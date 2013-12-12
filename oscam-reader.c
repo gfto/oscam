@@ -3,6 +3,7 @@
 #include "module-led.h"
 #include "module-stat.h"
 #include "module-dvbapi.h"
+#include "oscam-cache.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
 #include "oscam-ecm.h"
@@ -88,12 +89,14 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 							memcpy(erold, er, sizeof(struct ecm_request_t)); // copy ecm all
 							memcpy(erold->ecmd5, reader->rlecmh[h].ecmd5, CS_ECMSTORESIZE); // replace md5 hash
 							struct ecm_request_t *ecm = NULL;
-							ecm = check_cwcache(erold, erold->client); //CHECK IF FOUND ECM IN CACHE
+							ecm = check_cache(erold, erold->client); //CHECK IF FOUND ECM IN CACHE
 							free(erold);
 							if(ecm)   //found in cache
 								{ write_ecm_answer(reader, er, ecm->rc, ecm->rcEx, ecm->cw, NULL); }
 							else
 								{ write_ecm_answer(reader, er, E_NOTFOUND, E2_RATELIMIT, NULL, "Ratelimiter: no slots free!"); }
+
+							free(ecm);
 							return -2;
 						}
 						continue;
@@ -190,7 +193,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 		if(gone > reader->ratelimittime)
 		{
 			struct timeb minecmtime = actualtime;
-			for(h = 0; h < MAXECMRATELIMIT; h++) // find youngest addition
+			for(h = 0; h < MAXECMRATELIMIT; h++)
 			{
 				gone = comp_timeb(&minecmtime, &reader->rlecmh[h].last);
 				if(gone > 0)
@@ -332,7 +335,6 @@ int32_t ecm_ratelimit_check(struct s_reader *reader, ECM_REQUEST *er, int32_t re
 
 	cs_ftime(&now);
 	int32_t	gone = comp_timeb(&now, &reader->cooldowntime);
-	
 	if(reader->cooldownstate == 1)    // Cooldown in ratelimit phase
 	{
 		if(gone <= reader->cooldown[1]*1000)  // check if cooldowntime is elapsed
@@ -349,8 +351,8 @@ int32_t ecm_ratelimit_check(struct s_reader *reader, ECM_REQUEST *er, int32_t re
 
 	if(reader->cooldownstate == 2 && gone > reader->cooldown[0]*1000)
 	{
-		// Need to check if the other slots are not exceeding the ratelimit at the moment that
-		// cooldown[0] delaytime was exceeded!
+		// Need to check if the otherslots are not exceeding the ratelimit at the moment that
+		// cooldown[0] time was exceeded!
 		// time_t actualtime = reader->cooldowntime + reader->cooldown[0];
 		maxslots = 0; // maxslots is used as counter
 		for(h = 0; h < MAXECMRATELIMIT; h++)
@@ -376,7 +378,7 @@ int32_t ecm_ratelimit_check(struct s_reader *reader, ECM_REQUEST *er, int32_t re
 		}
 		else
 		{
-			reader->cooldownstate = 1; // Entering ratelimit for cooldown ratelimittime
+			reader->cooldownstate = 1; // Entering ratelimit for cooldown ratelimitseconds
 			cs_ftime(&reader->cooldowntime); // set time to enforce ecmratelimit for defined cooldowntime
 			maxslots = reader->ratelimitecm; // maxslots is maxslots again
 			sort_ecmrl(reader); // keep youngest ecm requests in list + housekeeping
@@ -668,8 +670,8 @@ void block_connect(struct s_reader *rdr)
 	rdr->tcp_block_connect_till.time += rdr->tcp_block_delay / 1000;
 	rdr->tcp_block_connect_till.millitm += rdr->tcp_block_delay % 1000;
 	rdr->tcp_block_delay *= 4; //increment timeouts
-	if(rdr->tcp_block_delay >= 60 * 1000)
-		{ rdr->tcp_block_delay = 60 * 1000; } //max 1min, todo config
+	if(rdr->tcp_block_delay >= rdr->tcp_reconnect_delay)
+		{ rdr->tcp_block_delay = rdr->tcp_reconnect_delay; }
 	rdr_debug_mask(rdr, D_TRACE, "tcp connect blocking delay set to %d", rdr->tcp_block_delay);
 }
 
@@ -1008,18 +1010,19 @@ void reader_get_ecm(struct s_reader *reader, ECM_REQUEST *er)
 
 	struct s_ecm_answer *ea = NULL, *ea_prev = NULL;
 	struct ecm_request_t *ecm;
-	time_t timeout = time(NULL) - cfg.max_cache_time;
+	time_t timeout;
 
 	cs_readlock(&ecmcache_lock);
 	for(ecm = ecmcwcache; ecm; ecm = ecm->next)
 	{
+		timeout = time(NULL) - ((cfg.ctimeout+500)/1000+1);
 		if(ecm->tps.time <= timeout)
 			{ break; }
 
 		if(!ecm->matching_rdr || ecm == er || ecm->rc == E_99) { continue; }
 
 		//match same ecm
-		if(er->caid == ecm->caid && (!memcmp(er->ecmd5, ecm->ecmd5, CS_ECMSTORESIZE)))
+		if(!memcmp(er->ecmd5, ecm->ecmd5, CS_ECMSTORESIZE))
 		{
 			//check if ask this reader
 			ea = get_ecm_answer(reader, ecm);

@@ -31,7 +31,15 @@ static void free_job_data(struct job_data *data)
 	if(!data)
 		{ return; }
 	if(data->len && data->ptr)
-		{ free(data->ptr); }
+	{
+		//special free checks
+		if(data->action==ACTION_ECM_ANSWER_CACHE)
+		{
+			free(((struct s_write_from_cache *)data->ptr)->er_cache);
+		}
+
+		free(data->ptr);
+	}
 	free(data);
 }
 
@@ -428,6 +436,7 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 		return 0;
 	}
 
+
 #ifdef CS_CACHEEX
 	// Avoid full running queues:
 	if(action == ACTION_CACHE_PUSH_OUT && ll_count(cl->joblist) > 2000)
@@ -439,7 +448,7 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 			{ free(ptr); }
 		// Thread down???
 		pthread_mutex_lock(&cl->thread_lock);
-		if(cl->thread_active)
+		if(cl && !cl->kill && cl->thread && cl->thread_active)
 		{
 			// Just test for invalid thread id:
 			if(pthread_detach(cl->thread) == ESRCH)
@@ -454,6 +463,7 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 	}
 #endif
 
+
 	struct job_data *data;
 	if(!cs_malloc(&data, sizeof(struct job_data)))
 	{
@@ -467,9 +477,9 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 	data->cl     = cl;
 	data->len    = len;
 	cs_ftime(&data->time);
-	
+
 	pthread_mutex_lock(&cl->thread_lock);
-	if(cl->thread_active)
+	if(cl && !cl->kill && cl->thread_active)
 	{
 		if(!cl->joblist)
 			{ cl->joblist = ll_create("joblist"); }

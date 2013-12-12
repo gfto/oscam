@@ -822,7 +822,6 @@ static void ratelimittime_fn(const char *token, char *value, void *setting, FILE
 	if(rdr->ratelimitecm || cfg.http_full_cfg)
 		{ fprintf_conf(f, token, "%d\n", rdr->ratelimittime); }
 }
-
 static void srvidholdtime_fn(const char *token, char *value, void *setting, FILE *f)
 {
 	struct s_reader *rdr = setting;
@@ -916,25 +915,35 @@ static void cooldowntime_fn(const char *UNUSED(token), char *value, void *settin
 	// It is only set by WebIf as convenience
 }
 
-#ifdef WITH_LB
+
 static void reader_fixups_fn(void *var)
 {
 	struct s_reader *rdr = var;
+#ifdef WITH_LB
 	if(rdr->lb_weight > 1000)
 		{ rdr->lb_weight = 1000; }
 	else if(rdr->lb_weight <= 0)
 		{ rdr->lb_weight = 100; }
-}
 #endif
+
+	if(is_cascading_reader(rdr) && (rdr->typ == R_CAMD35 || rdr->typ == R_CS378X))
+	{
+#ifdef CS_CACHEEX
+		if(rdr && rdr->cacheex.mode>1)
+			{ rdr->keepalive = 1; }   //with cacheex, it is required!
+#endif
+		if(rdr->keepalive)
+			{ rdr->tcp_rto = 60; }	  //we cannot check on rto before send keepalive (each 30s), so set rto > 30
+	}
+}
+
 
 #define OFS(X) offsetof(struct s_reader, X)
 #define SIZEOF(X) sizeof(((struct s_reader *)0)->X)
 
 static const struct config_list reader_opts[] =
 {
-#ifdef WITH_LB
 	DEF_OPT_FIXUP_FUNC(reader_fixups_fn),
-#endif
 	DEF_OPT_FUNC("label"                , 0,                            reader_label_fn),
 #ifdef WEBIF
 	DEF_OPT_STR("description"           , OFS(description),             NULL),
@@ -959,11 +968,13 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC("lb_whitelist_services"    , OFS(lb_sidtabs),              reader_lb_services_fn),
 	DEF_OPT_INT32("inactivitytimeout"   , OFS(tcp_ito),                 DEFAULT_INACTIVITYTIMEOUT),
 	DEF_OPT_INT32("reconnecttimeout"    , OFS(tcp_rto),                 DEFAULT_TCP_RECONNECT_TIMEOUT),
+	DEF_OPT_INT32("reconnectdelay"		, OFS(tcp_reconnect_delay),		60000),
 	DEF_OPT_INT32("resetcycle"          , OFS(resetcycle),              0),
 	DEF_OPT_INT8("disableserverfilter"  , OFS(ncd_disable_server_filt), 0),
 	DEF_OPT_INT8("connectoninit"        , OFS(ncd_connect_on_init),     0),
+	DEF_OPT_INT8("keepalive"			, OFS(keepalive),				0),
 	DEF_OPT_INT8("smargopatch"          , OFS(smargopatch),             0),
-	DEF_OPT_INT8("autospeed"      		, OFS(autospeed),         		1),
+	DEF_OPT_INT8("autospeed"            , OFS(autospeed),               1),
 	DEF_OPT_UINT8("sc8in1_dtrrts_patch" , OFS(sc8in1_dtrrts_patch),     0),
 	DEF_OPT_INT8("fallback"             , OFS(fallback),                0),
 	DEF_OPT_FUNC_X("fallback_percaid"   , OFS(fallback_percaid),        ftab_fn, FTAB_READER | FTAB_FBPCAID),
@@ -1206,6 +1217,7 @@ int32_t init_readerdb(void)
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr)))   //build active readers list
 	{
+		reader_fixups_fn(rdr);
 		module_reader_set(rdr);
 	}
 	fclose(fp);

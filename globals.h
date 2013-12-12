@@ -325,7 +325,7 @@ typedef unsigned char uchar;
 #define E_ALREADY_SENT	101
 #define E_WAITING		102
 #define E_99                99 //this code is undocumented
-#define E_UNHANDLED		100 //for selection of unhandled, use >= E_UNHANDLED
+#define E_UNHANDLED 100 //for selection of unhandled, use >= E_UNHANDLED
 
 #define CS_MAX_MOD 20
 #define MOD_CONN_TCP    1
@@ -849,23 +849,24 @@ typedef struct ecm_request_t
 #endif
 
 	void            *src_data;
+	int32_t         csp_hash; 					// csp has its own hash
+
 #ifdef CS_CACHEEX
 	struct s_client *cacheex_src;               // Cacheex origin
 	int8_t          cacheex_pushed;             // to avoid duplicate pushs
 	uint8_t         csp_answered;               // =1 if er get answer by csp
-	int32_t         csp_hash;                   // csp has its own hash
 	LLIST           *csp_lastnodes;             // last 10 Cacheex nodes atm cc-proto-only
 	uint32_t        cacheex_wait_time;          // cacheex wait time in ms
 	struct timeb    cacheex_wait;               // incoming time stamp (tps) + cacheex wait time
 	uint8_t         cacheex_wait_time_expired;  // =1 if cacheex wait_time expires
 	uint8_t         cacheex_hitcache;           // =1 if wait_time due hitcache
+	void            *cw_cache;					//pointer to cw stored in cache
 #endif
+	uint8_t         cw_count;
 	uint8_t         from_csp;                   // =1 if er from csp cache
 	uint8_t         from_cacheex;               // =1 if er from cacheex client pushing cache
 	uint8_t         from_cacheex1_client;       // =1 if er from cacheex-1 client
 	char            msglog[MSGLOGSIZE];
-	uint8_t			cwc_cycletime;
-	uint8_t			cwc_next_cw_cycle;
 #ifdef CW_CYCLE_CHECK
 	char            cwc_msg_log[MSGLOGSIZE];
 #endif
@@ -1008,7 +1009,6 @@ struct s_client
 	int32_t         cwcacheexerr;       // cw=00 or chksum wrong
 	int32_t         cwcacheexerrcw;     // same Hex, different CW
 	int16_t         cwcacheexping;      // peer ping in ms, only used by csp
-	int32_t			cwc_info;			// count of in/out comming cacheex ecms with CWCinfo
 #endif
 
 #ifdef WEBIF
@@ -1087,6 +1087,8 @@ struct s_client
 	int32_t         failban;
 
 	LLIST           *cascadeusers; //s_cascadeuser
+
+	int32_t			n_request[2];  //count for number of request per minute by client
 
 	void            *work_mbuf;         // Points to local data allocated in work_thread when the thread is running
 	void            *work_job_data;     // Points to current job_data when work_thread is running
@@ -1180,6 +1182,7 @@ struct s_emmlen_range
 
 struct s_reader                                     //contains device info, reader info and card info
 {
+	uint8_t         keepalive;
 	uint8_t     changes_since_shareupdate;
 	int32_t         resetcycle;                     // ECM until reset
 	int32_t         resetcounter;                   // actual count
@@ -1188,7 +1191,7 @@ struct s_reader                                     //contains device info, read
 	int8_t          needsemmfirst;                  // 0: reader descrambles without emm first, 1: reader needs emms before it can descramble
 	struct timeb    emm_last;                       // time of last succesfull written emm
 	int8_t          smargopatch;
-	int8_t			autospeed;				// 1 clockspeed set according to atr f max
+	int8_t          autospeed;                      // 1 clockspeed set according to atr f max
 	struct s_client *client;                        // pointer to 'r'client this reader is running in
 	LLIST           *ll_entitlements;               // entitlements
 	int8_t          enable;
@@ -1275,6 +1278,8 @@ struct s_reader                                     //contains device info, read
 	int8_t          tcp_connected;
 	int32_t         tcp_ito;                        // inactivity timeout
 	int32_t         tcp_rto;                        // reconnect timeout
+	int32_t         tcp_reconnect_delay;			// max tcp connection block delay
+
 	struct timeb    tcp_block_connect_till;         //time tcp connect ist blocked
 	int32_t         tcp_block_delay;                //incrementing block time
 	time_t          last_g;                         // get (if last_s-last_g>tcp_rto - reconnect )
@@ -1347,7 +1352,7 @@ struct s_reader                                     //contains device info, read
 	int32_t         ratelimittime; // ratelimit time in ms (everything below 60 ms is converted to ms by applying *1000)
 	int8_t          ecmunique; // check for matching ecm hash in ratelimitslot
 	int32_t         srvidholdtime; // time in ms to keep srvid in ratelimitslot (during this time not checked for ecmunique!)
-								   // (everything below 60 ms is converted to ms by applying *1000)
+	 	                   	       // (everything below 60 ms is converted to ms by applying *1000)
 	struct timeb    lastdvbapirateoverride;
 	uint32_t        ecmsok;
 	uint32_t        ecmsnok;
@@ -1405,6 +1410,7 @@ struct s_auth
 	int8_t          uniq;
 #ifdef CS_CACHEEX
 	CECSP           cacheex; //CacheEx Settings
+	uint8_t         no_wait_time;
 #endif
 	int16_t         allowedprotocols;
 	LLIST           *aureader_list;
@@ -1468,7 +1474,6 @@ struct s_auth
 	int32_t         cwcacheexhit;       // count hit ecms/cws
 	int32_t         cwcacheexerr; //cw=00 or chksum wrong
 	int32_t         cwcacheexerrcw; //Same Hex, different CW
-	int32_t			cwc_info;			// count of in/out comming cacheex ecms with CWCinfo
 #endif
 	struct s_auth   *next;
 };
@@ -1555,18 +1560,6 @@ struct s_cacheex_matcher
 
 	struct s_cacheex_matcher *next;
 };
-
-typedef struct csp_ce_hit_t
-{
-	time_t          time;
-	int16_t         ecmlen;
-	uint16_t        caid;
-	uint32_t        prid;
-	uint16_t        srvid;
-	uint64_t        grp;
-	struct csp_ce_hit_t *prev;
-	struct csp_ce_hit_t *next;
-} CSPCEHIT;
 
 struct s_config
 {
@@ -1771,13 +1764,15 @@ struct s_config
 	IN_ADDR_T   pand_srvip;
 #endif
 
-	uint32_t    max_cache_time;  //seconds ecms are stored in ecmcwcache
-	uint32_t    max_hitcache_time;  //seconds hits are stored in cspec_hitcache (to detect dyn wait_time)
+	int32_t    max_cache_time;  //seconds ecms are stored in ecmcwcache
+	int32_t    max_hitcache_time;  //seconds hits are stored in cspec_hitcache (to detect dyn wait_time)
 
 	int8_t      block_same_ip;   //0=allow all, 1=block client requests to reader with same ip   (default=1)
 	int8_t      block_same_name; //0=allow all, 1=block client requests to reader with same name (default=1)
 
 #ifdef CS_CACHEEX
+	uint8_t     check_cw_count;
+	uint8_t     check_cw_count_mode;
 	IN_ADDR_T   csp_srvip;
 	int32_t     csp_port;
 	CECSPVALUETAB   cacheex_wait_timetab;
@@ -1795,7 +1790,6 @@ struct s_config
 	int8_t          cwcycle_dropold;        // what to do on old ecmd5/cw
 	int8_t          cwcycle_sensitive;
 	int8_t          cwcycle_allowbadfromffb;        //allow Bad cycles from Fixed Fallbackreader
-	int8_t			cwcycle_usecwcfromce;		//Use CWC Info from Cacheex Sources for CWC Checking
 #endif
 
 	//Global whitelist:
@@ -1873,7 +1867,6 @@ struct s_write_from_cache
 {
 	ECM_REQUEST *er_new;
 	ECM_REQUEST *er_cache;
-	uint8_t type;    //=1 from INT. cache (cache1), =2 from distribute cacheex1 (cache2), =3 from cacheex clients
 };
 
 

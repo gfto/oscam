@@ -9,6 +9,7 @@
 #include "module-cccam-data.h"
 #include "module-cccshare.h"
 #include "oscam-chk.h"
+#include "oscam-cache.h"
 #include "oscam-client.h"
 #include "oscam-ecm.h"
 #include "oscam-emm.h"
@@ -1616,14 +1617,14 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf)
  for (i = 1, n = 1; i < cfg.max_pending; i++)
  {
  if ((t-cl->ecmtask[i].tps.time > ((cfg.ctimeout + 500) / 1000) + 1) &&
- (cl->ecmtask[i].rc>=E_NOCARD))      // drop timeouts
+ (cl->ecmtask[i].rc>=10))      // drop timeouts
  {
- cl->ecmtask[i].rc=E_FOUND;
+ cl->ecmtask[i].rc=0;
  }
  int32_t td=abs(1000*(ecmtask[i].tps.time-cc->found->tps.time)+ecmtask[i].tps.millitm-cc->found->tps.millitm);
- if (ecmtask[i].rc>=E_NOCARD && ecmtask[i].cidx==cc->found->cidx && &ecmtask[i]!=cc->found){
+ if (ecmtask[i].rc>=10 && ecmtask[i].cidx==cc->found->cidx && &ecmtask[i]!=cc->found){
  cs_log("aborting idx:%d caid:%04x client:%d timedelta:%d",ecmtask[i].idx,ecmtask[i].caid,ecmtask[i].cidx,td);
- ecmtask[i].rc=E_FOUND;
+ ecmtask[i].rc=0;
  ecmtask[i].rcEx=7;
  write_ecm_answer(rdr, fd_c2m, &ecmtask[i]);
  }
@@ -2179,6 +2180,13 @@ static void chk_peer_node_for_oscam(struct cc_data *cc)
 int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 {
 	struct cc_data *cc = cl->cc;
+	if(chk_is_null_nodeid(cc->peer_node_id,8))
+	{
+		cs_debug_mask(D_CACHEEX, "cacheex: NO peer_node_id got yet, skip!");
+		return 0;
+	}
+
+
 	//check max 10 nodes to push:
 	if(ll_count(er->csp_lastnodes) >= cacheex_maxhop(cl))
 	{
@@ -2220,6 +2228,11 @@ int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 		cs_debug_mask(D_CACHEEX, "cacheex: not connected %s -> no push", username(cl));
 		return 0;
 	}
+
+	//check if cw is already pushed
+	if(check_is_pushed(er->cw_cache, cl))
+		{ return 0; }
+
 	return 1;
 }
 
@@ -2267,19 +2280,7 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	i2b_buf(4, er->prid, ecmbuf + 2);
 	i2b_buf(2, er->srvid, ecmbuf + 10);
 
-	ecmbuf[18] = er->cwc_cycletime; // contains cwc stage3 cycletime
-	ecmbuf[19] = er->cwc_next_cw_cycle; // which cw must next cycle
-
-#ifdef CS_CACHEEX
-	if (er->cwc_cycletime)
-	{
-		if(cl->typ == 'c' && cl->account && cl->account->cacheex.mode)
-			{ cl->account->cwc_info++; }
-		else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
-			{ cl->cwc_info++; }
-		cs_debug_mask(D_CWC, "CWC (CE) push to %s (cccam) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
-	}
-#endif
+	ecmbuf[19] = er->ecm[0] != 0x80 && er->ecm[0] != 0x81 ? 0 : er->ecm[0];
 
 	uint8_t *ofs = ecmbuf + 20;
 
@@ -2349,23 +2350,10 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	er->caid = b2i(2, buf + 0);
 	er->prid = b2i(4, buf + 2);
 	er->srvid = b2i(2, buf + 10);
+	er->ecm[0] = buf[19]!=0x80 && buf[19]!=0x81 ? 0 : buf[19]; //odd/even byte, usefull to send it over CSP and to check cw for swapping
 	er->rc = rc;
 
 	er->ecmlen = 0;
-
-	er->cwc_cycletime = buf[18];
-	er->cwc_next_cw_cycle = buf[19];
-
-#ifdef CS_CACHEEX
-	if (er->cwc_cycletime)
-	{
-		if(cl->typ == 'c' && cl->account && cl->account->cacheex.mode)
-			{ cl->account->cwc_info++; }
-		else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
-			{ cl->cwc_info++; }
-		cs_debug_mask(D_CWC, "CWC (CE) received from %s (cccam) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
-	}
-#endif
 
 	uint8_t *ofs = buf + 20;
 

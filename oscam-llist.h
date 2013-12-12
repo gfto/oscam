@@ -42,6 +42,7 @@ struct llistlockiter
 LLIST *ll_create(const char *name); // create llist, return ptr to llist
 void ll_destroy(LLIST *l);      // same as ll_clear_abstract() but frees up LLIST mem as well
 void ll_destroy_data(LLIST *l); // same as ll_clear_data() but frees up obj allocations as well
+void ll_destroy_free_data(LLIST *l); // same as ll_clear_data() but frees up obj allocations as well. More, really free node without use GBC
 void ll_clear(LLIST *l);        // frees up all llnodes nodes but not data held in obj ptrs
 void ll_clear_data(LLIST *l);   // same as ll_clear_data() but frees up obj allocations as well
 

@@ -20,6 +20,7 @@ int32_t chk_srvid_by_caid_prov(struct s_client *cl, uint16_t caid, uint32_t prov
 int32_t chk_srvid_by_caid_prov_rdr(struct s_reader *rdr, uint16_t caid, uint32_t provid);
 int32_t chk_is_betatunnel_caid(uint16_t caid);
 uint16_t chk_on_btun(uint8_t chk_sx, struct s_client *cl, ECM_REQUEST *er);
+int32_t chk_ident_filter(uint16_t rcaid, uint32_t rprid, FTAB *ftab);
 int32_t chk_sfilter(ECM_REQUEST *er, PTAB *ptab);
 int32_t chk_ufilters(ECM_REQUEST *er);
 int32_t chk_rsfilter(struct s_reader *reader, ECM_REQUEST *er);
@@ -30,6 +31,7 @@ int32_t chk_caid(uint16_t caid, CAIDTAB *ctab);
 int32_t chk_caid_rdr(struct s_reader *rdr, uint16_t caid);
 int32_t chk_bcaid(ECM_REQUEST *er, CAIDTAB *ctab);
 int32_t chk_is_null_CW(uchar cw[]);
+int32_t chk_is_null_nodeid(uint8_t node_id[], uint8_t len);
 bool check_client(struct s_client *cl);
 
 #endif

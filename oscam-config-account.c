@@ -380,6 +380,7 @@ static const struct config_list account_opts[] =
 	DEF_OPT_FUNC("cacheex_ecm_filter"   , OFS(cacheex.filter_caidtab),  cacheex_hitvaluetab_fn),
 	DEF_OPT_UINT8("cacheex_drop_csp"    , OFS(cacheex.drop_csp),        0),
 	DEF_OPT_UINT8("cacheex_allow_request"   , OFS(cacheex.allow_request),   1),
+	DEF_OPT_INT8("no_wait_time"			, OFS(no_wait_time),			0),
 #endif
 #ifdef MODULE_CCCAM
 	DEF_OPT_INT32("cccmaxhops"          , OFS(cccmaxhops),              DEFAULT_CC_MAXHOPS),

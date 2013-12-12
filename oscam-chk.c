@@ -108,7 +108,7 @@ int32_t chk_srvid_match(ECM_REQUEST *er, SIDTAB *sidtab)
 		for(i = 0; (i < sidtab->num_caid) && (!(rc & 1)); i++)
 			if(er->caid == sidtab->caid[i]) { rc |= 1; }
 
-	if(!er->prid || !sidtab->num_provid)
+	if(!sidtab->num_provid)
 		{ rc |= 2; }
 	else
 		for(i = 0; (i < sidtab->num_provid) && (!(rc & 2)); i++)
@@ -380,6 +380,38 @@ static int32_t chk_chid(ECM_REQUEST *er, FTAB *fchid, char *type, char *name)
 	return (rc);
 }
 
+
+int32_t chk_ident_filter(uint16_t rcaid, uint32_t rprid, FTAB *ftab)
+{
+	int32_t i, j, rc=1;
+	uint16_t caid=0;
+	uint32_t prid=0;
+
+	if(ftab->nfilts)
+	{
+		for(rc=i=0; (!rc) && (i<ftab->nfilts); i++)
+		{
+			caid = ftab->filts[i].caid;
+			if((caid!=0 && caid==rcaid) || caid==0)
+			{
+				for(j=0; (!rc) && (j<ftab->filts[i].nprids); j++)
+				{
+					prid = ftab->filts[i].prids[j];
+					if(prid==rprid)
+					{
+						rc=1;
+					}
+				}
+			}
+		}
+		if(!rc)
+			{ return 0; }
+	}
+
+	return(rc);
+}
+
+
 int32_t chk_ufilters(ECM_REQUEST *er)
 {
 	int32_t i, j, rc;
@@ -627,6 +659,8 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 #ifdef CS_CACHEEX
 	//Cacheex=3 defines a Cacheex-only reader. never match them.
 	if(rdr->cacheex.mode == 3)
+		{ return (0); }
+	if(rdr->cacheex.mode == 2 && !rdr->cacheex.allow_request)
 		{ return (0); }
 #endif
 
@@ -941,6 +975,21 @@ int32_t chk_is_null_CW(uchar cw[])
 	for(i = 0; i < 16; i++)
 	{
 		if(cw[i])
+			{ return 0; }
+	}
+	return 1;
+}
+
+
+/**
+ * Check for NULL nodeid
+ **/
+int32_t chk_is_null_nodeid(uint8_t node_id[], uint8_t len)
+{
+	int8_t i;
+	for(i = 0; i < len; i++)
+	{
+		if(node_id[i])
 			{ return 0; }
 	}
 	return 1;

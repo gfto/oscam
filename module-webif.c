@@ -19,6 +19,7 @@
 #include "oscam-config.h"
 #include "oscam-files.h"
 #include "oscam-garbage.h"
+#include "oscam-cache.h"
 #include "oscam-client.h"
 #include "oscam-lock.h"
 #include "oscam-net.h"
@@ -334,14 +335,7 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 
 	if(cfg.waitforcards == 1)  { tpl_addVar(vars, TPLADD, "WAITFORCARDSCHECKED", "selected"); }
 	tpl_printf(vars, TPLADD, "EXTRADELAY", "%d", cfg.waitforcards_extra_delay);
-	if(cfg.preferlocalcards == 1)
-	{
-		tpl_addVar(vars, TPLADD, "PREFERCACHEEX", "selected");
-	}
-	else if(cfg.preferlocalcards == 2)
-	{
-		tpl_addVar(vars, TPLADD, "PREFERLOCALCARDS", "selected");
-	}
+	if(cfg.preferlocalcards == 1)  { tpl_addVar(vars, TPLADD, "PREFERLOCALCARDSCHECKED", "selected"); }
 
 	if(cfg.c35_suppresscmd08)
 		{ tpl_addVar(vars, TPLADD, "SUPPRESSCMD08", "checked"); }
@@ -630,10 +624,6 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 	if(cfg.cwcycle_allowbadfromffb == 1)
 	{
 		tpl_addVar(vars, TPLADD, "ALLOWBADFROMFFB", "selected");
-	}
-	if(cfg.cwcycle_usecwcfromce == 1)
-	{
-		tpl_addVar(vars, TPLADD, "USECWCFROMCE", "selected");
 	}
 #endif
 
@@ -1726,8 +1716,8 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	if(rdr->ratelimitecm)
 	{
 		tpl_printf(vars, TPLADD, "RATELIMITECM", "%d", rdr->ratelimitecm);
-		tpl_printf(vars, TPLADD, "RATELIMITTIME", "%d", rdr->ratelimittime);
-		tpl_printf(vars, TPLADD, "SRVIDHOLDTIME", "%d", rdr->srvidholdtime);
+        tpl_printf(vars, TPLADD, "RATELIMITTIME", "%d", rdr->ratelimittime);
+        tpl_printf(vars, TPLADD, "SRVIDHOLDTIME", "%d", rdr->srvidholdtime);
 		// ECMUNIQUE
 		if(!apicall)
 		{
@@ -2918,6 +2908,8 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	int8_t isactive;
 	int32_t casc_users = 0;
 	int32_t casc_users2 = 0;
+	int32_t n_request = 0;
+
 
 	if(cfg.http_showpicons) { tpl_addVar(vars, TPLADD, "PICONHEADER", "<TH>Image</TH>"); }
 
@@ -3063,6 +3055,12 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			}
 		}
 
+		n_request = 0;
+		if(latestclient != NULL){
+			n_request = latestclient->n_request[0];
+		}
+
+
 		tpl_printf(vars, TPLADD, "CWOK", "%d", account->cwfound);
 		tpl_printf(vars, TPLADD, "CWNOK", "%d", account->cwnot);
 		tpl_printf(vars, TPLADD, "CWIGN", "%d", account->cwignored);
@@ -3081,6 +3079,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_printf(vars, TPLADD, "CASCUSERS", "%d", casc_users);
 		tpl_printf(vars, TPLADD, "CASCUSERS2", "%d", casc_users2);
 		tpl_printf(vars, TPLADD, "CASCUSERSCOMB", "%d/%d", casc_users, casc_users2);
+		tpl_printf(vars, TPLADD, "N_REQUEST_MIN", "%d", n_request);
 
 		if(isactive > 0 || !cfg.http_hide_idle_clients)
 		{
@@ -3110,6 +3109,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "");
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEPAPI", "");
 			}
+
 			webif_add_client_proto(vars, latestclient, proto);
 		}
 		else
@@ -3118,7 +3118,6 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		}
 
 		tpl_addVar(vars, TPLADD, "CLASSNAME", classname);
-
 		if(cfg.http_showpicons && !apicall)
 		{
 			if(picon_exists(xml_encode(vars, account->usr)))
@@ -3170,7 +3169,51 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	tpl_printf(vars, TPLADD, "TOTAL_CONNECTED", "%d", connected_users);
 	tpl_printf(vars, TPLADD, "TOTAL_ONLINE", "%d", online_users);
 
-	tpl_printf(vars, TPLADD, "TOTAL_CW", "%d", first_client->cwfound + first_client->cwcache + first_client->cwnot + first_client->cwignored + first_client->cwtout); // dont count TUN its included
+
+	float ecmsum = first_client->cwfound + first_client->cwnot + first_client->cwignored + first_client->cwtout + first_client->cwcache; //dont count TUN its included
+	if(ecmsum < 1) 	ecmsum = 1;
+	float ecmpos = first_client->cwfound + first_client->cwcache; // dont count TUN its included
+	if(ecmpos < 1) ecmpos = 1;
+	float ecmneg = first_client->cwnot + first_client->cwignored + first_client->cwtout;
+	if(ecmneg < 1) ecmneg = 1;
+
+	//if one of the stats overloaded, reset all stats!
+	if(first_client->cwfound<0
+	  || first_client->cwnot<0
+	  || first_client->cwignored<0
+	  || first_client->cwtout<0
+	  || first_client->cwcache<0
+	  || first_client->cwtun<0
+	  || first_client->emmok<0
+	  || first_client->emmnok<0
+#ifdef CS_CACHEEX
+	  || first_client->cwcacheexgot<0
+	  || first_client->cwcacheexpush<0
+	  || first_client->cwcacheexhit<0
+#endif
+	  || (first_client->cwfound * 100 / ecmsum)<0
+	  || (first_client->cwnot * 100 / ecmsum)<0
+	  || (first_client->cwignored * 100 / ecmsum)<0
+	  || (first_client->cwtout * 100 / ecmsum)<0
+	  || (first_client->cwcache * 100 / ecmsum)<0
+	  || (first_client->cwtun * 100 / ecmsum)<0
+	  || ((first_client->cwfound + first_client->cwcache) * 100 / ecmsum)<0
+	  || ((first_client->cwnot + first_client->cwignored + first_client->cwtout) * 100 / ecmsum)<0
+	  || (first_client->cwfound * 100 / ecmpos)<0
+	  || (first_client->cwcache * 100 / ecmpos)<0
+	  || (first_client->cwnot * 100 / ecmneg)<0
+	  || (first_client->cwignored * 100 / ecmneg)<0
+	  || (first_client->cwtout * 100 / ecmneg)<0
+	){
+		clear_system_stats();
+		ecmsum = 1;
+		ecmpos = 1;
+		ecmneg = 1;
+	}
+	//end reset stats
+
+	tpl_printf(vars, TPLADD, "TOTAL_ECM_MIN", "%d", first_client->n_request[0]);
+	tpl_printf(vars, TPLADD, "TOTAL_CW", "%d", (int)ecmsum);
 	tpl_printf(vars, TPLADD, "TOTAL_CWOK", "%d", first_client->cwfound);
 	tpl_printf(vars, TPLADD, "TOTAL_CWNOK", "%d", first_client->cwnot);
 	tpl_printf(vars, TPLADD, "TOTAL_CWIGN", "%d", first_client->cwignored);
@@ -3180,21 +3223,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	tpl_printf(vars, TPLADD, "TOTAL_CWPOS", "%d", first_client->cwfound + first_client->cwcache);
 	tpl_printf(vars, TPLADD, "TOTAL_CWNEG", "%d", first_client->cwnot + first_client->cwignored + first_client->cwtout);
 
-	float ecmsum = first_client->cwfound + first_client->cwnot + first_client->cwignored + first_client->cwtout + first_client->cwcache; //dont count TUN its included
-	if(ecmsum < 1)
-	{
-		ecmsum = 1;
-	}
-	float ecmpos = first_client->cwfound + first_client->cwcache; // dont count TUN its included
-	if(ecmpos < 1)
-	{
-		ecmpos = 1;
-	}
-	float ecmneg = first_client->cwnot + first_client->cwignored + first_client->cwtout;
-	if(ecmneg < 1)
-	{
-		ecmneg = 1;
-	}
+
 	tpl_printf(vars, TPLADD, "REL_CWOK", "%.2f", first_client->cwfound * 100 / ecmsum);
 	tpl_printf(vars, TPLADD, "REL_CWNOK", "%.2f", first_client->cwnot * 100 / ecmsum);
 	tpl_printf(vars, TPLADD, "REL_CWIGN", "%.2f", first_client->cwignored * 100 / ecmsum);
@@ -3788,7 +3817,6 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					while(*p && !filtered)
 					{
 						char type = *p++;
-						// 'x' is a virtual type to match cacheex
 #ifdef CS_CACHEEX
 						filtered = (type == cl->typ) || (type == 'x' && (cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode));
 #else
@@ -3880,7 +3908,6 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					}
 
 					localtime_r(&cl->login, &lt);
-
 
 					tpl_printf(vars, TPLADD, "HIDEIDX", "%p", cl);
 
@@ -4042,7 +4069,6 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							{ tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", cl->last_srvid); }
 						else
 							{ tpl_printf(vars, TPLADD, "CLIENTSRVID", "none"); }
-
 						char *lastchannel;
 						char channame[32];
 						int32_t actual_caid = cl->last_caid;
@@ -4073,8 +4099,8 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								tpl_printf(vars, TPLADD, "CAIDSRVID", "%04X:%04X", actual_caid, actual_srvid);
 							}
 						}
-
 						tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime ? cl->cwlastresptime : 1);
+
 						tpl_printf(vars, TPLADD, "CLIENTSRVPROVIDER", "%s%s", cl->last_srvidptr && cl->last_srvidptr->prov ? xml_encode(vars, cl->last_srvidptr->prov) : "", cl->last_srvidptr && cl->last_srvidptr->prov ? ": " : "");
 						tpl_addVar(vars, TPLADD, "CLIENTSRVNAME", cl->last_srvidptr && cl->last_srvidptr->name ? xml_encode(vars, cl->last_srvidptr->name) : "");
 						tpl_addVar(vars, TPLADD, "CLIENTSRVTYPE", cl->last_srvidptr && cl->last_srvidptr->type ? xml_encode(vars, cl->last_srvidptr->type) : "");
@@ -5682,7 +5708,6 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->account->cacheex.mode]);
 			tpl_printf(vars, TPLADD, "PUSH", "%d", cl->account->cwcacheexpush);
 			tpl_printf(vars, TPLADD, "GOT", "%d", cl->account->cwcacheexgot);
-			tpl_printf(vars, TPLADD, "CWCINFO", "%d", cl->account->cwc_info);
 			tpl_printf(vars, TPLADD, "HIT", "%d", cl->account->cwcacheexhit);
 			tpl_printf(vars, TPLADD, "ERR", "%d", cl->account->cwcacheexerr);
 			tpl_printf(vars, TPLADD, "ERRCW", "%d", cl->account->cwcacheexerrcw);
@@ -5700,7 +5725,6 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->reader->cacheex.mode]);
 			tpl_printf(vars, TPLADD, "PUSH", "%d", cl->cwcacheexpush);
 			tpl_printf(vars, TPLADD, "GOT", "%d", cl->cwcacheexgot);
-			tpl_printf(vars, TPLADD, "CWCINFO", "%d", cl->cwc_info);
 			tpl_printf(vars, TPLADD, "HIT", "%d", cl->cwcacheexhit);
 			tpl_printf(vars, TPLADD, "ERR", "%d", cl->cwcacheexerr);
 			tpl_printf(vars, TPLADD, "ERRCW", "%d", cl->cwcacheexerrcw);
@@ -5724,7 +5748,6 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 			}
 			tpl_printf(vars, TPLADD, "PUSH", "%d", cl->cwcacheexpush);
 			tpl_printf(vars, TPLADD, "GOT", "%d", cl->cwcacheexgot);
-			tpl_printf(vars, TPLADD, "CWCINFO", "%d", cl->cwc_info);
 			tpl_printf(vars, TPLADD, "HIT", "%d", cl->cwcacheexhit);
 			tpl_printf(vars, TPLADD, "ERR", "%d", cl->cwcacheexerr);
 			tpl_printf(vars, TPLADD, "ERRCW", "%d", cl->cwcacheexerrcw);
@@ -5785,7 +5808,7 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 	tpl_printf(vars, TPLADD, "TOTAL_CACHEXGOT", "%d", first_client ? first_client->cwcacheexgot : 0);
 	tpl_addVar(vars, TPLADD, "TOTAL_CACHEXGOT_IMG", getting);
 	tpl_printf(vars, TPLADD, "TOTAL_CACHEXHIT", "%d", first_client ? first_client->cwcacheexhit : 0);
-	tpl_printf(vars, TPLADD, "TOTAL_CACHESIZE", "%d", ecmcwcache_size);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHESIZE", "%d", cache_size());
 
 	tpl_printf(vars, TPLADD, "REL_CACHEXHIT", "%.2f", (first_client ? first_client->cwcacheexhit : 0) * 100 / cachesum);
 

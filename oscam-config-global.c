@@ -495,7 +495,7 @@ static const struct config_list camd33_opts[] = { DEF_LAST_OPT };
 
 void cache_fixups_fn(void *UNUSED(var))
 {
-	if(cfg.max_cache_time < ((cfg.ctimeout + 500) / 1000 + 3)) { cfg.max_cache_time = ((cfg.ctimeout + 500) / 1000 + 3); }
+	if(cfg.max_cache_time < ((int32_t)(cfg.ctimeout + 500) / 1000 + 3)) { cfg.max_cache_time = ((cfg.ctimeout + 500) / 1000 + 3); }
 #ifdef CW_CYCLE_CHECK
 	if(cfg.maxcyclelist > 4000) { cfg.maxcyclelist = 4000; }
 	if(cfg.keepcycletime > 240) { cfg.keepcycletime = 240; }
@@ -511,7 +511,7 @@ static bool cache_should_save_fn(void *UNUSED(var))
 		   || cfg.cacheex_wait_timetab.n || cfg.cacheex_enable_stats > 0 || cfg.csp_port || cfg.csp.filter_caidtab.n || cfg.csp.allow_request == 0 || cfg.csp.allow_reforward > 0
 #endif
 #ifdef CW_CYCLE_CHECK
-		   || cfg.cwcycle_check_enable || cfg.cwcycle_check_caidtab.caid[0] || cfg.maxcyclelist != 500 || cfg.keepcycletime || cfg.onbadcycle || cfg.cwcycle_dropold || cfg.cwcycle_sensitive || cfg.cwcycle_allowbadfromffb || cfg.cwcycle_usecwcfromce
+		   || cfg.cwcycle_check_enable || cfg.cwcycle_check_caidtab.caid[0] || cfg.maxcyclelist != 500 || cfg.keepcycletime || cfg.onbadcycle || cfg.cwcycle_dropold || cfg.cwcycle_sensitive || cfg.cwcycle_allowbadfromffb
 #endif
 		   ;
 }
@@ -531,6 +531,8 @@ static const struct config_list cache_opts[] =
 	DEF_OPT_FUNC("csp_ecm_filter"           , OFS(csp.filter_caidtab),      cacheex_hitvaluetab_fn),
 	DEF_OPT_UINT8("csp_allow_request"       , OFS(csp.allow_request),       1),
 	DEF_OPT_UINT8("csp_allow_reforward"     , OFS(csp.allow_reforward),     0),
+	DEF_OPT_UINT8("check_cw_count"			, OFS(check_cw_count),			1),
+	DEF_OPT_UINT8("check_cw_count_mode"     , OFS(check_cw_count_mode),     0),
 #endif
 #ifdef CW_CYCLE_CHECK
 	DEF_OPT_INT8("cwcycle_check_enable"     , OFS(cwcycle_check_enable),        0),
@@ -541,7 +543,6 @@ static const struct config_list cache_opts[] =
 	DEF_OPT_INT8("cwcycle_dropold"          , OFS(cwcycle_dropold),             1),
 	DEF_OPT_INT8("cwcycle_sensitive"        , OFS(cwcycle_sensitive),           4),
 	DEF_OPT_INT8("cwcycle_allowbadfromffb"      , OFS(cwcycle_allowbadfromffb),         0),
-	DEF_OPT_INT8("cwcycle_usecwcfromce"     , OFS(cwcycle_usecwcfromce),		0),
 #endif
 	DEF_LAST_OPT
 };

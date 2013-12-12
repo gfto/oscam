@@ -1,6 +1,7 @@
 #ifndef OSCAM_ECM_H_
 #define OSCAM_ECM_H_
 
+void checkcache_process_thread_start(void);
 void cw_process_thread_start(void);
 void cw_process_thread_wakeup(void);
 
@@ -9,16 +10,15 @@ void convert_to_nagra(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto);
 
 int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, uint8_t rcEx, uint8_t *cw, char *msglog);
 
-bool cmp_ecm(ECM_REQUEST *er_new, ECM_REQUEST *er_cache);
 void get_cw(struct s_client *, ECM_REQUEST *);
 
 void update_chid(ECM_REQUEST *ecm);
 uint32_t get_subid(ECM_REQUEST *er);
 uint32_t chk_provid(uint8_t *ecm, uint16_t caid);
 
-struct ecm_request_t *check_cwcache(ECM_REQUEST *er, struct s_client *cl);
 int32_t send_dcw(struct s_client *client, ECM_REQUEST *er);
 void free_ecm(ECM_REQUEST *ecm);
+void free_push_in_ecm(ECM_REQUEST *ecm);
 void write_ecm_answer_fromcache(struct s_write_from_cache *wfc);
 void cacheex_timeout(ECM_REQUEST *er);
 void fallback_timeout(ECM_REQUEST *er);

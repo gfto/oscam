@@ -1504,11 +1504,6 @@ static void gbox_send_dcw(struct s_client *cl, ECM_REQUEST *er)
 	gbox_send(cli, buf, ei->ecm[ei->l - 1] + 45);
 
 	cs_debug_mask(D_READER, "-> CW  (->%d) from %s/%d (%04X) ", ei->ecm[ei->l - 1] + 1, cli->reader->label, cli->port, ei->peer);
-	if(er->src_data)
-	{
-		free(er->src_data);
-		er->src_data = NULL;
-	}
 }
 
 static uint8_t gbox_next_free_slot(struct gbox_data *gbox, uint16_t id)

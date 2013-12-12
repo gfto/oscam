@@ -5,6 +5,7 @@
 #include "module-cacheex.h"
 #include "oscam-aes.h"
 #include "oscam-chk.h"
+#include "oscam-cache.h"
 #include "oscam-client.h"
 #include "oscam-ecm.h"
 #include "oscam-emm.h"
@@ -22,15 +23,14 @@
 //CMD19 - EMM (incomming EMM in server mode) only seen with caid 0x1830
 //CMD08 - Stop sending requests to the server for current srvid,prvid,caid
 //CMD44 - MPCS/OScam internal error notification
+//CMD55 - connect_on_init/keepalive
 
 //CMD0x3d - CACHEEX Cache-push id request
 //CMD0x3e - CACHEEX Cache-push id answer
 //CMD0x3f - CACHEEX cache-push
 
 //used variable ncd_skey for storing remote node id: ncd_skey[0..7] : 8
-//bytes node id ncd_skey[8] : 1=valid node id ncd_skey[9] : 1=remote node id
-//already requested ncd_skey[10] : counter to check for ip changes, >30 do
-//dns resolve ncd_skey[11] : renew remote node every 256 cache pushs
+//bytes node id ncd_skey[8] : 1=valid node id received
 
 #define REQ_SIZE    584     // 512 + 20 + 0x34
 
@@ -142,7 +142,41 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 			else
 			{
 				//read minimum packet size (4 byte ucrc + 32 byte data) to detect packet size (tcp only)
-				rs = recv(client->udp_fd, buf, client->is_udp ? l : 36, 0);
+
+				//rs = recv(client->udp_fd, buf, client->is_udp ? l : 36, 0);
+				if(client->is_udp){
+					while (1){
+					rs = recv(client->udp_fd, buf, l, 0);
+						if (rs < 0){
+							if(errno == EINTR) { continue; }  // try again in case of interrupt
+							if(errno == EAGAIN) { continue; }  //EAGAIN needs select procedure again
+							cs_debug_mask(client->typ == 'c' ? D_CLIENT : D_READER, "ERROR: %s (errno=%d %s)", __func__, errno, strerror(errno));
+							break;
+						}else {break;}
+					}
+				}else{
+					int32_t tot=36, readed=0;
+					rs = 0;
+					do
+					{
+						readed = recv(client->udp_fd, buf+rs, tot, 0);
+						if (readed < 0){
+							if(errno == EINTR) { continue; }  // try again in case of interrupt
+							if(errno == EAGAIN) { continue; }  //EAGAIN needs select procedure again
+							cs_debug_mask(client->typ == 'c' ? D_CLIENT : D_READER, "ERROR: %s (errno=%d %s)", __func__, errno, strerror(errno));
+							break;
+						}
+						if (readed == 0){ // nothing to read left!
+							break;
+						}
+						if (readed > 0){ // received something, add it!
+							tot-=readed;
+						rs+=readed;
+						}
+					}
+					while(tot!=0);
+				}
+
 			}
 			if(rs < 36)
 			{
@@ -183,7 +217,29 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 			n = boundary(4, n + 20 + buflen);
 			if(!(client->is_udp && client->typ == 'c') && (rs < n) && ((n - 32) > 0))
 			{
-				len = recv(client->udp_fd, buf + 32, n - 32, 0); // read the rest of the packet
+
+				//len = recv(client->udp_fd, buf+32, n-32, 0); // read the rest of the packet
+				int32_t tot=n-32, readed=0;
+				len = 0;
+				do{
+					readed = recv(client->udp_fd, buf+32+len, tot, 0); // read the rest of the packet
+					if (readed < 0){
+						if(errno == EINTR) { continue; }  // try again in case of interrupt
+						if(errno == EAGAIN) { continue; }  //EAGAIN needs select procedure again
+						cs_debug_mask(client->typ == 'c' ? D_CLIENT : D_READER, "ERROR: %s (errno=%d %s)", __func__, errno, strerror(errno));
+						break;
+					}
+					if (readed == 0){ // nothing to read left!
+						break;
+					}
+					if (readed > 0){ // received something, add it!
+					tot-=readed;
+					len+=readed;
+					}
+				}
+				while(tot!=0);
+
+
 				if(len > 0)
 				{
 					rs += len;
@@ -401,20 +457,6 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				{ memmove(buf + 20 + 16, buf + 20 + buf[1], 0x34); }
 			buf[0]++;
 			buf[1] = 16;
-#ifdef CS_CACHEEX
-			if(((client->typ == 'c' && client->account && client->account->cacheex.mode) 
-				|| ((client->typ == 'p' || client->typ == 'r') && (client->reader && client->reader->cacheex.mode)))
-				&& er->cwc_cycletime)  // ce1
-			{
-				buf[18] = er->cwc_cycletime;
-				buf[19] = er->cwc_next_cw_cycle;
-				if(client->typ == 'c' && client->account && client->account->cacheex.mode)
-					{ client->account->cwc_info++; }
-				else if((client->typ == 'p' || client->typ == 'r') && (client->reader && client->reader->cacheex.mode))
-					{ client->cwc_info++; }
-				cs_debug_mask(D_CWC, "CWC (CE1) push to %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(client), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
-			} 
-#endif
 			memcpy(buf + 20, er->cw, buf[1]);
 		}
 		else
@@ -426,12 +468,6 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	}
 	camd35_send(client, buf, 0);
 	camd35_request_emm(er);
-
-	if(er->src_data)
-	{
-		free(er->src_data);
-		er->src_data = NULL;
-	}
 }
 
 static void camd35_process_ecm(uchar *buf, int buflen)
@@ -507,8 +543,6 @@ static int32_t tcp_connect(struct s_client *cl)
 	if(!cl->udp_fd) { return (0); }  // Check if client has no handle -> error
 	if(cl->reader->tcp_rto && (cl->reader->last_s - cl->reader->last_g > cl->reader->tcp_rto))  // check if client reached timeout, if so disconnect client
 	{
-		//cs_log("last_s:%d, last_g:%d, tcp_rto:%d, diff:%d",(int)cl->reader->last_s,(int)cl->reader->last_g,(int)cl->reader->tcp_rto,
-		//  (int)(cl->reader->last_s - cl->reader->last_g));
 		network_tcp_connection_close(cl->reader, "rto");
 		return 0;
 	}
@@ -516,22 +550,6 @@ static int32_t tcp_connect(struct s_client *cl)
 	return (1); // all ok
 }
 
-/*
- *  client functions
- */
-int32_t camd35_client_init(struct s_client *cl)
-{
-
-	unsigned char md5tmp[MD5_DIGEST_LENGTH];
-	cs_strncpy((char *)cl->upwd, cl->reader->r_pwd, sizeof(cl->upwd));
-	i2b_buf(4, crc32(0L, MD5((unsigned char *)cl->reader->r_usr, strlen(cl->reader->r_usr), md5tmp), 16), cl->ucrc);
-	aes_set_key(&cl->aes_keys, (char *)MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp));
-	cl->crypted = 1;
-
-	cs_log("camd35 proxy %s:%d", cl->reader->device, cl->reader->r_port);
-
-	return (0);
-}
 
 #ifdef CS_CACHEEX
 uint8_t camd35_node_id[8];
@@ -586,8 +604,6 @@ void camd35_cache_push_receive_remote_id(struct s_client *cl, uint8_t *buf)
 
 int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 {
-	uint8_t oldnode = 0; // used to indicate a previous remote node id was present
-
 	if(ll_count(er->csp_lastnodes) >= cacheex_maxhop(cl))    //check max 10 nodes to push:
 	{
 		cs_debug_mask(D_CACHEEX, "cacheex: nodelist reached %d nodes, no push", cacheex_maxhop(cl));
@@ -596,38 +612,21 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 
 	if(cl->reader)
 	{
-		if(!tcp_connect(cl))
+		if(!cl->reader->tcp_connected)
 		{
 			cs_debug_mask(D_CACHEEX, "cacheex: not connected %s -> no push", username(cl));
 			return 0;
 		}
 	}
-	//cs_debug_mask(D_CACHEEX, "ncd[8]=%d [9]=%d [10]=%d [11]=%d", cl->ncd_skey[8], cl->ncd_skey[9], cl->ncd_skey[10], cl->ncd_skey[11]);
 
-	if(cl->reader)  // check for reader connection (if not exists then in servermode!)
+	//if(chk_is_null_nodeid(remote_node,8)){
+	if(!cl->ncd_skey[8])
 	{
-		if(cl->reader->last_s - cl->reader->last_g > cl->reader->tcp_rto - 20)  // Cache-ex as clientpusher renew remote nodeid before rto kicks in
-			{ cl->ncd_skey[9] = 0; } //reset requestmemory -> inits a remote node id request
-	}
-	else if(cl->ncd_skey[8] == 0 || !(++cl->ncd_skey[11]))  // tcp: renew remote id every 256 pushes or if no remote nodeid present:
-		{ cl->ncd_skey[9] = 0; } //reset requestmemory -> inits a remote node id request
-
-	//Update remote id:
-	if(!cl->ncd_skey[9])
-	{
-		cl->ncd_skey[9] = 1; //remember request
-		camd35_cache_push_request_remote_id(cl);
-		oldnode = cl->ncd_skey[8];  // if we have a previous node store it
-		cl->ncd_skey[8] = 0; // reset nodeid
-	}
-	if(!oldnode && !cl->ncd_skey[8])    // We have no remote node -> no push
-	{
-		cs_debug_mask(D_CACHEEX, "cacheex: push without remote node %s - ignored", username(cl));
-		cl->ncd_skey[9] = 0; //reset requestmemory -> inits a remote node id request
+		cs_debug_mask(D_CACHEEX, "cacheex: NO peer_node_id got yet, skip!");
 		return 0;
 	}
 
-	uint8_t *remote_node = cl->ncd_skey;
+	uint8_t *remote_node = cl->ncd_skey; //it is sended by reader(mode 2) or client (mode 3) each 30s using keepalive msgs
 
 	//search existing peer nodes:
 	LL_LOCKITER *li = ll_li_create(er->csp_lastnodes, 0);
@@ -649,6 +648,10 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 					  "cacheex: node %" PRIu64 "X found in list => skip push!", cacheex_node_id(node));
 		return 0;
 	}
+
+	//check if cw is already pushed
+	if(check_is_pushed(er->cw_cache, cl))
+		{ return 0; }
 
 	cs_debug_mask(D_CACHEEX, "cacheex: push ok %" PRIu64 "X to %" PRIu64 "X %s", cacheex_node_id(camd35_node_id), cacheex_node_id(remote_node), username(cl));
 
@@ -687,19 +690,7 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	i2b_buf(4, er->prid, buf + 12);
 	//i2b_buf(2, er->idx, buf + 16); // Not relevant...?
 
-	buf[18] = er->cwc_cycletime; // contains cwc stage3 cycletime
-	buf[19] = er->cwc_next_cw_cycle; // which cw must next cycle
-
-#ifdef CS_CACHEEX
-	if (er->cwc_cycletime)
-	{
-		if(cl->typ == 'c' && cl->account && cl->account->cacheex.mode)
-			{ cl->account->cwc_info++; }
-		else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
-			{ cl->cwc_info++; }
-		cs_debug_mask(D_CWC, "CWC (CE) push to %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
-	}
-#endif
+	buf[19] = er->ecm[0] != 0x80 && er->ecm[0] != 0x81 ? 0 : er->ecm[0];
 
 	uint8_t *ofs = buf + 20;
 
@@ -738,39 +729,6 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	return res;
 }
 
-void camd35_recv_ce1_cwc_info(struct s_client *cl, uchar *buf, int32_t idx)
-{
-	ECM_REQUEST *er = NULL;
-	int32_t i;
-
-	for(i = 0; i < cfg.max_pending; i++)
-	{
-		if (cl->ecmtask[i].idx == idx)
-		{ 
-			er = &cl->ecmtask[i]; 
-			break;
-		}
-	}
-
-	if(!er)
-	{ return; }
-
-	int8_t rc = buf[3];
-	if(rc != E_FOUND)  
-		{ return; }
-
-	er->cwc_cycletime = buf[18];
-	er->cwc_next_cw_cycle = buf[19];
-	er->parent->cwc_cycletime = buf[18];
-	er->parent->cwc_next_cw_cycle = buf[19];
-
-	if(cl->typ == 'c' && cl->account && cl->account->cacheex.mode)
-		{ cl->account->cwc_info++; }
-	else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
-		{ cl->cwc_info++; }
-	cs_debug_mask(D_CWC, "CWC (CE1) received from %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
-
-}
 
 void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 {
@@ -793,23 +751,10 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 	er->caid = b2i(2, buf + 10);
 	er->prid = b2i(4, buf + 12);
 	er->pid  = b2i(2, buf + 16);
+	er->ecm[0] = buf[19]!=0x80 && buf[19]!=0x81 ? 0 : buf[19]; //odd/even byte, usefull to send it over CSP and to check cw for swapping
 	er->rc = rc;
 
 	er->ecmlen = 0;
-
-	er->cwc_cycletime = buf[18];
-	er->cwc_next_cw_cycle = buf[19];
-
-#ifdef CS_CACHEEX
-	if (er->cwc_cycletime)
-	{
-		if(cl->typ == 'c' && cl->account && cl->account->cacheex.mode)
-			{ cl->account->cwc_info++; }
-		else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
-			{ cl->cwc_info++; }
-		cs_debug_mask(D_CWC, "CWC (CE) received from %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
-	}
-#endif
 
 	uint8_t *ofs = buf + 20;
 
@@ -897,6 +842,98 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 
 #endif
 
+
+/*
+ *	client functions
+ */
+void send_keepalive(struct s_client *cl)
+{
+
+	if(cl->reader && cl->reader->keepalive)
+	{
+		if(tcp_connect(cl))
+		{
+#ifdef CS_CACHEEX
+			if(cl->reader->cacheex.mode>1){
+				camd35_cache_push_request_remote_id(cl);
+				return;
+			}
+#endif
+
+			uint8_t rbuf[32];//minimal size
+			memset(rbuf, 0, sizeof(rbuf));
+			rbuf[0] = 55;
+			rbuf[1] = 1;
+			rbuf[2] = 0;
+			camd35_send(cl, rbuf, 1); //send adds +20
+		}
+	}
+}
+
+
+void send_keepalive_answer(struct s_client *cl)
+{
+	if(check_client(cl) && cl->account)
+	{
+		uint8_t rbuf[32];//minimal size
+		memset(rbuf, 0, sizeof(rbuf));
+		rbuf[0] = 55;
+		rbuf[1] = 1;
+		rbuf[2] = 0;
+		camd35_send(cl, rbuf, 1); //send adds +20
+	}
+}
+
+
+int32_t camd35_client_init(struct s_client *cl)
+{
+
+	unsigned char md5tmp[MD5_DIGEST_LENGTH];
+	cs_strncpy((char *)cl->upwd, cl->reader->r_pwd, sizeof(cl->upwd));
+	i2b_buf(4, crc32(0L, MD5((unsigned char *)cl->reader->r_usr, strlen(cl->reader->r_usr), md5tmp), 16), cl->ucrc);
+	aes_set_key(&cl->aes_keys, (char *)MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp));
+	cl->crypted=1;
+
+	cs_log("camd35 proxy %s:%d", cl->reader->device, cl->reader->r_port);
+
+	send_keepalive(cl);
+
+	return(0);
+}
+
+
+void camd35_idle(void)
+{
+	struct s_client *cl = cur_client();
+
+	if(!cl->reader)
+		{ return; }
+
+	if(cl->reader->keepalive)
+	{
+		send_keepalive(cl);
+	}
+	else if(cl->reader->tcp_ito)
+	{
+		//inactivity timeout check
+		time_t now;
+		int32_t time_diff;
+		time(&now);
+		time_diff = abs(now - cl->reader->last_s);
+		if(time_diff>(cl->reader->tcp_ito*60))
+		{
+			if(check_client(cl) && cl->reader->tcp_connected && cl->reader->ph.type==MOD_CONN_TCP)
+			{
+				cs_debug_mask(D_READER, "%s inactive_timeout, close connection (fd=%d)", cl->reader->ph.desc, cl->pfd);
+				network_tcp_connection_close(cl->reader, "inactivity");
+			}
+			else
+				{ cl->reader->last_s = now; }
+		}
+	}
+}
+
+
 static void *camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 {
 	if(!client || !mbuf)
@@ -913,6 +950,7 @@ static void *camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 	}
 	client->last = time(NULL); // last client action is now
 
+
 	switch(mbuf[0])
 	{
 	case  0:    // ECM
@@ -921,6 +959,7 @@ static void *camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 		break;
 #ifdef CS_CACHEEX
 	case 0x3d:  // Cache-push id request
+		camd35_cache_push_receive_remote_id(client, mbuf); //reader send request id with its nodeid, so we save it!
 		camd35_cache_push_send_own_id(client, mbuf);
 		break;
 	case 0x3e:  // Cache-push id answer
@@ -934,6 +973,10 @@ static void *camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 	case 19:  // EMM
 		if(n > 2)
 			{ camd35_process_emm(mbuf, n, mbuf[1]); }
+		break;
+	case 55:
+		//keepalive msg
+		send_keepalive_answer(client);
 		break;
 	default:
 		cs_log("unknown camd35 command from %s! (%d) n=%d", username(client), mbuf[0], n);
@@ -1081,6 +1124,7 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 #ifdef CS_CACHEEX
 	if(buf[0] == 0x3d)    // Cache-push id request
 	{
+		camd35_cache_push_receive_remote_id(client, buf); //client send request id with its nodeid, so we save it!
 		camd35_cache_push_send_own_id(client, buf);
 		return -1;
 	}
@@ -1096,18 +1140,16 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 	}
 #endif
 
+	if(buf[0] == 55)  //keepalive answer
+		{ return -1; }
+
 	// CMD44: old reject command introduced in mpcs
 	// keeping this for backward compatibility
 	if((buf[0] != 1) && (buf[0] != 0x44) && (buf[0] != 0x08))
 		{ return (-1); }
 
 	idx = b2i(2, buf + 16);
-#ifdef CS_CACHEEX
-	if(buf[0] == 0x01 && buf[18] < 0xff && buf[18] > 0x00) // cwc info ; normal camd3 ecms send 0xff but we need no cycletime of 255 ;)
-	{
-		camd35_recv_ce1_cwc_info(client, buf, idx);
-	}
-#endif
+
 	*rc = ((buf[0] != 0x44) && (buf[0] != 0x08));
 
 	memcpy(dcw, buf + 20, 16);
@@ -1135,6 +1177,7 @@ void module_camd35(struct s_module *ph)
 	ph->c_recv_chk = camd35_recv_chk;
 	ph->c_send_ecm = camd35_send_ecm;
 	ph->c_send_emm = camd35_send_emm;
+	ph->c_idle = camd35_idle;
 #ifdef CS_CACHEEX
 	ph->c_cache_push = camd35_cache_push_out;
 	ph->c_cache_push_chk = camd35_cache_push_chk;
@@ -1159,6 +1202,7 @@ void module_camd35_tcp(struct s_module *ph)
 	ph->c_recv_chk = camd35_recv_chk;
 	ph->c_send_ecm = camd35_send_ecm;
 	ph->c_send_emm = camd35_send_emm;
+	ph->c_idle = camd35_idle;
 #ifdef CS_CACHEEX
 	ph->c_cache_push = camd35_cache_push_out;
 	ph->c_cache_push_chk = camd35_cache_push_chk;

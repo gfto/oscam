@@ -36,7 +36,7 @@ void add_garbage(void *data)
 
 	if(!garbage_collector_active || garbage_debug == 1)
 	{
-		cs_sleepms(1);
+		//cs_sleepms(1);
 		free(data);
 		return;
 	}
@@ -45,7 +45,7 @@ void add_garbage(void *data)
 	struct cs_garbage *garbage;
 	if(!cs_malloc(&garbage, sizeof(struct cs_garbage)))
 	{
-		cs_sleepms(1);
+		//cs_sleepms(1);
 		free(data);
 		return;
 	}
@@ -98,7 +98,7 @@ static void garbage_collector(void)
 		{
 			cs_writelock(&garbage_lock[i]);
 			first = garbage_first[i];
-			time_t deltime = time((time_t)0) - (2 * cfg.ctimeout / 1000 + 1); //clienttimeout +1 second
+			time_t deltime = time((time_t)0) - (2*cfg.ctimeout/1000 + 1);
 			for(garbage = first, prev = NULL; garbage; prev = garbage, garbage = garbage->next)
 			{
 				if(deltime < garbage->time)     // all following elements are too new
@@ -119,15 +119,17 @@ static void garbage_collector(void)
 			}
 			else if(prev) { garbage = first; }          // set back to beginning to cleanup all
 			else { garbage = NULL; }        // garbage not old enough yet => nothing to clean
+			cs_writeunlock(&garbage_lock[i]);
 
+			// list has been taken out before so we don't need a lock here anymore!
 			while(garbage)
 			{
 				next = garbage->next;
-				if(garbage->data) { free(garbage->data); }
+				if(garbage->data)
+					free(garbage->data);
 				free(garbage);
 				garbage = next;
 			}
-			cs_writeunlock(&garbage_lock[i]);
 		}
 
 		sleepms_on_cond(&sleep_cond, &sleep_cond_mutex, 1000);

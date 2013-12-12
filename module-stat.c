@@ -4,6 +4,7 @@
 #include "cscrypt/md5.h"
 #include "module-cacheex.h"
 #include "module-cccam.h"
+#include "oscam-cache.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
 #include "oscam-ecm.h"
@@ -460,8 +461,6 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 	// 11= expdate     #
 	// 12= disabled    #
 	// 13= stopped     #
-	// 30= ALREADY_SENT	#
-	// 31= WAITING		#
 	// 100= unhandled  #
 	//        + = adds statistic values
 	//        # = ignored because of duplicate values, temporary failures or softblocks
@@ -884,7 +883,6 @@ static void try_open_blocked_readers(ECM_REQUEST *er, STAT_QUERY *q, int32_t *ma
 
 		if(s->rc != E_FOUND)  //for debug output
 		{
-			
 			cs_debug_mask(D_LB, "loadbalancer: reader %s blocked for %d seconds (fail_factor %d), retrying in %d seconds", rdr->label, get_reopen_seconds(s), s->fail_factor, (uint) (reopenseconds - (gone/1000)));
 			continue;
 		}
@@ -1480,7 +1478,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 			reader_active++;
 			continue;
 		}
-		
+
 		struct timeb now;
 		cs_ftime(&now);
 		int32_t gone = comp_timeb(&now, &s->last_received);
@@ -1675,6 +1673,7 @@ static void housekeeping_stat_thread(void)
 			READER_STAT *s;
 			while((s = ll_iter_next(&it)))
 			{
+
 				int32_t gone = comp_timeb(&now, &s->last_received);
 				if(gone > cleanup_timeout)
 				{

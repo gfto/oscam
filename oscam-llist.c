@@ -63,6 +63,40 @@ void ll_destroy_data(LLIST *l)
 	_destroy(l);
 }
 
+
+void ll_destroy_free_data(LLIST *l)
+{
+	if(!l||l->flag) { return; }
+
+	//*********************************
+	cs_writelock(&l->lock);
+
+	LL_NODE *n=l->initial, *nxt;
+	while(n)
+	{
+		nxt = n->nxt;
+		free(n->obj);
+		free(n);
+		n = nxt;
+	}
+	l->version++;
+	l->count = 0;
+	l->initial = 0;
+	l->last = 0;
+	cs_writeunlock(&l->lock);
+	//**********************************
+
+	if(!l->flag++)
+	{
+		cs_writelock(&l->lock); //just getting sure noone is using it
+		cs_writeunlock(&l->lock);
+
+		cs_lock_destroy(&l->lock);
+		free(l);
+	}
+}
+
+
 /* Internal iteration function. Make sure that you don't have a lock and that it and it->l are set. */
 static void *ll_iter_next_nolock(LL_ITER *it)
 {

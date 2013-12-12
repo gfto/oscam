@@ -19,6 +19,7 @@
 #include "module-webif-tpl.h"
 #include "module-cw-cycle-check.h"
 #include "oscam-chk.h"
+#include "oscam-cache.h"
 #include "oscam-client.h"
 #include "oscam-config.h"
 #include "oscam-ecm.h"
@@ -67,18 +68,22 @@ CS_MUTEX_LOCK gethostbyname_lock;
 CS_MUTEX_LOCK clientlist_lock;
 CS_MUTEX_LOCK readerlist_lock;
 CS_MUTEX_LOCK fakeuser_lock;
-CS_MUTEX_LOCK ecmcache_lock;
 CS_MUTEX_LOCK readdir_lock;
 CS_MUTEX_LOCK cwcycle_lock;
-CS_MUTEX_LOCK hitcache_lock;
 pthread_key_t getclient;
 static int32_t bg;
 static int32_t gbdb;
 static int32_t max_pending = 32;
 
-//Cache for  ecms, cws and rcs:
+//ecms list
+CS_MUTEX_LOCK ecmcache_lock;
 struct ecm_request_t    *ecmcwcache = NULL;
 uint32_t ecmcwcache_size = 0;
+
+//pushout deleted list
+CS_MUTEX_LOCK ecm_pushed_deleted_lock;
+struct ecm_request_t	*ecm_pushed_deleted = NULL;
+
 
 struct  s_config  cfg;
 
@@ -148,7 +153,7 @@ static void show_usage(void)
 	printf("                         . 65535 - Debug all.\n");
 	printf("\n Settings:\n");
 	printf(" -p, --pending-ecm <num> | Set the maximum number of pending ECM packets.\n");
-	printf("                         . Default: 32 Max: 255\n");
+	printf("                         . Default: 32 Max: 4096\n");
 	if(config_enabled(WEBIF))
 	{
 		printf(" -u, --utf8              | Enable WebIf support for UTF-8 charset.\n");
@@ -228,7 +233,7 @@ static void parse_cmdline_params(int argc, char **argv)
 			syslog_ident = optarg;
 			break;
 		case 'p': // --pending-ecm
-			max_pending = atoi(optarg) <= 0 ? 32 : MIN(atoi(optarg), 255);
+			max_pending = atoi(optarg) <= 0 ? 32 : MIN(atoi(optarg), 4096);
 			break;
 		case 'r': // --restart
 			if(config_enabled(WEBIF))
@@ -1301,7 +1306,10 @@ int32_t main(int32_t argc, char *argv[])
 	cs_lock_create(&ecmcache_lock, 5, "ecmcache_lock");
 	cs_lock_create(&readdir_lock, 5, "readdir_lock");
 	cs_lock_create(&cwcycle_lock, 5, "cwcycle_lock");
-	cs_lock_create(&hitcache_lock, 5, "hitcache_lock");
+	init_cache();
+#ifdef CS_CACHEEX
+	init_hitcache();
+#endif
 	init_config();
 	cs_init_log();
 	if(!oscam_pidfile && cfg.pidfile)
@@ -1361,7 +1369,6 @@ int32_t main(int32_t argc, char *argv[])
 
 	global_whitelist_read();
 	ratelimit_read();
-	cacheex_load_config_file();
 
 	for(i = 0; i < CS_MAX_MOD; i++)
 	{
@@ -1382,6 +1389,7 @@ int32_t main(int32_t argc, char *argv[])
 
 	start_thread((void *) &reader_check, "reader check");
 	cw_process_thread_start();
+	checkcache_process_thread_start();
 
 	lcd_thread_start();
 

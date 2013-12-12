@@ -10,6 +10,7 @@
 #ifdef CS_CACHEEX
 
 #include "module-cacheex.h"
+#include "oscam-cache.h"
 #include "oscam-ecm.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
@@ -227,11 +228,18 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 
 			parse_request(er, buf + 5);
 
-			ECM_REQUEST *cw = check_cwcache(er, client);
+			ECM_REQUEST *result = check_cache(er, client);
 
-			if(cw)
+			if(result)
 			{
-				int32_t status = csp_cache_push_out(client, cw);
+
+				er->rc = E_FOUND;
+				er->rcEx = 0;
+				memcpy(er->cw, result->cw, 16);
+				er->grp |= result->grp;
+				free(result);
+
+				int32_t status = csp_cache_push_out(client, er);
 				cs_debug_mask(D_TRACE, "received resend request from cache peer: %s:%d (replied: %d)", cs_inet_ntoa(SIN_GET_ADDR(client->udp_sa)), port, status);
 			}
 			else
