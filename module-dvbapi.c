@@ -1223,12 +1223,13 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 					{
 						// preparing packet
 						int32_t request = CA_SET_PID;
-						unsigned char packet[sizeof(request) + sizeof(ca_pid2)];
-						memcpy(&packet, &request, sizeof(request));
-						memcpy(&packet[sizeof(request)], &ca_pid2, sizeof(ca_pid2));
+						unsigned char packet[1 + sizeof(request) + sizeof(ca_pid2)];
+						packet[0] = demux[demux_id].adapter_index;
+						memcpy(&packet[1], &request, sizeof(request));
+						memcpy(&packet[1+sizeof(request)], &ca_pid2, sizeof(ca_pid2));
 
 						// sending data to UDP (deprecated, will be removed in the future)
-						send(currentfd, &packet, sizeof(packet), 0);
+						send(currentfd, &packet[1], sizeof(packet)-1, 0);
 						cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d %s stream #%d pid=0x%04x index=%d on ca%d", demux_id,
 							(enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i);
 						// sending data back to socket
@@ -3759,12 +3760,13 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid)
 					{
 						// preparing packet
 						int32_t request = CA_SET_DESCR;
-						unsigned char packet[sizeof(request) + sizeof(ca_descr)];
-						memcpy(&packet, &request, sizeof(request));
-						memcpy(&packet[sizeof(request)], &ca_descr, sizeof(ca_descr));
+						unsigned char packet[1 + sizeof(request) + sizeof(ca_descr)];
+						packet[0] = demux[demux_id].adapter_index;
+						memcpy(&packet[1], &request, sizeof(request));
+						memcpy(&packet[1+sizeof(request)], &ca_descr, sizeof(ca_descr));
 
 						// sending data to UDP (deprecated, will be removed in the future)
-						send(ca_fd[i], &packet, sizeof(packet), 0);
+						send(ca_fd[i], &packet[1], sizeof(packet)-1, 0);
 						// sending data back to socket
 						if (demux[demux_id].socket_fd > 0)
 							send(demux[demux_id].socket_fd, &packet, sizeof(packet), MSG_DONTWAIT);
