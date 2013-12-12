@@ -17,4 +17,4 @@ void sort_list(void *ll, void *cmp);
 void *remove_elem_list(void *ll, void *ll_node);
 void *get_first_node_list(void *ll);
 void *get_first_elem_list(void *ll);
-void *get_data_from_node(void *node);
+void *get_data_from_node(void *_node);
