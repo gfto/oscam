@@ -327,7 +327,7 @@ static int32_t oscam_ser_poll(int32_t event, struct s_client *client)
 	struct pollfd pfds;
 	struct timeb tpc;
 	cs_ftime(&tpc);
-	msec = comp_timeb(&tpc, &client->serialdata->tpe);
+	msec = comp_timeb(&client->serialdata->tpe, &tpc);
 	if(msec < 0)
 		{ return (0); }
 	pfds.fd = cur_client()->pfd;
