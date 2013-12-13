@@ -698,7 +698,6 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 		if (reader->autospeed == 1) {
 		uint32_t Fsmart = atr_fs_table[FI];
 		reader->mhz = Fsmart/10000;
-		}
 		if(reader->mhz >= 1600) { reader->mhz = 1600; }
 		else if(reader->mhz >= 1200) { reader->mhz = 1200; }
 		else if(reader->mhz >= 961)  { reader->mhz =  961; }
@@ -714,7 +713,8 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 		else if(reader->mhz >= 343)  { reader->mhz =  343; }
 		else
 		{ reader->mhz =  320; }
-		}	
+		}
+	}	
 	F = reader->mhz; } // all other readers
 	reader->worketu = (double)((double)(1 / (double)D) * ((double)Fi / (double)((double)F / 100)));  // expressed in us
 	rdr_log(reader, "Calculated work ETU is %.2f us reader mhz = %u", reader->worketu, reader->mhz);
