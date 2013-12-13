@@ -211,14 +211,14 @@ static int32_t Sci_Reset(struct s_reader *reader, ATR *atr)
 	params.EGT = 3; //initial guardtime should be 0 (in iso this is parameter N)
 	params.fs = 5; //initial cardmhz should be 1 (in iso this is parameter D)
 	params.T = 0;
-	if(reader->mhz > 2000)    // PLL based reader
+	if(reader->cardmhz > 2000)    // PLL based reader
 	{
 		params.ETU = 372;
 		params.EGT = 0;
-		params.fs = (int32_t)(reader->mhz / 100.0 + 0.5);  /* calculate divider for 1 MHz  */
+		params.fs = (int32_t)(reader->cardmhz / 100.0 + 0.5);  /* calculate divider for 1 MHz  */
 		params.T = 0;
 	}
-	if(reader->mhz == 8300)    /* PLL based reader DM7025 */
+	if(reader->cardmhz == 8300)    /* PLL based reader DM7025 */
 	{
 		params.ETU = 372;
 		params.EGT = 0;
@@ -354,7 +354,7 @@ static int32_t Sci_Close(struct s_reader *reader)
 
 static int32_t sci_write_settings3(struct s_reader *reader, uint32_t ETU, uint32_t F, uint32_t WWT, uint32_t CWT, uint32_t BWT, uint32_t EGT, uint32_t I)
 {
-	if(reader->mhz > 2000)   // only for dreambox internal readers
+	if(reader->cardmhz > 2000)   // only for dreambox internal readers
 	{
 		// P fixed at 5V since this is default class A card, and TB is deprecated
 		if(reader->protocol_type != ATR_PROTOCOL_TYPE_T14)   // fix VU+ internal reader slow responses on T0/T1

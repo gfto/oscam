@@ -132,7 +132,8 @@ status detect of card (NONE = no detection), default:CD
 
 <B>cardmhz</B> = <B>mhz</B>
 <DL COMPACT><DT><DD>
-set standard SC frequency in units of 10 kHz, for Irdeto SC set to 600, for auto clock speed in Dreambox mode set to -1, refer to OVERCLOCKING, default:357
+set standard SC frequency in units of 10 kHz, for Irdeto SC set to 600 for Dreambox set  to
+	  2700 on dm8000/dm800,8300 on dm7025,3150 older ppc models. refer to OVERCLOCKING, default:357
 </DL>
 
 <P>
@@ -140,15 +141,14 @@ set standard SC frequency in units of 10 kHz, for Irdeto SC set to 600, for auto
 <B>mhz</B> = <B>frequency</B>
 <DL COMPACT><DT><DD>
 set reader frequency in units of 10 kHz, if <B>mhz</B> &gt; <B>cardmhz</B> you are in overclocking mode, 
-for <B>cardmhz</B> swiching to MIPSel Dreambox mode set to 2700, for <B>cardmhz</B> swiching to PPC Dreambox mode set to 3150, 
-for <B>cardmhz</B> swiching to Dreambox DM7025 mode set to 8300, refer to OVERCLOCKING, default:357 
+refer to OVERCLOCKING default:357. By smargo readers and dreambox internal readers assigned by atr if autospeed = 1
 </DL>
 
 <P>
 
 <B>autospeed</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
-1 = Sets mhz according to atr. Currently only used for smartreader and smargo protocol other readers will be adapted to use this parameter as well.
+1 = Sets mhz according to atr. Currently only used for smargo,smartreader and dreambox internal protocol other readers will be adapted to use this parameter as well.
 In webif checked means 1. If You wan't to overclock You're card set autospeed = 0, default:1
 </DL>
 

@@ -52,7 +52,7 @@
 /*
  * Not exported functions declaration
  */
-
+static uint16_t tempfi; // used to capture FI and use it for rounding or not 
 static void ICC_Async_InvertBuffer(uint32_t size, unsigned char *buffer);
 static int32_t Parse_ATR(struct s_reader *reader, ATR *atr, uint16_t deprecated);
 static int32_t PPS_Exchange(struct s_reader *reader, unsigned char *params, uint32_t *length);
@@ -347,33 +347,35 @@ static int32_t ICC_Async_GetPLL_Divider(struct s_reader *reader)
 {
 	if(reader->divider != 0) { return reader->divider; }
 
-	if(reader->mhz != 8300)  /* Check dreambox is not DM7025 */
+	if(reader->cardmhz != 8300)  /* Check dreambox is not DM7025 */
 	{
 		float divider;
-
-		divider = ((float) reader->mhz) / ((float) reader->cardmhz);
+		rdr_log(reader," TEST tempo mhz check = %u mhz", reader->mhz);
+		divider = ((float) reader->cardmhz) / ((float) reader->mhz);
+		if (tempfi == 9) reader->divider = (int32_t) divider; // some card's runs only when slightly oveclocked like HD02
+		else {
 		reader->divider = (int32_t) divider;
 		if(divider > reader->divider) { reader->divider++; }  /* to prevent over clocking, ceil (round up) the divider */
-
-		rdr_debug_mask(reader, D_DEVICE, "PLL maxmhz = %.2f, wanted cardmhz = %.2f, divider used = %d, actualcardclock=%.2f", (float) reader->mhz / 100, (float) reader->cardmhz / 100,
-					   reader->divider, (float) reader->mhz / reader->divider / 100);
-		reader->cardmhz = reader->mhz / reader->divider;
+		}
+		rdr_debug_mask(reader, D_DEVICE, "PLL maxmhz = %.2f, wanted mhz = %.2f, divider used = %d, actualcardclock=%.2f", (float) reader->cardmhz / 100, (float) reader->mhz / 100,
+					   reader->divider, (float) reader->cardmhz / reader->divider / 100);
+		reader->mhz = reader->cardmhz / reader->divider;
 	}
 	else /* STB is DM7025 */
 	{
 		int32_t i, dm7025_clock_freq[] = {518, 461, 395, 360, 319, 296, 267, 244, 230, 212, 197},
-										 dm7025_PLL_setting[] = {6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}, t_cardmhz = reader->cardmhz;
+										 dm7025_PLL_setting[] = {6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}, t_cardmhz = reader->mhz;
 
 		for(i = 0; i < 11; i++)
 			if(t_cardmhz >= dm7025_clock_freq[i]) { break; }
 
 		if(i > 10) { i = 10; }
 
-		reader->cardmhz = dm7025_clock_freq[i];
+		reader->mhz = dm7025_clock_freq[i];
 		reader->divider = dm7025_PLL_setting[i]; /*Nicer way of codeing is: reader->divider = i + 6;*/
 
-		rdr_debug_mask(reader, D_DEVICE, "DM7025 PLL maxmhz = %.2f, wanted cardmhz = %.2f, PLL setting used = %d, actualcardclock=%.2f", (float) reader->mhz / 100, (float) t_cardmhz / 100,
-					   reader->divider, (float) reader->cardmhz / 100);
+		rdr_debug_mask(reader, D_DEVICE, "DM7025 PLL maxmhz = %.2f, wanted mhz = %.2f, PLL setting used = %d, actualcardclock=%.2f", (float) reader->cardmhz / 100, (float) t_cardmhz / 100,
+					   reader->divider, (float) reader->mhz / 100);
 	}
 
 	return reader->divider;
@@ -655,17 +657,19 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 	if(ATR_GetParameter(atr, ATR_PARAMETER_I, &I) != ATR_OK)
 		{ I = 0; }
 
+	tempfi = FI;
+
 	//set clock speed to max if internal reader
 	if(reader->crdr.max_clock_speed == 1)
 	{
 		if(reader->mhz == 357 || reader->mhz == 358)  //no overclocking
 			{ reader->mhz = atr_fs_table[FI] / 10000; } //we are going to clock the card to this nominal frequency
 
-		if(reader->mhz > 2000 && reader->autospeed == 1)  // -1 replaced by autospeed parameter is magic number pll internal reader set cardmhz according to optimal atr speed
-			{ reader->cardmhz = atr_fs_table[FI] / 10000 ; }
+		if(reader->cardmhz > 2000 && reader->autospeed == 1)  // -1 replaced by autospeed parameter is magic number pll internal reader set cardmhz according to optimal atr speed
+			{ reader->mhz = atr_fs_table[FI] / 10000 ; }
 	}
 
-	if(reader->mhz > 2000)
+	if(reader->cardmhz > 2000)
 	{
 		reader->divider = 0; //reset pll divider so divider will be set calculated again.
 		ICC_Async_GetPLL_Divider(reader); // calculate pll divider for target cardmhz.
@@ -688,7 +692,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 			}
 		}
 	}
-	if(reader->mhz > 2000 && reader->typ == R_INTERNAL) { F = reader->cardmhz; }  // for PLL based internal readers
+	if(reader->cardmhz > 2000 && reader->typ == R_INTERNAL) { F = reader->mhz; }  // for PLL based internal readers
 	else { 
 	if ((reader->typ == R_SMART) || (!strcasecmp(reader->crdr.desc, "smargo"))) { 
 		if (reader->autospeed == 1) {
@@ -874,10 +878,10 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 
 	if(reader->typ == R_INTERNAL)
 	{
-		if(reader->mhz > 2000)
+		if(reader->cardmhz > 2000)
 		{
 			rdr_log(reader, "PLL Reader: ATR Fsmax is %i MHz, clocking card to %.2f Mhz (nearest possible mhz specified reader->cardmhz)",
-					atr_fs_table[FI] / 1000000, (float) reader->cardmhz / 100);
+					atr_fs_table[FI] / 1000000, (float) reader->mhz / 100);
 		}
 		else
 		{

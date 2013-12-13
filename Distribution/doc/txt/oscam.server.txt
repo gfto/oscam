@@ -95,21 +95,21 @@ DESCRIPTIONS
 	  status detect of card (NONE = no detection), default:CD
 
        cardmhz = mhz
-	  set standard SC frequency in units of 10 kHz, for Irdeto SC set to 600, for auto clock speed in Dreambox mode  set  to
-	  -1, refer to OVERCLOCKING, default:357
+	  set standard SC frequency in units of 10 kHz, for Irdeto SC set to 600, for Dreambox set  to
+	  2700 on dm8000/dm800,8300 on dm7025,3150 older ppc models. refer to OVERCLOCKING, default:357
 
        mhz = frequency *** EXTERNAL READERS ***
 	  set reader frequency in units of 10 kHz, if mhz > cardmhz you are in overclocking mode
-	  default:357
+	  default:357. By smargo readers and dreambox internal readers assigned by atr if autospeed = 1
 	  
-	   mhz = frequency *** INTERNAL READERS ***
-	  set reader frequency in units of 10 kHz. If you use mhz >2000 oscam will switch to PLL clocking.
+	   cardmhz = frequency *** INTERNAL READERS ***
+	  set reader frequency in units of 10 kHz. If you use cardmhz >2000 oscam will switch to PLL clocking.
 	  Internal readers of boxes from Dream Multimedia GmbH can be clocked more precise with it.
 	  The used mhz should reflect the highest frequency of the PLL crystal in the internal cardreader.
 	  Oscam will calculate the best PLL divider that comes nearest to the wanted user card speed specified in cardmhz. 
-	  For models with PPC cpu use mhz = 3150, for models with MIPS cpu use mhz = 2700. Exception is the DM7025, you should use mhz = 8300
-	  E.G. You have a dream 800 HD PVR, thats a mips so you should set mhz to 2700. We got a nagra card that should run on 5 Mhz.
-	  If you want to clock the card ok just use mhz = 2700 and cardmhz = 500. If you want to overclock it use mhz = 2700 and cardmhz = 900
+	  For models with PPC cpu use mhz = 3150, for models with MIPS cpu use cardmhz = 2700. Exception is the DM7025, you should use cardmhz = 8300
+	  E.G. You have a dream 800 HD PVR, thats a mips so you should set cardmhz to 2700. We got a nagra card that should run on 5 Mhz.
+	  If you want to clock the card ok just use cardmhz = 2700 and cardmhz = 500. If you want to overclock it use cardmhz = 2700 and cardmhz = 900
 	  Now your card will start to run 9 Mhz. Better monitor it! An overclocked card could run hot or crash suddenly.
 	  
 	  Keep in mind that most internal readers of non-dreamboxes clock the cards automatically and completely ignore any user clockspeed setting.
@@ -120,7 +120,7 @@ DESCRIPTIONS
 
        autospeed = 0|1
 
-      1 = Sets mhz according to atr. Currently only used for smartreader and smargo protocol other readers will be adapted to use this parameter as well.
+      1 = Sets mhz according to atr. Currently only used for smargo,smartreader and dreambox internal protocol other readers will be adapted to use this parameter as well.
        In webif checked means 1. If You wan't to overclock You're card set autospeed = 0, default:1
 
        deprecated = 0|1
