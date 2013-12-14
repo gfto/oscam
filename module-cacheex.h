@@ -58,6 +58,8 @@ static inline uint8_t checkECMD5(ECM_REQUEST *er)
 uint32_t get_cacheex_wait_time(ECM_REQUEST *er, struct s_client *cl);
 int32_t chk_csp_ctab(ECM_REQUEST *er, CECSPVALUETAB *tab);
 uint8_t check_cacheex_filter(struct s_client *cl, ECM_REQUEST *er);
+void checkcache_process_thread_start(void);
+
 #else
 static inline void cacheex_init(void) { };
 static inline void cacheex_clear_account_stats(struct s_auth *UNUSED(account)) { };

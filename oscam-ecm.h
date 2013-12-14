@@ -1,7 +1,6 @@
 #ifndef OSCAM_ECM_H_
 #define OSCAM_ECM_H_
 
-void checkcache_process_thread_start(void);
 void cw_process_thread_start(void);
 void cw_process_thread_wakeup(void);
 

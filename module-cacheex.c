@@ -25,6 +25,120 @@ uint8_t cacheex_peer_id[8];
 
 extern CS_MUTEX_LOCK ecm_pushed_deleted_lock;
 extern struct ecm_request_t	*ecm_pushed_deleted;
+extern CS_MUTEX_LOCK ecmcache_lock;
+extern struct ecm_request_t *ecmcwcache;
+
+
+static void *chkcache_process(void)
+{
+	set_thread_name(__func__);
+
+	time_t timeout;
+	struct ecm_request_t *er, *ecm;
+#ifdef CS_CACHEEX
+	uint8_t add_hitcache_er;
+	struct s_reader *cl_rdr;
+	struct s_reader *rdr;
+	struct s_ecm_answer *ea;
+	struct s_client *cex_src=NULL;
+#endif
+	struct s_write_from_cache *wfc=NULL;
+
+	while(1)
+	{
+		cs_readlock(&ecmcache_lock);
+		for(er = ecmcwcache; er; er = er->next)
+		{
+			timeout = time(NULL)-((cfg.ctimeout+500)/1000+1);
+			if(er->tps.time < timeout)
+				{ break; }
+
+			if(er->rc<E_UNHANDLED || er->readers_timeout_check)  //already answered
+				{ continue; }
+
+			//********  CHECK IF FOUND ECM IN CACHE
+			ecm = check_cache(er, er->client);
+			if(ecm)     //found in cache
+			{
+
+#ifdef CS_CACHEEX
+				//check for add_hitcache
+				if(ecm->cacheex_src)   //cw from cacheex
+				{
+					if((er->cacheex_wait_time && !er->cacheex_wait_time_expired) || !er->cacheex_wait_time)   //only when no wait_time expires (or not wait_time)
+					{
+
+						//add_hitcache already called, but we check if we have to call it for these (er) caid|prid|srvid
+						if(ecm->prid!=er->prid || ecm->srvid!=er->srvid)
+						{
+							cex_src = ecm->cacheex_src && is_valid_client(ecm->cacheex_src) && !ecm->cacheex_src->kill ?  ecm->cacheex_src : NULL; //here we should be sure cex client has not been freed!
+							if(cex_src){  //add_hitcache only if client is really active
+								add_hitcache_er=1;
+								cl_rdr = cex_src->reader;
+								if(cl_rdr && cl_rdr->cacheex.mode == 2)
+								{
+									for(ea = er->matching_rdr; ea; ea = ea->next)
+									{
+										rdr = ea->reader;
+										if(cl_rdr == rdr && ((ea->status & REQUEST_ANSWERED) == REQUEST_ANSWERED))
+										{
+											cs_debug_mask(D_CACHEEX|D_CSP|D_LB,"{client %s, caid %04X, prid %06X, srvid %04X} [CACHEEX] skip ADD self request!", (check_client(er->client)?er->client->account->usr:"-"),er->caid, er->prid, er->srvid);
+											add_hitcache_er=0; //don't add hit cache, reader requested self
+										}
+									}
+								}
+
+								if(add_hitcache_er)
+									{ add_hitcache(cex_src, er); }  //USE cacheex client (to get correct group) and ecm from requesting client (to get correct caid|prid|srvid)!!!
+							}
+						}
+
+					}
+					else
+					{
+						//add_hitcache already called, but we have to remove it because cacheex not coming before wait_time
+						if(ecm->prid==er->prid && ecm->srvid==er->srvid)
+							{ del_hitcache(ecm); }
+					}
+				}
+				//END check for add_hitcache
+#endif
+
+				if(check_client(er->client))
+				{
+
+					wfc=NULL;
+					if(!cs_malloc(&wfc, sizeof(struct s_write_from_cache)))
+					{
+						free(ecm);
+						continue;
+					}
+
+					wfc->er_new=er;
+					wfc->er_cache=ecm;
+
+					if(!add_job(er->client, ACTION_ECM_ANSWER_CACHE, wfc, sizeof(struct s_write_from_cache)))   //write_ecm_answer_fromcache
+					{
+						free(ecm);
+						continue;
+					}
+				}
+				else
+					{ free(ecm); }
+			}
+		}
+		cs_readunlock(&ecmcache_lock);
+
+		cs_sleepms(10);
+	}
+
+	return NULL;
+}
+
+void checkcache_process_thread_start(void)
+{
+	start_thread((void *) &chkcache_process, "chkcache_process");
+}
 
 void cacheex_init(void)
 {

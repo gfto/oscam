@@ -299,21 +299,6 @@ typedef void tommy_foreach_arg_func(void* arg, void* obj);
  */
 tommy_inline unsigned tommy_ilog2_u32(tommy_uint32_t value)
 {
-#if defined(_MSC_VER)
-	unsigned long count;
-	_BitScanReverse(&count, value);
-	return count;
-#elif defined(__GNUC__)
-	/*
-	 * GCC implements __builtin_clz(x) as "__builtin_clz(x) = bsr(x) ^ 31"
-	 *
-	 * Where "x ^ 31 = 31 - x", but gcc does not optimize "31 - __builtin_clz(x)" to bsr(x),
-	 * but generates 31 - (bsr(x) xor 31).
-	 *
-	 * So we write "__builtin_clz(x) ^ 31" instead of "31 - __builtin_clz(x)".
-	 */
-	return __builtin_clz(value) ^ 31;
-#else
 	/* Find the log base 2 of an N-bit integer in O(lg(N)) operations with multiply and lookup */
 	/* from http://graphics.stanford.edu/~seander/bithacks.html */
 	static const int TOMMY_DE_BRUIJN_INDEX_ILOG2[32] = {
@@ -328,7 +313,6 @@ tommy_inline unsigned tommy_ilog2_u32(tommy_uint32_t value)
 	value |= value >> 16;
 
 	return TOMMY_DE_BRUIJN_INDEX_ILOG2[(tommy_uint32_t)(value * 0x07C4ACDDU) >> 27];
-#endif
 }
 
 /**
@@ -341,13 +325,6 @@ tommy_inline unsigned tommy_ilog2_u32(tommy_uint32_t value)
  */
 tommy_inline unsigned tommy_ctz_u32(tommy_uint32_t value)
 {
-#if defined(_MSC_VER)
-	unsigned long count;
-	_BitScanForward(&count, value);
-	return count;
-#elif defined(__GNUC__)
-	return __builtin_ctz(value);
-#else
 	/* Count the consecutive zero bits (trailing) on the right with multiply and lookup */
 	/* from http://graphics.stanford.edu/~seander/bithacks.html */
 	static const tommy_uint32_t TOMMY_DE_BRUIJN_INDEX_CTZ[32] = {
@@ -356,7 +333,6 @@ tommy_inline unsigned tommy_ctz_u32(tommy_uint32_t value)
 	};
 
 	return TOMMY_DE_BRUIJN_INDEX_CTZ[(tommy_uint32_t)(((value & -value) * 0x077CB531U)) >> 27];
-#endif
 }
 
 /**

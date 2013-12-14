@@ -1389,7 +1389,9 @@ int32_t main(int32_t argc, char *argv[])
 
 	start_thread((void *) &reader_check, "reader check");
 	cw_process_thread_start();
+#ifdef CS_CACHEEX
 	checkcache_process_thread_start();
+#endif
 
 	lcd_thread_start();
 
