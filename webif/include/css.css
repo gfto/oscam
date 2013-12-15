@@ -3,6 +3,7 @@ BODY {background-color:white;font-family:Arial;font-size:11px;text-align:center}
 P {color:white}
 P.blinking {text-decoration:blink;font-weight:bold;font-size:large;color:red}
 H2 {color:#AAA;font-size:32px;line-height:32px;margin-top:0px; margin-bottom:0px}
+H2.headline1 {}
 H4 {color:#AAA;font-size:12px;line-height:9px}
 H4.footline1 {}
 H4.footline2 {}
