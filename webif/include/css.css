@@ -5,8 +5,9 @@ P.blinking {text-decoration:blink;font-weight:bold;font-size:large;color:red}
 H2 {color:#AAA;font-size:32px;line-height:32px;margin-top:0px; margin-bottom:0px}
 H4 {color:#AAA;font-size:12px;line-height:9px}
 H4.styleauthor:after {content:"Eneen"}
-HR {height:1px;border-width:0;color:white;background-color:#AAA}
+HR {height:1px;margin-top:56px;margin-bottom:28px;border-width:0;color:white;background-color:#AAA}
 TABLE {border-spacing:1px;margin-left:auto;margin-right:auto}
+TABLE.upspace {margin-top:28px}
 TABLE.menu {border-spacing:0px}
 TABLE.status {border-spacing:1px;background-color:white;empty-cells:show}
 TABLE.config {width:750px}
