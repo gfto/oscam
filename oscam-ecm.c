@@ -77,7 +77,7 @@ void cacheex_timeout(ECM_REQUEST *er)
 	{
 		cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} cacheex timeout! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
 
-		//check if "normal" readers selected
+		//check if "normal" readers selected, if not send NOT FOUND!
 		if((!er->from_cacheex1_client && (er->reader_count + er->fallback_reader_count - er->cacheex_reader_count) <= 0)    //not-cacheex-1 client and no normal readers avilable (or filtered by LB)
 				||
 				(er->from_cacheex1_client && !er->reader_nocacheex_avail)  //cacheex1-client and no normal readers available for others clients
@@ -816,7 +816,7 @@ void distribute_ea(struct s_ecm_answer *ea)
 
 	for(ea_temp = ea->pending; ea_temp; ea_temp = ea_temp->pending_next)
 	{
-		cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [distribute_ea] send ea by reader %s answering for client %s", (check_client(ea_temp->er->client) ? ea_temp->er->client->account->usr : "-"), ea_temp->er->caid, ea_temp->er->prid, ea_temp->er->srvid, ea_temp->reader->label, (check_client(ea->er->client) ? ea->er->client->account->usr : "-"));
+		cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [distribute_ea] send ea (%s) by reader %s answering for client %s", (check_client(ea_temp->er->client) ? ea_temp->er->client->account->usr : "-"), ea_temp->er->caid, ea_temp->er->prid, ea_temp->er->srvid, ea->rc==E_FOUND?"OK":"NOK", ea_temp->reader->label, (check_client(ea->er->client) ? ea->er->client->account->usr : "-"));
 		if(ea->rc!=E_FOUND)
 			ea->rc=E_NOTFOUND; //e.g. we cannot send timeout, because "ea_temp->er->client" could wait/ask other readers! Simply set not_found!
 		write_ecm_answer(ea_temp->reader, ea_temp->er, ea->rc, ea->rcEx, ea->cw, NULL);
