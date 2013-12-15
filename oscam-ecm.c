@@ -817,6 +817,8 @@ void distribute_ea(struct s_ecm_answer *ea)
 	for(ea_temp = ea->pending; ea_temp; ea_temp = ea_temp->pending_next)
 	{
 		cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [distribute_ea] send ea by reader %s answering for client %s", (check_client(ea_temp->er->client) ? ea_temp->er->client->account->usr : "-"), ea_temp->er->caid, ea_temp->er->prid, ea_temp->er->srvid, ea_temp->reader->label, (check_client(ea->er->client) ? ea->er->client->account->usr : "-"));
+		if(ea->rc!=E_FOUND)
+			ea->rc=E_NOTFOUND; //e.g. we cannot send timeout, because "ea_temp->er->client" could wait/ask other readers! Simply set not_found!
 		write_ecm_answer(ea_temp->reader, ea_temp->er, ea->rc, ea->rcEx, ea->cw, NULL);
 	}
 }
@@ -1342,13 +1344,14 @@ void chk_dcw(struct s_ecm_answer *ea)
 	{
 
 #ifdef CS_CACHEEX
-		/* if not wait_time expired and wait_time due to cacheex2 or ecm is cacheex-1 and other normal readers (for check INT cache), we have to wait before send rc to client!
-		 * (Before cacheex_wait_time_expired, this answered reader is a cacheex mode 1 reader!)
+		/* if not wait_time expired and wait_time due to hitcache, or ecm is cacheex-1 and there are other normal readers for check INT cache, we have to wait wait_time expires before send rc to client!
+		 * (Before cacheex_wait_time_expired, this answered reader is obviously a cacheex mode 1 reader!)
 		 */
 		if((!ert->cacheex_wait_time_expired && ert->cacheex_hitcache) || (ert->from_cacheex1_client && ert->reader_nocacheex_avail))
 			{ return; }
 #endif
 
+		//check if there are other readers to ask, and if not send NOT_FOUND to client
 		ert->rcEx = ea->rcEx;
 		cs_strncpy(ert->msglog, ea->msglog, sizeof(ert->msglog));
 
@@ -2217,14 +2220,14 @@ OUT:
 
 	if(client->account && !client->account->no_wait_time)
 	{
-		wait_time_no_hitcache = get_cacheex_wait_time(er,NULL);   //NO check hitcache. Wait_time is dwtime, or, if absent, awtime.
+		wait_time_no_hitcache = get_cacheex_wait_time(er,NULL);   //NO check hitcache. Wait_time is dwtime, or, if 0, awtime.
 		wait_time_hitcache = get_cacheex_wait_time(er,client);  //check hitcache for calculating wait_time! If hitcache wait_time is biggest value between dwtime and awtime, else it's awtime.
 
 		if(
 			//If "normal" client and ex1-rdr>0, we cannot use hitcache for calculating wait_time because we cannot know if cw is available or not on ex1 server!
 			(cacheex != 1 && er->cacheex_reader_count)
 			||
-				/* Cw for ex1-cl comes from: INT. cache by "normal" readers (normal clients that ask normal readers), ex1-rdr and ex2-rdr.
+				/* Cw for ex1-cl comes from: INT. cache by "normal" readers (normal clients that ask normal readers), ex1-rdr and ex2-rdr and ex3-rdr.
 			 * If readers, we have to wait cws generating by normal clients asking normal readers and answers by ex1-rdr (cannot use hitcache).
 			 * If no readers, use hitcache for calculating wait_time.
 			 */
@@ -2316,7 +2319,7 @@ OUT:
 		er->cacheex_wait_time_expired = 0;
 		if(er->cacheex_reader_count > 0)
 		{
-			er->cacheex_hitcache = wait_time_hitcache ? 1 : 0; //usefull only when cacheex mode 1 readers
+			er->cacheex_hitcache = wait_time_hitcache ? 1 : 0; //usefull only when cacheex mode 1 readers answers before wait_time and we have to decide if we have to wait until wait_time expires.
 			request_cw_from_readers(er, 1); // setting stop_stage=1, we request only cacheex mode 1 readers. Others are requested at cacheex timeout!
 		}
 	}

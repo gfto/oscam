@@ -28,7 +28,6 @@ extern struct ecm_request_t	*ecm_pushed_deleted;
 extern CS_MUTEX_LOCK ecmcache_lock;
 extern struct ecm_request_t *ecmcwcache;
 
-
 static void *chkcache_process(void)
 {
 	set_thread_name(__func__);
@@ -643,7 +642,7 @@ uint32_t get_cacheex_wait_time(ECM_REQUEST *er, struct s_client *cl)
 		};
 
 	}
-	if(awtime > 0 && dwtime <= 0)
+	if(awtime > 0 && (dwtime <= 0 || awtime==dwtime) ) //if awtime==dwtime useless check hitcache
 	{
 		return awtime;
 	}
