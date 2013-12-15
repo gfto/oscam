@@ -26,7 +26,6 @@ TABLE.invisible TD {font-size:12px}
 TABLE.configmenu {line-height:16px}
 TABLE.users {}
 TABLE.user_totals {}
-TABLE.user_totals_headline {}
 TABLE.ECM_totals {}
 TH {height:10px;padding:5px;background-color:#CCC;color:black}
 TH.statuscol0 {text-align:center;width:10px}
@@ -163,3 +162,4 @@ SPAN.span_notifier {padding:1px 3px;border-radius:10px;color:#FFF;margin-left:2p
 SPAN.idlesec_normal {font-size:9px;color:black}
 SPAN.idlesec_alert {font-size:9px;color:red}
 SPAN.global_conf {color:blue;font-size:12px;cursor:default;padding:4px}
+SPAN.user_totals_headline {}
