@@ -4,6 +4,8 @@ P {color:white}
 P.blinking {text-decoration:blink;font-weight:bold;font-size:large;color:red}
 H2 {color:#AAA;font-size:32px;line-height:32px;margin-top:0px; margin-bottom:0px}
 H4 {color:#AAA;font-size:12px;line-height:9px}
+H4.footline1 {}
+H4.footline2 {}
 H4.styleauthor:after {content:"Eneen"}
 HR {height:1px;margin-top:56px;margin-bottom:28px;border-width:0;color:white;background-color:#AAA}
 TABLE {border-spacing:1px;margin-left:auto;margin-right:auto}
@@ -12,6 +14,7 @@ TABLE.menu {border-spacing:0px}
 TABLE.status {border-spacing:1px;background-color:white;empty-cells:show}
 TABLE.config {width:750px}
 TABLE.configreader {width:850px}
+TABLE.stats {}
 TABLE.statsbalance TD:last-child{line-height:20px;width:125px}
 TABLE.statsbalance TD:last-child IMG.icon{float:right;margin-left:10px}
 TABLE.invisiblelb {border-spacing:0px;width:100%}
@@ -20,6 +23,10 @@ TABLE.invisiblelb TD {width:33%;font-size:12px;white-space: nowrap}
 TABLE.invisible {margin-left:0}
 TABLE.invisible TD {font-size:12px}
 TABLE.configmenu {line-height:16px}
+TABLE.users {}
+TABLE.user_totals {}
+TABLE.user_totals_headline {}
+TABLE.ECM_totals {}
 TH {height:10px;padding:5px;background-color:#CCC;color:black}
 TH.statuscol0 {text-align:center;width:10px}
 TH.statuscol1 {text-align:center}
@@ -96,6 +103,7 @@ TD.configmenu {color:black;background-color:white;font-weight:bold}
 TD.configmenu_selected {color:black; background-color:#E6FEBF;font-weight:bold;font-style:italic}
 TD.subheadline {height:10px;border:0px;padding:5px;background-color:#CCC;color:black}
 TD.subheadline A {text-decoration:none}
+TD.mandatory {}
 TR.s TD {background-color:#E1E1EF}
 TR.l TD {background-color:#E1E1EF}
 TR.n TD {background-color:#E1E1EF}
@@ -108,6 +116,7 @@ TR.online TD {background-color:#BFA}
 TR.online TD.usercol5 {background-color:#646464}
 TR.expired TD {background-color:#FBA}
 TR.connected TD {background-color:#FFA}
+TR.enabledreader {}
 TR.disabled TD:first-child IMG.icon {background-color:#0A0}
 TR.disabledreader TD:first-child IMG.icon {background-color:#0A0}
 TR.scanusbsubhead TD {background-color:#FDFBE1}
@@ -121,6 +130,11 @@ DIV.div_notifier {height:14px;width:14px;border-radius:7px;-webkit-border-radius
 DIV.debugmenu {line-height:20px}
 DIV.logmenu {line-height:20px}
 DIV.filterform {margin:10px}
+DIV.cccamentitlementtotals {}
+DIV.cccamentitlementcontrols {}
+DIV.warning {}
+DIV.header {}
+DIV.footer {}
 TEXTAREA.bt {font-size: 12px}
 TEXTAREA.editor {font-size:11px;width:98%;height:508px;border:1px dotted #AAA;background-color: #FAFAFA;padding:8px 10px;font-family:"Courier New", monospace; color:black;word-wrap:break-word;text-align:left}
 A.debugls:link {background-color:red}
