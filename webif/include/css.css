@@ -8,7 +8,7 @@ H4 {color:#AAA;font-size:12px;line-height:9px}
 H4.footline1 {}
 H4.footline2 {}
 H4.styleauthor:after {content:"Eneen"}
-HR {height:1px;margin-top:56px;margin-bottom:28px;border-width:0;color:white;background-color:#AAA}
+HR {height:1px;margin-top:28px;margin-bottom:28px;border-width:0;color:white;background-color:#AAA}
 TABLE {border-spacing:1px;margin-left:auto;margin-right:auto}
 TABLE.upspace {margin-top:28px}
 TABLE.menu {border-spacing:0px}
@@ -26,7 +26,7 @@ TABLE.invisible TD {font-size:12px}
 TABLE.configmenu {line-height:16px}
 TABLE.users {}
 TABLE.user_totals {}
-TABLE.ECM_totals {}
+TABLE.ECM_totals {margin-top:10px}
 TH {height:10px;padding:5px;background-color:#CCC;color:black}
 TH.statuscol0 {text-align:center;width:10px}
 TH.statuscol1 {text-align:center}
