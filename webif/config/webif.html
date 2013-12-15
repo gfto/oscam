@@ -8,7 +8,7 @@
 		<input name="http_prepend_embedded_css" type="hidden" value="0">
 		<input name="httphideidleclients" type="hidden" value="0">
 		<input name="httpshowpicons" type="hidden" value="0">
-		<TABLE class="config">
+		<TABLE CLASS="config">
 			<TR><TH COLSPAN="2">Edit WebIf Config</TH></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httpport##TPLHELPSUFFIX##Http port:</A></TD><TD><input name="httpport" type="text" size="6" maxlength="6" value="##HTTPPORT##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#serverip_9##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name="serverip" type="text" size="15" maxlength="15" value="##SERVERIP##"></TD></TR>
@@ -17,9 +17,9 @@
 			<TR><TD>##TPLHELPPREFIX##conf#http_prepend_embedded_css##TPLHELPSUFFIX##Http prepend embedded css:</A></TD><TD><input name="http_prepend_embedded_css" type="checkbox" value="1" ##HTTPPREPENDEMBEDDEDCSS##></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httpcss##TPLHELPSUFFIX##Http css:</A></TD>
  				<TD>
-					<SELECT name="httpcss">
+					<select name="httpcss">
 ##CSSOPTIONS##
-					</SELECT>
+					</select>
 				</TD>
 			</TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httphelplang##TPLHELPSUFFIX##Http Help Language (en|de|fr|it):</A></TD><TD><input name="httphelplang" type="text" size="3" maxlength="2" value="##HTTPHELPLANG##"></TD></TR>
@@ -36,7 +36,7 @@
 			<TR><TD>##TPLHELPPREFIX##conf#hideclient_to##TPLHELPSUFFIX##Hide client to:</A></TD><TD><input name="hideclient_to" type="text" size="5" maxlength="5" value="##HIDECLIENTTO##"> s</TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httpsavefullcfg##TPLHELPSUFFIX##Http save full config:</A></TD><TD><SELECT NAME="httpsavefullcfg"><OPTION VALUE="0">NO</OPTION><OPTION VALUE="1" ##HTTPSAVEFULLSELECT##>YES</OPTION></SELECT></TD></TR>
 ##TPLHTTPFORCESSLV3##
-			<TR><TD colspan="2" align="right"><input type="submit" value="Save" ##BTNDISABLED##></TD></TR>
+			<TR><TD COLSPAN="2" ALIGN="right"><input type="submit" value="Save" ##BTNDISABLED##></TD></TR>
 		</TABLE>
 	</form>
 ##TPLFOOTER##
