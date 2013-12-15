@@ -10,11 +10,39 @@
 			<TR><TD>##TPLHELPPREFIX##conf#port_8##TPLHELPSUFFIX##Port:</A></TD><TD><input name="port" type="text" size="16" maxlength="128" value="##PORT##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#serverip_10##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name="serverip" type="text" size="15" maxlength="15" value="##SERVERIP##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#reshare##TPLHELPSUFFIX##Reshare:</A></TD><TD><input name="reshare" type="text" size="2" maxlength="2" value="##RESHARE##"> -1 no reshare or lowest value off cccreshare reader account</TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#ignorereshare##TPLHELPSUFFIX##Ignore reshare:</A></TD><TD>			<SELECT NAME="ignorereshare">				<option VALUE="0" ##IGNRSHRSELECTED0##>0 - Use reshare level of Server</option>				<option VALUE="1" ##IGNRSHRSELECTED1##>1 - Use reshare level of Reader or User</option>			</SELECT></TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#forward_origin_card##TPLHELPSUFFIX##Forward origin card:</A></TD><TD><SELECT NAME="forward_origin_card"><option VALUE="0">OFF</option><option VALUE="1" ##FORWARDORIGINCARD##>ON</option></SELECT></TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#stealth##TPLHELPSUFFIX##Stealth mode:</A></TD><TD><SELECT NAME="stealth"><option VALUE="0">DISABLE</option><option VALUE="1" ##STEALTH##>ENABLE</option></SELECT></TD></TR>
+			<TR><TD>##TPLHELPPREFIX##conf#ignorereshare##TPLHELPSUFFIX##Ignore reshare:</A></TD>
+				<TD>			
+					<select name="ignorereshare">
+						<option value="0" ##IGNRSHRSELECTED0##>0 - Use reshare level of Server</option>
+						<option value="1" ##IGNRSHRSELECTED1##>1 - Use reshare level of Reader or User</option>
+					</select>
+				</TD>
+			</TR>
+			<TR><TD>##TPLHELPPREFIX##conf#forward_origin_card##TPLHELPSUFFIX##Forward origin card:</A></TD>
+				<TD>
+					<select name="forward_origin_card">
+						<option value="0">OFF</option>
+						<option value="1" ##FORWARDORIGINCARD##>ON</option>
+					</select>
+				</TD>
+			</TR>
+			<TR><TD>##TPLHELPPREFIX##conf#stealth##TPLHELPSUFFIX##Stealth mode:</A></TD>
+				<TD>
+					<select name="stealth">
+						<option value="0">DISABLE</option>
+						<option value="1" ##STEALTH##>ENABLE</option>
+					</select>
+				</TD>
+			</TR>
 			<TR><TD>##TPLHELPPREFIX##conf#nodeid##TPLHELPSUFFIX##Node Id:</A></TD><TD><input name="nodeid" type="text" size="18" maxlength="16" value="##NODEID##"></TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#keepconnected##TPLHELPSUFFIX##Keep clients connected:</A></TD><TD><SELECT NAME="keepconnected"><option VALUE="0">OFF</option><option VALUE="1" ##KEEPCONNECTED##>ON</option></SELECT></TD></TR>
+			<TR><TD>##TPLHELPPREFIX##conf#keepconnected##TPLHELPSUFFIX##Keep clients connected:</A></TD>
+				<TD>
+					<select name="keepconnected">
+						<option value="0">OFF</option>
+						<option value="1" ##KEEPCONNECTED##>ON</option>
+					</select>
+				</TD>
+			</TR>
 			<TR><TD>##TPLHELPPREFIX##conf#version##TPLHELPSUFFIX##Version:</A></TD>
 				<TD>
 					<select name="version">
@@ -59,13 +87,13 @@
 		<TR>
 			<TD STYLE="text-align:center;">				
 				<form action="config.html" method="get">
-				<input name="part" type="hidden" value="cccam">
-				<input type="submit" name="button" value="Refresh global list" ##BTNDISABLED##>
+					<input name="part" type="hidden" value="cccam">
+					<input type="submit" name="button" value="Refresh global list" ##BTNDISABLED##>
 				</form></TD>
 			<TD STYLE="text-align:center;">				
 				<form action="entitlements.html" method="get">
-				<input name="globallist" type="hidden" value="1">
-				<input type="submit" name="button" value="Show global list" ##BTNDISABLED##>
+					<input name="globallist" type="hidden" value="1">
+					<input type="submit" name="button" value="Show global list" ##BTNDISABLED##>
 				</form></TD>
 		</TR>
 	</TABLE>
