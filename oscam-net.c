@@ -381,7 +381,7 @@ int32_t process_input(uint8_t *buf, int32_t buflen, int32_t timeout)
 				{ return 0; }
 		}
 		
-		if(p_rc == 0 && gone >= timeoutms)  // client maxidle reached?
+		if((p_rc == 0) && (timeout != 0) && (gone >= timeoutms))  // client maxidle reached? timeout = 0, idle disconnect disabled
 		{
 			rc = -9;
 			break;
