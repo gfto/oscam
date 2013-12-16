@@ -125,7 +125,7 @@ TR.e_expired TD {background-color:#FFF3E7;font-family:"Courier New", monospace}
 TR.e_header TD {font-family:"Courier New", monospace}
 DIV.log {border:1px dotted #AAA;background-color:#FAFAFA;padding:10px;font-family:"Courier New", monospace;color:#666;word-wrap:break-word; text-align:left}
 DIV.sidlist {border:1px dotted #AAA;background-color:#fffdf5;padding:2px;font-family:"Courier New", monospace;color:#666;word-wrap:break-word; text-align:left}
-DIV.message {font-size: 12px;font-weight:bold}
+DIV.message {font-size: 12px;font-weight:bold;margin: 5px 0}
 DIV.div_notifier {height:14px;width:14px;border-radius:7px;-webkit-border-radius:7px;background-color:red;margin-left:4px;text-align:center;float:right}
 DIV.debugmenu {line-height:20px}
 DIV.logmenu {line-height:20px}
