@@ -103,7 +103,6 @@ TD.configmenu {color:black;background-color:white;font-weight:bold}
 TD.configmenu_selected {color:black; background-color:#E6FEBF;font-weight:bold;font-style:italic}
 TD.subheadline {height:10px;border:0px;padding:5px;background-color:#CCC;color:black}
 TD.subheadline A {text-decoration:none}
-TD.mandatory {}
 TR.s TD {background-color:#E1E1EF}
 TR.l TD {background-color:#E1E1EF}
 TR.n TD {background-color:#E1E1EF}
