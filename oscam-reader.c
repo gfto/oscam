@@ -1039,8 +1039,10 @@ void reader_get_ecm(struct s_reader *reader, ECM_REQUEST *er)
 		if(ea->rc < E_99)
 		{
 			cs_readunlock(&ea->ecmanswer_lock);
-			cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [reader_get_ecm] ecm already sent to reader %s (rc %d)", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid, reader ? reader->label : "-", ea->rc);
-			write_ecm_answer(reader, er, ea->rc, ea->rcEx, ea->cw, NULL);
+			cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [reader_get_ecm] ecm already sent to reader %s (%s)", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid, reader ? reader->label : "-", ea->rc==E_FOUND?"OK":"NOK");
+
+			//e.g. we cannot send timeout, because "ea_temp->er->client" could wait/ask other readers! Simply set not_found if different from E_FOUND!
+			write_ecm_answer(reader, er, (ea->rc==E_FOUND? E_FOUND : E_NOTFOUND), ea->rcEx, ea->cw, NULL);
 			return;
 		}
 		else
