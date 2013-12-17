@@ -2125,6 +2125,32 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 	cacheex_update_hash(er);
 	ac_chk(client, er, 0);
 
+
+	//********  CHECK IF FOUND ECM IN CACHE
+	struct ecm_request_t *ecm = NULL;
+	ecm = check_cache(er, client);
+	if(ecm)     //found in cache
+	{
+		cs_debug_mask(D_LB,"{client %s, caid %04X, prid %06X, srvid %04X} [get_cw] cw found immediately in cache! ", (check_client(er->client)?er->client->account->usr:"-"),er->caid, er->prid, er->srvid);
+
+		struct s_write_from_cache *wfc = NULL;
+		if(!cs_malloc(&wfc, sizeof(struct s_write_from_cache)))
+		{
+			free(ecm);
+			free_ecm(er);
+			return;
+		}
+
+		wfc->er_new = er;
+		wfc->er_cache = ecm;
+		write_ecm_answer_fromcache(wfc);
+	  	free(ecm);
+	  	free_ecm(er);
+
+		return;
+	}
+
+
 	er->reader_avail = 0;
 	er->readers = 0;
 #ifdef CS_CACHEEX
@@ -2247,7 +2273,6 @@ OUT:
 	if((er->reader_count + er->fallback_reader_count) == 0)
 #endif
 	{
-		er->readers_timeout_check = 1; //no readers asked to be checked at ctimeout
 		er->rc = E_NOTFOUND;
 		if(!er->rcEx)
 			{ er->rcEx = E2_GROUP; }
@@ -2265,31 +2290,6 @@ OUT:
 	ecmcwcache = er;
 	ecmcwcache_size++;
 	cs_writeunlock(&ecmcache_lock);
-
-
-	//********  CHECK IF FOUND ECM IN CACHE
-	struct ecm_request_t *ecm = NULL;
-	ecm = check_cache(er, client);
-	if(ecm)     //found in cache
-	{
-		er->readers_timeout_check = 1; //no readers asked to be checked at ctimeout
-
-		cs_debug_mask(D_LB,"{client %s, caid %04X, prid %06X, srvid %04X} [get_cw] cw found immediately in cache! ", (check_client(er->client)?er->client->account->usr:"-"),er->caid, er->prid, er->srvid);
-
-		struct s_write_from_cache *wfc = NULL;
-		if(!cs_malloc(&wfc, sizeof(struct s_write_from_cache)))
-		{
-			free(ecm);
-			return;
-		}
-		wfc->er_new = er;
-		wfc->er_cache = ecm;
-
-		if(!add_job(er->client, ACTION_ECM_ANSWER_CACHE, wfc, sizeof(struct s_write_from_cache)))  //write_ecm_answer_fromcache
-			{ free(ecm); }
-
-		return;
-	}
 
 
 #ifdef WITH_LB
