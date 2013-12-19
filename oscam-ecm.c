@@ -1173,7 +1173,7 @@ void request_cw_from_readers(ECM_REQUEST *er, uint8_t stop_stage)
 			{
 				// Cache-Exchange
 				if((ea->status & REQUEST_SENT) ||
-						(ea->status & (READER_CACHEEX | READER_ACTIVE)) != (READER_CACHEEX | READER_ACTIVE))
+						(ea->status & (READER_CACHEEX | READER_ACTIVE)) != (READER_CACHEEX | READER_ACTIVE) || cfg.preferlocalcards==2)
 					{ continue; }
 				break;
 			}
