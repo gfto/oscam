@@ -4388,7 +4388,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 		}
 	}
 
-	if(cs_dblevel == 255)
+	if(cs_dblevel == D_ALL_DUMP)
 		{ tpl_addVar(vars, TPLADD, "DCLASS65535", "debugls"); }
 	else
 		{ tpl_addVar(vars, TPLADD, "DCLASS65535", "debugl"); }
