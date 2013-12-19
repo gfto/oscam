@@ -12,7 +12,7 @@ HR {height:1px;margin-top:28px;margin-bottom:28px;border-width:0;color:white;bac
 TABLE {border-spacing:1px;margin-left:auto;margin-right:auto}
 TABLE.upspace {margin-top:28px}
 TABLE.menu {border-spacing:0px}
-TABLE.status {background-color:white;empty-cells:show}
+TABLE.status {width:100%;background-color:white;empty-cells:show}
 TABLE.config {width:750px}
 TABLE.configreader {width:850px}
 TABLE.readers {}
@@ -137,8 +137,9 @@ DIV.header {}
 DIV.footer {}
 TEXTAREA.bt {font-size: 12px}
 TEXTAREA.editor {font-size:11px;width:98%;height:508px;border:1px dotted #AAA;background-color: #FAFAFA;padding:8px 10px;font-family:"Courier New", monospace; color:black;word-wrap:break-word;text-align:left}
-A.debugls:link {background-color:red}
-A.debugls:visited {background-color:red}
+A.debugl:link {margin:0 1px;}
+A.debugls:link {background-color:#A00;padding:1px 4px 2px;color:#FFF}
+A.debugls:visited {background-color:#A00;color:#FFF}
 A:link {color:#050840}
 A:visited {color:#050840}
 A:active {color:#050840}
