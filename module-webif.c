@@ -632,6 +632,10 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 	{
 		tpl_addVar(vars, TPLADD, "ALLOWBADFROMFFB", "selected");
 	}
+	if(cfg.cwcycle_usecwcfromce == 1)
+	{
+		tpl_addVar(vars, TPLADD, "USECWCFROMCE", "selected");
+	}
 #endif
 
 	return tpl_getTpl(vars, "CONFIGCACHE");
@@ -5715,6 +5719,7 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->account->cacheex.mode]);
 			tpl_printf(vars, TPLADD, "PUSH", "%d", cl->account->cwcacheexpush);
 			tpl_printf(vars, TPLADD, "GOT", "%d", cl->account->cwcacheexgot);
+			tpl_printf(vars, TPLADD, "CWCINFO", "%d", cl->account->cwc_info);
 			tpl_printf(vars, TPLADD, "HIT", "%d", cl->account->cwcacheexhit);
 			tpl_printf(vars, TPLADD, "ERR", "%d", cl->account->cwcacheexerr);
 			tpl_printf(vars, TPLADD, "ERRCW", "%d", cl->account->cwcacheexerrcw);
@@ -5731,7 +5736,9 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 			tpl_printf(vars, TPLADD, "NODE", "%" PRIu64 "X", get_cacheex_node(cl));
 			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->reader->cacheex.mode]);
 			tpl_printf(vars, TPLADD, "PUSH", "%d", cl->cwcacheexpush);
+			tpl_printf(vars, TPLADD, "CWCINFO", "%d", cl->cwc_info);
 			tpl_printf(vars, TPLADD, "GOT", "%d", cl->cwcacheexgot);
+			tpl_printf(vars, TPLADD, "CWCINFO", "%d", cl->cwc_info);
 			tpl_printf(vars, TPLADD, "HIT", "%d", cl->cwcacheexhit);
 			tpl_printf(vars, TPLADD, "ERR", "%d", cl->cwcacheexerr);
 			tpl_printf(vars, TPLADD, "ERRCW", "%d", cl->cwcacheexerrcw);

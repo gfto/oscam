@@ -21,6 +21,11 @@ struct s_pushclient {
 typedef struct cw_t {
 	uchar			cw[16];
 	uint8_t			odd_even;			//odd/even byte (0x80 0x81)
+	uint8_t			cwc_cycletime;
+	uint8_t			cwc_next_cw_cycle;
+#ifdef CW_CYCLE_CHECK
+	uint8_t			got_bad_cwc;
+#endif
 	uint16_t		caid;				//first caid receved
 	uint32_t		prid;				//first prid receved
 	uint16_t		srvid;				//first srvid receved
@@ -172,10 +177,18 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 #endif
 
 #ifdef CW_CYCLE_CHECK
-		if(checkcwcycle(er, NULL, get_first_cw(result)->cw, 0) != 0){
-			cs_debug_mask(D_CWC | D_LB, "{client %s, caid %04X, srvid %04X} [get_cw] cyclecheck passed ecm in INT. cache, ecm->rc %d", (er->client ? er->client->account->usr : "-"), er->caid, er->srvid, ecm ? ecm->rc : -1);
+		uint8_t cwc_ct = get_first_cw(result)->cwc_cycletime > 0 ? get_first_cw(result)->cwc_cycletime : 0;
+		uint8_t cwc_ncwc = get_first_cw(result)->cwc_next_cw_cycle < 2 ? get_first_cw(result)->cwc_next_cw_cycle : 2;
+		if(get_first_cw(result)->got_bad_cwc)
+		{
+			pthread_rwlock_unlock(&cache_lock);
+			return NULL;
+		}
+		if(checkcwcycle(cl, er, NULL, get_first_cw(result)->cw, 0, cwc_ct, cwc_ncwc) != 0){
+			cs_debug_mask(D_CWC | D_LB, "{client %s, caid %04X, srvid %04X} [check_cache] cyclecheck passed ecm in INT. cache, ecm->rc %d", (cl ? cl->account->usr : "-"), er->caid, er->srvid, ecm ? ecm->rc : -1);
 		}else{
-			cs_log("cyclecheck [BAD CW Cycle] from Int. Cache detected.. {client %s, caid %04X, srvid %04X} [get_cw] -> skip cache answer", (er->client ? er->client->account->usr : "-"), er->caid, er->srvid);
+			cs_debug_mask(D_CWC, "cyclecheck [BAD CW Cycle] from Int. Cache detected.. {client %s, caid %04X, srvid %04X} [check_cache] -> skip cache answer", (cl ? cl->account->usr : "-"), er->caid, er->srvid);
+			get_first_cw(result)->got_bad_cwc = 1; // no need to check it again			
 			pthread_rwlock_unlock(&cache_lock);
 			return NULL;
 		}
@@ -195,6 +208,8 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 
 			ecm->grp = get_first_cw(result)->grp;
 			ecm->selected_reader = get_first_cw(result)->selected_reader;
+			ecm->cwc_cycletime = get_first_cw(result)->cwc_cycletime;
+			ecm->cwc_next_cw_cycle = get_first_cw(result)->cwc_next_cw_cycle;
 #ifdef CS_CACHEEX
 			ecm->cacheex_src = get_first_cw(result)->cacheex_src;
 #endif
@@ -263,6 +278,8 @@ void add_cache(ECM_REQUEST *er){
 			if(cs_malloc(&cw, sizeof(CW))){
 				memcpy(cw->cw, er->cw, sizeof(er->cw));
 				cw->odd_even = get_odd_even(er);
+				cw->cwc_cycletime = er->cwc_cycletime;
+				cw->cwc_next_cw_cycle = er->cwc_next_cw_cycle;
 				cw->count= 0;
 				cw->csp = 0;
 				cw->grp = 0;

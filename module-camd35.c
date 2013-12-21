@@ -457,6 +457,20 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				{ memmove(buf + 20 + 16, buf + 20 + buf[1], 0x34); }
 			buf[0]++;
 			buf[1] = 16;
+#ifdef CS_CACHEEX
+			if(((client->typ == 'c' && client->account && client->account->cacheex.mode) 
+				|| ((client->typ == 'p' || client->typ == 'r') && (client->reader && client->reader->cacheex.mode)))
+				&& er->cwc_cycletime)  // ce1
+			{
+				buf[18] = er->cwc_cycletime;
+				buf[19] = er->ecm[0];
+				if(client->typ == 'c' && client->account && client->account->cacheex.mode)
+					{ client->account->cwc_info++; }
+				else if((client->typ == 'p' || client->typ == 'r') && (client->reader && client->reader->cacheex.mode))
+					{ client->cwc_info++; }
+				cs_debug_mask(D_CWC, "CWC (CE1) push to %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(client), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
+			} 
+#endif
 			memcpy(buf + 20, er->cw, buf[1]);
 		}
 		else
@@ -690,7 +704,19 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	i2b_buf(4, er->prid, buf + 12);
 	//i2b_buf(2, er->idx, buf + 16); // Not relevant...?
 
+	buf[18] = er->cwc_cycletime; // contains cwc stage3 cycletime
 	buf[19] = er->ecm[0] != 0x80 && er->ecm[0] != 0x81 ? 0 : er->ecm[0];
+	//cs_debug_mask(D_CWC, "[camd35_cache_push_out] buf[18]= 0x%01X buf[19]= 0x%01X", buf[18], buf[19]);
+#ifdef CS_CACHEEX
+	if (er->cwc_cycletime && buf[19] != 0x00)
+	{
+		if(cl->typ == 'c' && cl->account && cl->account->cacheex.mode)
+			{ cl->account->cwc_info++; }
+		else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
+			{ cl->cwc_info++; }
+		cs_debug_mask(D_CWC, "CWC (CE) push to %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
+	}
+#endif
 
 	uint8_t *ofs = buf + 20;
 
@@ -729,6 +755,40 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	return res;
 }
 
+void camd35_recv_ce1_cwc_info(struct s_client *cl, uchar *buf, int32_t idx)
+{
+	ECM_REQUEST *er = NULL;
+	int32_t i;
+
+	for(i = 0; i < cfg.max_pending; i++)
+	{
+		if (cl->ecmtask[i].idx == idx)
+		{ 
+			er = &cl->ecmtask[i]; 
+			break;
+		}
+	}
+
+	if(!er)
+	{ return; }
+
+	int8_t rc = buf[3];
+	if(rc != E_FOUND)  
+		{ return; }
+
+	er->cwc_cycletime = buf[18];
+	er->cwc_next_cw_cycle = buf[19] != 0x80 && buf[19] != 0x81 ? 2 : buf[19] == 0x80 ? 0 : 1;  // use the odd/even byte for cwc_next_cw_cycle (0x80 = 0 ; 0x81 = 1)
+	er->parent->cwc_cycletime = buf[18];
+	er->parent->cwc_next_cw_cycle = buf[19] != 0x80 && buf[19] != 0x81 ? 2 : buf[19] == 0x80 ? 0 : 1;  // use the odd/even byte for cwc_next_cw_cycle (0x80 = 0 ; 0x81 = 1)
+	//cs_debug_mask(D_CWC, "[camd35_ce1_receive] buf[18]= 0x%01X buf[19]= 0x%01X", buf[18], buf[19]);
+
+	if(cl->typ == 'c' && cl->account && cl->account->cacheex.mode)
+		{ cl->account->cwc_info++; }
+	else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
+		{ cl->cwc_info++; }
+	cs_debug_mask(D_CWC, "CWC (CE1) received from %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
+
+}
 
 void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 {
@@ -755,6 +815,21 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 	er->rc = rc;
 
 	er->ecmlen = 0;
+
+	er->cwc_cycletime = buf[18];
+	er->cwc_next_cw_cycle = buf[19] != 0x80 && buf[19] != 0x81 ? 2 : buf[19] == 0x80 ? 0 : 1;  // use the odd/even byte for cwc_next_cw_cycle  (0x80 = 0 ; 0x81 = 1) 
+	//cs_debug_mask(D_CWC, "[camd35_cache_push_in] buf[18]= 0x%01X buf[19]= 0x%01X", buf[18], buf[19]);
+#ifdef CS_CACHEEX
+	if (er->cwc_cycletime && er->cwc_next_cw_cycle < 2)
+	{
+		if(cl->typ == 'c' && cl->account && cl->account->cacheex.mode)
+			{ cl->account->cwc_info++; }
+		else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
+			{ cl->cwc_info++; }
+		cs_debug_mask(D_CWC, "CWC (CE) received from %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
+	}
+#endif
+
 
 	uint8_t *ofs = buf + 20;
 
@@ -1149,6 +1224,13 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 		{ return (-1); }
 
 	idx = b2i(2, buf + 16);
+
+#ifdef CS_CACHEEX
+	if(buf[0] == 0x01 && buf[18] < 0xFF && buf[18] > 0x00 && (buf[19] == 0x81 || buf[19] == 0x80)) // cwc info ; normal camd3 ecms send 0xFF but we need no cycletime of 255 ;)
+	{
+		camd35_recv_ce1_cwc_info(client, buf, idx);
+	}
+#endif
 
 	*rc = ((buf[0] != 0x44) && (buf[0] != 0x08));
 

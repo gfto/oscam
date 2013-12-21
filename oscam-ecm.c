@@ -1237,11 +1237,14 @@ void request_cw_from_readers(ECM_REQUEST *er, uint8_t stop_stage)
 }
 
 
-void add_cache_from_reader(struct s_reader *rdr, int32_t csp_hash, uchar *ecmd5, uchar *cw, int16_t caid, int32_t prid, int16_t srvid ){
+void add_cache_from_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t csp_hash, uchar *ecmd5, uchar *cw, int16_t caid, int32_t prid, int16_t srvid ){
 	ECM_REQUEST *ecm;
 	if (cs_malloc(&ecm, sizeof(ECM_REQUEST))){
 		cs_ftime(&ecm->tps);
 
+		ecm->cwc_cycletime = er->cwc_cycletime;
+		ecm->cwc_next_cw_cycle = er->cwc_next_cw_cycle;
+		memcpy(ecm->ecm, er->ecm, sizeof(ecm->ecm));  // ecm[0] is pushed to cacheexclients so we need a copy from it
 		ecm->caid = caid;
 		ecm->prid = prid;
 		ecm->srvid = srvid;
@@ -1307,7 +1310,7 @@ void chk_dcw(struct s_ecm_answer *ea)
 		//answer too late, only cache update
 		if(ea && ea->rc < E_NOTFOUND)
 		{
-			add_cache_from_reader(eardr, ert->csp_hash, ert->ecmd5, ea->cw, ert->caid, ert->prid, ert->srvid );
+			add_cache_from_reader(ert, eardr, ert->csp_hash, ert->ecmd5, ea->cw, ert->caid, ert->prid, ert->srvid );
 		}
 
 	}
@@ -1419,7 +1422,7 @@ void chk_dcw(struct s_ecm_answer *ea)
 	{
 		if(ert->rc==E_FOUND)
 		{
-			add_cache_from_reader(eardr, ert->csp_hash, ert->ecmd5, ea->cw, ert->caid, ert->prid, ert->srvid );
+			add_cache_from_reader(ert, eardr, ert->csp_hash, ert->ecmd5, ea->cw, ert->caid, ert->prid, ert->srvid );
 #ifdef CS_CACHEEX
 			if(ert->cacheex_src && cfg.check_cw_count>1) //if answer form cacheex reader, and we have to check cw count, not send answer to client
 				{ return; }
@@ -1569,7 +1572,9 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 	}
 
 #ifdef CW_CYCLE_CHECK
-	if(!checkcwcycle(er, reader, cw, rc))
+	uint8_t cwc_ct = er->cwc_cycletime > 0 ? er->cwc_cycletime : 0;
+	uint8_t cwc_ncwc = er->cwc_next_cw_cycle < 2 ? er->cwc_next_cw_cycle : 2;
+	if(!checkcwcycle(er->client, er, reader, cw, rc, cwc_ct, cwc_ncwc))
 	{
 		rc = E_NOTFOUND;
 		rcEx = E2_WRONG_CHKSUM;
@@ -1788,6 +1793,8 @@ void write_ecm_answer_fromcache(struct s_write_from_cache *wfc)
 #ifdef CS_CACHEEX
 		if(ecm->cacheex_src && is_valid_client(ecm->cacheex_src) && !ecm->cacheex_src->kill){ //here we should be sure cex client has not been freed!
 			er->cacheex_src = ecm->cacheex_src;
+			er->cwc_cycletime = ecm->cwc_cycletime;
+			er->cwc_next_cw_cycle = ecm->cwc_next_cw_cycle;
 		}else{
 			er->cacheex_src = NULL;
 	    }

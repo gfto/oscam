@@ -867,6 +867,8 @@ typedef struct ecm_request_t
 	uint8_t         from_cacheex;               // =1 if er from cacheex client pushing cache
 	uint8_t         from_cacheex1_client;       // =1 if er from cacheex-1 client
 	char            msglog[MSGLOGSIZE];
+	uint8_t			cwc_cycletime;
+	uint8_t			cwc_next_cw_cycle;
 #ifdef CW_CYCLE_CHECK
 	char            cwc_msg_log[MSGLOGSIZE];
 #endif
@@ -1009,6 +1011,7 @@ struct s_client
 	int32_t         cwcacheexerr;       // cw=00 or chksum wrong
 	int32_t         cwcacheexerrcw;     // same Hex, different CW
 	int16_t         cwcacheexping;      // peer ping in ms, only used by csp
+	int32_t			cwc_info;			// count of in/out comming cacheex ecms with CWCinfo
 #endif
 
 #ifdef WEBIF
@@ -1475,6 +1478,7 @@ struct s_auth
 	int32_t         cwcacheexhit;       // count hit ecms/cws
 	int32_t         cwcacheexerr; //cw=00 or chksum wrong
 	int32_t         cwcacheexerrcw; //Same Hex, different CW
+	int32_t			cwc_info;			// count of in/out comming cacheex ecms with CWCinfo
 #endif
 	struct s_auth   *next;
 };
@@ -1791,6 +1795,7 @@ struct s_config
 	int8_t          cwcycle_dropold;        // what to do on old ecmd5/cw
 	int8_t          cwcycle_sensitive;
 	int8_t          cwcycle_allowbadfromffb;        //allow Bad cycles from Fixed Fallbackreader
+	int8_t			cwcycle_usecwcfromce;		//Use CWC Info from Cacheex Sources for CWC Checking
 #endif
 
 	//Global whitelist:
