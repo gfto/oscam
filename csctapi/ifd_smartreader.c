@@ -1289,19 +1289,19 @@ static int32_t SR_Init(struct s_reader *reader)
 			crdr_data->rdrtype = Infinity;			
 	}
 	if (!strcasecmp(rdrtype, "SRv2")) {
-			crdr_data->tripledelay = 0;
+			crdr_data->tripledelay = 100;
 			crdr_data->rdrtype = SRv2;			
 	}
  	if (!strcasecmp(rdrtype, "TripleP1")) {
-			crdr_data->tripledelay = 0;
+			crdr_data->tripledelay = 200;
 			crdr_data->rdrtype = TripleP1;
 	}
 	if (!strcasecmp(rdrtype, "TripleP2")) {
-			crdr_data->tripledelay = 0;
+			crdr_data->tripledelay = 300;
 			crdr_data->rdrtype = TripleP2;
 	}
 	if (!strcasecmp(rdrtype, "TripleP3")) {
-			crdr_data->tripledelay = 0;
+			crdr_data->tripledelay = 400;
 			crdr_data->rdrtype = TripleP3;
 	}
 	
