@@ -7,6 +7,7 @@
 #include "module-webif.h"
 #include "module-ird-guess.h"
 #include "module-cw-cycle-check.h"
+#include "module-gbox.h"
 #include "oscam-cache.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
@@ -691,7 +692,6 @@ ECM_REQUEST *get_ecmtask(void)
 #endif
 #ifdef MODULE_GBOX
 	er->gbox_ecm_id = 0;
-	er->gbox_hops = 0;
 #endif
 	er->rc     = E_UNHANDLED;
 	er->client = cl;
@@ -2466,8 +2466,9 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 #endif
 	cs_hexdump(0, ecm->cw, 16, cwhex, sizeof(cwhex));
 #ifdef MODULE_GBOX
-	if(ecm->gbox_hops)
-		{ return ecmfmt(ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, result, size, ecm->gbox_peer, ecm->gbox_hops); }
+	struct gbox_ecm_request_ext *ere = ecm->src_data;
+	if(ere && ere->gbox_hops)
+		{ return ecmfmt(ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, result, size, ere->gbox_peer, ere->gbox_hops); }
 	else
 #endif
 		return ecmfmt(ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, result, size, 0, 0);
