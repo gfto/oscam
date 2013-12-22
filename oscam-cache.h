@@ -8,6 +8,7 @@ void cleanup_cache(void);
 void remove_client_from_cache(struct s_client *cl);
 uint32_t cache_size(void);
 void cacheex_update_hash(ECM_REQUEST *er);
+uint8_t get_odd_even(ECM_REQUEST *er);
 
 #ifdef CS_CACHEEX
 uint8_t check_is_pushed(void *cw, struct s_client *cl);

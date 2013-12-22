@@ -643,7 +643,7 @@ uint8_t checkcwcycle(struct s_client *client, ECM_REQUEST *er, struct s_reader *
 	char c_reader[64];
 	char user[64];
 
-	if(username(client) != "NULL")
+	if(!streq(username(client), "NULL"))
 		{ snprintf(user, sizeof(user), "%s", username(client)); }
 	else
 		{ snprintf(user, sizeof(user), "---"); }
