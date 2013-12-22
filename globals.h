@@ -846,6 +846,15 @@ typedef struct ecm_request_t
 	uint8_t         gbox_ecm_ok;
 	uint8_t         gbox_hops;
 	uint16_t        gbox_peer;
+	uint16_t	gbox_mypeer;
+	uint32_t	gbox_peer_key;
+	uint16_t	gbox_caid;	//could be calculated 0x05 and 0x0D are diffrent
+	uint16_t	gbox_prid;	//same as gbox_caid
+	uint8_t		gbox_slot;
+	uint8_t		gbox_version;
+	uint8_t		gbox_unknown;	//byte between version and cpu info of ECM request
+	uint8_t		gbox_type;
+	uchar		gbox_routing_info[10];	//support max 10 hops 
 #endif
 
 	void            *src_data;
