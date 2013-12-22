@@ -65,9 +65,9 @@ struct gbox_card
 	uint16_t caid;
 	uint32_t provid;
 	uint32_t provid_1;
-	int32_t slot;
-	int32_t dist;
-	int32_t lvl;
+	uint8_t slot;
+	uint8_t dist;
+	uint8_t lvl;
 	LLIST *badsids; // sids that have failed to decode (struct cc_srvid)
 	LLIST *goodsids; //sids that could be decoded (struct cc_srvid)
 };
@@ -99,7 +99,6 @@ struct gbox_data
 	uchar ver;
 	uchar type;
 	uint16_t exp_seq; // hello seq
-	uchar cws[16];
 	struct gbox_peer peer;
 	CS_MUTEX_LOCK lock;
 	uchar buf[1024];
@@ -459,7 +458,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, int32_t n)
 		{
 
 			provid1 =  ptr[0] << 24 | ptr[1] << 16 | ptr[2] << 8 | ptr[3];
-			int32_t ncards = ptr[4];
+			uint8_t ncards = ptr[4];
 
 			ptr += 5;
 
@@ -596,7 +595,6 @@ int32_t gbox_cmd_switch(struct s_client *cli, int32_t n)
 		pthread_mutex_unlock(&gbox->hello_expire_mut);
 		break;
 	case MSG_CW:
-		memcpy(gbox->cws, data + 14, 16);
 		cli->last = time((time_t *)0);
 		idx = gbox_recv_chk(cli, dcw, &rc1, data, rc1);
 		if(idx < 0) { break; }  // no dcw received
