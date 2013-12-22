@@ -166,10 +166,12 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 	){
 
 #ifdef CS_CACHEEX
+		CWCHECK check_cw = get_cwcheck(er);
+
 		if(get_first_cw(result)->cacheex_src
-		   && cfg.check_cw_count>1
-		   && get_first_cw(result)->count < cfg.check_cw_count
-		   && (cfg.check_cw_count_mode || !er->cacheex_wait_time_expired)
+		   && check_cw.counter>1
+		   && get_first_cw(result)->count < check_cw.counter
+		   && (check_cw.mode || !er->cacheex_wait_time_expired)
 		){
 		    pthread_rwlock_unlock(&cache_lock);
 		    return NULL;

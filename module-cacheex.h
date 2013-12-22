@@ -59,6 +59,7 @@ uint32_t get_cacheex_wait_time(ECM_REQUEST *er, struct s_client *cl);
 int32_t chk_csp_ctab(ECM_REQUEST *er, CECSPVALUETAB *tab);
 uint8_t check_cacheex_filter(struct s_client *cl, ECM_REQUEST *er);
 void checkcache_process_thread_start(void);
+CWCHECK get_cwcheck(ECM_REQUEST *er);
 
 #else
 static inline void cacheex_init(void) { };

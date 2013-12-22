@@ -1164,6 +1164,23 @@ typedef struct ce_csp_tab
 	int16_t     dwtime[CS_MAXCAIDTAB];
 } CECSPVALUETAB;
 
+typedef struct cacheex_check_cw_tab
+{
+	uint16_t    n;
+	int32_t     caid[CS_MAXCAIDTAB];
+	int32_t     cmask[CS_MAXCAIDTAB];
+	int32_t     prid[CS_MAXCAIDTAB];
+	int32_t     srvid[CS_MAXCAIDTAB];
+	int8_t      mode[CS_MAXCAIDTAB];
+	uint32_t    counter[CS_MAXCAIDTAB];
+} CWCHECKTAB;
+
+typedef struct cacheex_check_cw
+{
+	int8_t      mode;
+	uint32_t    counter;
+} CWCHECK;
+
 typedef struct ce_csp_t
 {
 	int8_t          mode;
@@ -1332,7 +1349,7 @@ struct s_reader                                     //contains device info, read
 	int16_t				smart_type;
 	uint16_t   statuscnt;
 	uint16_t   modemstat;
-	CS_MUTEX_LOCK	sr_lock;		// smartreader mutex lock
+	CS_MUTEX_LOCK   sr_lock;                // smartreader mutex lock
 #endif
 	unsigned char   rom[15];
 	unsigned char   irdId[4];
@@ -1774,8 +1791,7 @@ struct s_config
 	int8_t      block_same_name; //0=allow all, 1=block client requests to reader with same name (default=1)
 
 #ifdef CS_CACHEEX
-	uint8_t     check_cw_count;
-	uint8_t     check_cw_count_mode;
+	CWCHECKTAB  cacheex_cwcheck_tab;
 	IN_ADDR_T   csp_srvip;
 	int32_t     csp_port;
 	CECSPVALUETAB   cacheex_wait_timetab;

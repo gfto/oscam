@@ -168,6 +168,64 @@ void chk_cacheex_valuetab(char *lbrlt, CECSPVALUETAB *tab)
 	memcpy(tab, &newtab, sizeof(CECSPVALUETAB));
 }
 
+
+void chk_cacheex_cwcheck_valuetab(char *lbrlt, CWCHECKTAB *tab)
+{
+	//caid[&mask][@provid][$servid]:mode:counter
+	int32_t i;
+	char *ptr = NULL, *saveptr1 = NULL;
+	CWCHECKTAB newtab;
+	memset(&newtab, 0, sizeof(CWCHECKTAB));
+
+	for(i = 0, ptr = strtok_r(lbrlt, ",", &saveptr1); (i < CS_MAXCAIDTAB) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++)
+	{
+		int32_t caid = -1, cmask = -1, provid = -1, srvid = -1;
+		int16_t mode = -1, counter = -1;
+
+		char *ptr1 = NULL, *ptr2 = NULL, *ptr3 = NULL, *ptr4 = NULL, *ptr5 = NULL, *saveptr2 = NULL;
+
+		if((ptr4 = strchr(trim(ptr), ':')))
+		{
+			*ptr4++ = '\0';
+			ptr5 = strtok_r(ptr4, ":", &saveptr2);
+			if(ptr5) mode = atoi(ptr5);
+			ptr5 = strtok_r(NULL, ":", &saveptr2);
+			if(ptr5) counter = atoi(ptr5);
+		}
+		if((ptr3 = strchr(trim(ptr), '$')))
+		{
+			*ptr3++ = '\0';
+			srvid = a2i(ptr3, 4);
+		}
+		if((ptr2 = strchr(trim(ptr), '@')))
+		{
+			*ptr2++ = '\0';
+			provid = a2i(ptr2, 6);
+		}
+		if((ptr1 = strchr(ptr, '&')))
+		{
+			*ptr1++ = '\0';
+			cmask = a2i(ptr1, -2);
+		}
+
+		caid = a2i(ptr, 2);
+
+		if((i == 0 && (caid <= 0)) || (caid > 0))
+		{
+			newtab.caid[i] = caid;
+			newtab.cmask[i] = cmask;
+			newtab.prid[i] = provid;
+			newtab.srvid[i] = srvid;
+			newtab.mode[i] = mode;
+			newtab.counter[i] = counter;
+			newtab.n = i + 1;
+		}
+
+	}
+	memcpy(tab, &newtab, sizeof(CWCHECKTAB));
+}
+
+
 void chk_cacheex_hitvaluetab(char *lbrlt, CECSPVALUETAB *tab)
 {
 	//[caid][&mask][@provid][$servid]

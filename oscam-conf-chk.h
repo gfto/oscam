@@ -6,6 +6,7 @@ void chk_caidtab(char *caidasc, CAIDTAB *ctab);
 void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab, int32_t minvalue);
 #ifdef CS_CACHEEX
 void chk_cacheex_valuetab(char *lbrlt, CECSPVALUETAB *tab);
+void chk_cacheex_cwcheck_valuetab(char *lbrlt, CWCHECKTAB *tab);
 void chk_cacheex_hitvaluetab(char *lbrlt, CECSPVALUETAB *tab);
 #endif
 void chk_tuntab(char *tunasc, TUNTAB *ttab);

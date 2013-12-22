@@ -614,6 +614,50 @@ void cacheex_load_config_file(void)
 	}
 }
 
+
+
+CWCHECK get_cwcheck(ECM_REQUEST *er){
+	int32_t i;
+	int8_t mode = 0;
+	int16_t counter = 1;
+
+	for(i = 0; i < cfg.cacheex_cwcheck_tab.n; i++)
+	{
+		if(i == 0 && cfg.cacheex_cwcheck_tab.caid[i] <= 0)
+		{
+			mode = cfg.cacheex_cwcheck_tab.mode[i];
+			counter = cfg.cacheex_cwcheck_tab.counter[i];
+			continue; //check other, only valid for unset
+		}
+
+		if(cfg.cacheex_cwcheck_tab.caid[i] == er->caid || cfg.cacheex_cwcheck_tab.caid[i] == er->caid >> 8 || ((cfg.cacheex_cwcheck_tab.cmask[i] >= 0 && (er->caid & cfg.cacheex_cwcheck_tab.cmask[i]) == cfg.cacheex_cwcheck_tab.caid[i]) || cfg.cacheex_cwcheck_tab.caid[i] == -1))
+		{
+			if((cfg.cacheex_cwcheck_tab.prid[i] >= 0 && cfg.cacheex_cwcheck_tab.prid[i] == (int32_t)er->prid) || cfg.cacheex_cwcheck_tab.prid[i] == -1)
+			{
+				if((cfg.cacheex_cwcheck_tab.srvid[i] >= 0 && cfg.cacheex_cwcheck_tab.srvid[i] == er->srvid) || cfg.cacheex_cwcheck_tab.srvid[i] == -1)
+				{
+					mode = cfg.cacheex_cwcheck_tab.mode[i];
+					counter = cfg.cacheex_cwcheck_tab.counter[i];
+					break;
+				}
+			}
+
+		}
+	}
+
+	//check for correct values
+	if(mode>2 || mode<0) mode=0;
+	if(counter<1) counter=1;
+
+	CWCHECK check_cw;
+	memset(&check_cw, 0, sizeof(CWCHECK));
+	check_cw.mode = mode;
+	check_cw.counter = counter;
+
+	return check_cw;
+}
+
+
 uint32_t get_cacheex_wait_time(ECM_REQUEST *er, struct s_client *cl)
 {
 	int32_t i, dwtime = -1, awtime = -1;
@@ -639,7 +683,7 @@ uint32_t get_cacheex_wait_time(ECM_REQUEST *er, struct s_client *cl)
 				}
 			}
 
-		};
+		}
 
 	}
 	if(awtime > 0 && (dwtime <= 0 || awtime==dwtime) ) //if awtime==dwtime useless check hitcache

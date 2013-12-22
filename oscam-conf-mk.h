@@ -5,6 +5,7 @@ extern char *mk_t_caidtab(CAIDTAB *ctab);
 extern char *mk_t_caidvaluetab(CAIDVALUETAB *tab);
 #ifdef CS_CACHEEX
 extern char *mk_t_cacheex_valuetab(CECSPVALUETAB *tab);
+extern char *mk_t_cacheex_cwcheck_valuetab(CWCHECKTAB *tab);
 extern char *mk_t_cacheex_hitvaluetab(CECSPVALUETAB *tab);
 #endif
 extern char *mk_t_tuntab(TUNTAB *ttab);

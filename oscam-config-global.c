@@ -183,6 +183,31 @@ void cacheex_valuetab_fn(const char *token, char *value, void *setting, FILE *f)
 	}
 }
 
+void cacheex_cwcheck_tab_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	CWCHECKTAB *cacheex_value_table = setting;
+	if(value)
+	{
+		if(strlen(value) == 0)
+		{
+			memset(cacheex_value_table, -1, sizeof(CWCHECKTAB));
+			cacheex_value_table->n = 0;
+		}
+		else
+		{
+			chk_cacheex_cwcheck_valuetab(value, cacheex_value_table);
+		}
+		return;
+	}
+
+	if(cacheex_value_table->n || cfg.http_full_cfg)
+	{
+		value = mk_t_cacheex_cwcheck_valuetab(cacheex_value_table);
+		fprintf_conf(f, token, "%s\n", value);
+		free_mk_t(value);
+	}
+}
+
 void cacheex_hitvaluetab_fn(const char *token, char *value, void *setting, FILE *f)
 {
 	CECSPVALUETAB *cacheex_value_table = setting;
@@ -531,8 +556,7 @@ static const struct config_list cache_opts[] =
 	DEF_OPT_FUNC("csp_ecm_filter"           , OFS(csp.filter_caidtab),      cacheex_hitvaluetab_fn),
 	DEF_OPT_UINT8("csp_allow_request"       , OFS(csp.allow_request),       1),
 	DEF_OPT_UINT8("csp_allow_reforward"     , OFS(csp.allow_reforward),     0),
-	DEF_OPT_UINT8("check_cw_count"			, OFS(check_cw_count),			1),
-	DEF_OPT_UINT8("check_cw_count_mode"     , OFS(check_cw_count_mode),     0),
+	DEF_OPT_FUNC("cacheex_cw_check"		    , OFS(cacheex_cwcheck_tab),		cacheex_cwcheck_tab_fn),
 #endif
 #ifdef CW_CYCLE_CHECK
 	DEF_OPT_INT8("cwcycle_check_enable"     , OFS(cwcycle_check_enable),        0),
