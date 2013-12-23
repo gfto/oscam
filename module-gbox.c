@@ -31,11 +31,11 @@
 #define FILE_SHARED_CARDS_INFO  "/tmp/gbx_card.info"
 #define FILE_ATTACK_INFO        "/tmp/gbx_attack.txt"
 
-#define GBOX_STAT_HELLOL    0
-#define GBOX_STAT_HELLOS    1
-#define GBOX_STAT_HELLOR    2
-#define GBOX_STAT_HELLO3    3
-#define GBOX_STAT_HELLO4    4
+#define GBOX_STAT_HELLOL	0
+#define GBOX_STAT_HELLOS	1
+#define GBOX_STAT_HELLOR	2
+#define GBOX_STAT_HELLO3	3
+#define GBOX_STAT_HELLO4	4
 
 enum
 {
@@ -687,10 +687,6 @@ int32_t gbox_cmd_switch(struct s_client *cli, int32_t n)
 		gbox->peer.last_srvid = er->srvid;
 //		ei->extra = data[14] << 8 | data[15];
 		memcpy(er->ecm, data + 18, er->ecmlen);
-/*
-		//potentially interesting
-		ei->peer_cw = data[data[0x14] + 0x1F] << 8 | data[data[0x14] + 0x20];
-*/
 		ere->gbox_peer = ecm[er->ecmlen] << 8 | ecm[er->ecmlen + 1];
 		ere->gbox_version = ecm[er->ecmlen + 2];
 		ere->gbox_unknown = ecm[er->ecmlen + 3];
@@ -704,7 +700,9 @@ int32_t gbox_cmd_switch(struct s_client *cli, int32_t n)
 		//TODO: What do we do with our own checkcode @-7?
 		er->gbox_crc = gbox_get_ecmchecksum(er);
 		ere->gbox_hops = data[n - 15] + 1;
-		memcpy(ere->gbox_routing_info, &data[n - 15 - ere->gbox_hops], ere->gbox_hops - 1);
+		if (ere->gbox_hops > GBOX_MAXHOPS)
+			{ return -1; }
+		memcpy(&ere->gbox_routing_info[0], &data[n - 15 - ere->gbox_hops + 1], ere->gbox_hops - 1);
 
 		er->prid = chk_provid(er->ecm, er->caid);
 		cs_debug_mask(D_READER, "<- ECM (%d<-) from server (%s:%d) to cardserver (%04X) SID %04X", ere->gbox_hops, gbox->peer.hostname, cli->port, ere->gbox_peer, er->srvid);
@@ -1342,7 +1340,6 @@ static void gbox_send_dcw(struct s_client *cl, ECM_REQUEST *er)
 	buf[33] = er->gbox_crc & 0xff;		//CRC
 	buf[34] = er->caid >> 8;		//CAID
 	buf[35] = ere->gbox_caid & 0xff;	//CAID
-	//  buf[36] = ei->ecm[16];		//nbcards???
 	buf[36] = ere->gbox_slot;  		//Slot
 	buf[37] = ere->gbox_prid >> 8;		//ProvID
 	buf[38] = ere->gbox_prid & 0xff;	//ProvID
@@ -1354,8 +1351,8 @@ static void gbox_send_dcw(struct s_client *cl, ECM_REQUEST *er)
 
 	//This copies the routing info from ECM to answer.
 	//Each hop adds one byte and number of hops is in er->gbox_hops.
-	memcpy(&buf[44], &ere->gbox_routing_info, ere->gbox_hops);
-	buf[44 + ere->gbox_hops] = ere->gbox_hops - 1;	//Hops 
+	memcpy(&buf[44], &ere->gbox_routing_info, ere->gbox_hops - 1);
+	buf[44 + ere->gbox_hops - 1] = ere->gbox_hops - 1;	//Hops 
 	/*
 	char tmp[0x50];
 	cs_log("sending dcw to peer : %04x   data: %s", er->gbox_peer, cs_hexdump(0, buf, er->gbox_hops + 44, tmp, sizeof(tmp)));

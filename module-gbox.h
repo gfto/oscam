@@ -1,6 +1,8 @@
 #ifndef MODULE_GBOX_H_
 #define MODULE_GBOX_H_
 
+#define GBOX_MAXHOPS	10
+
 struct gbox_ecm_request_ext
 {
 //    uint32_t        gbox_crc;       // rcrc for gbox, used to identify ECM
@@ -16,7 +18,7 @@ struct gbox_ecm_request_ext
     uint8_t         gbox_version;
     uint8_t         gbox_unknown;   //byte between version and cpu info of
     uint8_t         gbox_type;
-    uchar           gbox_routing_info[10];  //support max 10 hops
+    uchar           gbox_routing_info[GBOX_MAXHOPS];  //support max 10 hops
 };
 
 // Parsing function used in oscam-config-reader.c
