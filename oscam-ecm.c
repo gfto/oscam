@@ -87,15 +87,11 @@ void cacheex_timeout(ECM_REQUEST *er)
 		{
 			er->rc = E_NOTFOUND;
 			er->selected_reader = NULL;
-			if(er->reader_requested > 0)
-				{ er->rcEx = 0; }  //not found by reader
-			else
-				{ er->rcEx = E2_GROUP; }  //no matching reader
+			er->rcEx = 0;
 
-			cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} NO Readers... not_found! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
+			cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} NO \"normal\" readers... not_found! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
 			send_dcw(er->client, er);
 			return;
-
 		}
 		else
 		{
