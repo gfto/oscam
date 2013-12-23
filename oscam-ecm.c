@@ -1288,7 +1288,7 @@ void chk_dcw(struct s_ecm_answer *ea)
 
 	//cache update
 	if(ea && ea->rc < E_NOTFOUND)
-		add_cache_from_reader(eardr, ert->csp_hash, ert->ecmd5, ea->cw, ert->caid, ert->prid, ert->srvid );
+		add_cache_from_reader(ert, eardr, ert->csp_hash, ert->ecmd5, ea->cw, ert->caid, ert->prid, ert->srvid );
 
 
 	//ecm request already answered!
