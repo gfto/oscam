@@ -1001,11 +1001,11 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 #ifdef CS_CACHEEX
 		if(check_client(er->cacheex_src))
 		{
+			first_client->cwcacheexhit++;
 			er->cacheex_src->cwcacheexhit++;
 			if(er->cacheex_src->account)
 				{ er->cacheex_src->account->cwcacheexhit++; }
 		}
-		first_client->cwcacheexhit++;
 #endif
 		break;
 	}
