@@ -121,7 +121,7 @@ static uint8_t checkvalidCW(ECM_REQUEST *er, char *reader, uint8_t nds)
 	}
 
 	return ret;
-};
+}
 
 void cleanupcwcycle(void)
 {
@@ -314,7 +314,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 					{
 						cwc->nextcyclecw = 1;
 						er->cwc_next_cw_cycle = 1;
-						if(cwc->cycletime <= 255 && (!(cwc->caid == 0x0100 && cwc->provid == 0x00006A))) // make sure because er->cwc_cycletime buf[18] is only 1Byte
+						if(cwc->cycletime < 128 && (!(cwc->caid == 0x0100 && cwc->provid == 0x00006A))) // make sure cycletime is lower dez 128 because share over cacheex buf[18] bit 8 is used for cwc_next_cw_cycle
 							{ er->cwc_cycletime = cwc->cycletime; }
 						cs_debug_mask(D_CWC, "cyclecheck [Valid CW 0 Cycle] Client: %s EA: %s Timediff: %ld Stage: %i Cycletime: %i dyncycletime: %i nextCycleCW = CW%i from Reader: %s", user, er_ecmf, now - cwc->time, cwc->stage, cwc->cycletime, cwc->dyncycletime, cwc->nextcyclecw, reader);
 					}
@@ -322,7 +322,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 					{
 						cwc->nextcyclecw = 0;
 						er->cwc_next_cw_cycle = 0;
-						if(cwc->cycletime <= 255 && (!(cwc->caid == 0x0100 && cwc->provid == 0x00006A))) // make sure because er->cwc_cycletime buf[18] is only 1Byte
+						if(cwc->cycletime < 128 && (!(cwc->caid == 0x0100 && cwc->provid == 0x00006A))) // make sure cycletime is lower dez 128 because share over cacheex buf[18] bit 8 is used for cwc_next_cw_cycle
 							{ er->cwc_cycletime = cwc->cycletime; }
 						cs_debug_mask(D_CWC, "cyclecheck [Valid CW 1 Cycle] Client: %s EA: %s Timediff: %ld Stage: %i Cycletime: %i dyncycletime: %i nextCycleCW = CW%i from Reader: %s", user, er_ecmf, now - cwc->time, cwc->stage, cwc->cycletime, cwc->dyncycletime, cwc->nextcyclecw, reader);
 					}

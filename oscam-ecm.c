@@ -1842,6 +1842,7 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 
 	er->client = client;
 	er->rc = E_UNHANDLED; // set default rc status to unhandled
+	er->cwc_next_cw_cycle = 2; //set it to: we dont know
 	if(now - client->lastecm > cfg.hideclient_to) { client->lastswitch = 0; }       // user was on freetv or didn't request for some time so we reset lastswitch to get correct stats/webif display
 	client->lastecm = now;
 
