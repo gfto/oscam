@@ -860,7 +860,7 @@ typedef struct ecm_request_t
 	uint8_t         cacheex_hitcache;           // =1 if wait_time due hitcache
 	void            *cw_cache;					//pointer to cw stored in cache
 #endif
-	uint8_t         cw_count;
+	uint32_t        cw_count;
 	uint8_t         from_csp;                   // =1 if er from csp cache
 	uint8_t         from_cacheex;               // =1 if er from cacheex client pushing cache
 	uint8_t         from_cacheex1_client;       // =1 if er from cacheex-1 client

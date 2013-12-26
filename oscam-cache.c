@@ -65,7 +65,7 @@ list ll_cache;
 void init_cache(void){
 	init_hash_table(&ht_cache, &ll_cache);
 	if (pthread_rwlock_init(&cache_lock,NULL) != 0)
-		cs_log("Errore nella creazione del lock cache_lock!");
+		cs_log("Error creating lock cache_lock!");
 }
 
 uint32_t cache_size(void){
@@ -178,7 +178,18 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 		}
 #endif
 
+
+		//checks for ecm[0] odd/even byte, if we need swapp cw (all this stuff could be removed when we'll include ecm[0] to csp_hash)
+		uchar cw_to_check[16];
+		if(get_first_cw(result)->odd_even != 0 && get_odd_even(er) != get_first_cw(result)->odd_even){  //swapp it
+			memcpy(cw_to_check, get_first_cw(result)->cw+8, 8);
+			memcpy(cw_to_check+8, get_first_cw(result)->cw, 8);
+		}else{
+			memcpy(cw_to_check, get_first_cw(result)->cw, 16);
+		}
+
 #ifdef CW_CYCLE_CHECK
+
 		uint8_t cwc_ct = get_first_cw(result)->cwc_cycletime > 0 ? get_first_cw(result)->cwc_cycletime : 0;
 		uint8_t cwc_ncwc = get_first_cw(result)->cwc_next_cw_cycle < 2 ? get_first_cw(result)->cwc_next_cw_cycle : 2;
 		if(get_first_cw(result)->got_bad_cwc)
@@ -186,11 +197,11 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 			pthread_rwlock_unlock(&cache_lock);
 			return NULL;
 		}
-		if(checkcwcycle(cl, er, NULL, get_first_cw(result)->cw, 0, cwc_ct, cwc_ncwc) != 0){
+		if(checkcwcycle(cl, er, NULL, cw_to_check, 0, cwc_ct, cwc_ncwc) != 0){
 			cs_debug_mask(D_CWC | D_LB, "{client %s, caid %04X, srvid %04X} [check_cache] cyclecheck passed ecm in INT. cache, ecm->rc %d", (cl ? cl->account->usr : "-"), er->caid, er->srvid, ecm ? ecm->rc : -1);
 		}else{
 			cs_debug_mask(D_CWC, "cyclecheck [BAD CW Cycle] from Int. Cache detected.. {client %s, caid %04X, srvid %04X} [check_cache] -> skip cache answer", (cl ? cl->account->usr : "-"), er->caid, er->srvid);
-			get_first_cw(result)->got_bad_cwc = 1; // no need to check it again			
+			get_first_cw(result)->got_bad_cwc = 1; // no need to check it again
 			pthread_rwlock_unlock(&cache_lock);
 			return NULL;
 		}
@@ -199,14 +210,7 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 		if (cs_malloc(&ecm, sizeof(ECM_REQUEST))){
 			ecm->rc = E_FOUND;
 			ecm->rcEx = 0;
-
-			//checks for ecm[0] odd/even byte, if we need swapp cw (all this stuff could be removed when we'll include ecm[0] to csp_hash)
-			if(get_first_cw(result)->odd_even != 0 && get_odd_even(er) != get_first_cw(result)->odd_even){  //swapp it
-				memcpy(ecm->cw, get_first_cw(result)->cw+8, 8);
-				memcpy(ecm->cw+8, get_first_cw(result)->cw, 8);
-			}else{
-				memcpy(ecm->cw, get_first_cw(result)->cw, 16);
-			}
+			memcpy(ecm->cw, cw_to_check, 16);
 
 			ecm->grp = get_first_cw(result)->grp;
 			ecm->selected_reader = get_first_cw(result)->selected_reader;
@@ -215,7 +219,7 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 #ifdef CS_CACHEEX
 			ecm->cacheex_src = get_first_cw(result)->cacheex_src;
 #endif
-			ecm->cw_count = get_first_cw(result)->count;
+			ecm->cw_count = (get_first_cw(result)->count%1000) + ((int)(get_first_cw(result)->count/1000));  //set correct cw_count, removing trick from "normal" reader!
 		}
 	}
 
@@ -298,7 +302,7 @@ void add_cache(ECM_REQUEST *er){
 					if (pthread_rwlock_init(&cw->pushout_client_lock, NULL) == 0)
 						break;
 
-					cs_log("Errore nella creazione del lock pushout_client_lock!");
+					cs_log("Error creating lock pushout_client_lock!");
 					cs_sleepms(1);
 				}
 
@@ -317,15 +321,16 @@ void add_cache(ECM_REQUEST *er){
 	}
 
 	//always update group and counter
-	cw->count++;
 	cw->grp |= er->grp;
 	if(er->from_csp) cw->csp = 1;
 
-	//if cw from normal reader, give it priority, moving cw at first position!
+	//if cw from normal reader, give it priority respect cacheex src, moving cw at first position!
 #ifdef CS_CACHEEX
-	if(!er->cacheex_src)
+	if(er->cacheex_src)
+		cw->count++;
+	else
 #endif
-		cw->count+=30000;
+	cw->count+=1000;  //trick from "normal" reader to increase priority respect cacheex src
 
 	//sort cw_list by counter (DESC order)
 	if(cw->count>1)
@@ -466,7 +471,7 @@ list ll_hitcache;
 void init_hitcache(void){
 	init_hash_table(&ht_hitcache, &ll_hitcache);
 	if (pthread_rwlock_init(&hitcache_lock,NULL) != 0)
-		cs_log("Errore nella creazione del lock hitcache_lock!");
+		cs_log("Error creating lock hitcache_lock!");
 }
 
 uint32_t hitcache_size(void){

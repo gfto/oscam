@@ -50,7 +50,7 @@ void cacheex_timeout(ECM_REQUEST *er)
 {
 	er->cacheex_wait_time_expired = 1;
 
-	//if check_cw_count_mode=0, first try to get cw from cache without check counter!
+	//if check_cw mode=0, first try to get cw from cache without check counter!
 	CWCHECK check_cw = get_cwcheck(er);
 	if(!check_cw.mode)
 	{
@@ -953,6 +953,12 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 			if(ea_orig) { snprintf(sreason, sizeof(sreason) - 1, " (real %d ms)", ea_orig->ecm_time); }
 		}
 	}
+
+	//print counter
+	if(er->cw_count>1){
+		char *cur = sreason;
+		cur += snprintf(cur, sizeof(sreason) - 1, " (cw count %d)", er->cw_count);
+	}
 #endif
 
 	client->cwlastresptime = 1000 * (tpe.time - er->tps.time) + tpe.millitm - er->tps.millitm;
@@ -1281,11 +1287,9 @@ void chk_dcw(struct s_ecm_answer *ea)
 	if(!ert)
 		{ return; }
 
-
 	//cache update
 	if(ea && ea->rc < E_NOTFOUND)
 		add_cache_from_reader(ert, eardr, ert->csp_hash, ert->ecmd5, ea->cw, ert->caid, ert->prid, ert->srvid );
-
 
 	//ecm request already answered!
 	if(ert->rc < E_99)
@@ -1318,7 +1322,7 @@ void chk_dcw(struct s_ecm_answer *ea)
 	//check if check_cw enabled
 	if(eardr && cacheex_reader(eardr)){  //IF mode-1 reader
 		CWCHECK check_cw = get_cwcheck(ert);
-		if(check_cw.counter>1) //if answer from cacheex-1 reader, and we have to check cw counter, not send answer to client! thread check_cache will send answe to client!
+		if(check_cw.counter>1) //if answer from cacheex-1 reader, and we have to check cw counter, not send answer to client! thread check_cache will send answer to client!
 			return;
 	}
 #endif
@@ -1779,13 +1783,16 @@ void write_ecm_answer_fromcache(struct s_write_from_cache *wfc)
 	{
 #ifdef CS_CACHEEX
 		if(ecm->cacheex_src)      //from cacheex or csp
-			{ er->rc = E_CACHEEX; }
+			{
+				er->rc = E_CACHEEX;
+			}
 		else
 #endif
 			{ er->rc=E_CACHE1; }      //from normal readers
 
 		memcpy(er->cw, ecm->cw, 16);
 		er->selected_reader = ecm->selected_reader;
+		er->cw_count = ecm->cw_count;
 
 #ifdef CS_CACHEEX
 		if(ecm->cacheex_src && is_valid_client(ecm->cacheex_src) && !ecm->cacheex_src->kill){ //here we should be sure cex client has not been freed!
@@ -1817,7 +1824,7 @@ void write_ecm_answer_fromcache(struct s_write_from_cache *wfc)
 
 		if(rc_orig == E_UNHANDLED)
 		{
-			cs_debug_mask(D_LB,"{client %s, caid %04X, prid %06X, srvid %04X} [write_ecm_answer_fromcache] found cw in CACHE (count %d)!", (check_client(er->client)?er->client->account->usr:"-"),er->caid, er->prid, er->srvid, ecm->cw_count);
+			cs_debug_mask(D_LB,"{client %s, caid %04X, prid %06X, srvid %04X} [write_ecm_answer_fromcache] found cw in CACHE (count %d)!", (check_client(er->client)?er->client->account->usr:"-"),er->caid, er->prid, er->srvid, er->cw_count);
 			send_dcw(er->client, er);
 		}
 	}
