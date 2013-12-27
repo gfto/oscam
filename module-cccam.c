@@ -2369,15 +2369,18 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	er->rc = rc;
 
 #ifdef CS_CACHEEX
-	if(buf[18] && (buf[18] & (0x01 << 7)))
+	if(buf[18])
 	{
-		er->cwc_cycletime = (buf[18] & 0x7F); // remove bit 8 to get cycletime
-		er->cwc_next_cw_cycle = 1;
-	}
-	else
-	{
-	er->cwc_cycletime = buf[18];
-		er->cwc_next_cw_cycle = 0;
+		if(buf[18] & (0x01 << 7))
+		{
+			er->cwc_cycletime = (buf[18] & 0x7F); // remove bit 8 to get cycletime
+			er->cwc_next_cw_cycle = 1;
+		}
+		else
+		{
+			er->cwc_cycletime = buf[18];
+			er->cwc_next_cw_cycle = 0;
+		}
 	}
 
 	if (er->cwc_cycletime && er->cwc_next_cw_cycle < 2)

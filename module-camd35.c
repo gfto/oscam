@@ -782,19 +782,22 @@ void camd35_recv_ce1_cwc_info(struct s_client *cl, uchar *buf, int32_t idx)
 	if(rc != E_FOUND)  
 		{ return; }
 
-	if(buf[18] && (buf[18] & (0x01 << 7)))
-	{
-		er->cwc_cycletime = (buf[18] & 0x7F); // remove bit 8 to get cycletime
-		er->parent->cwc_cycletime = er->cwc_cycletime;
-		er->cwc_next_cw_cycle = 1;
-		er->parent->cwc_next_cw_cycle = er->cwc_next_cw_cycle;
-	}
-	else
-	{
-	er->cwc_cycletime = buf[18];
-		er->parent->cwc_cycletime = er->cwc_cycletime;
-		er->cwc_next_cw_cycle = 0;
-		er->parent->cwc_next_cw_cycle = er->cwc_next_cw_cycle;
+	if(buf[18])
+ 	{
+		if(buf[18] & (0x01 << 7))
+		{
+			er->cwc_cycletime = (buf[18] & 0x7F); // remove bit 8 to get cycletime
+			er->parent->cwc_cycletime = er->cwc_cycletime;
+			er->cwc_next_cw_cycle = 1;
+			er->parent->cwc_next_cw_cycle = er->cwc_next_cw_cycle;
+		}
+		else
+		{
+			er->cwc_cycletime = buf[18];
+			er->parent->cwc_cycletime = er->cwc_cycletime;
+			er->cwc_next_cw_cycle = 0;
+			er->parent->cwc_next_cw_cycle = er->cwc_next_cw_cycle;
+		}
 	}
 
 	if(cl->typ == 'c' && cl->account && cl->account->cacheex.mode)
@@ -833,15 +836,18 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 	er->ecmlen = 0;
 
 #ifdef CS_CACHEEX
-	if(buf[18] && (buf[18] & (0x01 << 7)))
+	if(buf[18])
 	{
-		er->cwc_cycletime = (buf[18] & 0x7F); // remove bit 8 to get cycletime
-		er->cwc_next_cw_cycle = 1;
-	}
-	else
-	{
-		er->cwc_cycletime = buf[18];
-		er->cwc_next_cw_cycle = 0;
+		if(buf[18] & (0x01 << 7))
+		{
+			er->cwc_cycletime = (buf[18] & 0x7F); // remove bit 8 to get cycletime
+			er->cwc_next_cw_cycle = 1;
+		}
+		else
+		{
+			er->cwc_cycletime = buf[18];
+			er->cwc_next_cw_cycle = 0;
+		}
 	}
 
 	if (er->cwc_cycletime && er->cwc_next_cw_cycle < 2)
