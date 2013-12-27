@@ -179,15 +179,6 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 #endif
 
 
-		//checks for ecm[0] odd/even byte, if we need swapp cw (all this stuff could be removed when we'll include ecm[0] to csp_hash)
-		uchar cw_to_check[16];
-		if(get_first_cw(result)->odd_even != 0 && get_odd_even(er) != get_first_cw(result)->odd_even){  //swapp it
-			memcpy(cw_to_check, get_first_cw(result)->cw+8, 8);
-			memcpy(cw_to_check+8, get_first_cw(result)->cw, 8);
-		}else{
-			memcpy(cw_to_check, get_first_cw(result)->cw, 16);
-		}
-
 #ifdef CW_CYCLE_CHECK
 
 		uint8_t cwc_ct = get_first_cw(result)->cwc_cycletime > 0 ? get_first_cw(result)->cwc_cycletime : 0;
@@ -197,7 +188,7 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 			pthread_rwlock_unlock(&cache_lock);
 			return NULL;
 		}
-		if(checkcwcycle(cl, er, NULL, cw_to_check, 0, cwc_ct, cwc_ncwc) != 0){
+		if(checkcwcycle(cl, er, NULL, get_first_cw(result)->cw, 0, cwc_ct, cwc_ncwc) != 0){
 			cs_debug_mask(D_CWC | D_LB, "{client %s, caid %04X, srvid %04X} [check_cache] cyclecheck passed ecm in INT. cache, ecm->rc %d", (cl ? cl->account->usr : "-"), er->caid, er->srvid, ecm ? ecm->rc : -1);
 		}else{
 			cs_debug_mask(D_CWC, "cyclecheck [BAD CW Cycle] from Int. Cache detected.. {client %s, caid %04X, srvid %04X} [check_cache] -> skip cache answer", (cl ? cl->account->usr : "-"), er->caid, er->srvid);
@@ -210,7 +201,14 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 		if (cs_malloc(&ecm, sizeof(ECM_REQUEST))){
 			ecm->rc = E_FOUND;
 			ecm->rcEx = 0;
-			memcpy(ecm->cw, cw_to_check, 16);
+
+			//checks for ecm[0] odd/even byte, if we need swapp cw (all this stuff could be removed when we'll include ecm[0] to csp_hash)
+			if(get_first_cw(result)->odd_even != 0 && get_odd_even(er) != get_first_cw(result)->odd_even){  //swapp it
+				memcpy(ecm->cw, get_first_cw(result)->cw+8, 8);
+				memcpy(ecm->cw+8, get_first_cw(result)->cw, 8);
+			}else{
+				memcpy(ecm->cw, get_first_cw(result)->cw, 16);
+			}
 
 			ecm->grp = get_first_cw(result)->grp;
 			ecm->selected_reader = get_first_cw(result)->selected_reader;
