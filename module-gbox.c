@@ -1332,13 +1332,13 @@ static void gbox_send_dcw(struct s_client *cl, ECM_REQUEST *er)
 	buf[10] = ere->gbox_mypeer >> 8;	//From peer
 	buf[11] = ere->gbox_mypeer & 0xff;	//From peer
 	buf[12] = (ere->gbox_slot << 4) | (er->ecm[0] & 0x0f); //slot << 4 | even/odd
-	buf[13] = er->caid >> 8;		//CAID first byte
+	buf[13] = ere->gbox_caid >> 8;		//CAID first byte
 	memcpy(buf + 14, er->cw, 16);		//CW
 	buf[30] = er->gbox_crc >> 24;		//CRC
 	buf[31] = er->gbox_crc >> 16;		//CRC
 	buf[32] = er->gbox_crc >> 8;		//CRC
 	buf[33] = er->gbox_crc & 0xff;		//CRC
-	buf[34] = er->caid >> 8;		//CAID
+	buf[34] = ere->gbox_caid >> 8;		//CAID
 	buf[35] = ere->gbox_caid & 0xff;	//CAID
 	buf[36] = ere->gbox_slot;  		//Slot
 	buf[37] = ere->gbox_prid >> 8;		//ProvID
