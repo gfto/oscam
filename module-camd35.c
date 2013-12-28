@@ -471,9 +471,9 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				else if((client->typ == 'p' || client->typ == 'r') && (client->reader && client->reader->cacheex.mode))
 					{ client->cwc_info++; }
 				cs_debug_mask(D_CWC, "CWC (CE1) push to %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(client), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
+				buf[19] = er->ecm[0];
 			} 
 #endif
-			buf[19] = er->ecm[0];
 			memcpy(buf + 20, er->cw, buf[1]);
 		}
 		else
