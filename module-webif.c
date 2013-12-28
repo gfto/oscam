@@ -4380,6 +4380,86 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 		tpl_addVar(vars, TPLADD, "LOGHISTORY", "loghistorysize is set to 0 in your configuration<BR>\n");
 	}
 
+#ifdef CS_CACHEEX
+	char *getting = "<IMG SRC=\"image?i=ICARRL\" ALT=\"Getting\">";
+	char *pushing = "<IMG SRC=\"image?i=ICARRR\" ALT=\"Pushing\">";
+
+	float cachesum = first_client ? first_client->cwcacheexgot : 1;
+	if(cachesum < 1)
+	{
+		cachesum = 1;
+	}
+	tpl_printf(vars, TPLADD, "TOTAL_CACHEXPUSH", "%d", first_client ? first_client->cwcacheexpush : 0);
+	tpl_addVar(vars, TPLADD, "TOTAL_CACHEXPUSH_IMG", pushing);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHEXGOT", "%d", first_client ? first_client->cwcacheexgot : 0);
+	tpl_addVar(vars, TPLADD, "TOTAL_CACHEXGOT_IMG", getting);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHEXHIT", "%d", first_client ? first_client->cwcacheexhit : 0);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHESIZE", "%d", cache_size());
+	tpl_printf(vars, TPLADD, "REL_CACHEXHIT", "%.2f", (first_client ? first_client->cwcacheexhit : 0) * 100 / cachesum);
+	tpl_addVar(vars, TPLADD, "CACHEEXSTATS", tpl_getTpl(vars, "STATUSCACHEX"));
+#endif
+	//userinfo////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	struct s_auth *account;
+	int8_t isactive;
+	int32_t total_users = 0;
+	int32_t disabled_users = 0;
+	int32_t expired_users = 0;
+	int32_t active_users = 0;
+	for(account = cfg.account; (account); account = account->next)
+	{
+		total_users++;
+		isactive = 1;
+		if(account->expirationdate && account->expirationdate < now)
+		{
+			expired_users++;
+			isactive = 0;
+		}
+		if(account->disabled != 0)
+		{
+			disabled_users++;
+			isactive = 0;
+		}
+		if(isactive)
+		{
+			active_users++;
+		}
+	}
+	tpl_printf(vars, TPLADD, "TOTAL_USERS", "%d", total_users);
+	tpl_printf(vars, TPLADD, "TOTAL_ACTIVE", "%d", user_count_all);
+	tpl_printf(vars, TPLADD, "TOTAL_EXPIRED", "%d", expired_users);
+	tpl_printf(vars, TPLADD, "TOTAL_DISABLED", "%d", disabled_users);
+
+	if(cfg.http_hide_idle_clients == 1 || cfg.hideclient_to < 1)
+	{
+		tpl_printf(vars, TPLADD, "TOTAL_ONLINE", "%d", user_count_shown);
+		tpl_printf(vars, TPLADD, "TOTAL_CONNECTED", "%d", (user_count_all - user_count_shown));
+	}
+	else
+	{
+		tpl_printf(vars, TPLADD, "TOTAL_ONLINE", "%d", user_count_active);
+		tpl_printf(vars, TPLADD, "TOTAL_CONNECTED", "%d", (user_count_all - user_count_active));
+	}
+
+	//userinfo////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	tpl_printf(vars, TPLADD, "TOTAL_CWOK", "%d", first_client->cwfound);
+	tpl_printf(vars, TPLADD, "TOTAL_CWNOK", "%d", first_client->cwnot);
+	tpl_printf(vars, TPLADD, "TOTAL_CWIGN", "%d", first_client->cwignored);
+	tpl_printf(vars, TPLADD, "TOTAL_CWTOUT", "%d", first_client->cwtout);
+	tpl_printf(vars, TPLADD, "TOTAL_CWCACHE", "%d", first_client->cwcache);
+	tpl_printf(vars, TPLADD, "TOTAL_CWTUN", "%d", first_client->cwtun);
+
+	float ecmsum = first_client->cwfound + first_client->cwnot + first_client->cwignored + first_client->cwtout + first_client->cwcache + first_client->cwtun;
+	if(ecmsum < 1)
+	{
+		ecmsum = 1;
+	}
+	tpl_printf(vars, TPLADD, "REL_CWOK", "%.2f", first_client->cwfound * 100 / ecmsum);
+	tpl_printf(vars, TPLADD, "REL_CWNOK", "%.2f", first_client->cwnot * 100 / ecmsum);
+	tpl_printf(vars, TPLADD, "REL_CWIGN", "%.2f", first_client->cwignored * 100 / ecmsum);
+	tpl_printf(vars, TPLADD, "REL_CWTOUT", "%.2f", first_client->cwtout * 100 / ecmsum);
+	tpl_printf(vars, TPLADD, "REL_CWCACHE", "%.2f", first_client->cwcache * 100 / ecmsum);
+	tpl_printf(vars, TPLADD, "REL_CWTUN", "%.2f", first_client->cwtun * 100 / ecmsum);
+
 #ifdef WITH_DEBUG
 	// Debuglevel Selector
 	int32_t lvl;
