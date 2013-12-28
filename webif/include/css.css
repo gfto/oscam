@@ -68,6 +68,7 @@ TH.statuscol16 {text-align:center}
 TH.withservices {}
 TH.notservices {}
 TH.lbservices {}
+.groups {overflow: hidden;text-overflow: ellipsis;-o-text-overflow: ellipsis;white-space: nowrap;width: 40px;text-align:center;}
 
 /* 6. TABLE CELLS - TD
 ------------------------------------------------------------------------------------*/
