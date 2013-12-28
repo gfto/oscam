@@ -94,7 +94,8 @@ enum refreshtypes { REFR_ACCOUNTS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REF
 #define MNU_CFG_FDVBAPI 23
 #define MNU_CFG_CACHE 24
 #define MNU_CFG_WHITELIST 25
-#define MNU_CFG_TOTAL_ITEMS 26 // sum of items above. Use it for "All inactive" in function calls too.
+#define MNU_CFG_RATELIMIT 26
+#define MNU_CFG_TOTAL_ITEMS 27 // sum of items above. Use it for "All inactive" in function calls too.
 
 static void refresh_oscam(enum refreshtypes refreshtype)
 {
@@ -1205,7 +1206,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 					if(picon_exists(xml_encode(vars, rdr->label)))
 					{
 						tpl_printf(vars, TPLADD, "READERICON",
-								   "<img class=\"readericon\" src=\"image?i=IC_%s\" TITLE=\"%s\">",
+								   "<IMG CLASS=\"readericon\" SRC=\"image?i=IC_%s\" TITLE=\"%s\">",
 								   xml_encode(vars, rdr->label), xml_encode(vars, rdr->label));
 					}
 					else
@@ -1215,7 +1216,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 					if(picon_exists(xml_encode(vars, reader_get_type_desc(rdr, 0))))
 					{
 						tpl_printf(vars, TPLADD, "READERTYPEICON",
-								   "<img class=\"readertypeicon\" src=\"image?i=IC_%s\" TITLE=\"%s\">",
+								   "<IMG CLASS=\"readertypeicon\" SRC=\"image?i=IC_%s\" TITLE=\"%s\">",
 								   reader_get_type_desc(rdr, 0), reader_get_type_desc(rdr, 0));
 					}
 					else
@@ -2020,7 +2021,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 
 	if(error)
 	{
-		tpl_addVar(vars, TPLAPPEND, "READERSTATSROW", "<TR><TD colspan=\"8\"> No statistics found - Reader exist and active?</TD></TR>");
+		tpl_addVar(vars, TPLAPPEND, "READERSTATSROW", "<TR><TD COLSPAN=\"8\"> No statistics found - Reader exist and active?</TD></TR>");
 		if(!apicall)
 			{ return tpl_getTpl(vars, "READERSTATS"); }
 		else
@@ -2246,16 +2247,16 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 					if(s->rc == E_NOTFOUND)
 					{
 						tpl_addVar(vars, TPLAPPEND, "READERSTATSROWNOTFOUND", tpl_getTpl(vars, "READERSTATSBIT"));
-						tpl_addVar(vars, TPLADD, "READERSTATSNFHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"6\">Not found</TD>");
-						tpl_printf(vars, TPLAPPEND, "READERSTATSNFHEADLINE", "<TD CLASS=\"subheadline\" colspan=\"2\"><A HREF=\"readerstats.html?label=%s&amp;action=resetstat&amp;rc=4\">delete all %s</A></TD></TR>\n",
+						tpl_addVar(vars, TPLADD, "READERSTATSNFHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" COLSPAN=\"6\">Not found</TD>");
+						tpl_printf(vars, TPLAPPEND, "READERSTATSNFHEADLINE", "<TD CLASS=\"subheadline\" COLSPAN=\"2\"><A HREF=\"readerstats.html?label=%s&amp;action=resetstat&amp;rc=4\">delete all %s</A></TD></TR>\n",
 								   urlencode(vars, rdr->label),
 								   stxt[s->rc]);
 					}
 					else if(s->rc == E_TIMEOUT)
 					{
 						tpl_addVar(vars, TPLAPPEND, "READERSTATSROWTIMEOUT", tpl_getTpl(vars, "READERSTATSBIT"));
-						tpl_addVar(vars, TPLADD, "READERSTATSTOHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"6\">Timeout</TD>");
-						tpl_printf(vars, TPLAPPEND, "READERSTATSTOHEADLINE", "<TD CLASS=\"subheadline\" colspan=\"2\"><A HREF=\"readerstats.html?label=%s&amp;action=resetstat&amp;rc=5\">delete all %s</A></TD></TR>\n",
+						tpl_addVar(vars, TPLADD, "READERSTATSTOHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" COLSPAN=\"6\">Timeout</TD>");
+						tpl_printf(vars, TPLAPPEND, "READERSTATSTOHEADLINE", "<TD CLASS=\"subheadline\" COLSPAN=\"2\"><A HREF=\"readerstats.html?label=%s&amp;action=resetstat&amp;rc=5\">delete all %s</A></TD></TR>\n",
 								   urlencode(vars, rdr->label),
 								   stxt[s->rc]);
 					}
@@ -2273,7 +2274,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 	}
 	else
 #endif
-		tpl_addVar(vars, TPLAPPEND, "READERSTATSROW", "<TR><TD colspan=\"8\"> No statistics found </TD></TR>");
+		tpl_addVar(vars, TPLAPPEND, "READERSTATSROW", "<TR><TD COLSPAN=\"8\"> No statistics found </TD></TR>");
 
 	tpl_printf(vars, TPLADD, "ROWCOUNT", "%d", rowcount);
 
@@ -2659,7 +2660,7 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 			{
 				tpl_printf(vars, TPLADDONCE, "CLIENTPROTO", "%s (%s)", proto, newcamd_get_client_name(cl->ncd_client_id));
 				tpl_printf(vars, TPLADD, "PROTOICON",
-						   "<img class=\"protoicon\" src=\"image?i=IC_%s_%s\" alt=\"IC_%s_%s\" title=\"Protocol %s %s\">",
+						   "<IMG CLASS=\"protoicon\" SRC=\"image?i=IC_%s_%s\" ALT=\"IC_%s_%s\" TITLE=\"Protocol %s %s\">",
 						   proto, newcamd_get_client_name(cl->ncd_client_id), proto, newcamd_get_client_name(cl->ncd_client_id), proto, newcamd_get_client_name(cl->ncd_client_id));
 			}
 			else
@@ -2692,7 +2693,7 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 					tpl_printf(vars, TPLADDONCE, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
 					tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "cccam extinfo: %s missing icon: IC_%s_%s_%s", cc->extended_mode ? cc->remote_oscam : "", proto, cc->remote_version, cc->remote_build);
 					tpl_printf(vars, TPLADD, "PROTOICON",
-							   "<img class=\"protoicon\" src=\"image?i=IC_%s_%s_%s\" alt=\"IC_%s (%s-%s)\" title=\"Protocol %s (%s-%s) %s\">",
+							   "<IMG CLASS=\"protoicon\" SRC=\"image?i=IC_%s_%s_%s\" ALT=\"IC_%s (%s-%s)\" TITLE=\"Protocol %s (%s-%s) %s\">",
 							   proto, cc->remote_version, cc->remote_build, proto, cc->remote_version, cc->remote_build, proto, cc->remote_version, cc->remote_build, cc->extended_mode ? cc->remote_oscam : "");
 				}
 				else
@@ -2718,7 +2719,7 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 		snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s", proto);
 		if(picon_exists(picon_name))
 		{
-			tpl_printf(vars, TPLADD, "PROTOICON", "<img class=\"protoicon\" src=\"image?i=IC_%s\" alt=\"IC_%s\" title=\"Protocol %s\">", proto, proto, proto);
+			tpl_printf(vars, TPLADD, "PROTOICON", "<IMG CLASS=\"protoicon\" SRC=\"image?i=IC_%s\" ALT=\"IC_%s\" TITLE=\"Protocol %s\">", proto, proto, proto);
 			tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", (char *)proto);
 			tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
 		}
@@ -3005,7 +3006,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		if(latestclient != NULL)
 		{
 			char channame[32];
-			status = (!apicall) ? "<b>connected</b>" : "connected";
+			status = (!apicall) ? "<B>connected</B>" : "connected";
 			if(account->expirationdate && account->expirationdate < now) { classname = "expired"; }
 			else { classname = "connected"; }
 			proto = client_get_proto(latestclient);
@@ -3022,7 +3023,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				if(picon_exists(picon_name))
 				{
 					tpl_printf(vars, TPLADD, "LASTCHANNEL",
-							   "<img class=\"userpicon\" src=\"image?i=IC_%s\" alt=\"%s\" title=\"%s\">",
+							   "<IMG CLASS=\"userpicon\" SRC=\"image?i=IC_%s\" ALT=\"%s\" title=\"%s\">",
 							   picon_name, lastchan, lastchan);
 				}
 				else
@@ -3052,7 +3053,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				if(isec < cfg.hideclient_to)
 				{
 					isactive = 1;
-					status = (!apicall) ? "<b>online</b>" : "online";
+					status = (!apicall) ? "<B>online</B>" : "online";
 					if(account->expirationdate && account->expirationdate < now) { classname = "expired"; }
 					else { classname = "online"; }
 					if(latestclient->cwfound + latestclient->cwnot + latestclient->cwcache > 0)
@@ -3134,7 +3135,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			if(picon_exists(xml_encode(vars, account->usr)))
 			{
 				tpl_printf(vars, TPLADD, "USER",
-						   "<img class=\"usericon\" src=\"image?i=IC_%s\" TITLE=\"%s\">",
+						   "<IMG CLASS=\"usericon\" SRC=\"image?i=IC_%s\" TITLE=\"%s\">",
 						   xml_encode(vars, account->usr), xml_encode(vars, account->usr));
 			}
 			else
@@ -3630,7 +3631,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				for(i = 0; i < rdr->nprov; i++)
 				{
 					for(j = 0; j < 4; j++)  { tpl_printf(vars, TPLAPPEND, "READERPROVIDS", "%02X ", rdr->prid[i][j]); }
-					tpl_addVar(vars, TPLAPPEND, "READERPROVIDS", i == 0 ? "(sysid)<br>\n" : "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>\n");
+					tpl_addVar(vars, TPLAPPEND, "READERPROVIDS", i == 0 ? "(sysid)<BR>\n" : "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<BR>\n");
 				}
 
 
@@ -3693,14 +3694,14 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 
 	if(!apicall) { setActiveMenu(vars, MNU_STATUS); }
 	char picon_name[32];
-	snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "oscamlogo");
+	snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "LOGO");
 	if(picon_exists(picon_name))
 	{
-		tpl_printf(vars, TPLADD, "OSCAMLOGO", "<A HREF=\"http://www.streamboard.tv/oscam/timeline\"><img class=\"oscamlogo\" src=\"image?i=IC_oscamlogo\" alt=\"Oscam %s\" title=\"Oscam %s\"></A>", CS_SVN_VERSION, CS_SVN_VERSION);
+		tpl_printf(vars, TPLADD, "LOGO", "<A HREF=\"http://www.streamboard.tv/oscam/\" TARGET=\"_blank\"><IMG SRC=\"image?i=IC_LOGO\" ALT=\"\" TITLE=\"\"></A>");
 	}
 	else
 	{
-		tpl_printf(vars, TPLADD, "OSCAMLOGO", "<A HREF=\"http://www.streamboard.tv/oscam/timeline\">Oscam r%s</A>", CS_SVN_VERSION);
+		tpl_printf(vars, TPLADD, "LOGO", "");
 	}
 	if(strcmp(getParam(params, "action"), "kill") == 0)
 	{
@@ -3891,10 +3892,10 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							else
 							{
 								if(cau == -1)
-									{ tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "<a href=\"#\" class=\"tooltip\">ON"); }
+									{ tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "<A HREF=\"#\" CLASS=\"tooltip\">ON"); }
 								else
-									{ tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "<a href=\"#\" class=\"tooltip\">ACTIVE"); }
-								tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", "<span>");
+									{ tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "<A HREF=\"#\" CLASS=\"tooltip\">ACTIVE"); }
+								tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", "<SPAN>");
 								if(cl->typ == 'c')
 								{
 									struct s_reader *rdr;
@@ -3902,13 +3903,13 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 									while((rdr = ll_iter_next(&itr)))
 									{
 										if(rdr->audisabled)
-											{ tpl_printf(vars, TPLAPPEND, "CLIENTCAUHTTP", "(%s)<br>", xml_encode(vars, rdr->label)); }
+											{ tpl_printf(vars, TPLAPPEND, "CLIENTCAUHTTP", "(%s)<BR>", xml_encode(vars, rdr->label)); }
 										else
-											{ tpl_printf(vars, TPLAPPEND, "CLIENTCAUHTTP", "%s<br>", xml_encode(vars, rdr->label)); }
+											{ tpl_printf(vars, TPLAPPEND, "CLIENTCAUHTTP", "%s<BR>", xml_encode(vars, rdr->label)); }
 									}
 								}
 								else { tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", xml_encode(vars, cl->reader->label)); }
-								tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", "</span></a>");
+								tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", "</SPAN></A>");
 							}
 						}
 					}
@@ -3973,13 +3974,13 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								if(cl->typ == 'c')
 								{
 									tpl_printf(vars, TPLADD, "STATUSUSERICON",
-											   "<A HREF=\"user_edit.html?user=%s\"><img class=\"statususericon\" src=\"image?i=IC_%s\" TITLE=\"Edit User %s\"></A>",
+											   "<A HREF=\"user_edit.html?user=%s\"><IMG CLASS=\"statususericon\" SRC=\"image?i=IC_%s\" TITLE=\"Edit User %s\"></A>",
 											   xml_encode(vars, usr), xml_encode(vars, usr), xml_encode(vars, usr));
 								}
 								if(cl->typ == 'p' || cl->typ == 'r')
 								{
 									tpl_printf(vars, TPLADD, "STATUSUSERICON",
-											   "<A HREF=\"readerconfig.html?label=%s\"><img class=\"statususericon\" src=\"image?i=IC_%s\" TITLE=\" Edit Reader %s\"></A>",
+											   "<A HREF=\"readerconfig.html?label=%s\"><IMG CLASS=\"statususericon\" SRC=\"image?i=IC_%s\" TITLE=\"Edit Reader %s\"></A>",
 											   xml_encode(vars, usr), xml_encode(vars, usr), xml_encode(vars, usr));
 								}
 							}
@@ -3988,13 +3989,13 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								if(cl->typ == 'c')
 								{
 									tpl_printf(vars, TPLADD, "STATUSUSERICON",
-											   "<A class=\"statususericon\" HREF=\"user_edit.html?user=%s\" TITLE=\"Edit User %s\">%s</A>",
+											   "<A CLASS=\"statususericon\" HREF=\"user_edit.html?user=%s\" TITLE=\"Edit User %s\">%s</A>",
 											   xml_encode(vars, usr), xml_encode(vars, usr), xml_encode(vars, usr));
 								}
 								else
 								{
 									tpl_printf(vars, TPLADD, "STATUSUSERICON",
-											   "<A class=\"statususericon\" HREF=\"readerconfig.html?label=%s\" TITLE=\"Edit Reader %s\">%s</A>",
+											   "<A CLASS=\"statususericon\" HREF=\"readerconfig.html?label=%s\" TITLE=\"Edit Reader %s\">%s</A>",
 											   xml_encode(vars, usr), xml_encode(vars, usr), xml_encode(vars, usr));
 								}
 							}
@@ -4004,13 +4005,13 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							if(cl->typ == 'c')
 							{
 								tpl_printf(vars, TPLADD, "STATUSUSERICON",
-										   "<A class=\"statususericon\" HREF=\"user_edit.html?user=%s\" TITLE=\"Edit User %s\">%s</A>",
+										   "<A CLASS=\"statususericon\" HREF=\"user_edit.html?user=%s\" TITLE=\"Edit User %s\">%s</A>",
 										   xml_encode(vars, usr), xml_encode(vars, usr), xml_encode(vars, usr));
 							}
 							else
 							{
 								tpl_printf(vars, TPLADD, "STATUSUSERICON",
-										   "<A class=\"statususericon\" HREF=\"readerconfig.html?label=%s\" TITLE=\"Edit Reader %s\">%s</A>",
+										   "<A CLASS=\"statususericon\" HREF=\"readerconfig.html?label=%s\" TITLE=\"Edit Reader %s\">%s</A>",
 										   xml_encode(vars, usr), xml_encode(vars, usr), xml_encode(vars, usr));
 							}
 						}
@@ -4095,7 +4096,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								if(picon_exists(picon_name))
 								{
 									tpl_printf(vars, TPLADD, "CLIENTCURRENTPICON",
-											   "<img class=\"clientcurrentpicon\" src=\"image?i=IC_%04X_%04X\">",
+											   "<IMG CLASS=\"clientcurrentpicon\" SRC=\"image?i=IC_%04X_%04X\">",
 											   actual_caid, actual_srvid);
 								}
 								else
@@ -4229,7 +4230,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 
 								}
 
-								tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s&hideexpired=1\" class=\"tooltip%s\">%s%s</A>",
+								tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s&hideexpired=1\" CLASS=\"tooltip%s\">%s%s</A>",
 										   urlencode(vars, cl->reader->label),
 										   active_ent > 0 ? "" : "1",
 										   tpl_getVar(vars, "TMP"),
@@ -4237,7 +4238,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							}
 							else
 							{
-								tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s&hideexpired=1\" class=\"tooltip\">(no entitlements)"
+								tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s&hideexpired=1\" CLASS=\"tooltip\">(no entitlements)"
 										   "<SPAN>No active entitlements found</SPAN></A>",
 										   urlencode(vars, cl->reader->label));
 							}
@@ -4268,7 +4269,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 												   rcc->num_reshare2,
 												   rcc->num_resharex);
 
-										tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" class=\"tooltip%s\">%s%s</A>",
+										tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" CLASS=\"tooltip%s\">%s%s</A>",
 												   urlencode(vars, cl->reader->label),
 												   rcc->num_reshare0 > 0 ? "1" : "",
 												   tpl_getVar(vars, "TMP"),
@@ -4290,25 +4291,25 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					if(shown) { tpl_addVar(vars, TPLAPPEND, "CLIENTSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT")); }
 					if(cfg.http_hide_idle_clients == 1 || cfg.hideclient_to < 1)
 					{
-						tpl_printf(vars, TPLADD, "CLIENTHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d</TD></TR>\n",
+						tpl_printf(vars, TPLADD, "CLIENTHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" COLSPAN=\"17\">Clients %d/%d</TD></TR>\n",
 								   user_count_shown, user_count_all);
 					}
 					else
 					{
-						tpl_printf(vars, TPLADD, "CLIENTHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d (%d with ECM within last %d seconds)</TD></TR>\n",
+						tpl_printf(vars, TPLADD, "CLIENTHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" COLSPAN=\"17\">Clients %d/%d (%d with ECM within last %d seconds)</TD></TR>\n",
 								   user_count_shown, user_count_all, user_count_active, cfg.hideclient_to);
 					}
 				}
 				else if(cl->typ == 'r')
 				{
 					if(shown) { tpl_addVar(vars, TPLAPPEND, "READERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT")); }
-					tpl_printf(vars, TPLADD, "READERHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"17\">Readers %d/%d</TD></TR>\n",
+					tpl_printf(vars, TPLADD, "READERHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" COLSPAN=\"17\">Readers %d/%d</TD></TR>\n",
 							   reader_count_conn, reader_count_all);
 				}
 				else if(cl->typ == 'p')
 				{
 					if(shown) { tpl_addVar(vars, TPLAPPEND, "PROXYSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT")); }
-					tpl_printf(vars, TPLADD, "PROXYHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"17\">Proxies %d/%d</TD></TR>\n",
+					tpl_printf(vars, TPLADD, "PROXYHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" COLSPAN=\"17\">Proxies %d/%d</TD></TR>\n",
 							   proxy_count_conn, proxy_count_all);
 				}
 				else if(shown) { tpl_addVar(vars, TPLAPPEND, "SERVERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT")); }
@@ -4364,7 +4365,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 			{
 				if(p_txt[0])
 					tpl_printf(vars, TPLAPPEND, "LOGHISTORY",
-							   "\t\t<span class=\"%s\">%s\t\t</span><br>\n", xml_encode(vars, p_usr), xml_encode(vars, p_txt));
+							   "\t\t<SPAN CLASS=\"%s\">%s\t\t</SPAN><BR>\n", xml_encode(vars, p_usr), xml_encode(vars, p_txt));
 			}
 			else
 			{
@@ -4607,7 +4608,7 @@ static char *send_oscam_services(struct templatevars * vars, struct uriparams * 
 		if((strcmp(getParam(params, "service"), sidtab->label) == 0) && (strcmp(getParam(params, "action"), "list") == 0))
 		{
 			tpl_addVar(vars, TPLADD, "SIDCLASS", "sidlist");
-			tpl_addVar(vars, TPLAPPEND, "SID", "<div style=\"float:right;background-color:red;color:white\"><A HREF=\"services.html\" style=\"color:white;text-decoration:none\">X</A></div>");
+			tpl_addVar(vars, TPLAPPEND, "SID", "<DIV CLASS=\"sidlistclose\"><A HREF=\"services.html\">X</A></DIV>");
 			for(i = 0; i < sidtab->num_srvid; i++)
 			{
 				tpl_printf(vars, TPLAPPEND, "SID", "%04X : %s<BR>", sidtab->srvid[i], xml_encode(vars, get_servicename(cur_client(), sidtab->srvid[i], sidtab->caid[0], channame)));
@@ -4856,11 +4857,11 @@ static void webif_process_userfile(struct templatevars * vars, struct uriparams 
 
 	tpl_addVar(vars, TPLAPPEND, "LOGMENU", "<A HREF=\"files.html?file=userfile&amp;clear=usrfile\">Clear Log</A>");
 
-	tpl_printf(vars, TPLADD, "FILTERFORMOPTIONS", "<OPTION value=\"%s\">%s</OPTION>\n", "all", "all");
+	tpl_printf(vars, TPLADD, "FILTERFORMOPTIONS", "<option value=\"%s\">%s</option>\n", "all", "all");
 	struct s_auth *account;
 	for(account = cfg.account; account; account = account->next)
 	{
-		tpl_printf(vars, TPLAPPEND, "FILTERFORMOPTIONS", "<OPTION value=\"%s\" %s>%s</OPTION>\n",
+		tpl_printf(vars, TPLAPPEND, "FILTERFORMOPTIONS", "<option value=\"%s\" %s>%s</option>\n",
 				   xml_encode(vars, account->usr),
 				   strcmp(getParam(params, "filter"), account->usr) ? "" : "selected",
 				   xml_encode(vars, account->usr)
@@ -4893,6 +4894,8 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 		{ "oscam.srvid",     MNU_CFG_FSRVID,    FTYPE_CONFIG },
 		{ "oscam.provid",    MNU_CFG_FPROVID,   FTYPE_CONFIG },
 		{ "oscam.tiers",     MNU_CFG_FTIERS,    FTYPE_CONFIG },
+        { "oscam.ratelimit", MNU_CFG_RATELIMIT, FTYPE_CONFIG },
+        
 #ifdef HAVE_DVBAPI
 		{ "oscam.dvbapi",    MNU_CFG_FDVBAPI,   FTYPE_CONFIG },
 #endif
@@ -5935,19 +5938,19 @@ static char *send_oscam_ghttp(struct templatevars * vars, struct uriparams * par
 			bool missing = false;
 			if(strlen(getParam(params, "gacuser")) == 0)
 			{
-				tpl_addVar(vars, TPLADD, "USERREQ", "<font color='red'>(Required)</font>");
+				tpl_addVar(vars, TPLADD, "USERREQ", "<FONT COLOR='red'>(Required)</FONT>");
 				missing = true;
 			}
 			else { tpl_addVar(vars, TPLADD, "GACUSER", getParam(params, "gacuser")); }
 			if(strlen(getParam(params, "gacpasswd")) == 0)
 			{
-				tpl_addVar(vars, TPLADD, "PWDREQ", "<font color='red'>(Required)</font>");
+				tpl_addVar(vars, TPLADD, "PWDREQ", "<FONT COLOR='red'>(Required)</FONT>");
 				missing = true;
 			}
 			else { tpl_addVar(vars, TPLADD, "GACPASSWD", getParam(params, "gacpasswd")); }
 			if(strlen(getParam(params, "gacname")) == 0)
 			{
-				tpl_addVar(vars, TPLADD, "NAMEREQ", "<font color='red'>(Required)</font>");
+				tpl_addVar(vars, TPLADD, "NAMEREQ", "<FONT COLOR='red'>(Required)</FONT>");
 				missing = true;
 			}
 			else { tpl_addVar(vars, TPLADD, "GACNAME", getParam(params, "gacname")); }

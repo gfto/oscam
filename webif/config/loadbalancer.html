@@ -30,10 +30,10 @@
 			<TR><TD>##TPLHELPPREFIX##conf#lb_reopen_seconds##TPLHELPSUFFIX##Time to reopen:</A></TD><TD><input name="lb_reopen_seconds" type="text" size="5" maxlength="5" value="##LBREOPENSECONDS##"> s</TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#lb_stat_cleanup##TPLHELPSUFFIX##Hours to cleanup older than:</A></TD><TD><input name="lb_stat_cleanup" type="text" size="5" maxlength="5" value="##LBCLEANUP##"> h</TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#lb_noproviderforcaid##TPLHELPSUFFIX##Ignore provider for:</A></TD><TD><input name="lb_noproviderforcaid" type="text" size="63" maxlength="160" value="##LBNOPROVIDERFORCAID##"></TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#lb_auto_betatunnel##TPLHELPSUFFIX##Auto Betatunnel:</A></TD><TD><SELECT NAME="lb_auto_betatunnel"><OPTION VALUE="0">NO</OPTION><OPTION VALUE="1" ##LBAUTOBETATUNNEL##>YES</OPTION></SELECT></TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#lb_auto_betatunnel_mode##TPLHELPSUFFIX##Auto Betatunnel Mode:</A></TD><TD><SELECT NAME="lb_auto_betatunnel_mode"><OPTION VALUE="0">0 - 18XX->17X2 (only)</OPTION><OPTION VALUE="1" ##LBAUTOBETATUNNELMODE1##>1 - 18XX->17X2 & 17X2->18XX (1833/1801)</OPTION><OPTION VALUE="2" ##LBAUTOBETATUNNELMODE2##>2 - 18XX->17X2 & 17X2->18XX (1833/1834)</OPTION><OPTION VALUE="3" ##LBAUTOBETATUNNELMODE3##>3 - 18XX->17X2 & 17X2->18XX (1833/1835)</OPTION><OPTION VALUE="4" ##LBAUTOBETATUNNELMODE4##>4 - 17X2->18XX (1833/1801 only)</OPTION><OPTION VALUE="5" ##LBAUTOBETATUNNELMODE5##>5 - 17X2->18XX (1833/1834 only)</OPTION><OPTION VALUE="6" ##LBAUTOBETATUNNELMODE6##>6 - 17X2->18XX (1833/1835 only)</OPTION></SELECT></TD></TR>
+			<TR><TD>##TPLHELPPREFIX##conf#lb_auto_betatunnel##TPLHELPSUFFIX##Auto Betatunnel:</A></TD><TD><select name="lb_auto_betatunnel"><option value="0">NO</option><option value="1" ##LBAUTOBETATUNNEL##>YES</option></select></TD></TR>
+			<TR><TD>##TPLHELPPREFIX##conf#lb_auto_betatunnel_mode##TPLHELPSUFFIX##Auto Betatunnel Mode:</A></TD><TD><select name="lb_auto_betatunnel_mode"><option value="0">0 - 18XX->17X2 (only)</option><option value="1" ##LBAUTOBETATUNNELMODE1##>1 - 18XX->17X2 & 17X2->18XX (1833/1801)</option><option value="2" ##LBAUTOBETATUNNELMODE2##>2 - 18XX->17X2 & 17X2->18XX (1833/1834)</option><option value="3" ##LBAUTOBETATUNNELMODE3##>3 - 18XX->17X2 & 17X2->18XX (1833/1835)</option><option value="4" ##LBAUTOBETATUNNELMODE4##>4 - 17X2->18XX (1833/1801 only)</option><option value="5" ##LBAUTOBETATUNNELMODE5##>5 - 17X2->18XX (1833/1834 only)</option><option value="6" ##LBAUTOBETATUNNELMODE6##>6 - 17X2->18XX (1833/1835 only)</option></select></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#lb_auto_betatunnel_prefer_beta##TPLHELPSUFFIX##Prefer Beta over Nagra:</A></TD><TD><input name="lb_auto_betatunnel_prefer_beta" type="text" size="5" maxlength="5" value="##LBPREFERBETA##"> %</TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#lb_auto_timeout##TPLHELPSUFFIX##Auto timeout:</A></TD><TD><SELECT NAME="lb_auto_timeout"><OPTION VALUE="0">NO</OPTION><OPTION VALUE="1" ##LBAUTOTIMEOUT##>YES</OPTION></SELECT></TD></TR>
+			<TR><TD>##TPLHELPPREFIX##conf#lb_auto_timeout##TPLHELPSUFFIX##Auto timeout:</A></TD><TD><select name="lb_auto_timeout"><option value="0">NO</option><option value="1" ##LBAUTOTIMEOUT##>YES</option></select></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#lb_auto_timeout_p##TPLHELPSUFFIX##Auto timeout percent:</A></TD><TD><input name="lb_auto_timeout_p" type="text" size="5" maxlength="5" value="##LBAUTOTIMEOUTP##"> %</TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#lb_auto_timeout_t##TPLHELPSUFFIX##Auto timeout time:</A></TD><TD><input name="lb_auto_timeout_t" type="text" size="5" maxlength="5" value="##LBAUTOTIMEOUTT##"> ms</TD></TR>
 			<TR><TD COLSPAN="2" ALIGN="right"><input type="submit" value="Save" title="Save settings" ##BTNDISABLED##></TD></TR>
@@ -44,11 +44,11 @@
 	<TABLE CLASS="config upspace">
 		<TR><TH COLSPAN="5">Control</TH></TR>
 		<TR>
-			<TD STYLE="text-align:center;"><input type="submit" name="button" value="Load Stats" ##BTNDISABLED##></TD>
-			<TD STYLE="text-align:center;"><input type="submit" name="button" value="Save Stats" ##BTNDISABLED##></TD>
-			<TD STYLE="text-align:center;"><input type="submit" name="button" value="Clear Stats" ##BTNDISABLED##></TD>
-			<TD STYLE="text-align:center;"><input type="submit" name="button" value="Clear Timeouts" ##BTNDISABLED##></TD>
-			<TD STYLE="text-align:center;"><input type="submit" name="button" value="Clear Not Founds" ##BTNDISABLED##></TD>
+			<TD CLASS="centered"><input type="submit" name="button" value="Load Stats" ##BTNDISABLED##></TD>
+			<TD CLASS="centered"><input type="submit" name="button" value="Save Stats" ##BTNDISABLED##></TD>
+			<TD CLASS="centered"><input type="submit" name="button" value="Clear Stats" ##BTNDISABLED##></TD>
+			<TD CLASS="centered"><input type="submit" name="button" value="Clear Timeouts" ##BTNDISABLED##></TD>
+			<TD CLASS="centered"><input type="submit" name="button" value="Clear Not Founds" ##BTNDISABLED##></TD>
 		</TR>
 	</TABLE>
 	</form>
