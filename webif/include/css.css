@@ -68,7 +68,6 @@ TH.statuscol16 {text-align:center}
 TH.withservices {}
 TH.notservices {}
 TH.lbservices {}
-.groups {overflow: hidden;text-overflow: ellipsis;-o-text-overflow: ellipsis;white-space: nowrap;width: 40px;text-align:center;}
 
 /* 6. TABLE CELLS - TD
 ------------------------------------------------------------------------------------*/
@@ -168,7 +167,8 @@ DIV.cccamentitlementcontrols {margin-top:14px}
 DIV.warning {margin:42px 0 14px 0}
 DIV.logo {position:absolute;top:5px;left:5px}
 DIV.header {}
-DIV.footer {border-top: 1px solid #AAA;margin-top:20px;padding-top:10px}
+DIV.footer {border-top:1px solid #AAA;margin-top:20px;padding-top:10px}
+DIV.groups {overflow:hidden;text-overflow:ellipsis;-o-text-overflow:ellipsis;white-space:nowrap;width:40px}
 
 /* 9. TEXTAREA
 ------------------------------------------------------------------------------------*/
