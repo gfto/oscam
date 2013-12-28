@@ -3701,7 +3701,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	}
 	else
 	{
-		tpl_printf(vars, TPLADD, "LOGO", "");
+		tpl_addVar(vars, TPLADD, "LOGO", "");
 	}
 	if(strcmp(getParam(params, "action"), "kill") == 0)
 	{
