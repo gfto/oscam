@@ -4067,8 +4067,8 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					{
 						if(((cl->typ != 'r') || (cl->typ != 'p')) && (cl->lastreader[0]))
 						{
-							tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "by %s", cl->lastreader);
-							tpl_printf(vars, TPLAPPEND, "CLIENTLBVALUE", "&nbsp;(%dms)", cl->cwlastresptime);
+							tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "(%dms)&nbsp;", cl->cwlastresptime);
+							tpl_printf(vars, TPLAPPEND, "CLIENTLBVALUE", "by %s", cl->lastreader);
 							if(apicall)
 								{ tpl_addVar(vars, TPLADD, "LASTREADER", cl->lastreader); }
 						}
