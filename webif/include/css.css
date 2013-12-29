@@ -73,6 +73,7 @@ TH.lbservices {}
 ------------------------------------------------------------------------------------*/
 TD {height:10px;padding:5px;background-color:#EEE;color:black;text-align:left}
 TD.centered {text-align:center}
+TD.centered DIV {margin:auto}
 TD.statuscol0 {text-align:center;width:10px}
 TD.statuscol1 {text-align:center}
 TD.statuscol2 {text-align:center}
@@ -168,7 +169,7 @@ DIV.warning {margin:42px 0 14px 0}
 DIV.logo {position:absolute;top:5px;left:5px}
 DIV.header {}
 DIV.footer {border-top:1px solid #AAA;margin-top:20px;padding-top:10px}
-DIV.groups {overflow:hidden;text-overflow:ellipsis;-o-text-overflow:ellipsis;white-space:nowrap;width:40px}
+DIV.groups {overflow:hidden;text-overflow:ellipsis;-o-text-overflow:ellipsis;white-space:nowrap;width:40px;text-align:center;cursor:pointer;cursor:default}
 
 /* 9. TEXTAREA
 ------------------------------------------------------------------------------------*/

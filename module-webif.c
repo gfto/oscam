@@ -1321,7 +1321,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>camd33</option>\n");
 #endif
 #ifdef MODULE_CAMD35
-		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>camd35</option>\n");
+		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>cs357x</option>\n");
 #endif
 #ifdef MODULE_CAMD35_TCP
 		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>cs378x</option>\n");

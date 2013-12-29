@@ -61,7 +61,7 @@ APIREADERSTATSECMBIT          api.xml/readerstats_ecmstats.xml
 READERCONFIG                  readerconfig/readerconfig.html
 READERCONFIGSIDOKBIT          readerconfig/readerconfig_sidokbit.html
 READERCONFIGSIDNOBIT          readerconfig/readerconfig_sidnobit.html
-READERCONFIGSIDLBOKBIT          readerconfig/readerconfig_sidlbokbit.html
+READERCONFIGSIDLBOKBIT        readerconfig/readerconfig_sidlbokbit.html
 READERCONFIGSTDHWREADERBIT    readerconfig/readerconfig_hwreader.html
 READERCONFIGHOPBIT            readerconfig/readerconfig_hopbit.html
 READERCONFIGCAMD35BIT         readerconfig/readerconfig_camd35bit.html
@@ -114,6 +114,8 @@ USEREDITANTICASC              user_edit/user_edit_anticasc.html                 
 CONFIGANTICASC                config/anticasc.html                                        CS_ANTICASC
 CONFIGMENUANTICASC            config/menu_anticasc.html                                   CS_ANTICASC
 FILEMENUANTICASC              files/menu_anticasc.html                                    CS_ANTICASC
+CWANTICASCTHV                 userconfig/userconfig_cwanticascthv.html                    CS_ANTICASC
+CWANTICASCTBV                 userconfig/userconfig_entry_cwanticasctbv.html              CS_ANTICASC
 CONFIGMENUMONITOR             config/menu_monitor.html                                    MODULE_MONITOR
 CONFIGMENUWEBIF               config/menu_webif.html
 CONFIGMENULCD                 config/menu_lcd.html                                        LCDSUPPORT
