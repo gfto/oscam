@@ -1466,7 +1466,18 @@ static void gbox_local_cards(struct s_client *cli)
 				}
 			}
 			else
-				{ gbox_add_local_card(gbox, gbox->id, cl->reader->caid, 0, slot, card_reshare, 0); }
+				{ 
+					gbox_add_local_card(gbox, gbox->id, cl->reader->caid, 0, slot, card_reshare, 0); 
+
+					//Check for Betatunnel on gbox account in oscam.user
+					if (chk_is_betatunnel_caid(cl->reader->caid) == 1 && cli->ttab.n && cl->reader->caid == cli->ttab.bt_caidto[0])
+					{
+						//For now only first entry in tunnel tab. No sense in iteration?
+						//Add betatunnel card to transmitted list
+						gbox_add_local_card(gbox, gbox->id, cli->ttab.bt_caidfrom[0], 0, slot, card_reshare, 0);
+						cs_debug_mask(D_READER, "gbox created betatunnel card for caid: %04X->%04X",cli->ttab.bt_caidfrom[0],cl->reader->caid);
+					}
+				}
 		}   //end local readers
 #ifdef MODULE_CCCAM
 		if(cl->typ == 'p' && cl->reader
@@ -1566,10 +1577,6 @@ static int32_t gbox_client_init(struct s_client *cli)
 
 	int32_t opt = 1;
 	setsockopt(cli->udp_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-
-#ifdef SO_REUSEPORT
-	setsockopt(cli->udp_fd, SOL_SOCKET, SO_REUSEPORT, (void *)&opt, sizeof(opt));
-#endif
 
 #ifdef SO_REUSEPORT
 	setsockopt(cli->udp_fd, SOL_SOCKET, SO_REUSEPORT, (void *)&opt, sizeof(opt));

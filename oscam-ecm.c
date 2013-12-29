@@ -2472,7 +2472,7 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 	cs_hexdump(0, ecm->cw, 16, cwhex, sizeof(cwhex));
 #ifdef MODULE_GBOX
 	struct gbox_ecm_request_ext *ere = ecm->src_data;
-	if(ere && ere->gbox_hops)
+	if(ere && check_client(ecm->client) && get_module(ecm->client)->num == R_GBOX && ere->gbox_hops)
 		{ return ecmfmt(ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, result, size, ere->gbox_peer, ere->gbox_hops); }
 	else
 #endif
