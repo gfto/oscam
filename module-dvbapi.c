@@ -1179,8 +1179,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 	{
 #ifdef WITH_STAPI
 	case STAPI:
-		if(!enable) idx = -1;
-		stapi_set_pid(demux_id, num, idx, demux[demux_id].STREAMpids[num], demux[demux_id].pmt_file); // only used to disable pids!!!
+		stapi_set_pid(demux_id, idx, demux[demux_id].STREAMpids[num], enable, demux[demux_id].pmt_file); 
 		break;
 #endif
 #ifdef WITH_COOLAPI
@@ -2373,7 +2372,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 			demux_id = i;
 
-#if defined WITH_STAPI || defined WITH_COOLAPI || defined WITH_MCA || defined WITH_AZBOX
+#if defined WITH_COOLAPI || defined WITH_MCA || defined WITH_AZBOX
 			dvbapi_stop_descrambling(i); // stop descrambling for all boxes except dvbapi based boxes
 #else
 			cs_log("[DVBAPI] Demuxer #%d continue decoding of SRVID %04X", i, demux[i].program_number);
@@ -2614,7 +2613,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	
 	if(demux[demux_id].ECMpidcount == 0) { return demux_id; }  // for FTA it ends here!
 
-#if !defined WITH_STAPI && !defined WITH_COOLAPI && !defined WITH_MCA && !defined WITH_AZBOX
+#if !defined WITH_COOLAPI && !defined WITH_MCA && !defined WITH_AZBOX
 	if (running) disable_unused_streampids(demux_id); // disable all streampids not in use anymore
 #endif
 	if(running == 0)   // only start demuxer if it wasnt running
@@ -4051,8 +4050,8 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		switch(selected_api)
 		{
 #ifdef WITH_STAPI
-		case STAPI:
-			stapi_write_cw(i, er->cw, demux[i].STREAMpids, demux[i].STREAMpidcount, demux[i].pmt_file);
+		case STAPI:	
+			stapi_write_cw(i, er->cw, j);
 			break;
 #endif
 		default:
@@ -4497,9 +4496,12 @@ void disable_unused_streampids(int16_t demux_id)
 	int32_t i,n;
 	struct s_streampid *listitem;
 	// search for old enabled streampids on all ca devices that have to be disabled, index 0 is skipped as it belongs to fta!
+#ifdef WITH_STAPI	
+	for(i = 0; i < PTINUM; i++){
+#else
 	for(i = 0; i < 8 && idx; i++){
 		if(!(demux[demux_id].ca_mask & (1 << i))) continue; // continue if ca is unused by this demuxer
-		
+#endif		
 		LL_ITER itr;
 		itr = ll_iter_create(ll_activestreampids);
 		while((listitem = ll_iter_next(&itr)))
