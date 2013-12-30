@@ -45,16 +45,16 @@ READERSTATS                   readerstats/readerstats.html
 READERSTATSBIT                readerstats/readerstats_statsbit.html
 SCANUSB                       scanusb/scanusb.html
 SCANUSBBIT                    scanusb/scanusb_usbbit.html
-ENTITLEMENTS                  entitlements/entitlements.html
-ENTITLEMENTGENERICBIT         entitlements/entitlements_genericbit.html
-ENTITLEMENTBIT                entitlements/entitlements_bit.html
-ENTITLEMENTITEMBIT            entitlements/entitlements_itembit.html
-ENTITLEMENTCCCAMBIT           entitlements/entitlements_cccambit.html
-ENTITLEMENTCCCAMENTRYBIT      entitlements/entitlements_cccambit_statsentry.html
-APICCCAMCARDLIST              api.xml/cccamcardlist.xml
-APICCCAMCARDBIT               api.xml/cccamcardlist_cardlist.xml
-APICCCAMCARDNODEBIT           api.xml/cccamcardlist_cardlist_nodelist.xml
-APICCCAMCARDPROVIDERBIT       api.xml/cccamcardlist_cardlist_providerlist.xml
+ENTITLEMENTS                  entitlements/entitlements.html                              WITH_CARDREADER
+ENTITLEMENTGENERICBIT         entitlements/entitlements_genericbit.html                   WITH_CARDREADER
+ENTITLEMENTBIT                entitlements/entitlements_bit.html                          WITH_CARDREADER
+ENTITLEMENTITEMBIT            entitlements/entitlements_itembit.html                      WITH_CARDREADER
+ENTITLEMENTCCCAMBIT           entitlements/entitlements_cccambit.html                     MODULE_CCCAM
+ENTITLEMENTCCCAMENTRYBIT      entitlements/entitlements_cccambit_statsentry.html          MODULE_CCCAM
+APICCCAMCARDLIST              api.xml/cccamcardlist.xml                                   MODULE_CCCAM
+APICCCAMCARDBIT               api.xml/cccamcardlist_cardlist.xml                          MODULE_CCCAM
+APICCCAMCARDNODEBIT           api.xml/cccamcardlist_cardlist_nodelist.xml                 MODULE_CCCAM
+APICCCAMCARDPROVIDERBIT       api.xml/cccamcardlist_cardlist_providerlist.xml             MODULE_CCCAM
 APIREADERSTATS                api.xml/readerstats.xml
 APIREADERSTATSEMMBIT          api.xml/readerstats_emmstats.xml
 APIREADERSTATSECMBIT          api.xml/readerstats_ecmstats.xml
@@ -62,15 +62,15 @@ READERCONFIG                  readerconfig/readerconfig.html
 READERCONFIGSIDOKBIT          readerconfig/readerconfig_sidokbit.html
 READERCONFIGSIDNOBIT          readerconfig/readerconfig_sidnobit.html
 READERCONFIGSIDLBOKBIT        readerconfig/readerconfig_sidlbokbit.html
-READERCONFIGSTDHWREADERBIT    readerconfig/readerconfig_hwreader.html
+READERCONFIGSTDHWREADERBIT    readerconfig/readerconfig_hwreader.html                     WITH_CARDREADER
 READERCONFIGHOPBIT            readerconfig/readerconfig_hopbit.html
-READERCONFIGCAMD35BIT         readerconfig/readerconfig_camd35bit.html
-READERCONFIGCS378XBIT         readerconfig/readerconfig_cs378xbit.html
-READERCONFIGRADEGASTBIT       readerconfig/readerconfig_radegastbit.html
+READERCONFIGCAMD35BIT         readerconfig/readerconfig_camd35bit.html                    MODULE_CAMD35
+READERCONFIGCS378XBIT         readerconfig/readerconfig_cs378xbit.html                    MODULE_CAMD35_TCP
+READERCONFIGRADEGASTBIT       readerconfig/readerconfig_radegastbit.html                  MODULE_RADEGAST
 READERCONFIGGHTTPBIT          readerconfig/readerconfig_ghttpbit.html
-READERCONFIGNCD525BIT         readerconfig/readerconfig_ncd525bit.html
-READERCONFIGNCD524BIT         readerconfig/readerconfig_ncd524bit.html
-READERCONFIGCCCAMBIT          readerconfig/readerconfig_cccambit.html
+READERCONFIGNCD525BIT         readerconfig/readerconfig_ncd525bit.html                    MODULE_NEWCAMD
+READERCONFIGNCD524BIT         readerconfig/readerconfig_ncd524bit.html                    MODULE_NEWCAMD
+READERCONFIGCCCAMBIT          readerconfig/readerconfig_cccambit.html                     MODULE_CCCAM
 APIUSEREDIT                   api.xml/useredit.xml
 USEREDIT                      user_edit/user_edit.html
 USEREDITSIDOKBIT              user_edit/user_edit_sidokbit.html
