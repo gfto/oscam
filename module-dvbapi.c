@@ -2289,6 +2289,7 @@ static void getDemuxOptions(int32_t demux_id, unsigned char *buffer, uint16_t *c
 		uint32_t demuxid = buffer[20];
 		if (demuxid == 0xff) demuxid = 0; // tryfix prismcube (0xff -> "demux-1" = error! )
 		*demux_index = demuxid; 
+		if (buffer[25]==0x83 && buffer[26]==0x01) *adapter_index=buffer[27]; // from code cahandler.cpp 0x83 index of adapter
 	}
 
 	if(cfg.dvbapi_boxtype == BOXTYPE_IPBOX_PMT)
