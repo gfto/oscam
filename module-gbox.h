@@ -1,6 +1,8 @@
 #ifndef MODULE_GBOX_H_
 #define MODULE_GBOX_H_
 
+#ifdef MODULE_GBOX
+
 #define GBOX_MAXHOPS	10
 
 struct gbox_ecm_request_ext
@@ -20,6 +22,7 @@ struct gbox_ecm_request_ext
     uint8_t         gbox_type;
     uchar           gbox_routing_info[GBOX_MAXHOPS];  //support max 10 hops
 };
+#endif
 
 // Parsing function used in oscam-config-reader.c
 void mgencrypted_fn(const char *token, char *value, void *setting, FILE *f);

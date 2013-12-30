@@ -228,6 +228,7 @@ SRC-$(CONFIG_WITH_COOLAPI) += module-dvbapi-coolapi.c
 SRC-$(CONFIG_WITH_SU980) += module-dvbapi-coolapi.c
 SRC-$(CONFIG_WITH_STAPI) += module-dvbapi-stapi.c
 SRC-$(CONFIG_HAVE_DVBAPI) += module-dvbapi.c
+SRC-$(CONFIG_MODULE_GBOX) += module-gbox-helper.c
 SRC-$(CONFIG_MODULE_GBOX) += module-gbox.c
 SRC-$(CONFIG_IRDETO_GUESSING) += module-ird-guess.c
 SRC-$(CONFIG_LCDSUPPORT) += module-lcd.c
