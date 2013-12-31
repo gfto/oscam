@@ -1333,10 +1333,10 @@ static int32_t gbox_client_init(struct s_client *cli)
 		return -1;
 	}
 
-	if(!cli->reader->gbox_my_password || strlen(cli->reader->gbox_my_password) != 8)
+	if(!cfg.gbox_my_password || strlen(cfg.gbox_my_password) != 8)
 	{
 		cs_log("gbox: error, no/invalid password '%s' configured in oscam.conf!",
-			   cli->reader->gbox_my_password ? cli->reader->gbox_my_password : "");
+			   cfg.gbox_my_password ? cfg.gbox_my_password : "");
 		return -1;
 	}
 
@@ -1353,7 +1353,7 @@ static int32_t gbox_client_init(struct s_client *cli)
 	memset(&gbox->peer, 0, sizeof(struct gbox_peer));
 
 	uint32_t r_pwd = a2i(rdr->r_pwd, 4);
-	uint32_t key = a2i(cli->reader->gbox_my_password, 4);
+	uint32_t key = a2i(cfg.gbox_my_password, 4);
 	int32_t i;
 	for(i = 3; i >= 0; i--)
 	{
@@ -1362,7 +1362,7 @@ static int32_t gbox_client_init(struct s_client *cli)
 	}
 
 	cs_ddump_mask(D_READER, gbox->peer.key, 4, "Peer password: %s:", rdr->r_pwd);
-	cs_ddump_mask(D_READER, gbox->key,      4, " My  password: %s:", cli->reader->gbox_my_password);
+	cs_ddump_mask(D_READER, gbox->key,      4, " My  password: %s:", cfg.gbox_my_password);
 
 	gbox->peer.id = (gbox->peer.key[0] ^ gbox->peer.key[2]) << 8 | (gbox->peer.key[1] ^ gbox->peer.key[3]);
 

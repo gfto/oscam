@@ -960,8 +960,6 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_INT8("gbox_max_distance"    , OFS(gbox_maxdist),            DEFAULT_GBOX_MAX_DIST),
 	DEF_OPT_INT8("gbox_max_ecm_send"    , OFS(gbox_maxecmsend),         DEFAULT_GBOX_MAX_ECM_SEND),
 	DEF_OPT_INT8("gbox_reshare"         , OFS(gbox_reshare),            0),
-	DEF_OPT_FUNC("gbox_group"           , OFS(gbox_grp),                group_fn),
-	DEF_OPT_SSTR("gbox_my_password"     , OFS(gbox_my_password),        "", SIZEOF(gbox_my_password)),
 #endif
 	DEF_OPT_STR("readnano"              , OFS(emmfile),                 NULL),
 	DEF_OPT_FUNC("services"             , OFS(sidtabs),                 reader_services_fn),
