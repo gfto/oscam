@@ -182,7 +182,7 @@ void gbox_write_shared_cards_info(void)
 				while((card = ll_iter_next(&it)))
 				{
 					fprintf(fhandle, "CardID %4d at %s Card %08X Sl:%2d Lev:%2d dist:%2d id:%04X\n",
-							card_count, cl->reader->label, card->provid_1,
+							card_count, cl->reader->device, card->provid_1,
 							card->slot, card->lvl, card->dist, card->peer_id);
 					card_count++;
 				} // end of while ll_iter_next
