@@ -474,9 +474,9 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 							   au_cl->emmcache[i].count, aureader->rewritemm);
 				if(aureader->cachemm && (au_cl->emmcache[i].count > aureader->rewritemm))
 				{
+					au_cl->emmcache[i].count++;
 					reader_log_emm(aureader, ep, i, 2, NULL);
 					writeemm = 0; // dont write emm!
-					au_cl->emmcache[i].count++;
 					break; // found emm match needs no further handling, stop searching and proceed with next reader!
 				}
 				writeemm = 1; // found emm match but rewrite counter not reached: write emm!
