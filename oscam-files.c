@@ -124,7 +124,7 @@ int32_t safe_overwrite_with_bak(char *destfile, char *temp_file, char *bakfile, 
 			if(file_copy(destfile, bakfile) < 0)
 			{
 				cs_log("Error copying original config file %s to %s. The original config will be left untouched!", destfile, bakfile);
-				if(remove(temp_file) < 0)
+				if(unlink(temp_file) < 0)
 					{ cs_log("Error removing temp config file %s (errno=%d %s)!", temp_file, errno, strerror(errno)); }
 				return 1;
 			}
@@ -136,11 +136,11 @@ int32_t safe_overwrite_with_bak(char *destfile, char *temp_file, char *bakfile, 
 		cs_log("An error occured while writing the new config file %s.", destfile);
 		if(rc == -2)
 			{ cs_log("The config will be missing or only partly filled upon next startup as this is a non-recoverable error! Please restore from backup or try again."); }
-		if(remove(temp_file) < 0)
+		if(unlink(temp_file) < 0)
 			{ cs_log("Error removing temp config file %s (errno=%d %s)!", temp_file, errno, strerror(errno)); }
 		return 1;
 	}
-	if(remove(temp_file) < 0)
+	if(unlink(temp_file) < 0)
 		{ cs_log("Error removing temp config file %s (errno=%d %s)!", temp_file, errno, strerror(errno)); }
 	return 0;
 }
