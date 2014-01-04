@@ -759,11 +759,13 @@ static int32_t gbox_recv2(struct s_client *cli, uchar *b, int32_t l)
 	{
 		cs_debug_mask(D_READER, "received data, peer : %04x   data: %s", gbox->peer.id, cs_hexdump(0, data, l, tmp, sizeof(tmp)));
 
-		if(data[0] != 0x48 && data[1] != 0x44)  // if MSG_CW
+		if (gbox_decode_cmd(data) != MSG_CW)
 		{
-			if(data[6] != gbox->peer.key[0] && data[7] != gbox->peer.key[1] && data[8] != gbox->peer.key[2] && data[9] != gbox->peer.key[3])
+			if(data[6] != gbox->peer.key[0] || data[7] != gbox->peer.key[1] || data[8] != gbox->peer.key[2] || data[9] != gbox->peer.key[3])
 			{
+				cs_log("gbox peer: %04X sends wrong password", gbox->peer.id);
 				cs_writeunlock(&gbox->lock);
+				return -1;
 				//continue; // next client
 			}
 		}
@@ -773,6 +775,7 @@ static int32_t gbox_recv2(struct s_client *cli, uchar *b, int32_t l)
 		cs_log("gbox: ATTACK ALERT: proxy %s:%d", cs_inet_ntoa(cli->ip), cli->reader->r_port);
 		cs_log("received data, peer : %04x   data: %s", gbox->peer.id, cs_hexdump(0, data, n, tmp, sizeof(tmp)));
 		cs_writeunlock(&gbox->lock);
+		return -1;
 		//continue; // next client
 	}
 	if(gbox_cmd_switch(cli, n) < 0)
