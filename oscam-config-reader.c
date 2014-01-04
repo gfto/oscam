@@ -956,7 +956,6 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_SSTR("password"             , OFS(r_pwd),                   "", SIZEOF(r_pwd)),
 	DEF_OPT_SSTR("pincode"              , OFS(pincode),                 "none", SIZEOF(pincode)),
 #ifdef MODULE_GBOX
-	DEF_OPT_FUNC("mg-encrypted"         , 0,                            mgencrypted_fn),
 	DEF_OPT_INT8("gbox_max_distance"    , OFS(gbox_maxdist),            DEFAULT_GBOX_MAX_DIST),
 	DEF_OPT_INT8("gbox_max_ecm_send"    , OFS(gbox_maxecmsend),         DEFAULT_GBOX_MAX_ECM_SEND),
 	DEF_OPT_INT8("gbox_reshare"         , OFS(gbox_reshare),            0),

@@ -24,7 +24,4 @@ struct gbox_ecm_request_ext
 };
 #endif
 
-// Parsing function used in oscam-config-reader.c
-void mgencrypted_fn(const char *token, char *value, void *setting, FILE *f);
-
 #endif
