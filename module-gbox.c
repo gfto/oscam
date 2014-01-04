@@ -37,6 +37,8 @@
 #define GBOX_STAT_HELLO3	3
 #define GBOX_STAT_HELLO4	4
 
+#define RECEIVE_BUFFER_SIZE	1024
+
 enum
 {
 	MSG_ECM = 0x445c,
@@ -101,7 +103,7 @@ struct gbox_data
 	uint16_t exp_seq; // hello seq
 	struct gbox_peer peer;
 	CS_MUTEX_LOCK lock;
-	uchar buf[1024];
+	uchar buf[RECEIVE_BUFFER_SIZE];
 	pthread_mutex_t hello_expire_mut;
 	pthread_cond_t hello_expire_cond;
 	LLIST *local_cards;
@@ -727,7 +729,7 @@ static int32_t gbox_recv2(struct s_client *cli, uchar *b, int32_t l)
 	uchar *data = gbox->buf;
 	char tmp[0x50];
 
-	if(!gbox)
+	if(!gbox || l > RECEIVE_BUFFER_SIZE)
 		{ return -1; }
 
 	int32_t n = l;
