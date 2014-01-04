@@ -592,7 +592,7 @@ maximum time CWs resist in cache, the time must be 2 seconds highter than the pa
 maximum time for cache exchange hits resist in cache for evaluating \fBwait_time\fP, default:15
 .RE
 .PP
-\fBwait_time\fP = \fB[caid][&mask][@provid][$servid][:awtime][:]dwtime,n\fP
+\fBwait_time\fP = \fB[caid][&mask][@provid][$servid][:awtime][:]dwtime[,[caid][&mask][@provid][$servid][:awtime][:]dwtime]...\fP
 .RS 3n
 wait time in milli-seconds for cache exchange and Cardservproxy before sending ECMs to reader or proxy, default:none
 
@@ -606,6 +606,20 @@ wait time in milli-seconds for cache exchange and Cardservproxy before sending E
 \fIPlease consider memory consumption.\fR
 .RE
 .PP
+\fBcacheex_cw_check\fP = \fB[caid][&mask][@provid][$servid]:mode:counter[,[caid][&mask][@provid][$servid]:mode:counter]...\fP
+.RS 3n
+
+ \fBmode\fP = specify behaviour for counter:
+              
+        \fB0\fP = when \fBwait_time\fP expires, serve highest counter's CW 
+            got anyway, even if no counter reached (default)
+        \fB1\fP = never serve CW from cache exchange stored in cache, 
+            if it's counter not reaches counter. When \fBwait_time\fP 
+            expires, requests will go to normal readers
+ 
+ \fBcounter\fP = set minimum CW counter to allow CW is used, default:1
+.RE
+.PP
 \fBcsp_port\fP = \fBport\fP
 .RS 3n
 UDP port of Cardservproxy for cache exchange, default:none
@@ -616,7 +630,7 @@ UDP port of Cardservproxy for cache exchange, default:none
 bind Cardservproxy for cache exchange to specified IP address, default:none
 .RE
 .PP
-\fBcsp_ecm_filter\fP = \fB[caid][&mask][@provid][$servid],n\fP
+\fBcsp_ecm_filter\fP = \fB[caid][&mask][@provid][$servid][,[caid][&mask][@provid][$servid]]...\fP
 .RS 3n
 Cardservproxy incoming ECM filter setting, default:none
 .RE
@@ -738,6 +752,11 @@ TCP port/CAID/provid definitions for camd 3.78x clients, 0 = disabled, default:0
 \fBserverip\fP = \fBIP address\fP
 .RS 3n
 bind service to specified IP address, default:all
+.RE
+.PP
+\fBkeepalive\fP = \fB0\fP|\fB1\fP
+.RS 3n
+0 = disable camd 3.78x keepalive modus, default:0
 .RE
 .PP
 \fBsuppresscmd08\fP = \fB0\fP|\fB1\fP

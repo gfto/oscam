@@ -95,17 +95,17 @@ DESCRIPTIONS
 	  status detect of card (NONE = no detection), default:CD
 
        cardmhz = mhz
-	  set standard SC frequency in units of 10 kHz, for Irdeto SC set to 600, refer to OVERCLOCKING, default:357 for Dreambox
-	  set to 2700 on dm8000/dm800,8300 on dm7025,3150 older ppc models
+	  set standard SC frequency in units of 10 kHz, for Irdeto SC set to 600 mhz, for Dreambox DM800 /  DM8000  set  to  2700
+	  mhz,	for  Dreambox  DM7025  set  to	8300 mhz, for older PowerPC Dreambox STBs set to 3150 mhz, refer to OVERCLOCKING,
+	  default:357
 
        mhz = frequency
-	  set  reader frequency in units of 10 kHz, if mhz > cardmhz you are in overclocking mode, default:357. By smargo readers
-	  and dreambox internal readers assigned by atr if autospeed = 1
+	  set reader frequency in units of 10 kHz, if mhz > cardmhz you are in overclocking mode. For Smargo readers and Dreambox
+	  internal readers frequency will be set by ATR if autospeed is set to 1, default:357
 
        autospeed = 0|1
-	  1 = Sets mhz according to atr. Currently only used for smartreader,smargo and dreambox internal protocol other  readers
-	  will be adapted to use this parameter as well In webif checked means 1. If You wan't to overclock You're card set it to
-	  0, default:1
+	  1  = sets mhz according to ATR. Currently only used for smartreader, Smargo and Dreambox internal protocol, other read‐
+	  ers will be adapted to use this parameter as well. If You wan't to overclock you're card set it to 0, default:1
 
        deprecated = 0|1
 	  First the SC will be initialized in normal mode. If it fails, the SC will be automatically reverted to deprecated mode,
@@ -242,6 +242,9 @@ DESCRIPTIONS
 
        reconnecttimeout = seconds
 	  reconnect if missing answers from a remote reader, default:30
+
+       reconnectdelay = milli-seconds
+	  set maximum TCP connection block delay, default:60000
 
        connectoninit = 0|1
 	  1 = allow newcamd connections to be established on startup although there isn't a request yet, default:0

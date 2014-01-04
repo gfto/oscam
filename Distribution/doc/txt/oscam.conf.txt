@@ -413,7 +413,7 @@ DESCRIPTIONS
        max_hit_time = seconds
 	  maximum time for cache exchange hits resist in cache for evaluating wait_time, default:15
 
-       wait_time = [caid][&mask][@provid][$servid][:awtime][:]dwtime,n
+       wait_time = [caid][&mask][@provid][$servid][:awtime][:]dwtime[,[caid][&mask][@provid][$servid][:awtime][:]dwtime]...
 	  wait time in milli-seconds for cache exchange and Cardservproxy before sending ECMs to reader or proxy, default:none
 
 	   example: wait_time = 0:50:250,0200@00009X:50:150,15:950,0500@000001:150,1602&ffdf:1200
@@ -423,13 +423,25 @@ DESCRIPTIONS
 
 	  Please consider memory consumption.
 
+       cacheex_cw_check = [caid][&mask][@provid][$servid]:mode:counter[,[caid][&mask][@provid][$servid]:mode:counter]...
+
+	   mode = specify behaviour for counter:
+
+		  0 = when wait_time expires, serve highest counter's CW
+		      got anyway, even if no counter reached (default)
+		  1 = never serve CW from cache exchange stored in cache,
+		      if it's counter not reaches counter. When wait_time
+		      expires, requests will go to normal readers
+
+	   counter = set minimum CW counter to allow CW is used, default:1
+
        csp_port = port
 	  UDP port of Cardservproxy for cache exchange, default:none
 
        csp_serverip = IP
 	  bind Cardservproxy for cache exchange to specified IP address, default:none
 
-       csp_ecm_filter = [caid][&mask][@provid][$servid],n
+       csp_ecm_filter = [caid][&mask][@provid][$servid][,[caid][&mask][@provid][$servid]]...
 	  Cardservproxy incoming ECM filter setting, default:none
 
        csp_allow_request = 0|1
@@ -510,6 +522,9 @@ DESCRIPTIONS
 
        serverip = IP address
 	  bind service to specified IP address, default:all
+
+       keepalive = 0|1
+	  0 = disable camd 3.78x keepalive modus, default:0
 
        suppresscmd08 = 0|1
 	  0 = tell camd 3.78x clients not to request again for rejected CAID, service ID and provider ID combination,  1  =  dis‐

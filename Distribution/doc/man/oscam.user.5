@@ -137,6 +137,14 @@ set cache exchange mode
 define maximum hops for cache exchange, default=10
 .RE
 .PP
+\fBno_wait_time\fP = \fB0\fP|\fB1\fP
+.RS 3n
+set wait time behaviour:
+ 
+ \fB0\fP: use \fBwait_time\fP set in \fBoscam.conf\fP (default)
+ \fB1\fP: do not use \fBwait_time\fP set in \fBoscam.conf\fP
+.RE
+.PP
 \fBcsp_ecm_filter\fP = \fB[caid][&mask][@provid][$servid],n\fP
 .RS 3n
 cache exchange incoming ECM filter setting (mode 3 only) for Cardservproxy, default:none

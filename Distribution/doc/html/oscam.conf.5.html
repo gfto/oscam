@@ -792,7 +792,7 @@ maximum time for cache exchange hits resist in cache for evaluating <B>wait_time
 
 <P>
 
-<B>wait_time</B> = <B>[caid][&amp;mask][@provid][$servid][:awtime][:]dwtime,n</B>
+<B>wait_time</B> = <B>[caid][&amp;mask][@provid][$servid][:awtime][:]dwtime[,[caid][&amp;mask][@provid][$servid][:awtime][:]dwtime]...</B>
 <DL COMPACT><DT><DD>
 wait time in milli-seconds for cache exchange and Cardservproxy before sending ECMs to reader or proxy, default:none
 <P>
@@ -806,6 +806,22 @@ wait time in milli-seconds for cache exchange and Cardservproxy before sending E
 1 = enable statistics for cache exchange mode, default:0
 <P>
 <I>Please consider memory consumption.</I>
+</DL>
+
+<P>
+
+<B>cacheex_cw_check</B> = <B>[caid][&amp;mask][@provid][$servid]:mode:counter[,[caid][&amp;mask][@provid][$servid]:mode:counter]...</B>
+<DL COMPACT><DT><DD>
+<P>
+<BR>&nbsp;<B>mode</B>&nbsp;=&nbsp;specify&nbsp;behaviour&nbsp;for&nbsp;counter:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;when&nbsp;<B>wait_time</B>&nbsp;expires,&nbsp;serve&nbsp;highest&nbsp;counter's&nbsp;CW&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;got&nbsp;anyway,&nbsp;even&nbsp;if&nbsp;no&nbsp;counter&nbsp;reached&nbsp;(default)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;never&nbsp;serve&nbsp;CW&nbsp;from&nbsp;cache&nbsp;exchange&nbsp;stored&nbsp;in&nbsp;cache,&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;it's&nbsp;counter&nbsp;not&nbsp;reaches&nbsp;counter.&nbsp;When&nbsp;<B>wait_time</B>&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires,&nbsp;requests&nbsp;will&nbsp;go&nbsp;to&nbsp;normal&nbsp;readers
+<BR>&nbsp;
+<BR>&nbsp;<B>counter</B>&nbsp;=&nbsp;set&nbsp;minimum&nbsp;CW&nbsp;counter&nbsp;to&nbsp;allow&nbsp;CW&nbsp;is&nbsp;used,&nbsp;default:1
 </DL>
 
 <P>
@@ -824,7 +840,7 @@ bind Cardservproxy for cache exchange to specified IP address, default:none
 
 <P>
 
-<B>csp_ecm_filter</B> = <B>[caid][&amp;mask][@provid][$servid],n</B>
+<B>csp_ecm_filter</B> = <B>[caid][&amp;mask][@provid][$servid][,[caid][&amp;mask][@provid][$servid]]...</B>
 <DL COMPACT><DT><DD>
 Cardservproxy incoming ECM filter setting, default:none
 </DL>
@@ -993,6 +1009,13 @@ TCP port/CAID/provid definitions for camd 3.78x clients, 0 = disabled, default:0
 <B>serverip</B> = <B>IP address</B>
 <DL COMPACT><DT><DD>
 bind service to specified IP address, default:all
+</DL>
+
+<P>
+
+<B>keepalive</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+0 = disable camd 3.78x keepalive modus, default:0
 </DL>
 
 <P>
