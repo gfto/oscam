@@ -2255,7 +2255,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 	}
 	else
 #endif
-		tpl_addVar(vars, TPLAPPEND, "READERSTATSROW", "<TR><TD COLSPAN=\"8\"> No statistics found </TD></TR>");
+		tpl_addVar(vars, TPLAPPEND, "READERSTATSROW", tpl_getTpl(vars, "READERSTATSNOSTATS"));
 
 	tpl_printf(vars, TPLADD, "ROWCOUNT", "%d", rowcount);
 

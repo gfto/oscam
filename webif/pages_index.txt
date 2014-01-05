@@ -45,6 +45,7 @@ READERENTITLEBIT              readers/readers_readerlist_entitlement.html
 READERREFRESHBIT              readers/readers_readerlist_refresh.html
 READERWRITEEMMBIT             readers/readers_readerlist_writeemm.html
 READERSTATS                   readerstats/readerstats.html
+READERSTATSNOSTATS            readerstats/readerstats_nostats.html
 READERSTATSBIT                readerstats/readerstats_statsbit.html
 READERSTATSROWBIT             readerstats/readerstatsrowbit.html
 READERSTATSROWTIMEOUTBIT      readerstats/readerstatstimeoutbit.html
