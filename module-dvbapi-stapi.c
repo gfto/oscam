@@ -615,24 +615,6 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t idx, uint16_t pid, bool enable, 
 		bool actionneeded = false;
 		if(enable){
 			if(dev_list[n].SessionHandle == 0) { continue; }
-			actionneeded = !update_streampid_list(n, pid, idx);
-		}
-		if(!enable){
-			actionneeded = remove_streampid_from_list(n, pid, idx);
-		}
-		
-		if (actionneeded && !enable){
-			if(demux[demux_id].DescramblerHandle[n] == 0) { continue; }
-			stapi_DescramblerAssociate(demux_id, pid, DISASSOCIATE, n);
-			if(!is_ca_used(n)){
-				cs_debug_mask(D_DVBAPI, "stop descrambling PTI: %s", dev_list[n].name);
-				stapi_startdescrambler(demux_id, n, DE_STOP);
-				memset(demux[demux_id].slot_assc[n], 0, sizeof(demux[demux_id].slot_assc[n]));
-			}
-		}
-			
-		if (actionneeded && enable){
-			if(dev_list[n].SessionHandle == 0) { continue; }
 			if(demux[demux_id].DescramblerHandle[n] == 0){
 				struct s_dvbapi_priority *p;
 
@@ -648,6 +630,23 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t idx, uint16_t pid, bool enable, 
 			}
 
 			if(demux[demux_id].DescramblerHandle[n] == 0) { continue; }
+			actionneeded = !update_streampid_list(n, pid, idx);
+		}
+		if(!enable){
+			if(demux[demux_id].DescramblerHandle[n] == 0) { continue; }
+			actionneeded = remove_streampid_from_list(n, pid, idx);
+		}
+		
+		if (actionneeded && !enable){
+			stapi_DescramblerAssociate(demux_id, pid, DISASSOCIATE, n);
+			if(!is_ca_used(n)){
+				cs_debug_mask(D_DVBAPI, "stop descrambling PTI: %s", dev_list[n].name);
+				stapi_startdescrambler(demux_id, n, DE_STOP);
+				memset(demux[demux_id].slot_assc[n], 0, sizeof(demux[demux_id].slot_assc[n]));
+			}
+		}
+			
+		if (actionneeded && enable){
 			stapi_DescramblerAssociate(demux_id, pid, ASSOCIATE, n);
 		}
 	}
