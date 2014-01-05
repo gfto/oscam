@@ -2238,7 +2238,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 					else if(s->rc == E_TIMEOUT)
 					{
 						tpl_addVar(vars, TPLAPPEND, "READERSTATSROWTIMEOUT", tpl_getTpl(vars, "READERSTATSBIT"));
-						tpl_addVar(vars, TPLAPPEND, "RESETB", urlencode(vars, rdr->label));
+						tpl_addVar(vars, TPLADD, "RESETB", urlencode(vars, rdr->label));
 						tpl_addVar(vars, TPLADD, "READERSTATSTOHEADLINE", tpl_getTpl(vars, "READERSTATSROWTIMEOUTBIT"));
 					}
 					else
