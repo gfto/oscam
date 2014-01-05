@@ -36,6 +36,8 @@ USERCONFIGLISTBIT             userconfig/userconfig_entry.html
 APIUSERCONFIGLIST             api.xml/userconfiglist.xml
 APIUSERCONFIGLISTBIT          api.xml/userconfiglist_userconfigs.xml
 READERS                       readers/readers.html
+READERNAMEBIT                 readers/readernamebit.html
+READERCTYPBIT                 readers/readerctypbit.html
 APIREADERS                    api.xml/readers.xml
 APIREADERSBIT                 api.xml/readers_readerlist.xml
 READERSBIT                    readers/readers_readerlist.html

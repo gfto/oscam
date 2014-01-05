@@ -1191,6 +1191,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 			// used for API and WebIf
 			tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, rdr->label));
 			tpl_addVar(vars, TPLADD, "READERNAMEENC", urlencode(vars, rdr->label));
+			tpl_addVar(vars, TPLADD, "DESCRIPTION", xml_encode(vars, rdr->description));
 			tpl_addVar(vars, TPLADD, "CTYP", reader_get_type_desc(rdr, 0));
 
 			// used only for WebIf
@@ -1205,30 +1206,14 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 				{
 					if(picon_exists(xml_encode(vars, rdr->label)))
 					{
-						tpl_printf(vars, TPLADD, "READERICON",
-								   "<IMG CLASS=\"readericon\" SRC=\"image?i=IC_%s\" TITLE=\"%s\">",
-								   xml_encode(vars, rdr->label), xml_encode(vars, rdr->label));
-					}
-					else
-					{
-						tpl_addVar(vars, TPLADD, "READERICON", xml_encode(vars, rdr->label));
+						tpl_addVar(vars, TPLADD, "READERNAME", tpl_getTpl(vars, "READERNAMEBIT"));
 					}
 					if(picon_exists(xml_encode(vars, reader_get_type_desc(rdr, 0))))
 					{
-						tpl_printf(vars, TPLADD, "READERTYPEICON",
-								   "<IMG CLASS=\"readertypeicon\" SRC=\"image?i=IC_%s\" TITLE=\"%s\">",
-								   reader_get_type_desc(rdr, 0), reader_get_type_desc(rdr, 0));
-					}
-					else
-					{
-						tpl_addVar(vars, TPLADD, "READERTYPEICON", reader_get_type_desc(rdr, 0));
+						tpl_addVar(vars, TPLADD, "CTYP", tpl_getTpl(vars, "READERCTYPBIT"));
 					}
 				}
-				else
-				{
-					tpl_addVar(vars, TPLADD, "READERICON", xml_encode(vars, rdr->label));
-					tpl_addVar(vars, TPLADD, "READERTYPEICON", reader_get_type_desc(rdr, 0));
-				}
+
 				char *value = mk_t_group(rdr->grp);
 				tpl_addVar(vars, TPLADD, "GROUPS", value);
 				free_mk_t(value);
