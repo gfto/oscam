@@ -47,6 +47,8 @@ READERWRITEEMMBIT             readers/readers_readerlist_writeemm.html
 READERSTATS                   readerstats/readerstats.html
 READERSTATSBIT                readerstats/readerstats_statsbit.html
 READERSTATSROWBIT             readerstats/readerstatsrowbit.html
+READERSTATSROWTIMEOUTBIT      readerstats/readerstatstimeoutbit.html
+READERSTATSROWNOTFOUNDBIT     readerstats/readerstatsnotfound.html
 SCANUSB                       scanusb/scanusb.html
 SCANUSBBIT                    scanusb/scanusb_usbbit.html
 ENTITLEMENTS                  entitlements/entitlements.html                              WITH_CARDREADER

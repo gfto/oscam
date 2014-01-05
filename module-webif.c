@@ -2232,18 +2232,14 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 					if(s->rc == E_NOTFOUND)
 					{
 						tpl_addVar(vars, TPLAPPEND, "READERSTATSROWNOTFOUND", tpl_getTpl(vars, "READERSTATSBIT"));
-						tpl_addVar(vars, TPLADD, "READERSTATSNFHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" COLSPAN=\"6\">Not found</TD>");
-						tpl_printf(vars, TPLAPPEND, "READERSTATSNFHEADLINE", "<TD CLASS=\"subheadline\" COLSPAN=\"2\"><A HREF=\"readerstats.html?label=%s&amp;action=resetstat&amp;rc=4\">delete all %s</A></TD></TR>\n",
-								   urlencode(vars, rdr->label),
-								   stxt[s->rc]);
+						tpl_addVar(vars, TPLADD, "RESETA", urlencode(vars, rdr->label));
+						tpl_addVar(vars, TPLADD, "READERSTATSNFHEADLINE", tpl_getTpl(vars, "READERSTATSROWNOTFOUNDBIT"));
 					}
 					else if(s->rc == E_TIMEOUT)
 					{
 						tpl_addVar(vars, TPLAPPEND, "READERSTATSROWTIMEOUT", tpl_getTpl(vars, "READERSTATSBIT"));
-						tpl_addVar(vars, TPLADD, "READERSTATSTOHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" COLSPAN=\"6\">Timeout</TD>");
-						tpl_printf(vars, TPLAPPEND, "READERSTATSTOHEADLINE", "<TD CLASS=\"subheadline\" COLSPAN=\"2\"><A HREF=\"readerstats.html?label=%s&amp;action=resetstat&amp;rc=5\">delete all %s</A></TD></TR>\n",
-								   urlencode(vars, rdr->label),
-								   stxt[s->rc]);
+						tpl_addVar(vars, TPLAPPEND, "RESETB", urlencode(vars, rdr->label));
+						tpl_addVar(vars, TPLADD, "READERSTATSTOHEADLINE", tpl_getTpl(vars, "READERSTATSROWTIMEOUTBIT"));
 					}
 					else
 						{ tpl_addVar(vars, TPLAPPEND, "READERSTATSROWFOUND", tpl_getTpl(vars, "READERSTATSBIT")); }
