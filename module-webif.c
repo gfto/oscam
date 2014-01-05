@@ -3697,7 +3697,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "LOGO");
 	if(picon_exists(picon_name))
 	{
-		tpl_printf(vars, TPLADD, "LOGO", "<A HREF=\"http://www.streamboard.tv/oscam/\" TARGET=\"_blank\"><IMG SRC=\"image?i=IC_LOGO\" ALT=\"\" TITLE=\"\"></A>");
+		tpl_addVar(vars, TPLADD, "LOGO", tpl_getTpl(vars, "LOGOBIT"));
 	}
 	else
 	{

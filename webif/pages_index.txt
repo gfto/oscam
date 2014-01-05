@@ -20,6 +20,7 @@ FOOTER                        include/footer.html
 APIFOOTER                     api.xml/footer.xml
 JSONFOOTER                    api.json/footer.json
 MENU                          include/menu.html
+LOGOBIT                       include/logobit.html
 REFRESH                       include/refresh.html
 HELPPREFIX                    include/help_prefix.html
 HELPSUFFIX                    include/help_suffix.html
