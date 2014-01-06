@@ -2872,7 +2872,6 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		}
 	}
 
-
 	/* List accounts*/
 	char *status, *expired, *classname, *lastchan;
 	time_t now = time((time_t *)0);
@@ -2895,9 +2894,6 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	int32_t casc_users = 0;
 	int32_t casc_users2 = 0;
 	int32_t n_request = 0;
-
-
-	if(cfg.http_showpicons) { tpl_addVar(vars, TPLADD, "PICONHEADER", "<TH>Image</TH>"); }
 
 	for(account = cfg.account; (account); account = account->next)
 	{
@@ -3121,13 +3117,14 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		{
 			if(picon_exists(xml_encode(vars, account->usr)))
 			{
-				tpl_printf(vars, TPLADD, "USER",
-						   "<IMG CLASS=\"usericon\" SRC=\"image?i=IC_%s\" TITLE=\"%s\">",
-						   xml_encode(vars, account->usr), xml_encode(vars, account->usr));
+				tpl_printf(vars, TPLADD, "USERICON", xml_encode(vars, account->usr));
+				tpl_printf(vars, TPLADD, "USERICON", tpl_getTpl(vars, "PROTONEWCAMDPIC"));
+				tpl_printf(vars, TPLADD, "USERTITLE", "%s", xml_encode(vars, account->usr));
 			}
 			else
 			{
 				tpl_addVar(vars, TPLADD, "USER", xml_encode(vars, account->usr));
+				tpl_printf(vars, TPLADD, "USERTITLE", "missing icon: IC_%s", xml_encode(vars, account->usr));
 			}
 		}
 		else
@@ -3141,7 +3138,11 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "DESCRIPTION", xml_encode(vars, account->description ? account->description : ""));
 		tpl_addVar(vars, TPLADD, "STATUS", status);
 		tpl_addVar(vars, TPLAPPEND, "STATUS", expired);
-		if(nrclients > 1) { tpl_printf(vars, TPLADDONCE, "CLIENTCOUNTNOTIFIER", "<SPAN CLASS=\"span_notifier\">%d</SPAN>", nrclients); }
+
+		if(nrclients > 1)
+		{
+			tpl_printf(vars, TPLADDONCE, "CLIENTCOUNTNOTIFIER", "<SPAN CLASS=\"span_notifier\">%d</SPAN>", nrclients);
+		}
 
 		//Expirationdate
 		struct tm timeinfo;

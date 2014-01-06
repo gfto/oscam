@@ -37,6 +37,7 @@ USERCONFIGLIST                userconfig/userconfig.html
 ADDNEWUSER                    userconfig/userconfig_newuserform.html
 USERCONFIGLISTBIT             userconfig/userconfig_entry.html
 USERCONFIGLASTCHANEL          userconfig/userconfig_lastchannelicon.html
+USERICON                      userconfig/userconfig_usericon.html
 APIUSERCONFIGLIST             api.xml/userconfiglist.xml
 APIUSERCONFIGLISTBIT          api.xml/userconfiglist_userconfigs.xml
 READERS                       readers/readers.html
