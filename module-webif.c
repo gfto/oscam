@@ -2638,7 +2638,7 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 			if(picon_exists(picon_name))
 			{
 				tpl_addVar(vars, TPLADD, "NCMDA", (char *)proto);
-				tpl_addVar(vars, TPLADD, "NCMDB", newcamd_get_client_name(cl->ncd_client_id));
+				tpl_addVar(vars, TPLADD, "NCMDB", (char *)newcamd_get_client_name(cl->ncd_client_id));
 				tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTONEWCAMDPIC"));
 			}
 			else
