@@ -18,37 +18,43 @@ int32_t constcw_file_available(void)
 	return (1);
 }
 
-int32_t constcw_analyse_file(uint16_t c_caid, uint32_t c_prid, uint16_t c_sid, uint32_t c_vpid, uint16_t c_ecmpid, uchar *dcw)
+int32_t constcw_analyse_file(uint16_t c_caid, uint32_t c_prid, uint16_t c_sid, uint16_t c_pmtpid, uint32_t c_vpid, uint16_t c_ecmpid, uchar *dcw)
 {
-	//CAID:PROVIDER:SID:VPID:ECMPID::XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX
-
+	//CAID:PROVIDER:SID:PMTPID:ECMPID:VPID:XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX
 	FILE *fp;
 	char token[512];
-	uint32_t caid, provid, sid, vpid, ecmpid;
+	uint32_t caid, provid, sid, vpid, pmtpid, ecmpid;
 	int32_t cw[16];
 
 	fp = fopen(cur_client()->reader->device, "r");
 	if(!fp) { return (0); }
 
-	cs_log("[CONSTCW] find controlword for CAID %04X PROVID %06X SRVID %04X VPID %04X ECMPID %04X", c_caid, c_prid, c_sid, c_vpid, c_ecmpid);
+	cs_log("[CONSTCW] find controlword for CAID %04X PROVID %06X SRVID %04X ECMPID %04X PMTPID %04X VPID %04X", c_caid, c_prid, c_sid, c_ecmpid, c_pmtpid, c_vpid);
 
 	while(fgets(token, sizeof(token), fp))
 	{
 		if(token[0] == '#') { continue; }
-
-		sscanf(token, "%4x:%6x:%4x:%4x:%4x::%2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x", &caid, &provid, &sid, &vpid, &ecmpid,
+		vpid = 0;
+		int ret = sscanf(token, "%4x:%6x:%4x:%4x:%4x::%2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x", &caid, &provid, &sid, &pmtpid, &ecmpid,
 			   &cw[0], &cw[1], &cw[2], &cw[3], &cw[4], &cw[5], &cw[6], &cw[7],
 			   &cw[8], &cw[9], &cw[10], &cw[11], &cw[12], &cw[13], &cw[14], &cw[15]);
+		
+		if(ret != 21){   
+			ret = sscanf(token, "%4x:%6x:%4x:%4x:%4x:%4x:%2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x %2x", &caid, &provid, &sid, &pmtpid, &ecmpid, &vpid,
+				   &cw[0], &cw[1], &cw[2], &cw[3], &cw[4], &cw[5], &cw[6], &cw[7],
+				   &cw[8], &cw[9], &cw[10], &cw[11], &cw[12], &cw[13], &cw[14], &cw[15]);
+			if(ret != 22) continue;
+		}		
 
 		//cs_log("Line found: %s", token);
-		if(c_caid == caid && c_sid == sid && (!provid || provid == c_prid) && (!vpid || !c_vpid || vpid == c_vpid)
+		if(c_caid == caid && c_sid == sid && (!provid || provid == c_prid) && (!pmtpid || !c_pmtpid || pmtpid == c_pmtpid) && (!vpid || !c_vpid || vpid == c_vpid) 
 				&& (!ecmpid || !c_ecmpid || ecmpid == c_ecmpid))
 		{
 			fclose(fp);
 			int8_t i;
 			for(i = 0; i < 16; ++i)
 				{ dcw[i] = (uchar) cw[i]; }
-			cs_log("[CONSTCW] Entry found: %04X:%06X:%04X:%04X:%04X::%s", caid, provid, sid, vpid, ecmpid, cs_hexdump(1, dcw, 16, token, sizeof(token)));
+			cs_log("[CONSTCW] Entry found: %04X:%06X:%04X:%04X:%04X:%04X:%s", caid, provid, sid, pmtpid, ecmpid, vpid, cs_hexdump(1, dcw, 16, token, sizeof(token)));
 			return 1;
 		}
 	}
@@ -115,7 +121,7 @@ static int32_t constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar 
 	// Check if DCW exist in the files
 	//cs_log("Searching ConstCW for ECM: %04X:%06X:%04X (%d)", er->caid, er->prid, er->srvid, er->l);
 
-	if(constcw_analyse_file(er->caid, er->prid, er->srvid, er->vpid, er->pid, cw) == 0)
+	if(constcw_analyse_file(er->caid, er->prid, er->srvid, er->pmtpid, er->vpid, er->pid, cw) == 0)
 	{
 		write_ecm_answer(rdr, er, E_NOTFOUND, (E1_READER << 4 | E2_SID), NULL, NULL);
 	}

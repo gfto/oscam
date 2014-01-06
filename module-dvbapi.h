@@ -117,6 +117,7 @@ typedef struct demux_s
 	uint16_t program_number;
 	uint16_t onid;
 	uint16_t tsid;
+	uint16_t pmtpid;
 	uint32_t enigma_namespace;
 	unsigned char lastcw[2][8];
 	int8_t emm_filter;

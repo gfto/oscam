@@ -1340,6 +1340,7 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 	er->pid   = demux[demux_id].ECMpids[pid].ECM_PID;
 	er->prid  = demux[demux_id].ECMpids[pid].PROVID;
 	er->vpid  = demux[demux_id].ECMpids[pid].VPID;
+	er->pmtpid  = demux[demux_id].pmtpid;
 
 	struct timeb now;
 	cs_ftime(&now);
@@ -1393,9 +1394,9 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 				er->ecmlen += 2;
 			}
 
-			cs_log("[DVBAPI] Demuxer #%d trying to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X ANY CHID VPID %04X", demux_id, pid,
+			cs_log("[DVBAPI] Demuxer #%d trying to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X ANY CHID PMTPID %04X VPID %04X", demux_id, pid,
 				   demux[demux_id].ECMpids[pid].CAID, demux[demux_id].ECMpids[pid].PROVID, demux[demux_id].ECMpids[pid].ECM_PID,
-				   demux[demux_id].ECMpids[pid].VPID);
+				   demux[demux_id].pmtpid, demux[demux_id].ECMpids[pid].VPID);
 
 			demux[demux_id].curindex = pid; // set current pid to the fresh started one
 
@@ -1417,15 +1418,15 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 
 			if(p && p->chid < 0x10000)  // do we prio a certain chid?
 			{
-				cs_log("[DVBAPI] Demuxer #%d trying to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X CHID %04X VPID %04X", demux_id, pid,
+				cs_log("[DVBAPI] Demuxer #%d trying to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X CHID %04X PMTPID %04X VPID %04X", demux_id, pid,
 					   demux[demux_id].ECMpids[pid].CAID, demux[demux_id].ECMpids[pid].PROVID, demux[demux_id].ECMpids[pid].ECM_PID,
-					   demux[demux_id].ECMpids[pid].CHID, demux[demux_id].ECMpids[pid].VPID);
+					   demux[demux_id].ECMpids[pid].CHID, demux[demux_id].pmtpid, demux[demux_id].ECMpids[pid].VPID);
 			}
 			else
 			{
-				cs_log("[DVBAPI] Demuxer #%d trying to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X ANY CHID VPID %04X", demux_id, pid,
+				cs_log("[DVBAPI] Demuxer #%d trying to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X ANY CHID PMTPID %04X VPID %04X", demux_id, pid,
 					   demux[demux_id].ECMpids[pid].CAID, demux[demux_id].ECMpids[pid].PROVID, demux[demux_id].ECMpids[pid].ECM_PID,
-					   demux[demux_id].ECMpids[pid].VPID);
+					   demux[demux_id].pmtpid, demux[demux_id].ECMpids[pid].VPID);
 			}
 
 			demux[demux_id].curindex = pid; // set current pid to the fresh started one
@@ -1438,8 +1439,8 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 	}
 	if(demux[demux_id].curindex != pid)
 	{
-		cs_log("[DVBAPI] Demuxer #%d impossible to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X (NO MATCHING READER)", demux_id, pid,
-			   demux[demux_id].ECMpids[pid].CAID, demux[demux_id].ECMpids[pid].PROVID, demux[demux_id].ECMpids[pid].ECM_PID);
+		cs_log("[DVBAPI] Demuxer #%d impossible to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X PMTPID %04X (NO MATCHING READER)", demux_id, pid,
+			   demux[demux_id].ECMpids[pid].CAID, demux[demux_id].ECMpids[pid].PROVID, demux[demux_id].ECMpids[pid].ECM_PID, demux[demux_id].pmtpid);
 		demux[demux_id].ECMpids[pid].checked = 3; // flag this pid as checked
 		demux[demux_id].ECMpids[pid].status = -1; // flag this pid as unusable
 		edit_channel_cache(demux_id, pid, 0); // remove this pid from channelcache
@@ -2278,9 +2279,9 @@ void dvbapi_try_next_caid(int32_t demux_id, int8_t checked)
 	}
 }
 
-static void getDemuxOptions(int32_t demux_id, unsigned char *buffer, uint16_t *ca_mask, uint16_t *demux_index, uint16_t *adapter_index)
+static void getDemuxOptions(int32_t demux_id, unsigned char *buffer, uint16_t *ca_mask, uint16_t *demux_index, uint16_t *adapter_index, uint16_t *pmtpid)
 {
-	*ca_mask = 0x01, *demux_index = 0x00, *adapter_index = 0x00;
+	*ca_mask = 0x01, *demux_index = 0x00, *adapter_index = 0x00, *pmtpid = 0x00;
 
 	if(buffer[17] == 0x82 && buffer[18] == 0x02)
 	{
@@ -2288,7 +2289,8 @@ static void getDemuxOptions(int32_t demux_id, unsigned char *buffer, uint16_t *c
 		*ca_mask = buffer[19];
 		uint32_t demuxid = buffer[20];
 		if (demuxid == 0xff) demuxid = 0; // tryfix prismcube (0xff -> "demux-1" = error! )
-		*demux_index = demuxid; 
+		*demux_index = demuxid;
+		if (buffer[21]==0x84 && buffer[22]==0x02) *pmtpid = (buffer[23] << 8) | buffer[24];
 		if (buffer[25]==0x83 && buffer[26]==0x01) *adapter_index=buffer[27]; // from code cahandler.cpp 0x83 index of adapter
 	}
 
@@ -2319,7 +2321,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	uint32_t i = 0, running = 0;
 	int32_t j = 0;
 	int32_t demux_id = -1;
-	uint16_t ca_mask, demux_index, adapter_index;
+	uint16_t ca_mask, demux_index, adapter_index, pmtpid;
 	
 #define LIST_MORE 0x00    //*CA application should append a 'MORE' CAPMT object to the list and start receiving the next object
 #define LIST_FIRST 0x01   //*CA application should clear the list when a 'FIRST' CAPMT object is received, and start receiving the next object
@@ -2349,8 +2351,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			pmt_stopmarking = 1;
 		}
 	}
-	getDemuxOptions(i, buffer, &ca_mask, &demux_index, &adapter_index);
-	cs_log("[DVBAPI] Receiver wants to demux srvid %04X on adapter %04X camask %04X index %04X", program_number, adapter_index, ca_mask, demux_index);
+	getDemuxOptions(i, buffer, &ca_mask, &demux_index, &adapter_index, &pmtpid);
+	cs_log("[DVBAPI] Receiver wants to demux srvid %04X on adapter %04X camask %04X index %04X pmtpid %04X", program_number, adapter_index, ca_mask, demux_index, pmtpid);
 	
 	for(i = 0; i < MAX_DEMUX; i++)    // search current demuxers for running the same program as the one we received in this PMT object
 	{
@@ -2414,6 +2416,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	demux[demux_id].enigma_namespace = 0;
 	demux[demux_id].tsid = 0;
 	demux[demux_id].onid = 0;
+	demux[demux_id].pmtpid = pmtpid;
 
 	if(pmtfile)
 		{ cs_strncpy(demux[demux_id].pmt_file, pmtfile, sizeof(demux[demux_id].pmt_file)); }
@@ -2468,9 +2471,9 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	}
 	cs_log("Found %d ECMpids and %d STREAMpids in PMT", demux[demux_id].ECMpidcount, demux[demux_id].STREAMpidcount);
 
-	getDemuxOptions(demux_id, buffer, &ca_mask, &demux_index, &adapter_index);
-	cs_log("[DVBAPI] Receiver wants to demux srvid %04X on adapter %04X camask %04X index %04X",
-		   demux[demux_id].program_number, adapter_index, ca_mask, demux_index);
+	getDemuxOptions(demux_id, buffer, &ca_mask, &demux_index, &adapter_index, &pmtpid);
+	cs_log("[DVBAPI] Receiver wants to demux srvid %04X on adapter %04X camask %04X index %04X pmtpid %04X",
+		   demux[demux_id].program_number, adapter_index, ca_mask, demux_index, pmtpid);
 	demux[demux_id].adapter_index = adapter_index;
 	demux[demux_id].ca_mask = ca_mask;
 	demux[demux_id].rdr = NULL;
@@ -2518,11 +2521,12 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 				continue;
 			}
 			// copy to new demuxer
-			getDemuxOptions(demux_id, buffer, &ca_mask, &demux_index, &adapter_index);
+			getDemuxOptions(demux_id, buffer, &ca_mask, &demux_index, &adapter_index, &pmtpid);
 			demux[xtra_demux_id].ECMpids[0] = demux[demux_id].ECMpids[j];
 			demux[xtra_demux_id].ECMpidcount = 1;
 			demux[xtra_demux_id].STREAMpidcount = 0;
 			demux[xtra_demux_id].program_number = demux[demux_id].program_number;
+			demux[xtra_demux_id].pmtpid = demux[demux_id].pmtpid;
 			demux[xtra_demux_id].demux_index = demux_index;
 			demux[xtra_demux_id].adapter_index = adapter_index;
 			demux[xtra_demux_id].ca_mask = ca_mask;
@@ -3004,6 +3008,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 
 		er->tsid = demux[demux_id].tsid;
 		er->onid = demux[demux_id].onid;
+		er->pmtpid = demux[demux_id].pmtpid;
 		er->ens = demux[demux_id].enigma_namespace;
 
 		er->caid  = curpid->CAID;
