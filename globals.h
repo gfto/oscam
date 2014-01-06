@@ -9,7 +9,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>

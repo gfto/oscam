@@ -29,7 +29,7 @@
 #include <sys/modem.h>
 #endif
 
-#include <sys/poll.h>
+#include <poll.h>
 
 #if defined(__linux__) && !defined(__ANDROID__)
 #include <linux/serial.h>
