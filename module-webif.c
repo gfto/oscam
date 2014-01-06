@@ -3912,20 +3912,20 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					if(!apicall)
 					{
 						if(cl->typ == 'c' && !cfg.http_readonly)
-						    {tpl_addVar(vars, TPLADD, "TARGET", "User"); tpl_printf(vars, TPLADD, "LBL", "%s", xml_encode(vars, usr)); tpl_printf(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));}
+						    {tpl_addVar(vars, TPLADD, "TARGET", "User"); tpl_printf(vars, TPLADD, "LBL", "%s", xml_encode(vars, usr)); tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));}
 						else if(cl->typ == 'p' && !cfg.http_readonly)
-						    {tpl_addVar(vars, TPLADD, "TARGET", "Proxy"); tpl_printf(vars, TPLADD, "LBL", "%s", xml_encode(vars, usr)); tpl_printf(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));}
+						    {tpl_addVar(vars, TPLADD, "TARGET", "Proxy"); tpl_printf(vars, TPLADD, "LBL", "%s", xml_encode(vars, usr)); tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));}
 						else if(cl->typ == 'r' && !cfg.http_readonly)
-						    {tpl_addVar(vars, TPLADD, "TARGET", "Reader"); tpl_printf(vars, TPLADD, "LBL", "%s", xml_encode(vars, usr)); tpl_printf(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));}
+						    {tpl_addVar(vars, TPLADD, "TARGET", "Reader"); tpl_printf(vars, TPLADD, "LBL", "%s", xml_encode(vars, usr)); tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));}
 						if((cl->typ == 'p' || cl->typ == 'r') && !cfg.http_readonly)
 						{
 							tpl_printf(vars, TPLADD, "CID", "%p", cl);
-							tpl_printf(vars, TPLADD, "CSIDX", tpl_getTpl(vars, "STATUSRBUTTON"));
+							tpl_addVar(vars, TPLADD, "CSIDX", tpl_getTpl(vars, "STATUSRBUTTON"));
 						}
 						else if(cl->typ == 'c' && !cfg.http_readonly)
 						{
 							tpl_printf(vars, TPLADD, "CID", "%p", cl);
-							tpl_printf(vars, TPLADD, "CSIDX", tpl_getTpl(vars, "STATUSKBUTTON"));
+							tpl_addVar(vars, TPLADD, "CSIDX", tpl_getTpl(vars, "STATUSKBUTTON"));
 						}
 						else
 						{
