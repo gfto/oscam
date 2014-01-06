@@ -1035,8 +1035,8 @@ static void gbox_send_hello(struct s_client *cli)
 		struct gbox_card *card;
 		while((card = ll_iter_next(&it)))
 		{
-			//send to user only cards which matching CAID from account and lvl > 0
-			if(chk_ctab(card->caid, &cli->account->ctab) && card->lvl > 0)
+			//send to user only cards which matching CAID from account
+			if(chk_ctab(card->caid, &cli->account->ctab))
 			{
 				*(++ptr) = card->provid_1 >> 24;
 				*(++ptr) = card->provid_1 >> 16;
