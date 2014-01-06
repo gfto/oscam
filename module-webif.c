@@ -2983,32 +2983,45 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			status = (!apicall) ? "<B>connected</B>" : "connected";
 			if(account->expirationdate && account->expirationdate < now) { classname = "expired"; }
 			else { classname = "connected"; }
+
 			proto = client_get_proto(latestclient);
-			if(latestclient->last_srvid != NO_SRVID_VALUE || latestclient->last_caid != NO_CAID_VALUE)
-				{ lastchan = xml_encode(vars, get_servicename(latestclient, latestclient->last_srvid, latestclient->last_caid, channame)); }
+			int clientcaid = latestclient->last_caid;
+			int clientsrvid = latestclient->last_srvid;
+			tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", clientcaid);
+			tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", clientsrvid);
+
+			if(clientsrvid != NO_SRVID_VALUE || clientcaid != NO_CAID_VALUE)
+			{
+				lastchan = xml_encode(vars, get_servicename(latestclient, clientsrvid, clientcaid, channame));
+			}
 			else
-				{ lastchan = ""; }
-			tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", latestclient->last_caid);
-			tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", latestclient->last_srvid);
+			{
+				lastchan = "";
+			}
+
 			if(cfg.http_showpicons && !apicall)
 			{
 				char picon_name[32];
-				snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%04X", latestclient->last_caid, latestclient->last_srvid);
+				snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%04X", clientcaid, clientsrvid);
 				if(picon_exists(picon_name))
 				{
-					tpl_printf(vars, TPLADD, "LASTCHANNEL",
-							   "<IMG CLASS=\"userpicon\" SRC=\"image?i=IC_%s\" ALT=\"%s\" title=\"%s\">",
-							   picon_name, lastchan, lastchan);
+					tpl_printf(vars, TPLADDONCE, "LCA", "%s", picon_name);
+					tpl_printf(vars, TPLADDONCE, "LCB", "%s", lastchan);
+					tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", tpl_getTpl(vars, "USERCONFIGLASTCHANEL"));
+					tpl_addVar(vars, TPLADDONCE, "LASTCHANNELTITLE", lastchan);
 				}
 				else
 				{
 					tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
+					tpl_printf(vars, TPLADDONCE, "LASTCHANNELTITLE", "missing icon: IC_%s", picon_name);
 				}
 			}
 			else
 			{
 				tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
+				tpl_addVar(vars, TPLADDONCE, "LASTCHANNELTITLE", lastchan);
 			}
+
 			lastresponsetm = latestclient->cwlastresptime;
 			tpl_addVar(vars, TPLADDONCE, "CLIENTIP", cs_inet_ntoa(latestclient->ip));
 			connected_users++;
