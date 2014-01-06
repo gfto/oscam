@@ -28,6 +28,9 @@ REFRESH                       include/refresh.html
 HELPPREFIX                    include/help_prefix.html
 HELPSUFFIX                    include/help_suffix.html
 STATUS                        status/status.html
+STATUSHBUTTON                 status/status_hidebutton.html
+STATUSKBUTTON                 status/status_killbutton.html
+STATUSRBUTTON                 status/status_restartbutton.html
 APISTATUS                     api.xml/status.xml
 JSONSTATUS                    api.json/status.json
 CLIENTSTATUSBIT               status/status_clientstatusbit.html
