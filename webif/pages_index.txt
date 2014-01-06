@@ -11,6 +11,9 @@ APIHEADER                     api.xml/header.xml
 JSONHEADER                    api.json/header.json
 CSS                           include/css.css
 JSCRIPT                       include/jscript.js
+PROTONEWCAMDPIC               include/protonewcamdpic.html
+PROTOCCCAMPIC                 include/protocccampic.html
+PROTOOTHERPIC                 include/protootherpic.html
 TOUCH_CSS                     touch/css.css                                               TOUCH
 TOUCH_STATUS                  touch/status.html                                           TOUCH
 TOUCH_JSCRIPT                 touch/jscript.js                                            TOUCH

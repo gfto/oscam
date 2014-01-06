@@ -1191,7 +1191,6 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 			// used for API and WebIf
 			tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, rdr->label));
 			tpl_addVar(vars, TPLADD, "READERNAMEENC", urlencode(vars, rdr->label));
-			tpl_addVar(vars, TPLADD, "DESCRIPTION", xml_encode(vars, rdr->description));
 			tpl_addVar(vars, TPLADD, "CTYP", reader_get_type_desc(rdr, 0));
 
 			// used only for WebIf
@@ -2626,7 +2625,6 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 
 static void webif_add_client_proto(struct templatevars *vars, struct s_client *cl, const char *proto)
 {
-	tpl_addVar(vars, TPLADDONCE, "PROTOICON", "");
 	tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", "");
 	tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
 	if(!cl) { return; }
@@ -2639,22 +2637,19 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 			snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s_%s", (char *)proto, newcamd_get_client_name(cl->ncd_client_id));
 			if(picon_exists(picon_name))
 			{
-				tpl_printf(vars, TPLADDONCE, "CLIENTPROTO", "%s (%s)", proto, newcamd_get_client_name(cl->ncd_client_id));
-				tpl_printf(vars, TPLADD, "PROTOICON",
-						   "<IMG CLASS=\"protoicon\" SRC=\"image?i=IC_%s_%s\" ALT=\"IC_%s_%s\" TITLE=\"Protocol %s %s\">",
-						   proto, newcamd_get_client_name(cl->ncd_client_id), proto, newcamd_get_client_name(cl->ncd_client_id), proto, newcamd_get_client_name(cl->ncd_client_id));
+				tpl_printf(vars, TPLADD, "NCMDA", "%s", proto);
+				tpl_addVar(vars, TPLADD, "NCMDB", newcamd_get_client_name(cl->ncd_client_id));
+				tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTONEWCAMDPIC"))
 			}
 			else
 			{
-				tpl_printf(vars, TPLADDONCE, "CLIENTPROTO", "%s (%s)", proto, newcamd_get_client_name(cl->ncd_client_id));
-				tpl_printf(vars, TPLADD, "PROTOICON", "<SPAN TITLE=\"IC_%s_%s\">%s (%s)</SPAN>",
-						   proto, newcamd_get_client_name(cl->ncd_client_id), proto, newcamd_get_client_name(cl->ncd_client_id));
+				tpl_printf(vars, TPLADD, "CLIENTPROTO", "%s (%s)", proto, newcamd_get_client_name(cl->ncd_client_id));
+				tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "missing icon: IC_%s_%s", proto, newcamd_get_client_name(cl->ncd_client_id));
 			}
 		}
 		else
 		{
-			tpl_printf(vars, TPLADDONCE, "PROTOICON", "%s (%s)", proto, newcamd_get_client_name(cl->ncd_client_id));
-			tpl_printf(vars, TPLADDONCE, "CLIENTPROTO", "%s (%s)", proto, newcamd_get_client_name(cl->ncd_client_id));
+			tpl_printf(vars, TPLADD, "CLIENTPROTO", "%s (%s)", proto, newcamd_get_client_name(cl->ncd_client_id));
 		}
 		return;
 	}
@@ -2671,22 +2666,22 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 				snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s_%s_%s", proto, cc->remote_version, cc->remote_build);
 				if(picon_exists(picon_name))
 				{
-					tpl_printf(vars, TPLADDONCE, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
-					tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "cccam extinfo: %s missing icon: IC_%s_%s_%s", cc->extended_mode ? cc->remote_oscam : "", proto, cc->remote_version, cc->remote_build);
-					tpl_printf(vars, TPLADD, "PROTOICON",
-							   "<IMG CLASS=\"protoicon\" SRC=\"image?i=IC_%s_%s_%s\" ALT=\"IC_%s (%s-%s)\" TITLE=\"Protocol %s (%s-%s) %s\">",
-							   proto, cc->remote_version, cc->remote_build, proto, cc->remote_version, cc->remote_build, proto, cc->remote_version, cc->remote_build, cc->extended_mode ? cc->remote_oscam : "");
+					tpl_printf(vars, TPLADD, "CCA", "%s", proto);
+					tpl_addVar(vars, TPLADD, "CCB", cc->remote_version);
+					tpl_addVar(vars, TPLADD, "CCC", cc->remote_build);
+					tpl_addVar(vars, TPLADD, "CCD", cc->extended_mode ? cc->remote_oscam : "");
+					tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTOCCCAMPIC"));
+					tpl_addVar(vars, TPLADD, "CLIENTPROTOTITLE", cc->extended_mode ? cc->remote_oscam : "");
 				}
 				else
 				{
-					tpl_printf(vars, TPLADD, "PROTOICON", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
-					tpl_printf(vars, TPLADDONCE, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
-					tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", cc->extended_mode ? cc->remote_oscam : "");
+					tpl_printf(vars, TPLADD, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
+					tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "cccam extinfo: %s missing icon: IC_%s_%s_%s",
+					cc->extended_mode ? cc->remote_oscam : "", proto, cc->remote_version, cc->remote_build);
 				}
 			}
 			else
 			{
-				tpl_printf(vars, TPLADDONCE, "PROTOICON", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
 				tpl_printf(vars, TPLADDONCE, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
 				tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", cc->extended_mode ? cc->remote_oscam : "");
 			}
@@ -2700,20 +2695,18 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 		snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s", proto);
 		if(picon_exists(picon_name))
 		{
-			tpl_printf(vars, TPLADD, "PROTOICON", "<IMG CLASS=\"protoicon\" SRC=\"image?i=IC_%s\" ALT=\"IC_%s\" TITLE=\"Protocol %s\">", proto, proto, proto);
-			tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", (char *)proto);
-			tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
+			tpl_printf(vars, TPLADD, "OTHER", "%s", proto);
+			tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTOOTHERPIC"));
+			tpl_addVar(vars, TPLADD, "CLIENTPROTOTITLE", "");
 		}
 		else
 		{
-			tpl_printf(vars, TPLADD, "PROTOICON", "<SPAN TITLE=\"IC_%s\">%s</SPAN>", proto, proto);
-			tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", (char *)proto);
-			tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
+			tpl_addVar(vars, TPLADD, "CLIENTPROTO", (char *)proto);
+			tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "missing icon: IC_%s", proto);
 		}
 	}
 	else
 	{
-		tpl_addVar(vars, TPLADDONCE, "PROTOICON", (char *)proto);
 		tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", (char *)proto);
 		tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
 	}
@@ -3107,7 +3100,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		}
 		else
 		{
-			tpl_addVar(vars, TPLADDONCE, "PROTOICON", "");
+			tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", "");
 		}
 
 		tpl_addVar(vars, TPLADD, "CLASSNAME", classname);
