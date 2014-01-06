@@ -2637,8 +2637,8 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 			snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s_%s", (char *)proto, newcamd_get_client_name(cl->ncd_client_id));
 			if(picon_exists(picon_name))
 			{
-				tpl_printf(vars, TPLADD, "NCMDA", "%s", proto);
-				tpl_printf(vars, TPLADD, "NCMDB", "%s", newcamd_get_client_name(cl->ncd_client_id));
+				tpl_addVar(vars, TPLADD, "NCMDA", "%s", (char *)proto);
+				tpl_addVar(vars, TPLADD, "NCMDB", newcamd_get_client_name(cl->ncd_client_id));
 				tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTONEWCAMDPIC"));
 			}
 			else
@@ -2666,7 +2666,7 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 				snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s_%s_%s", proto, cc->remote_version, cc->remote_build);
 				if(picon_exists(picon_name))
 				{
-					tpl_printf(vars, TPLADD, "CCA", "%s", proto);
+					tpl_addVar(vars, TPLADD, "CCA", (char *)proto);
 					tpl_addVar(vars, TPLADD, "CCB", cc->remote_version);
 					tpl_addVar(vars, TPLADD, "CCC", cc->remote_build);
 					tpl_addVar(vars, TPLADD, "CCD", cc->extended_mode ? cc->remote_oscam : "");
@@ -2695,7 +2695,7 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 		snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s", proto);
 		if(picon_exists(picon_name))
 		{
-			tpl_printf(vars, TPLADD, "OTHER", "%s", proto);
+			tpl_addVar(vars, TPLADD, "OTHER", (char *)proto);
 			tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTOOTHERPIC"));
 			tpl_addVar(vars, TPLADD, "CLIENTPROTOTITLE", "");
 		}
@@ -3001,8 +3001,8 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%04X", clientcaid, clientsrvid);
 				if(picon_exists(picon_name))
 				{
-					tpl_printf(vars, TPLADDONCE, "LCA", "%s", picon_name);
-					tpl_printf(vars, TPLADDONCE, "LCB", "%s", lastchan);
+					tpl_addVar(vars, TPLADDONCE, "LCA", picon_name);
+					tpl_addVar(vars, TPLADDONCE, "LCB", lastchan);
 					tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", tpl_getTpl(vars, "USERCONFIGLASTCHANEL"));
 					tpl_addVar(vars, TPLADDONCE, "LASTCHANNELTITLE", lastchan);
 				}
@@ -3117,9 +3117,9 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		{
 			if(picon_exists(xml_encode(vars, account->usr)))
 			{
-				tpl_printf(vars, TPLADD, "USERICON", "%s", xml_encode(vars, account->usr));
+				tpl_addVar(vars, TPLADD, "USERICON", xml_encode(vars, account->usr));
 				tpl_addVar(vars, TPLADD, "USERICON", tpl_getTpl(vars, "PROTONEWCAMDPIC"));
-				tpl_printf(vars, TPLADD, "USERTITLE", "%s", xml_encode(vars, account->usr));
+				tpl_addVar(vars, TPLADD, "USERTITLE", xml_encode(vars, account->usr));
 			}
 			else
 			{
@@ -3142,7 +3142,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		if(nrclients > 1)
 		{
 			tpl_printf(vars, TPLADD, "UNOTIFY", "%d", nrclients);
-			tpl_printf(vars, TPLADDONCE, "CLIENTCOUNTNOTIFIER", tpl_getTpl(vars, "CLIENTCOUNTNOTIFIERBIT"));
+			tpl_addVar(vars, TPLADDONCE, "CLIENTCOUNTNOTIFIER", tpl_getTpl(vars, "CLIENTCOUNTNOTIFIERBIT"));
 		}
 
 		//Expirationdate
