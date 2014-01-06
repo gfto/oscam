@@ -3968,12 +3968,12 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							{
 								if(cl->typ == 'c')
 								{
-									tpl_printf(vars, TPLADD, "ULBL", "%s", xml_encode(vars, usr));
+									tpl_addVar(vars, TPLADD, "ULBL", xml_encode(vars, usr));
 									tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SUSERICON"));
 								}
 								if(cl->typ == 'p' || cl->typ == 'r')
 								{
-									tpl_printf(vars, TPLADD, "RLBL", "%s", xml_encode(vars, usr));
+									tpl_addVar(vars, TPLADD, "RLBL", xml_encode(vars, usr));
 									tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SREADERICON"));
 								}
 							}
@@ -3982,12 +3982,12 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								tpl_printf(vars, TPLADD, "UPICMISSING", "missing icon: IC_%s", xml_encode(vars, usr));
 								if(cl->typ == 'c')
 								{
-									tpl_printf(vars, TPLADD, "ULBL", "%s", xml_encode(vars, usr));
+									tpl_addVar(vars, TPLADD, "ULBL", xml_encode(vars, usr));
 									tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SUSER"));
 								}
 								else if (cl->typ == 'p' || cl->typ == 'r')
 								{
-									tpl_printf(vars, TPLADD, "RLBL", "%s", xml_encode(vars, usr));
+									tpl_addVar(vars, TPLADD, "RLBL", xml_encode(vars, usr));
 									tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SREADER"));
 								}
 								else
@@ -4000,12 +4000,12 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						{
 							if(cl->typ == 'c')
 							{
-								tpl_printf(vars, TPLADD, "ULBL", xml_encode(vars, usr));
+								tpl_addVar(vars, TPLADD, "ULBL", xml_encode(vars, usr));
 								tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SUSER"));
 							}
 							else if (cl->typ == 'p' || cl->typ == 'r')
 							{
-								tpl_printf(vars, TPLADD, "RLBL", xml_encode(vars, usr));
+								tpl_addVar(vars, TPLADD, "RLBL", xml_encode(vars, usr));
 								tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SREADER"));
 							}
 							else
