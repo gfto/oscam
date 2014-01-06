@@ -2637,7 +2637,7 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 			snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s_%s", (char *)proto, newcamd_get_client_name(cl->ncd_client_id));
 			if(picon_exists(picon_name))
 			{
-				tpl_addVar(vars, TPLADD, "NCMDA", "%s", (char *)proto);
+				tpl_addVar(vars, TPLADD, "NCMDA", (char *)proto);
 				tpl_addVar(vars, TPLADD, "NCMDB", newcamd_get_client_name(cl->ncd_client_id));
 				tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTONEWCAMDPIC"));
 			}
@@ -3912,20 +3912,28 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					if(!apicall)
 					{
 						if(cl->typ == 'c' && !cfg.http_readonly)
-						    {tpl_addVar(vars, TPLADD, "TARGET", "User"); tpl_printf(vars, TPLADD, "LBL", "%s", xml_encode(vars, usr)); tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));}
-						else if(cl->typ == 'p' && !cfg.http_readonly)
-						    {tpl_addVar(vars, TPLADD, "TARGET", "Proxy"); tpl_printf(vars, TPLADD, "LBL", "%s", xml_encode(vars, usr)); tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));}
-						else if(cl->typ == 'r' && !cfg.http_readonly)
-						    {tpl_addVar(vars, TPLADD, "TARGET", "Reader"); tpl_printf(vars, TPLADD, "LBL", "%s", xml_encode(vars, usr)); tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));}
-						if((cl->typ == 'p' || cl->typ == 'r') && !cfg.http_readonly)
 						{
+							tpl_addVar(vars, TPLADD, "TARGET", "User");
+							tpl_addVar(vars, TPLADD, "LBL", xml_encode(vars, usr));
 							tpl_printf(vars, TPLADD, "CID", "%p", cl);
+							tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));
+							tpl_addVar(vars, TPLADD, "CSIDX", tpl_getTpl(vars, "STATUSKBUTTON"));
+						}
+						else if(cl->typ == 'p' && !cfg.http_readonly)
+						{
+							tpl_addVar(vars, TPLADD, "TARGET", "Proxy");
+							tpl_addVar(vars, TPLADD, "LBL", xml_encode(vars, usr));
+							tpl_printf(vars, TPLADD, "CID", "%p", cl);
+							tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));
 							tpl_addVar(vars, TPLADD, "CSIDX", tpl_getTpl(vars, "STATUSRBUTTON"));
 						}
-						else if(cl->typ == 'c' && !cfg.http_readonly)
+						else if(cl->typ == 'r' && !cfg.http_readonly)
 						{
+							tpl_addVar(vars, TPLADD, "TARGET", "Reader");
+							tpl_addVar(vars, TPLADD, "LBL", xml_encode(vars, usr));
 							tpl_printf(vars, TPLADD, "CID", "%p", cl);
-							tpl_addVar(vars, TPLADD, "CSIDX", tpl_getTpl(vars, "STATUSKBUTTON"));
+							tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));
+							tpl_addVar(vars, TPLADD, "CSIDX", tpl_getTpl(vars, "STATUSRBUTTON"));
 						}
 						else
 						{
