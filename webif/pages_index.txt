@@ -31,6 +31,10 @@ STATUS                        status/status.html
 STATUSHBUTTON                 status/status_hidebutton.html
 STATUSKBUTTON                 status/status_killbutton.html
 STATUSRBUTTON                 status/status_restartbutton.html
+SREADERICON                   status/status_readericon.html
+SREADER                       status/status_reader.html
+SUSERICON                     status/status_usericon.html
+SUSER                         status/status_user.html
 APISTATUS                     api.xml/status.xml
 JSONSTATUS                    api.json/status.json
 CLIENTSTATUSBIT               status/status_clientstatusbit.html
