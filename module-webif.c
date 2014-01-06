@@ -3141,7 +3141,8 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 
 		if(nrclients > 1)
 		{
-			tpl_printf(vars, TPLADDONCE, "CLIENTCOUNTNOTIFIER", "<SPAN CLASS=\"span_notifier\">%d</SPAN>", nrclients);
+			tpl_printf(vars, TPLADD, "UNOTIFY", "%d", nrclients);
+			tpl_printf(vars, TPLADDONCE, "CLIENTCOUNTNOTIFIER", tpl_getTpl(vars, "CLIENTCOUNTNOTIFIERBIT"));
 		}
 
 		//Expirationdate
