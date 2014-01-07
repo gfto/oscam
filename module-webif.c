@@ -177,8 +177,9 @@ static char *get_ecm_historystring(struct s_client *cl)
 			free(value);
 			return "";
 		}
-		else { return value; }´´pú
-    )
+		else { return value; }
+
+	}
 	else
 	{
 		return "";
@@ -324,7 +325,7 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 
 
 	value = mk_t_caidvaluetab(&cfg.ftimeouttab);
-	tpFALLBACKTIMEOUT_PERCAID", value);
+	tpl_addVar(vars, TPLADD, "FALLBACKTIMEOUT_PERCAID", value);
 	free_mk_t(value);
 
 	tpl_printf(vars, TPLADD, "SLEEP", "%d", cfg.tosleep);
@@ -396,7 +397,9 @@ static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct ur
 				clear_all_stat();
 				load_stat_from_file();
 				tpl_addMsg(vars, "Stats loaded from file");
-		p(getParam(params, "button"), "Save Stats") == 0)
+			}
+
+			if(strcmp(getParam(params, "button"), "Save Stats") == 0)
 			{
 				save_stat_to_file(1);
 				tpl_addMsg(vars, "Stats saved to file");
