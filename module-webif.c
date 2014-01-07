@@ -4066,10 +4066,33 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					{
 						if(((cl->typ != 'r') || (cl->typ != 'p')) && (cl->lastreader[0]))
 						{
-							tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "(%dms)&nbsp;", cl->cwlastresptime);
-							tpl_printf(vars, TPLAPPEND, "CLIENTLBVALUE", "by %s", cl->lastreader);
 							if(apicall)
-								{ tpl_addVar(vars, TPLADD, "LASTREADER", cl->lastreader); }
+							{
+								tpl_addVar(vars, TPLADD, "LASTREADER", cl->lastreader);
+							}
+							else
+							{
+								if(cfg.http_showpicons)
+								{
+									if(picon_exists((char *)cl->lastreader))
+									{
+										tpl_addVar(vars, TPLADD, "LBLVALUE", cl->lastreader);
+										tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "(%dms)&nbsp;by&nbsp;", cl->cwlastresptime);
+										tpl_addVar(vars, TPLAPPEND, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUEBITPIC"));
+									}
+									else
+									{
+										tpl_addVar(vars, TPLADD, "LBLVALUE", cl->lastreader);
+										tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "(%dms)&nbsp;by&nbsp;", cl->cwlastresptime);
+										tpl_addVar(vars, TPLAPPEND, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUEBITNOPIC"));
+									}
+								}
+								else
+								{
+									tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "(%dms)&nbsp;by&nbsp;", cl->cwlastresptime);
+									tpl_addVar(vars, TPLAPPEND, "CLIENTLBVALUE", (char *)cl->lastreader);
+								}
+							}
 						}
 
 						if(cl->last_caid != NO_CAID_VALUE)
