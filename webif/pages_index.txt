@@ -28,6 +28,13 @@ REFRESH                       include/refresh.html
 HELPPREFIX                    include/help_prefix.html
 HELPSUFFIX                    include/help_suffix.html
 STATUS                        status/status.html
+STATUSHBUTTON                 status/status_hidebutton.html
+STATUSKBUTTON                 status/status_killbutton.html
+STATUSRBUTTON                 status/status_restartbutton.html
+SREADERICON                   status/status_readericon.html
+SREADER                       status/status_reader.html
+SUSERICON                     status/status_usericon.html
+SUSER                         status/status_user.html
 APISTATUS                     api.xml/status.xml
 JSONSTATUS                    api.json/status.json
 CLIENTSTATUSBIT               status/status_clientstatusbit.html
@@ -37,6 +44,8 @@ USERCONFIGLIST                userconfig/userconfig.html
 ADDNEWUSER                    userconfig/userconfig_newuserform.html
 USERCONFIGLISTBIT             userconfig/userconfig_entry.html
 USERCONFIGLASTCHANEL          userconfig/userconfig_lastchannelicon.html
+USERICON                      userconfig/userconfig_usericon.html
+CLIENTCOUNTNOTIFIERBIT        userconfig/userconfig_notify.html
 APIUSERCONFIGLIST             api.xml/userconfiglist.xml
 APIUSERCONFIGLISTBIT          api.xml/userconfiglist_userconfigs.xml
 READERS                       readers/readers.html

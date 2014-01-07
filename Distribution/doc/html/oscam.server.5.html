@@ -115,10 +115,18 @@ define local or remote reader
 <BR>&nbsp;<B>constantcw</B>:&nbsp;&nbsp;constant&nbsp;CW&nbsp;file&nbsp;name
 <P>
 constant CW file format: 
+<DL COMPACT>
+<DT>&bull; standard format<DD>
 <P>
-CAID<B>:</B>Provider ID<B>:</B>Service ID<B>:</B>Video ID<B>:</B>ECM PID<I>::</I>key (16 Bytes seperated by spaces)
+CAID<B>:</B>Provider ID<B>:</B>Service ID<B>:</B>PMT ID<B>:</B>ECM PID<I>::</I>key (16 Bytes seperated by spaces)
 <P>
 example: 1234:123456:1234:2345:3456<I>::</I>00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
+<DT>&bull; extended OScam format<DD>
+<P>
+CAID<B>:</B>Provider ID<B>:</B>Service ID<B>:</B>PMT ID<B>:</B>ECM PID<I>:Video PID:</I>key (16 Bytes seperated by spaces)
+<P>
+example: 1234:123456:1234:2345:3456<I>:7890:</I>00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
+</DL>
 </DL>
 
 <P>
