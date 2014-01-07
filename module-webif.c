@@ -589,7 +589,11 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 	value = mk_t_cacheex_hitvaluetab(&cfg.csp.filter_caidtab);
 	tpl_addVar(vars, TPLADD, "CSP_ECM_FILTER", value);
 	free_mk_t(value);
-
+	
+	value = mk_t_cacheex_cwcheck_valuetab(&cfg.cacheex_cwcheck_tab);
+	tpl_addVar(vars, TPLADD, "CACHEEXCWCHECK", value);
+	free_mk_t(value);
+	
 	tpl_addVar(vars, TPLADD, "ARCHECKED", (cfg.csp.allow_request == 1) ? "checked" : "");
 	tpl_addVar(vars, TPLADD, "ARFCHECKED", (cfg.csp.allow_reforward == 1) ? "checked" : "");
 #endif
@@ -1465,6 +1469,9 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 
 	// Receive timeout
 	tpl_printf(vars, TPLADD, "RECEIVETIMEOUT", "%d", rdr->tcp_rto);
+	
+	// keepalive
+	tpl_addVar(vars, TPLADD, "RDRKEEPALIVE", (rdr->keepalive == 1) ? "checked" : "");
 
 	// Connect on init (newcamd only)
 	if(!apicall)
@@ -2549,7 +2556,8 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 
 	tpl_addVar(vars, TPLADD, "DCCHECKED", (account->cacheex.drop_csp == 1) ? "checked" : "");
 	tpl_addVar(vars, TPLADD, "ARCHECKED", (account->cacheex.allow_request == 1) ? "checked" : "");
-
+	tpl_addVar(vars, TPLADD, "NWTCHECKED", (account->no_wait_time == 1) ? "checked" : "");
+	
 #endif
 
 	//Keepalive
