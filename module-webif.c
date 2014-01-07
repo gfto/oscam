@@ -4081,73 +4081,48 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							else
 							{
 								tpl_addVar(vars, TPLADD, "LBLVALUE", (char *)cl->lastreader);
-								if(cfg.http_showpicons)
-								{
-									if(picon_exists((char *)cl->lastreader))
-									{
-										tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "(%dms)&nbsp;by&nbsp;", cl->cwlastresptime);
-										tpl_addVar(vars, TPLAPPEND, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUEBITPIC"));
-									}
-									else
-									{
-										tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "(%dms)&nbsp;by&nbsp;", cl->cwlastresptime);
-										tpl_addVar(vars, TPLAPPEND, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUEBITNOPIC"));
-									}
-								}
-								else
-								{
-									
-									tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "(%dms)&nbsp;by&nbsp;", cl->cwlastresptime);
-									tpl_addVar(vars, TPLAPPEND, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUENOPIC"));
-								}
+								tpl_printf(vars, TPLADD, "MSVALUE", "%d", cl->cwlastresptime);
+								tpl_addVar(vars, TPLAPPEND, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUEBIT"));
 							}
 						}
 
-						if(cl->last_caid != NO_CAID_VALUE)
-							{ tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", cl->last_caid); }
-						else
-							{ tpl_addVar(vars, TPLADD, "CLIENTCAID", "none"); }
-						if(cl->last_srvid != NO_SRVID_VALUE)
-							{ tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", cl->last_srvid); }
-						else
-							{ tpl_printf(vars, TPLADD, "CLIENTSRVID", "none"); }
 						char *lastchannel;
 						char channame[32];
 						int32_t actual_caid = cl->last_caid;
 						int32_t actual_srvid = cl->last_srvid;
+						if(cl->last_caid != NO_CAID_VALUE) { tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", actual_caid); }
+						else { tpl_addVar(vars, TPLADD, "CLIENTCAID", "none"); }
+						if(cl->last_srvid != NO_SRVID_VALUE) { tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", actual_srvid); }
+						else { tpl_printf(vars, TPLADD, "CLIENTSRVID", "none"); }
 						lastchannel = xml_encode(vars, get_servicename(cl, actual_srvid, actual_caid, channame));
-						if(cl->last_caid != NO_CAID_VALUE && cl->last_srvid != NO_SRVID_VALUE)
-						{
-							tpl_printf(vars, TPLADD, "CLIENTCURRENTPICON", "%s", lastchannel);
-							tpl_printf(vars, TPLADD, "CAIDSRVID", "%04X:%04X", actual_caid, actual_srvid);
-							if(cfg.http_showpicons)
-							{
-								snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%04X", actual_caid, actual_srvid);
-								if(picon_exists(picon_name))
-								{
-									tpl_printf(vars, TPLADD, "CLIENTCURRENTPICON",
-											   "<IMG CLASS=\"clientcurrentpicon\" SRC=\"image?i=IC_%04X_%04X\">",
-											   actual_caid, actual_srvid);
-								}
-								else
-								{
-									tpl_printf(vars, TPLADD, "CLIENTCURRENTPICON", "%s", lastchannel);
-									tpl_printf(vars, TPLADD, "CAIDSRVID", "%04X:%04X", actual_caid, actual_srvid);
-								}
-							}
-							else
-							{
-								tpl_printf(vars, TPLADD, "CLIENTCURRENTPICON", "%s", lastchannel);
-								tpl_printf(vars, TPLADD, "CAIDSRVID", "%04X:%04X", actual_caid, actual_srvid);
-							}
-						}
 						tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime ? cl->cwlastresptime : 1);
-
 						tpl_printf(vars, TPLADD, "CLIENTSRVPROVIDER", "%s%s", cl->last_srvidptr && cl->last_srvidptr->prov ? xml_encode(vars, cl->last_srvidptr->prov) : "", cl->last_srvidptr && cl->last_srvidptr->prov ? ": " : "");
 						tpl_addVar(vars, TPLADD, "CLIENTSRVNAME", cl->last_srvidptr && cl->last_srvidptr->name ? xml_encode(vars, cl->last_srvidptr->name) : "");
 						tpl_addVar(vars, TPLADD, "CLIENTSRVTYPE", cl->last_srvidptr && cl->last_srvidptr->type ? xml_encode(vars, cl->last_srvidptr->type) : "");
 						tpl_addVar(vars, TPLADD, "CLIENTSRVDESCRIPTION", cl->last_srvidptr && cl->last_srvidptr->desc ? xml_encode(vars, cl->last_srvidptr->desc) : "");
 						tpl_addVar(vars, TPLADD, "CLIENTTIMEONCHANNEL", sec2timeformat(vars, chsec));
+
+						if(cl->last_caid != NO_CAID_VALUE && cl->last_srvid != NO_SRVID_VALUE)
+						{
+							tpl_printf(vars, TPLADD, "CAIDSRVID", "%04X:%04X", actual_caid, actual_srvid);
+							if(cfg.http_showpicons)
+							{
+								snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%04X", actual_caid, actual_srvid);
+								tpl_addVar(vars, TPLADD, "PICONNAME", picon_name);
+								if(picon_exists(picon_name))
+								{
+									tpl_addVar(vars, TPLADDONCE, "CURRENTPICON", tpl_getTpl(vars, "CLIENTCURRENTCHANNELPIC"));
+								}
+								else
+								{
+									tpl_addVar(vars, TPLADDONCE, "CURRENTPICON", tpl_getTpl(vars, "CLIENTCURRENTCHANNEL"));
+								}
+							}
+							else
+							{
+								tpl_addVar(vars, TPLADDONCE, "CURRENTPICON", tpl_getTpl(vars, "CLIENTCURRENTCHANNELBIT"));
+							}
+						}
 					}
 					else
 					{
@@ -4161,7 +4136,6 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						tpl_addVar(vars, TPLADD, "CLIENTSRVDESCRIPTION", "");
 						tpl_addVar(vars, TPLADD, "CLIENTLBVALUE", "");
 						tpl_addVar(vars, TPLADD, "CLIENTTIMEONCHANNEL", "");
-
 					}
 
 					if(!apicall)
