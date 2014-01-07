@@ -4072,25 +4072,25 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							}
 							else
 							{
+								tpl_addVar(vars, TPLADD, "LBLVALUE", (char *)cl->lastreader);
 								if(cfg.http_showpicons)
 								{
 									if(picon_exists((char *)cl->lastreader))
 									{
-										tpl_addVar(vars, TPLADD, "LBLVALUE", cl->lastreader);
 										tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "(%dms)&nbsp;by&nbsp;", cl->cwlastresptime);
 										tpl_addVar(vars, TPLAPPEND, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUEBITPIC"));
 									}
 									else
 									{
-										tpl_addVar(vars, TPLADD, "LBLVALUE", cl->lastreader);
 										tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "(%dms)&nbsp;by&nbsp;", cl->cwlastresptime);
 										tpl_addVar(vars, TPLAPPEND, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUEBITNOPIC"));
 									}
 								}
 								else
 								{
+									
 									tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "(%dms)&nbsp;by&nbsp;", cl->cwlastresptime);
-									tpl_addVar(vars, TPLAPPEND, "CLIENTLBVALUE", (char *)cl->lastreader);
+									tpl_addVar(vars, TPLAPPEND, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUENOPIC"));
 								}
 							}
 						}

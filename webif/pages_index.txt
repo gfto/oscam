@@ -40,6 +40,7 @@ JSONSTATUS                    api.json/status.json
 CLIENTSTATUSBIT               status/status_clientstatusbit.html
 CLIENTLBLVALUEBITNOPIC        status/status_lblvaluereader.html
 CLIENTLBLVALUEBITPIC          status/status_lblvaluereaderpic.html
+CLIENTLBLVALUENOPIC           status/status_lblvaluereaderbit.html
 APISTATUSBIT                  api.xml/status_statusbits.xml
 JSONSTATUSBIT                 api.json/status_statusbits.json
 USERCONFIGLIST                userconfig/userconfig.html
