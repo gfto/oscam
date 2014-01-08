@@ -510,17 +510,17 @@ void *stapi_read_thread(void *sparam)
 #define DE_START 0
 #define DE_STOP 1
 
-void stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t mode, int32_t n)
+int32_t stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t mode, int32_t n)
 {
 	uint32_t Slot = 0;
 	int32_t ErrorCode = 0;
 
-	if(dev_list[n].SessionHandle == 0) { return; }
+	if(dev_list[n].SessionHandle == 0) { return 1; }
 
 	Slot = oscam_stapi_PidQuery(dev_list[n].name, pid);
-	if(!Slot) { return; }
+	if(!Slot) { return 2; }
 
-	if(demux[demux_id].DescramblerHandle[n] == 0) { return; }
+	if(demux[demux_id].DescramblerHandle[n] == 0) { return 3; }
 
 	if(mode == ASSOCIATE)
 	{
@@ -529,7 +529,7 @@ void stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t mode, in
 		{
 			if(demux[demux_id].slot_assc[n][k] == Slot)
 			{
-				return;
+				return 4;
 			}
 		}
 
@@ -562,12 +562,12 @@ void stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t mode, in
 			if(demux[demux_id].slot_assc[n][k] == Slot)
 			{
 				demux[demux_id].slot_assc[n][k] = 0;
-				return;
+				break;
 			}
 		}
 	}
 
-	return;
+	return ErrorCode;
 }
 
 void stapi_startdescrambler(int32_t demux_id, int32_t dev_index, int32_t mode)
@@ -638,7 +638,8 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t idx, uint16_t pid, bool enable, 
 		}
 		
 		if (actionneeded && !enable){
-			stapi_DescramblerAssociate(demux_id, pid, DISASSOCIATE, n);
+			int32_t ret = stapi_DescramblerAssociate(demux_id, pid, DISASSOCIATE, n);
+			if (ret !=0) update_streampid_list(n, pid, idx); // something went wrong, add pid again!
 			if(!is_ca_used(n)){
 				cs_debug_mask(D_DVBAPI, "stop descrambling PTI: %s", dev_list[n].name);
 				stapi_startdescrambler(demux_id, n, DE_STOP);
@@ -647,7 +648,8 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t idx, uint16_t pid, bool enable, 
 		}
 			
 		if (actionneeded && enable){
-			stapi_DescramblerAssociate(demux_id, pid, ASSOCIATE, n);
+			int32_t ret = stapi_DescramblerAssociate(demux_id, pid, ASSOCIATE, n);
+			if (ret != 0) remove_streampid_from_list(n, pid, idx); // something went wrong, remove pid!
 		}
 	}
 
