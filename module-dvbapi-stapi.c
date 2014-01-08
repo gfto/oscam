@@ -510,17 +510,17 @@ void *stapi_read_thread(void *sparam)
 #define DE_START 0
 #define DE_STOP 1
 
-int32_t stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t mode, int32_t n)
+void stapi_DescramblerAssociate(int32_t demux_id, int32_t idx, uint16_t pid, int32_t mode, int32_t n)
 {
 	uint32_t Slot = 0;
 	int32_t ErrorCode = 0;
 
-	if(dev_list[n].SessionHandle == 0) { return 1; }
+	if(dev_list[n].SessionHandle == 0) { return; }
 
 	Slot = oscam_stapi_PidQuery(dev_list[n].name, pid);
-	if(!Slot) { return 2; }
+	if(!Slot) { return; }
 
-	if(demux[demux_id].DescramblerHandle[n] == 0) { return 3; }
+	if(demux[demux_id].DescramblerHandle[n] == 0) { return; }
 
 	if(mode == ASSOCIATE)
 	{
@@ -529,7 +529,7 @@ int32_t stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t mode,
 		{
 			if(demux[demux_id].slot_assc[n][k] == Slot)
 			{
-				return 4;
+				return;
 			}
 		}
 
@@ -543,6 +543,7 @@ int32_t stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t mode,
 		{
 			if(demux[demux_id].slot_assc[n][k] == 0)
 			{
+				update_streampid_list(n, pid, idx); // update dvbapi streampid registration
 				demux[demux_id].slot_assc[n][k] = Slot;
 				break;
 			}
@@ -561,13 +562,20 @@ int32_t stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t mode,
 		{
 			if(demux[demux_id].slot_assc[n][k] == Slot)
 			{
+				stapi_DescramblerAssociate(demux_id, idx, pid, DISASSOCIATE, n);
+				remove_streampid_from_list(n, pid, idx);
+				if(!is_ca_used(n)){
+					cs_debug_mask(D_DVBAPI, "stop descrambling PTI: %s", dev_list[n].name);
+					stapi_startdescrambler(demux_id, n, DE_STOP);
+					memset(demux[demux_id].slot_assc[n], 0, sizeof(demux[demux_id].slot_assc[n]));
+				}
 				demux[demux_id].slot_assc[n][k] = 0;
-				break;
+				return;
 			}
 		}
 	}
 
-	return ErrorCode;
+	return;
 }
 
 void stapi_startdescrambler(int32_t demux_id, int32_t dev_index, int32_t mode)
@@ -612,7 +620,6 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t idx, uint16_t pid, bool enable, 
 
 	for(n = 0; n < PTINUM; n++)
 	{
-		bool actionneeded = false;
 		if(enable){
 			if(dev_list[n].SessionHandle == 0) { continue; }
 			if(demux[demux_id].DescramblerHandle[n] == 0){
@@ -630,26 +637,11 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t idx, uint16_t pid, bool enable, 
 			}
 
 			if(demux[demux_id].DescramblerHandle[n] == 0) { continue; }
-			actionneeded = !update_streampid_list(n, pid, idx);
+			stapi_DescramblerAssociate(demux_id, idx, pid, ASSOCIATE, n);
 		}
 		if(!enable){
 			if(demux[demux_id].DescramblerHandle[n] == 0) { continue; }
-			actionneeded = remove_streampid_from_list(n, pid, idx);
-		}
-		
-		if (actionneeded && !enable){
-			int32_t ret = stapi_DescramblerAssociate(demux_id, pid, DISASSOCIATE, n);
-			if (ret !=0) update_streampid_list(n, pid, idx); // something went wrong, add pid again!
-			if(!is_ca_used(n)){
-				cs_debug_mask(D_DVBAPI, "stop descrambling PTI: %s", dev_list[n].name);
-				stapi_startdescrambler(demux_id, n, DE_STOP);
-				memset(demux[demux_id].slot_assc[n], 0, sizeof(demux[demux_id].slot_assc[n]));
-			}
-		}
-			
-		if (actionneeded && enable){
-			int32_t ret = stapi_DescramblerAssociate(demux_id, pid, ASSOCIATE, n);
-			if (ret != 0) remove_streampid_from_list(n, pid, idx); // something went wrong, remove pid!
+			stapi_DescramblerAssociate(demux_id, idx, pid, DISASSOCIATE, n);
 		}
 	}
 
