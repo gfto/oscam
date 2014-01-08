@@ -845,7 +845,8 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 	setTCPTimeouts(client->udp_fd);
 	clear_block_delay(rdr);
 	client->last = client->login = time((time_t *)0);
-	client->last_caid = client->last_srvid = 0;
+	client->last_caid = NO_CAID_VALUE;
+	client->last_srvid = NO_SRVID_VALUE;
 	client->pfd = client->udp_fd;
 	rdr->tcp_connected = 1;
 	rdr_debug_mask(rdr, D_TRACE, "connect succesfull fd=%d", client->udp_fd);
