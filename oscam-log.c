@@ -622,7 +622,7 @@ void cs_statistics(struct s_client *client)
 		get_servicename(client, client->last_srvid, client->last_caid, channame);
 
 		int32_t lsec;
-		if((client->last_caid == 0xFFFF) && (client->last_srvid == 0xFFFF))
+		if((client->last_caid == NO_CAID_VALUE) && (client->last_srvid == NO_SRVID_VALUE))
 			{ lsec = client->last - client->login; } //client leave calc total duration
 		else
 			{ lsec = client->last - client->lastswitch; }

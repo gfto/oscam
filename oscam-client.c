@@ -685,8 +685,8 @@ void free_client(struct s_client *cl)
 	if(cl->typ == 'c')
 	{
 		cs_statistics(cl);
-		cl->last_caid = 0xFFFF;
-		cl->last_srvid = 0xFFFF;
+		cl->last_caid = NO_CAID_VALUE;
+		cl->last_srvid = NO_SRVID_VALUE;
 		cs_statistics(cl);
 
 		cs_sleepms(1000); //just wait a bit that really really nobody is accessing client data
