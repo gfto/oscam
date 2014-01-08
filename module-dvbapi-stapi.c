@@ -562,12 +562,12 @@ void stapi_DescramblerAssociate(int32_t demux_id, int32_t idx, uint16_t pid, int
 		{
 			if(demux[demux_id].slot_assc[n][k] == Slot)
 			{
-				stapi_DescramblerAssociate(demux_id, idx, pid, DISASSOCIATE, n);
 				remove_streampid_from_list(n, pid, idx);
 				if(!is_ca_used(n)){
 					cs_debug_mask(D_DVBAPI, "stop descrambling PTI: %s", dev_list[n].name);
 					stapi_startdescrambler(demux_id, n, DE_STOP);
 					memset(demux[demux_id].slot_assc[n], 0, sizeof(demux[demux_id].slot_assc[n]));
+					return;
 				}
 				demux[demux_id].slot_assc[n][k] = 0;
 				return;
