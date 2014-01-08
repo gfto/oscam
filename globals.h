@@ -1350,7 +1350,6 @@ struct s_reader                                     //contains device info, read
 	int16_t				smart_type;
 	uint16_t   statuscnt;
 	uint16_t   modemstat;
-	CS_MUTEX_LOCK   sr_lock;                // smartreader mutex lock
 #endif
 	unsigned char   rom[15];
 	unsigned char   irdId[4];
