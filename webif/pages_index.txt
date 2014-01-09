@@ -127,6 +127,10 @@ SERVICECONFIGSIDBIT           services/services_servicetabs_sidlist.html
 SERVICEEDIT                   services_edit/services_edit.html
 PRESHUTDOWN                   shutdown/pre_shutdown.html
 SHUTDOWN                      shutdown/shutdown.html
+CLEARLOG                      logmenu/log_clearlog.html
+LOGMENUONOFF                  logmenu/log_logmenuonoff.html
+LOGMENUDISABLELOG             logmenu/log_disablelogmenu.html
+LOGMENUFILTERFORM             logmenu/log_filterform.html
 
 WRITEPROTECTION               files/file_writeprotection.html
 MESSAGE                       include/message.html

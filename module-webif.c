@@ -3943,9 +3943,12 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));
 							tpl_addVar(vars, TPLADD, "CSIDX", tpl_getTpl(vars, "STATUSRBUTTON"));
 						}
-						else
+						else if ((cl->typ == 'h' || cl->typ == 's' || cl->typ == 'm') && !cfg.http_readonly)
 						{
-							tpl_printf(vars, TPLADD, "HIDEIDX", "%p", cl);
+							tpl_addVar(vars, TPLADD, "TARGET", "Reader");
+							tpl_addVar(vars, TPLADD, "LBL", xml_encode(vars, usr));
+							tpl_printf(vars, TPLADD, "CID", "%p", cl);
+							tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));
 							tpl_printf(vars, TPLADD, "CSIDX", "%p", cl);
 						}
 					}
@@ -3954,11 +3957,9 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						tpl_printf(vars, TPLADD, "HIDEIDX", "%p", cl);
 						tpl_printf(vars, TPLADD, "CSIDX", "%p", cl);
 					}
-
 					tpl_printf(vars, TPLADD, "CLIENTTYPE", "%c", cl->typ);
 					tpl_printf(vars, TPLADD, "CLIENTCNR", "%d", get_threadnum(cl));
 					tpl_addVar(vars, TPLADD, "CLIENTUSER", xml_encode(vars, usr));
-
 					if(cl->typ == 'c')
 					{
 						tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", xml_encode(vars, (cl->account && cl->account->description) ? cl->account->description : ""));
@@ -4932,10 +4933,19 @@ static void webif_process_logfile(struct templatevars * vars, struct uriparams *
 	tpl_addVar(vars, TPLADD, "NEXTPAGE", "files.html");
 #endif
 	if(!cfg.disablelog)
-		{ tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?file=logfile&amp;stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 1, "Stop Log"); }
+	{
+		tpl_printf(vars, TPLADD, "SWITCH", "%d", 1);
+		tpl_addVar(vars, TPLADD, "TEXT", "Stop Log");
+		tpl_printf(vars, TPLADD, "LOGMENU", tpl_getTpl(vars, "LOGMENUDISABLELOG"));
+		
+	}
 	else
-		{ tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?file=logfile&amp;stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 0, "Start Log"); }
-	tpl_addVar(vars, TPLAPPEND, "LOGMENU", "<A HREF=\"files.html?file=logfile&amp;clear=logfile\">Clear Log</A>");
+	{
+		tpl_printf(vars, TPLADD, "SWITCH", "%d", 0);
+		tpl_addVar(vars, TPLADD, "TEXT", "Stop Log");
+		tpl_printf(vars, TPLADD, "LOGMENU", tpl_getTpl(vars, "LOGMENUDISABLELOG"));
+	}
+	tpl_addVar(vars, TPLAPPEND, "LOGMENU", tpl_getTpl(vars, "CLEARLOG"));
 	return;
 }
 
@@ -4950,23 +4960,27 @@ static void webif_process_userfile(struct templatevars * vars, struct uriparams 
 			fclose(file);
 		}
 	}
-
 	if(!cfg.disableuserfile)
-		{ tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?file=userfile&amp;stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 1, "Stop Log"); }
+	{
+		tpl_printf(vars, TPLADD, "SWITCH", "%d", 1);
+		tpl_addVar(vars, TPLADD, "TEXT", "Stop Log");
+		tpl_printf(vars, TPLADD, "LOGMENU", tpl_getTpl(vars, "LOGMENUONOFF"));
+	}
 	else
-		{ tpl_printf(vars, TPLADD, "LOGMENU", "<A HREF=\"files.html?file=userfile&amp;stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 0, "Start Log"); }
-
-	tpl_addVar(vars, TPLAPPEND, "LOGMENU", "<A HREF=\"files.html?file=userfile&amp;clear=usrfile\">Clear Log</A>");
-
-	tpl_printf(vars, TPLADD, "FILTERFORMOPTIONS", "<option value=\"%s\">%s</option>\n", "all", "all");
+	{
+		tpl_printf(vars, TPLADD, "SWITCH", "%d", 0);
+		tpl_addVar(vars, TPLADD, "TEXT", "Start Log");
+		tpl_printf(vars, TPLADD, "LOGMENU", tpl_getTpl(vars, "LOGMENUONOFF"));
+	}
+	tpl_addVar(vars, TPLAPPEND, "LOGMENU", tpl_getTpl(vars, "CLEARLOG"));
+	tpl_addVar(vars, TPLADD, "FFVAL", "all");
+	tpl_addVar(vars, TPLADD, "FILTERFORMOPTIONS", tpl_getTpl(vars, "LOGMENUFILTERFORM"));
 	struct s_auth *account;
 	for(account = cfg.account; account; account = account->next)
 	{
-		tpl_printf(vars, TPLAPPEND, "FILTERFORMOPTIONS", "<option value=\"%s\" %s>%s</option>\n",
-				   xml_encode(vars, account->usr),
-				   strcmp(getParam(params, "filter"), account->usr) ? "" : "selected",
-				   xml_encode(vars, account->usr)
-				  );
+		tpl_addVar(vars, TPLADD, "FFVAL", xml_encode(vars, account->usr));
+		tpl_addVar(vars, TPLADD, "FFSEL", strcmp(getParam(params, "filter"), account->usr) ? "" : "selected");
+		tpl_printf(vars, TPLAPPEND, "FILTERFORMOPTIONS", tpl_getTpl(vars, "LOGMENUFILTERFORM"));
 	}
 	tpl_addVar(vars, TPLADD, "FILTERFORM", tpl_getTpl(vars, "FILTERFORM"));
 }
