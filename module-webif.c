@@ -3128,17 +3128,21 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				tpl_addVar(vars, TPLADD, "USERICON", xml_encode(vars, account->usr));
 				tpl_addVar(vars, TPLADD, "USERICON", tpl_getTpl(vars, "PROTONEWCAMDPIC"));
 				tpl_addVar(vars, TPLADD, "USERTITLE", xml_encode(vars, account->usr));
+				tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, account->usr));
+				tpl_addVar(vars, TPLADD, "USER", tpl_getTpl(vars, "USERICON"));
 			}
 			else
 			{
-				tpl_addVar(vars, TPLADD, "USER", xml_encode(vars, account->usr));
-				tpl_printf(vars, TPLADD, "USERTITLE", "missing icon: IC_%s", xml_encode(vars, account->usr));
+				tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, account->usr));
+				tpl_addVar(vars, TPLADD, "USER", tpl_getTpl(vars, "USERNOICON"));
 			}
 		}
 		else
 		{
-			tpl_addVar(vars, TPLADD, "USER", xml_encode(vars, account->usr));
+			tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, account->usr));
+			tpl_addVar(vars, TPLADD, "USER", tpl_getTpl(vars, "USERLABEL"));
 		}
+
 		char *value = mk_t_group(account->grp);
 		tpl_addVar(vars, TPLADD, "GROUPS", value);
 		free_mk_t(value);

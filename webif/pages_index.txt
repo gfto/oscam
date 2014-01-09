@@ -53,7 +53,9 @@ USERCONFIGLIST                userconfig/userconfig.html
 ADDNEWUSER                    userconfig/userconfig_newuserform.html
 USERCONFIGLISTBIT             userconfig/userconfig_entry.html
 USERCONFIGLASTCHANEL          userconfig/userconfig_lastchannelicon.html
+USERNOICON                    userconfig/userconfig_usernoicon.html
 USERICON                      userconfig/userconfig_usericon.html
+USERLABEL                     userconfig/userconfig_userlabel.html
 CLIENTCOUNTNOTIFIERBIT        userconfig/userconfig_notify.html
 APIUSERCONFIGLIST             api.xml/userconfiglist.xml
 APIUSERCONFIGLISTBIT          api.xml/userconfiglist_userconfigs.xml
