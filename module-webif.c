@@ -4317,7 +4317,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					{
 						tpl_printf(vars, TPLADD, "UCS", "%d", user_count_shown);
 						tpl_printf(vars, TPLADD, "UCA", "%d", user_count_all);
-						tpl_printf(vars, TPLADD, "CLIENTHEADLINE", tpl_getTpl(vars, "CLIENTHEADLINEBIT"));
+						tpl_addVar(vars, TPLADD, "CLIENTHEADLINE", tpl_getTpl(vars, "CLIENTHEADLINEBIT"));
 					}
 					else
 					{
@@ -4325,7 +4325,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						tpl_printf(vars, TPLADD, "UCA", "%d", user_count_all);
 						tpl_printf(vars, TPLADD, "UCAC", "%d", user_count_active);
 						tpl_printf(vars, TPLADD, "CFGH", "%d", cfg.hideclient_to);
-						tpl_printf(vars, TPLADD, "CLIENTHEADLINE", tpl_getTpl(vars, "CLIENTHEADLINEWITH"));
+						tpl_addVar(vars, TPLADD, "CLIENTHEADLINE", tpl_getTpl(vars, "CLIENTHEADLINEWITH"));
 					}
 				}
 				else if(cl->typ == 'r')
@@ -4336,7 +4336,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					}
 						tpl_printf(vars, TPLADD, "RCC", "%d", reader_count_conn);
 						tpl_printf(vars, TPLADD, "RCA", "%d", reader_count_all);
-						tpl_printf(vars, TPLADD, "READERHEADLINE", tpl_getTpl(vars, "CLIENTRHEADLINE"));
+						tpl_addVar(vars, TPLADD, "READERHEADLINE", tpl_getTpl(vars, "CLIENTRHEADLINE"));
 				}
 				else if(cl->typ == 'p')
 				{
@@ -4346,7 +4346,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					}
 						tpl_printf(vars, TPLADD, "PCC", "%d", proxy_count_conn);
 						tpl_printf(vars, TPLADD, "PCA", "%d", proxy_count_all);
-						tpl_printf(vars, TPLADD, "PROXYHEADLINE", tpl_getTpl(vars, "CLIENTPHEADLINE"));
+						tpl_addVar(vars, TPLADD, "PROXYHEADLINE", tpl_getTpl(vars, "CLIENTPHEADLINE"));
 				}
 				else if(shown)
 				{
@@ -4952,14 +4952,14 @@ static void webif_process_logfile(struct templatevars * vars, struct uriparams *
 	{
 		tpl_printf(vars, TPLADD, "SWITCH", "%d", 1);
 		tpl_addVar(vars, TPLADD, "TEXT", "Stop Log");
-		tpl_printf(vars, TPLADD, "LOGMENU", tpl_getTpl(vars, "LOGMENUDISABLELOG"));
+		tpl_addVar(vars, TPLADD, "LOGMENU", tpl_getTpl(vars, "LOGMENUDISABLELOG"));
 		
 	}
 	else
 	{
 		tpl_printf(vars, TPLADD, "SWITCH", "%d", 0);
 		tpl_addVar(vars, TPLADD, "TEXT", "Stop Log");
-		tpl_printf(vars, TPLADD, "LOGMENU", tpl_getTpl(vars, "LOGMENUDISABLELOG"));
+		tpl_addVar(vars, TPLADD, "LOGMENU", tpl_getTpl(vars, "LOGMENUDISABLELOG"));
 	}
 	tpl_addVar(vars, TPLAPPEND, "LOGMENU", tpl_getTpl(vars, "CLEARLOG"));
 	return;
@@ -4980,13 +4980,13 @@ static void webif_process_userfile(struct templatevars * vars, struct uriparams 
 	{
 		tpl_printf(vars, TPLADD, "SWITCH", "%d", 1);
 		tpl_addVar(vars, TPLADD, "TEXT", "Stop Log");
-		tpl_printf(vars, TPLADD, "LOGMENU", tpl_getTpl(vars, "LOGMENUONOFF"));
+		tpl_addVar(vars, TPLADD, "LOGMENU", tpl_getTpl(vars, "LOGMENUONOFF"));
 	}
 	else
 	{
 		tpl_printf(vars, TPLADD, "SWITCH", "%d", 0);
 		tpl_addVar(vars, TPLADD, "TEXT", "Start Log");
-		tpl_printf(vars, TPLADD, "LOGMENU", tpl_getTpl(vars, "LOGMENUONOFF"));
+		tpl_addVar(vars, TPLADD, "LOGMENU", tpl_getTpl(vars, "LOGMENUONOFF"));
 	}
 	tpl_addVar(vars, TPLAPPEND, "LOGMENU", tpl_getTpl(vars, "CLEARLOG"));
 	tpl_addVar(vars, TPLADD, "FFVAL", "all");
@@ -4996,7 +4996,7 @@ static void webif_process_userfile(struct templatevars * vars, struct uriparams 
 	{
 		tpl_addVar(vars, TPLADD, "FFVAL", xml_encode(vars, account->usr));
 		tpl_addVar(vars, TPLADD, "FFSEL", strcmp(getParam(params, "filter"), account->usr) ? "" : "selected");
-		tpl_printf(vars, TPLAPPEND, "FILTERFORMOPTIONS", tpl_getTpl(vars, "LOGMENUFILTERFORM"));
+		tpl_addVar(vars, TPLAPPEND, "FILTERFORMOPTIONS", tpl_getTpl(vars, "LOGMENUFILTERFORM"));
 	}
 	tpl_addVar(vars, TPLADD, "FILTERFORM", tpl_getTpl(vars, "FILTERFORM"));
 }
