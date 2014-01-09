@@ -121,6 +121,7 @@ static int32_t gbox_recv2(struct s_client *cli, uchar *b, int32_t l);
 static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, uchar *data, int32_t UNUSED(n));
 static int32_t gbox_checkcode_recv(struct s_client *cli, uchar *checkcode);
 static int32_t gbox_decode_cmd(uchar *buf);
+static uint8_t gbox_compare_pw(uchar *my_pw, uchar *rec_pw);
 uint32_t gbox_get_ecmchecksum(ECM_REQUEST *er);
 
 static const uint8_t gbox_version_high_byte = 0x02;
@@ -198,6 +199,11 @@ void gbox_write_shared_cards_info(void)
 void hostname2ip(char *hostname, IN_ADDR_T *ip)
 {
 	cs_resolve(hostname, ip, NULL, NULL);
+}
+
+static uint8_t gbox_compare_pw(uchar *my_pw, uchar *rec_pw)
+{
+	return my_pw[0] == rec_pw[0] && my_pw[1] == rec_pw[1] && my_pw[2] == rec_pw[2] && my_pw[3] == rec_pw[3];
 }
 
 void gbox_add_good_card(struct s_client *cl, uint16_t id_card, uint16_t caid, uint32_t prov, uint16_t sid_ok)
@@ -726,17 +732,17 @@ int32_t gbox_cmd_switch(struct s_client *cli, int32_t n)
 static int32_t gbox_recv2(struct s_client *cli, uchar *b, int32_t l)
 {
 	struct gbox_data *gbox = cli->gbox;
-	uchar *data = gbox->buf;
-	char tmp[0x50];
-
+	
 	if(!gbox || l > RECEIVE_BUFFER_SIZE)
 		{ return -1; }
 
-	int32_t n = l;
+	uchar *data = gbox->buf;
 	memcpy(data , b, l);
 
 	cs_writelock(&gbox->lock);
 
+	char tmp[0x50];
+	int32_t n = l;
 	cs_ddump_mask(D_READER, data, n, "gbox: encrypted data received (%d bytes):", n);
 
 	if((data[0] == 0x48) && (data[1] == 0x49))  // if MSG_HELLO1
@@ -744,28 +750,28 @@ static int32_t gbox_recv2(struct s_client *cli, uchar *b, int32_t l)
 	else
 		{ gbox_decrypt(data, n, gbox->key); }
 
-	// if my pass ok verify CW | pass to peer
-	if(data[0] == 0x48 && data[1] == 0x44)  // if MSG_CW
-	{
-		if(data[39] != cli->gbox_cw_id[0] && data[40] != cli->gbox_cw_id[1])
-		{
-			cs_writeunlock(&gbox->lock);
-			//continue; // next client
-		}
-	}
-
 	cs_ddump_mask(D_READER, data, n, "gbox: decrypted received data (%d bytes):", n);
 
 	//verify my pass received
-	if(data[2] == gbox->key[0] && data[3] == gbox->key[1] && data[4] == gbox->key[2] && data[5] == gbox->key[3])
+	if (gbox_compare_pw(&data[2],&gbox->key[0]))
 	{
 		cs_debug_mask(D_READER, "received data, peer : %04x   data: %s", gbox->peer.id, cs_hexdump(0, data, l, tmp, sizeof(tmp)));
 
 		if (gbox_decode_cmd(data) != MSG_CW)
 		{
-			if(data[6] != gbox->peer.key[0] || data[7] != gbox->peer.key[1] || data[8] != gbox->peer.key[2] || data[9] != gbox->peer.key[3])
+			if (!gbox_compare_pw(&data[6],&gbox->peer.key[0]))
 			{
 				cs_log("gbox peer: %04X sends wrong password", gbox->peer.id);
+				cs_writeunlock(&gbox->lock);
+				return -1;
+				//continue; // next client
+			}
+		} else 
+		{
+			// if my pass ok verify CW | pass to peer
+			if((data[39] != ((gbox->id >> 8) & 0xff)) || (data[40] != (gbox->id & 0xff)))
+			{
+				cs_log("gbox peer: %04X sends CW for other than my id: %04X", gbox->peer.id, gbox->id);
 				cs_writeunlock(&gbox->lock);
 				return -1;
 				//continue; // next client
@@ -850,7 +856,7 @@ static void gbox_calc_checkcode(struct gbox_data *gbox)
 static int32_t gbox_checkcode_recv(struct s_client *cli, uchar *checkcode)
 {
 	struct gbox_data *gbox = cli->gbox;
-	char tmp[0x50];
+	char tmp[7];
 
 	if(memcmp(gbox->peer.checkcode, checkcode, 7))
 	{
@@ -1466,13 +1472,13 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
 	{
 		cl = cli;
 	}
-	char tmp[512];
 	if(gbox_decode_cmd(data) == MSG_CW)
 	{
 		int i, n;
 		*rc = 1;
 		memcpy(dcw, data + 14, 16);
 		uint32_t crc = data[30] << 24 | data[31] << 16 | data[32] << 8 | data[33];
+		char tmp[16];
 		cs_debug_mask(D_READER, "gbox: received cws=%s, peer=%04x, ecm_pid=%04x, sid=%04x, crc=%08x",
 					  cs_hexdump(0, dcw, 16, tmp, sizeof(tmp)), data[10] << 8 | data[11], data[6] << 8 | data[7], data[8] << 8 | data[9], crc);
 
