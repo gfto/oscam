@@ -1409,7 +1409,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 	// set smartreader+ default values
 	crdr_data->F = 372;
 	crdr_data->D = 1;
-	crdr_data->N = 1;
+	crdr_data->N = 0;
 	crdr_data->T = 1;
 	crdr_data->inv = 0;
 	baud_temp2 = (double)(crdr_data->D * crdr_data->fs / (double)crdr_data->F);
@@ -1426,7 +1426,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 		if(i == 3)
 		{
 			rdr_debug_mask(reader, D_DEVICE, "SR: Trying irdeto");
-			crdr_data->F = 558; /// changed this from 618 to 558 atr iso table shows 558 as convertion factor
+			crdr_data->F = 618; // why 618 needs to be used instead off 558 ?
 			crdr_data->D = 1;
 			crdr_data->T = 2; // will be set to T=1 in EnableSmartReader
 			crdr_data->fs = 6000000;
