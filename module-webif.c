@@ -3023,8 +3023,8 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				{
 					tpl_addVar(vars, TPLADDONCE, "LCA", picon_name);
 					tpl_addVar(vars, TPLADDONCE, "LCB", lastchan);
-					tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", tpl_getTpl(vars, "USERCONFIGLASTCHANEL"));
 					tpl_addVar(vars, TPLADDONCE, "LASTCHANNELTITLE", lastchan);
+					tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", tpl_getTpl(vars, "USERCONFIGLASTCHANEL"));
 				}
 				else
 				{
