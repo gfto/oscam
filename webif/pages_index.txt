@@ -205,16 +205,37 @@ READERCONFIGVIACCESS          readerconfig/readerconfig_hwreader_viaccess.html  
 READERCONFIGVIDEOGUARD        readerconfig/readerconfig_hwreader_videoguard.html          READER_VIDEOGUARD
 READERCONFIGSC8IN1            readerconfig/readerconfig_hwreader_sc8in1.html              CARDREADER_SC8IN1
 READERCONFIGSMARGO            readerconfig/readerconfig_hwreader_smargo.html              CARDREADER_SMARGO,CARDREADER_PHOENIX
+ICMLOGO                       images/ICMLOGO.svg
 ICMAI                         images/favicon.ico
-ICSTA                         images/ICSTA.png
-ICDEL                         images/ICDEL.png
-ICEDI                         images/ICEDI.png
-ICENT                         images/ICENT.png
-ICREF                         images/ICREF.png
-ICKIL                         images/ICKIL.png
-ICDIS                         images/ICDIS.png
-ICENA                         images/ICENA.png
-ICHID                         images/ICHID.png
-ICRES                         images/ICRES.png
+ICSTA                         images/ICSTA.svg
+ICDEL                         images/ICDEL.svg
+ICEDI                         images/ICEDI.svg
+ICENT                         images/ICENT.svg
+ICREF                         images/ICREF.svg
+ICKIL                         images/ICKIL.svg
+ICDIS                         images/ICDIS.svg
+ICENA                         images/ICENA.svg
+ICHID                         images/ICHID.svg
+ICRES                         images/ICRES.svg
 ICSPAC                        images/ICSPAC.gif
-ICEMM                         images/ICEMM.png
+ICEMM                         images/ICEMM.svg
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
