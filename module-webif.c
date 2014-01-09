@@ -1211,10 +1211,22 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 					{
 						tpl_addVar(vars, TPLADD, "READERNAME", tpl_getTpl(vars, "READERNAMEBIT"));
 					}
+					else
+					{
+						tpl_addVar(vars, TPLADD, "READERNAME", tpl_getTpl(vars, "READERNOICON"));
+					}
 					if(picon_exists(xml_encode(vars, reader_get_type_desc(rdr, 0))))
 					{
 						tpl_addVar(vars, TPLADD, "CTYP", tpl_getTpl(vars, "READERCTYPBIT"));
 					}
+					else
+					{
+						tpl_addVar(vars, TPLADD, "CTYP", tpl_getTpl(vars, "READERCTYPNOICON"));
+					}
+				}
+				else
+				{
+					tpl_addVar(vars, TPLADD, "READERNAME", tpl_getTpl(vars, "READERLABEL"));
 				}
 
 				char *value = mk_t_group(rdr->grp);

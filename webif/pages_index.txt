@@ -60,8 +60,11 @@ CLIENTCOUNTNOTIFIERBIT        userconfig/userconfig_notify.html
 APIUSERCONFIGLIST             api.xml/userconfiglist.xml
 APIUSERCONFIGLISTBIT          api.xml/userconfiglist_userconfigs.xml
 READERS                       readers/readers.html
+READERLABEL                   readers/readerlabel.html
 READERNAMEBIT                 readers/readernamebit.html
+READERNOICON                  readers/readernoicon.html
 READERCTYPBIT                 readers/readerctypbit.html
+READERCTYPNOICON              readers/readerctypnoicon.html
 APIREADERS                    api.xml/readers.xml
 APIREADERSBIT                 api.xml/readers_readerlist.xml
 READERSBIT                    readers/readers_readerlist.html
