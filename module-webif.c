@@ -3456,7 +3456,7 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, str
 			tpl_printf(vars, TPLAPPEND, "CONTROLS", "<A HREF=\"entitlements.html?offset=%d&globallist=%s&amp;label=%s\"> << PREVIOUS < </A>",
 					   offset - ENTITLEMENT_PAGE_SIZE,
 					   getParam(params, "globallist"),
-					   getParam(params, "label"));
+					   urlencode(vars, getParam(params, "label")));
 		}
 
 		// set next link if needed
@@ -3465,7 +3465,7 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, str
 			tpl_printf(vars, TPLAPPEND, "CONTROLS", "<A HREF=\"entitlements.html?offset=%d&globallist=%s&amp;label=%s\"> > NEXT >> </A>",
 					   offset + ENTITLEMENT_PAGE_SIZE,
 					   getParam(params, "globallist"),
-					   getParam(params, "label"));
+					   urlencode(vars, getParam(params, "label")));
 		}
 
 		if(!apicall)
