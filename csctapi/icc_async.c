@@ -857,6 +857,8 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 	if(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
 	{
 		ETU = 0;    // for Irdeto T14 cards, do not set ETU
+		if ((reader->typ == R_SMART) && (reader->smart_type >= 2))
+		reader->worketu *= 2.1; else // increase the worketu for v2 and tripple zigo try out
 		reader->worketu *= 2; // overclocked T14 needs this otherwise high ecm reponses
 	}
 
