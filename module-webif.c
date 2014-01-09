@@ -4164,10 +4164,17 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						else if(cl->typ == 'r' || cl->typ == 'p')  //reader or proxy
 						{
 							if(rdr->lbvalue)
-								{ tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "<A HREF=\"readerstats.html?label=%s&amp;hide=4\" TITLE=\"Show statistics for this reader/ proxy\">%d</A>", urlencode(vars, rdr->label), rdr->lbvalue); }
+							{
+								tpl_addVar(vars, TPLADD, "LBLRPVALUE", urlencode(vars, rdr->label));
+								tpl_printf(vars, TPLADD, "LBLRPSTRVALUE", "%d", rdr->lbvalue);
+								tpl_addVar(vars, TPLADD, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUERP"));
+							}
 							else
-								{ tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "<A HREF=\"readerstats.html?label=%s&amp;hide=4\" TITLE=\"Show statistics for this reader/ proxy\">%s</A>", urlencode(vars, rdr->label), "no data"); }
-
+							{
+								tpl_addVar(vars, TPLADD, "LBLRPVALUE", urlencode(vars, rdr->label));
+								tpl_addVar(vars, TPLADD, "LBLRPSTRVALUE", "no data");
+								tpl_addVar(vars, TPLADD, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUERP"));
+							}
 							switch(rdr->card_status)
 							{
 							case NO_CARD:
@@ -4233,20 +4240,14 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								else
 								{
 									tpl_addVar(vars, TPLADD, "TMP", "(no entitlements)");
-
 								}
-
-								tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s&hideexpired=1\" CLASS=\"tooltip%s\">%s%s</A>",
-										   urlencode(vars, cl->reader->label),
-										   active_ent > 0 ? "" : "1",
-										   tpl_getVar(vars, "TMP"),
-										   tpl_getVar(vars, "TMPSPAN"));
+								tpl_printf(vars, TPLAPPEND, "CLIENTCON", "<A HREF=\"entitlements.html?label=%s&hideexpired=1\" CLASS=\"tooltip%s\">%s%s</A>",
+								urlencode(vars, cl->reader->label), active_ent > 0 ? "" : "1", tpl_getVar(vars, "TMP"), tpl_getVar(vars, "TMPSPAN"));
 							}
 							else
 							{
-								tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s&hideexpired=1\" CLASS=\"tooltip\">(no entitlements)"
-										   "<SPAN>No active entitlements found</SPAN></A>",
-										   urlencode(vars, cl->reader->label));
+								tpl_printf(vars, TPLAPPEND, "CLIENTCON", "<A HREF=\"entitlements.html?label=%s&hideexpired=1\" CLASS=\"tooltip\">(no entitlements)"
+								"<SPAN>No active entitlements found</SPAN></A>", urlencode(vars, cl->reader->label));
 							}
 						}
 
@@ -4297,29 +4298,43 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					if(shown) { tpl_addVar(vars, TPLAPPEND, "CLIENTSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT")); }
 					if(cfg.http_hide_idle_clients == 1 || cfg.hideclient_to < 1)
 					{
-						tpl_printf(vars, TPLADD, "CLIENTHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" COLSPAN=\"17\">Clients %d/%d</TD></TR>\n",
-								   user_count_shown, user_count_all);
+						tpl_printf(vars, TPLADD, "UCS", "%d", user_count_shown);
+						tpl_printf(vars, TPLADD, "UCA", "%d", user_count_all);
+						tpl_printf(vars, TPLADD, "CLIENTHEADLINE", tpl_getTpl(vars, "CLIENTHEADLINEBIT"));
 					}
 					else
 					{
-						tpl_printf(vars, TPLADD, "CLIENTHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" COLSPAN=\"17\">Clients %d/%d (%d with ECM within last %d seconds)</TD></TR>\n",
-								   user_count_shown, user_count_all, user_count_active, cfg.hideclient_to);
+						tpl_printf(vars, TPLADD, "UCS", "%d", user_count_shown);
+						tpl_printf(vars, TPLADD, "UCA", "%d", user_count_all);
+						tpl_printf(vars, TPLADD, "UCAC", "%d", user_count_active);
+						tpl_printf(vars, TPLADD, "CFGH", "%d", cfg.hideclient_to);
+						tpl_printf(vars, TPLADD, "CLIENTHEADLINE", tpl_getTpl(vars, "CLIENTHEADLINEWITH"));
 					}
 				}
 				else if(cl->typ == 'r')
 				{
-					if(shown) { tpl_addVar(vars, TPLAPPEND, "READERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT")); }
-					tpl_printf(vars, TPLADD, "READERHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" COLSPAN=\"17\">Readers %d/%d</TD></TR>\n",
-							   reader_count_conn, reader_count_all);
+					if(shown)
+					{
+						tpl_addVar(vars, TPLAPPEND, "READERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+					}
+						tpl_printf(vars, TPLADD, "RCC", "%d", reader_count_conn);
+						tpl_printf(vars, TPLADD, "RCA", "%d", reader_count_all);
+						tpl_printf(vars, TPLADD, "READERHEADLINE", tpl_getTpl(vars, "CLIENTRHEADLINE"));
 				}
 				else if(cl->typ == 'p')
 				{
-					if(shown) { tpl_addVar(vars, TPLAPPEND, "PROXYSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT")); }
-					tpl_printf(vars, TPLADD, "PROXYHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" COLSPAN=\"17\">Proxies %d/%d</TD></TR>\n",
-							   proxy_count_conn, proxy_count_all);
+					if(shown)
+					{
+						tpl_addVar(vars, TPLAPPEND, "PROXYSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+					}
+						tpl_printf(vars, TPLADD, "PCC", "%d", proxy_count_conn);
+						tpl_printf(vars, TPLADD, "PCA", "%d", proxy_count_all);
+						tpl_printf(vars, TPLADD, "PROXYHEADLINE", tpl_getTpl(vars, "CLIENTPHEADLINE"));
 				}
-				else if(shown) { tpl_addVar(vars, TPLAPPEND, "SERVERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT")); }
-
+				else if(shown)
+				{
+					tpl_addVar(vars, TPLAPPEND, "SERVERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+				}
 			}
 			else
 			{
