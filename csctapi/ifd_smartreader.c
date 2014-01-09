@@ -1398,12 +1398,12 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 	int32_t parity[4] = {EVEN, ODD, NONE, EVEN};    // the last EVEN is to try with different F, D values for irdeto card.
 	static const char *const parity_str[5] = {"NONE", "ODD", "EVEN", "MARK", "SPACE"};
 
-/*	Temporary removed until a better way off passing from 369 to 600 is find
+//	seems to be ok after all
 	if (reader->autospeed == 0 && reader->cardmhz == reader->mhz && reader->cardmhz > 369)
-	crdr_data->fs = reader->cardmhz * 10000; else */
-	crdr_data->fs = reader->cardmhz * 10000;
+	crdr_data->fs = reader->cardmhz * 10000; else 
+	crdr_data->fs = 3690000;
 
-//	rdr_log(reader," init card at %u mhz", crdr_data->fs / 10000);
+	rdr_log(reader," init card at %u mhz", crdr_data->fs / 10000);
 
 	smart_fastpoll(reader, 1);
 	// set smartreader+ default values
@@ -1426,7 +1426,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 		if(i == 3)
 		{
 			rdr_debug_mask(reader, D_DEVICE, "SR: Trying irdeto");
-			crdr_data->F = 618; // why 618 needs to be used instead off 558 ?
+			crdr_data->F = 618; // why 618 needs to be used instead off 558 ? but magic it is
 			crdr_data->D = 1;
 			crdr_data->T = 2; // will be set to T=1 in EnableSmartReader
 			crdr_data->fs = 6000000;
