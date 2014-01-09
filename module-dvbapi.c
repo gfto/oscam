@@ -1270,6 +1270,9 @@ void dvbapi_stop_descrambling(int32_t demux_id)
 	get_servicename(dvbapi_client, demux[demux_id].program_number, demux[demux_id].ECMpidcount > 0 ? demux[demux_id].ECMpids[i].CAID : 0, channame);
 	cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d stop descrambling program number %04X (%s)", demux_id, demux[demux_id].program_number, channame);
 	dvbapi_stop_filter(demux_id, TYPE_EMM);
+#ifdef WITH_STAPI
+	idx = -1; // on stop descrambling remove all streampids!
+#endif
 	if(demux[demux_id].ECMpidcount > 0)
 	{
 		dvbapi_stop_filter(demux_id, TYPE_ECM);
@@ -2789,8 +2792,8 @@ void event_handler(int32_t UNUSED(signal))
 
 				if((time_t)pmt_info.st_mtime != demux[i].pmt_time)
 				{
-					cs_log("PMT file %s is updated -> stop descrambling demuxer #%d", dest, i);
-					dvbapi_stop_descrambling(i);
+					cs_log("[DVBAPI] Demuxer #%d PMT file %s is updated!", i, dest);
+					//dvbapi_stop_descrambling(i);
 				}
 
 				int32_t ret = close(pmt_fd);
@@ -2799,7 +2802,7 @@ void event_handler(int32_t UNUSED(signal))
 			}
 			else
 			{
-				cs_log("Could not open PMT file %s -> stop descrambling demuxer #%d", dest, i);
+				cs_log("[DVBAPI] Demuxer #%d Unable to open PMT file %s -> stop descrambling!", i, dest);
 				dvbapi_stop_descrambling(i);
 			}
 		}
