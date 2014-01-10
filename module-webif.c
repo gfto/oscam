@@ -3906,6 +3906,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", xml_encode(vars, cl->reader->description ? cl->reader->description : ""));
 					}
 
+					tpl_addVar(vars, TPLADD, "STATUSUSERICON", xml_encode(vars, usr));
 					if (cl->typ == 'c') {
 						tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, usr));
 						tpl_addVar(vars, TPLADD, "USERENC", urlencode(vars, usr));
@@ -3916,56 +3917,35 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 
 					if(!apicall)
 					{
+						bool picon_shown = false;
+						const char *status_user_icon_tpl = NULL;
+
 						if(cfg.http_showpicons)
 						{
 							if(picon_exists(xml_encode(vars, usr)))
 							{
-								if(cl->typ == 'c')
-								{
-									tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SUSERICON"));
-								}
-								if(cl->typ == 'p' || cl->typ == 'r')
-								{
-									tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SREADERICON"));
+								switch (cl->typ) {
+								case 'c': status_user_icon_tpl = "SUSERICON"; picon_shown = true; break;
+								case 'p': // Fall through
+								case 'r': status_user_icon_tpl = "SREADERICON"; picon_shown = true; break;
 								}
 							}
 							else
 							{
 								tpl_printf(vars, TPLADD, "UPICMISSING", "missing icon: IC_%s", xml_encode(vars, usr));
-								if(cl->typ == 'c')
-								{
-									tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SUSER"));
-								}
-								else if (cl->typ == 'p' || cl->typ == 'r')
-								{
-									tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SREADER"));
-								}
-								else
-								{
-									tpl_addVar(vars, TPLADD, "STATUSUSERICON", xml_encode(vars, usr));
-								}
 							}
 						}
-						else
-						{
-							if(cl->typ == 'c')
-							{
-								tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SUSER"));
-							}
-							else if (cl->typ == 'p' || cl->typ == 'r')
-							{
-								tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SREADER"));
-							}
-							else
-							{
-								tpl_addVar(vars, TPLADD, "STATUSUSERICON", xml_encode(vars, usr));
+
+						if (!picon_shown) {
+							switch (cl->typ) {
+							case 'c': status_user_icon_tpl = "SUSER"; break;
+							case 'p': // Fall through
+							case 'r': status_user_icon_tpl = "SREADER"; break;
 							}
 						}
-						
-					}
-					else
-					{
-						tpl_addVar(vars, TPLADD, "STATUSUSERICON", xml_encode(vars, usr));
+
+						if (status_user_icon_tpl)
+							tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, status_user_icon_tpl));
 					}
 
 					tpl_printf(vars, TPLADD, "CLIENTCAU", "%d", cau);
