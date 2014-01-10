@@ -3138,7 +3138,6 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			if(picon_exists(xml_encode(vars, account->usr)))
 			{
 				tpl_addVar(vars, TPLADD, "USERICON", xml_encode(vars, account->usr));
-				tpl_addVar(vars, TPLADD, "USERICON", tpl_getTpl(vars, "PROTONEWCAMDPIC"));
 				tpl_addVar(vars, TPLADD, "USERTITLE", xml_encode(vars, account->usr));
 				tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, account->usr));
 				tpl_addVar(vars, TPLADD, "USER", tpl_getTpl(vars, "USERICON"));
