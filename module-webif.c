@@ -1427,16 +1427,8 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		{ return NULL; }
 
 	// Label, Description
-	if(!apicall)
-	{
-		tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, rdr->label));
-		tpl_addVar(vars, TPLADD, "DESCRIPTION", xml_encode(vars, rdr->description));
-	}
-	else
-	{
-		tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
-		tpl_addVar(vars, TPLADD, "DESCRIPTION", rdr->description);
-	}
+	tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, rdr->label));
+	tpl_addVar(vars, TPLADD, "DESCRIPTION", xml_encode(vars, rdr->description));
 
 	// enabled
 	if(!apicall)
@@ -2070,17 +2062,9 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 
 #endif
 
-	if(!apicall)
-	{
-		tpl_addVar(vars, TPLADD, "LABEL", xml_encode(vars, rdr->label));
-		tpl_addVar(vars, TPLADD, "ENCODEDLABEL", urlencode(vars, rdr->label));
-	}
-	else
-	{
-		tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
-	}
-
-
+	tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, rdr->label));
+	tpl_addVar(vars, TPLADD, "LABEL", xml_encode(vars, rdr->label));
+	tpl_addVar(vars, TPLADD, "ENCODEDLABEL", urlencode(vars, rdr->label));
 
 	if(apicall)
 	{
@@ -3480,17 +3464,9 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 			}
 			else
 			{
-				if(!apicall)
-				{
-					tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, rdr->label));
-					tpl_addVar(vars, TPLADD, "APIHOST", xml_encode(vars, rdr->device));
-				}
-				else
-				{
-					tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
-					tpl_addVar(vars, TPLADD, "APIHOST", rdr->device);
-					tpl_printf(vars, TPLADD, "APIHOSTPORT", "%d", rdr->r_port);
-				}
+				tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, rdr->label));
+				tpl_addVar(vars, TPLADD, "APIHOST", xml_encode(vars, rdr->device));
+				tpl_printf(vars, TPLADD, "APIHOSTPORT", "%d", rdr->r_port);
 			}
 
 #ifdef MODULE_CCCSHARE
@@ -3594,7 +3570,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					{ tpl_printf(vars, TPLADD, "READERTYPE", "%c", cl->typ); }
 				else
 					{ tpl_addVar(vars, TPLADD, "READERTYPE", "null"); }
-				tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
+				tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, rdr->label));
 
 				int8_t i, j;
 				for(i = 0; i < 15; i++) { tpl_printf(vars, TPLAPPEND, "READERROM", "%c", rdr->rom[i]); }
