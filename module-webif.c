@@ -4006,18 +4006,10 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								tpl_addVar(vars, TPLAPPEND, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUEBIT"));
 							}
 						}
-						if(cl->typ != 'p')
-						{
-							tpl_printf(vars, TPLADDONCE, "CLIENTCAID", "%04X", cl->last_caid);
-							tpl_printf(vars, TPLADDONCE, "CLIENTSRVID", "%04X", cl->last_srvid);
-						}
-						else
-						{
-							tpl_addVar(vars, TPLADDONCE, "CLIENTCAID", "0000");
-							tpl_addVar(vars, TPLADDONCE, "CLIENTSRVID", "0000");
-						}
 						if(cl->last_caid != NO_CAID_VALUE && cl->last_srvid != NO_SRVID_VALUE)
 						{
+							tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", cl->last_caid);
+							tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", cl->last_srvid);
 							tpl_printf(vars, TPLADD, "CLIENTSRVPROVIDER", "%s%s", cl->last_srvidptr && cl->last_srvidptr->prov ? xml_encode(vars, cl->last_srvidptr->prov) : "", cl->last_srvidptr && cl->last_srvidptr->prov ? ": " : "");
 							tpl_addVar(vars, TPLADD, "CLIENTSRVNAME", cl->last_srvidptr && cl->last_srvidptr->name ? xml_encode(vars, cl->last_srvidptr->name) : "");
 							tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime ? cl->cwlastresptime : 1);
@@ -4026,6 +4018,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							tpl_addVar(vars, TPLADD, "CLIENTTIMEONCHANNEL", sec2timeformat(vars, chsec));
 							if(cfg.http_showpicons)
 							{
+								char picon_name[32];
 								snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%04X", cl->last_caid, cl->last_srvid);
 								tpl_addVar(vars, TPLADD, "PICONNAME", picon_name);
 								if(picon_exists(picon_name))
