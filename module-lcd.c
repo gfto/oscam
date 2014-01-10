@@ -37,12 +37,12 @@ static void refresh_lcd_file(void)
 
 	int8_t iscccam = 0;
 	int32_t seconds = 0, secs = 0, fullmins = 0, mins = 0, fullhours = 0, hours = 0,    days = 0;
-	time_t now;
+	struct timeb now;
 
 
 	while(running)
 	{
-		now = time((time_t *)0);
+		cs_ftime(&now);
 		int16_t cnt = 0, idx = 0, count_r = 0, count_p = 0, count_u = 0;
 		FILE *fpsave;
 
@@ -63,7 +63,7 @@ static void refresh_lcd_file(void)
 			hours = 0;
 			days = 0;
 
-			seconds = now - first_client->login;
+			seconds = now.time - first_client->login.time;
 			secs = seconds % 60;
 			if(seconds > 60)
 			{
@@ -97,7 +97,7 @@ static void refresh_lcd_file(void)
 			for(i = 0, cl = first_client; cl ; cl = cl->next, i++)
 			{
 
-				if((cl->typ == 'r' || cl->typ == 'p') && ((now - cl->last) < 20 || !cfg.lcd_hide_idle))
+				if((cl->typ == 'r' || cl->typ == 'p') && ((now.time - cl->last.time) < 20 || !cfg.lcd_hide_idle))
 				{
 					type = "";
 					label = "";
@@ -109,7 +109,7 @@ static void refresh_lcd_file(void)
 					hours = 0;
 					days = 0;
 
-					seconds = now - cl->last;
+					seconds = now.time - cl->last.time;
 
 					if(cl->typ == 'r')
 					{
@@ -210,7 +210,7 @@ static void refresh_lcd_file(void)
 			for(i = 0, cl = first_client; cl ; cl = cl->next, i++)
 			{
 
-				seconds = now - cl->lastecm;
+				seconds = now.time - cl->lastecm.time;
 
 				if(cl->typ == 'c' && seconds < 15)
 				{
@@ -220,7 +220,7 @@ static void refresh_lcd_file(void)
 					count_u++;
 
 					get_servicename(cl, cl->last_srvid, cl->last_caid, channame);
-					fprintf(fpsave, "%s%d | %-10.10s | %-10.10s:%-17.17s| % 4d\n",
+					fprintf(fpsave, "%s%d | %-10.10s | %-10.10s:%-17.17s| % 4jd\n",
 							type,
 							idx,
 							label,

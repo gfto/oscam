@@ -236,7 +236,8 @@ struct s_client *create_client(IN_ADDR_T ip)
 	cl->account = first_client->account;
 	//master part
 	pthread_mutex_init(&cl->thread_lock, NULL);
-	cl->login = cl->last = time(NULL);
+	cs_ftime(&cl->last);
+	cl->login = cl->last;
 	cl->tid = (uint32_t)(uintptr_t)cl;  // Use pointer adress of client as threadid (for monitor and log)
 	//Now add new client to the list:
 	struct s_client *last;
@@ -300,7 +301,7 @@ void init_first_client(void)
 	first_client_hashed[bucket] = first_client;
 
 	first_client->next = NULL; //terminate clients list with NULL
-	first_client->login = time(NULL);
+	cs_ftime(&first_client->login);
 	first_client->typ = 's';
 	first_client->thread = pthread_self();
 	set_localhost_ip(&first_client->ip);
@@ -406,7 +407,7 @@ int32_t cs_auth_client(struct s_client *client, struct s_auth *account, const ch
 				client->disabled = account->disabled;
 				client->allowedtimeframe[0] = account->allowedtimeframe[0];
 				client->allowedtimeframe[1] = account->allowedtimeframe[1];
-				if(account->firstlogin == 0) { account->firstlogin = time((time_t *)0); }
+				if(account->firstlogin.time == 0) { cs_ftime(&account->firstlogin); }
 				client->failban = account->failban;
 				client->c35_suppresscmd08 = account->c35_suppresscmd08;
 				client->ncd_keepalive = account->ncd_keepalive;
@@ -573,22 +574,27 @@ void client_check_status(struct s_client *cl)
 	switch(cl->typ)
 	{
 	case 'm':
-	case 'c':
+	case 'c':{
+
+		struct timeb now;
+		cs_ftime(&now);
+		int32_t gone = comp_timeb(&now, &cl->last);
+
 		// Check user for exceeding umaxidle by checking cl->last
-		if(!(cl->ncd_keepalive && (get_module(cl)->listenertype & LIS_NEWCAMD)) && cl->account->umaxidle &&
-				cl->last && (time(NULL) - cl->last) > (time_t)cl->account->umaxidle)
-		{
-			add_job(cl, ACTION_CLIENT_IDLE, NULL, 0);
-		}
+		if(!(cl->ncd_keepalive && (get_module(cl)->listenertype & LIS_NEWCAMD))
+			&& cl->account->umaxidle && (gone > (int) cl->account->umaxidle*1000)){
+				add_job(cl, ACTION_CLIENT_IDLE, NULL, 0);
+			}
 
 		// Check clients for exceeding cmaxidle by checking cl->last
-		if(!(cl->ncd_keepalive && (get_module(cl)->listenertype & LIS_NEWCAMD)) &&
-				cl->last && !cl->account->umaxidle && cfg.cmaxidle && (time(NULL) - cl->last) > (time_t)cfg.cmaxidle)
+		if(!(cl->ncd_keepalive && (get_module(cl)->listenertype & LIS_NEWCAMD))
+			&& !cl->account->umaxidle && cfg.cmaxidle && (gone > (int) cfg.cmaxidle*1000))
 		{
 			add_job(cl, ACTION_CLIENT_IDLE, NULL, 0);
 		}
 
 		break;
+	}
 	case 'r':
 		cardreader_checkhealth(cl, cl->reader);
 		break;
@@ -601,9 +607,12 @@ void client_check_status(struct s_client *cl)
 		// disconnect when no keepalive available
 		if((rdr->tcp_ito && is_cascading_reader(rdr)) || (rdr->typ == R_CCCAM) || (rdr->typ == R_CAMD35) || (rdr->typ == R_CS378X) || (rdr->tcp_ito != 0 && rdr->typ == R_RADEGAST))
 		{
-			time_t now = time(NULL);
-			int32_t time_diff = abs(now - rdr->last_check);
-			if(time_diff > 60 || (time_diff > 30 && (rdr->typ == R_CCCAM || rdr->typ == R_CAMD35 || rdr->typ == R_CS378X)) || ((time_diff > (rdr->tcp_rto?rdr->tcp_rto:60)) && rdr->typ == R_RADEGAST))     //check 1x per minute or every 30s for cccam/camd35 or reconnecttimeout radegast if 0 defaut 60s
+			struct timeb now;
+			cs_ftime(&now);
+			int32_t gone = comp_timeb(&now,&rdr->last_check);
+			//check 1x per minute or every 30s for cccam/camd35 or reconnecttimeout radegast if 0 defaut 60s
+			if(gone > 60*1000 || (gone > 30*1000 && (rdr->typ == R_CCCAM || rdr->typ == R_CAMD35 || rdr->typ == R_CS378X))
+				|| ((gone > (rdr->tcp_rto?rdr->tcp_rto*1000:60*1000)) && rdr->typ == R_RADEGAST))
 			{
 				add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
 				rdr->last_check = now;

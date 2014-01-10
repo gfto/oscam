@@ -6,6 +6,7 @@
 #include "oscam-emm.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
+#include "oscam-time.h"
 
 #define REQ_SIZE    4
 
@@ -27,7 +28,7 @@ static int32_t camd33_recv(struct s_client *client, uchar *buf, int32_t l)
 	if(!client->pfd) { return (-1); }
 	if((n = recv(client->pfd, buf, l, 0)) > 0)
 	{
-		client->last = time((time_t *) 0);
+		cs_ftime(&client->last);
 		if(client->crypted)
 			{ aes_encrypt_idx(&cur_client()->aes_keys, buf, n); }
 	}

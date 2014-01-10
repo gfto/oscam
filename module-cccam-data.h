@@ -82,7 +82,7 @@ struct cc_srvid_block
 	uint16_t sid;
 	uint16_t chid;
 	uint8_t  ecmlen;
-	time_t   blocked_till;
+	struct timeb blocked_till;
 };
 
 struct cc_provider
@@ -122,7 +122,7 @@ struct cc_card
 	uint64_t grp;
 	uint8_t rdr_reshare;
 	SIDTABBITS sidtabno;
-	time_t timeout;
+	struct timeb timeout;
 	uint8_t is_ext;
 	int8_t rating;
 };
@@ -211,7 +211,7 @@ struct cc_data
 	int8_t ecm_busy;
 	CS_MUTEX_LOCK cards_busy;
 	struct timeb ecm_time;
-	time_t answer_on_keepalive;
+	struct timeb answer_on_keepalive;
 	uint8_t last_msg;
 	uint8_t cmd05NOK;
 

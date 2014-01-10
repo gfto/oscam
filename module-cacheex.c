@@ -32,24 +32,23 @@ static void *chkcache_process(void)
 {
 	set_thread_name(__func__);
 
-	time_t timeout;
+	int32_t timeout;
+	struct timeb actualtime;
 	struct ecm_request_t *er, *ecm;
 #ifdef CS_CACHEEX
 	uint8_t add_hitcache_er;
-	struct s_reader *cl_rdr;
-	struct s_reader *rdr;
 	struct s_ecm_answer *ea;
-	struct s_client *cex_src=NULL;
 #endif
 	struct s_write_from_cache *wfc=NULL;
 
 	while(1)
 	{
+		cs_ftime(&actualtime);
 		cs_readlock(&ecmcache_lock);
 		for(er = ecmcwcache; er; er = er->next)
 		{
-			timeout = time(NULL)-((cfg.ctimeout+500)/1000+1);
-			if(er->tps.time < timeout)
+			timeout = comp_timeb(&actualtime, &er->tps);
+			if(timeout > (int) cfg.ctimeout + 1500)
 				{ break; }
 
 			if(er->rc<E_UNHANDLED || er->readers_timeout_check)  //already answered
@@ -66,29 +65,26 @@ static void *chkcache_process(void)
 				{
 					if((er->cacheex_wait_time && !er->cacheex_wait_time_expired) || !er->cacheex_wait_time)   //only when no wait_time expires (or not wait_time)
 					{
-
 						//add_hitcache already called, but we check if we have to call it for these (er) caid|prid|srvid
 						if(ecm->prid!=er->prid || ecm->srvid!=er->srvid)
 						{
-							cex_src = ecm->cacheex_src && is_valid_client(ecm->cacheex_src) && !ecm->cacheex_src->kill ?  ecm->cacheex_src : NULL; //here we should be sure cex client has not been freed!
-							if(cex_src){  //add_hitcache only if client is really active
+							//add_hitcache only if client is really active
+							if(ecm->cacheex_src && (is_valid_client(ecm->cacheex_src) && !ecm->cacheex_src->kill )){
 								add_hitcache_er=1;
-								cl_rdr = cex_src->reader;
-								if(cl_rdr && cl_rdr->cacheex.mode == 2)
+								if(ecm->cacheex_src->reader && ecm->cacheex_src->reader->cacheex.mode == 2)
 								{
 									for(ea = er->matching_rdr; ea; ea = ea->next)
 									{
-										rdr = ea->reader;
-										if(cl_rdr == rdr && ((ea->status & REQUEST_ANSWERED) == REQUEST_ANSWERED))
+										if(ecm->cacheex_src->reader == ea->reader && ((ea->status & REQUEST_ANSWERED) == REQUEST_ANSWERED))
 										{
 											cs_debug_mask(D_CACHEEX|D_CSP|D_LB,"{client %s, caid %04X, prid %06X, srvid %04X} [CACHEEX] skip ADD self request!", (check_client(er->client)?er->client->account->usr:"-"),er->caid, er->prid, er->srvid);
 											add_hitcache_er=0; //don't add hit cache, reader requested self
 										}
 									}
 								}
-
+								//USE cacheex client (to get correct group) and ecm from requesting client (to get correct caid|prid|srvid)!!!
 								if(add_hitcache_er)
-									{ add_hitcache(cex_src, er); }  //USE cacheex client (to get correct group) and ecm from requesting client (to get correct caid|prid|srvid)!!!
+									{ add_hitcache(ecm->cacheex_src, er); }
 							}
 						}
 
@@ -174,7 +170,6 @@ int32_t cacheex_add_stats(struct s_client *cl, uint16_t caid, uint16_t srvid, ui
 	if(!cl->ll_cacheex_stats)
 		{ cl->ll_cacheex_stats = ll_create("ll_cacheex_stats"); }
 
-	time_t now = time((time_t *)0);
 	LL_ITER itr = ll_iter_create(cl->ll_cacheex_stats);
 	S_CACHEEX_STAT_ENTRY *cacheex_stats_entry;
 
@@ -188,7 +183,7 @@ int32_t cacheex_add_stats(struct s_client *cl, uint16_t caid, uint16_t srvid, ui
 		{
 			// we already have this entry - just add count and time
 			cacheex_stats_entry->cache_count++;
-			cacheex_stats_entry->cache_last = now;
+			cs_ftime(&cacheex_stats_entry->cache_last);
 			return cacheex_stats_entry->cache_count;
 		}
 	}
@@ -200,7 +195,7 @@ int32_t cacheex_add_stats(struct s_client *cl, uint16_t caid, uint16_t srvid, ui
 		cacheex_stats_entry->cache_srvid = srvid;
 		cacheex_stats_entry->cache_prid = prid;
 		cacheex_stats_entry->cache_count = 1;
-		cacheex_stats_entry->cache_last = now;
+		cs_ftime(&cacheex_stats_entry->cache_last);
 		cacheex_stats_entry->cache_direction = direction;
 		ll_iter_insert(&itr, cacheex_stats_entry);
 		return 1;

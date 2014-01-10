@@ -626,7 +626,7 @@ struct s_ecm
 	uint64_t        grp;
 	struct s_reader *reader;
 	int32_t         rc;
-	time_t          time;
+	//struct timeb    time;
 };
 
 struct s_emm
@@ -656,7 +656,7 @@ typedef struct v_ban                    // Failban listmember
 typedef struct s_cacheex_stat_entry     // Cacheex stats listmember
 {
 	int32_t         cache_count;
-	time_t          cache_last;
+	struct timeb    cache_last;
 	uint16_t        cache_caid;
 	uint16_t        cache_srvid;
 	uint32_t        cache_prid;
@@ -913,7 +913,7 @@ struct s_acasc
 struct s_cwresponse
 {
 	int32_t         duration;
-	time_t          timestamp;
+	struct timeb    timestamp;
 	int32_t         rc;
 };
 
@@ -922,7 +922,7 @@ struct s_cascadeuser
 	uint16_t        caid;
 	uint32_t        prid;
 	uint16_t        srvid;
-	time_t          time;
+	struct timeb    time;
 	int8_t          cwrate;
 };
 
@@ -943,12 +943,12 @@ struct s_client
 	LLIST           *joblist;
 	IN_ADDR_T       ip;
 	in_port_t       port;
-	time_t          login;      // connection
-	time_t          logout;     // disconnection
-	time_t          last;
-	time_t          lastswitch;
-	time_t          lastemm;
-	time_t          lastecm;
+	struct timeb    login;      // connection
+	struct timeb    logout;     // disconnection
+	struct timeb    last;
+	struct timeb    lastswitch;
+	struct timeb    lastemm;
+	struct timeb    lastecm;
 	time_t          expirationdate;
 	int32_t         allowedtimeframe[2];
 	int8_t          c35_suppresscmd08;
@@ -1301,9 +1301,9 @@ struct s_reader                                     //contains device info, read
 
 	struct timeb    tcp_block_connect_till;         //time tcp connect ist blocked
 	int32_t         tcp_block_delay;                //incrementing block time
-	time_t          last_g;                         // get (if last_s-last_g>tcp_rto - reconnect )
-	time_t          last_s;                         // send
-	time_t          last_check;                     // last checked
+	struct timeb    last_g;                         // get (if last_s-last_g>tcp_rto - reconnect )
+	struct timeb    last_s;                         // send
+	struct timeb    last_check;                     // last checked
 	FTAB            fchid;
 	FTAB            ftab;
 	CLASSTAB        cltab;
@@ -1457,7 +1457,7 @@ struct s_auth
 	IN_ADDR_T       dynip;
 	char            *dyndns;
 	time_t          expirationdate;
-	time_t          firstlogin;
+	struct timeb    firstlogin;
 	int32_t         allowedtimeframe[2];
 	int8_t          c35_suppresscmd08;
 	uint8_t         c35_sleepsend;

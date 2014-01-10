@@ -71,7 +71,7 @@ struct pstat {
 	uint64_t mem_buff; // Buffered Memory in bytes
 	float cpu_avg[3]; //CPU load from "load average"
 	struct timeb time_started; //needed for calculating time between function call
-	int64_t gone_refresh; //time difference between CPU usage calculations in sec
+	int32_t gone_refresh; //time difference between CPU usage calculations in sec
 	double cpu_usage_user; //user_CPU usage to display in %
 	double cpu_usage_sys; //sys_CPU usage to display in %
 	uint16_t check_available; //default is 0, if value x is not available,

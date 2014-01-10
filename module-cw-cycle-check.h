@@ -13,8 +13,8 @@ struct s_cwc_md5
 struct s_cw_cycle_check
 {
 	uchar           cw[16];
-	time_t          time;
-	time_t          locktime; // lock in learning
+	struct timeb    time;
+	struct timeb    locktime; // lock in learning
 	uint16_t        caid;
 	uint16_t        sid;
 	uint16_t        chid;

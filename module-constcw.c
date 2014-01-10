@@ -5,6 +5,7 @@
 #include "oscam-ecm.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
+#include "oscam-time.h"
 
 static int32_t pserver;
 
@@ -72,7 +73,7 @@ static int32_t constcw_recv(struct s_client *client, uchar *buf, int32_t l)
 	if(!client->udp_fd) { return (-9); }
 	ret = read(client->udp_fd, buf, l);
 	if(ret < 1) { return (-1); }
-	client->last = time(NULL);
+	cs_ftime(&client->last);
 	return (ret);
 }
 
@@ -113,11 +114,9 @@ int32_t constcw_client_init(struct s_client *client)
 
 static int32_t constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *UNUSED(msgbuf))
 {
-	time_t t;
 	struct s_reader *rdr = client->reader;
 	uchar cw[16];
 
-	t = time(NULL);
 	// Check if DCW exist in the files
 	//cs_log("Searching ConstCW for ECM: %04X:%06X:%04X (%d)", er->caid, er->prid, er->srvid, er->l);
 
@@ -130,8 +129,8 @@ static int32_t constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar 
 		write_ecm_answer(rdr, er, E_FOUND, 0, cw, NULL);
 	}
 
-	client->last = t;
-	rdr->last_g = t;
+	cs_ftime(&client->last);
+	rdr->last_g = client->last;
 	return (0);
 }
 

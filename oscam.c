@@ -292,6 +292,7 @@ static void parse_cmdline_params(int argc, char **argv)
 static void write_versionfile(bool use_stdout)
 {
 	struct timeb now;
+	cs_ftime(&now);
 	FILE *fp = stdout;
 	if(!use_stdout)
 	{
@@ -684,7 +685,14 @@ static void init_check(void)
 			}
 		}
 		// adjust login time of first client
-		if(i > 0) { first_client->login = time((time_t *)0); }
+		struct timeb now;
+		cs_ftime(&now);
+		if(i > 0) { first_client->login = now; }
+		switch (cs_getclocktype(&now)) {
+			case CLOCK_TYPE_UNKNOWN  : cs_log("WARN: Something is wrong with clock init!!!"); break;
+			case CLOCK_TYPE_REALTIME : cs_log("WARN: Using real time clock -> changes to system time would affect OSCam work!"); break;
+			case CLOCK_TYPE_MONOTONIC: cs_log("Using MONOTONIC clock for time functions. Good!"); break;
+		}
 	}
 }
 
@@ -1007,7 +1015,7 @@ static void process_clients(void)
 			}
 		}
 		cs_ftime(&start); // register start time for new poll next run
-		first_client->last = time((time_t *)0);
+		first_client->last = start;
 	}
 	NULLFREE(pfd);
 	NULLFREE(cl_list);
@@ -1390,7 +1398,7 @@ int32_t main(int32_t argc, char *argv[])
 	}
 
 	//set time for server to now to avoid 0 in monitor/webif
-	first_client->last = time((time_t *)0);
+	cs_ftime(&first_client->last);
 
 	webif_init();
 

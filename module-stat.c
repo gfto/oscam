@@ -155,6 +155,7 @@ void load_stat_from_file(void)
 				s->time_avg = atoi(split[6]);
 				s->ecm_count = atoi(split[7]);
 				s->last_received.time = atol(split[8]);
+				s->last_received.millitm = 0; // reset milliseconds
 				s->fail_factor = atoi(split[9]);
 				s->ecmlen = a2i(split[10], 2);
 			}
@@ -212,7 +213,7 @@ void load_stat_from_file(void)
 #ifdef WITH_DEBUG
 	int32_t load_time = comp_timeb(&te, &ts);
 
-	cs_debug_mask(D_LB, "loadbalancer: statistics loaded %d records in %dms", count, load_time);
+	cs_debug_mask(D_LB, "loadbalancer: statistics loaded %d records in %jdms", count, load_time);
 #endif
 }
 
@@ -320,7 +321,8 @@ static void save_stat_to_file_thread(void)
 	struct timeb ts, te;
 	cs_ftime(&ts);
 
-	int32_t cleanup_timeout = (cfg.lb_stat_cleanup * 60 * 60 * 1000);
+	int32_t cleanup_timeout = cfg.lb_stat_cleanup;
+	cleanup_timeout *= (60 * 60 * 1000); // convert to ms
 
 	int32_t count = 0;
 	struct s_reader *rdr;
@@ -369,7 +371,7 @@ static void save_stat_to_file_thread(void)
 	int32_t load_time = comp_timeb(&te, &ts);
 
 
-	cs_log("loadbalancer: statistic saved %d records to %s in %dms", count, fname, load_time);
+	cs_log("loadbalancer: statistic saved %d records to %s in %jdms", count, fname, load_time);
 }
 
 void save_stat_to_file(int32_t thread)
@@ -1658,7 +1660,8 @@ static void housekeeping_stat_thread(void)
 {
 	struct timeb now;
 	cs_ftime(&now);
-	int32_t cleanup_timeout = cfg.lb_stat_cleanup * 60 * 60 * 1000;
+	int32_t cleanup_timeout = cfg.lb_stat_cleanup;
+	cleanup_timeout *= (60 * 60 * 1000);
 	int32_t cleaned = 0;
 	struct s_reader *rdr;
 	set_thread_name(__func__);

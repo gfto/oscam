@@ -114,7 +114,7 @@ void cardreader_get_card_info(struct s_reader *reader)
 	{
 		struct s_client *cl = reader->client;
 		if(cl)
-			{ cl->last = time((time_t *)0); }
+			{ cs_ftime(&cl->last); }
 
 		if(reader->csystem.active && reader->csystem.card_info)
 		{
@@ -247,8 +247,8 @@ int32_t cardreader_do_checkhealth(struct s_reader *reader)
 			NULLFREE(reader->csystem_data);
 			if(cl)
 			{
-				cl->lastemm = 0;
-				cl->lastecm = 0;
+				cl->lastemm.time = 0;
+				cl->lastecm.time = 0;
 			}
 			led_status_card_ejected();
 		}
@@ -380,7 +380,7 @@ int32_t cardreader_do_ecm(struct s_reader *reader, ECM_REQUEST *er, struct s_ecm
 		{
 			cl->last_srvid = er->srvid;
 			cl->last_caid = er->caid;
-			cl->last = time((time_t *)0);
+			cs_ftime(&cl->last);
 		}
 
 		if(reader->csystem.active && reader->csystem.do_ecm)
@@ -458,7 +458,7 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 
 	write_ecm_answer(reader, er, ea.rc, ea.rcEx, ea.cw, ea.msglog);
 	
-	cl->lastecm = time((time_t *)0);
+	cs_ftime(&cl->lastecm);
 	char ecmd5[17 * 3];
 	cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
 

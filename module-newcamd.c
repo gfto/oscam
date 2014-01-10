@@ -381,7 +381,7 @@ void newcamd_reply_ka(void)
 	cs_debug_mask(D_CLIENT, "send keepalive to client fd=%d", cl->udp_fd);
 
 	if(cl->reader)
-		{ cl->reader->last_s = time((time_t *)0); }
+		{ cs_ftime(&cl->reader->last_s); }
 
 	network_cmd_no_data_send(cl->udp_fd, &cl->ncd_msgid, MSG_KEEPALIVE, cl->ncd_skey, COMMTYPE_SERVER);
 }
@@ -497,7 +497,8 @@ static int32_t connect_newcamd_server(void)
 	// 6. Set card inserted
 	cl->reader->tcp_connected = 2;
 	cl->reader->card_status = CARD_INSERTED;
-	cl->reader->last_g = cl->reader->last_s = time((time_t *)0);
+	cs_ftime(&cl->reader->last_g);
+	cl->reader->last_s = cl->reader->last_g;
 
 	// Only after connect() on cl->udp_fd (Linux)
 	cl->pfd = cl->udp_fd;
@@ -558,7 +559,7 @@ static int32_t newcamd_recv(struct s_client *client, uchar *buf, int32_t UNUSED(
 	else { rc = rs; }
 
 	cs_ddump_mask(D_CLIENT, buf, rs, "received %d bytes from %s", rs, remote_txt());
-	client->last = time((time_t *) 0);
+	cs_ftime(&client->last);
 
 	if(rc == -1)
 	{
@@ -1346,11 +1347,10 @@ void newcamd_idle(void)
 	if(rdr->tcp_ito > 0)
 	{
 		// inactivitytimeout > 0 enables protocol keepalive packages
-		time_t now;
-		int32_t time_diff;
-		time(&now);
-		time_diff = abs(now - rdr->last_s);
-		if(time_diff > (rdr->tcp_ito))
+		struct timeb now;
+		cs_ftime(&now);
+		int32_t gone = comp_timeb(&now,&rdr->last_s);
+		if(gone > rdr->tcp_ito * 1000)
 		{
 			if(client->ncd_keepalive)
 				{ newcamd_reply_ka(); }

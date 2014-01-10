@@ -271,18 +271,19 @@ void cs_reinit_loghist(uint32_t size)
 }
 #endif
 
-static time_t log_ts;
-
+static struct timeb log_ts;
+time_t walltime;
 static int32_t get_log_header(int32_t m, char *txt)
 {
 	struct s_client *cl = cur_client();
 	struct tm lt;
 	int32_t pos;
 
-	time(&log_ts);
-	localtime_r(&log_ts, &lt);
+	cs_ftime(&log_ts);
+	walltime = cs_walltime(&log_ts);
+	localtime_r(&walltime, &lt);
 
-	pos = snprintf(txt, LOG_BUF_SIZE,  "[LOG000]%4d/%02d/%02d %02d:%02d:%02d ", lt.tm_year + 1900, lt.tm_mon + 1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec);
+	pos = snprintf(txt, LOG_BUF_SIZE,  "[LOG000]%4d/%02d/%02d %02d:%02d:%02d.%03d ", lt.tm_year + 1900, lt.tm_mon + 1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec, log_ts.millitm);
 
 	switch(m)
 	{
@@ -439,7 +440,7 @@ static pthread_mutex_t log_mutex;
 static char log_txt[LOG_BUF_SIZE];
 static char dupl[LOG_BUF_SIZE / 4];
 static char last_log_txt[LOG_BUF_SIZE];
-static time_t last_log_ts;
+static struct timeb last_log_ts;
 static unsigned int last_log_duplicates;
 
 void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar *buf, int32_t n, const char *fmt, ...)
@@ -466,11 +467,12 @@ void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar 
 				repeated_line = strcmp(last_log_txt, log_txt + len) == 0;
 				if(last_log_duplicates > 0)
 				{
-					if(!last_log_ts)  // Must be initialized once
+					if(!last_log_ts.time)  // Must be initialized once
 						{ last_log_ts = log_ts; }
 					// Report duplicated lines when the new log line is different
 					// than the old or 60 seconds have passed.
-					if(!repeated_line || log_ts - last_log_ts >= 60)
+					int32_t gone = comp_timeb(&log_ts, &last_log_ts);
+					if(!repeated_line || gone >= 60*1000)
 					{
 						dupl_header_len = get_log_header(2, dupl);
 						snprintf(dupl + dupl_header_len - 1, sizeof(dupl) - dupl_header_len, "--- Skipped %u duplicated log lines ---", last_log_duplicates);
@@ -612,7 +614,7 @@ void cs_statistics(struct s_client *client)
 		localtime_r(&t, &lt);
 		if(client->cwfound + client->cwnot > 0)
 		{
-			cwps = client->last - client->login;
+			cwps = (comp_timeb(&client->last,&client->login)/1000);
 			cwps /= client->cwfound + client->cwnot;
 		}
 		else
@@ -623,9 +625,9 @@ void cs_statistics(struct s_client *client)
 
 		int32_t lsec;
 		if((client->last_caid == NO_CAID_VALUE) && (client->last_srvid == NO_SRVID_VALUE))
-			{ lsec = client->last - client->login; } //client leave calc total duration
+			{ lsec = client->last.time - client->login.time; } //client leave calc total duration
 		else
-			{ lsec = client->last - client->lastswitch; }
+			{ lsec = client->last.time - client->lastswitch.time; }
 
 		int32_t secs = 0, fullmins = 0, mins = 0, fullhours = 0;
 
@@ -646,6 +648,8 @@ void cs_statistics(struct s_client *client)
 		/* statistics entry start with 's' to filter it out on other end of pipe
 		 * so we can use the same Pipe as Log
 		 */
+		time_t wall_login = cs_walltime(&client->login);
+		time_t wall_last = cs_walltime(&client->last);
 		snprintf(buf, sizeof(buf), "s%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %02d:%02d:%02d %s %04X:%04X %s\n",
 				 lt.tm_mday, lt.tm_mon + 1, lt.tm_year % 100,
 				 lt.tm_hour, lt.tm_min, lt.tm_sec, cwps,
@@ -658,8 +662,8 @@ void cs_statistics(struct s_client *client)
 				 client->cwignored,
 				 client->cwtout,
 				 client->cwtun,
-				 client->login,
-				 client->last,
+				 wall_login,
+				 wall_last,
 				 fullhours, mins, secs,
 				 get_module(client)->desc,
 				 client->last_caid,

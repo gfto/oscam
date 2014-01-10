@@ -12,6 +12,7 @@
 #include "oscam-net.h"
 #include "oscam-string.h"
 #include "oscam-reader.h"
+#include "oscam-time.h"
 
 //CMD00 - ECM (request)
 //CMD01 - ECM (response)
@@ -74,16 +75,15 @@ static int32_t __camd35_send(struct s_client *cl, uchar *buf, int32_t buflen, in
 	}
 	if(status != -1)
 	{
+		cs_ftime(&cl->last);
 		if(cl->reader && answer_awaited)
 		{
-			cl->reader->last_s = time(NULL);
+			cl->reader->last_s=cl->last;
 		}
 		if(cl->reader && !answer_awaited)
 		{
-			cl->reader->last_s = cl->reader->last_g = time(NULL);
+			cl->reader->last_s = cl->reader->last_g = cl->last;
 		}
-		cl->last = time(NULL);
-
 	}
 	return status;
 }
@@ -273,7 +273,7 @@ out:
 		cs_ddump_mask(client->typ == 'c' ? D_CLIENT : D_READER, buf, rs,
 					  "received %d bytes from %s (native)", rs, remote_txt());
 	}
-	if(rc >= 0) { client->last = time(NULL); }  // last client action is now
+	if(rc >= 0) { cs_ftime(&client->last); }  // last client action is now
 	switch(rc)
 	{
 		//case 0:   break;
@@ -303,7 +303,7 @@ out:
 static void camd35_request_emm(ECM_REQUEST *er)
 {
 	int32_t i;
-	time_t now;
+	struct timeb now;
 	uchar mbuf[1024];
 	struct s_client *cl = cur_client();
 	struct s_reader *aureader = NULL, *rdr = NULL;
@@ -334,9 +334,9 @@ static void camd35_request_emm(ECM_REQUEST *er)
 	if(!au_caid && (er->caid == 0x5581 || er->caid == 0x4aee))
 		{ au_caid = 0x5581; }
 
-	time(&now);
+	cs_ftime(&now);
 	if(!memcmp(cl->lastserial, aureader->hexserial, 8))
-		if(abs(now - cl->last) < 180) { return; }
+		if(comp_timeb(&now, &cl->last) < 180*1000) { return; }
 
 	memcpy(cl->lastserial, aureader->hexserial, 8);
 	cl->last = now;
@@ -544,24 +544,26 @@ static int32_t tcp_connect(struct s_client *cl)
 		handle = network_tcp_connection_open(cl->reader); // try to connect
 		if(handle < 0)   // got no handle -> error!
 		{
-			cl->reader->last_s = 0; // set last send to zero
-			cl->reader->last_g = 0; // set last receive to zero
-			cl->last = 0; // set last client action to zero
+			cl->reader->last_s.time = 0; // reset last send
+			cl->reader->last_g.time = 0; // reset last receive
+			cl->last.time = 0; // reset last client action
 			return (0);
 		}
 
 		cl->reader->tcp_connected = 1;
 		cl->reader->card_status = CARD_INSERTED;
-		cl->reader->last_s = time(NULL); // reset last send
-		cl->reader->last_g = time(NULL); // reset last receive
-		cl->last = time(NULL); // reset last client action
+		cs_ftime(&cl->last); // last client action is now
+		cl->reader->last_s = cl->last; // last send action is now
+		cl->reader->last_g = cl->last; // last receive action is now
 		cl->pfd = cl->udp_fd = handle;
 	}
 	if(!cl->udp_fd) { return (0); }  // Check if client has no handle -> error
-	if(cl->reader->tcp_rto && (cl->reader->last_s - cl->reader->last_g > cl->reader->tcp_rto))  // check if client reached timeout, if so disconnect client
-	{
-		network_tcp_connection_close(cl->reader, "rto");
-		return 0;
+	if(cl->reader->tcp_rto){
+		int32_t gone = comp_timeb(&cl->reader->last_s , &cl->reader->last_g);
+		if (gone > cl->reader->tcp_rto*1000){  // check if client reached timeout, if so disconnect client
+			network_tcp_connection_close(cl->reader, "rto");
+			return 0;
+		}
 	}
 
 	return (1); // all ok
@@ -1021,11 +1023,11 @@ void camd35_idle(void)
 	else if(cl->reader->tcp_ito)
 	{
 		//inactivity timeout check
-		time_t now;
-		int32_t time_diff;
-		time(&now);
-		time_diff = abs(now - cl->reader->last_s);
-		if(time_diff>(cl->reader->tcp_ito*60))
+		struct timeb now;
+		int32_t gone;
+		cs_ftime(&now);
+		gone = comp_timeb(&now,&cl->reader->last_s);
+		if(gone > cl->reader->tcp_ito*60*1000)
 		{
 			if(check_client(cl) && cl->reader->tcp_connected && cl->reader->ph.type==MOD_CONN_TCP)
 			{
@@ -1044,17 +1046,17 @@ static void *camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 	if(!client || !mbuf)
 		{ return NULL; }
 
+	cs_ftime(&client->last); // last client action is now
 	if(client->reader)
 	{
-		client->reader->last_g = time(NULL);  // last receive is now
+		client->reader->last_g = client->last;  // last receive is now
 		if(mbuf[0] == 6 || mbuf[0] == 19)  // check for emm command
 		{
-			client->reader->last_s = time(NULL); // fixup: last send is now (if client is only sending emms connection would be dropped!)
+			// fixup: last send is now (if client is only sending emms connection would be dropped!)
+			client->reader->last_s = client->last;
 		}
-		cs_log("CAMD35_SERVER last = %d, last_s = %d, last_g = %d", (int) client->last, (int) client->reader->last_s, (int) client->reader->last_g);
+		cs_log("CAMD35_SERVER last = %d, last_s = %d, last_g = %d", (int) client->last.time, (int) client->reader->last_s.time, (int) client->reader->last_g.time);
 	}
-	client->last = time(NULL); // last client action is now
-
 
 	switch(mbuf[0])
 	{
@@ -1156,7 +1158,7 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 	uint16_t idx;
 	static const char *typtext[] = {"ok", "invalid", "sleeping"};
 	struct s_reader *rdr = client->reader;
-	rdr->last_g = time(NULL);  // last receive is now
+	cs_ftime(&rdr->last_g); // last receive is now
 
 	// reading CMD05 Emm request and set serial
 	if(buf[0] == 0x05 && buf[1] == 111)

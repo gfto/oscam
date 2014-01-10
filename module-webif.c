@@ -249,7 +249,7 @@ static char *get_ecm_fullhistorystring(struct s_client *cl)
 			v = cl->cwlastresptimes[k].duration;
 			if(v > 0 && v < (int32_t)cfg.ctimeout * 5)
 			{
-				pos += snprintf(value + pos, needed - pos, "%s%d:%d:%ld", dot, cl->cwlastresptimes[k].duration, cl->cwlastresptimes[k].rc, cl->cwlastresptimes[k].timestamp);
+				pos += snprintf(value + pos, needed - pos, "%s%d:%d:%ld", dot, cl->cwlastresptimes[k].duration, cl->cwlastresptimes[k].rc, cl->cwlastresptimes[k].timestamp.time);
 				dot = ",";
 			}
 			k++;
@@ -2161,7 +2161,8 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 
 	int32_t rowcount = 0;
 	uint64_t ecmcount = 0;
-	time_t lastaccess = 0;
+	struct timeb lastaccess;
+	lastaccess.time = 0;
 
 #ifdef WITH_LB
 	int32_t rc2hide = (-1);
@@ -2180,7 +2181,8 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 			if(!(s->rc == rc2hide))
 			{
 				struct tm lt;
-				localtime_r(&s->last_received.time, &lt); // fixme we need walltime!
+				time_t walltime = cs_walltime(&s->last_received);
+				localtime_r(&walltime, &lt);
 				ecmcount += s->ecm_count;
 				if(!apicall)
 				{
@@ -2228,8 +2230,9 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 					}
 					tpl_printf(vars, TPLADD, "ECMCOUNT", "%d", s->ecm_count);
 
-					if(s->last_received.time > lastaccess)
-						{ lastaccess = s->last_received.time; }
+					int32_t gone = comp_timeb(&s->last_received, &lastaccess);
+					if(gone > 0)
+						{ lastaccess = s->last_received; }
 				}
 
 				if(!apicall)
@@ -2264,11 +2267,12 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 
 	tpl_printf(vars, TPLADD, "ROWCOUNT", "%d", rowcount);
 
-	if(lastaccess > 0)
+	if(lastaccess.time !=-1)
 	{
 		char tbuffer [30];
 		struct tm lt;
-		localtime_r(&lastaccess, &lt);
+		time_t walltime = cs_walltime(&lastaccess);
+		localtime_r(&walltime, &lt);
 		strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &lt);
 		tpl_addVar(vars, TPLADD, "LASTACCESS", tbuffer);
 	}
@@ -2873,6 +2877,8 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	/* List accounts*/
 	char *status, *expired, *classname, *lastchan;
 	time_t now = time((time_t *)0);
+	struct timeb actualtime;
+	cs_ftime(&actualtime);
 	int32_t isec = 0, chsec = 0;
 
 	char *filter = NULL;
@@ -2942,7 +2948,10 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		if(isactive)
 			{ active_users++; }
 
-		int32_t lastresponsetm = 0, latestactivity = 0;
+		int32_t lastresponsetm = 0;
+		struct timeb latestactivity;
+		latestactivity.time = 0;
+		latestactivity.millitm = 0;
 		const char *proto = "";
 		double cwrate = 0.0, cwrate2 = 0.0;
 
@@ -2954,9 +2963,12 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		{
 			if(cl->account && !strcmp(cl->account->usr, account->usr))
 			{
-				if(cl->lastecm > latestactivity || cl->login > latestactivity)
+				int32_t gone_lastecm = comp_timeb(&cl->lastecm, &latestactivity);
+				int32_t gone_login = comp_timeb(&cl->login, &latestactivity);
+				if(gone_lastecm > 0 || gone_login > 0)
 				{
-					if(cl->lastecm > cl->login) { latestactivity = cl->lastecm; }
+					int32_t gone_ecm_login = comp_timeb(&cl->lastecm,&cl->login);
+					if(gone_ecm_login > 0) { latestactivity = cl->lastecm; }
 					else { latestactivity = cl->login; }
 					latestclient = cl;
 				}
@@ -2965,7 +2977,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		}
 		if(account->cwfound + account->cwnot + account->cwcache > 0)
 		{
-			cwrate = now - account->firstlogin;
+			cwrate = comp_timeb(&actualtime,&account->firstlogin) / 1000;
 			cwrate /= (account->cwfound + account->cwnot + account->cwcache);
 		}
 
@@ -3027,10 +3039,10 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				if(cu->cwrate > 0)
 					{ casc_users2++; }
 			}
-			if(latestactivity > 0)
+			if(latestactivity.time > 0)
 			{
-				isec = now - latestactivity;
-				chsec = latestclient->lastswitch ? now - latestclient->lastswitch : 0;
+				isec = actualtime.time - latestactivity.time;
+				chsec = latestclient->lastswitch.time ? actualtime.time - latestclient->lastswitch.time : 0;
 				if(isec < cfg.hideclient_to)
 				{
 					isactive = 1;
@@ -3039,7 +3051,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 					else { classname = "online"; }
 					if(latestclient->cwfound + latestclient->cwnot + latestclient->cwcache > 0)
 					{
-						cwrate2 = now - latestclient->login;
+						cwrate2 = actualtime.time - latestclient->login.time;
 						cwrate2 /= (latestclient->cwfound + latestclient->cwnot + latestclient->cwcache);
 						tpl_printf(vars, TPLADDONCE, "CWRATE2", " (%.2f)", cwrate2);
 						online_users++;
@@ -3657,8 +3669,10 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	int32_t i;
 	char *usr;
 	int32_t lsec, isec, chsec, con, cau = 0;
-	time_t now = time((time_t *)0);
+	struct timeb now;
+	cs_ftime(&now);
 	struct tm lt;
+	time_t entnow = time(NULL);
 
 	if(!apicall) { setActiveMenu(vars, MNU_STATUS); }
 	char picon_name[32];
@@ -3794,7 +3808,8 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 			shown = 0;
 			if(cl->wihidden != 1)
 			{
-				filtered = !(cfg.http_hide_idle_clients != 1 || cl->typ != 'c' || (now - cl->lastecm) <= cfg.hideclient_to);
+				int32_t gone_lastecm = comp_timeb(&now,&cl->lastecm);
+				filtered = !(cfg.http_hide_idle_clients != 1 || cl->typ != 'c' || gone_lastecm <= cfg.hideclient_to*1000);
 				if(!filtered && cfg.http_hide_type)
 				{
 					char *p = cfg.http_hide_type;
@@ -3814,7 +3829,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					if(cl->typ == 'c')
 					{
 						user_count_shown++;
-						if(cfg.http_hide_idle_clients != 1 && cfg.hideclient_to > 0 && (now - cl->lastecm) <= cfg.hideclient_to)
+						if(cfg.http_hide_idle_clients != 1 && cfg.hideclient_to > 0 && gone_lastecm <= cfg.hideclient_to*1000)
 						{
 							user_count_active++;
 							tpl_addVar(vars, TPLADD, "CLIENTTYPE", "a");
@@ -3831,28 +3846,28 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					}
 					if(cl->typ == 'c' || cl->typ == 'r' || cl->typ == 'p')
 					{
-						if(cl->lastecm >= cl->login && cl->lastecm >= cl->logout) { isec = now - cl->lastecm; }
-						else if(cl->logout >= cl->login) { isec = now - cl->logout; }
-						else { isec = now - cl->login; }
+						if(cl->lastecm.time >= cl->login.time && cl->lastecm.time >= cl->logout.time){ isec = now.time - cl->lastecm.time; }
+						else if(cl->logout.time >= cl->login.time) { isec = now.time - cl->logout.time; }
+						else { isec = now.time - cl->login.time; }
 					}
-					else { isec = now - cl->last; }
+					else { isec = now.time - cl->last.time; }
 
 					shown = 1;
-					lsec = now - cl->login;
-					chsec = now - cl->lastswitch;
+					lsec = now.time - cl->login.time;
+					chsec = now.time - cl->lastswitch.time;
 					usr = username(cl);
 
 					if((cl->typ == 'r') || (cl->typ == 'p')) { usr = cl->reader->label; }
 
 					if(cl->dup) { con = 2; }
-					else if((cl->tosleep) && (now - cl->lastswitch > cl->tosleep)) { con = 1; }
+					else if((cl->tosleep) && (now.time - cl->lastswitch.time > cl->tosleep)) { con = 1; }
 					else { con = 0; }
 
 					// no AU reader == 0 / AU ok == 1 / Last EMM > aulow == -1
 					if(cl->typ == 'c' || cl->typ == 'p' || cl->typ == 'r')
 					{
 						if((cl->typ == 'c' && ll_count(cl->aureader_list) == 0) || ((cl->typ == 'p' || cl->typ == 'r') && cl->reader->audisabled)) { cau = 0; }
-						else if((now - cl->lastemm) / 60 > cfg.aulow) { cau = -1; }
+						else if((now.time - cl->lastemm.time) / 60 > cfg.aulow) { cau = -1; }
 						else { cau = 1; }
 
 						if(!apicall)
@@ -3890,7 +3905,8 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						cau = 0;
 						tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "");
 					}
-					localtime_r(&cl->login, &lt);
+					time_t walltime = cs_walltime(&cl->login);
+					localtime_r(&walltime, &lt);
 
 					if(!apicall)
 					{
@@ -4056,7 +4072,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", cl->last_srvid);
 							tpl_printf(vars, TPLADD, "CLIENTSRVPROVIDER", "%s%s", cl->last_srvidptr && cl->last_srvidptr->prov ? xml_encode(vars, cl->last_srvidptr->prov) : "", cl->last_srvidptr && cl->last_srvidptr->prov ? ": " : "");
 							tpl_addVar(vars, TPLADD, "CLIENTSRVNAME", cl->last_srvidptr && cl->last_srvidptr->name ? xml_encode(vars, cl->last_srvidptr->name) : "");
-							tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime ? cl->cwlastresptime : 1);
+							tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%jd", cl->cwlastresptime ? cl->cwlastresptime : 1);
 							tpl_addVar(vars, TPLADD, "CLIENTSRVTYPE", cl->last_srvidptr && cl->last_srvidptr->type ? xml_encode(vars, cl->last_srvidptr->type) : "");
 							tpl_addVar(vars, TPLADD, "CLIENTSRVDESCRIPTION", cl->last_srvidptr && cl->last_srvidptr->desc ? xml_encode(vars, cl->last_srvidptr->desc) : "");
 							tpl_addVar(vars, TPLADD, "CLIENTTIMEONCHANNEL", sec2timeformat(vars, chsec));
@@ -4181,7 +4197,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								while((ent = ll_iter_next(&itr)))
 								{
 									total_ent++;
-									if((ent->end > now) && (ent->type != 7))
+									if((ent->end > entnow) && (ent->type != 7))
 									{
 										if(active_ent) { tpl_addVar(vars, TPLAPPEND, "TMPSPAN", "<BR><BR>"); }
 										active_ent++;
@@ -4399,7 +4415,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	{
 		total_users++;
 		isactive = 1;
-		if(account->expirationdate && account->expirationdate < now)
+		if(account->expirationdate && account->expirationdate < entnow)
 		{
 			expired_users++;
 			isactive = 0;
@@ -5231,7 +5247,8 @@ static char *send_oscam_failban(struct templatevars * vars, struct uriparams * p
 		tpl_printf(vars, TPLADD, "IPADDRESS", "%s : %d", cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port);
 		tpl_addVar(vars, TPLADD, "VIOLATIONUSER", v_ban_entry->info ? v_ban_entry->info : "unknown");
 		struct tm st ;
-		localtime_r(&v_ban_entry->v_time.time, &st); // fix me, we need walltime!
+		time_t walltime = cs_walltime(&v_ban_entry->v_time);
+		localtime_r(&walltime, &st);
 		if(!apicall)
 		{
 			tpl_printf(vars, TPLADD, "VIOLATIONDATE", "%02d.%02d.%02d %02d:%02d:%02d",
@@ -5252,7 +5269,7 @@ static char *send_oscam_failban(struct templatevars * vars, struct uriparams * p
 		if(!apicall)
 			{ tpl_addVar(vars, TPLADD, "LEFTTIME", sec2timeformat(vars, (cfg.failbantime * 60) - (gone / 1000))); }
 		else
-			{ tpl_printf(vars, TPLADD, "LEFTTIME", "%d", (cfg.failbantime * 60) - (gone / 1000)); }
+			{ tpl_printf(vars, TPLADD, "LEFTTIME", "%jd", (cfg.failbantime * 60) - (gone / 1000)); }
 
 		tpl_addVar(vars, TPLADD, "INTIP", cs_inet_ntoa(v_ban_entry->v_ip));
 
@@ -5598,14 +5615,15 @@ static char *send_oscam_api(struct templatevars * vars, FILE * f, struct uripara
 		int32_t i;
 		int32_t isec;
 		int32_t shown;
-		time_t now = time((time_t *)0);
+		struct timeb now;
+		cs_ftime(&now);
 		char *usr;
 		struct s_client *cl;
 		for(i = 0, cl = first_client; cl ; cl = cl->next, i++)
 		{
 			if(cl->wihidden != 1)
 			{
-				isec = now - cl->lastecm;
+				isec = now.time - cl->lastecm.time;
 				usr = username(cl);
 				shown = 0;
 				if(strcmp(getParam(params, "label"), "") == 0)
@@ -5641,7 +5659,7 @@ static char *send_oscam_api(struct templatevars * vars, FILE * f, struct uripara
 					{
 						tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", xml_encode(vars, cl->reader->description ? cl->reader->description : ""));
 					}
-					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime ? cl->cwlastresptime : -1);
+					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%jd", cl->cwlastresptime ? cl->cwlastresptime : -1);
 					tpl_printf(vars, TPLADD, "CLIENTIDLESECS", "%d", isec);
 
 					//load historical values from ringbuffer
@@ -5732,7 +5750,8 @@ static char *send_oscam_image(struct templatevars * vars, FILE * f, struct uripa
 					}
 				}
 			}
-			if(disktpl == 0 && first_client->login < modifiedheader)
+			time_t walltime = cs_walltime(&first_client->login);
+			if(disktpl == 0 && walltime < modifiedheader)
 			{
 				send_header304(f, extraheader);
 				return "1";
@@ -5839,7 +5858,8 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 
 	int16_t i, written = 0;
 	struct s_client *cl;
-	time_t now = time((time_t *)0);
+	struct timeb now;
+	cs_ftime(&now);
 
 	tpl_printf(vars, TPLADD, "OWN_CACHEEX_NODEID", "%" PRIu64 "X", cacheex_node_id(cacheex_peer_id));
 
@@ -5919,7 +5939,8 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 				{
 
 					tpl_addVar(vars, TPLADD, "DIRECTIONIMG", "");
-					if(now - cacheex_stats_entry->cache_last < 20)
+					int32_t gone = comp_timeb(&now, &cacheex_stats_entry->cache_last);
+					if(gone < 20 * 1000) // 20 seconds reached?
 						{ tpl_addVar(vars, TPLADD, "TYPE", cacheex_stats_entry->cache_direction == 0 ? pushing : getting); }
 					else
 						{ tpl_addVar(vars, TPLADD, "TYPE", ""); }
@@ -6599,19 +6620,21 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 
 			tpl_printf(vars, TPLADD, "CURDATE", "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon + 1, lt.tm_year % 100);
 			tpl_printf(vars, TPLADD, "CURTIME", "%02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
-			localtime_r(&first_client->login, &st);
+			time_t walltime = cs_walltime(&first_client->login);
+			localtime_r(&walltime, &st);
 			tpl_printf(vars, TPLADD, "STARTDATE", "%02d.%02d.%02d", st.tm_mday, st.tm_mon + 1, st.tm_year % 100);
 			tpl_printf(vars, TPLADD, "STARTTIME", "%02d:%02d:%02d", st.tm_hour, st.tm_min, st.tm_sec);
 			tpl_printf(vars, TPLADD, "PROCESSID", "%d", getpid());
 
-			time_t now = time((time_t *)0);
+			struct timeb now;
+			cs_ftime(&now);
 			// XMLAPI
 			if(pgidx == 18 || pgidx == 22 || pgidx == 24)
 			{
 				char tbuffer [30];
 				strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &st);
 				tpl_addVar(vars, TPLADD, "APISTARTTIME", tbuffer);
-				tpl_printf(vars, TPLADD, "APIUPTIME", "%ld", now - first_client->login);
+				tpl_printf(vars, TPLADD, "APIUPTIME", "%ld", now.time - first_client->login.time);
 				tpl_printf(vars, TPLADD, "APIREADONLY", "%d", cfg.http_readonly);
 				if(strcmp(getParam(&params, "callback"), ""))
 				{
@@ -6622,7 +6645,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 
 			// language code in helplink
 			tpl_addVar(vars, TPLADD, "LANGUAGE", cfg.http_help_lang);
-			tpl_addVar(vars, TPLADD, "UPTIME", sec2timeformat(vars, (now - first_client->login)));
+			tpl_addVar(vars, TPLADD, "UPTIME", sec2timeformat(vars, (now.time - first_client->login.time)));
 			tpl_addVar(vars, TPLADD, "CURIP", cs_inet_ntoa(addr));
 			if(cfg.http_readonly)
 				{ tpl_addVar(vars, TPLAPPEND, "BTNDISABLED", "DISABLED"); }
@@ -7019,7 +7042,7 @@ static void *http_server(void *UNUSED(d))
 				continue;
 			}
 			setTCPTimeouts(s);
-			cur_client()->last = time((time_t *)0); //reset last busy time
+			cs_ftime(&cur_client()->last); //reset last busy time
 			conn->cl = cur_client();
 #ifdef IPV6SUPPORT
 			if(do_ipv6)
@@ -7092,13 +7115,13 @@ void webif_client_reset_lastresponsetime(struct s_client * cl)
 	for(i = 0; i < CS_ECM_RINGBUFFER_MAX; i++)
 	{
 		cl->cwlastresptimes[i].duration = 0;
-		cl->cwlastresptimes[i].timestamp = time((time_t *)0);
+		cs_ftime(&cl->cwlastresptimes[i].timestamp);
 		cl->cwlastresptimes[i].rc = 0;
 	}
 	cl->cwlastresptimes_last = 0;
 }
 
-void webif_client_add_lastresponsetime(struct s_client * cl, int32_t ltime, time_t timestamp, int32_t rc)
+void webif_client_add_lastresponsetime(struct s_client * cl, int32_t ltime, struct timeb timestamp, int32_t rc)
 {
 	int32_t last = cl->cwlastresptimes_last = (cl->cwlastresptimes_last + 1) & (CS_ECM_RINGBUFFER_MAX - 1);
 	cl->cwlastresptimes[last].duration = ltime > 9999 ? 9999 : ltime;

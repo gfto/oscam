@@ -42,7 +42,7 @@ static int32_t csp_send_ping(struct s_client *cl, uint32_t now)
 
 	int32_t status = sendto(cl->udp_fd, buf, sizeof(buf), 0, (struct sockaddr *) &cl->udp_sa, cl->udp_sa_len);
 
-	cl->lastecm = time((time_t *) 0); // use this to indicate last ping sent for now
+	cs_ftime(&cl->lastecm); // use this to indicate last ping sent for now
 	return status;
 }
 
@@ -89,8 +89,8 @@ static int32_t csp_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 
 	struct timeb tpe;
 	cs_ftime(&tpe);
-
-	if(tpe.time - cl->lastecm > PING_INTVL) { csp_send_ping(cl, 1000 * tpe.time + tpe.millitm); }
+	int32_t gone = comp_timeb(&tpe, &cl->lastecm);
+	if(gone > PING_INTVL*1000) { csp_send_ping(cl, 1000 * tpe.time + tpe.millitm); }
 
 	cs_ddump_mask(D_TRACE, buf, size, "pushing cache update to csp onid=%04X caid=%04X srvid=%04X hash=%08X (tag: %02X)", onid, er->caid, er->srvid, er->csp_hash, tag);
 
@@ -195,7 +195,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 	case TYPE_PINGREQ:
 		if(rs >= 13)
 		{
-			client->last = time((time_t *) 0);
+			cs_ftime(&client->last);
 			uint32_t port = b2i(4, buf + 9);
 			SIN_GET_PORT(client->udp_sa) = htons(port);
 

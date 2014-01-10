@@ -117,7 +117,7 @@ void cc_xor(uint8_t *buf)
 void cc_cw_crypt(struct s_client *cl, uint8_t *cws, uint32_t cardid)
 {
 	struct cc_data *cc = cl->cc;
-	int64_t node_id;
+	int32_t node_id;
 	uint8_t tmp;
 	int32_t i;
 
@@ -328,7 +328,8 @@ void add_sid_block(struct s_client *cl __attribute__((unused)), struct cc_card *
 	if(!cs_malloc(&srvid, sizeof(struct cc_srvid_block)))
 		{ return; }
 	memcpy(srvid, srvid_blocked, sizeof(struct cc_srvid));
-	srvid->blocked_till = time(NULL) + BLOCKING_SECONDS;
+	cs_ftime(&srvid->blocked_till);
+	add_ms_to_timeb(&srvid->blocked_till, BLOCKING_SECONDS*1000);
 	ll_append(card->badsids, srvid);
 	cs_debug_mask(D_READER, "%s added sid block %04X(CHID %04X, length %d) for card %08x",
 				  getprefix(), srvid_blocked->sid, srvid_blocked->chid, srvid_blocked->ecmlen,
@@ -382,8 +383,8 @@ void cc_cli_close(struct s_client *cl, int32_t call_conclose)
 
 	if(rdr) { rdr->tcp_connected = 0; }
 	if(rdr) { rdr->card_status = NO_CARD; }
-	if(rdr) { rdr->last_s = rdr->last_g = 0; }
-	if(cl) { cl->last = 0; }
+	if(rdr) { rdr->last_s.time = rdr->last_g.time = 0; }
+	if(cl) { cl->last.time = 0; }
 
 	if(call_conclose)  //clears also pending ecms!
 		{ network_tcp_connection_close(rdr, "close"); }
@@ -622,7 +623,7 @@ int32_t cc_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen)
 
 		len = recv(handle, buf + 4, size, MSG_WAITALL);
 		if(rdr && buf[1] == MSG_CW_ECM)
-			{ rdr->last_g = time(NULL); }
+			{ cs_ftime(&rdr->last_g); }
 
 		if(len != size)
 		{
@@ -692,8 +693,8 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 	cc_crypt(&cc->block[ENCRYPT], netbuf, len, ENCRYPT);
 
 	n = send(cl->udp_fd, netbuf, len, 0);
-	if(rdr) { rdr->last_s = time(NULL); }
-	if(cl) { cl->last = time(NULL); }
+	if(rdr) { cs_ftime(&rdr->last_s); }
+	if(cl) { cs_ftime(&cl->last); }
 
 	cs_writeunlock(&cc->lockcmd);
 
@@ -859,7 +860,7 @@ int32_t cc_get_nxt_ecm(struct s_client *cl)
 	struct timeb t;
 
 	cs_ftime(&t);
-	int32_t diff = (int32_t)cfg.ctimeout + 500;
+	int32_t diff = (int)cfg.ctimeout + 500;
 
 	n = -1;
 	for(i = 0; i < cfg.max_pending; i++)
@@ -1287,7 +1288,8 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 //reopen all blocked sids for this srvid:
 static void reopen_sids(struct cc_data *cc, int8_t ignore_time, ECM_REQUEST *cur_er, struct cc_srvid *cur_srvid)
 {
-	time_t utime = time(NULL);
+	struct timeb now;
+	cs_ftime(&now);
 	struct cc_card *card;
 	LL_ITER it = ll_iter_create(cc->cards);
 	while((card = ll_iter_next(&it)))
@@ -1299,7 +1301,8 @@ static void reopen_sids(struct cc_data *cc, int8_t ignore_time, ECM_REQUEST *cur
 			while((srvid = ll_iter_next(&it2)))
 				if(srvid->ecmlen > 0 && sid_eq((struct cc_srvid *)srvid, cur_srvid))   //ecmlen==0: From remote peer, so do not remove
 				{
-					if(ignore_time || srvid->blocked_till <= utime)
+					int32_t gone = comp_timeb(&now, &srvid->blocked_till);
+					if(ignore_time || gone > 0)
 						{ ll_iter_remove_data(&it2); }
 				}
 		}
@@ -1929,10 +1932,12 @@ void cc_idle(void)
 	if(!rdr || !rdr->tcp_connected || !cl || !cc)
 		{ return; }
 
-	time_t now = time(NULL);
+	struct timeb now;
+	cs_ftime(&now);
 	if(rdr->cc_keepalive)
 	{
-		if(cc->answer_on_keepalive + 55 <= now)
+		int32_t gone = comp_timeb(&now, &cc->answer_on_keepalive);
+		if(gone >= 55*1000)
 		{
 			if(cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) > 0)
 			{
@@ -1946,7 +1951,9 @@ void cc_idle(void)
 	{
 		//cs_log("last_s - now = %d, last_g - now = %d, tcp_ito=%d", abs(rdr->last_s - now), abs(rdr->last_g - now), rdr->tcp_ito);
 		//check inactivity timeout:
-		if((abs(rdr->last_s - now) > rdr->tcp_ito) && (abs(rdr->last_g - now) > rdr->tcp_ito))   // inactivity timeout is entered in seconds in webif!
+		int32_t gonesend = comp_timeb(&now, &rdr->last_s);
+		int32_t gonerecv = comp_timeb(&now, &rdr->last_g);
+		if((gonesend > rdr->tcp_ito*1000) && (gonerecv > rdr->tcp_ito*1000))   // inactivity timeout is entered in seconds in webif!
 		{
 			cs_debug_mask(D_READER, "%s inactive_timeout, close connection (fd=%d)", rdr->ph.desc, rdr->client->pfd);
 			network_tcp_connection_close(rdr, "inactivity");
@@ -1954,9 +1961,8 @@ void cc_idle(void)
 		}
 
 		//check read timeout:
-		int32_t rto = abs(rdr->last_g - now);
 		//cs_log("last_g - now = %d, rto=%d", rto, rdr->tcp_rto);
-		if(rto > (rdr->tcp_rto))    // this is also entered in seconds, actually its an receive timeout!
+		if(gonerecv > rdr->tcp_rto * 1000)    // this is also entered in seconds, actually its an receive timeout!
 		{
 			cs_debug_mask(D_READER, "%s read timeout, close connection (fd=%d)", rdr->ph.desc, rdr->client->pfd);
 			network_tcp_connection_close(rdr, "rto");
@@ -2047,7 +2053,7 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext)
 			srvid->sid = sid;
 			srvid->chid = 0;
 			srvid->ecmlen = 0;
-			srvid->blocked_till = 0;
+			srvid->blocked_till.time = 0;
 			ll_append(card->badsids, srvid);
 			ptr += 2;
 		}
@@ -2325,9 +2331,11 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	int32_t res = cc_cmd_send(cl, ecmbuf, size, MSG_CACHE_PUSH);
 	if(res > 0)   // cache-ex is pushing out, so no receive but last_g should be updated otherwise disconnect!
 	{
-		if(cl->reader)
-			{ cl->reader->last_s = cl->reader->last_g = time((time_t *)0); } // correct
-		if(cl) { cl->last = time(NULL); }
+		if(cl->reader){
+			cs_ftime(&cl->reader->last_s); // last send action is now
+			cl->reader->last_g = cl->reader->last_s; // last receive action is now
+		}
+		if(cl) { cs_ftime(&cl->last); } // last client action is now
 	}
 	NULLFREE(ecmbuf);
 	return res;
@@ -2339,9 +2347,11 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	ECM_REQUEST *er;
 	if(!cc) { return; }
 
-	if(cl->reader)
-		{ cl->reader->last_s = cl->reader->last_g = time((time_t *)0); }
-	if(cl) { cl->last = time(NULL); }
+	if(cl->reader){
+		cs_ftime(&cl->reader->last_s); // last send action is now
+		cl->reader->last_g = cl->reader->last_s; // last receive action is now
+	}
+	if(cl) { cs_ftime(&cl->last); } // last client action is now
 
 	int8_t rc = buf[14];
 	if(rc != E_FOUND && rc != E_UNHANDLED)  //Maybe later we could support other rcs
@@ -3077,7 +3087,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 						//check response time, if > fallbacktime, switch cards!
 						struct timeb tpe;
 						cs_ftime(&tpe);
-						uint32_t cwlastresptime = comp_timeb(&tpe, &cc->ecm_time);
+						int32_t cwlastresptime = comp_timeb(&tpe, &cc->ecm_time);
 						if(cwlastresptime > get_fallbacktimeout(card->caid) && !cc->extended_mode)
 						{
 							cs_debug_mask(D_READER, "%s card %04X is too slow, moving to the end...", getprefix(), card->id);
@@ -3132,11 +3142,11 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 		break;
 
 	case MSG_KEEPALIVE:
-		cl->last = time(NULL);
+		cs_ftime(&cl->last);
 		if(rdr)
 		{
-			rdr->last_g = time(NULL);
-			rdr->last_s = time(NULL);
+			rdr->last_g = cl->last;
+			rdr->last_s = cl->last;
 		}
 		if(cl->typ != 'c')
 		{
@@ -3145,11 +3155,14 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 		else
 		{
 			//Checking if last answer is one minute ago:
-			if(cc->just_logged_in || cc->answer_on_keepalive + 55 <= time(NULL))
+			struct timeb now;
+			cs_ftime(&now);
+			int32_t gone = comp_timeb(&now, &cc->answer_on_keepalive);
+			if(cc->just_logged_in || gone > 55*1000)
 			{
 				cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
 				cs_debug_mask(D_CLIENT, "cccam: keepalive");
-				cc->answer_on_keepalive = time(NULL);
+				cc->answer_on_keepalive = now;
 			}
 		}
 		cc->just_logged_in = 0;
@@ -3542,8 +3555,8 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l)
 		n = cc_parse_msg(cl, buf, n);
 		if(n == MSG_CW_ECM || n == MSG_EMM_ACK)
 		{
-			cl->last = time(NULL); // last client action is now
-			if(rdr) { rdr->last_g = time(NULL); }  // last reader receive is now
+			cs_ftime(&cl->last); // last client action is now
+			if(rdr) { rdr->last_g = cl->last; }  // last reader receive is now
 		}
 	}
 
@@ -3804,7 +3817,7 @@ int32_t cc_srv_connect(struct s_client *cl)
 
 	cc->cccam220 = check_cccam_compat(cc);
 	cc->just_logged_in = 1;
-	cc->answer_on_keepalive = time(NULL);
+	cs_ftime(&cc->answer_on_keepalive);
 
 	//Wait for Partner detection (NOK1 with data) before reporting cards
 	//When Partner is detected, cccam220=1 is set. then we can report extended card data
@@ -3935,7 +3948,7 @@ int32_t cc_cli_connect(struct s_client *cl)
 	cc->cmd05_offset = 0;
 	cc->cmd05_active = 0;
 	cc->cmd05_data_len = 0;
-	cc->answer_on_keepalive = time(NULL);
+	cs_ftime(&cc->answer_on_keepalive);
 	cc->extended_mode = 0;
 	cc->last_emm_card = NULL;
 	cc->num_hop1 = 0;
@@ -4015,7 +4028,7 @@ int32_t cc_cli_connect(struct s_client *cl)
 		cs_debug_mask(D_READER, "%s login succeeded", getprefix());
 	}
 
-	cs_debug_mask(D_READER, "cccam: last_s=%ld, last_g=%ld", rdr->last_s, rdr->last_g);
+	cs_debug_mask(D_READER, "cccam: last_s=%ld, last_g=%ld", rdr->last_s.time, rdr->last_g.time);
 
 	cl->pfd = cl->udp_fd;
 	cs_debug_mask(D_READER, "cccam: pfd=%d", cl->pfd);
@@ -4039,7 +4052,8 @@ int32_t cc_cli_connect(struct s_client *cl)
 	}
 
 	rdr->card_status = CARD_NEED_INIT;
-	rdr->last_g = rdr->last_s = time((time_t *) 0);
+	cs_ftime(&rdr->last_g);
+	rdr->last_s = rdr->last_g;
 	rdr->tcp_connected = 1;
 
 	cc->just_logged_in = 1;

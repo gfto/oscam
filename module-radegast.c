@@ -5,6 +5,7 @@
 #include "oscam-net.h"
 #include "oscam-string.h"
 #include "oscam-reader.h"
+#include "oscam-time.h"
 
 static int32_t radegast_connect(void);
 
@@ -21,14 +22,14 @@ static int32_t radegast_recv(struct s_client *client, uchar *buf, int32_t l)
 	if(client->typ == 'c')     // server code
 	{
 		if((n = recv(client->pfd, buf, l, 0)) > 0)
-			{ client->last = time((time_t *) 0); }
+			{ cs_ftime(&client->last); }
 	}
 	else      // client code
 	{
 		if((n = recv(client->pfd, buf, l, 0)) > 0)
 		{
 			cs_ddump_mask(D_CLIENT, buf, n, "radegast: received %d bytes from %s", n, remote_txt());
-			client->last = time((time_t *) 0);
+			cs_ftime(&client->last);
 			if((buf[0] == 0x02) && (buf[1] == 0x12) && (buf[2] == 0x05) && (buf[3] == 0x10)) { return (n); }  // dcw received
 			else if((buf[0] == 0x02) && (buf[1] == 0x02) && (buf[2] == 0x04) && (buf[3] == 0x00)) { return (n); }  // dcw no found
 			else if((buf[0] == 0x81) && (buf[1] == 0x00)) { return (n); }  // cmd unknown
@@ -226,9 +227,10 @@ int32_t radegast_cli_init(struct s_client *cl)
 
 	cl->reader->tcp_connected = 2;
 	cl->reader->card_status = CARD_INSERTED;
-	cl->reader->last_g = cl->reader->last_s = time((time_t *)0);
+	cs_ftime(&cl->reader->last_s);
+	cl->reader->last_g = cl->reader->last_s;
 
-	cs_debug_mask(D_CLIENT, "radegast: last_s=%ld, last_g=%ld", cl->reader->last_s, cl->reader->last_g);
+	cs_debug_mask(D_CLIENT, "radegast: last_s=%ld, last_g=%ld", cl->reader->last_s.time, cl->reader->last_g.time);
 
 	cl->pfd = cl->udp_fd;
 
@@ -264,14 +266,15 @@ void radegast_idle(void)
 {
 	struct s_client *client = cur_client();
 	struct s_reader *rdr = client->reader;
-	time_t now = time(NULL);
+	struct timeb now;
+	cs_ftime(&now);
+
 	if(!rdr) { return; }
 
 	if(rdr->tcp_ito > 0)
 	{
-		int32_t time_diff;
-		time_diff = abs(now - rdr->last_s);
-		if(time_diff > (rdr->tcp_ito))
+		int32_t gone = comp_timeb(&now, &rdr->last_s);
+		if(gone > rdr->tcp_ito*1000)
 		{
 			network_tcp_connection_close(rdr, "inactivity");
 			return;

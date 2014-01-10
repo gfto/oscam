@@ -10,6 +10,7 @@
 #include "oscam-reader.h"
 #include "oscam-string.h"
 #include "oscam-work.h"
+#include "oscam-time.h"
 
 extern char *entitlement_type[];
 extern char *loghist;
@@ -185,7 +186,7 @@ static int32_t monitor_recv(struct s_client *client, uchar *buf, int32_t UNUSED(
 	}
 	buf[n] = '\0';
 	n = strlen(trim((char *)buf));
-	if(n) { client->last = time((time_t *) 0); }
+	if(n) { cs_ftime(&client->last); }
 	return n;
 }
 
@@ -246,22 +247,22 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf)
 	if(cl)
 	{
 		char ldate[16], ltime[16], *usr;
-		int32_t lsec, isec, con, cau, lrt = - 1;
-		time_t now;
+		int32_t lsec, isec, con, cau, lrt = - 1, gone_lastswitch;
+		struct timeb now;
 		struct tm lt;
-		now = time((time_t *)0);
+		cs_ftime(&now);
+		int32_t gone_lastecm = comp_timeb(&now,&cl->lastecm);
+		int32_t gone_lastemm = comp_timeb(&now,&cl->lastemm);
 
-		if((cfg.hideclient_to <= 0) ||
-				(now - cl->lastecm < cfg.hideclient_to) ||
-				(now - cl->lastemm < cfg.hideclient_to) ||
-				(cl->typ != 'c'))
+		if((cfg.hideclient_to <= 0) || gone_lastecm < cfg.hideclient_to*1000 || gone_lastemm < cfg.hideclient_to*1000 || (cl->typ != 'c'))
 		{
-			lsec = now - cl->login;
-			isec = now - cl->last;
+			lsec = comp_timeb(&now,&cl->login) / 1000;
+			isec = comp_timeb(&now,&cl->last) / 1000;
+			gone_lastswitch = comp_timeb(&now,&cl->lastswitch);
 			usr = username(cl);
 			if(cl->dup)
 				{ con = 2; }
-			else if((cl->tosleep) && (now - cl->lastswitch > cl->tosleep))
+			else if((cl->tosleep) && (gone_lastswitch > cl->tosleep *1000))
 				{ con = 1; }
 			else
 				{ con = 0; }
@@ -274,7 +275,7 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf)
 						((cl->typ == 'p' || cl->typ == 'r') && cl->reader->audisabled))
 					{ cau = 0; }
 
-				else if((now - cl->lastemm) / 60 > cfg.aulow)
+				else if(gone_lastemm / 60*1000 > cfg.aulow)
 					{ cau = (-1); }
 
 				else
@@ -299,11 +300,11 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf)
 			}
 			else
 				{ lrt = cl->cwlastresptime; }
-			localtime_r(&cl->login, &lt);
+			localtime_r(&cl->login.time, &lt);
 			snprintf(ldate, sizeof(ldate), "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon + 1, lt.tm_year % 100);
 			int32_t cnr = get_threadnum(cl);
 			snprintf(ltime, sizeof(ldate), "%02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
-			snprintf(sbuf, 256, "[%c--CCC]%8X|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",
+			snprintf(sbuf, 256, "[%c--CCC]%8X|%c|%d|%s|%jd|%d|%s|%d|%s|%s|%s|%jd|%04X:%04X|%s|%jd|%jd|%d|%d|%d|%d|%d|%d|%d|%jd\n",
 					 id, cl->tid, cl->typ, cnr, usr, cau, cl->crypted,
 					 cs_inet_ntoa(cl->ip), cl->port, client_get_proto(cl),
 					 ldate, ltime, lsec, cl->last_caid, cl->last_srvid,
@@ -317,17 +318,17 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf)
 
 static void monitor_process_info(void)
 {
-	time_t now = time((time_t *)0);
+	struct timeb now;
+	cs_ftime(&now);
 	char sbuf[256];
 
 	struct s_client *cl, *cur_cl = cur_client();
 
 	for(cl = first_client; cl ; cl = cl->next)
 	{
-		if((cfg.hideclient_to <= 0) ||
-				(now - cl->lastecm < cfg.hideclient_to) ||
-				(now - cl->lastemm < cfg.hideclient_to) ||
-				(cl->typ != 'c'))
+		int32_t gone_lastecm = comp_timeb(&now, &cl->lastecm);
+		int32_t gone_lastemm = comp_timeb(&now, &cl->lastemm);
+		if(cfg.hideclient_to <= 0 || gone_lastecm < cfg.hideclient_to*1000 || gone_lastemm < cfg.hideclient_to*1000 || (cl->typ != 'c'))
 		{
 			if((cur_cl->monlvl < 2) && (cl->typ != 's'))
 			{

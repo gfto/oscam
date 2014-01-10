@@ -347,7 +347,7 @@ void gbox_reconnect_client(void)
 			gbox->peer.online = 0;
 			gbox->peer.ecm_idx = 0;
 			gbox->peer.hello_stat = GBOX_STAT_HELLOL;
-			cl->reader->last_s = cl->reader->last_g = 0;
+			cl->reader->last_s.time = cl->reader->last_g.time = 0;
 			gbox_free_cardlist(gbox->peer.cards);
 			gbox->peer.cards = ll_create("peer.cards");
 			gbox_send_hello(cl);
@@ -692,11 +692,11 @@ int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 		pthread_mutex_unlock(&gbox->hello_expire_mut);
 		break;
 	case MSG_CW:
-		cli->last = time((time_t *)0);
+		cs_ftime(&cli->last);
 		idx = gbox_recv_chk(cli, dcw, &rc1, data, rc1);
 		if(idx < 0) { break; }  // no dcw received
 		if(!idx) { idx = cli->last_idx; }
-		cli->reader->last_g = time((time_t *)0); // for reconnect timeout
+		cs_ftime(&cli->reader->last_g); // for reconnect timeout
 		for(i1 = 0, n1 = 0; i1 < cfg.max_pending && n1 == 0; i1++)
 		{
 			if(cli->ecmtask[i1].idx == idx)
@@ -1705,7 +1705,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 	er->gbox_ecm_ok = 1;
 	gbox_send(cli, send_buf_1, cont_1);
 	cli->pending++;
-	cli->reader->last_s = time((time_t *) 0);
+	cs_ftime(&cli->reader->last_s);
 
 	return 0;
 }

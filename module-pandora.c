@@ -7,6 +7,7 @@
 #include "oscam-ecm.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
+#include "oscam-time.h"
 
 #define CWS_NETMSGSIZE 320
 #define START_TIME 150000
@@ -80,7 +81,7 @@ static int pandora_recv(struct s_client *cl, uchar *buf, int32_t l)
 		{ return (-1); }
 
 	simple_crypt(buf, ret, cl->pand_md5_key, 16);
-	cl->last = time((time_t *) 0);
+	cs_ftime(&cl->last);
 
 	if(cl->typ != 'c')
 		{ pandora_process_request(cl, buf, ret); }

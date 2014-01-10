@@ -42,7 +42,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 		int32_t gone = comp_timeb(&actualtime, &reader->rlecmh[h].last);
 		if( gone >= (reader->rlecmh[h].ratelimittime + reader->rlecmh[h].srvidholdtime))
 		{
-			cs_debug_mask(D_CLIENT, "ratelimiter srvid %04X released from slot #%d/%d of reader %s (%d>=%d ratelimit ms + %d ms srvidhold!)",
+			cs_debug_mask(D_CLIENT, "ratelimiter srvid %04X released from slot #%d/%d of reader %s (%jd>=%d ratelimit ms+%d ms srvidhold!)",
 						  reader->rlecmh[h].srvid, h + 1, MAXECMRATELIMIT, reader->label, gone,
 						  reader->rlecmh[h].ratelimittime, reader->rlecmh[h].srvidholdtime);
 			reader->rlecmh[h].last.time = -1;
@@ -65,7 +65,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 				&& (!reader->rlecmh[h].chid || (reader->rlecmh[h].chid == rl.chid)))
 		{
 			int32_t gone = comp_timeb(&actualtime, &reader->rlecmh[h].last);
-			cs_debug_mask(D_CLIENT, "ratelimiter found srvid %04X for %d ms in slot #%d/%d of reader %s", er->srvid,
+			cs_debug_mask(D_CLIENT, "ratelimiter found srvid %04X for %jd ms in slot #%d/%d of reader %s", er->srvid,
 						  gone, h + 1, MAXECMRATELIMIT, reader->label);
 
 			// check ecmunique if enabled and ecmunique time is done
@@ -176,7 +176,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 		}
 		else { 
 			int32_t gone = comp_timeb(&actualtime, &reader->rlecmh[h].last);
-		cs_debug_mask(D_CLIENT, "ratelimiter srvid %04X for %d ms present in slot #%d/%d of reader %s", reader->rlecmh[h].srvid, gone , h + 1,
+		cs_debug_mask(D_CLIENT, "ratelimiter srvid %04X for %jd ms present in slot #%d/%d of reader %s", reader->rlecmh[h].srvid, gone , h + 1,
 			maxecms, reader->label); }  //occupied slots
 	}
 
@@ -290,7 +290,8 @@ int32_t ecm_ratelimit_check(struct s_reader *reader, ECM_REQUEST *er, int32_t re
 	// No cooldown set
 	if(!reader->cooldown[0])
 	{
-		cs_debug_mask(D_CLIENT, "ratelimiter find a slot for srvid %04X on reader %s", er->srvid, reader->label);
+		cs_debug_mask(D_CLIENT, "ratelimiter find a slot for srvid %04X on reader %s (%s)", er->srvid, reader->label,
+			(reader_mode == 0 ? "just probing" : "real request"));
 		foundspace = ecm_ratelimit_findspace(reader, er, rl, reader_mode);
 		if(foundspace < 0)
 		{
@@ -386,7 +387,8 @@ int32_t ecm_ratelimit_check(struct s_reader *reader, ECM_REQUEST *er, int32_t re
 		}
 	} // if cooldownstate == 2
 
-	cs_debug_mask(D_CLIENT, "ratelimiter cooldownphase %d find a slot for srvid %04X on reader %s", reader->cooldownstate, er->srvid, reader->label);
+	cs_debug_mask(D_CLIENT, "ratelimiter cooldownphase %d find a slot for srvid %04X on reader %s (%s)", reader->cooldownstate, er->srvid,
+		reader->label, (reader_mode == 0 ? "just probing" : "real request"));
 	foundspace = ecm_ratelimit_findspace(reader, er, rl, reader_mode);
 
 	if(foundspace < 0)
@@ -603,7 +605,8 @@ void cs_clear_entitlement(struct s_reader *rdr)
 void casc_check_dcw(struct s_reader *reader, int32_t idx, int32_t rc, uchar *cw)
 {
 	int32_t i, pending = 0;
-	time_t t = time(NULL);
+	struct timeb now;
+	cs_ftime(&now);
 	ECM_REQUEST *ecm;
 	struct s_client *cl = reader->client;
 
@@ -626,7 +629,8 @@ void casc_check_dcw(struct s_reader *reader, int32_t idx, int32_t rc, uchar *cw)
 			ecm->rc = E_FOUND;
 		}
 
-		if(ecm->rc >= E_NOCARD && (t - (uint32_t)ecm->tps.time > ((cfg.ctimeout + 500) / 1000) + 1))  // drop timeouts
+		int32_t gone = comp_timeb(&now, &ecm->tps);
+		if(ecm->rc >= E_NOCARD && (gone > (int) (cfg.ctimeout + 1500)))  // drop timeouts
 		{
 			ecm->rc = E_FOUND;
 		}
@@ -840,7 +844,9 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 
 	setTCPTimeouts(client->udp_fd);
 	clear_block_delay(rdr);
-	client->last = client->login = time((time_t *)0);
+	struct timeb now;
+	cs_ftime(&now);
+	client->last = client->login = now;
 	client->last_caid = NO_CAID_VALUE;
 	client->last_srvid = NO_SRVID_VALUE;
 	client->pfd = client->udp_fd;
@@ -876,7 +882,7 @@ void network_tcp_connection_close(struct s_reader *reader, char *reason)
 
 	reader->tcp_connected = 0;
 	reader->card_status = UNKNOWN;
-	cl->logout = time((time_t *)0);
+	cs_ftime(&cl->logout);
 
 	if(cl->ecmtask)
 	{
@@ -895,7 +901,8 @@ void network_tcp_connection_close(struct s_reader *reader, char *reason)
 int32_t casc_process_ecm(struct s_reader *reader, ECM_REQUEST *er)
 {
 	int32_t rc, n, i, sflag, pending = 0;
-	time_t t;//, tls;
+	struct timeb now;
+	cs_ftime(&now);
 	struct s_client *cl = reader->client;
 
 	if(!cl || !cl->ecmtask)
@@ -906,12 +913,12 @@ int32_t casc_process_ecm(struct s_reader *reader, ECM_REQUEST *er)
 
 	uchar buf[512];
 
-	t = time((time_t *)0);
 	ECM_REQUEST *ecm;
 	for(i = 0; i < cfg.max_pending; i++)
 	{
 		ecm = &cl->ecmtask[i];
-		if((ecm->rc >= E_NOCARD) && (t - (uint32_t)ecm->tps.time > ((cfg.ctimeout + 500) / 1000) + 1))  // drop timeouts
+		int32_t gone = comp_timeb(&now, &ecm->tps);
+		if((ecm->rc >= E_NOCARD) && (gone > (int) (cfg.ctimeout + 1500)))  // drop timeouts
 		{
 			ecm->rc = E_FOUND;
 		}
@@ -966,7 +973,7 @@ int32_t casc_process_ecm(struct s_reader *reader, ECM_REQUEST *er)
 			{ casc_check_dcw(reader, n, 0, cl->ecmtask[n].cw); }  // simulate "not found"
 		else
 			{ cl->last_idx = cl->ecmtask[n].idx; }
-		reader->last_s = t;   // used for inactive_timeout and reconnect_timeout in TCP reader
+		reader->last_s = now;   // used for inactive_timeout and reconnect_timeout in TCP reader
 	}
 
 	if(cl->idx > 0x1ffe) { cl->idx = 1; }
@@ -993,13 +1000,14 @@ void reader_get_ecm(struct s_reader *reader, ECM_REQUEST *er)
 
 	struct s_ecm_answer *ea = NULL, *ea_prev = NULL;
 	struct ecm_request_t *ecm;
-	time_t timeout;
+	struct timeb now;
+	cs_ftime(&now);
 
 	cs_readlock(&ecmcache_lock);
 	for(ecm = ecmcwcache; ecm; ecm = ecm->next)
 	{
-		timeout = time(NULL) - ((cfg.ctimeout+500)/1000+1);
-		if(ecm->tps.time <= timeout)
+		int32_t gone = comp_timeb(&now, &ecm->tps);
+		if(gone > (int) (cfg.ctimeout + 1500))
 			{ break; }
 
 		if(!ecm->matching_rdr || ecm == er || ecm->rc == E_99) { continue; }
@@ -1007,14 +1015,12 @@ void reader_get_ecm(struct s_reader *reader, ECM_REQUEST *er)
 		//match same ecm
 		if(!memcmp(er->ecmd5, ecm->ecmd5, CS_ECMSTORESIZE))
 		{
-			//check if ask this reader
+			//fetch it! (used to check if we ask this reader)
 			ea = get_ecm_answer(reader, ecm);
-			if(ea && !ea->is_pending && (ea->status & REQUEST_SENT)) { break; }
-			ea = NULL;
 		}
 	}
 	cs_readunlock(&ecmcache_lock);
-	if(ea)   //found ea in cached ecm, asking for this reader
+	if(ea && !ea->is_pending && (ea->status & REQUEST_SENT))   //found ea in cached ecm, asking for this reader
 	{
 		ea_er->is_pending = true;
 
@@ -1054,7 +1060,7 @@ void reader_get_ecm(struct s_reader *reader, ECM_REQUEST *er)
 		cl->last_srvid = er->srvid;
 		cl->last_caid = er->caid;
 		casc_process_ecm(reader, er);
-		cl->lastecm = time((time_t *)0);
+		cs_ftime(&cl->lastecm);
 		return;
 	}
 
@@ -1074,11 +1080,11 @@ void reader_do_idle(struct s_reader *reader)
 		{ reader->ph.c_idle(); }
 	else
 	{
-		time_t now;
-		int32_t time_diff;
-		time(&now);
-		time_diff = abs(now - reader->last_s);
-		if(time_diff > (reader->tcp_ito * 60))
+		struct timeb now;
+		int32_t gone;
+		cs_ftime(&now);
+		gone = comp_timeb(&now, &reader->last_s);
+		if(gone > (reader->tcp_ito * 60*1000))
 		{
 			struct s_client *cl = reader->client;
 			if(check_client(cl) && reader->tcp_connected && reader->ph.type == MOD_CONN_TCP)
@@ -1157,7 +1163,7 @@ int32_t reader_init(struct s_reader *reader)
 		return 0;
 	}
 
-	client->login = time((time_t *)0);
+	cs_ftime(&client->login);
 	client->init_done = 1;
 
 	return 1;

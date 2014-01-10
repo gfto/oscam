@@ -198,9 +198,8 @@ static void *cw_process(void)
 {
 	set_thread_name(__func__);
 	int32_t time_to_check_fbtimeout, time_to_check_ctimeout, next_check, ecmc_next, cache_next, n_request_next, msec_wait = 3000;
-	struct timeb t_now, tbc, ecmc_time, cache_time, n_request_time;
+	struct timeb now, tbc, ecmc_time, cache_time, n_request_time;
 	ECM_REQUEST *er = NULL;
-	time_t ecm_maxcachetime;
 
 #ifdef CS_CACHEEX
 	int32_t time_to_check_cacheex_wait_time;
@@ -240,7 +239,7 @@ static void *cw_process(void)
 		cache_next = 0;
 		msec_wait = 0;
 
-		cs_ftime(&t_now);
+		cs_ftime(&now);
 		cs_readlock(&ecmcache_lock);
 		for(er = ecmcwcache; er; er = er->next)
 		{
@@ -263,7 +262,7 @@ static void *cw_process(void)
 				{
 					tbc = er->tps;
 					time_to_check_cacheex_wait_time = add_ms_to_timeb(&tbc, auto_timeout(er, er->cacheex_wait_time));
-					if(comp_timeb(&t_now, &tbc) >= 0)
+					if(comp_timeb(&now, &tbc) >= 0)
 					{
 						add_job(er->client, ACTION_CACHEEX_TIMEOUT, (void *)er, 0);
 						time_to_check_cacheex_wait_time = 0;
@@ -277,7 +276,7 @@ static void *cw_process(void)
 					//fbtimeout
 					tbc = er->tps;
 					time_to_check_fbtimeout = add_ms_to_timeb(&tbc, auto_timeout(er, get_fallbacktimeout(er->caid)));
-					if(comp_timeb(&t_now, &tbc) >= 0)
+					if(comp_timeb(&now, &tbc) >= 0)
 					{
 						add_job(er->client, ACTION_FALLBACK_TIMEOUT, (void *)er, 0);
 						time_to_check_fbtimeout = 0;
@@ -293,7 +292,7 @@ static void *cw_process(void)
 			{
 				tbc = er->tps;
 				time_to_check_ctimeout = add_ms_to_timeb(&tbc, auto_timeout(er, cfg.ctimeout));
-				if(comp_timeb(&t_now, &tbc) >= 0)
+				if(comp_timeb(&now, &tbc) >= 0)
 				{
 					add_job(er->client, ACTION_CLIENT_TIMEOUT, (void *)er, 0);
 					time_to_check_ctimeout = 0;
@@ -304,14 +303,14 @@ static void *cw_process(void)
 		}
 		cs_readunlock(&ecmcache_lock);
 #ifdef CS_ANTICASC
-		if(cfg.ac_enabled && (ac_next = comp_timeb(&ac_time, &t_now)) <= 10)
+		if(cfg.ac_enabled && (ac_next = comp_timeb(&ac_time, &now)) <= 10)
 		{
 			ac_do_stat();
 			cs_ftime(&ac_time);
 			ac_next = add_ms_to_timeb(&ac_time, cfg.ac_stime * 60 * 1000);
 		}
 #endif
-		if((ecmc_next = comp_timeb(&ecmc_time, &t_now)) <= 10)
+		if((ecmc_next = comp_timeb(&ecmc_time, &now)) <= 10)
 		{
 			uint32_t count = 0;
 			struct ecm_request_t *ecm, *ecmt = NULL, *prv;
@@ -319,9 +318,9 @@ static void *cw_process(void)
 			cs_readlock(&ecmcache_lock);
 			for(ecm = ecmcwcache, prv = NULL; ecm; prv = ecm, ecm = ecm->next, count++)
 			{
-				ecm_maxcachetime = t_now.time - ((cfg.ctimeout+500)/1000+3);  //to be sure no more access er!
+				int32_t gone = comp_timeb(&now, &ecm->tps);
 
-				if(ecm->tps.time < ecm_maxcachetime)
+				if(gone > (int) cfg.ctimeout+3500) // to be sure no more access er!
 				{
 					cs_readunlock(&ecmcache_lock);
 					cs_writelock(&ecmcache_lock);
@@ -350,8 +349,8 @@ static void *cw_process(void)
 			cs_readlock(&ecm_pushed_deleted_lock);
 			for(ecm = ecm_pushed_deleted, prv = NULL; ecm; prv = ecm, ecm = ecm->next)
 			{
-				ecm_maxcachetime = t_now.time - ((cfg.ctimeout+500)/1000+3);
-				if(ecm->tps.time < ecm_maxcachetime)
+				int32_t gone = comp_timeb(&now, &ecm->tps);
+				if(gone > (int) cfg.ctimeout+3500) // to be sure no more access er!
 				{
 					cs_readunlock(&ecm_pushed_deleted_lock);
 					cs_writelock(&ecm_pushed_deleted_lock);
@@ -380,7 +379,7 @@ static void *cw_process(void)
 		}
 
 
-		if((cache_next = comp_timeb(&cache_time, &t_now)) <= 10)
+		if((cache_next = comp_timeb(&cache_time, &now)) <= 10)
 		{
 
 
@@ -393,7 +392,7 @@ static void *cw_process(void)
 			cache_next = add_ms_to_timeb(&cache_time, 3000);
 		}
 
-		if((n_request_next = comp_timeb(&n_request_time, &t_now)) <= 10)
+		if((n_request_next = comp_timeb(&n_request_time, &now)) <= 10)
 		{
 			update_n_request();
 			cs_ftime(&n_request_time);
@@ -442,17 +441,18 @@ void cw_process_thread_wakeup(void)
 struct ecm_request_t *check_same_ecm(ECM_REQUEST *er)
 {
 	struct ecm_request_t *ecm;
-	time_t timeout;
+	int32_t timeout;
+	struct timeb actualtime;
 	struct s_ecm_answer *ea_ecm = NULL, *ea_er = NULL;
 	uint8_t rdrs = 0;
 
-
+	cs_ftime(&actualtime);
 	cs_readlock(&ecmcache_lock);
 	for(ecm = ecmcwcache; ecm; ecm = ecm->next)
 	{
-		timeout = time(NULL) - ((cfg.ctimeout + 500) / 1000);
+		timeout = comp_timeb(&actualtime, &ecm->tps);
 
-		if(ecm->tps.time <= timeout)
+		if(timeout > (int) cfg.ctimeout+500)
 			{ break; }
 
 		if(ecm == er) { continue; }
@@ -742,19 +742,21 @@ static void add_cascade_data(struct s_client *client, ECM_REQUEST *er)
 		{ client->cascadeusers = ll_create("cascade_data"); }
 	LLIST *l = client->cascadeusers;
 	LL_ITER it = ll_iter_create(l);
-	time_t now = time(NULL);
+	struct timeb actualtime;
+	cs_ftime(&actualtime);
 	struct s_cascadeuser *cu;
 	int8_t found = 0;
 	while((cu = ll_iter_next(&it)))
 	{
+		int32_t gone = comp_timeb(&actualtime, &cu->time);
 		if(er->caid == cu->caid && er->prid == cu->prid && er->srvid == cu->srvid)  //found it
 		{
-			if(cu->time < now)
-				{ cu->cwrate = now - cu->time; }
-			cu->time = now;
+			if(gone > 0)
+				{ cu->cwrate = gone / 1000; }
+			cu->time = actualtime;
 			found = 1;
 		}
-		else if(cu->time + 60 < now)  //  old
+		else if(gone > 60*1000)  //  older than 60 seconds
 			{ ll_iter_remove_data(&it); }
 	}
 	if(!found)    //add it if not found
@@ -764,7 +766,7 @@ static void add_cascade_data(struct s_client *client, ECM_REQUEST *er)
 		cu->caid = er->caid;
 		cu->prid = er->prid;
 		cu->srvid = er->srvid;
-		cu->time = now;
+		cu->time = actualtime;
 		ll_append(l, cu);
 	}
 }
@@ -914,8 +916,10 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	}
 #endif
 
-	if(er->rc < E_NOTFOUND)
-		{ er->rcEx = 0; }
+	if(er->rc < E_NOTFOUND){
+		er->rcEx = 0;
+		er->msglog[0] = 0; // reset obselete msgs from other readers!
+	}
 
 	if(er->rcEx)
 		{ snprintf(erEx, sizeof(erEx) - 1, "rejected %s%s", stxtWh[er->rcEx >> 4], stxtEx[er->rcEx & 0xf]); }
@@ -940,7 +944,7 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	{
 		if(er->rc >= E_CACHEEX)
 		{
-			uint32_t ntime = comp_timeb(&tpe, &er->tps);
+			uint64_t ntime = comp_timeb(&tpe, &er->tps);
 			if(ntime >= er->cacheex_wait_time)
 			{
 				snprintf(sreason, sizeof(sreason) - 1, " (wait_time over)");
@@ -948,7 +952,7 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 		}
 		else if(er->rc == E_FOUND)
 		{
-			if(ea_orig) { snprintf(sreason, sizeof(sreason) - 1, " (real %d ms)", ea_orig->ecm_time); }
+			if(ea_orig) { snprintf(sreason, sizeof(sreason) - 1, " (real %jd ms)", ea_orig->ecm_time); }
 		}
 	}
 
@@ -961,8 +965,7 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 	client->cwlastresptime = comp_timeb(&tpe, &er->tps);
 
-	time_t now = time(NULL);
-	webif_client_add_lastresponsetime(client, client->cwlastresptime, now, er->rc); // add to ringbuffer
+	webif_client_add_lastresponsetime(client, client->cwlastresptime, tpe, er->rc); // add to ringbuffer
 
 	if(er_reader)
 	{
@@ -970,14 +973,14 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 		if(check_client(er_cl))
 		{
 			er_cl->cwlastresptime = client->cwlastresptime;
-			webif_client_add_lastresponsetime(er_cl, client->cwlastresptime, now, er->rc);
+			webif_client_add_lastresponsetime(er_cl, client->cwlastresptime, tpe, er->rc);
 			er_cl->last_srvidptr = client->last_srvidptr;
 		}
 	}
 
 	webif_client_init_lastreader(client, er, er_reader, stxt);
 
-	client->last = now;
+	client->last = tpe;
 
 	//cs_debug_mask(D_TRACE, "CHECK rc=%d er->cacheex_src=%s", er->rc, username(er->cacheex_src));
 	switch(er->rc)
@@ -1104,13 +1107,13 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 		format_ecm(er, buf, ECM_FMT_LEN);
 		if(er->reader_avail == 1 || er->stage == 0)
 		{
-			cs_log("%s (%s): %s (%d ms)%s%s%s%s",
+			cs_log("%s (%s): %s (%jd ms)%s%s%s%s",
 				   uname, buf,
 				   er->rcEx ? erEx : stxt[er->rc], client->cwlastresptime, sby, schaninfo, sreason, scwcinfo);
 		}
 		else
 		{
-			cs_log("%s (%s): %s (%d ms)%s (%c/%d/%d/%d)%s%s%s",
+			cs_log("%s (%s): %s (%jd ms)%s (%c/%d/%d/%d)%s%s%s",
 				   uname, buf,
 				   er->rcEx ? erEx : stxt[er->rc],
 				   client->cwlastresptime, sby,
@@ -1498,15 +1501,15 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 {
 	if(!reader || !er || !er->tps.time) { return 0; }
 
-	// drop too late answers, to avoid seg fault --> only answer until tps.time+((cfg.ctimeout+500)/1000+1) is accepted
-	time_t timeout = time(NULL) - ((cfg.ctimeout+500)/1000+1);
-	if(er->tps.time < timeout)   //< and NOT <=
+	struct timeb now;
+	int32_t timeout;
+	cs_ftime(&now);
+	timeout = comp_timeb(&now, &er->tps);
+	if(timeout > (int) cfg.ctimeout+1500) // +1500 needed to write timeouts or notfounds otherwise clients disconnects due to no answer!
 		{ return 0; }
 
 	int32_t i;
 	uint8_t c;
-	struct timeb now;
-	cs_ftime(&now);
 
 	if(er && er->parent)
 	{
@@ -1516,8 +1519,8 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 		er_reader_cp->rc = rc;
 		er_reader_cp->idx = 0;
 
-		timeout = time(NULL) - ((cfg.ctimeout+500)/1000+1);
-		if(er->tps.time < timeout)
+		timeout = comp_timeb(&now, &er->tps);
+		if(timeout > (int) cfg.ctimeout+1500) // +1500 needed to write timeouts or notfounds otherwise clients disconnects due to no answer!
 			{ return 0; }
 	}
 
@@ -1571,15 +1574,17 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 	}
 
 #ifdef CW_CYCLE_CHECK
-	uint8_t cwc_ct = er->cwc_cycletime > 0 ? er->cwc_cycletime : 0;
-	uint8_t cwc_ncwc = er->cwc_next_cw_cycle < 2 ? er->cwc_next_cw_cycle : 2;
-	if(!checkcwcycle(er->client, er, reader, cw, rc, cwc_ct, cwc_ncwc))
-	{
-		rc = E_NOTFOUND;
-		rcEx = E2_WRONG_CHKSUM;
-		cs_debug_mask(D_CACHEEX | D_CWC | D_LB, "{client %s, caid %04X, srvid %04X} [write_ecm_answer] cyclecheck failed! Reader: %s set rc: %i", (er->client ? er->client->account->usr : "-"), er->caid, er->srvid, reader ? reader->label : "-", rc);
+	if(reader && cw && rc < E_NOTFOUND){ // only do cyclechecks if cw present and rc is stating found, this should skip cw with wrong crc's
+		uint8_t cwc_ct = er->cwc_cycletime > 0 ? er->cwc_cycletime : 0;
+		uint8_t cwc_ncwc = er->cwc_next_cw_cycle < 2 ? er->cwc_next_cw_cycle : 2;
+		if(!checkcwcycle(er->client, er, reader, cw, rc, cwc_ct, cwc_ncwc))
+		{
+			rc = E_NOTFOUND;
+			rcEx = E2_WRONG_CHKSUM;
+			cs_debug_mask(D_CACHEEX | D_CWC | D_LB, "{client %s, caid %04X, srvid %04X} [write_ecm_answer] cyclecheck failed! Reader: %s set rc: %i", (er->client ? er->client->account->usr : "-"), er->caid, er->srvid, reader ? reader->label : "-", rc);
+		}
+		else { cs_debug_mask(D_CACHEEX | D_CWC | D_LB, "{client %s, caid %04X, srvid %04X} [write_ecm_answer] cyclecheck passed! Reader: %s rc: %i", (er->client ? er->client->account->usr : "-"), er->caid, er->srvid, reader ? reader->label : "-", rc); }
 	}
-	else { cs_debug_mask(D_CACHEEX | D_CWC | D_LB, "{client %s, caid %04X, srvid %04X} [write_ecm_answer] cyclecheck passed! Reader: %s rc: %i", (er->client ? er->client->account->usr : "-"), er->caid, er->srvid, reader ? reader->label : "-", rc); }
 #endif
 	//END -- SPECIAL CHECKs for rc
 
@@ -1594,11 +1599,9 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 
 	cs_writeunlock(&ea->ecmanswer_lock);
 
-	struct timeb tpe;
-	cs_ftime(&tpe);
-	int32_t ntime = comp_timeb(&tpe, &er->tps);
+	int32_t ntime = comp_timeb(&now, &er->tps);
 	if(ntime < 1) { ntime = 1; }
-	cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [write_ecm_answer] reader %s rc %d, ecm time %d ms (%d ms)", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid, reader ? reader->label : "-", rc, ea->ecm_time, ntime);
+	cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [write_ecm_answer] reader %s rc %d, ecm time %jd ms (%jd ms)", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid, reader ? reader->label : "-", rc, ea->ecm_time, ntime);
 
 	//send ea for ecm request
 	int32_t res = 0;
@@ -1835,13 +1838,15 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 	increment_n_request(client);
 
 	int32_t i, j, m;
-	time_t now = time((time_t *)0);
+	struct timeb now;
+	cs_ftime(&now);
 	uint32_t line = 0;
 
 	er->client = client;
 	er->rc = E_UNHANDLED; // set default rc status to unhandled
 	er->cwc_next_cw_cycle = 2; //set it to: we dont know
-	if(now - client->lastecm > cfg.hideclient_to) { client->lastswitch = 0; }       // user was on freetv or didn't request for some time so we reset lastswitch to get correct stats/webif display
+	int32_t gone = comp_timeb(&now, &client->lastecm);
+	if(gone > cfg.hideclient_to*1000) { client->lastswitch.time = 0; } // user was on freetv or didn't request for some time so we reset lastswitch to get correct stats/webif display
 	client->lastecm = now;
 
 	if(client == first_client || !client ->account || client->account == first_client->account)
@@ -1958,14 +1963,17 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 	}
 
 	// user expired
-	if(client->expirationdate && client->expirationdate < client->lastecm)
-		{ er->rc = E_EXPDATE; }
+	if(client->expirationdate >0){
+		time_t walltime = cs_walltime(&client->lastecm);
+		if(client->expirationdate < walltime) { er->rc = E_EXPDATE; }
+	}
 
 	// out of timeframe
 	if(client->allowedtimeframe[0] && client->allowedtimeframe[1])
 	{
 		struct tm acttm;
-		localtime_r(&now, &acttm);
+		time_t nowrtc = time(NULL);
+		localtime_r(&nowrtc, &acttm);
 		int32_t curtime = (acttm.tm_hour * 60) + acttm.tm_min;
 		int32_t mintime = client->allowedtimeframe[0];
 		int32_t maxtime = client->allowedtimeframe[1];
@@ -2008,7 +2016,7 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 		m = er->caid;
 		i = er->srvid;
 
-		if(i != client->last_srvid || !client->lastswitch)
+		if(i != client->last_srvid || client->lastswitch.time == 0)
 		{
 			if(cfg.usrfileflag)
 				{ cs_statistics(client); }
@@ -2016,7 +2024,8 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 		}
 
 		// user sleeping
-		if(client->tosleep && (now - client->lastswitch > client->tosleep))
+		gone = comp_timeb(&now, &client->lastswitch);
+		if(client->tosleep && (gone > client->tosleep*1000))
 		{
 			if(client->failban & BAN_SLEEPING)
 			{

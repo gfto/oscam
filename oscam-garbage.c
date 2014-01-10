@@ -8,7 +8,7 @@
 
 struct cs_garbage
 {
-	time_t time;
+	struct timeb time;
 	void *data;
 #ifdef WITH_DEBUG
 	char *file;
@@ -48,7 +48,7 @@ void add_garbage(void *data)
 		NULLFREE(data);
 		return;
 	}
-	garbage->time = time(NULL);
+	cs_ftime(&garbage->time);
 	garbage->data = data;
 #ifdef WITH_DEBUG
 	garbage->file = file;
@@ -90,17 +90,21 @@ static void garbage_collector(void)
 	int8_t i;
 	struct cs_garbage *garbage, *next, *prev, *first;
 	set_thread_name(__func__);
+	struct timeb garbagefrom;
+	struct timeb start;
+
 	while(garbage_collector_active)
 	{
-
+		cs_ftime(&garbagefrom);
+		start = garbagefrom;
+		garbagefrom.time -= 5; // ditch stale garbage = 5 seconds
 		for(i = 0; i < HASH_BUCKETS; ++i)
 		{
 			cs_writelock(&garbage_lock[i]);
 			first = garbage_first[i];
-			time_t deltime = time((time_t)0) - (2*cfg.ctimeout/1000 + 1);
 			for(garbage = first, prev = NULL; garbage; prev = garbage, garbage = garbage->next)
 			{
-				if(deltime < garbage->time)     // all following elements are too new
+				if(garbagefrom.time < garbage->time.time)     // all following elements are too new
 				{
 					if(prev)
 					{
@@ -121,6 +125,7 @@ static void garbage_collector(void)
 			cs_writeunlock(&garbage_lock[i]);
 
 			// list has been taken out before so we don't need a lock here anymore!
+
 			while(garbage)
 			{
 				next = garbage->next;
@@ -130,7 +135,11 @@ static void garbage_collector(void)
 			}
 		}
 
-		sleepms_on_cond(&sleep_cond_mutex, &sleep_cond, 1000);
+		cs_ftime(&garbagefrom); // reuse to calculate sleeptime
+		int32_t sleeptime = 5000 - comp_timeb(&garbagefrom, &start);
+		if (sleeptime > 0){	// protection, we dont want negative sleeptime!
+			sleepms_on_cond(&sleep_cond_mutex, &sleep_cond, sleeptime);
+		}
 	}
 	pthread_exit(NULL);
 }

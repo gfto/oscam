@@ -502,7 +502,7 @@ void send_file(FILE *f, char *filename, char *subdir, time_t modifiedheader, uin
 			result = JSCRIPT;
 		}
 #endif
-		moddate = first_client->login;
+		moddate = first_client->login.time;
 	}
 
 	size = strlen(result);

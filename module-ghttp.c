@@ -6,6 +6,7 @@
 #include "oscam-reader.h"
 #include "oscam-work.h"
 #include "module-dvbapi.h"
+#include "oscam-time.h"
 #ifdef WITH_SSL
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
@@ -102,7 +103,8 @@ int32_t ghttp_client_init(struct s_client *cl)
 
 	cl->reader->tcp_connected = 2;
 	cl->reader->card_status = CARD_INSERTED;
-	cl->reader->last_g = cl->reader->last_s = time((time_t *)0);
+	cs_ftime(&cl->reader->last_s);
+	cl->reader->last_g = cl->reader->last_s;
 
 	cl->pfd = cl->udp_fd;
 
@@ -201,7 +203,7 @@ static int32_t ghttp_recv_int(struct s_client *client, uchar *buf, int32_t l)
 	if(n > 0)
 	{
 		cs_debug_mask(D_CLIENT, "%s: received %d bytes from %s", client->reader->label, n, remote_txt());
-		client->last = time((time_t *)0);
+		cs_ftime(&client->last);
 
 		if(n > 400)
 		{
@@ -492,7 +494,7 @@ static int32_t ghttp_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, 
 		data = strstr((char *)buf, "Pragma: cached");
 		if(data || (client->cwlastresptime > 0 && client->cwlastresptime < 640))
 		{
-			cs_debug_mask(D_CLIENT, "%s: probably cached cw (%d ms), switching back to cache get for next req", client->reader->label, client->cwlastresptime);
+			cs_debug_mask(D_CLIENT, "%s: probably cached cw (%jd ms), switching back to cache get for next req", client->reader->label, client->cwlastresptime);
 			if(er) { _is_post_context(context->post_contexts, er, true); }
 		}
 	}

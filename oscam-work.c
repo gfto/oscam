@@ -226,6 +226,7 @@ void *work_thread(void *ptr)
 
 			if(data != &tmp_data)
 				{ cl->work_job_data = data; } // Track the current job_data
+
 			switch(data->action)
 			{
 			case ACTION_READER_IDLE:
@@ -248,11 +249,11 @@ void *work_thread(void *ptr)
 						{ network_tcp_connection_close(reader, "disconnect on receive"); }
 					break;
 				}
-				cl->last = time(NULL); // *********************************** TO BE REPLACE BY CS_FTIME() LATER ****************
+				cs_ftime(&cl->last);
 				idx = reader->ph.c_recv_chk(cl, dcw, &rc, mbuf, rc);
 				if(idx < 0) { break; }  // no dcw received
 				if(!idx) { idx = cl->last_idx; }
-				reader->last_g = time(NULL); // *********************************** TO BE REPLACE BY CS_FTIME() LATER **************** // for reconnect timeout
+				cs_ftime(&reader->last_g); // for reconnect timeout
 				for(i = 0, n = 0; i < cfg.max_pending && n == 0; i++)
 				{
 					if(cl->ecmtask[i].idx == idx)

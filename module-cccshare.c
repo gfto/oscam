@@ -685,7 +685,9 @@ int32_t add_card_providers(struct cc_card *dest_card, struct cc_card *card,
 
 void set_card_timeout(struct cc_card *card)
 {
-	card->timeout = time(NULL) + TIMEOUT_SECONDS + ((rand() & 0xff) - 128) * 2;
+	cs_ftime(&card->timeout);
+	int32_t timeout = (TIMEOUT_SECONDS + ((rand() & 0xff) - 128) * 2)*1000;
+	add_ms_to_timeb(&card->timeout, timeout);
 }
 
 struct cc_card *create_card(struct cc_card *card)
@@ -988,7 +990,10 @@ int32_t card_timed_out(struct cc_card *card)
 {
 	//!=CT_REMOTECARD = LOCALCARD (or virtual cards by caid/ident/service)
 	//timeout is set in future, so if current time is bigger, timeout is reached
-	int32_t res = (card->card_type != CT_REMOTECARD) && (card->timeout < time(NULL)); //local card is older than 1h?
+	struct timeb now;
+	cs_ftime(&now);
+	int32_t gone = comp_timeb(&now,&card->timeout);
+	int32_t res = ((card->card_type != CT_REMOTECARD) && gone > 0); //local card is older than 1h?
 	if(res)
 		{ cs_debug_mask(D_TRACE, "card %08X timed out! refresh forced", card->id ? card->id : card->origin_id); }
 	return res;

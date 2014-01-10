@@ -118,7 +118,7 @@ static void reader_log_emm(struct s_reader *reader, EMM_PACKET *ep, int32_t i, i
 
 	if(rc)
 	{
-		cl->lastemm = time(NULL);
+		cs_ftime(&cl->lastemm);
 		led_status_emm_ok();
 	}
 
@@ -406,7 +406,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 		rdr_debug_mask_sensitive(aureader, D_EMM, "emm UA/SA: {%s}.",
 								 cs_hexdump(0, ep->hexserial, 8, tmp, sizeof(tmp)));
 
-		client->last = time(NULL);
+		cs_ftime(&client->last);
 		saveemm(aureader, ep);
 
 		int32_t is_blocked = 0;
@@ -449,7 +449,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 			continue;
 		}
 
-		client->lastemm = time((time_t *)0);
+		cs_ftime(&client->lastemm);
 
 		client->emmok++;
 		if(client->account)

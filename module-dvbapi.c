@@ -2613,7 +2613,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	dvbapi_client->last_srvid = demux[demux_id].program_number;
 	dvbapi_client->last_caid = 0;
 // reset idle-Time & last switch
-	dvbapi_client->lastswitch = dvbapi_client->last = time((time_t *)0); // ********** TO BE CHANGED LATER ON ***********
+	cs_ftime(&dvbapi_client->last);
+	dvbapi_client->lastswitch = dvbapi_client->last;
 
 #if defined WITH_AZBOX || defined WITH_MCA
 	openxcas_sid = program_number;
@@ -3568,7 +3569,7 @@ static void *dvbapi_main_local(void *cli)
 			if (timeout < 0) {
 				cs_log("*** WARNING: BAD TIME AFFECTING WHOLE OSCAM ECM HANDLING ****");
 			}
-			cs_debug_mask(D_TRACE, "[DVBAPI] new events occurred on %d of %d handlers after %d ms inactivity", rc, pfdcount, timeout);
+			cs_debug_mask(D_TRACE, "[DVBAPI] new events occurred on %d of %d handlers after %jd ms inactivity", rc, pfdcount, timeout);
 			cs_ftime(&start); // register new start time for next poll
 		}
 
@@ -3804,7 +3805,7 @@ void delayer(ECM_REQUEST *er)
 	int32_t gone = comp_timeb(&tpe, &er->tps);
 	if( gone < cfg.dvbapi_delayer)
 	{
-		cs_debug_mask(D_DVBAPI, "delayer: gone=%dms, cfg=%dms -> delay=%dms", gone, cfg.dvbapi_delayer, cfg.dvbapi_delayer - gone);
+		cs_debug_mask(D_DVBAPI, "delayer: gone=%jdms, cfg=%dms -> delay=%jdms", gone, cfg.dvbapi_delayer, cfg.dvbapi_delayer - gone);
 		cs_sleepms(cfg.dvbapi_delayer - gone);
 	}
 }
@@ -4068,7 +4069,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		}
 
 		// reset idle-Time
-		client->last = time((time_t *)0); // ********* TO BE FIXED LATER ON ******
+		cs_ftime(&client->last);
 
 		FILE *ecmtxt;
 		ecmtxt = fopen(ECMINFO_FILE, "w");

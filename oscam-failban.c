@@ -45,7 +45,7 @@ static int32_t cs_check_v(IN_ADDR_T ip, int32_t port, int32_t add, char *info)
 			{
 				if(v_ban_entry->v_count >= cfg.failbancount)
 				{
-					cs_debug_mask(D_TRACE, "failban: banned ip %s:%d - %d seconds left%s%s",
+					cs_debug_mask(D_TRACE, "failban: banned ip %s:%d - %jd seconds left%s%s",
 								  cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port,
 								  ((ftime - gone)/1000), info ? ", info: " : "", info ? info : "");
 				}
