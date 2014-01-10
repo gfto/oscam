@@ -4078,13 +4078,15 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						{
 							if(rdr->lbvalue)
 							{
-								tpl_addVar(vars, TPLADD, "LBLRPVALUE", urlencode(vars, rdr->label));
+								tpl_addVar(vars, TPLADD, "LBLRPVALUE", rdr->label);
+								tpl_addVar(vars, TPLADD, "LBLRPVALUEENC", urlencode(vars, rdr->label));
 								tpl_printf(vars, TPLADD, "LBLRPSTRVALUE", "%d", rdr->lbvalue);
 								tpl_addVar(vars, TPLADD, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUERP"));
 							}
 							else
 							{
-								tpl_addVar(vars, TPLADD, "LBLRPVALUE", urlencode(vars, rdr->label));
+								tpl_addVar(vars, TPLADD, "LBLRPVALUE", rdr->label);
+								tpl_addVar(vars, TPLADD, "LBLRPVALUEENC", urlencode(vars, rdr->label));
 								tpl_addVar(vars, TPLADD, "LBLRPSTRVALUE", "no data");
 								tpl_addVar(vars, TPLADD, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUERP"));
 							}
