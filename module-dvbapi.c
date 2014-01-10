@@ -1179,6 +1179,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 	{
 #ifdef WITH_STAPI
 	case STAPI:
+		idx = (enable ? 1 : -1); // use indexer 1 for start, -1 to stop descrambling! (stapi doesnt use indexers!)
 		stapi_set_pid(demux_id, idx, demux[demux_id].STREAMpids[num], enable, demux[demux_id].pmt_file); 
 		break;
 #endif
@@ -1270,9 +1271,6 @@ void dvbapi_stop_descrambling(int32_t demux_id)
 	get_servicename(dvbapi_client, demux[demux_id].program_number, demux[demux_id].ECMpidcount > 0 ? demux[demux_id].ECMpids[i].CAID : 0, channame);
 	cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d stop descrambling program number %04X (%s)", demux_id, demux[demux_id].program_number, channame);
 	dvbapi_stop_filter(demux_id, TYPE_EMM);
-#ifdef WITH_STAPI
-	idx = -1; // on stop descrambling remove all streampids!
-#endif
 	if(demux[demux_id].ECMpidcount > 0)
 	{
 		dvbapi_stop_filter(demux_id, TYPE_ECM);
@@ -4505,7 +4503,8 @@ void disable_unused_streampids(int16_t demux_id)
 	int32_t i,n;
 	struct s_streampid *listitem;
 	// search for old enabled streampids on all ca devices that have to be disabled, index 0 is skipped as it belongs to fta!
-#ifdef WITH_STAPI	
+#ifdef WITH_STAPI
+	idx = 2; // idx-1 = 2-1 = 1 = used indexer for starting pids on stapi
 	for(i = 0; i < PTINUM; i++){
 #else
 	for(i = 0; i < 8 && idx; i++){
