@@ -3947,6 +3947,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						{
 							tpl_addVar(vars, TPLADD, "TARGET", "Proxy");
 							tpl_addVar(vars, TPLADD, "LBL", xml_encode(vars, usr));
+							tpl_addVar(vars, TPLADD, "LBLENC", urlencode(vars, usr));
 							tpl_printf(vars, TPLADD, "CID", "%p", cl);
 							tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));
 							tpl_addVar(vars, TPLADD, "CSIDX", tpl_getTpl(vars, "STATUSRBUTTON"));
@@ -3955,6 +3956,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						{
 							tpl_addVar(vars, TPLADD, "TARGET", "Reader");
 							tpl_addVar(vars, TPLADD, "LBL", xml_encode(vars, usr));
+							tpl_addVar(vars, TPLADD, "LBLENC", urlencode(vars, usr));
 							tpl_printf(vars, TPLADD, "CID", "%p", cl);
 							tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));
 							tpl_addVar(vars, TPLADD, "CSIDX", tpl_getTpl(vars, "STATUSRBUTTON"));
@@ -4103,7 +4105,8 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							}
 							else
 							{
-								tpl_addVar(vars, TPLADD, "LBLVALUE", (char *)cl->lastreader);
+								tpl_addVar(vars, TPLADD, "LBLVALUE", xml_encode(vars, cl->lastreader));
+								tpl_addVar(vars, TPLADD, "LBLVALUEENC", urlencode(vars, cl->lastreader));
 								tpl_printf(vars, TPLADD, "MSVALUE", "%d", cl->cwlastresptime);
 								tpl_addVar(vars, TPLAPPEND, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUEBIT"));
 							}
