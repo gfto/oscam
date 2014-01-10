@@ -4115,7 +4115,6 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							}
 						}
 						tpl_addVar(vars, TPLADD, "CLIENTCON", txt);
-
 						if(rdr && (cl->typ == 'r') && (!apicall))  //reader
 						{
 							if(rdr->ll_entitlements)
@@ -4125,7 +4124,6 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								uint16_t total_ent = 0;
 								uint16_t active_ent = 0;
 								struct tm end_t;
-
 								tpl_addVar(vars, TPLADD, "TMPSPAN", "<SPAN>");
 								while((ent = ll_iter_next(&itr)))
 								{
@@ -4140,14 +4138,11 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 												   end_t.tm_year + 1900, end_t.tm_mon + 1, end_t.tm_mday);
 									}
 								}
-
 								if(((total_ent) && (active_ent == 0)) || (total_ent == 0))
 								{
 									tpl_addVar(vars, TPLAPPEND, "TMPSPAN", "No active entitlements found");
 								}
-
 								tpl_addVar(vars, TPLAPPEND, "TMPSPAN", "</SPAN>");
-
 								if(active_ent)
 								{
 									tpl_printf(vars, TPLADD, "TMP", "(%d entitlement%s)", active_ent, (active_ent != 1) ? "s" : "");
@@ -4156,16 +4151,16 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								{
 									tpl_addVar(vars, TPLADD, "TMP", "(no entitlements)");
 								}
-								tpl_printf(vars, TPLAPPEND, "CLIENTCON", "<A HREF=\"entitlements.html?label=%s&hideexpired=1\" CLASS=\"tooltip%s\">%s%s</A>",
-								urlencode(vars, cl->reader->label), active_ent > 0 ? "" : "1", tpl_getVar(vars, "TMP"), tpl_getVar(vars, "TMPSPAN"));
+								tpl_addVar(vars, TPLADD, "ENTLABEL", urlencode(vars, cl->reader->label));
+								tpl_addVar(vars, TPLADD, "ENTVALUE", active_ent > 0 ? "" : "1");
+								tpl_printf(vars, TPLAPPEND, "CLIENTCON", tpl_getTpl(vars, "FOUNDENTITLEMENTS"));
 							}
 							else
 							{
-								tpl_printf(vars, TPLAPPEND, "CLIENTCON", "<A HREF=\"entitlements.html?label=%s&hideexpired=1\" CLASS=\"tooltip\">(no entitlements)"
-								"<SPAN>No active entitlements found</SPAN></A>", urlencode(vars, cl->reader->label));
+								tpl_addVar(vars, TPLADD, "ENTLABEL",  urlencode(vars, cl->reader->label));
+								tpl_printf(vars, TPLAPPEND, "CLIENTCON", tpl_getTpl(vars, "NOENTITLEMENTS"));
 							}
 						}
-
 #ifdef MODULE_CCCAM
 						if(!apicall)
 						{
@@ -4180,22 +4175,21 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 										int32_t cnt = ll_count(cards);
 										int32_t locals = rcc->num_hop1;
 										tpl_printf(vars, TPLADD, "TMP", "(%d of %d card%s)", locals, cnt, (cnt > 1) ? "s" : "");
-										tpl_printf(vars, TPLADD, "TMPSPAN", "<SPAN>card count=%d<BR>hop1=%d<BR>hop2=%d<BR>hopx=%d<BR>currenthops=%d<BR><BR>reshare0=%d<BR>reshare1=%d<BR>reshare2=%d<BR>resharex=%d</SPAN>",
-												   cnt,
-												   rcc->num_hop1,
-												   rcc->num_hop2,
-												   rcc->num_hopx,
-												   cl->reader->currenthops,
-												   rcc->num_reshare0,
-												   rcc->num_reshare1,
-												   rcc->num_reshare2,
-												   rcc->num_resharex);
-
-										tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" CLASS=\"tooltip%s\">%s%s</A>",
-												   urlencode(vars, cl->reader->label),
-												   rcc->num_reshare0 > 0 ? "1" : "",
-												   tpl_getVar(vars, "TMP"),
-												   tpl_getVar(vars, "TMPSPAN"));
+										tpl_printf(vars, TPLADD, "CCCOUNT", "%d", cnt);
+										tpl_printf(vars, TPLADD, "CCCHOP1", "%d", rcc->num_hop1);
+										tpl_printf(vars, TPLADD, "CCCHOP2", "%d", rcc->num_hop2);
+										tpl_printf(vars, TPLADD, "CCCHOPX", "%d", rcc->num_hopx);
+										tpl_printf(vars, TPLADD, "CCCCURR", "%d", cl->reader->currenthops);
+										tpl_printf(vars, TPLADD, "CCCRES0", "%d", rcc->num_reshare0);
+										tpl_printf(vars, TPLADD, "CCCRES1", "%d", rcc->num_reshare1);
+										tpl_printf(vars, TPLADD, "CCCRES2", "%d", rcc->num_reshare2);
+										tpl_printf(vars, TPLADD, "CCCRESX", "%d", rcc->num_resharex);
+										tpl_printf(vars, TPLADD, "TMPSPAN", tpl_getTpl(vars, "CCENTITLEMENTS"));
+										tpl_addVar(vars, TPLADD, "CCCLABEL", urlencode(vars, cl->reader->label));
+										tpl_addVar(vars, TPLADD, "CCCRESHARE", rcc->num_reshare0 > 0 ? "1" : "");
+										tpl_addVar(vars, TPLADD, "CCCTMP", tpl_getVar(vars, "TMP"));
+										tpl_addVar(vars, TPLADD, "CCCTMPSPAN", tpl_getVar(vars, "TMPSPAN"));
+										tpl_addVar(vars, TPLAPPEND, "CLIENTCON", tpl_getTpl(vars, "CCENTITLETOOLTIP"));
 									}
 								}
 							}
@@ -4204,7 +4198,6 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					}
 				}
 			}
-
 			if(!apicall)
 			{
 				// select right suborder

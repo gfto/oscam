@@ -79,6 +79,10 @@ READERSTATSROWTIMEOUTBIT      readerstats/readerstatstimeoutbit.html
 READERSTATSROWNOTFOUNDBIT     readerstats/readerstatsnotfound.html
 SCANUSB                       scanusb/scanusb.html
 SCANUSBBIT                    scanusb/scanusb_usbbit.html
+CCENTITLEMENTS                include/cccamentitlements.html
+CCENTITLETOOLTIP              include/cccamentitletooltip.html
+NOENTITLEMENTS                include/noentitlements.html
+FOUNDENTITLEMENTS             include/foundentitlements.html
 ENTITLEMENTS                  entitlements/entitlements.html                              WITH_CARDREADER,MODULE_CCCAM
 ENTITLEMENTGENERICBIT         entitlements/entitlements_genericbit.html                   WITH_CARDREADER
 ENTITLEMENTBIT                entitlements/entitlements_bit.html                          WITH_CARDREADER
