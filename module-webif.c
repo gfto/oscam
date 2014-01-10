@@ -3920,7 +3920,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								}
 								if(cl->typ == 'p' || cl->typ == 'r')
 								{
-									tpl_addVar(vars, TPLADD, "RLBL", xml_encode(vars, usr));
+									tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, usr));
 									tpl_addVar(vars, TPLADD, "READERNAMEENC", urlencode(vars, usr));
 									tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SREADERICON"));
 								}
@@ -3936,7 +3936,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								}
 								else if (cl->typ == 'p' || cl->typ == 'r')
 								{
-									tpl_addVar(vars, TPLADD, "RLBL", xml_encode(vars, usr));
+									tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, usr));
 									tpl_addVar(vars, TPLADD, "READERNAMEENC", urlencode(vars, usr));
 									tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SREADER"));
 								}
@@ -3956,7 +3956,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							}
 							else if (cl->typ == 'p' || cl->typ == 'r')
 							{
-								tpl_addVar(vars, TPLADD, "RLBL", xml_encode(vars, usr));
+								tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, usr));
 								tpl_addVar(vars, TPLADD, "READERNAMEENC", urlencode(vars, usr));
 								tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SREADER"));
 							}
