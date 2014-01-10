@@ -3906,6 +3906,14 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", xml_encode(vars, cl->reader->description ? cl->reader->description : ""));
 					}
 
+					if (cl->typ == 'c') {
+						tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, usr));
+						tpl_addVar(vars, TPLADD, "USERENC", urlencode(vars, usr));
+					} else if (cl->typ == 'p' || cl->typ == 'r') {
+						tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, usr));
+						tpl_addVar(vars, TPLADD, "READERNAMEENC", urlencode(vars, usr));
+					}
+
 					if(!apicall)
 					{
 						if(cfg.http_showpicons)
@@ -3914,14 +3922,10 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							{
 								if(cl->typ == 'c')
 								{
-									tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, usr));
-									tpl_addVar(vars, TPLADD, "USERENC", urlencode(vars, usr));
 									tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SUSERICON"));
 								}
 								if(cl->typ == 'p' || cl->typ == 'r')
 								{
-									tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, usr));
-									tpl_addVar(vars, TPLADD, "READERNAMEENC", urlencode(vars, usr));
 									tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SREADERICON"));
 								}
 							}
@@ -3930,14 +3934,10 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								tpl_printf(vars, TPLADD, "UPICMISSING", "missing icon: IC_%s", xml_encode(vars, usr));
 								if(cl->typ == 'c')
 								{
-									tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, usr));
-									tpl_addVar(vars, TPLADD, "USERENC", urlencode(vars, usr));
 									tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SUSER"));
 								}
 								else if (cl->typ == 'p' || cl->typ == 'r')
 								{
-									tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, usr));
-									tpl_addVar(vars, TPLADD, "READERNAMEENC", urlencode(vars, usr));
 									tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SREADER"));
 								}
 								else
@@ -3950,14 +3950,10 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						{
 							if(cl->typ == 'c')
 							{
-								tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, usr));
-									tpl_addVar(vars, TPLADD, "USERENC", urlencode(vars, usr));
 								tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SUSER"));
 							}
 							else if (cl->typ == 'p' || cl->typ == 'r')
 							{
-								tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, usr));
-								tpl_addVar(vars, TPLADD, "READERNAMEENC", urlencode(vars, usr));
 								tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, "SREADER"));
 							}
 							else
