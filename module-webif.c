@@ -1200,34 +1200,15 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 			// used only for WebIf
 			if(!apicall)
 			{
-				if(rdr->enable)
-					{ tpl_addVar(vars, TPLADD, "READERCLASS", "enabledreader"); }
-				else
-					{ tpl_addVar(vars, TPLADD, "READERCLASS", "disabledreader"); }
+				tpl_addVar(vars, TPLADD, "READERCLASS", rdr->enable ? "enabledreader" : "disabledreader");
 
+				const char *readername_tpl = "READERLABEL";
 				if(cfg.http_showpicons)
 				{
-					if(picon_exists(xml_encode(vars, rdr->label)))
-					{
-						tpl_addVar(vars, TPLADD, "READERNAME", tpl_getTpl(vars, "READERNAMEBIT"));
-					}
-					else
-					{
-						tpl_addVar(vars, TPLADD, "READERNAME", tpl_getTpl(vars, "READERNOICON"));
-					}
-					if(picon_exists(xml_encode(vars, reader_get_type_desc(rdr, 0))))
-					{
-						tpl_addVar(vars, TPLADD, "CTYP", tpl_getTpl(vars, "READERCTYPBIT"));
-					}
-					else
-					{
-						tpl_addVar(vars, TPLADD, "CTYP", tpl_getTpl(vars, "READERCTYPNOICON"));
-					}
+					readername_tpl = picon_exists(xml_encode(vars, rdr->label)) ? "READERNAMEBIT" : "READERNOICON";
+					tpl_addVar(vars, TPLADD, "CTYP", picon_exists(xml_encode(vars, reader_get_type_desc(rdr, 0))) ? tpl_getTpl(vars, "READERCTYPBIT") : tpl_getTpl(vars, "READERCTYPNOICON"));
 				}
-				else
-				{
-					tpl_addVar(vars, TPLADD, "READERNAME", tpl_getTpl(vars, "READERLABEL"));
-				}
+				tpl_addVar(vars, TPLADD, "READERNAME", tpl_getTpl(vars, readername_tpl));
 
 				char *value = mk_t_group(rdr->grp);
 				tpl_addVar(vars, TPLADD, "GROUPS", value);
