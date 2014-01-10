@@ -691,7 +691,7 @@ static char *send_oscam_config_radegast(struct templatevars *vars, struct uripar
 	tpl_printf(vars, TPLADD, "PORT", "%d", cfg.rad_port);
 	if(IP_ISSET(cfg.rad_srvip))
 		{ tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.rad_srvip)); }
-	tpl_addVar(vars, TPLADD, "USER", cfg.rad_usr);
+	tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, cfg.rad_usr));
 
 	char *value = mk_t_iprange(cfg.rad_allowed);
 	tpl_addVar(vars, TPLADD, "ALLOWED", value);
@@ -991,7 +991,7 @@ static char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparam
 		tpl_printf(vars, TPLAPPEND, "BOXTYPE", "<option%s>%s</option>\n", cfg.dvbapi_boxtype == i ? " selected" : "", boxdesc[i]);
 	}
 
-	tpl_addVar(vars, TPLADD, "USER", cfg.dvbapi_usr);
+	tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, cfg.dvbapi_usr));
 
 	//PMT Mode
 	tpl_printf(vars, TPLADD, "TMP", "PMTMODESELECTED%d", cfg.dvbapi_pmtmode);
@@ -1448,23 +1448,9 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "ENABLEDVALUE", (rdr->enable == 1) ? "1" : "0");
 	}
 
-	// Account
-	if(!apicall)
-	{
-		tpl_addVar(vars, TPLADD, "ACCOUNT", xml_encode(vars, rdr->r_usr));
-		tpl_addVar(vars, TPLADD, "PASSWORD", xml_encode(vars, rdr->r_pwd));
-		//TODO Remove USER PASS if they dont display
-		tpl_addVar(vars, TPLADD, "USER", rdr->r_usr);
-		tpl_addVar(vars, TPLADD, "PASS", rdr->r_pwd);
-	}
-	else
-	{
-		tpl_addVar(vars, TPLADD, "ACCOUNT", rdr->r_usr);
-		tpl_addVar(vars, TPLADD, "PASSWORD", rdr->r_pwd);
-		//TODO Remove USER PASS if they dont display
-		tpl_addVar(vars, TPLADD, "USER", rdr->r_usr);
-		tpl_addVar(vars, TPLADD, "PASS", rdr->r_pwd);
-	}
+	tpl_addVar(vars, TPLADD, "PASSWORD", xml_encode(vars, rdr->r_pwd));
+	tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, rdr->r_usr));
+	tpl_addVar(vars, TPLADD, "PASS", xml_encode(vars, rdr->r_pwd));
 
 	// Key Newcamd
 	for(i = 0; i < (int32_t)sizeof(rdr->ncd_key); i++)
@@ -2377,18 +2363,9 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 		if(write_userdb() != 0) { tpl_addMsg(vars, "Write Config failed!"); }
 	}
 
-	if(!apicall)
-	{
-		tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, account->usr));
-		tpl_addVar(vars, TPLADD, "PASSWORD", xml_encode(vars, account->pwd));
-		tpl_addVar(vars, TPLADD, "DESCRIPTION", xml_encode(vars, account->description));
-	}
-	else
-	{
-		tpl_addVar(vars, TPLADD, "USERNAME", account->usr);
-		tpl_addVar(vars, TPLADD, "PASSWORD", account->pwd);
-		tpl_addVar(vars, TPLADD, "DESCRIPTION", account->description);
-	}
+	tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, account->usr));
+	tpl_addVar(vars, TPLADD, "PASSWORD", xml_encode(vars, account->pwd));
+	tpl_addVar(vars, TPLADD, "DESCRIPTION", xml_encode(vars, account->description));
 
 	//Disabled
 	if(!apicall)

@@ -1,4 +1,4 @@
-        <user name="##USER##" status="##STATUS##" ip="##CLIENTIP##" protocol="##CLIENTPROTO##">
+        <user name="##USERNAME##" status="##STATUS##" ip="##CLIENTIP##" protocol="##CLIENTPROTO##">
             <stats>
                 <cwok>##CWOK##</cwok>
                 <cwnok>##CWNOK##</cwnok>
