@@ -2790,8 +2790,7 @@ void event_handler(int32_t UNUSED(signal))
 
 				if((time_t)pmt_info.st_mtime != demux[i].pmt_time)
 				{
-					cs_log("[DVBAPI] Demuxer #%d PMT file %s is updated!", i, dest);
-					//dvbapi_stop_descrambling(i);
+					dvbapi_stop_descrambling(i);
 				}
 
 				int32_t ret = close(pmt_fd);
