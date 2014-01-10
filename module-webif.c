@@ -4099,13 +4099,13 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								txt = "UNKNOWN";
 								break;
 							case CARD_NEED_INIT:
-								txt = "NEEDINIT";
+								txt = "NEEDINIT<BR>";
 								break;
 							case CARD_INSERTED:
 								if(cl->typ == 'p')
-									{ txt = "CONNECTED"; }
+									{ txt = "CONNECTED<BR>"; }
 								else
-									{ txt = "CARDOK"; }
+									{ txt = "CARDOK<BR>"; }
 								break;
 							case CARD_FAILURE:
 								txt = "ERROR";
