@@ -4153,12 +4153,12 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								}
 								tpl_addVar(vars, TPLADD, "ENTLABEL", urlencode(vars, cl->reader->label));
 								tpl_addVar(vars, TPLADD, "ENTVALUE", active_ent > 0 ? "" : "1");
-								tpl_printf(vars, TPLAPPEND, "CLIENTCON", tpl_getTpl(vars, "FOUNDENTITLEMENTS"));
+								tpl_addVar(vars, TPLAPPEND, "CLIENTCON", tpl_getTpl(vars, "FOUNDENTITLEMENTS"));
 							}
 							else
 							{
 								tpl_addVar(vars, TPLADD, "ENTLABEL",  urlencode(vars, cl->reader->label));
-								tpl_printf(vars, TPLAPPEND, "CLIENTCON", tpl_getTpl(vars, "NOENTITLEMENTS"));
+								tpl_addVar(vars, TPLAPPEND, "CLIENTCON", tpl_getTpl(vars, "NOENTITLEMENTS"));
 							}
 						}
 #ifdef MODULE_CCCAM
@@ -4241,7 +4241,10 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 				}
 				else if(shown)
 				{
-					tpl_addVar(vars, TPLAPPEND, "SERVERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+					if(cl->typ == 'm')
+					{
+						tpl_addVar(vars, TPLAPPEND, "SERVERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+					}
 				}
 			}
 			else
