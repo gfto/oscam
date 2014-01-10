@@ -4018,7 +4018,6 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							tpl_addVar(vars, TPLADD, "CLIENTTIMEONCHANNEL", sec2timeformat(vars, chsec));
 							if(cfg.http_showpicons)
 							{
-								char picon_name[32];
 								snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%04X", cl->last_caid, cl->last_srvid);
 								tpl_addVar(vars, TPLADD, "PICONNAME", picon_name);
 								if(picon_exists(picon_name))
