@@ -101,34 +101,43 @@ static struct pstat p_stat_old;
 #define MNU_CFG_RATELIMIT 26
 #define MNU_CFG_TOTAL_ITEMS 27 // sum of items above. Use it for "All inactive" in function calls too.
 
+static void set_status_info_var(struct templatevars *vars, char *varname, int no_data, char *fmt, double value) {
+	if (no_data)
+		tpl_addVar(vars, TPLADD, varname, "N/A");
+	else
+		tpl_printf(vars, TPLADD, varname, fmt, value);
+}
+
 /*
 * Creates vars Memory/CPU/OSCAM info in for status_page
 * if check_available == 0 N/A will be displayed
 */
 static void set_status_info(struct templatevars *vars, struct pstat stats){
+	set_status_info_var(vars, "MEM_CUR_TOTAL",  stats.check_available & (1 << 0), "%.2fMB" , (double)stats.mem_total/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_FREE",   stats.check_available & (1 << 1), "%.2fMB" , (double)stats.mem_free/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_USED",   stats.check_available & (1 << 2), "%.2fMB" , (double)stats.mem_used/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_BUFF",   stats.check_available & (1 << 3), "%.2fMB" , (double)stats.mem_buff/(1024.0*1024.0));
 
-	//create MEM_INFO
-	tpl_printf(vars, TPLADD, "MEM_CUR_TOTAL" , stats.check_available  & (1 << 0) ? "N/A" : "%.2fMB" , (double)stats.mem_total/(1024.0*1024.0));
-	tpl_printf(vars, TPLADD, "MEM_CUR_FREE" , stats.check_available  & (1 << 1) ? "N/A" : "%.2fMB" , (double)stats.mem_free/(1024.0*1024.0));
-	tpl_printf(vars, TPLADD, "MEM_CUR_USED" , stats.check_available  & (1 << 2) ? "N/A" : "%.2fMB" , (double)stats.mem_used/(1024.0*1024.0));
-	tpl_printf(vars, TPLADD, "MEM_CUR_BUFF" , stats.check_available  & (1 << 3) ? "N/A" : "%.2fMB" , (double)stats.mem_buff/(1024.0*1024.0));
+	set_status_info_var(vars, "CPU_LOAD_0",     stats.check_available & (1 << 3), "%.2f"   , stats.cpu_avg[0]);
+	set_status_info_var(vars, "CPU_LOAD_1",     stats.check_available & (1 << 4), "%.2f"   , stats.cpu_avg[1]);
+	set_status_info_var(vars, "CPU_LOAD_2",     stats.check_available & (1 << 5), "%.2f"   , stats.cpu_avg[2]);
 
-	//create CPU_INFO
-	tpl_printf(vars, TPLADD, "CPU_LOAD_0" , stats.check_available  & (1 << 3) ? "N/A" : "%.2f" , stats.cpu_avg[0]);
-	tpl_printf(vars, TPLADD, "CPU_LOAD_1" , stats.check_available  & (1 << 4) ? "N/A" : "%.2f" , stats.cpu_avg[1]);
-	tpl_printf(vars, TPLADD, "CPU_LOAD_2" , stats.check_available  & (1 << 5) ? "N/A" : "%.2f" , stats.cpu_avg[2]);
-
-	//create OSCAM_INFO
-	tpl_printf(vars, TPLADD, "OSCAM_VMSIZE" , stats.check_available  & (1 << 6) ? "N/A" : "%.2fMB" , (double)stats.vsize/(1024.0*1024.0));
-	tpl_printf(vars, TPLADD, "OSCAM_RSSSIZE" , stats.check_available  & (1 << 7) ? "N/A" : "%.2fMB" , (double)stats.rss/(1024.0*1024.0));
-	tpl_printf(vars, TPLADD, "OSCAM_CPU_USER" , stats.check_available  & (1 << 8) ? "N/A" : "%.2f%%" , stats.cpu_usage_user);
-	tpl_printf(vars, TPLADD, "OSCAM_CPU_SYS" , stats.check_available  & (1 << 9) ? "N/A" : "%.2f%%" , stats.cpu_usage_sys);
+	set_status_info_var(vars, "OSCAM_VMSIZE",   stats.check_available & (1 << 6), "%.2fMB" , (double)stats.vsize/(1024.0*1024.0));
+	set_status_info_var(vars, "OSCAM_RSSSIZE",  stats.check_available & (1 << 7), "%.2fMB" , (double)stats.rss/(1024.0*1024.0));
+	set_status_info_var(vars, "OSCAM_CPU_USER", stats.check_available & (1 << 8), "%.2f%%" , stats.cpu_usage_user);
+	set_status_info_var(vars, "OSCAM_CPU_SYS",  stats.check_available & (1 << 9), "%.2f%%" , stats.cpu_usage_sys);
 
 	double sum_cpu = stats.cpu_usage_sys + stats.cpu_usage_user;
-	tpl_printf(vars, TPLADD, "OSCAM_CPU_SUM" , stats.check_available  & (1 << 10) ? "N/A" : "%.2f%%" , sum_cpu);
+	set_status_info_var(vars, "OSCAM_CPU_SUM", stats.check_available & (1 << 10), "%.2f%%" , sum_cpu);
 
-	tpl_printf(vars, TPLADD, "OSCAM_REFRESH" , stats.check_available  & (1 << 11) ? "N/A" : "%02"PRId64":%02"PRId64":%02"PRId64"h",
-	stats.gone_refresh / 3600 , (stats.gone_refresh / 60) % 60 , stats.gone_refresh % 60);
+	if (stats.check_available & (1 << 11)) {
+		tpl_addVar(vars, TPLADD, "OSCAM_REFRESH" , "N/A");
+	} else {
+		tpl_printf(vars, TPLADD, "OSCAM_REFRESH" , "%02"PRId64":%02"PRId64":%02"PRId64"h",
+			stats.gone_refresh / 3600,
+			(stats.gone_refresh / 60) % 60,
+			stats.gone_refresh % 60);
+	}
 }
 
 static void refresh_oscam(enum refreshtypes refreshtype)
