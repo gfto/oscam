@@ -44,6 +44,8 @@ TABLE.configmenu {line-height:16px}
 TABLE.users {}
 TABLE.user_totals {}
 TABLE.ECM_totals {margin-top:10px}
+TABLE.footer tbody tr th,
+TABLE.footer tbody tr td.centered{background-color:#EEEEEE}
 
 /* 5. TABLE HEADER - TH
 ------------------------------------------------------------------------------------*/
@@ -169,7 +171,7 @@ DIV.warning {margin:42px 0 14px 0}
 DIV.logo {position:absolute;top:5px;left:5px}
 DIV.header {}
 DIV.groups {overflow:hidden;text-overflow:ellipsis;-o-text-overflow:ellipsis;white-space:nowrap;width:40px;text-align:center;cursor:pointer;cursor:default}
-
+DIV.newuser {display:none}
 /* 9. TEXTAREA
 ------------------------------------------------------------------------------------*/
 TEXTAREA.bt {font-size:12px}
@@ -184,6 +186,7 @@ SELECT {padding:2px}
 SELECT {padding:1px}
 input[type="submit"] {padding:2px 6px;}
 }
+input[type='checkbox'] {width:18px;height:18px;}
 
 /* 11. LINKS
 ------------------------------------------------------------------------------------*/
@@ -230,13 +233,11 @@ path.graph_grid {stroke:gray;stroke-opacity:0.5}
 
 /* 15. OTHER CLASS
 ------------------------------------------------------------------------------------*/
-DIV.footer {clear:both;border-top:1px solid #AAA;margin:20px auto;padding-top:10px}
+DIV.footer {clear:both;border-top:1px solid #AAA;margin:20px auto;padding-top:10px;background-color:#EEEEEE}
 DIV.footerwidth {max-width:1300px}
 DIV.info {max-width:1300px;margin:20px auto;border-top:1px solid #AAA}
 TABLE.invisible TD:first-child {padding-left:0}
-TABLE.statusmeminfo {width:100%;margin:10px auto}
-TABLE.statususerinfo {width:70%;margin:10px auto}
-TABLE.statuscacheexinfo {width:30%;margin:10px auto}
+TABLE.statusmeminfo,TABLE.statususerinfo,TABLE.statuscacheexinfo {width:60%;margin:10px auto;white-space: no-wrap;}
 TH.nameinfo {text-transform:uppercase;text-align:left;background-color:#999}
 .hidden {display:none}
 .visible {}
