@@ -37,7 +37,7 @@ LIB_DL = -ldl
 LIB_RT :=
 ifeq ($(uname_S),Linux)
 ifeq "$(shell ./config.sh --enabled CLOCKFIX)" "Y"
-	override LIB_RT := -lrt
+	LIB_RT := -lrt
 endif
 endif
 ifeq ($(uname_S),FreeBSD)

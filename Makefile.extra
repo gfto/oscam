@@ -279,6 +279,7 @@ static-ssl:
 
 android-arm:
 	$(MAKE) --no-print-directory \
+		LIB_RT= \
 		LIB_PTHREAD= \
 		CROSS=arm-linux-androideabi- \
 		$(MAKEFLAGS)

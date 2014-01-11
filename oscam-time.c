@@ -201,6 +201,10 @@ int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms)
 #  if __GLIBCVER < 204
 #     undef HAVE_pthread_condattr_setclock
 #  endif
+// android's libc not have pthread_condattr_setclock
+#  if __BIONIC__
+#     undef HAVE_pthread_condattr_setclock
+#  endif
 #endif
 
 void init_rightclock_cond(pthread_cond_t *cond)
