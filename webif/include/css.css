@@ -168,7 +168,6 @@ DIV.cccamentitlementcontrols {margin-top:14px}
 DIV.warning {margin:42px 0 14px 0}
 DIV.logo {position:absolute;top:5px;left:5px}
 DIV.header {}
-DIV.footer {border-top:1px solid #AAA;margin-top:20px;padding-top:10px}
 DIV.groups {overflow:hidden;text-overflow:ellipsis;-o-text-overflow:ellipsis;white-space:nowrap;width:40px;text-align:center;cursor:pointer;cursor:default}
 
 /* 9. TEXTAREA
@@ -228,3 +227,16 @@ rect.graph_bg {fill:white}
 text.graph_error {text-anchor:middle;fill:red}
 text.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}
 path.graph_grid {stroke:gray;stroke-opacity:0.5}
+
+/* 15. OTHER CLASS
+------------------------------------------------------------------------------------*/
+DIV.footer {clear:both;border-top:1px solid #AAA;margin:20px auto;padding-top:10px}
+DIV.footerwidth {max-width:1300px}
+DIV.info {max-width:1300px;margin:20px auto;border-top:1px solid #AAA}
+TABLE.invisible TD:first-child {padding-left:0}
+TABLE.statusmeminfo {width:100%;margin:10px auto}
+TABLE.statususerinfo {width:70%;margin:10px auto}
+TABLE.statuscacheexinfo {width:30%;margin:10px auto}
+TH.nameinfo {text-transform:uppercase;text-align:left;background-color:#999}
+.hidden {display:none}
+.visible {}

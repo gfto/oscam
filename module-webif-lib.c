@@ -10,6 +10,9 @@
 #include "oscam-string.h"
 #include "oscam-time.h"
 #include "oscam-net.h"
+#if defined(__linux__)
+	#include <sys/sysinfo.h>
+#endif
 
 extern int32_t ssl_active;
 extern pthread_key_t getkeepalive;
@@ -569,6 +572,118 @@ char *getParam(struct uriparams *params, char *name)
 	return "";
 }
 
+#if defined(__linux__)
+/*
+ * read /proc data into the passed struct pstat
+ * returns 0 on success, -1 on error
+*/
+int8_t get_stats_linux(const pid_t pid, struct pstat* result)
+{
+	// convert pid to string
+	char pid_s[20];
+	snprintf(pid_s, sizeof(pid_s), "%d", pid);
+	char stat_filepath[30] = "/proc/"; strncat(stat_filepath, pid_s,
+			sizeof(stat_filepath) - strlen(stat_filepath) -1);
+	strncat(stat_filepath, "/stat", sizeof(stat_filepath) -
+			strlen(stat_filepath) -1);
+
+	FILE *f_pstat = fopen(stat_filepath, "r");
+	if (f_pstat == NULL) {
+		cs_log("FOPEN ERROR %s",stat_filepath);
+		return -1;
+	}
+
+	FILE *f_stat = fopen("/proc/stat", "r");
+	if (!f_stat) {
+		cs_log("ERROR: Can't open /proc/stat for reading: %s", strerror(errno));
+		return -1;
+	}
+
+	// read values from /proc/pid/stat
+	uint64_t rss;
+	if (fscanf(f_pstat, "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %" SCNu32
+				"%" SCNu32 "%" SCNd32 "%" SCNd32 "%*d %*d %*d %*d %*u %" SCNu64 "%" SCNu64,
+				&result->utime_ticks,&result->stime_ticks,
+				&result->cutime_ticks,&result->cstime_ticks,&result->vsize,
+				&rss) == EOF)
+	{
+		fclose(f_pstat);
+		return -1;
+	}
+	fclose(f_pstat);
+	result->rss = rss * getpagesize();
+
+	// read+calc cpu total time from /proc/stat
+	uint32_t cpu_time[10];
+	if (fscanf(f_stat, "%*s %" SCNu32 "%" SCNu32 "%" SCNu32 "%" SCNu32 "%" SCNu32 "%" SCNu32 "%" SCNu32 "%" SCNu32 "%" SCNu32 "%" SCNu32,
+				&cpu_time[0], &cpu_time[1], &cpu_time[2], &cpu_time[3],
+				&cpu_time[4], &cpu_time[5], &cpu_time[6], &cpu_time[7],
+				&cpu_time[8], &cpu_time[9]) == EOF)
+	{
+		fclose(f_stat);
+		return -1;
+	}
+	fclose(f_stat);
+	int i;
+	result->cpu_total_time = 0;
+	for(i = 0; i < 10; i++) {
+		result->cpu_total_time += cpu_time[i];
+	}
+
+	// read cpu/meminfo from sysinfo()
+	struct sysinfo info;
+	float shiftfloat = (float)(1 << SI_LOAD_SHIFT);
+	if (!sysinfo(&info)) {
+		// cpu load
+		result->cpu_avg[0] = (float) info.loads[0] / shiftfloat;
+		result->cpu_avg[1] = (float) info.loads[1] / shiftfloat;
+		result->cpu_avg[2] = (float) info.loads[2] / shiftfloat;
+		// meminfo
+		result->mem_total = info.totalram  * info.mem_unit;
+		result->mem_free = info.freeram * info.mem_unit;
+		result->mem_used = (info.totalram * info.mem_unit) - (info.freeram * info.mem_unit);
+		result->mem_buff = info.bufferram * info.mem_unit;
+	}
+
+	// set timestamp for function call
+	cs_ftime(&result->time_started);
+
+	return 0;
+}
+
+/*
+* calculates the elapsed CPU usage between 2 measuring points. in percent and stores to cur_usage
+*/
+void calc_cpu_usage_pct(struct pstat* cur_usage, struct pstat* last_usage)
+{
+	const double total_time_diff = cur_usage->cpu_total_time - last_usage->cpu_total_time;
+
+	//time difference between cur_usage/last_usage when created / in sec
+	cur_usage->gone_refresh = comp_timeb(&cur_usage->time_started, &last_usage->time_started)/1000;
+
+	if(cur_usage->gone_refresh < 1){
+		//set to N/A since result may provide wrong results (/proc not updated)
+		cur_usage->check_available |= (1 << 8);
+		cur_usage->check_available |= (1 << 9);
+		cur_usage->check_available |= (1 << 10);
+	}
+	else{
+		int32_t cur_ticks = cur_usage->utime_ticks + cur_usage->cutime_ticks;
+		int32_t last_ticks = last_usage->utime_ticks + last_usage->cutime_ticks;
+		//reset flags if set bevore
+		cur_usage->check_available &= ~(1 << 8);
+		cur_usage->check_available &= ~(1 << 9);
+		cur_usage->check_available &= ~(1 << 10);
+
+		cur_usage->cpu_usage_user = 100.0 * abs(cur_ticks - last_ticks) / total_time_diff;
+
+		cur_ticks = cur_usage->stime_ticks + cur_usage->cstime_ticks;
+		last_ticks = last_usage->stime_ticks + last_usage->cstime_ticks;
+
+		cur_usage->cpu_usage_sys = 100.0 * abs(cur_ticks - last_ticks) / total_time_diff;
+	}
+}
+#endif
 
 #ifdef WITH_SSL
 SSL *cur_ssl(void)

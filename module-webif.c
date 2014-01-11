@@ -52,6 +52,10 @@ static pthread_t httpthread;
 static int32_t sock;
 enum refreshtypes { REFR_ACCOUNTS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REFR_SERVICES };
 
+//initialize structs for calculating cpu-usage depending on time between refresh of status_page
+static struct pstat p_stat_cur;
+static struct pstat p_stat_old;
+
 /* constants for menuactivating */
 #define MNU_STATUS 0
 #define MNU_CONFIG 1
@@ -96,6 +100,36 @@ enum refreshtypes { REFR_ACCOUNTS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REF
 #define MNU_CFG_WHITELIST 25
 #define MNU_CFG_RATELIMIT 26
 #define MNU_CFG_TOTAL_ITEMS 27 // sum of items above. Use it for "All inactive" in function calls too.
+
+/*
+* Creates vars Memory/CPU/OSCAM info in for status_page
+* if check_available == 0 N/A will be displayed
+*/
+static void set_status_info(struct templatevars *vars, struct pstat stats){
+
+	//create MEM_INFO
+	tpl_printf(vars, TPLADD, "MEM_CUR_TOTAL" , stats.check_available  & (1 << 0) ? "N/A" : "%.2fMB" , (double)stats.mem_total/(1024.0*1024.0));
+	tpl_printf(vars, TPLADD, "MEM_CUR_FREE" , stats.check_available  & (1 << 1) ? "N/A" : "%.2fMB" , (double)stats.mem_free/(1024.0*1024.0));
+	tpl_printf(vars, TPLADD, "MEM_CUR_USED" , stats.check_available  & (1 << 2) ? "N/A" : "%.2fMB" , (double)stats.mem_used/(1024.0*1024.0));
+	tpl_printf(vars, TPLADD, "MEM_CUR_BUFF" , stats.check_available  & (1 << 3) ? "N/A" : "%.2fMB" , (double)stats.mem_buff/(1024.0*1024.0));
+
+	//create CPU_INFO
+	tpl_printf(vars, TPLADD, "CPU_LOAD_0" , stats.check_available  & (1 << 3) ? "N/A" : "%.2f" , stats.cpu_avg[0]);
+	tpl_printf(vars, TPLADD, "CPU_LOAD_1" , stats.check_available  & (1 << 4) ? "N/A" : "%.2f" , stats.cpu_avg[1]);
+	tpl_printf(vars, TPLADD, "CPU_LOAD_2" , stats.check_available  & (1 << 5) ? "N/A" : "%.2f" , stats.cpu_avg[2]);
+
+	//create OSCAM_INFO
+	tpl_printf(vars, TPLADD, "OSCAM_VMSIZE" , stats.check_available  & (1 << 6) ? "N/A" : "%.2fMB" , (double)stats.vsize/(1024.0*1024.0));
+	tpl_printf(vars, TPLADD, "OSCAM_RSSSIZE" , stats.check_available  & (1 << 7) ? "N/A" : "%.2fMB" , (double)stats.rss/(1024.0*1024.0));
+	tpl_printf(vars, TPLADD, "OSCAM_CPU_USER" , stats.check_available  & (1 << 8) ? "N/A" : "%.2f%%" , stats.cpu_usage_user);
+	tpl_printf(vars, TPLADD, "OSCAM_CPU_SYS" , stats.check_available  & (1 << 9) ? "N/A" : "%.2f%%" , stats.cpu_usage_sys);
+
+	double sum_cpu = stats.cpu_usage_sys + stats.cpu_usage_user;
+	tpl_printf(vars, TPLADD, "OSCAM_CPU_SUM" , stats.check_available  & (1 << 10) ? "N/A" : "%.2f%%" , sum_cpu);
+
+	tpl_printf(vars, TPLADD, "OSCAM_REFRESH" , stats.check_available  & (1 << 11) ? "N/A" : "%02"PRId64":%02"PRId64":%02"PRId64"h",
+	stats.gone_refresh / 3600 , (stats.gone_refresh / 60) % 60 , stats.gone_refresh % 60);
+}
 
 static void refresh_oscam(enum refreshtypes refreshtype)
 {
@@ -863,6 +897,9 @@ static char *send_oscam_config_webif(struct templatevars *vars, struct uriparams
 	if(cfg.http_hide_idle_clients > 0) { tpl_addVar(vars, TPLADD, "CHECKED", "checked"); }
 	tpl_addVar(vars, TPLADD, "HTTPHIDETYPE", cfg.http_hide_type);
 	if(cfg.http_showpicons > 0) { tpl_addVar(vars, TPLADD, "SHOWPICONSCHECKED", "checked"); }
+	if(cfg.http_showmeminfo > 0) { tpl_addVar(vars, TPLADD, "SHOWMEMINFOCHECKED", "checked"); }
+	if(cfg.http_showuserinfo > 0) { tpl_addVar(vars, TPLADD, "SHOWUSERINFOCHECKED", "checked"); }
+	if(cfg.http_showcacheexinfo > 0) { tpl_addVar(vars, TPLADD, "SHOWCACHEEXINFOCHECKED", "checked"); }
 
 	char *value = mk_t_iprange(cfg.http_allowed);
 	tpl_addVar(vars, TPLADD, "HTTPALLOW", value);
@@ -3662,6 +3699,10 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 #endif
 	}
 
+	if(strcmp(getParam(params, "action"), "resetserverstats") == 0)
+	{
+		clear_system_stats();
+	}
 	if(strcmp(getParam(params, "action"), "restart") == 0)
 	{
 		struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
@@ -4391,6 +4432,61 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	tpl_printf(vars, TPLADD, "REL_CWTOUT", "%.2f", first_client->cwtout * 100 / ecmsum);
 	tpl_printf(vars, TPLADD, "REL_CWCACHE", "%.2f", first_client->cwcache * 100 / ecmsum);
 	tpl_printf(vars, TPLADD, "REL_CWTUN", "%.2f", first_client->cwtun * 100 / ecmsum);
+
+	//Memory-CPU Info for linux based systems
+#if defined(__linux__)
+
+	//copy struct to p_stat_old for cpu_usage calculation
+	p_stat_old = p_stat_cur;
+
+	//get actual stats
+	if(!get_stats_linux(getpid(),&p_stat_cur)){
+		if(p_stat_old.cpu_total_time != 0){
+			calc_cpu_usage_pct(&p_stat_cur, &p_stat_old);
+		}
+		//update template with given values
+		set_status_info(vars, p_stat_cur);
+	}
+	else{
+		//something went wrong, so fill with "N/A"
+		p_stat_cur.check_available = 65535;
+		set_status_info(vars, p_stat_cur);
+	}
+
+#else // if not linux, fill with "N/A" but probably in future gets filled also for other platforms
+	p_stat_cur.check_available = 65535;
+	set_status_info(vars, p_stat_cur);
+#endif
+
+	if(cfg.http_showmeminfo == 1 || cfg.http_showuserinfo == 1 || (cfg.http_showcacheexinfo == 1 && config_enabled(CS_CACHEEX))){
+		tpl_addVar(vars, TPLADD, "FOOTER", "footerwidth");
+		tpl_addVar(vars, TPLADD, "DISPLAYINFO", "visible");
+	}
+	else{
+		tpl_addVar(vars, TPLADD, "DISPLAYINFO", "hidden");
+	}
+
+	if(cfg.http_showmeminfo == 1){
+		tpl_addVar(vars, TPLADD, "DISPLAYSYSINFO", "visible");
+	}
+	else{
+		tpl_addVar(vars, TPLADD, "DISPLAYSYSINFO", "hidden");
+	}
+
+	if(cfg.http_showuserinfo == 1){
+		tpl_addVar(vars, TPLADD, "DISPLAYUSERINFO", "visible");
+	}
+	else{
+		tpl_addVar(vars, TPLADD, "DISPLAYUSERINFO", "hidden");
+	}
+
+	if(cfg.http_showcacheexinfo == 1 && config_enabled(CS_CACHEEX)){
+		tpl_addVar(vars, TPLADD, "DISPLAYCACHEEXINFO", "visible");
+		tpl_addVar(vars, TPLADDONCE, "CACHEEX_INFO", tpl_getTpl(vars, "CACHEEXINFOBIT"));
+	}
+
+	tpl_addVar(vars, TPLADDONCE, "SYSTEM_INFO", tpl_getTpl(vars, "SYSTEMINFOBIT"));
+	tpl_addVar(vars, TPLADDONCE, "USER_INFO", tpl_getTpl(vars, "USERINFOBIT"));
 
 #ifdef WITH_DEBUG
 	// Debuglevel Selector

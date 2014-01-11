@@ -35,6 +35,8 @@ SREADERICON                   status/status_readericon.html
 SREADER                       status/status_reader.html
 SUSERICON                     status/status_usericon.html
 SUSER                         status/status_user.html
+SYSTEMINFOBIT                 status/status_systeminfo.html
+USERINFOBIT                   status/status_userinfo.html
 APISTATUS                     api.xml/status.xml
 JSONSTATUS                    api.json/status.json
 CLIENTSTATUSBIT               status/status_clientstatusbit.html
@@ -191,6 +193,8 @@ CACHEEXTABLEROW               cacheex/cacheex_tablerow.html                     
 CACHEEXMENUITEM               include/menu_cacheexmenuitem.html                           CS_CACHEEX
 ICARRR                        images/ICARRR.gif                                           CS_CACHEEX
 ICARRL                        images/ICARRL.gif                                           CS_CACHEEX
+CACHEEXINFOBIT                status/status_cacheexinfo.html                              CS_CACHEEX
+SHOWCACHEEXINFO               config/webif_showcacheexinfo.html                           CS_CACHEEX
 PREAUTOCONF                   ghttp/pre_autoconf.html                                     MODULE_GHTTP
 AUTOCONF                      ghttp/autoconf.html                                         MODULE_GHTTP
 CONFIGCWCYCLE                 config/cache_cwcycle.html                                   CW_CYCLE_CHECK

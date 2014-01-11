@@ -35,6 +35,17 @@
 			<TR><TD>##TPLHELPPREFIX##conf#aulow##TPLHELPSUFFIX##Au low:</A></TD><TD><input name="aulow" type="text" size="5" maxlength="5" value="##AULOW##"> min</TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#hideclient_to##TPLHELPSUFFIX##Hide client to:</A></TD><TD><input name="hideclient_to" type="text" size="5" maxlength="5" value="##HIDECLIENTTO##"> s</TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httpsavefullcfg##TPLHELPSUFFIX##Http save full config:</A></TD><TD><SELECT NAME="httpsavefullcfg"><OPTION VALUE="0">NO</OPTION><OPTION VALUE="1" ##HTTPSAVEFULLSELECT##>YES</OPTION></SELECT></TD></TR>
+			<TR><TD>##TPLHELPPREFIX##conf#httpshowstats##TPLHELPSUFFIX##Show info in STATUS:</A></TD>
+				<TD>
+					<TABLE class="invisible">
+						<TR>
+							<TD><input name="httpshowmeminfo" type="hidden" value="0"><input name="httpshowmeminfo" type="checkbox" value="1" ##SHOWMEMINFOCHECKED##> Memory/CPU</TD>
+							<TD><input name="httpshowuserinfo" type="hidden" value="0"><input name="httpshowuserinfo" type="checkbox" value="1" ##SHOWUSERINFOCHECKED##> Users info</TD>
+##TPLSHOWCACHEEXINFO##
+						</TR>
+					</TABLE>
+				</TD>
+			</TR>
 ##TPLHTTPFORCESSLV3##
 			<TR><TD COLSPAN="2" ALIGN="right"><input type="submit" value="Save" title="Save settings" ##BTNDISABLED##></TD></TR>
 		</TABLE>
