@@ -175,10 +175,8 @@ int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms)
 	return comp_timeb(tb, &tb_now);
 }
 
-#if defined(__UCLIBC__) && defined(__UCLIBC_MAJOR__) && defined(__UCLIBC_MINOR__)
-#  if defined(__UCLIBC_SUBLEVEL__)
-#    define __UCLIBC_VER (__UCLIBC_MAJOR__ * 10000 + __UCLIBC_MINOR__ * 100 + __UCLIBC_SUBLEVEL__)
-#  endif
+#if defined(__UCLIBC__)
+#  define __UCLIBC_VER (__UCLIBC_MAJOR__ * 10000 + __UCLIBC_MINOR__ * 100 + __UCLIBC_SUBLEVEL__)
 #else
 #  define __UCLIBC_VER 999999
 #endif
@@ -190,8 +188,8 @@ int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms)
 #endif
 
 #if defined(HAVE_pthread_condattr_setclock)
-// UCLIBC 0.9.28 does not have pthread_condattr_setclock
-#  if __UCLIBC_VER < 929
+// UCLIBC 0.9.30 does not have pthread_condattr_setclock
+#  if __UCLIBC_VER < 931
 #     undef HAVE_pthread_condattr_setclock
 #  endif
 #endif
