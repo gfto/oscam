@@ -52,10 +52,6 @@ static pthread_t httpthread;
 static int32_t sock;
 enum refreshtypes { REFR_ACCOUNTS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REFR_SERVICES };
 
-//initialize structs for calculating cpu-usage depending on time between refresh of status_page
-static struct pstat p_stat_cur;
-static struct pstat p_stat_old;
-
 /* constants for menuactivating */
 #define MNU_STATUS 0
 #define MNU_CONFIG 1
@@ -4444,6 +4440,10 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 
 	//Memory-CPU Info for linux based systems
 #if defined(__linux__)
+
+	//initialize structs for calculating cpu-usage depending on time between refresh of status_page
+	static struct pstat p_stat_cur;
+	static struct pstat p_stat_old;
 
 	//copy struct to p_stat_old for cpu_usage calculation
 	p_stat_old = p_stat_cur;
