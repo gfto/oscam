@@ -4234,7 +4234,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 										tpl_printf(vars, TPLADD, "CCCRES1", "%d", rcc->num_reshare1);
 										tpl_printf(vars, TPLADD, "CCCRES2", "%d", rcc->num_reshare2);
 										tpl_printf(vars, TPLADD, "CCCRESX", "%d", rcc->num_resharex);
-										tpl_printf(vars, TPLADD, "TMPSPAN", tpl_getTpl(vars, "CCENTITLEMENTS"));
+										tpl_addVar(vars, TPLADD, "TMPSPAN", tpl_getTpl(vars, "CCENTITLEMENTS"));
 										tpl_addVar(vars, TPLADD, "CCCLABEL", urlencode(vars, cl->reader->label));
 										tpl_addVar(vars, TPLADD, "CCCRESHARE", rcc->num_reshare0 > 0 ? "1" : "");
 										tpl_addVar(vars, TPLADD, "CCCTMP", tpl_getVar(vars, "TMP"));
