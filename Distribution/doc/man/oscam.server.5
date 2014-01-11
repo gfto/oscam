@@ -106,9 +106,9 @@ example: 1234:123456:1234:2345:3456\fI::\fR00 01 02 03 04 05 06 07 08 09 0A 0B 0
 example: 1234:123456:1234:2345:3456\fI:7890:\fR00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
 .RE
 .PP
-\fBdetect\fP = \fBCD\fP|\fBDSR\fP|\fBCTS\fP|\fBRING\fP|\fBNONE\fP|\fBgpio[1-7]\fP
+\fBdetect\fP = [\fB!\fP]\fBCD\fP|[\fB!\fP]\fBDSR\fP|[\fB!\fP]\fBCTS\fP|[\fB!\fP]\fBRING\fP|[\fB!\fP]\fBNONE\fP|[\fB!\fP]\fBgpio[1-7]\fP
 .RS 3n
-status detect of card (NONE = no detection), default:CD
+status detect of card, NONE = no detection, ! = inverse, default:CD
 .RE
 .PP
 \fBcardmhz\fP = \fBmhz\fP

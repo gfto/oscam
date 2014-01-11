@@ -131,9 +131,9 @@ example: 1234:123456:1234:2345:3456<I>:7890:</I>00 01 02 03 04 05 06 07 08 09 0A
 
 <P>
 
-<B>detect</B> = <B>CD</B>|<B>DSR</B>|<B>CTS</B>|<B>RING</B>|<B>NONE</B>|<B>gpio[1-7]</B>
+<B>detect</B> = [<B>!</B>]<B>CD</B>|[<B>!</B>]<B>DSR</B>|[<B>!</B>]<B>CTS</B>|[<B>!</B>]<B>RING</B>|[<B>!</B>]<B>NONE</B>|[<B>!</B>]<B>gpio[1-7]</B>
 <DL COMPACT><DT><DD>
-status detect of card (NONE = no detection), default:CD
+status detect of card, NONE = no detection, ! = inverse, default:CD
 </DL>
 
 <P>
