@@ -516,19 +516,22 @@ bool stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t mode, in
 	int32_t ErrorCode = 0;
 
 	if(dev_list[n].SessionHandle == 0) {
-		cs_log("[DVBAPI] Demuxer #%d enable pid %04x on PTI#%d: %s Failed! (no session handle)",demux_id, pid, n, dev_list[n].name);
-		return false;
+		cs_log("[DVBAPI] Demuxer #%d %s pid %04x on PTI#%d: %s Failed! (no session handle)",demux_id,
+			(mode == ASSOCIATE ? "enable" : "disable"), pid, n, dev_list[n].name);
+		return (mode == ASSOCIATE ? false : true); // return false on enable, true on disable
 	}
 
 	Slot = oscam_stapi_PidQuery(dev_list[n].name, pid);
 	if(!Slot) {
-		cs_log("[DVBAPI] Demuxer #%d enable pid %04x on PTI#%d: %s Failed! (no slots free)",demux_id, pid, n, dev_list[n].name);
-		return false;
+		cs_log("[DVBAPI] Demuxer #%d %s pid %04x on PTI#%d: %s Failed! (no slot assigned)",demux_id,
+			(mode == ASSOCIATE ? "enable" : "disable"), pid, n, dev_list[n].name);
+		return (mode == ASSOCIATE ? false : true); // return false on enable, true on disable
 	}
 
 	if(demux[demux_id].DescramblerHandle[n] == 0) {
-		cs_log("[DVBAPI] Demuxer #%d enable pid %04x on PTI#%d: %s Failed! (no descramblerhandle)",demux_id, pid, n, dev_list[n].name);
-		return false;
+		cs_log("[DVBAPI] Demuxer #%d %s pid %04x on PTI#%d: %s Failed! (no descramblerhandle)",demux_id,
+			(mode == ASSOCIATE ? "enable" : "disable"), pid, n, dev_list[n].name);
+		return (mode == ASSOCIATE ? false : true); // return false on enable, true on disable
 	}
 
 	if(mode == ASSOCIATE)
@@ -656,14 +659,20 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t idx, uint16_t pid, bool enable, 
 			}
 
 			if(demux[demux_id].DescramblerHandle[n] == 0) { continue; }
-			if(!update_streampid_list(n, pid, idx)) { stapi_DescramblerAssociate(demux_id, pid, ASSOCIATE, n); } // add only new pid!
+			if(!update_streampid_list(n, pid, idx)) { // add only new pid! 
+				if(!stapi_DescramblerAssociate(demux_id, pid, ASSOCIATE, n)){ // try to add pid
+					remove_streampid_from_list(n, pid, idx); // adding failed, remove from list!
+				}
+			}
 			
 		}
 		if(!enable){
 			if(demux[demux_id].DescramblerHandle[n] == 0) { continue; }
 			if(remove_streampid_from_list(n, pid, idx)){ // is pid active and needs removing?
-				stapi_DescramblerAssociate(demux_id, pid, DISASSOCIATE, n); // remove this pid
-				if(!is_ca_used(n)){ // last streampid on this descrambler?
+				if(!stapi_DescramblerAssociate(demux_id, pid, DISASSOCIATE, n)){ // try remove this pid
+					update_streampid_list(n, pid, idx); // removing failed, add to list again
+				}
+				else(!is_ca_used(n)){ // remove ok, is this last streampid on this descrambler?
 					cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d stop descrambling PTI#%d: %s", demux_id, n, dev_list[n].name);
 					stapi_startdescrambler(demux_id, n, DE_STOP);
 					memset(demux[demux_id].slot_assc[n], 0, sizeof(demux[demux_id].slot_assc[n]));
