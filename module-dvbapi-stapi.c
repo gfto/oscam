@@ -672,7 +672,7 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t idx, uint16_t pid, bool enable, 
 				if(!stapi_DescramblerAssociate(demux_id, pid, DISASSOCIATE, n)){ // try remove this pid
 					update_streampid_list(n, pid, idx); // removing failed, add to list again
 				}
-				else(!is_ca_used(n)){ // remove ok, is this last streampid on this descrambler?
+				else if(!is_ca_used(n)){ // remove ok, is this last streampid on this descrambler?
 					cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d stop descrambling PTI#%d: %s", demux_id, n, dev_list[n].name);
 					stapi_startdescrambler(demux_id, n, DE_STOP);
 					memset(demux[demux_id].slot_assc[n], 0, sizeof(demux[demux_id].slot_assc[n]));
