@@ -4295,6 +4295,10 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					{
 						tpl_addVar(vars, TPLAPPEND, "SERVERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
 					}
+					if(cl->typ == 's')
+					{
+						tpl_printf(vars, TPLADD, "RUNAS", "Run as: %s", xml_encode(vars, usr));
+					}
 				}
 			}
 			else
