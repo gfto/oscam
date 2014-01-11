@@ -636,6 +636,7 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t idx, uint16_t pid, bool enable, 
 		return -1;
 	}
 
+	bool actionneeded = false;
 	for(n = 0; n < PTINUM; n++)
 	{
 		if(enable){
@@ -655,12 +656,13 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t idx, uint16_t pid, bool enable, 
 			}
 
 			if(demux[demux_id].DescramblerHandle[n] == 0) { continue; }
-			if(stapi_DescramblerAssociate(demux_id, pid, ASSOCIATE, n)) { update_streampid_list(n, pid, idx); } // on success add pid!
+			if(!update_streampid_list(n, pid, idx)) { stapi_DescramblerAssociate(demux_id, pid, ASSOCIATE, n); } // add only new pid!
+			
 		}
 		if(!enable){
 			if(demux[demux_id].DescramblerHandle[n] == 0) { continue; }
-			if(stapi_DescramblerAssociate(demux_id, pid, DISASSOCIATE, n)){ // remove of pid succeeded?
-				remove_streampid_from_list(n, pid, idx); // remove streampid from list
+			if(remove_streampid_from_list(n, pid, idx)){ // is pid active and needs removing?
+				stapi_DescramblerAssociate(demux_id, pid, DISASSOCIATE, n); // remove this pid
 				if(!is_ca_used(n)){ // last streampid on this descrambler?
 					cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d stop descrambling PTI#%d: %s", demux_id, n, dev_list[n].name);
 					stapi_startdescrambler(demux_id, n, DE_STOP);

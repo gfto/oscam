@@ -1179,7 +1179,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 	{
 #ifdef WITH_STAPI
 	case STAPI:
-		idx = (enable ? 1 : -1); // use indexer 1 for start, -1 to stop descrambling! (stapi doesnt use indexers!)
+		if (idx != -1) idx = 1; // use always indexer 1 for start or stop exeception = -1 disable all (stapi doesnt use indexers!)
 		stapi_set_pid(demux_id, idx, demux[demux_id].STREAMpids[num], enable, demux[demux_id].pmt_file); 
 		break;
 #endif
