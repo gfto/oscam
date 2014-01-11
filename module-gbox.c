@@ -103,7 +103,6 @@ struct gbox_data
 	uint16_t exp_seq; // hello seq
 	struct gbox_peer peer;
 	CS_MUTEX_LOCK lock;
-	uchar buf[RECEIVE_BUFFER_SIZE];
 	pthread_mutex_t hello_expire_mut;
 	pthread_cond_t hello_expire_cond;
 	LLIST *local_cards;
@@ -117,7 +116,7 @@ static void    gbox_expire_hello(struct s_client *cli);
 static void    gbox_local_cards(struct s_client *cli);
 static void    gbox_init_ecm_request_ext(struct gbox_ecm_request_ext *ere); 	
 static int32_t gbox_client_init(struct s_client *cli);
-static int32_t gbox_recv2(struct s_client *cli, uchar *b, int32_t l);
+static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l);
 static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, uchar *data, int32_t UNUSED(n));
 static int32_t gbox_checkcode_recv(struct s_client *cli, uchar *checkcode);
 static int32_t gbox_decode_cmd(uchar *buf);
@@ -364,7 +363,7 @@ static void *gbox_server(struct s_client *cli, uchar *b, int32_t l)
 	if(l > 0)
 	{
 		cs_log("gbox:  gbox_server %s/%d", cli->reader->label, cli->port);
-		gbox_recv2(cli, b, l);
+		gbox_check_header(cli, b, l);
 	}
 	return 0;
 }
@@ -417,10 +416,9 @@ static void gbox_server_init(struct s_client *cl)
 	return;
 }
 
-int32_t gbox_cmd_hello(struct s_client *cli, int32_t n)
+int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 {
 	struct gbox_data *gbox = cli->gbox;
-	uint8_t *data = gbox->buf;
 	int32_t i;
 	int32_t ncards_in_msg = 0;
 	int32_t payload_len = n;
@@ -591,10 +589,9 @@ int32_t gbox_cmd_hello(struct s_client *cli, int32_t n)
 	return 0;
 }
 
-int32_t gbox_cmd_switch(struct s_client *cli, int32_t n)
+int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 {
 	struct gbox_data *gbox = cli->gbox;
-	uchar *data = gbox->buf;
 	int32_t n1 = 0, rc1 = 0, i1, idx, diffcheck = 0;
 	uchar dcw[16];
 	struct s_client *cl;
@@ -614,7 +611,7 @@ int32_t gbox_cmd_switch(struct s_client *cli, int32_t n)
 		break;
 	case MSG_HELLO1:
 	case MSG_HELLO:
-		if(gbox_cmd_hello(cli, n) < 0)
+		if(gbox_cmd_hello(cli, data, n) < 0)
 			{ return -1; }
 		pthread_mutex_lock(&gbox->hello_expire_mut);
 		pthread_cond_signal(&gbox->hello_expire_cond);
@@ -729,15 +726,12 @@ int32_t gbox_cmd_switch(struct s_client *cli, int32_t n)
 	return 0;
 }
 
-static int32_t gbox_recv2(struct s_client *cli, uchar *b, int32_t l)
+static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 {
 	struct gbox_data *gbox = cli->gbox;
 	
-	if(!gbox || l > RECEIVE_BUFFER_SIZE)
+	if(!gbox)
 		{ return -1; }
-
-	uchar *data = gbox->buf;
-	memcpy(data , b, l);
 
 	cs_writelock(&gbox->lock);
 
@@ -786,7 +780,7 @@ static int32_t gbox_recv2(struct s_client *cli, uchar *b, int32_t l)
 		return -1;
 		//continue; // next client
 	}
-	if(gbox_cmd_switch(cli, n) < 0)
+	if(gbox_cmd_switch(cli, data, n) < 0)
 		{ return -1; }
 
 	cs_writeunlock(&gbox->lock);
@@ -1103,22 +1097,21 @@ static void gbox_send_boxinfo(struct s_client *cli)
 
 static int32_t gbox_recv(struct s_client *cli, uchar *buf, int32_t l)
 {
-
-	uchar *data;
+	uchar data[RECEIVE_BUFFER_SIZE];
 	int32_t n = l;
 
-	if(!cli->udp_fd) { return -1; }
+	if(!cli->udp_fd || n > RECEIVE_BUFFER_SIZE) { return -1; }
 	if(cli->is_udp && cli->typ == 'c')
 	{
-		data = buf;
-		n = recv_from_udpipe(data);
+		n = recv_from_udpipe(buf);
+		memcpy(&data[0], buf, n);
 		struct s_client *cl = switch_client_proxy(cli);
 
 		//clients may timeout - attach to peer's gbox/reader
 		cli->gbox = cl->gbox; //point to the same gbox as proxy
 		cli->reader = cl->reader; //point to the same reader as proxy
 
-		gbox_recv2(cl, data, n);
+		gbox_check_header(cl, &data[0], n);
 
 		//clients may timeout - dettach from peer's gbox/reader
 		cli->gbox = NULL;
