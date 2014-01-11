@@ -7,6 +7,7 @@
 #if defined(__linux__)
 #define HAVE_DVBAPI 1
 #endif
+#define CLOCKFIX 1
 #define IRDETO_GUESSING 1
 #define CS_ANTICASC 1
 #define WITH_DEBUG 1

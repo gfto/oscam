@@ -291,6 +291,7 @@ static void parse_cmdline_params(int argc, char **argv)
 
 static void write_versionfile(bool use_stdout)
 {
+	struct timeb now;
 	FILE *fp = stdout;
 	if(!use_stdout)
 	{
@@ -302,10 +303,9 @@ static void write_versionfile(bool use_stdout)
 			return;
 		}
 		struct tm st;
-		time_t now = time(NULL);
-		localtime_r(&now, &st);
-
-		fprintf(fp, "Unix starttime: %ld\n", (long)now);
+		time_t walltime = cs_walltime(&now);
+		localtime_r(&walltime, &st);
+		fprintf(fp, "Unix starttime: %ld\n", (long)walltime);
 		fprintf(fp, "Starttime:      %02d.%02d.%04d %02d:%02d:%02d\n",
 				st.tm_mday, st.tm_mon + 1, st.tm_year + 1900,
 				st.tm_hour, st.tm_min, st.tm_sec);
@@ -335,6 +335,13 @@ static void write_versionfile(bool use_stdout)
 	write_conf(LCDSUPPORT, "LCD support");
 	write_conf(LEDSUPPORT, "LED support");
 	write_conf(IPV6SUPPORT, "IPv6 support");
+	int8_t n = cs_getclocktype(&now);
+	if (n==2){
+		write_conf(CLOCKFIX, "Clockfix using clockmonotonic");
+	}
+	else {
+		write_conf(CLOCKFIX, "Clockfix using realtimeclock");
+	}
 	write_conf(CS_CACHEEX, "Cache exchange support");
 
 	fprintf(fp, "\n");
@@ -1018,7 +1025,7 @@ static void *reader_check(void)
 	struct s_reader *rdr;
 	set_thread_name(__func__);
 	pthread_mutex_init(&reader_check_sleep_cond_mutex, NULL);
-	pthread_cond_init(&reader_check_sleep_cond, NULL);
+	init_rightclock_cond(&reader_check_sleep_cond); // init with right clock
 	while(!exit_oscam)
 	{
 		for(cl = first_client->next; cl ; cl = cl->next)

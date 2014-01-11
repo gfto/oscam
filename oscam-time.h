@@ -12,4 +12,9 @@ void add_ms_to_timespec(struct timespec *timeout, int32_t msec);
 int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms);
 void sleepms_on_cond(pthread_cond_t *cond, pthread_mutex_t *mutex, uint32_t msec);
 
+time_t cs_walltime(struct timeb *tp);
+void cs_gettime(struct timespec *ts);
+uint8_t cs_getclocktype(struct timeb *now);
+void init_rightclock_cond(pthread_cond_t *cond);
+
 #endif

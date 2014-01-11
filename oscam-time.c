@@ -1,6 +1,8 @@
 #include "globals.h"
 #include "oscam-time.h"
 
+uint8_t used_clock = 0;  // 1 = macintosh clock = realtimeclock? 2 = clockmonotonic, 3= realtimeclock
+
 int32_t comp_timeb(struct timeb *tpa, struct timeb *tpb)
 {
 	return ((tpa->time - tpb->time) * 1000) + (tpa->millitm - tpb->millitm);
@@ -173,6 +175,23 @@ int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms)
 	return comp_timeb(tb, &tb_now);
 }
 
+void init_rightclock_cond(pthread_cond_t *cond)
+{
+	pthread_condattr_t attr;
+	pthread_condattr_init(&attr); // init condattr with defaults
+
+#if defined (__USE_XOPEN2K) && defined (CLOCKFIX) && defined (CLOCK_MONOTONIC)
+	int8_t clocktype = cs_getclocktype(NULL);
+	if (clocktype == 2){ // clockmonotonic
+		pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+	}
+	else { // all others
+		pthread_condattr_setclock(&attr, CLOCK_REALTIME);
+	}
+#endif
+	pthread_cond_init(cond, &attr); // init thread with right clock assigned
+}
+
 void sleepms_on_cond(pthread_cond_t *cond, pthread_mutex_t *mutex, uint32_t msec)
 {
 	struct timespec ts;
@@ -180,4 +199,67 @@ void sleepms_on_cond(pthread_cond_t *cond, pthread_mutex_t *mutex, uint32_t msec
 	pthread_mutex_lock(mutex);
 	pthread_cond_timedwait(cond, mutex, &ts); // sleep on sleep_cond
 	pthread_mutex_unlock(mutex);
+}
+
+uint8_t cs_getclocktype(struct timeb *UNUSED(now)) {
+	if (used_clock == 0) { // first to check in.... could happen!
+		struct timespec ts;
+		cs_gettime(&ts); // fetch time
+	}
+	return used_clock;
+}
+
+time_t cs_walltime(struct timeb *tp)
+{
+	if (used_clock != 2) { // we dont need to fetch time again and calculate if oscam is already using realtimeclock!
+		return tp->time;
+	}
+
+	/*/ Below is in case of clockmonotonic /*/
+
+	struct timespec ts;
+	struct timeval tv;
+
+	cs_gettime(&ts);
+	gettimeofday(&tv, NULL);
+	int64_t skew = tv.tv_sec - ts.tv_sec;
+	return(tp->time + skew);
+}
+
+#ifdef __MACH__
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
+
+void cs_gettime(struct timespec *ts)
+{
+#if !defined (__USE_XOPEN2K) || !defined (CLOCKFIX) || (!defined (CLOCK_MONOTONIC) && !defined (__MACH__))
+	struct timeval tv;
+    gettimeofday(&tv, NULL);
+	ts->tv_sec = tv.tv_sec;
+	ts->tv_nsec = tv.tv_usec * 1000;
+	used_clock = 3;
+	return;
+#elif defined (__MACH__)
+// OS X does not have clock_gettime, use clock_get_time
+	clock_serv_t cclock;
+	mach_timespec_t mts;
+	host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+	clock_get_time(cclock, &mts);
+	mach_port_deallocate(mach_task_self(), cclock);
+	ts->tv_sec = mts.tv_sec;
+	ts->tv_nsec = mts.tv_nsec;
+	used_clock = 1;
+#else
+	if (used_clock == 3){
+		clock_gettime(CLOCK_REALTIME, ts);
+		return;
+	}
+	int32_t	ret = clock_gettime(CLOCK_MONOTONIC, ts);
+	used_clock = 2;
+	if ((ret < 0 && errno == EINVAL)){ // Error fetching time from this source (Shouldn't happen on modern Linux)
+		clock_gettime(CLOCK_REALTIME, ts);
+		used_clock = 3;
+	}
+#endif
 }
