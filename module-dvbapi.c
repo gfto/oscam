@@ -3019,7 +3019,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		memcpy(er->ecm, buffer, er->ecmlen);
 
 		chid = get_subid(er); // fetch chid or fake chid
-		er->chid = (chid != 0 ? chid : 0x10000); // if not zero apply, otherwise use no chid value 0x10000
+		er->chid = chid;
 
 		if(curpid->CAID >> 8 == 0x06)  //irdeto cas
 		{
