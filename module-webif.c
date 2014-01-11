@@ -354,8 +354,7 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	if(cfg.disablelog == 1) { tpl_addVar(vars, TPLADD, "DISABLELOGCHECKED", "selected"); }
 	tpl_printf(vars, TPLADD, "MAXLOGSIZE", "%d", cfg.max_log_size);
 
-	if(cfg.logduplicatelines)
-		{ tpl_addVar(vars, TPLADD, "LOGDUPSCHECKED", "selected"); }
+	tpl_addVar(vars, TPLADD, "LOGDUPSCHECKED", (cfg.logduplicatelines == 1) ? "checked" : "");
 
 	if(cfg.cwlogdir != NULL) { tpl_addVar(vars, TPLADD, "CWLOGDIR", cfg.cwlogdir); }
 	if(cfg.emmlogdir != NULL) { tpl_addVar(vars, TPLADD, "EMMLOGDIR", cfg.emmlogdir); }
@@ -372,7 +371,8 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	free_mk_t(value);
 
 	tpl_printf(vars, TPLADD, "SLEEP", "%d", cfg.tosleep);
-	if(cfg.ulparent) { tpl_addVar(vars, TPLADD, "UNLOCKPARENTALCHECKED", "selected"); }
+	tpl_addVar(vars, TPLADD, "UNLOCKPARENTALCHECKED", (cfg.ulparent == 1) ? "checked" : "");
+
 
 	if(cfg.block_same_ip)   { tpl_addVar(vars, TPLADD, "BLOCKSAMEIPCHECKED", "selected"); }
 	if(cfg.block_same_name) { tpl_addVar(vars, TPLADD, "BLOCKSAMENAMECHECKED", "selected"); }
@@ -395,8 +395,7 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	if(cfg.reader_restart_seconds)
 		{ tpl_printf(vars, TPLADD, "READERRESTARTSECONDS", "%d", cfg.reader_restart_seconds); }
 
-	if(cfg.dropdups)
-		{ tpl_addVar(vars, TPLADD, "DROPDUPSCHECKED", "selected"); }
+	tpl_addVar(vars, TPLADD, "DROPDUPSCHECKED", (cfg.dropdups == 1) ? "checked" : "");
 
 	if(cfg.resolve_gethostbyname == 1)
 		{ tpl_addVar(vars, TPLADD, "RESOLVER1", "selected"); }
@@ -406,8 +405,8 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	tpl_printf(vars, TPLADD, "FAILBANTIME", "%d", cfg.failbantime);
 	tpl_printf(vars, TPLADD, "FAILBANCOUNT", "%d", cfg.failbancount);
 
-	if(cfg.double_check == 1)
-		{ tpl_addVar(vars, TPLADD, "DCHECKCSELECTED", "selected"); }
+	tpl_addVar(vars, TPLADD, "DCHECKCSELECTED", (cfg.double_check == 1) ? "checked" : "");
+
 	value = mk_t_caidtab(&cfg.double_check_caid);
 	tpl_addVar(vars, TPLADD, "DOUBLECHECKCAID", value);
 	free_mk_t(value);
@@ -497,7 +496,8 @@ static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct ur
 	tpl_addVar(vars, TPLADD, "LBNOPROVIDERFORCAID", value);
 	free_mk_t(value);
 
-	if(cfg.lb_auto_betatunnel) { tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNEL", "selected"); }
+	tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNEL", (cfg.lb_auto_betatunnel == 1) ? "checked" : "");
+
 	if(cfg.lb_auto_betatunnel_mode == 1)
 	{
 		tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNELMODE1", "selected");
@@ -524,7 +524,8 @@ static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct ur
 	}
 	tpl_printf(vars, TPLADD, "LBPREFERBETA", "%d", cfg.lb_auto_betatunnel_prefer_beta);
 
-	if(cfg.lb_auto_timeout) { tpl_addVar(vars, TPLADD, "LBAUTOTIMEOUT", "selected"); }
+	tpl_addVar(vars, TPLADD, "LBAUTOTIMEOUT", (cfg.lb_auto_timeout == 1) ? "checked" : "");
+
 	tpl_printf(vars, TPLADD, "LBAUTOTIMEOUTP", "%d", cfg.lb_auto_timeout_p);
 	tpl_printf(vars, TPLADD, "LBAUTOTIMEOUTT", "%d", cfg.lb_auto_timeout_t);
 
@@ -545,7 +546,7 @@ static char *send_oscam_config_camd33(struct templatevars *vars, struct uriparam
 	{
 		tpl_printf(vars, TPLADD, "PORT", "%d", cfg.c33_port);
 		if(IP_ISSET(cfg.c33_srvip))    { tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.c33_srvip)); }
-		if(cfg.c33_passive == 1)       { tpl_addVar(vars, TPLADD, "PASSIVECHECKED", "selected"); }
+		tpl_addVar(vars, TPLADD, "PASSIVECHECKED", (cfg.c33_passive == 1) ? "checked" : "");
 
 		for(i = 0; i < (int) sizeof(cfg.c33_key); ++i) { tpl_printf(vars, TPLAPPEND, "KEY", "%02X", cfg.c33_key[i]); }
 		char *value = mk_t_iprange(cfg.c33_plain);
@@ -620,8 +621,7 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 
 	tpl_printf(vars, TPLADD, "MAX_HIT_TIME", "%d", cfg.max_hitcache_time);
 
-	if(cfg.cacheex_enable_stats == 1)
-		{ tpl_addVar(vars, TPLADD, "CACHEEXSTATSSELECTED", "selected"); }
+	tpl_addVar(vars, TPLADD, "CACHEEXSTATSSELECTED", (cfg.cacheex_enable_stats == 1) ? "checked" : "");
 
 	if(cfg.csp_port)
 		{ tpl_printf(vars, TPLADD, "PORT", "%d", cfg.csp_port); }
@@ -645,10 +645,9 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 #ifndef CS_CACHEEX
 	char *value = NULL;
 #endif
-	if(cfg.cwcycle_check_enable == 1)
-	{
-		tpl_addVar(vars, TPLADD, "CWCYCLECHECK", "selected");
-	}
+	
+	tpl_addVar(vars, TPLADD, "CWCYCLECHECK", (cfg.cwcycle_check_enable == 1) ? "checked" : "");
+	
 	value = mk_t_caidtab(&cfg.cwcycle_check_caidtab);
 	tpl_addVar(vars, TPLADD, "CWCYCLECHECKCAID", value);
 	free_mk_t(value);
@@ -656,14 +655,10 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 	tpl_printf(vars, TPLADD, "MAXCYCLELIST", "%d", cfg.maxcyclelist);
 	tpl_printf(vars, TPLADD, "KEEPCYCLETIME", "%d", cfg.keepcycletime);
 
-	if(cfg.onbadcycle == 1)
-	{
-		tpl_addVar(vars, TPLADD, "ONBADCYCLE1", "selected");
-	}
-	if(cfg.cwcycle_dropold == 1)
-	{
-		tpl_addVar(vars, TPLADD, "DROPOLD", "selected");
-	}
+	tpl_addVar(vars, TPLADD, "ONBADCYCLE1", (cfg.onbadcycle == 1) ? "checked" : "");
+
+	tpl_addVar(vars, TPLADD, "DROPOLD", (cfg.cwcycle_dropold == 1) ? "checked" : "");
+
 	switch(cfg.cwcycle_sensitive)
 	{
 	case 2:
@@ -676,14 +671,12 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 		tpl_addVar(vars, TPLADD, "CWCSEN4", "selected");
 		break;
 	}
-	if(cfg.cwcycle_allowbadfromffb == 1)
-	{
-		tpl_addVar(vars, TPLADD, "ALLOWBADFROMFFB", "selected");
-	}
-	if(cfg.cwcycle_usecwcfromce == 1)
-	{
-		tpl_addVar(vars, TPLADD, "USECWCFROMCE", "selected");
-	}
+
+	tpl_addVar(vars, TPLADD, "ALLOWBADFROMFFB", (cfg.cwcycle_allowbadfromffb == 1) ? "checked" : "");
+	
+	tpl_addVar(vars, TPLADD, "USECWCFROMCE", (cfg.cwcycle_usecwcfromce == 1) ? "checked" : "");
+
+	
 #endif
 
 	return tpl_getTpl(vars, "CONFIGCACHE");
@@ -809,8 +802,8 @@ static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams
 
 	tpl_printf(vars, TPLADD, "UPDATEINTERVAL", "%d", cfg.cc_update_interval);
 	tpl_printf(vars, TPLADD, "RECV_TIMEOUT", "%u", cfg.cc_recv_timeout);
-	if(cfg.cc_stealth)
-		{ tpl_addVar(vars, TPLADD, "STEALTH", "selected"); }
+
+	tpl_addVar(vars, TPLADD, "STEALTH", (cfg.cc_stealth == 1) ? "checked" : "");
 
 	tpl_printf(vars, TPLADD, "NODEID", "%02X%02X%02X%02X%02X%02X%02X%02X",
 			   cfg.cc_fixed_nodeid[0], cfg.cc_fixed_nodeid[1], cfg.cc_fixed_nodeid[2], cfg.cc_fixed_nodeid[3],
@@ -825,12 +818,9 @@ static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams
 	tpl_printf(vars, TPLADD, "TMP", "IGNRSHRSELECTED%d", cfg.cc_ignore_reshare);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
-	if(cfg.cc_forward_origin_card)
-		{ tpl_addVar(vars, TPLADD, "FORWARDORIGINCARD", "selected"); }
+	tpl_addVar(vars, TPLADD, "FORWARDORIGINCARD", (cfg.cc_forward_origin_card == 1) ? "checked" : "");
 
-	if(cfg.cc_keep_connected)
-		{ tpl_addVar(vars, TPLADD, "KEEPCONNECTED", "selected"); }
-
+	tpl_addVar(vars, TPLADD, "KEEPCONNECTED", (cfg.cc_keep_connected == 1) ? "checked" : "");
 
 	return tpl_getTpl(vars, "CONFIGCCCAM");
 }
@@ -923,12 +913,11 @@ static char *send_oscam_config_webif(struct templatevars *vars, struct uriparams
 		}
 	}
 
-	if(cfg.http_full_cfg)
-		{ tpl_addVar(vars, TPLADD, "HTTPSAVEFULLSELECT", "selected"); }
+	tpl_addVar(vars, TPLADD, "HTTPSAVEFULLSELECT", (cfg.http_full_cfg == 1) ? "checked" : "");
+
 
 #ifdef WITH_SSL
-	if(cfg.http_force_sslv3)
-		{ tpl_addVar(vars, TPLADD, "HTTPFORCESSLV3SELECT", "selected"); }
+	tpl_addVar(vars, TPLADD, "HTTPFORCESSLV3SELECT", (cfg.http_force_sslv3 == 1) ? "checked" : "");
 #endif
 
 	tpl_printf(vars, TPLADD, "AULOW", "%d", cfg.aulow);
@@ -944,12 +933,13 @@ static char *send_oscam_config_lcd(struct templatevars *vars, struct uriparams *
 
 	webif_save_config("lcd", vars, params);
 
-	if(cfg.enablelcd)
-		{ tpl_addVar(vars, TPLADD, "ENABLELCDSELECTED", "selected"); }
+	tpl_addVar(vars, TPLADD, "ENABLELCDSELECTED", (cfg.enablelcd == 1) ? "checked" : "");
+
 	if(cfg.lcd_output_path != NULL)
 		{ tpl_addVar(vars, TPLADD, "LCDOUTPUTPATH", cfg.lcd_output_path); }
-	if(cfg.lcd_hide_idle)
-		{ tpl_addVar(vars, TPLADD, "LCDHIDEIDLE", "selected"); }
+
+	tpl_addVar(vars, TPLADD, "LCDHIDEIDLE", (cfg.lcd_hide_idle == 1) ? "checked" : "");
+
 	tpl_printf(vars, TPLADD, "LCDREFRESHINTERVAL", "%d", cfg.lcd_write_intervall);
 
 	return tpl_getTpl(vars, "CONFIGLCD");

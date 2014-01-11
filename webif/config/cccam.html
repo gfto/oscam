@@ -20,27 +20,18 @@
 			</TR>
 			<TR><TD>##TPLHELPPREFIX##conf#forward_origin_card##TPLHELPSUFFIX##Forward origin card:</A></TD>
 				<TD>
-					<select name="forward_origin_card">
-						<option value="0">OFF</option>
-						<option value="1" ##FORWARDORIGINCARD##>ON</option>
-					</select>
+					<input name="forward_origin_card" value="0" type="hidden"><input name="forward_origin_card" value="1" type="checkbox" ##FORWARDORIGINCARD##>
 				</TD>
 			</TR>
 			<TR><TD>##TPLHELPPREFIX##conf#stealth##TPLHELPSUFFIX##Stealth mode:</A></TD>
 				<TD>
-					<select name="stealth">
-						<option value="0">DISABLE</option>
-						<option value="1" ##STEALTH##>ENABLE</option>
-					</select>
+					<input name="stealth" value="0" type="hidden"><input name="stealth" value="1" type="checkbox" ##STEALTH##>
 				</TD>
 			</TR>
 			<TR><TD>##TPLHELPPREFIX##conf#nodeid##TPLHELPSUFFIX##Node Id:</A></TD><TD><input name="nodeid" type="text" size="18" maxlength="16" value="##NODEID##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#keepconnected##TPLHELPSUFFIX##Keep clients connected:</A></TD>
 				<TD>
-					<select name="keepconnected">
-						<option value="0">OFF</option>
-						<option value="1" ##KEEPCONNECTED##>ON</option>
-					</select>
+					<input name="keepconnected" value="0" type="hidden"><input name="keepconnected" value="1" type="checkbox" ##KEEPCONNECTED##>
 				</TD>
 			</TR>
 			<TR><TD>##TPLHELPPREFIX##conf#version##TPLHELPSUFFIX##Version:</A></TD>

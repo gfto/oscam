@@ -28,7 +28,7 @@
 					<select name="block_same_name"><option VALUE="0">Name - No</option><option VALUE="1" ##BLOCKSAMENAMECHECKED##>Name - Yes</option></select>
 				</TD>
 			</TR>
-			<TR><TD>##TPLHELPPREFIX##conf#dropdups##TPLHELPSUFFIX##Drop duplicate users:</A></TD><TD><select name="dropdups"><option VALUE="0">NO</option><option VALUE="1" ##DROPDUPSCHECKED##>YES</option></SELECT></TD></TR>
+			<TR><TD>##TPLHELPPREFIX##conf#dropdups##TPLHELPSUFFIX##Drop duplicate users:</A></TD><TD><input name="dropdups" value="0" type="hidden"><input name="dropdups" value="1" type="checkbox" ##DROPDUPSCHECKED##></TD></TR>
 			<TR><TH COLSPAN="2">Logging</TH></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#disableuserfile##TPLHELPSUFFIX##Usr file:</A></TD>
 				<TD>
@@ -50,7 +50,7 @@
 					<input name="maxlogsize" type="text" size="5" maxlength="5" value="##MAXLOGSIZE##"> kB
 				</TD>
 			</TR>
-			<TR><TD>##TPLHELPPREFIX##conf#logduplicatelines##TPLHELPSUFFIX##Log duplicated lines:</A></TD><TD><select name="logduplicatelines"><option VALUE="0">NO</option><option VALUE="1" ##LOGDUPSCHECKED##>YES</option></select></TD></TR>
+			<TR><TD>##TPLHELPPREFIX##conf#logduplicatelines##TPLHELPSUFFIX##Log duplicated lines:</A></TD><TD><input name="logduplicatelines" value="0" type="hidden"><input name="logduplicatelines" value="1" type="checkbox" ##LOGDUPSCHECKED##></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#pidfile##TPLHELPSUFFIX##Pid file:</A></TD><TD><input name="pidfile" type="text" size="55" maxlength="128" value="##PIDFILE##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#cwlogdir##TPLHELPSUFFIX##CW log dir:</A></TD><TD><input name="cwlogdir" type="text" size="55" maxlength="128" value="##CWLOGDIR##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#emmlogdir##TPLHELPSUFFIX##EMM log dir:</A></TD><TD><input name="emmlogdir" type="text" size="55" maxlength="128" value="##EMMLOGDIR##"></TD></TR>
@@ -67,7 +67,7 @@
 			<TR><TD>##TPLHELPPREFIX##conf#sleep##TPLHELPSUFFIX##Global sleep:</A></TD><TD><input name="sleep" type="text" size="5" maxlength="5" value="##SLEEP##"> min to switch a client in sleepmode</TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#readerrestartseconds##TPLHELPSUFFIX##Reader restart seconds:</A></TD><TD><input name="readerrestartseconds" type="text" size="5" maxlength="5" value="##READERRESTARTSECONDS##"> s waittime to restart a reader</TD></TR>
 			<TR><TH COLSPAN="2">Doublecheck</TH></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#double_check##TPLHELPSUFFIX##ECM Doublecheck:</A></TD><TD><select name="double_check"><option VALUE="0">NO</option><option VALUE="1" ##DCHECKCSELECTED##>YES</option></select></TD></TR>
+			<TR><TD>##TPLHELPPREFIX##conf#double_check##TPLHELPSUFFIX##ECM Doublecheck:</A></TD><TD><input name="double_check" value="0" type="hidden"><input name="double_check" value="1" type="checkbox" ##DCHECKCSELECTED##></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#double_check_caid##TPLHELPSUFFIX##Doublecheck caids:</A></TD><TD><input name="double_check_caid" type="text" size="55" maxlength="160" value="##DOUBLECHECKCAID##"></TD></TR>
 ##TPLSUPPRESSCMD08##
 ##TPLENABLELEDBIT##
