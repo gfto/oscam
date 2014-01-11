@@ -170,7 +170,7 @@ void calculate_nonce(char *nonce, char *result, char *opaque)
 	}
 	if(foundnonce && now - foundnonce->firstuse > AUTHNONCEVALIDSECS)
 	{
-		free(foundnonce);
+		NULLFREE(foundnonce);
 		foundnonce = NULL;
 	}
 	if(!foundnonce && foundopaque)
@@ -197,7 +197,7 @@ void calculate_nonce(char *nonce, char *result, char *opaque)
 	{
 		prev = foundexpired;
 		foundexpired = foundexpired->next;
-		free(prev);
+		NULLFREE(prev);
 	}
 }
 
@@ -468,14 +468,14 @@ void send_file(FILE *f, char *filename, char *subdir, time_t modifiedheader, uin
 			if(oldallocated) { newsize += strlen(oldallocated) + 1; }
 			if(!cs_malloc(&allocated, newsize))
 			{
-				if(oldallocated) { free(oldallocated); }
-				free(CSS);
+				if(oldallocated) { NULLFREE(oldallocated); }
+				NULLFREE(CSS);
 				send_error500(f);
 				return;
 			}
 			snprintf(allocated, newsize, "%s\n%s\n%s",
 					 CSS, separator, (oldallocated != NULL ? oldallocated : ""));
-			if(oldallocated) { free(oldallocated); }
+			if(oldallocated) { NULLFREE(oldallocated); }
 		}
 
 		if(allocated) { result = allocated; }
@@ -516,11 +516,11 @@ void send_file(FILE *f, char *filename, char *subdir, time_t modifiedheader, uin
 		send_headers(f, 200, "OK", NULL, mimetype, 1, size, result, 0);
 		webif_write(result, f);
 	}
-	if(allocated) { free(allocated); }
-	free(CSS);
-	free(JSCRIPT);
-	free(TOUCH_CSS);
-	free(TOUCH_JSCRIPT);
+	if(allocated) { NULLFREE(allocated); }
+	NULLFREE(CSS);
+	NULLFREE(JSCRIPT);
+	NULLFREE(TOUCH_CSS);
+	NULLFREE(TOUCH_JSCRIPT);
 }
 
 /* Parse url parameters and save them to params array. The pch pointer is increased to the position where parsing stopped. */
@@ -726,7 +726,7 @@ static struct CRYPTO_dynlock_value *SSL_dyn_create_function(const char *file, in
 	if(pthread_mutex_init(&l->mutex, NULL))
 	{
 		// Initialization of mutex failed.
-		free(l);
+		NULLFREE(l);
 		return (NULL);
 	}
 	pthread_mutex_init(&l->mutex, NULL);
@@ -752,7 +752,7 @@ static void SSL_dyn_lock_function(int32_t mode, struct CRYPTO_dynlock_value *l, 
 static void SSL_dyn_destroy_function(struct CRYPTO_dynlock_value *l, const char *file, int32_t line)
 {
 	pthread_mutex_destroy(&l->mutex);
-	free(l);
+	NULLFREE(l);
 	// just to remove compiler warnings...
 	if(file || line) { return; }
 }

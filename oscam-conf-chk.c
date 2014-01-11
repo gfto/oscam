@@ -456,7 +456,7 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 		}
 	}
 	memcpy(ptab, newptab, sizeof(PTAB));
-	free(newptab);
+	NULLFREE(newptab);
 }
 
 /* Clears the s_ip structure provided. The pointer will be set to NULL so everything is cleared.*/
@@ -494,7 +494,7 @@ void clear_ptab(struct s_ptab *ptab)
 		{
 			ptab->ports[i].ncd->ncd_ftab.nfilts = 0;
 			ptab->ports[i].ncd->ncd_ftab.filts[0].nprids = 0;
-			free(ptab->ports[i].ncd);
+			NULLFREE(ptab->ports[i].ncd);
 			ptab->ports[i].ncd = NULL;
 		}
 	}

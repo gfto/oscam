@@ -35,12 +35,12 @@ static void free_job_data(struct job_data *data)
 		//special free checks
 		if(data->action==ACTION_ECM_ANSWER_CACHE)
 		{
-			free(((struct s_write_from_cache *)data->ptr)->er_cache);
+			NULLFREE(((struct s_write_from_cache *)data->ptr)->er_cache);
 		}
 
-		free(data->ptr);
+		NULLFREE(data->ptr);
 	}
-	free(data);
+	NULLFREE(data);
 }
 
 void free_joblist(struct s_client *cl)
@@ -135,7 +135,7 @@ void *work_thread(void *ptr)
 				free_client(cl);
 				if(restart_reader)
 					{ restart_cardreader(reader, 0); }
-				free(mbuf);
+				NULLFREE(mbuf);
 				pthread_exit(NULL);
 				return NULL;
 			}
@@ -415,7 +415,7 @@ void *work_thread(void *ptr)
 	}
 	cl->thread_active = 0;
 	cl->work_mbuf = NULL; // Prevent free_client from freeing mbuf (->work_mbuf)
-	free(mbuf);
+	NULLFREE(mbuf);
 	pthread_exit(NULL);
 	return NULL;
 }
@@ -432,7 +432,7 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 		if(!cl)
 			{ cs_log("WARNING: add_job failed. Client killed!"); } // Ignore jobs for killed clients
 		if(len && ptr)
-			{ free(ptr); }
+			{ NULLFREE(ptr); }
 		return 0;
 	}
 
@@ -445,7 +445,7 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 					  cl->typ == 'c' ? "client" : "reader",
 					  username(cl), ll_count(cl->joblist));
 		if(len && ptr)
-			{ free(ptr); }
+			{ NULLFREE(ptr); }
 		// Thread down???
 		pthread_mutex_lock(&cl->thread_lock);
 		if(cl && !cl->kill && cl->thread && cl->thread_active)
@@ -468,7 +468,7 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 	if(!cs_malloc(&data, sizeof(struct job_data)))
 	{
 		if(len && ptr)
-			{ free(ptr); }
+			{ NULLFREE(ptr); }
 		return 0;
 	}
 

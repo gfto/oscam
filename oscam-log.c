@@ -164,8 +164,8 @@ static void log_list_add(struct s_log *log)
 	}
 	else     // We have too much backlog
 	{
-		free(log->txt);
-		free(log);
+		NULLFREE(log->txt);
+		NULLFREE(log);
 		cs_write_log("-------------> Too much data in log_list, dropping log message.\n", 1);
 	}
 	pthread_cond_signal(&log_thread_sleep_cond);
@@ -185,7 +185,7 @@ static void cs_write_log_int(char *txt)
 		struct s_log *log;
 		if(!cs_malloc(&log, sizeof(struct s_log)))
 		{
-			free(newtxt);
+			NULLFREE(newtxt);
 			return;
 		}
 		log->txt = newtxt;
@@ -386,7 +386,7 @@ static void write_to_log_int(char *txt, int8_t header_len)
 	struct s_log *log;
 	if(!cs_malloc(&log, sizeof(struct s_log)))
 	{
-		free(newtxt);
+		NULLFREE(newtxt);
 		return;
 	}
 	log->txt = newtxt;
@@ -428,8 +428,8 @@ static void write_to_log_int(char *txt, int8_t header_len)
 		char buf[LOG_BUF_SIZE];
 		cs_strncpy(buf, log->txt, LOG_BUF_SIZE);
 		write_to_log(buf, log, 1);
-		free(log->txt);
-		free(log);
+		NULLFREE(log->txt);
+		NULLFREE(log);
 	}
 	else
 		{ log_list_add(log); }
@@ -689,8 +689,8 @@ void log_list_thread(void)
 				{ cs_write_log(buf, do_flush); }
 			else
 				{ write_to_log(buf, log, do_flush); }
-			free(log->txt);
-			free(log);
+			NULLFREE(log->txt);
+			NULLFREE(log);
 		}
 		if(!log_list_queued)  // The list is empty, sleep until new data comes in and we are woken up
 			{ sleepms_on_cond(&log_thread_sleep_cond, &log_thread_sleep_cond_mutex, 60 * 1000); }
@@ -764,7 +764,7 @@ void log_free(void)
 	pthread_cond_signal(&log_thread_sleep_cond);
 	pthread_join(log_thread, NULL);
 #if defined(WEBIF) || defined(MODULE_MONITOR)
-	free(loghist);
+	NULLFREE(loghist);
 	loghist = loghistptr = NULL;
 #endif
 }

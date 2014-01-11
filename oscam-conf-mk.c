@@ -886,5 +886,5 @@ char *mk_t_allowedprotocols(struct s_auth *account)
  */
 void free_mk_t(char *value)
 {
-	if(strlen(value) > 0) { free(value); }
+	if(strlen(value) > 0) { NULLFREE(value); }
 }

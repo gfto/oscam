@@ -225,7 +225,7 @@ void cc_crypt_cmd0c(struct s_client *cl, uint8_t *buf, int32_t len)
 	}
 	}
 	memcpy(buf, out, len);
-	free(out);
+	NULLFREE(out);
 }
 
 
@@ -494,13 +494,13 @@ void free_extended_ecm_idx_by_card(struct s_client *cl, struct cc_card *card, in
 			{
 				cc_reset_pending(cl, eei->ecm_idx);
 				if(eei->free_card)
-					{ free(eei->card); }
+					{ NULLFREE(eei->card); }
 				ll_iter_remove_data(&it);
 			}
 			else
 			{
 				if(eei->free_card)
-					{ free(eei->card); }
+					{ NULLFREE(eei->card); }
 				eei->card = NULL;
 			}
 		}
@@ -514,7 +514,7 @@ void free_extended_ecm_idx(struct cc_data *cc)
 	while((eei = ll_iter_next(&it)))
 	{
 		if(eei->free_card)
-			{ free(eei->card); }
+			{ NULLFREE(eei->card); }
 		ll_iter_remove_data(&it);
 	}
 }
@@ -697,7 +697,7 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 
 	cs_writeunlock(&cc->lockcmd);
 
-	free(netbuf);
+	NULLFREE(netbuf);
 
 	if(n != len)
 	{
@@ -1529,7 +1529,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf)
 				eei = add_extended_ecm_idx(cl, send_idx, cur_er->idx, card, cur_srvid, 0);
 				if(!eei)
 				{
-					free(ecmbuf);
+					NULLFREE(ecmbuf);
 					cs_readunlock(&cc->cards_busy);
 					break;
 				}
@@ -1544,7 +1544,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf)
 				"%s sending ecm for sid %04X(%d) to card %08x, hop %d, ecmtask %d", getprefix(), cur_er->srvid, cur_er->ecmlen, card->id, card->hop, cur_er->idx);
 			cc_cmd_send(cl, ecmbuf, cur_er->ecmlen + 13, MSG_CW_ECM); // send ecm
 
-			free(ecmbuf);
+			NULLFREE(ecmbuf);
 
 			//For EMM
 			set_au_data(cl, rdr, card, cur_er);
@@ -2336,7 +2336,7 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 			{ cl->reader->last_s = cl->reader->last_g = time((time_t *)0); } // correct
 		if(cl) { cl->last = time(NULL); }
 	}
-	free(ecmbuf);
+	NULLFREE(ecmbuf);
 	return res;
 }
 
@@ -2420,7 +2420,7 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	if(count > cacheex_maxhop(cl))
 	{
 		cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes (max=%d), ignored!", (int32_t)count, cacheex_maxhop(cl));
-		free(er);
+		NULLFREE(er);
 		return;
 	}
 	cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes %s", (int32_t)count, username(cl));
@@ -3025,7 +3025,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 			else
 			{
 				cs_debug_mask(D_CLIENT, "%s NO ECMTASK!!!! l=%d", getprefix(), l);
-				free(server_card);
+				NULLFREE(server_card);
 			}
 
 		}
@@ -3049,7 +3049,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 				struct cc_card *card = eei->card;
 				uint32_t cccam_id = eei->cccam_id;
 				struct cc_srvid srvid = eei->srvid;
-				free(eei);
+				NULLFREE(eei);
 
 				if(card)
 				{
@@ -3360,7 +3360,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 				//emm->type = UNKNOWN;
 				//emm->cidx = cs_idx;
 				do_emm(cl, emm);
-				free(emm);
+				NULLFREE(emm);
 			}
 		}
 		else     //Our EMM Request Ack!
@@ -3492,8 +3492,8 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er)
 	cc->server_ecm_pending--;
 	if(eei)
 	{
-		free(eei->card);
-		free(eei);
+		NULLFREE(eei->card);
+		NULLFREE(eei);
 	}
 }
 
@@ -3740,7 +3740,7 @@ int32_t cc_srv_connect(struct s_client *cl)
 
 		account = account->next;
 	}
-	free(save_block);
+	NULLFREE(save_block);
 
 	if(cs_auth_client(cl, account, NULL))    //cs_auth_client returns 0 if account is valid/active/accessible
 	{

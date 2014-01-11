@@ -1449,7 +1449,7 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 		demux[demux_id].ECMpids[pid].status = -1; // flag this pid as unusable
 		edit_channel_cache(demux_id, pid, 0); // remove this pid from channelcache
 	}
-	if(!fake_ecm) { free(er); }
+	if(!fake_ecm) { NULLFREE(er); }
 	return started;
 }
 
@@ -1579,7 +1579,7 @@ void dvbapi_read_priority(void)
 		for(p = dvbapi_priority; p != NULL; p = o)
 		{
 			o = p->next;
-			free(p);
+			NULLFREE(p);
 		}
 		dvbapi_priority = NULL;
 	}
@@ -1752,7 +1752,7 @@ void dvbapi_read_priority(void)
 						}
 					}
 				}
-			free(entry);
+			NULLFREE(entry);
 			continue;
 		}
 		else
@@ -1990,7 +1990,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 				}
 			}
 		}
-		free(er);
+		NULLFREE(er);
 	}
 
 	if(!matching_done)      //works if there is no oscam.dvbapi or if there is oscam.dvbapi but not p rules in it
@@ -2062,7 +2062,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 				cs_debug_mask(D_DVBAPI, "[IGNORE PID %d] %04X:%06X:%04X (no matching reader)", n, demux[demux_index].ECMpids[n].CAID,
 							  demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID);
 		}
-		free(er);
+		NULLFREE(er);
 	}
 
 	if(cache == 1)
@@ -3038,7 +3038,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 				{
 					curpid->table = 0;
 					dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this ecm doesnt match with current irdeto index
-					free(er);
+					NULLFREE(er);
 					return;
 				}
 			}
@@ -3066,7 +3066,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 							curpid->CHID = 0x10000;
 						}
 						dvbapi_stop_filternum(demux_id, filter_num); // stop this ecm filter!
-						free(er);
+						NULLFREE(er);
 						return;
 					}
 				}
@@ -3077,7 +3077,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 
 				curpid->table = 0;
 				dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this ecm doesnt match with current irdeto index
-				free(er);
+				NULLFREE(er);
 				return;
 			}
 			else  // all nonirdeto cas systems
@@ -3087,7 +3087,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 				dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this ecm doesnt match with current irdeto index
 				if(forceentry && forceentry->force)
 				{
-					free(er);
+					NULLFREE(er);
 					return; // forced pid? keep trying the forced ecmpid!
 				}
 				if(curpid->checked == 2) { curpid->checked = 3; }
@@ -3097,7 +3097,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 					curpid->CHID = 0x10000;
 				}
 				dvbapi_stop_filternum(demux_id, filter_num); // stop this ecm filter!
-				free(er);
+				NULLFREE(er);
 				return;
 			}
 		}
@@ -3116,7 +3116,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 			if(p->delay == len && p->force < 6)
 			{
 				p->force++;
-				free(er);
+				NULLFREE(er);
 				return;
 			}
 			if(p->force >= 6)
@@ -3132,7 +3132,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 			{
 				curpid->table = 0;
 				dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this ecm doesnt match with current irdeto index
-				free(er);
+				NULLFREE(er);
 				return;
 			}
 			// we have an ecm with the correct irdeto index
@@ -3154,7 +3154,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 					}
 					curpid->table = 0;
 					dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this chid has to be ignored!
-					free(er);
+					NULLFREE(er);
 					return;
 				}
 			}

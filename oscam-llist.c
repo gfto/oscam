@@ -75,8 +75,8 @@ void ll_destroy_free_data(LLIST *l)
 	while(n)
 	{
 		nxt = n->nxt;
-		free(n->obj);
-		free(n);
+		NULLFREE(n->obj);
+		NULLFREE(n);
 		n = nxt;
 	}
 	l->version++;
@@ -92,7 +92,7 @@ void ll_destroy_free_data(LLIST *l)
 		cs_writeunlock(&l->lock);
 
 		cs_lock_destroy(&l->lock);
-		free(l);
+		NULLFREE(l);
 	}
 }
 
@@ -701,5 +701,5 @@ void *ll_remove_first(LLIST *l)
 void ll_remove_first_data(LLIST *l)
 {
 	void *data = ll_remove_first(l);
-	if(data) { free(data); }
+	if(data) { NULLFREE(data); }
 }

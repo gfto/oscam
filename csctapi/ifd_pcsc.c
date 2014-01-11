@@ -72,7 +72,7 @@ static int32_t pcsc_init(struct s_reader *pcsc_reader)
 		if(rv != SCARD_S_SUCCESS)
 		{
 			rdr_debug_mask(pcsc_reader, D_DEVICE, "PCSC failed listing readers [2]: (%lx)", (unsigned long)rv);
-			free(mszReaders);
+			NULLFREE(mszReaders);
 			return ERROR;
 		}
 		/* Extract readers from the null separated string and get the total
@@ -89,13 +89,13 @@ static int32_t pcsc_init(struct s_reader *pcsc_reader)
 		if(nbReaders == 0)
 		{
 			rdr_log(pcsc_reader, "PCSC : no pcsc_reader found");
-			free(mszReaders);
+			NULLFREE(mszReaders);
 			return ERROR;
 		}
 
 		if(!cs_malloc(&readers, nbReaders * sizeof(char *)))
 		{
-			free(mszReaders);
+			NULLFREE(mszReaders);
 			return ERROR;
 		}
 
@@ -114,14 +114,14 @@ static int32_t pcsc_init(struct s_reader *pcsc_reader)
 		if(reader_nb < 0 || reader_nb >= nbReaders)
 		{
 			rdr_log(pcsc_reader, "Wrong pcsc_reader index: %d", reader_nb);
-			free(mszReaders);
-			free(readers);
+			NULLFREE(mszReaders);
+			NULLFREE(readers);
 			return ERROR;
 		}
 
 		snprintf(crdr_data->pcsc_name, sizeof(crdr_data->pcsc_name), "%s", readers[reader_nb]);
-		free(mszReaders);
-		free(readers);
+		NULLFREE(mszReaders);
+		NULLFREE(readers);
 	}
 	else
 	{

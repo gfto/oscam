@@ -282,9 +282,9 @@ static void ac_load_config(void)
 				{
 					last_cpmap = cur_cpmap;
 					cur_cpmap = cur_cpmap->next;
-					free(last_cpmap);
+					NULLFREE(last_cpmap);
 				}
-				free(token);
+				NULLFREE(token);
 				return;
 			}
 			if(last_cpmap)
@@ -305,7 +305,7 @@ static void ac_load_config(void)
 			nr++;
 		}
 	}
-	free(token);
+	NULLFREE(token);
 	fclose(fp);
 
 	last_cpmap = cfg.cpmap;

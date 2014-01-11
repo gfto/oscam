@@ -26,7 +26,7 @@ static int32_t cs_check_v(IN_ADDR_T ip, int32_t port, int32_t add, char *info)
 		int32_t gone = comp_timeb(&now, &v_ban_entry->v_time);
 		if(gone >= ftime) // entry out of time->remove
 		{
-			free(v_ban_entry->info);
+			NULLFREE(v_ban_entry->info);
 			ll_iter_remove_data(&itr);
 			continue;
 		}

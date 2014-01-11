@@ -103,7 +103,7 @@ static int32_t csp_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	 */
 
 	int32_t status = sendto(cl->udp_fd, buf, size, 0, (struct sockaddr *) &cl->udp_sa, cl->udp_sa_len);
-	free(buf);
+	NULLFREE(buf);
 	return status;
 }
 
@@ -169,7 +169,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 				cs_ddump_mask(D_TRACE, er->cw, sizeof(er->cw), "received cw from csp onid=%04X caid=%04X srvid=%04X hash=%08X (org connector: %s, tags: %02X/%02X)", er->onid, er->caid, er->srvid, er->csp_hash, orgname, commandTag, rplTag);
 				cacheex_add_to_cache_from_csp(client, er);
 			}
-			else { free(er); }
+			else { NULLFREE(er); }
 		}
 		break;
 
@@ -188,7 +188,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 				cs_ddump_mask(D_TRACE, buf, l, "received ecm request from csp onid=%04X caid=%04X srvid=%04X hash=%08X (tag: %02X)", er->onid, er->caid, er->srvid, er->csp_hash, commandTag);
 				cacheex_add_to_cache_from_csp(client, er);
 			}
-			else { free(er); }
+			else { NULLFREE(er); }
 		}
 		break;
 
@@ -237,7 +237,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 				er->rcEx = 0;
 				memcpy(er->cw, result->cw, 16);
 				er->grp |= result->grp;
-				free(result);
+				NULLFREE(result);
 
 				int32_t status = csp_cache_push_out(client, er);
 				cs_debug_mask(D_TRACE, "received resend request from cache peer: %s:%d (replied: %d)", cs_inet_ntoa(SIN_GET_ADDR(client->udp_sa)), port, status);
@@ -246,7 +246,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 			{
 				cs_debug_mask(D_TRACE, "received resend request from cache peer: %s:%d (not found)", cs_inet_ntoa(SIN_GET_ADDR(client->udp_sa)), port);
 			}
-			free(er);
+			NULLFREE(er);
 		}
 		break;
 

@@ -243,7 +243,7 @@ int32_t init_sidtab(void)
 			{
 				if(!cs_malloc(&ptr, sizeof(struct s_sidtab)))
 				{
-					free(token);
+					NULLFREE(token);
 					return (1);
 				}
 				if(sidtab)
@@ -261,7 +261,7 @@ int32_t init_sidtab(void)
 		*value++ = '\0';
 		chk_sidtab(trim(strtolower(token)), trim(strtolower(value)), sidtab);
 	}
-	free(token);
+	NULLFREE(token);
 	fclose(fp);
 
 #ifdef DEBUG_SIDTAB
@@ -303,7 +303,7 @@ int32_t init_provid(void)
 
 		if(!cs_malloc(&ptr, sizeof(struct s_provid)))
 		{
-			free(token);
+			NULLFREE(token);
 			fclose(fp);
 			return (1);
 		}
@@ -337,7 +337,7 @@ int32_t init_provid(void)
 		provid->caid = a2i(token, 3);
 		nr++;
 	}
-	free(token);
+	NULLFREE(token);
 	fclose(fp);
 	if(nr > 0)
 		{ cs_log("%d provid's loaded", nr); }
@@ -381,7 +381,7 @@ int32_t init_srvid(void)
 
 		if(!cs_malloc(&srvid, sizeof(struct s_srvid)))
 		{
-			free(token);
+			NULLFREE(token);
 			fclose(fp);
 			return (1);
 		}
@@ -462,8 +462,8 @@ int32_t init_srvid(void)
 
 		if(srvidtmp < 0)
 		{
-			free(tmpptr);
-			free(srvid);
+			NULLFREE(tmpptr);
+			NULLFREE(srvid);
 			continue;
 		}
 		else { srvid->srvid = srvidtmp; }
@@ -486,9 +486,9 @@ int32_t init_srvid(void)
 	}
 	for(i = 0; i < 1024; ++i)
 	{
-		if(allocated[i] > 0) { free(stringcache[i]); }
+		if(allocated[i] > 0) { NULLFREE(stringcache[i]); }
 	}
-	free(token);
+	NULLFREE(token);
 
 	cs_ftime(&te);
 	int32_t load_time = comp_timeb(&te, &ts);
@@ -618,7 +618,7 @@ void ratelimit_read(void)
 	while(old_list)
 	{
 		entry = old_list->next;
-		free(old_list);
+		NULLFREE(old_list);
 		old_list = entry;
 	}
 }
@@ -673,7 +673,7 @@ int32_t init_tierid(void)
 
 		if(!cs_malloc(&ptr, sizeof(struct s_tierid)))
 		{
-			free(token);
+			NULLFREE(token);
 			fclose(fp);
 			return (1);
 		}
@@ -702,7 +702,7 @@ int32_t init_tierid(void)
 		}
 		nr++;
 	}
-	free(token);
+	NULLFREE(token);
 	fclose(fp);
 	if(nr > 0)
 		{ cs_log("%d tier-id's loaded", nr); }
@@ -714,7 +714,7 @@ int32_t init_tierid(void)
 	while(tierid)
 	{
 		ptr = tierid->next;
-		free(tierid);
+		NULLFREE(tierid);
 		tierid = ptr;
 	}
 	cs_writeunlock(&config_lock);
@@ -951,7 +951,7 @@ void global_whitelist_read(void)
 	while(old_list)
 	{
 		entry = old_list->next;
-		free(old_list);
+		NULLFREE(old_list);
 		old_list = entry;
 	}
 }
@@ -989,7 +989,7 @@ void init_len4caid(void)
 		len4caid[i] = c;
 		nr++;
 	}
-	free(token);
+	NULLFREE(token);
 	fclose(fp);
 	if(nr)
 		{ cs_log("%d lengths for caid guessing loaded", nr); }

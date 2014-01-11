@@ -133,13 +133,13 @@ void gbox_compress(uchar *buf, int32_t unpacked_len, int32_t *packed_len)
         }
         if(!cs_malloc(&tmp2, 0x40000))
         {
-                free(tmp);
+                NULLFREE(tmp);
                 return;
         }
         if(!cs_malloc(&wrkmem, unpacked_len * 0x1000))
         {
-                free(tmp);
-                free(tmp2);
+                NULLFREE(tmp);
+                NULLFREE(tmp2);
                 return;
         }
         unpacked_len -= 12;
@@ -150,9 +150,9 @@ void gbox_compress(uchar *buf, int32_t unpacked_len, int32_t *packed_len)
                 { cs_log("gbox: compression failed!"); }
         memcpy(buf + 12, tmp, pl);
         pl += 12;
-        free(tmp);
-        free(tmp2);
-        free(wrkmem);
+        NULLFREE(tmp);
+        NULLFREE(tmp2);
+        NULLFREE(wrkmem);
         *packed_len = pl;
 }
 
@@ -170,6 +170,6 @@ void gbox_decompress(uchar *buf, int32_t *unpacked_len)
                 { cs_debug_mask(D_READER, "gbox: decompression failed! errno=%d", err); }
         memcpy(buf + 12, tmp, *unpacked_len);
         *unpacked_len += 12;
-        free(tmp);
+        NULLFREE(tmp);
 }
 #endif

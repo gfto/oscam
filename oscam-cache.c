@@ -419,13 +419,13 @@ void cleanup_cache(void){
 					cw->pushout_client=NULL;
 					while (pc) {
 						nxt = pc->next_push;
-						free(pc);
+						NULLFREE(pc);
 						pc = nxt;
 					}
 
 					remove_elem_list(&ecmhash->ll_cw, &cw->ll_node);
 					remove_elem_hash_table(&ecmhash->ht_cw, &cw->ht_node);
-					free(cw);
+					NULLFREE(cw);
     			}
 
 				j = j_next;
@@ -434,7 +434,7 @@ void cleanup_cache(void){
     		deinitialize_hash_table(&ecmhash->ht_cw);
     		remove_elem_list(&ll_cache, &ecmhash->ll_node);
     		remove_elem_hash_table(&ht_cache, &ecmhash->ht_node);
-    	    free(ecmhash);
+	    NULLFREE(ecmhash);
     	}
 
 	    i = i_next;
@@ -591,7 +591,7 @@ void cleanup_hitcache(void) {
 	    if(cachehit && gone>timeout){
     		remove_elem_list(&ll_hitcache, &cachehit->ll_node);
     		remove_elem_hash_table(&ht_hitcache, &cachehit->ht_node);
-    	    free(cachehit);
+	    NULLFREE(cachehit);
     	}
 
 	    i = i_next;

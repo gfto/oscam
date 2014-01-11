@@ -114,11 +114,11 @@ void free_irdeto_guess_tab(void)
 		while(head)
 		{
 			void *next = head->next;
-			free(head);
+			NULLFREE(head);
 			head = next;
 		}
 	}
-	free(itab);
+	NULLFREE(itab);
 }
 
 void guess_irdeto(ECM_REQUEST *er)

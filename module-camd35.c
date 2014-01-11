@@ -757,7 +757,7 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	ll_li_destroy(li);
 
 	int32_t res = camd35_send(cl, buf, size);
-	free(buf);
+	NULLFREE(buf);
 	return res;
 }
 
@@ -891,7 +891,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 		if(count > cacheex_maxhop(cl))
 		{
 			cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes (max=%d), ignored! %s", (int32_t)count, cacheex_maxhop(cl), username(cl));
-			free(er);
+			NULLFREE(er);
 			return;
 		}
 		cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes %s", (int32_t)count, username(cl));

@@ -196,17 +196,17 @@ void load_stat_from_file(void)
 			else
 			{
 				cs_log("loadbalancer: statistics could not be loaded for %s", buf);
-				free(s);
+				NULLFREE(s);
 			}
 		}
 		else
 		{
 			cs_debug_mask(D_LB, "loadbalancer: statistics ERROR: %s rc=%d i=%d", buf, s->rc, i);
-			free(s);
+			NULLFREE(s);
 		}
 	}
 	fclose(file);
-	free(line);
+	NULLFREE(line);
 
 	cs_ftime(&te);
 #ifdef WITH_DEBUG

@@ -705,7 +705,7 @@ static void blockemm_bylen_fn(const char *token, char *value, void *setting, FIL
 			num = sscanf(ptr, "%hd%c%hd", &blocklen->min, &dash, &blocklen->max);
 			if(num <= 0)
 			{
-				free(blocklen);
+				NULLFREE(blocklen);
 				fprintf(stderr, "blockemm-bylen parse error: %s\n", value);
 				continue;
 			}
@@ -1176,7 +1176,7 @@ int32_t init_readerdb(void)
 	struct s_reader *rdr;
 	if(!cs_malloc(&rdr, sizeof(struct s_reader)))
 	{
-		free(token);
+		NULLFREE(token);
 		return 1;
 	}
 
@@ -1210,7 +1210,7 @@ int32_t init_readerdb(void)
 		*value++ = '\0';
 		chk_reader(trim(strtolower(token)), trim(value), rdr);
 	}
-	free(token);
+	NULLFREE(token);
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr)))   //build active readers list
 	{

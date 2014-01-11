@@ -210,7 +210,7 @@ static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar
 
 	cs_debug_mask(D_TRACE, "radegast: sending ecm");
 	cs_ddump_mask(D_CLIENT, ecmbuf, er->ecmlen + 30, "ecm:");
-	free(ecmbuf);
+	NULLFREE(ecmbuf);
 	return ((n < 1) ? (-1) : 0);
 }
 

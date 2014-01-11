@@ -799,15 +799,15 @@ static uint32_t resize_pfd_cllist(struct pollfd **pfd, struct s_client ***cl_lis
 		struct s_client **cl_list_new;
 		if(!cs_malloc(&cl_list_new, new_size * sizeof(cl_list)))
 		{
-			free(pfd_new);
+			NULLFREE(pfd_new);
 			return old_size;
 		}
 		if(old_size > 0)
 		{
 			memcpy(pfd_new, *pfd, old_size * sizeof(struct pollfd));
 			memcpy(cl_list_new, *cl_list, old_size * sizeof(cl_list));
-			free(*pfd);
-			free(*cl_list);
+			NULLFREE(*pfd);
+			NULLFREE(*cl_list);
 		}
 		*pfd = pfd_new;
 		*cl_list = cl_list_new;
@@ -1004,8 +1004,8 @@ static void process_clients(void)
 		cs_ftime(&start); // register start time for new poll next run
 		first_client->last = time((time_t *)0);
 	}
-	free(pfd);
-	free(cl_list);
+	NULLFREE(pfd);
+	NULLFREE(cl_list);
 	return;
 }
 
@@ -1469,8 +1469,8 @@ int32_t main(int32_t argc, char *argv[])
 
 	stop_garbage_collector();
 
-	free(first_client->account);
-	free(first_client);
+	NULLFREE(first_client->account);
+	NULLFREE(first_client);
 
 	// This prevents the compiler from removing config_mak from the final binary
 	syslog_ident = config_mak;

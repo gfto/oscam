@@ -1097,7 +1097,7 @@ static void write_msg(struct s_reader *reader, MAILMSG *msg, uint32_t baseyear)
 	fprintf(fp, "%04X:%08X:%02d/%02d/%04d:%04X:\"%s\":\"%s\"\n", msg->caid, msg->serial, day, mon, year,
 			msg->id, msg->subject, msg->message);
 	fclose(fp);
-	free(msg->message);
+	NULLFREE(msg->message);
 	msg->message = msg->subject = 0;
 	msg->written = 1;
 }
@@ -1164,7 +1164,7 @@ void videoguard_mail_msg(struct s_reader *rdr, uint8_t *data)
 		msg->len = submsg_len;
 		if(!cs_malloc(&msg->message, msg_size))
 		{
-			free(msg);
+			NULLFREE(msg);
 			return;
 		}
 		memset(msg->message, 0, msg_size);

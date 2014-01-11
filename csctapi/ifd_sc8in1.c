@@ -483,7 +483,7 @@ static int32_t MCR_DisplayText(struct s_reader *reader, char *text, uint16_t tex
 		if(!cs_malloc(&display->text, text_len))
 		{
 			rdr_log(reader, "MCR_DisplayText: Out of memory.");
-			free(display);
+			NULLFREE(display);
 			return ERROR;
 		}
 		memcpy(display->text, text, text_len);
@@ -619,8 +619,8 @@ static void *mcr_update_display_thread(void *param)
 			{
 				cs_writelock(&crdr_data->sc8in1_display_lock);
 				struct s_sc8in1_display *next = crdr_data->display->next;
-				free(crdr_data->display->text);
-				free(crdr_data->display);
+				NULLFREE(crdr_data->display->text);
+				NULLFREE(crdr_data->display);
 				crdr_data->display = next;
 				cs_writeunlock(&crdr_data->sc8in1_display_lock);
 			}

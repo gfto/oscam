@@ -109,7 +109,7 @@ static void *chkcache_process(void)
 					wfc=NULL;
 					if(!cs_malloc(&wfc, sizeof(struct s_write_from_cache)))
 					{
-						free(ecm);
+						NULLFREE(ecm);
 						continue;
 					}
 
@@ -118,12 +118,12 @@ static void *chkcache_process(void)
 
 					if(!add_job(er->client, ACTION_ECM_ANSWER_CACHE, wfc, sizeof(struct s_write_from_cache)))   //write_ecm_answer_fromcache
 					{
-						free(ecm);
+						NULLFREE(ecm);
 						continue;
 					}
 				}
 				else
-					{ free(ecm); }
+					{ NULLFREE(ecm); }
 			}
 		}
 		cs_readunlock(&ecmcache_lock);
@@ -335,7 +335,7 @@ uint8_t check_cacheex_filter(struct s_client *cl, ECM_REQUEST *er)
 	  )
 		{ return 1; }
 
-	free(er);
+	NULLFREE(er);
 	return 0;
 }
 
@@ -609,7 +609,7 @@ void cacheex_load_config_file(void)
 	while(old_list)
 	{
 		entry = old_list->next;
-		free(old_list);
+		NULLFREE(old_list);
 		old_list = entry;
 	}
 }

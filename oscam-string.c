@@ -32,7 +32,7 @@ bool cs_realloc(void *result, size_t size)
 	if(*tmp == NULL)
 	{
 		fprintf(stderr, "%s: ERROR: Can't allocate %zu bytes!", __func__, size);
-		free(*tmp2);
+		NULLFREE(*tmp2);
 	}
 	return !!*tmp;
 }

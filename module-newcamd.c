@@ -1247,7 +1247,7 @@ static void newcamd_report_cards(struct s_client *client)
 				}
 		}
 	}
-	free(cd);
+	NULLFREE(cd);
 
 }
 

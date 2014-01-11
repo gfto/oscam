@@ -79,7 +79,7 @@ void webif_tpls_prepare(void)
 	{
 		/* this should NEVER happen */
 		cs_log("internal error - decompression failed: %d\n", r);
-		free(tpls);
+		NULLFREE(tpls);
 		tpls_count = 0;
 	}
 
@@ -112,10 +112,10 @@ void webif_tpls_free(void)
 	int32_t i;
 	for(i = 0; i < tpls_count; ++i)
 	{
-		free(tpls[i].extra_data);
+		NULLFREE(tpls[i].extra_data);
 	}
-	free(tpls_data);
-	free(tpls);
+	NULLFREE(tpls_data);
+	NULLFREE(tpls);
 }
 
 /* Adds a name->value-mapping or appends to it. You will get a reference back which you may freely
@@ -150,7 +150,7 @@ char *tpl_addVar(struct templatevars *vars, uint8_t addmode, char *name, char *v
 		len = strlen(value) + 1;
 		if(!cs_malloc(&tmp, len))
 		{
-			free((*vars).names[(*vars).varscnt]);
+			NULLFREE((*vars).names[(*vars).varscnt]);
 			return "";
 		}
 		memcpy(tmp, value, len);
@@ -217,7 +217,7 @@ char *tpl_printf(struct templatevars *vars, uint8_t addmode, char *varname, char
 	else
 	{
 		char *tmp = tpl_addVar(vars, addmode, varname, result);
-		free(result);
+		NULLFREE(result);
 		result = tmp;
 	}
 	return result;
@@ -270,28 +270,28 @@ struct templatevars *tpl_create(void)
 	(*vars).tmpcnt = 0;
 	if(!cs_malloc(&(*vars).names, (*vars).varsalloc * sizeof(char **)))
 	{
-		free(vars);
+		NULLFREE(vars);
 		return NULL;
 	}
 	if(!cs_malloc(&(*vars).values, (*vars).varsalloc * sizeof(char **)))
 	{
-		free((*vars).names);
-		free(vars);
+		NULLFREE((*vars).names);
+		NULLFREE(vars);
 		return NULL;
 	}
 	if(!cs_malloc(&(*vars).vartypes, (*vars).varsalloc * sizeof(uint8_t *)))
 	{
-		free((*vars).names);
-		free((*vars).values);
-		free(vars);
+		NULLFREE((*vars).names);
+		NULLFREE((*vars).values);
+		NULLFREE(vars);
 		return NULL;
 	}
 	if(!cs_malloc(&(*vars).tmp, (*vars).tmpalloc * sizeof(char **)))
 	{
-		free((*vars).names);
-		free((*vars).values);
-		free((*vars).vartypes);
-		free(vars);
+		NULLFREE((*vars).names);
+		NULLFREE((*vars).values);
+		NULLFREE((*vars).vartypes);
+		NULLFREE(vars);
 		return NULL;
 	}
 	return vars;
@@ -303,18 +303,18 @@ void tpl_clear(struct templatevars *vars)
 	int32_t i;
 	for(i = (*vars).varscnt - 1; i >= 0; --i)
 	{
-		free((*vars).names[i]);
-		free((*vars).values[i]);
+		NULLFREE((*vars).names[i]);
+		NULLFREE((*vars).values[i]);
 	}
-	free((*vars).names);
-	free((*vars).values);
-	free((*vars).vartypes);
+	NULLFREE((*vars).names);
+	NULLFREE((*vars).values);
+	NULLFREE((*vars).vartypes);
 	for(i = (*vars).tmpcnt - 1; i >= 0; --i)
 	{
-		free((*vars).tmp[i]);
+		NULLFREE((*vars).tmp[i]);
 	}
-	free((*vars).tmp);
-	free(vars);
+	NULLFREE((*vars).tmp);
+	NULLFREE(vars);
 }
 
 /* Creates a path to a template file. You need to set the resultsize to the correct size of result. */
@@ -557,7 +557,7 @@ char *tpl_getTpl(struct templatevars *vars, const char *name)
 			++tpl;
 		}
 	}
-	free(tplorg);
+	NULLFREE(tplorg);
 	result[respos] = '\0';
 	tpl_addTmp(vars, result);
 	return result;
@@ -627,7 +627,7 @@ void tpl_checkOneDirDiskRevisions(const char *subdir)
 			}
 			else { cs_log("WARNING: Your http disk template %s is in the old template format without revision info. Please consider upgrading it!", path); }
 			if(error) { cs_log("If you are sure that it is current, add the following line at the beginning of the template to suppress this warning: <!--OSCam;%lu;%s;%s;%s-->", curchecksum, CS_VERSION, CS_SVN_VERSION, ifdefs); }
-			free(tplorg);
+			NULLFREE(tplorg);
 		}
 	}
 }

@@ -440,7 +440,7 @@ int32_t accept_connection(struct s_module *module, int8_t module_idx, int8_t por
 
 			if(cs_check_violation(SIN_GET_ADDR(cad), port->s_port))
 			{
-				free(buf);
+				NULLFREE(buf);
 				return 0;
 			}
 
@@ -468,7 +468,7 @@ int32_t accept_connection(struct s_module *module, int8_t module_idx, int8_t por
 			add_job(cl, ACTION_CLIENT_UDP, buf, n + 3);
 		}
 		else
-			{ free(buf); }
+			{ NULLFREE(buf); }
 	}
 	else     //TCP
 	{

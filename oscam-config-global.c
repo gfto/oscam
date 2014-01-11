@@ -1031,7 +1031,7 @@ int32_t init_config(void)
 					cs_conf, line, cur_section->section, ttoken, tvalue);
 		}
 	}
-	free(token);
+	NULLFREE(token);
 	fclose(fp);
 	if(cur_section) { config_list_apply_fixups(cur_section->config, &cfg); }
 	return 0;

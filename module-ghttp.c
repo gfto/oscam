@@ -241,7 +241,7 @@ static bool _is_post_context(LLIST *ca_contexts, ECM_REQUEST *er, bool remove_da
 		existing = (s_ca_context *)ll_contains_data(ca_contexts, ctx, sizeof(s_ca_context));
 		if(remove_data)
 			{ ll_remove_data(ca_contexts, existing); }
-		free(ctx);
+		NULLFREE(ctx);
 	}
 	return existing != NULL;
 }
@@ -252,7 +252,7 @@ static void _add_context(LLIST *ca_contexts, s_ca_context *context)
 	{
 		ll_append(ca_contexts, context);
 	}
-	else { free(context); }
+	else { NULLFREE(context); }
 
 	while(ll_count(ca_contexts) > 64)
 		{ ll_remove_first_data(ca_contexts); }
@@ -541,7 +541,7 @@ static int32_t _ghttp_http_get(struct s_client *client, uint32_t hash, int odd)
 	if(encauth)    // basic auth login
 	{
 		ret = snprintf((char *)req, sizeof(req), "GET /api/c/%d/%x HTTP/1.1\r\nHost: %s\r\nAuthorization: Basic %s\r\n\r\n", odd ? 81 : 80, hash, context->host_id, encauth);
-		free(encauth);
+		NULLFREE(encauth);
 	}
 	else
 	{
@@ -573,7 +573,7 @@ static int32_t _ghttp_post_ecmdata(struct s_client *client, ECM_REQUEST *er)
 	if(encauth)    // basic auth login
 	{
 		ret = snprintf((char *)req, sizeof(req), "POST /api/e/%x/%x/%x/%x/%x/%x HTTP/1.1\r\nHost: %s\r\nAuthorization: Basic %s\r\nContent-Length: %d\r\n\r\n", er->onid, er->tsid, er->pid, er->srvid, er->caid, er->prid, context->host_id, encauth, er->ecmlen);
-		free(encauth);
+		NULLFREE(encauth);
 	}
 	else
 	{
@@ -607,10 +607,10 @@ static bool _is_pid_ignored(ECM_REQUEST *er)
 		ignore->pid = er->pid;
 		if(ll_contains_data(ghttp_ignored_contexts, ignore, sizeof(s_ca_context)))
 		{
-			free(ignore);
+			NULLFREE(ignore);
 			return true;
 		}
-		else { free(ignore); }
+		else { NULLFREE(ignore); }
 	}
 	return false;
 }
@@ -706,7 +706,7 @@ static int32_t ghttp_capmt_notify(struct s_client *client, struct demux_s *demux
 	if(encauth)    // basic auth login
 	{
 		ret = snprintf((char *)req, sizeof(req), "%s /api/p/%x/%x/%x/%x/%x HTTP/1.1\r\nHost: %s\r\nAuthorization: Basic %s%s\r\n\r\n", ((pids_len > 0) ? "POST" : "GET"), demux->onid, demux->tsid, demux->program_number, demux->ECMpidcount, demux->enigma_namespace, context->host_id, encauth, lenhdr);
-		free(encauth);
+		NULLFREE(encauth);
 	}
 	else
 	{
@@ -730,7 +730,7 @@ static int32_t ghttp_capmt_notify(struct s_client *client, struct demux_s *demux
 
 	ret = ghttp_send(client, req, ret + pids_len);
 
-	if(pids_len > 0) { free(pids); }
+	if(pids_len > 0) { NULLFREE(pids); }
 
 	return 0;
 }

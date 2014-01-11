@@ -36,8 +36,7 @@ void add_garbage(void *data)
 
 	if(!garbage_collector_active || garbage_debug == 1)
 	{
-		//cs_sleepms(1);
-		free(data);
+		NULLFREE(data);
 		return;
 	}
 
@@ -45,8 +44,8 @@ void add_garbage(void *data)
 	struct cs_garbage *garbage;
 	if(!cs_malloc(&garbage, sizeof(struct cs_garbage)))
 	{
-		//cs_sleepms(1);
-		free(data);
+		cs_log("*** MEMORY FULL -> FREEING DIRECT MAY LEAD TO INSTABILITY!!!! ***");
+		NULLFREE(data);
 		return;
 	}
 	garbage->time = time(NULL);
@@ -69,7 +68,7 @@ void add_garbage(void *data)
 				cs_log("Current garbage addition: %s, line %d.", file, line);
 				cs_log("Original garbage addition: %s, line %d.", garbagecheck->file, garbagecheck->line);
 				cs_writeunlock(&garbage_lock[bucket]);
-				free(garbage);
+				NULLFREE(garbage);
 				return;
 			}
 			garbagecheck = garbagecheck->next;
@@ -125,9 +124,8 @@ static void garbage_collector(void)
 			while(garbage)
 			{
 				next = garbage->next;
-				if(garbage->data)
-					free(garbage->data);
-				free(garbage);
+				NULLFREE(garbage->data);
+				NULLFREE(garbage);
 				garbage = next;
 			}
 		}
@@ -184,8 +182,8 @@ void stop_garbage_collector(void)
 			while(garbage_first[i])
 			{
 				struct cs_garbage *next = garbage_first[i]->next;
-				free(garbage_first[i]->data);
-				free(garbage_first[i]);
+				NULLFREE(garbage_first[i]->data);
+				NULLFREE(garbage_first[i]);
 				garbage_first[i] = next;
 			}
 		}

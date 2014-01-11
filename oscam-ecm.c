@@ -61,14 +61,14 @@ void cacheex_timeout(ECM_REQUEST *er)
 			struct s_write_from_cache *wfc=NULL;
 			if(!cs_malloc(&wfc, sizeof(struct s_write_from_cache)))
 			{
-				free(ecm);
+				NULLFREE(ecm);
 				return;
 			}
 			wfc->er_new=er;
 			wfc->er_cache=ecm;
 
 			if(!add_job(er->client, ACTION_ECM_ANSWER_CACHE, wfc, sizeof(struct s_write_from_cache)))  //write_ecm_answer_fromcache
-				{ free(ecm); }
+				{ NULLFREE(ecm); }
 
 			return;
 		}
@@ -667,8 +667,8 @@ void free_push_in_ecm(ECM_REQUEST *ecm)
 {
 	cacheex_free_csp_lastnodes(ecm);
 	if(ecm->src_data)
-		{ free(ecm->src_data); }
-	free(ecm);
+		{ NULLFREE(ecm->src_data); }
+	NULLFREE(ecm);
 }
 
 
@@ -1270,7 +1270,7 @@ void add_cache_from_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t csp_ha
 		ecm_pushed_deleted = ecm;
 		cs_writeunlock(&ecm_pushed_deleted_lock);
 #else
-		free(ecm);
+		NULLFREE(ecm);
 #endif
 	}
 }
@@ -2148,7 +2148,7 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 		struct s_write_from_cache *wfc = NULL;
 		if(!cs_malloc(&wfc, sizeof(struct s_write_from_cache)))
 		{
-			free(ecm);
+			NULLFREE(ecm);
 			free_ecm(er);
 			return;
 		}
@@ -2156,7 +2156,7 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 		wfc->er_new = er;
 		wfc->er_cache = ecm;
 		write_ecm_answer_fromcache(wfc);
-	  	free(ecm);
+		NULLFREE(ecm);
 	  	free_ecm(er);
 
 		return;

@@ -475,7 +475,7 @@ struct s_auth *init_userdb(void)
 		}
 		chk_account(trim(strtolower(token)), trim(value), account);
 	}
-	free(token);
+	NULLFREE(token);
 	fclose(fp);
 
 	for(account = authptr; account; account = account->next)

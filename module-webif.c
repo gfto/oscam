@@ -217,7 +217,7 @@ static char *get_ecm_historystring(struct s_client *cl)
 		}
 		if(strlen(value) == 0)
 		{
-			free(value);
+			NULLFREE(value);
 			return "";
 		}
 		else { return value; }
@@ -2266,7 +2266,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 				}
 			}
 		}
-		free(statarray);
+		NULLFREE(statarray);
 	}
 	else
 #endif
@@ -3513,7 +3513,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				struct cc_card **cardarray = get_sorted_card_copy(sharelist2, 0, &cardsize);
 				ll_destroy(sharelist2);
 				print_cards(vars, params, cardarray, cardsize, 1, NULL, offset, apicall);
-				free(cardarray);
+				NULLFREE(cardarray);
 			}
 			else
 			{
@@ -3523,7 +3523,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				{
 					struct cc_card **cardarray = get_sorted_card_copy(rcc->cards, 0, &cardsize);
 					print_cards(vars, params, cardarray, cardsize, 0, rdr, offset, apicall);
-					free(cardarray);
+					NULLFREE(cardarray);
 				}
 			}
 #endif
@@ -4773,7 +4773,7 @@ static char *send_oscam_shutdown(struct templatevars * vars, FILE * f, struct ur
 		{
 			char *CSS = tpl_getUnparsedTpl("CSS", 1, "");
 			tpl_addVar(vars, TPLADD, "STYLESHEET", CSS);
-			free(CSS);
+			NULLFREE(CSS);
 			tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", SHUTDOWNREFRESH);
 			tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
 			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
@@ -4803,7 +4803,7 @@ static char *send_oscam_shutdown(struct templatevars * vars, FILE * f, struct ur
 		{
 			char *CSS = tpl_getUnparsedTpl("CSS", 1, "");
 			tpl_addVar(vars, TPLADD, "STYLESHEET", CSS);
-			free(CSS);
+			NULLFREE(CSS);
 			tpl_addVar(vars, TPLADD, "REFRESHTIME", "5");
 			tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
 			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
@@ -6287,7 +6287,7 @@ static int32_t readRequest(FILE * f, IN_ADDR_T in, char **result, int8_t forcePl
 		if(bufsize > 102400)
 		{
 			cs_log("error: too much data received from %s", cs_inet_ntoa(in));
-			free(*result);
+			NULLFREE(*result);
 			*result = NULL;
 			return -1;
 		}
@@ -6407,19 +6407,19 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			{
 				if((protocol = strtok_r(NULL, "\r", &saveptr1)) == NULL)
 				{
-					free(filebuf);
+					NULLFREE(filebuf);
 					return -1;
 				}
 			}
 			else
 			{
-				free(filebuf);
+				NULLFREE(filebuf);
 				return -1;
 			}
 		}
 		else
 		{
-			free(filebuf);
+			NULLFREE(filebuf);
 			return -1;
 		}
 		tmp = protocol + strlen(protocol) + 2;
@@ -6550,7 +6550,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				send_headers(f, 401, "Unauthorized", extraheader, "text/html", 0, strlen(msg), msg, 0);
 				webif_write(msg, f);
 				NULLFREE(authheader);
-				free(filebuf);
+				NULLFREE(filebuf);
 				if(*keepalive) { continue; }
 				else { return 0; }
 			}
@@ -6573,7 +6573,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			if(vars == NULL)
 			{
 				send_error500(f);
-				free(filebuf);
+				NULLFREE(filebuf);
 				return 0;
 			}
 
@@ -6742,7 +6742,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			}
 			tpl_clear(vars);
 		}
-		free(filebuf);
+		NULLFREE(filebuf);
 	}
 	while(*keepalive == 1);
 	return 0;
@@ -6762,7 +6762,7 @@ static void *serve_process(void *conn)
 	SSL *ssl = myconn->ssl;
 	pthread_setspecific(getssl, ssl);
 #endif
-	free(myconn);
+	NULLFREE(myconn);
 
 	pthread_setspecific(getip, &in);
 	pthread_setspecific(getclient, cl);
@@ -7055,7 +7055,7 @@ static void *http_server(void *UNUSED(d))
 			if(ret)
 			{
 				cs_log("ERROR: can't create thread for webif (errno=%d %s)", ret, strerror(ret));
-				free(conn);
+				NULLFREE(conn);
 			}
 			else
 				{ pthread_detach(workthread); }

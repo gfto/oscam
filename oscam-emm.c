@@ -269,7 +269,7 @@ static void saveemm(struct s_reader *aureader, EMM_PACKET *ep)
 			{
 				fprintf(fp, "%s   %s   ", buf, cs_hexdump(0, ep->hexserial, 8, tmp, sizeof(tmp)));
 				fprintf(fp, "%s\n", cs_hexdump(0, ep->emm, emm_length + 3, tmp2, (emm_length + 3) * 2 + 1));
-				free(tmp2);
+				NULLFREE(tmp2);
 				rdr_log(aureader, "Successfully added EMM to %s", token);
 			}
 			fclose(fp);
@@ -603,7 +603,7 @@ void do_emm_from_file(struct s_reader *reader)
 	if(ret < 1 && ferror(fp))
 	{
 		rdr_log(reader, "ERROR: Can't read EMM from file '%s' (errno=%d %s)", token, errno, strerror(errno));
-		free(eptmp);
+		NULLFREE(eptmp);
 		fclose(fp);
 		return;
 	}
@@ -619,7 +619,7 @@ void do_emm_from_file(struct s_reader *reader)
 	if(cs && cs->get_emm_type && !cs->get_emm_type(eptmp, reader))
 	{
 		rdr_debug_mask(reader, D_EMM, "emm skipped, get_emm_type() returns error");
-		free(eptmp);
+		NULLFREE(eptmp);
 		return;
 	}
 
@@ -643,7 +643,7 @@ void do_emm_from_file(struct s_reader *reader)
 	reader->b_nano = save_b_nano;
 	reader->saveemm = save_saveemm;
 
-	free(eptmp);
+	NULLFREE(eptmp);
 }
 
 void emm_sort_nanos(unsigned char *dest, const unsigned char *src, int32_t len)

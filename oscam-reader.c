@@ -90,13 +90,13 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 							memcpy(erold->ecmd5, reader->rlecmh[h].ecmd5, CS_ECMSTORESIZE); // replace md5 hash
 							struct ecm_request_t *ecm = NULL;
 							ecm = check_cache(erold, erold->client); //CHECK IF FOUND ECM IN CACHE
-							free(erold);
+							NULLFREE(erold);
 							if(ecm)   //found in cache
 								{ write_ecm_answer(reader, er, ecm->rc, ecm->rcEx, ecm->cw, NULL); }
 							else
 								{ write_ecm_answer(reader, er, E_NOTFOUND, E2_RATELIMIT, NULL, "Ratelimiter: no slots free!"); }
 
-							free(ecm);
+							NULLFREE(ecm);
 							return -2;
 						}
 						continue;

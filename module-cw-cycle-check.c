@@ -161,7 +161,7 @@ void cleanupcwcycle(void)
 		temp = currentnode->next;
 		if(!currentnode->old)
 			{ cw_cc_list_size--; }
-		free(currentnode);
+		NULLFREE(currentnode);
 		currentnode = temp;
 	}
 	if(bcleanup)
@@ -618,7 +618,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 	}
 	else if(cwc)
 	{
-		free(cwc);
+		NULLFREE(cwc);
 	}
 	return ret;
 }
