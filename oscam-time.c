@@ -175,17 +175,38 @@ int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms)
 	return comp_timeb(tb, &tb_now);
 }
 
-void init_rightclock_cond(pthread_cond_t *cond)
-{
-	pthread_condattr_t attr;
-	pthread_condattr_init(&attr); // init condattr with defaults
-
-#if defined (__USE_XOPEN2K) && defined (CLOCKFIX) && defined(CLOCK_MONOTONIC)
-	enum clock_type ctype = cs_getclocktype(NULL);
-	pthread_condattr_setclock(&attr, (ctype == CLOCK_TYPE_MONOTONIC) ? CLOCK_MONOTONIC : CLOCK_REALTIME);
+#if defined(__UCLIBC__) && defined(__UCLIBC_MAJOR__) && defined(__UCLIBC_MINOR__)
+#  if defined(__UCLIBC_SUBLEVEL__)
+#    define __UCLIBC_VER (__UCLIBC_MAJOR__ * 10000 + __UCLIBC_MINOR__ * 100 + __UCLIBC_SUBLEVEL__)
+#  endif
+#else
+#  define __UCLIBC_VER 999999
 #endif
 
+// Assume we have HAVE_pthread_condattr_setclock if CLOCK_MONOTONIC is defined
+#if defined(CLOCKFIX) && defined(CLOCK_MONOTONIC)
+#undef HAVE_pthread_condattr_setclock
+#define HAVE_pthread_condattr_setclock 1
+#endif
+
+#if defined(HAVE_pthread_condattr_setclock)
+// UCLIBC 0.9.28 does not have pthread_condattr_setclock
+#  if __UCLIBC_VER < 929
+#     undef HAVE_pthread_condattr_setclock
+#  endif
+#endif
+
+void init_rightclock_cond(pthread_cond_t *cond)
+{
+#if !defined(HAVE_pthread_condattr_setclock)
+	(void)cond;
+#else
+	pthread_condattr_t attr;
+	pthread_condattr_init(&attr); // init condattr with defaults
+	enum clock_type ctype = cs_getclocktype(NULL);
+	pthread_condattr_setclock(&attr, (ctype == CLOCK_TYPE_MONOTONIC) ? CLOCK_MONOTONIC : CLOCK_REALTIME);
 	pthread_cond_init(cond, &attr); // init thread with right clock assigned
+#endif
 }
 
 void sleepms_on_cond(pthread_cond_t *cond, pthread_mutex_t *mutex, uint32_t msec)
@@ -227,7 +248,7 @@ time_t cs_walltime(struct timeb *tp)
 
 void cs_gettime(struct timespec *ts)
 {
-#if !defined (__USE_XOPEN2K) || !defined (CLOCKFIX) || (!defined (CLOCK_MONOTONIC) && !defined (__MACH__))
+#if !defined(CLOCKFIX) || (!defined(CLOCK_MONOTONIC) && !defined(__MACH__))
 	struct timeval tv;
     gettimeofday(&tv, NULL);
 	ts->tv_sec = tv.tv_sec;
