@@ -1,6 +1,12 @@
 #ifndef OSCAM_TIME_H_
 #define OSCAM_TIME_H_
 
+enum clock_type {
+	CLOCK_TYPE_UNKNOWN,
+	CLOCK_TYPE_REALTIME,
+	CLOCK_TYPE_MONOTONIC,
+};
+
 int32_t comp_timeb(struct timeb *tpa, struct timeb *tpb);
 time_t cs_timegm(struct tm *tm);
 struct tm *cs_gmtime_r(const time_t *timep, struct tm *r);
@@ -14,7 +20,7 @@ void sleepms_on_cond(pthread_cond_t *cond, pthread_mutex_t *mutex, uint32_t msec
 
 time_t cs_walltime(struct timeb *tp);
 void cs_gettime(struct timespec *ts);
-uint8_t cs_getclocktype(struct timeb *now);
+enum clock_type cs_getclocktype(struct timeb *now);
 void init_rightclock_cond(pthread_cond_t *cond);
 
 #endif

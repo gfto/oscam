@@ -335,12 +335,10 @@ static void write_versionfile(bool use_stdout)
 	write_conf(LCDSUPPORT, "LCD support");
 	write_conf(LEDSUPPORT, "LED support");
 	write_conf(IPV6SUPPORT, "IPv6 support");
-	int8_t n = cs_getclocktype(&now);
-	if (n==2){
-		write_conf(CLOCKFIX, "Clockfix using clockmonotonic");
-	}
-	else {
-		write_conf(CLOCKFIX, "Clockfix using realtimeclock");
+	switch (cs_getclocktype(&now)) {
+		case CLOCK_TYPE_UNKNOWN  : write_conf(CLOCKFIX, "Clockfix with UNKNOWN clock"); break;
+		case CLOCK_TYPE_REALTIME : write_conf(CLOCKFIX, "Clockfix with realtime clock"); break;
+		case CLOCK_TYPE_MONOTONIC: write_conf(CLOCKFIX, "Clockfix with monotonic clock"); break;
 	}
 	write_conf(CS_CACHEEX, "Cache exchange support");
 
