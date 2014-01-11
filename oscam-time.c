@@ -183,13 +183,16 @@ int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms)
 
 // Assume we have HAVE_pthread_condattr_setclock if CLOCK_MONOTONIC is defined
 #if defined(CLOCKFIX) && defined(CLOCK_MONOTONIC)
-#undef HAVE_pthread_condattr_setclock
 #define HAVE_pthread_condattr_setclock 1
 #endif
 
 #if defined(HAVE_pthread_condattr_setclock)
 // UCLIBC 0.9.30 does not have pthread_condattr_setclock
 #  if __UCLIBC_VER < 931
+#     undef HAVE_pthread_condattr_setclock
+#  endif
+// glibc 2.3.6 in ppc old toolchain do not have pthread_condattr_setclock
+#  if __GNUC__ && __GNUC_PREREQ(2,4)
 #     undef HAVE_pthread_condattr_setclock
 #  endif
 #endif
