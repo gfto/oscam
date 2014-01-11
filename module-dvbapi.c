@@ -1796,7 +1796,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 	demux[demux_index].curindex = -1;
 	demux[demux_index].pidindex = -1;
 
-	struct s_channel_cache *c;
+	struct s_channel_cache *c = NULL;
 
 	if(cfg.dvbapi_requestmode == 1)
 	{
