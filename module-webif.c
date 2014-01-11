@@ -4442,30 +4442,25 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	tpl_printf(vars, TPLADD, "REL_CWCACHE", "%.2f", first_client->cwcache * 100 / ecmsum);
 	tpl_printf(vars, TPLADD, "REL_CWTUN", "%.2f", first_client->cwtun * 100 / ecmsum);
 
-	//Memory-CPU Info for linux based systems
-#if defined(__linux__)
-
 	//copy struct to p_stat_old for cpu_usage calculation
 	p_stat_old = p_stat_cur;
 
+	//Memory-CPU Info for linux based systems
+#if defined(__linux__)
 	//get actual stats
 	if(!get_stats_linux(getpid(),&p_stat_cur)){
 		if(p_stat_old.cpu_total_time != 0){
 			calc_cpu_usage_pct(&p_stat_cur, &p_stat_old);
 		}
-		//update template with given values
-		set_status_info(vars, p_stat_cur);
 	}
 	else{
 		//something went wrong, so fill with "N/A"
 		p_stat_cur.check_available = 65535;
-		set_status_info(vars, p_stat_cur);
 	}
-
 #else // if not linux, fill with "N/A" but probably in future gets filled also for other platforms
 	p_stat_cur.check_available = 65535;
-	set_status_info(vars, p_stat_cur);
 #endif
+	set_status_info(vars, p_stat_cur);
 
 	if(cfg.http_showmeminfo == 1 || cfg.http_showuserinfo == 1 || (cfg.http_showcacheexinfo == 1 && config_enabled(CS_CACHEEX))){
 		tpl_addVar(vars, TPLADD, "FOOTER", "footerwidth");
