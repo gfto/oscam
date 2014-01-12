@@ -1269,7 +1269,7 @@ void dvbapi_stop_descrambling(int32_t demux_id)
 	if(i < 0) { i = 0; }
 	int32_t idx = demux[demux_id].ECMpids[i].index;
 #ifdef WITH_STAPI
-	idx = -1; // remove all!
+	idx = 0;  // 0-1 = -1 means remove all!
 #endif
 	get_servicename(dvbapi_client, demux[demux_id].program_number, demux[demux_id].ECMpidcount > 0 ? demux[demux_id].ECMpids[i].CAID : 0, channame);
 	cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d stop descrambling program number %04X (%s)", demux_id, demux[demux_id].program_number, channame);
