@@ -655,7 +655,7 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 	tpl_printf(vars, TPLADD, "MAXCYCLELIST", "%d", cfg.maxcyclelist);
 	tpl_printf(vars, TPLADD, "KEEPCYCLETIME", "%d", cfg.keepcycletime);
 
-	tpl_addVar(vars, TPLADD, "ONBADCYCLE1", (cfg.onbadcycle == 1) ? "checked" : "");
+	tpl_addVar(vars, TPLADD, "ONBADCYCLE1", (cfg.onbadcycle == 1) ? "selected" : "");
 
 	tpl_addVar(vars, TPLADD, "DROPOLD", (cfg.cwcycle_dropold == 1) ? "checked" : "");
 
