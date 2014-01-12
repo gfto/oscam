@@ -314,7 +314,7 @@ void smartreader_init(struct s_reader *reader)
 
 	crdr_data->type = TYPE_BM;    /* chip type */
 	crdr_data->baudrate = -1;
-	crdr_data->bitbang_enabled = 0;  /* 0: normal mode 1: any of the bitbang modes enabled */
+	crdr_data->bitbang_enabled = 1;  /* 0: normal mode 1: any of the bitbang modes enabled */
 
 	crdr_data->writebuffer_chunksize = 4096;
 	crdr_data->max_packet_size = 0;
@@ -1377,7 +1377,7 @@ static int32_t SR_Init(struct s_reader *reader)
 	pthread_cond_init(&crdr_data->g_usb_cond, NULL);
 
 	cs_writeunlock(&sr_lock);
-	rdr_log(reader," Creating Pthread");
+	rdr_log(reader," Pthread Wordt gecreeerd");
 	ret = pthread_create(&crdr_data->rt, NULL, ReaderThread, (void *)(reader));
 	if(ret)
 	{
@@ -1399,7 +1399,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 	static const char *const parity_str[5] = {"NONE", "ODD", "EVEN", "MARK", "SPACE"};
 
 //	seems to be ok after all
-	if (reader->autospeed == 0 && reader->cardmhz > 369)
+	if (reader->autospeed == 0 && reader->cardmhz == reader->mhz && reader->cardmhz > 369)
 	crdr_data->fs = reader->cardmhz * 10000; else 
 	crdr_data->fs = 3690000;
 
