@@ -211,7 +211,7 @@ void init_rightclock_cond(pthread_cond_t *cond)
 {
 	pthread_condattr_t attr;
 	pthread_condattr_init(&attr); // init condattr with defaults
-#if !defined(HAVE_pthread_condattr_setclock)
+#if defined(HAVE_pthread_condattr_setclock)
 	enum clock_type ctype = cs_getclocktype(NULL);
 	pthread_condattr_setclock(&attr, (ctype == CLOCK_TYPE_MONOTONIC) ? CLOCK_MONOTONIC : CLOCK_REALTIME);
 #endif
