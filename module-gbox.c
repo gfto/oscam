@@ -563,13 +563,13 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		gbox->peer.online = 1;
 		if(!data[0xA])
 		{
-			cs_log("<-HelloS from %s (%s:%d)", cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port);
+			cs_log("<-HelloS from %s (%s:%d) V2.%02X with %d cards", cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, gbox->peer.ver, ncards_in_msg);
 			gbox->peer.hello_stat = GBOX_STAT_HELLOR;
 			gbox_send_hello(cli);
 		}
 		else
 		{
-			cs_log("<-HelloR from %s (%s:%d)", cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port);
+			cs_log("<-HelloR from %s (%s:%d) V2.%02X with %d cards", cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, gbox->peer.ver, ncards_in_msg);
 			gbox_send_checkcode(cli);
 		}
 		if(gbox->peer.hello_stat == GBOX_STAT_HELLOS)
