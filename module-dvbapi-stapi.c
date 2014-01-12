@@ -643,6 +643,7 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t idx, uint16_t pid, bool enable, 
 				continue;
 			}
 		}
+		if(p == NULL) continue; // no matching device found -> skip, check next!
 		
 		if(enable){
 			if(dev_list[n].SessionHandle == 0) { continue; }
@@ -654,11 +655,7 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t idx, uint16_t pid, bool enable, 
 			if(demux[demux_id].DescramblerHandle[n] == 0) { continue; } // starting descrambler failed!
 			if(stapi_DescramblerAssociate(demux_id, pid, ASSOCIATE, n)){ // starting descrambler successful -> try to add pid
 				actionneeded = update_streampid_list(n, pid, idx); // successful added pid -> register pid as active
-			} else {
-				actionneeded = remove_streampid_from_list(n, pid, idx); // failed to add pid -> register pid as inactive
 			}
-				
-			
 		}
 		if(!enable){
 			if(demux[demux_id].DescramblerHandle[n] == 0) { continue; }
@@ -673,8 +670,6 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t idx, uint16_t pid, bool enable, 
 			
 			if(stapi_DescramblerAssociate(demux_id, pid, DISASSOCIATE, n)){ // try remove this pid
 				actionneeded = remove_streampid_from_list(n, pid, idx); // remove pid successful -> register this pid as inactive
-			} else {
-				actionneeded = update_streampid_list(n, pid, idx); // remove pid failed -> register this pid as active
 			}
 		}
 	}
