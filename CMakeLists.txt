@@ -543,6 +543,10 @@ add_dependencies (${exe_name} ${csoscam} ${csreaders} ${csmodules})
 
 #----------------------- specific options ------------------------------
 
+if (NOT OSCamOperatingSystem MATCHES "(Mac OS X|Windows/Cygwin|FreeBSD)")
+    target_link_libraries (${exe_name} rt)
+endif (NOT OSCamOperatingSystem MATCHES "(Mac OS X|Windows/Cygwin|FreeBSD)")
+
 if (OSCamOperatingSystem MATCHES "Linux")
 elseif (OSCamOperatingSystem MATCHES "Mac OS X")
     if (NOT HAVE_PCSC EQUAL 0)
