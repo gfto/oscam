@@ -209,15 +209,13 @@ int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms)
 
 void init_rightclock_cond(pthread_cond_t *cond)
 {
-#if !defined(HAVE_pthread_condattr_setclock)
-	(void)cond;
-#else
 	pthread_condattr_t attr;
 	pthread_condattr_init(&attr); // init condattr with defaults
+#if !defined(HAVE_pthread_condattr_setclock)
 	enum clock_type ctype = cs_getclocktype(NULL);
 	pthread_condattr_setclock(&attr, (ctype == CLOCK_TYPE_MONOTONIC) ? CLOCK_MONOTONIC : CLOCK_REALTIME);
-	pthread_cond_init(cond, &attr); // init thread with right clock assigned
 #endif
+	pthread_cond_init(cond, &attr); // init thread with right clock assigned
 }
 
 void sleepms_on_cond(pthread_cond_t *cond, pthread_mutex_t *mutex, uint32_t msec)
