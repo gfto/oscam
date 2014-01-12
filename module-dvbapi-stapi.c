@@ -631,19 +631,20 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t idx, uint16_t pid, bool enable, 
 	}
 
 	bool actionneeded = false;
-	for(n = 0; n < PTINUM; n++)
-	{
-		struct s_dvbapi_priority *p;
+	struct s_dvbapi_priority *p;
 
-		for(p = dvbapi_priority; p != NULL; p = p->next){
-			if(p->type != 's') { continue; }
-			if(strcmp(pmtfile, p->pmtfile) != 0) { continue; } // pmtfile and device pmt doesnt match -> skip!
+	for(p = dvbapi_priority; p != NULL; p = p->next){
+		if(p->type != 's') { continue; }
+		if(strcmp(pmtfile, p->pmtfile) != 0) { continue; } // pmtfile and device pmt doesnt match -> skip!
 
-			if(strcmp(dev_list[n].name, p->devname) != 0){ // devicename and specified devicename in oscam.dvbapi doesnt match -> skip!
-				continue;
+		for(n = 0; n < PTINUM; n++){
+			if(strcmp(dev_list[n].name, p->devname) == 0){ // devicename and specified devicename in oscam.dvbapi do match -> found!
+				break; // lets do some action with this matching device
 			}
 		}
 		if(p == NULL) continue; // no matching device found -> skip, check next!
+		
+		/*/ Do matching stapi device actions /*/
 		
 		if(enable){
 			if(dev_list[n].SessionHandle == 0) { continue; }
