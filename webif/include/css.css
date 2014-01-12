@@ -80,23 +80,23 @@ TD.statuscol0 {text-align:center;width:10px}
 TD.statuscol1 {text-align:center}
 TD.statuscol2 {text-align:center}
 TD.statuscol3 {text-align:center}
-TD.statuscol4 {}
+TD.statuscol4,TD.statuscol4 A {text-align:center;text-decoration:none}
 TD.statuscol5 {text-align:center}
 TD.statuscol6 {text-align:center}
 TD.statuscol7 {text-align:center}
 TD.statuscol8 {text-align:center}
-TD.statuscol9 {}
+TD.statuscol9,TD.statuscol9 A {text-align:center;text-decoration:none}
 TD.statuscol10 {text-align:center}
 TD.statuscol11 {text-align:center}
 TD.statuscol12 {text-align:center}
-TD.statuscol13 {}
+TD.statuscol13,TD.statuscol13 A {text-align:center;text-decoration:none}
 TD.statuscol14 {text-align:center}
 TD.statuscol14 A {text-decoration:none}
 TD.statuscol15 {text-align:center}
 TD.statuscol16 {text-align:center}
 TD.statuscol16 A {text-decoration:none}
 TD.usercol0 {text-align:center}
-TD.usercol1 {}
+TD.usercol1 {text-align:center;text-decoration:none}
 TD.usercol2 {text-align:center}
 TD.usercol3 {text-align:center}
 TD.usercol4 {text-align:center}
@@ -208,7 +208,7 @@ A:hover SPAN {display:block;position:absolute;top:2em;right:1em;padding:10px;col
 ------------------------------------------------------------------------------------*/
 IMG {border:0px solid}
 IMG.icon {border:0px solid;width:22px;height:22px;background-color:#A00;border-radius:3px;-webkit-border-radius:3px}
-IMG.userpicon {max-height:22px;max-width:72px}
+IMG.userpicon {max-height:22px;}
 
 /* 13. SPAN Elements
 ------------------------------------------------------------------------------------*/
@@ -241,3 +241,4 @@ TABLE.statusmeminfo,TABLE.statususerinfo,TABLE.statuscacheexinfo {width:60%;marg
 TH.nameinfo {text-transform:uppercase;text-align:left;background-color:#999}
 .hidden {display:none}
 .visible {}
+.span, span, span a {text-align:center;text-decoration:none}
