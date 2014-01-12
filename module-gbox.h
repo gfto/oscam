@@ -13,7 +13,6 @@ struct gbox_ecm_request_ext
     uint8_t         gbox_hops;
     uint16_t        gbox_peer;
     uint16_t        gbox_mypeer;
-    uint32_t        gbox_peer_key;
     uint16_t        gbox_caid;      //could be calculated 0x05 and 0x0D are
     uint16_t        gbox_prid;      //same as gbox_caid
     uint8_t         gbox_slot;

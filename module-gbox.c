@@ -89,8 +89,6 @@ struct gbox_peer
 	uchar ecm_idx;
 	uchar gbox_count_ecm;
 	time_t t_ecm;
-	uint16_t  last_srvid;
-	uint16_t  last_caid;
 };
 
 struct gbox_data
@@ -117,6 +115,7 @@ static void    gbox_local_cards(struct s_client *cli);
 static void    gbox_init_ecm_request_ext(struct gbox_ecm_request_ext *ere); 	
 static int32_t gbox_client_init(struct s_client *cli);
 static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l);
+static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n);
 static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, uchar *data, int32_t UNUSED(n));
 static int32_t gbox_checkcode_recv(struct s_client *cli, uchar *checkcode);
 static int32_t gbox_decode_cmd(uchar *buf);
@@ -303,7 +302,6 @@ void gbox_init_ecm_request_ext(struct gbox_ecm_request_ext *ere)
 	ere->gbox_hops = 0;
 	ere->gbox_peer = 0;                		
 	ere->gbox_mypeer = 0;
-	ere->gbox_peer_key = 0;
 	ere->gbox_caid = 0;
 	ere->gbox_prid = 0;
 	ere->gbox_slot = 0;
@@ -589,12 +587,91 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 	return 0;
 }
 
+static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
+{
+	struct gbox_data *gbox;
+	struct s_client *cl;
+	int32_t diffcheck = 0;
+
+	cl = switch_client_proxy(cli);
+	gbox = cl->gbox;
+
+	gbox->peer.t_ecm = time((time_t *)0);
+
+	// No ECMs with length < 8 expected
+	if ((((data[19] & 0x0f) << 8) | data[20]) < 8) { return -1; }
+
+	// GBOX_MAX_HOPS not violated
+	if (data[n - 15] + 1 > GBOX_MAXHOPS) { return -1; }
+
+	ECM_REQUEST *er;
+	if(!(er = get_ecmtask())) { return -1; }
+
+	struct gbox_ecm_request_ext *ere;
+	if(!cs_malloc(&ere, sizeof(struct gbox_ecm_request_ext)))
+	{
+        	cs_writeunlock(&gbox->lock);
+              	return -1;
+	}
+
+	uchar *ecm = data + 18; //offset of ECM in gbx message
+
+	er->src_data = ere;                
+	gbox_init_ecm_request_ext(ere);
+
+	gbox->peer.gbox_count_ecm++;
+	er->gbox_ecm_id = gbox->peer.id;
+
+	if(gbox->peer.ecm_idx == 100) { gbox->peer.ecm_idx = 0; }
+
+	er->idx = gbox->peer.ecm_idx++;
+	er->ecmlen = (((ecm[1] & 0x0f) << 8) | ecm[2]) + 3;
+
+	er->pid = data[10] << 8 | data[11];
+	er->srvid = data[12] << 8 | data[13];
+
+	int32_t adr_caid_1 = (((data[19] & 0x0f) << 8) | data[20]) + 26;
+	if(data[adr_caid_1] == 0x05)
+		{ er->caid = (data[adr_caid_1] << 8); }
+	else
+		{ er->caid = (data[adr_caid_1] << 8 | data[adr_caid_1 + 1]); }
+
+//	ei->extra = data[14] << 8 | data[15];
+	memcpy(er->ecm, data + 18, er->ecmlen);
+	ere->gbox_peer = ecm[er->ecmlen] << 8 | ecm[er->ecmlen + 1];
+	ere->gbox_version = ecm[er->ecmlen + 2];
+	ere->gbox_unknown = ecm[er->ecmlen + 3];
+	ere->gbox_type = ecm[er->ecmlen + 4];
+	ere->gbox_caid = ecm[er->ecmlen + 5] << 8 | ecm[er->ecmlen + 6];
+	ere->gbox_prid = ecm[er->ecmlen + 7] << 8 | ecm[er->ecmlen + 8];
+	ere->gbox_mypeer = ecm[er->ecmlen + 10] << 8 | ecm[er->ecmlen + 11];
+	ere->gbox_slot = ecm[er->ecmlen + 12];
+
+	diffcheck = gbox_checkcode_recv(cl, data + n - 14);
+	//TODO: What do we do with our own checkcode @-7?
+	er->gbox_crc = gbox_get_ecmchecksum(er);
+	ere->gbox_hops = data[n - 15] + 1;
+	memcpy(&ere->gbox_routing_info[0], &data[n - 15 - ere->gbox_hops + 1], ere->gbox_hops - 1);
+
+	er->prid = chk_provid(er->ecm, er->caid);
+	cs_debug_mask(D_READER, "<- ECM (%d<-) from server (%s:%d) to cardserver (%04X) SID %04X", ere->gbox_hops, gbox->peer.hostname, cli->port, ere->gbox_peer, er->srvid);
+	get_cw(cl, er);
+
+	//checkcode did not match gbox->peer checkcode
+	if(diffcheck)
+	{
+		//        TODO: Send HelloS here?
+		//        gbox->peer.hello_stat = GBOX_STAT_HELLOS;
+		//                gbox_send_hello(cli);
+	}
+	return 0;
+}
+
 int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 {
 	struct gbox_data *gbox = cli->gbox;
-	int32_t n1 = 0, rc1 = 0, i1, idx, diffcheck = 0;
+	int32_t n1 = 0, rc1 = 0, i1, idx;
 	uchar dcw[16];
-	struct s_client *cl;
 
 	switch(gbox_decode_cmd(data))
 	{
@@ -644,80 +721,7 @@ int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 		break;
 	case MSG_ECM:
 	{
-		cl = switch_client_proxy(cli);
-		gbox = cl->gbox;
-
-		gbox->peer.t_ecm = time((time_t *)0);
-
-		ECM_REQUEST *er;
-		if(!(er = get_ecmtask())) { break; }
-
-		// No ECMs with length < 8 expected
-		if ((((data[19] & 0x0f) << 8) | data[20]) < 8)
-			{ return -1; }
-
-		uchar *ecm = data + 18;
-
-		struct gbox_ecm_request_ext *ere;
-                if(!cs_malloc(&ere, sizeof(struct gbox_ecm_request_ext)))
-                {
-                	cs_writeunlock(&gbox->lock);
-                	return -1;
-                }
-		er->src_data = ere;                
-		gbox_init_ecm_request_ext(ere);
-
-		gbox->peer.gbox_count_ecm++;
-		er->gbox_ecm_id = gbox->peer.id;
-
-		if(gbox->peer.ecm_idx == 100) { gbox->peer.ecm_idx = 0; }
-
-		er->idx = gbox->peer.ecm_idx++;
-		er->ecmlen = (((ecm[1] & 0x0f) << 8) | ecm[2]) + 3;
-
-		ere->gbox_peer_key = data[6] << 24 | data[7] << 16 | data[8] << 8 | data[9];
-
-		er->pid = data[10] << 8 | data[11];
-		er->srvid = data[12] << 8 | data[13];
-
-		int32_t adr_caid_1 = (((data[19] & 0x0f) << 8) | data[20]) + 26;
-		if(data[adr_caid_1] == 0x05)
-			{ er->caid = (data[adr_caid_1] << 8); }
-		else
-			{ er->caid = (data[adr_caid_1] << 8 | data[adr_caid_1 + 1]); }
-
-		gbox->peer.last_caid = er->caid;
-		gbox->peer.last_srvid = er->srvid;
-//		ei->extra = data[14] << 8 | data[15];
-		memcpy(er->ecm, data + 18, er->ecmlen);
-		ere->gbox_peer = ecm[er->ecmlen] << 8 | ecm[er->ecmlen + 1];
-		ere->gbox_version = ecm[er->ecmlen + 2];
-		ere->gbox_unknown = ecm[er->ecmlen + 3];
-		ere->gbox_type = ecm[er->ecmlen + 4];
-		ere->gbox_caid = ecm[er->ecmlen + 5] << 8 | ecm[er->ecmlen + 6];
-		ere->gbox_prid = ecm[er->ecmlen + 7] << 8 | ecm[er->ecmlen + 8];
-		ere->gbox_mypeer = ecm[er->ecmlen + 10] << 8 | ecm[er->ecmlen + 11];
-		ere->gbox_slot = ecm[er->ecmlen + 12];
-
-		diffcheck = gbox_checkcode_recv(cl, data + n - 14);
-		//TODO: What do we do with our own checkcode @-7?
-		er->gbox_crc = gbox_get_ecmchecksum(er);
-		ere->gbox_hops = data[n - 15] + 1;
-		if (ere->gbox_hops > GBOX_MAXHOPS)
-			{ return -1; }
-		memcpy(&ere->gbox_routing_info[0], &data[n - 15 - ere->gbox_hops + 1], ere->gbox_hops - 1);
-
-		er->prid = chk_provid(er->ecm, er->caid);
-		cs_debug_mask(D_READER, "<- ECM (%d<-) from server (%s:%d) to cardserver (%04X) SID %04X", ere->gbox_hops, gbox->peer.hostname, cli->port, ere->gbox_peer, er->srvid);
-		get_cw(cl, er);
-
-		//checkcode did not match gbox->peer checkcode
-		if(diffcheck)
-		{
-			//        TODO: Send HelloS here?
-			//        gbox->peer.hello_stat = GBOX_STAT_HELLOS;
-			//                gbox_send_hello(cli);
-		}
+		gbox_incoming_ecm(cli, data, n);
 		break;
 	}
 	default:
@@ -1138,10 +1142,10 @@ static void gbox_send_dcw(struct s_client *cl, ECM_REQUEST *er)
 	struct gbox_ecm_request_ext *ere = er->src_data;
 
 	gbox_code_cmd(buf, MSG_CW);
-	buf[2] = ere->gbox_peer_key >> 24;	//Peer key
-	buf[3] = ere->gbox_peer_key >> 16;	//Peer key
-	buf[4] = ere->gbox_peer_key >> 8;	//Peer key
-	buf[5] = ere->gbox_peer_key & 0xff;	//Peer key
+	buf[2] = gbox->peer.key[0];		//Peer key
+	buf[3] = gbox->peer.key[1];		//Peer key
+	buf[4] = gbox->peer.key[2];		//Peer key
+	buf[5] = gbox->peer.key[3];		//Peer key
 	buf[6] = er->pid >> 8;			//PID
 	buf[7] = er->pid & 0xff;		//PID
 	buf[8] = er->srvid >> 8;		//SrvID
