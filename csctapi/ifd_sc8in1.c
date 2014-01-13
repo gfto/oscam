@@ -687,8 +687,8 @@ static int32_t Sc8in1_Selectslot(struct s_reader *reader, uint16_t slot)
 	rdr_debug_mask(reader, D_TRACE, "SC8in1: select slot %i", slot);
 
 #ifdef WITH_DEBUG
-	struct timeval tv_start, tv_end;
-	gettimeofday(&tv_start, 0);
+	struct timeb tv_start, tv_end;
+	cs_ftime(&tv_start);
 #endif
 
 	int32_t status = ERROR;
@@ -707,9 +707,8 @@ static int32_t Sc8in1_Selectslot(struct s_reader *reader, uint16_t slot)
 		crdr_data->current_slot = slot;
 	}
 #ifdef WITH_DEBUG
-	gettimeofday(&tv_end, 0);
-	uint32_t elapsed = (tv_end.tv_sec - tv_start.tv_sec) * 1000000 + tv_end.tv_usec - tv_start.tv_usec;
-	rdr_debug_mask(reader, D_DEVICE, "SC8in1 Selectslot in %ums", elapsed / 1000);
+	cs_ftime(&tv_end);
+	rdr_debug_mask(reader, D_DEVICE, "SC8in1 Selectslot in %d ms", comp_timeb(&tv_end, &tv_start));
 #endif
 	return status;
 }
