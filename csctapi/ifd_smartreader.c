@@ -1363,7 +1363,7 @@ static int32_t SR_Init(struct s_reader *reader)
 	cs_pthread_cond_init(&crdr_data->g_usb_mutex, &crdr_data->g_usb_cond);
 
 	cs_writeunlock(&sr_lock);
-	rdr_log(reader," Pthread Wordt gecreeerd");
+	rdr_log(reader, "Creating smartreader thread.");
 	ret = pthread_create(&crdr_data->rt, NULL, ReaderThread, (void *)(reader));
 	if(ret)
 	{
