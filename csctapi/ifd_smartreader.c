@@ -86,24 +86,22 @@ static int32_t smart_read(struct s_reader *reader, unsigned char *buff, uint32_t
 	struct sr_data *crdr_data = reader->crdr_data;
 	int32_t ret = 0;
 	uint32_t  total_read = 0;
-	struct timeval start, now, dif;
-	struct timespec timeout;
+	struct timeb start, now;
 
-	memset(&dif, 0, sizeof(struct timeval));
-
-	gettimeofday(&start, NULL);
-	timeout.tv_sec = start.tv_sec + (timeout_ms / 1000);
-	timeout.tv_nsec = start.tv_usec * 1000;
-
-	while(total_read < size && dif.tv_sec < timeout_ms / 1000)
-	{
+	cs_ftime(&start);
+	now = start;
+	do {
 		pthread_mutex_lock(&crdr_data->g_read_mutex);
 
-		while(crdr_data->g_read_buffer_size == 0 && dif.tv_sec < timeout_ms / 1000)
+		while(crdr_data->g_read_buffer_size == 0)
 		{
-			pthread_cond_timedwait(&crdr_data->g_read_cond, &crdr_data->g_read_mutex, &timeout);
-			gettimeofday(&now, NULL);
-			timersub(&now, &start, &dif);
+			int32_t gone = comp_timeb(&now, &start);
+			if (gone >= timeout_ms)
+				break;
+			struct timespec ts;
+			add_ms_to_timespec(&ts, timeout_ms - gone);
+			pthread_cond_timedwait(&crdr_data->g_read_cond, &crdr_data->g_read_mutex, &ts);
+			cs_ftime(&now);
 		}
 
 		ret = (crdr_data->g_read_buffer_size > size - total_read ? size - total_read : crdr_data->g_read_buffer_size);
@@ -115,10 +113,8 @@ static int32_t smart_read(struct s_reader *reader, unsigned char *buff, uint32_t
 
 		total_read += ret;
 		pthread_mutex_unlock(&crdr_data->g_read_mutex);
-
-		gettimeofday(&now, NULL);
-		timersub(&now, &start, &dif);
-	}
+		cs_ftime(&now);
+	} while(total_read < size && comp_timeb(&now, &start) < timeout_ms);
 
 	rdr_ddump_mask(reader, D_DEVICE, buff, total_read, "SR: Receive:");
 	return total_read;
