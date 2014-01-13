@@ -1146,6 +1146,9 @@ int32_t main(int32_t argc, char *argv[])
 {
 	int32_t i, j;
 	prog_name = argv[0];
+	struct timespec start_ts;
+	cs_gettime(&start_ts); // Initialize clock_type
+
 	if(pthread_key_create(&getclient, NULL))
 	{
 		fprintf(stderr, "Could not create getclient, exiting...");
