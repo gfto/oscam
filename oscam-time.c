@@ -207,7 +207,7 @@ int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms)
 #  endif
 #endif
 
-void init_rightclock_cond(pthread_cond_t *cond)
+void cs_pthread_cond_init(pthread_cond_t *cond)
 {
 	pthread_condattr_t attr;
 	pthread_condattr_init(&attr); // init condattr with defaults
