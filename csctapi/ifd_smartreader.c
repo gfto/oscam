@@ -81,7 +81,7 @@ struct sr_data
 
 static int32_t init_count;
 
-static int32_t smart_read(struct s_reader *reader, unsigned char *buff, uint32_t  size, int32_t timeout_sec)
+static int32_t smart_read(struct s_reader *reader, unsigned char *buff, uint32_t  size, int32_t timeout_ms)
 {
 	struct sr_data *crdr_data = reader->crdr_data;
 	int32_t ret = 0;
@@ -92,14 +92,14 @@ static int32_t smart_read(struct s_reader *reader, unsigned char *buff, uint32_t
 	memset(&dif, 0, sizeof(struct timeval));
 
 	gettimeofday(&start, NULL);
-	timeout.tv_sec = start.tv_sec + timeout_sec;
+	timeout.tv_sec = start.tv_sec + (timeout_ms / 1000);
 	timeout.tv_nsec = start.tv_usec * 1000;
 
-	while(total_read < size && dif.tv_sec < timeout_sec)
+	while(total_read < size && dif.tv_sec < timeout_ms / 1000)
 	{
 		pthread_mutex_lock(&crdr_data->g_read_mutex);
 
-		while(crdr_data->g_read_buffer_size == 0 && dif.tv_sec < timeout_sec)
+		while(crdr_data->g_read_buffer_size == 0 && dif.tv_sec < timeout_ms / 1000)
 		{
 			pthread_cond_timedwait(&crdr_data->g_read_cond, &crdr_data->g_read_mutex, &timeout);
 			gettimeofday(&now, NULL);
@@ -1450,7 +1450,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 
 
 		//Read the ATR
-		ret = smart_read(reader, data, ATR_MAX_SIZE, 1);
+		ret = smart_read(reader, data, ATR_MAX_SIZE, 1000);
 		rdr_debug_mask(reader, D_DEVICE, "SR: get ATR ret = %d" , ret);
 		if(ret)
 			{ rdr_ddump_mask(reader, D_DEVICE, data, ATR_MAX_SIZE * 2, "SR:"); }
@@ -1566,7 +1566,7 @@ static int32_t SR_Receive(struct s_reader *reader, unsigned char *buffer, uint32
 	uint32_t  ret;
 
 	smart_fastpoll(reader, 1);
-	ret = smart_read(reader, buffer, size, 2);
+	ret = smart_read(reader, buffer, size, 2000);
 	smart_fastpoll(reader, 0);
 	if(ret != size)
 		{ return ERROR; }
@@ -1651,7 +1651,7 @@ static int32_t SR_Close(struct s_reader *reader)
     smartreader_setdtr_rts(reader, 1, 0);
 
     //Read the ATR
-    smart_read(reader,data, ATR_MAX_SIZE,1);
+    smart_read(reader,data, ATR_MAX_SIZE,1000);
     smart_fastpoll(reader, 0);
     return 0;
 } */
@@ -1674,7 +1674,7 @@ static int32_t SR_FastReset_With_ATR(struct s_reader *reader, ATR *atr)
 	smartreader_setdtr_rts(reader, 1, 0);
 
 	//Read the ATR
-	ret = smart_read(reader, data, ATR_MAX_SIZE, 1);
+	ret = smart_read(reader, data, ATR_MAX_SIZE, 1000);
 
 	// parse atr
 	if(ATR_InitFromArray(atr, data, ret) != ERROR)
