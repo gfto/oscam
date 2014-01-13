@@ -1182,7 +1182,7 @@ void *init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t m
 	if(bcopy_end == -1)  //mutex should be initialized only once
 	{
 		pthread_mutex_init(&mutex, NULL);
-		pthread_cond_init(&cond, NULL);
+		cs_pthread_cond_init(&cond);
 		bcopy_end = 0;
 	}
 	while((p = strrchr(sdevice, ';')))

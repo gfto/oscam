@@ -24,6 +24,7 @@
 #include "oscam-net.h"
 #include "oscam-chk.h"
 #include "oscam-string.h"
+#include "oscam-time.h"
 #include "oscam-reader.h"
 #include "oscam-garbage.h"
 
@@ -899,7 +900,7 @@ static void gbox_expire_hello(struct s_client *cli)
 	struct timeval tv;
 
 	pthread_mutex_init(&gbox->hello_expire_mut, NULL);
-	pthread_cond_init(&gbox->hello_expire_cond, NULL);
+	cs_pthread_cond_init(&gbox->hello_expire_cond);
 
 	while(1)
 	{

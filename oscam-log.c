@@ -707,7 +707,7 @@ int32_t cs_init_log(void)
 		pthread_mutex_init(&log_mutex, NULL);
 
 		pthread_mutex_init(&log_thread_sleep_cond_mutex, NULL);
-		pthread_cond_init(&log_thread_sleep_cond, NULL);
+		cs_pthread_cond_init(&log_thread_sleep_cond);
 
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 		cs_lock_create(&loghistory_lock, 5, "loghistory_lock");

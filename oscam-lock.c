@@ -13,8 +13,8 @@ void cs_lock_create(CS_MUTEX_LOCK *l, int16_t timeout, const char *name)
 	l->timeout = timeout;
 	l->name = name;
 	pthread_mutex_init(&l->lock, NULL);
-	pthread_cond_init(&l->writecond, NULL);
-	pthread_cond_init(&l->readcond, NULL);
+	cs_pthread_cond_init(&l->writecond);
+	cs_pthread_cond_init(&l->readcond);
 #ifdef WITH_MUTEXDEBUG
 	cs_debug_mask_nolock(D_TRACE, "lock %s created", name);
 #endif
