@@ -192,8 +192,7 @@ int32_t add_emmfilter_to_list(int32_t demux_id, uchar *filter, uint16_t caid, ui
 		cs_ftime(&filter_item->time_started);
 	}
 	else {
-		filter_item->time_started.time = 0;
-		filter_item->time_started.millitm = 0;
+		memset(&filter_item->time_started, 0, sizeof(filter_item->time_started));
 	}
 		
 	if(num > 0)

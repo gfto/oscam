@@ -682,8 +682,7 @@ ECM_REQUEST *get_ecmtask(void)
 	cs_ftime(&er->tps);
 
 #ifdef CS_CACHEEX
-	er->cacheex_wait.time = er->tps.time;
-	er->cacheex_wait.millitm = er->tps.millitm;
+	er->cacheex_wait = er->tps;
 	er->cacheex_wait_time = 0;
 #endif
 #ifdef MODULE_GBOX
