@@ -1371,10 +1371,8 @@ static int32_t SR_Init(struct s_reader *reader)
 	// start the reading thread
 	crdr_data->g_read_buffer_size = 0;
 	crdr_data->modem_status = 0 ;
-	pthread_mutex_init(&crdr_data->g_read_mutex, NULL);
-	cs_pthread_cond_init(&crdr_data->g_read_cond);
-	pthread_mutex_init(&crdr_data->g_usb_mutex, NULL);
-	cs_pthread_cond_init(&crdr_data->g_usb_cond);
+	cs_pthread_cond_init(&crdr_data->g_read_mutex, &crdr_data->g_read_cond);
+	cs_pthread_cond_init(&crdr_data->g_usb_mutex, &crdr_data->g_usb_cond);
 
 	cs_writeunlock(&sr_lock);
 	rdr_log(reader," Pthread Wordt gecreeerd");

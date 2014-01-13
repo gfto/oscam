@@ -1181,8 +1181,7 @@ void *init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t m
 	char cltype = 'c'; //now auto should work
 	if(bcopy_end == -1)  //mutex should be initialized only once
 	{
-		pthread_mutex_init(&mutex, NULL);
-		cs_pthread_cond_init(&cond);
+		cs_pthread_cond_init(&mutex, &cond);
 		bcopy_end = 0;
 	}
 	while((p = strrchr(sdevice, ';')))

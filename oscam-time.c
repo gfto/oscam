@@ -207,7 +207,7 @@ int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms)
 #  endif
 #endif
 
-void cs_pthread_cond_init(pthread_cond_t *cond)
+void __cs_pthread_cond_init(pthread_cond_t *cond)
 {
 	pthread_condattr_t attr;
 	pthread_condattr_init(&attr); // init condattr with defaults
@@ -225,6 +225,12 @@ void sleepms_on_cond(pthread_mutex_t *mutex, pthread_cond_t *cond, uint32_t msec
 	pthread_mutex_lock(mutex);
 	pthread_cond_timedwait(cond, mutex, &ts); // sleep on sleep_cond
 	pthread_mutex_unlock(mutex);
+}
+
+void cs_pthread_cond_init(pthread_mutex_t *mutex, pthread_cond_t *cond)
+{
+	pthread_mutex_init(mutex, NULL);
+	__cs_pthread_cond_init(cond);
 }
 
 enum clock_type cs_getclocktype(struct timeb *UNUSED(now)) {

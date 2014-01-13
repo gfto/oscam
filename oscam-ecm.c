@@ -206,8 +206,7 @@ static void *cw_process(void)
 	int32_t time_to_check_cacheex_wait_time;
 #endif
 
-	pthread_mutex_init(&cw_process_sleep_cond_mutex, NULL);
-	cs_pthread_cond_init(&cw_process_sleep_cond);
+	cs_pthread_cond_init(&cw_process_sleep_cond_mutex, &cw_process_sleep_cond);
 
 #ifdef CS_ANTICASC
 	int32_t ac_next;

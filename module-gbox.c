@@ -899,8 +899,7 @@ static void gbox_expire_hello(struct s_client *cli)
 	struct timespec ts;
 	struct timeval tv;
 
-	pthread_mutex_init(&gbox->hello_expire_mut, NULL);
-	cs_pthread_cond_init(&gbox->hello_expire_cond);
+	cs_pthread_cond_init(&gbox->hello_expire_mut, &gbox->hello_expire_cond);
 
 	while(1)
 	{
