@@ -39,6 +39,13 @@
 #define BOXTYPE_PC      11
 #define BOXTYPES        11
 #define DMXMD5HASHSIZE  16  // use MD5() 
+#define REMOVED_STREAMPID_LASTINDEX 2
+#define REMOVED_STREAMPID_INDEX 1
+#define NO_STREAMPID_LISTED 0
+#define FOUND_STREAMPID_INDEX 0
+#define ADDED_STREAMPID_INDEX 1
+#define CA_IS_IN_USE 1
+#define CA_IS_CLEAR 0
 
 struct box_devices
 {
@@ -253,10 +260,10 @@ int32_t dvbapi_check_ecm_delayed_delivery(int32_t demux_index, ECM_REQUEST *er);
 int32_t dvbapi_get_filternum(int32_t demux_index, ECM_REQUEST *er, int32_t type);
 int32_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid);
 void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable);
-bool update_streampid_list(uint8_t cadevice, uint16_t pid, int32_t idx);
-bool remove_streampid_from_list(uint8_t cadevice, uint16_t pid, int32_t idx);
+int8_t update_streampid_list(uint8_t cadevice, uint16_t pid, int32_t idx);
+int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, int32_t idx);
 void disable_unused_streampids(int16_t demux_id);
-bool is_ca_used(uint8_t cadevice);
+int8_t is_ca_used(uint8_t cadevice);
 
 #ifdef DVBAPI_LOG_PREFIX
 #undef cs_log
