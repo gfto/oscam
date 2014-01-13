@@ -390,22 +390,23 @@ bool IO_Serial_Read(struct s_reader *reader, uint32_t delay, uint32_t timeout, u
 #elif defined(__SH4__)
 		const uint32_t chunksize = 1;
 #endif
-		struct timeval tv, tv_spent;
-		gettimeofday(&tv, 0);
-		memcpy(&tv_spent, &tv, sizeof(struct timeval));
+		struct timeb start, end;
+		cs_ftime(&start);
+		end = start;
+		int32_t gone = 0;
+		int32_t timeout_ms = timeout / 1000;
 		readed = 0;
 
-		while((((tv_spent.tv_sec - tv.tv_sec) * 1000000) + ((tv_spent.tv_usec - tv.tv_usec) / 1000000L)) < (time_t)(timeout))
+		while(gone < timeout_ms)
 		{
 			readed = read(reader->handle, &data[count], size - count >= chunksize ? chunksize : size - count);
-			gettimeofday(&tv_spent, 0);
+			cs_ftime(&end);
 			if(readed > 0)
 			{
 				count += readed;
-				gettimeofday(&tv, 0); // reset timeout again since card is responsive!
-				memcpy(&tv_spent, &tv, sizeof(struct timeval));
+				end = start; // reset timeout again since card is responsive!
 			}
-
+			gone = comp_timeb(&end, &start);
 			if(count < size)
 			{
 				if(readed < (int32_t)chunksize) { cs_sleepus(1); }
