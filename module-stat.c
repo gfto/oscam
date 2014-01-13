@@ -1316,7 +1316,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 					{ rdr->lb_last = check_time; }
 
 				//current is negative here!
-				current = 1000 * (rdr->lb_last.time - check_time.time) + (rdr->lb_last.millitm - check_time.millitm);
+				current = comp_timeb(&rdr->lb_last, &check_time);
 
 				current = current * weight / 100;
 

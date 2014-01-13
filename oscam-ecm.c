@@ -959,7 +959,7 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	}
 #endif
 
-	client->cwlastresptime = 1000 * (tpe.time - er->tps.time) + tpe.millitm - er->tps.millitm;
+	client->cwlastresptime = comp_timeb(&tpe, &er->tps);
 
 	time_t now = time(NULL);
 	webif_client_add_lastresponsetime(client, client->cwlastresptime, now, er->rc); // add to ringbuffer

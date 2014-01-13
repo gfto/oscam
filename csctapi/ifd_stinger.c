@@ -100,7 +100,7 @@ static bool Stinger_IO_Serial_WaitToWrite(struct s_reader *reader, uint32_t dela
 		switch(ret_val)
 		{
 		case 0:
-			rdr_log(reader, "ERROR: not ready to write, timeout=%ld ms", 1000 * (end.time - start.time) + end.millitm - start.millitm);
+			rdr_log(reader, "ERROR: not ready to write, timeout=%d ms", comp_timeb(&end, &start));
 			return ERROR;
 		case -1:
 			if(errno == EINTR || errno == EAGAIN)
@@ -108,12 +108,12 @@ static bool Stinger_IO_Serial_WaitToWrite(struct s_reader *reader, uint32_t dela
 				cs_sleepus(1);
 				if(timeout_us > 0)
 				{
-					polltimeout = (timeout_us / 1000) - (1000 * (end.time - start.time) + end.millitm - start.millitm);
+					polltimeout = (timeout_us / 1000) - comp_timeb(&end, &start);
 					if(polltimeout < 0) { polltimeout = 0; }
 				}
 				continue;
 			}
-			rdr_log(reader, "ERROR: %s: timeout=%ld ms (errno=%d %s)", __func__, 1000 * (end.time - start.time) + end.millitm - start.millitm, errno, strerror(errno));
+			rdr_log(reader, "ERROR: %s: timeout=%d ms (errno=%d %s)", __func__, comp_timeb(&end, &start), errno, strerror(errno));
 			return ERROR;
 		default:
 			if(((ufds.revents) & POLLOUT) == POLLOUT)
