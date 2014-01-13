@@ -89,7 +89,6 @@ struct gbox_peer
 	int32_t goodbye_cont;
 	uchar ecm_idx;
 	uchar gbox_count_ecm;
-	time_t t_ecm;
 };
 
 struct gbox_data
@@ -348,7 +347,6 @@ void gbox_reconnect_client(void)
 			gbox->peer.online = 0;
 			gbox->peer.ecm_idx = 0;
 			gbox->peer.hello_stat = GBOX_STAT_HELLOL;
-			gbox->peer.t_ecm = time((time_t *)0);
 			cl->reader->last_s = cl->reader->last_g = 0;
 			gbox_free_cardlist(gbox->peer.cards);
 			gbox->peer.cards = ll_create("peer.cards");
@@ -596,8 +594,6 @@ static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 
 	cl = switch_client_proxy(cli);
 	gbox = cl->gbox;
-
-	gbox->peer.t_ecm = time((time_t *)0);
 
 	// No ECMs with length < 8 expected
 	if ((((data[19] & 0x0f) << 8) | data[20]) < 8) { return -1; }
@@ -1425,7 +1421,6 @@ static int32_t gbox_client_init(struct s_client *cli)
 	gbox->peer.online     = 0;
 	gbox->peer.ecm_idx    = 0;
 	gbox->peer.hello_stat = GBOX_STAT_HELLOL;
-	gbox->peer.t_ecm      = time(NULL);
 
 	cli->reader->card_status = CARD_NEED_INIT;
 	gbox_send_hello(cli);
