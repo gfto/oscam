@@ -227,7 +227,7 @@ static void *cw_process(void)
 	{
 		if(cw_process_wakeups == 0)    // No waiting wakeups, proceed to sleep
 		{
-			sleepms_on_cond(&cw_process_sleep_cond, &cw_process_sleep_cond_mutex, msec_wait);
+			sleepms_on_cond(&cw_process_sleep_cond_mutex, &cw_process_sleep_cond, msec_wait);
 		}
 		cw_process_wakeups = 0; // We've been woken up, reset the counter
 		if(exit_oscam)

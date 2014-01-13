@@ -218,7 +218,7 @@ void init_rightclock_cond(pthread_cond_t *cond)
 	pthread_cond_init(cond, &attr); // init thread with right clock assigned
 }
 
-void sleepms_on_cond(pthread_cond_t *cond, pthread_mutex_t *mutex, uint32_t msec)
+void sleepms_on_cond(pthread_mutex_t *mutex, pthread_cond_t *cond, uint32_t msec)
 {
 	struct timespec ts;
 	add_ms_to_timespec(&ts, msec);

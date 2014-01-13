@@ -1044,7 +1044,7 @@ static void *reader_check(void)
 			}
 		}
 		cs_readunlock(&readerlist_lock);
-		sleepms_on_cond(&reader_check_sleep_cond, &reader_check_sleep_cond_mutex, 1000);
+		sleepms_on_cond(&reader_check_sleep_cond_mutex, &reader_check_sleep_cond, 1000);
 	}
 	return NULL;
 }

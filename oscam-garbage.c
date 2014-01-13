@@ -130,7 +130,7 @@ static void garbage_collector(void)
 			}
 		}
 
-		sleepms_on_cond(&sleep_cond, &sleep_cond_mutex, 1000);
+		sleepms_on_cond(&sleep_cond_mutex, &sleep_cond, 1000);
 	}
 	pthread_exit(NULL);
 }

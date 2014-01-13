@@ -693,7 +693,7 @@ void log_list_thread(void)
 			NULLFREE(log);
 		}
 		if(!log_list_queued)  // The list is empty, sleep until new data comes in and we are woken up
-			{ sleepms_on_cond(&log_thread_sleep_cond, &log_thread_sleep_cond_mutex, 60 * 1000); }
+			sleepms_on_cond(&log_thread_sleep_cond_mutex, &log_thread_sleep_cond, 60 * 1000);
 	}
 	while(log_running);
 	ll_destroy(log_list);
