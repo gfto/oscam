@@ -1221,20 +1221,8 @@ static void *ReaderThread(void *p)
 		if(ret != 0)
 			{ rdr_log(reader, "libusb_handle_events returned with %d", ret); }
 
-		pthread_mutex_lock(&crdr_data->g_usb_mutex);
-
 		if(!crdr_data->poll)
-		{
-			struct timeval start;
-			struct timespec timeout;
-
-			gettimeofday(&start, NULL);
-			timeout.tv_sec = start.tv_sec + 1;
-			timeout.tv_nsec = start.tv_usec * 1000;
-
-			pthread_cond_timedwait(&crdr_data->g_usb_cond, &crdr_data->g_usb_mutex, &timeout);
-		}
-		pthread_mutex_unlock(&crdr_data->g_usb_mutex);
+			sleepms_on_cond(&crdr_data->g_usb_mutex, &crdr_data->g_usb_cond, 1000);
 	}
 
 	pthread_exit(NULL);
