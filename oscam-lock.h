@@ -5,7 +5,7 @@
 #define WRITELOCK 1
 #define READLOCK 2
 
-void cs_lock_create(CS_MUTEX_LOCK *l, int16_t timeout, const char *name);
+void cs_lock_create(CS_MUTEX_LOCK *l, const char *name, uint32_t timeout_ms);
 void cs_lock_destroy(CS_MUTEX_LOCK *l);
 void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type);
 void cs_rwunlock_int(CS_MUTEX_LOCK *l, int8_t type);

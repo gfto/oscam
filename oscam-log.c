@@ -709,7 +709,7 @@ int32_t cs_init_log(void)
 		cs_pthread_cond_init(&log_thread_sleep_cond_mutex, &log_thread_sleep_cond);
 
 #if defined(WEBIF) || defined(MODULE_MONITOR)
-		cs_lock_create(&loghistory_lock, 5, "loghistory_lock");
+		cs_lock_create(&loghistory_lock, "loghistory_lock", 5000);
 #endif
 
 		log_list = ll_create(LOG_LIST);

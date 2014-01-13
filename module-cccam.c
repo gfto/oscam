@@ -3564,8 +3564,8 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l)
 
 void cc_init_locks(struct cc_data *cc)
 {
-	cs_lock_create(&cc->lockcmd, 5, "lockcmd");
-	cs_lock_create(&cc->cards_busy, 10, "cards_busy");
+	cs_lock_create(&cc->lockcmd, "lockcmd", 5000);
+	cs_lock_create(&cc->cards_busy, "cards_busy", 10000);
 }
 
 #ifdef MODULE_CCCSHARE

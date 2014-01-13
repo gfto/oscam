@@ -2231,7 +2231,7 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 
 			ea->pending = NULL;
 			ea->is_pending = false;
-			cs_lock_create(&ea->ecmanswer_lock, 5, "ecmanswer_lock");
+			cs_lock_create(&ea->ecmanswer_lock, "ecmanswer_lock", 5000);
 		}
 	}
 

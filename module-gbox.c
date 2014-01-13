@@ -1420,7 +1420,7 @@ static int32_t gbox_client_init(struct s_client *cli)
 
 	cli->pfd = cli->udp_fd;
 
-	cs_lock_create(&gbox->lock, 5, "gbox_lock");
+	cs_lock_create(&gbox->lock, "gbox_lock", 5000);
 
 	gbox->peer.online     = 0;
 	gbox->peer.ecm_idx    = 0;

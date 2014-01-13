@@ -124,7 +124,7 @@ void init_noncelocks(void)
 	int32_t i;
 	for(i = 0; i < AUTHNONCEHASHBUCKETS; ++i)
 	{
-		cs_lock_create(&nonce_lock[i], 5, "nonce_lock");
+		cs_lock_create(&nonce_lock[i], "nonce_lock", 5000);
 		nonce_first[i] = NULL;
 	}
 }
@@ -780,7 +780,7 @@ SSL_CTX *SSL_Webif_Init(void)
 
 	for(i = 0; i < num; ++i)
 	{
-		cs_lock_create(&lock_cs[i], 10, "ssl_lock_cs");
+		cs_lock_create(&lock_cs[i], "ssl_lock_cs", 10000);
 	}
 	/* static lock callbacks */
 	CRYPTO_set_id_callback(SSL_id_function);

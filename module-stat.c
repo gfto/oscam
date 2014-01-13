@@ -21,7 +21,7 @@
 #define LB_OLDEST_READER_FIRST 2
 #define LB_LOWEST_USAGELEVEL 3
 
-#define DEFAULT_LOCK_TIMEOUT 1000
+#define DEFAULT_LOCK_TIMEOUT 1000000
 
 static int32_t stat_load_save;
 static struct timeb last_housekeeping;
@@ -187,7 +187,7 @@ void load_stat_from_file(void)
 				if(!rdr->lb_stat)
 				{
 					rdr->lb_stat = ll_create("lb_stat");
-					cs_lock_create(&rdr->lb_stat_lock, DEFAULT_LOCK_TIMEOUT, rdr->label);
+					cs_lock_create(&rdr->lb_stat_lock, rdr->label, DEFAULT_LOCK_TIMEOUT);
 				}
 
 				ll_append(rdr->lb_stat, s);
@@ -224,7 +224,7 @@ static READER_STAT *get_stat_lock(struct s_reader *rdr, STAT_QUERY *q, int8_t lo
 	if(!rdr->lb_stat)
 	{
 		rdr->lb_stat = ll_create("lb_stat");
-		cs_lock_create(&rdr->lb_stat_lock, DEFAULT_LOCK_TIMEOUT, rdr->label);
+		cs_lock_create(&rdr->lb_stat_lock, rdr->label, DEFAULT_LOCK_TIMEOUT);
 	}
 
 	if(lock) { cs_readlock(&rdr->lb_stat_lock); }
@@ -397,7 +397,7 @@ static READER_STAT *get_add_stat(struct s_reader *rdr, STAT_QUERY *q)
 	if(!rdr->lb_stat)
 	{
 		rdr->lb_stat = ll_create("lb_stat");
-		cs_lock_create(&rdr->lb_stat_lock, DEFAULT_LOCK_TIMEOUT, rdr->label);
+		cs_lock_create(&rdr->lb_stat_lock, rdr->label, DEFAULT_LOCK_TIMEOUT);
 	}
 
 	cs_writelock(&rdr->lb_stat_lock);

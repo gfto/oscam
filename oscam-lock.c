@@ -7,10 +7,10 @@ extern char *LOG_LIST;
 /**
  * creates a lock
  **/
-void cs_lock_create(CS_MUTEX_LOCK *l, int16_t timeout, const char *name)
+void cs_lock_create(CS_MUTEX_LOCK *l, const char *name, uint32_t timeout_ms)
 {
 	memset(l, 0, sizeof(CS_MUTEX_LOCK));
-	l->timeout = timeout;
+	l->timeout = timeout_ms / 1000;
 	l->name = name;
 	pthread_mutex_init(&l->lock, NULL);
 	__cs_pthread_cond_init(&l->writecond);

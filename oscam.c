@@ -1304,15 +1304,15 @@ int32_t main(int32_t argc, char *argv[])
 	if(cs_confdir[strlen(cs_confdir) - 1] != '/') { strcat(cs_confdir, "/"); }
 	init_signal_pre(); // because log could cause SIGPIPE errors, init a signal handler first
 	init_first_client();
-	cs_lock_create(&system_lock, 5, "system_lock");
-	cs_lock_create(&config_lock, 10, "config_lock");
-	cs_lock_create(&gethostbyname_lock, 10, "gethostbyname_lock");
-	cs_lock_create(&clientlist_lock, 5, "clientlist_lock");
-	cs_lock_create(&readerlist_lock, 5, "readerlist_lock");
-	cs_lock_create(&fakeuser_lock, 5, "fakeuser_lock");
-	cs_lock_create(&ecmcache_lock, 5, "ecmcache_lock");
-	cs_lock_create(&readdir_lock, 5, "readdir_lock");
-	cs_lock_create(&cwcycle_lock, 5, "cwcycle_lock");
+	cs_lock_create(&system_lock, "system_lock", 5000);
+	cs_lock_create(&config_lock, "config_lock", 10000);
+	cs_lock_create(&gethostbyname_lock, "gethostbyname_lock", 10000);
+	cs_lock_create(&clientlist_lock, "clientlist_lock", 5000);
+	cs_lock_create(&readerlist_lock, "readerlist_lock", 5000);
+	cs_lock_create(&fakeuser_lock, "fakeuser_lock", 5000);
+	cs_lock_create(&ecmcache_lock, "ecmcache_lock", 5000);
+	cs_lock_create(&readdir_lock, "readdir_lock", 5000);
+	cs_lock_create(&cwcycle_lock, "cwcycle_lock", 5000);
 	init_cache();
 #ifdef CS_CACHEEX
 	init_hitcache();

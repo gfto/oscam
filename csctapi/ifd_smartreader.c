@@ -1719,7 +1719,7 @@ static pthread_mutex_t init_lock_mutex;
 static int32_t sr_init_locks(struct s_reader *UNUSED(reader))
 {
 	if (pthread_mutex_trylock(&init_lock_mutex)) {
-		cs_lock_create(&sr_lock, 5 , "sr_lock");
+		cs_lock_create(&sr_lock, "sr_lock", 5000);
 	}
 
 	return 0;

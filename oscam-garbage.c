@@ -142,7 +142,7 @@ void start_garbage_collector(int32_t debug)
 	int8_t i;
 	for(i = 0; i < HASH_BUCKETS; ++i)
 	{
-		cs_lock_create(&garbage_lock[i], 5, "garbage_lock");
+		cs_lock_create(&garbage_lock[i], "garbage_lock", 5000);
 
 		garbage_first[i] = NULL;
 	}

@@ -1118,8 +1118,8 @@ static int32_t Sc8in1_InitLocks(struct s_reader *reader)
 				{ snprintf(buff, 128, "sc8in1_lock_%s", reader->device); }
 			if(cs_malloc(&buff2, 128))
 				{ snprintf(buff2, 128, "display_sc8in1_lock_%s", reader->device); }
-			cs_lock_create(&crdr_data->sc8in1_lock, 40, ESTR(buff));
-			cs_lock_create(&crdr_data->sc8in1_display_lock, 10, ESTR(buff2));
+			cs_lock_create(&crdr_data->sc8in1_lock, ESTR(buff), 40000);
+			cs_lock_create(&crdr_data->sc8in1_display_lock, ESTR(buff2), 10000);
 		}
 		else
 		{

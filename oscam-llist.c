@@ -43,7 +43,7 @@ LLIST *ll_create(const char *name)
 	LLIST *l;
 	if(!cs_malloc(&l, sizeof(LLIST)))
 		{ return NULL; }
-	cs_lock_create(&l->lock, 5, name);
+	cs_lock_create(&l->lock, name, 5000);
 	return l;
 }
 

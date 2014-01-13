@@ -1583,7 +1583,7 @@ void cccam_init_share(void)
 {
 
 	memset(reported_carddatas_list, 0, sizeof(reported_carddatas_list));
-	cs_lock_create(&cc_shares_lock, 200, "cc_shares_lock");
+	cs_lock_create(&cc_shares_lock, "cc_shares_lock", 200000);
 
 	share_updater_thread = 0;
 	share_updater_thread_active = 1;
