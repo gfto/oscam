@@ -211,9 +211,11 @@ void __cs_pthread_cond_init(pthread_cond_t *cond)
 {
 	pthread_condattr_t attr;
 	pthread_condattr_init(&attr); // init condattr with defaults
+#if 0
 #if defined(HAVE_pthread_condattr_setclock)
 	enum clock_type ctype = cs_getclocktype(NULL);
 	pthread_condattr_setclock(&attr, (ctype == CLOCK_TYPE_MONOTONIC) ? CLOCK_MONOTONIC : CLOCK_REALTIME);
+#endif
 #endif
 	pthread_cond_init(cond, &attr); // init thread with right clock assigned
 }
@@ -263,6 +265,13 @@ time_t cs_walltime(struct timeb *tp)
 
 void cs_gettime(struct timespec *ts)
 {
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	ts->tv_sec = tv.tv_sec;
+	ts->tv_nsec = tv.tv_usec * 1000;
+	clock_type = CLOCK_TYPE_REALTIME;
+	return;
+#if 0
 #if !defined(CLOCKFIX) || (!defined(CLOCK_MONOTONIC) && !defined(__MACH__))
 	struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -291,5 +300,6 @@ void cs_gettime(struct timespec *ts)
 		clock_gettime(CLOCK_REALTIME, ts);
 		clock_type = CLOCK_TYPE_REALTIME;
 	}
+#endif
 #endif
 }
