@@ -887,21 +887,16 @@ uint32_t gbox_get_ecmchecksum(ECM_REQUEST *er)
 static void gbox_expire_hello(struct s_client *cli)
 {
 	struct gbox_data *gbox = cli->gbox;
-
 	int32_t callback = 60;
 
 	set_thread_name(__func__);
-
-	struct timespec ts;
-	struct timeval tv;
 
 	cs_pthread_cond_init(&gbox->hello_expire_mut, &gbox->hello_expire_cond);
 
 	while(1)
 	{
-		gettimeofday(&tv, NULL);
-		ts.tv_sec = tv.tv_sec + callback;
-		ts.tv_nsec = tv.tv_usec * 1000;
+		struct timespec ts;
+		add_ms_to_timespec(&ts, callback * 1000);
 
 		pthread_mutex_lock(&gbox->hello_expire_mut);
 		if(pthread_cond_timedwait(&gbox->hello_expire_cond, &gbox->hello_expire_mut, &ts) == ETIMEDOUT)
