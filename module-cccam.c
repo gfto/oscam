@@ -1324,14 +1324,7 @@ static int8_t cc_request_timeout(struct s_client *cl)
 	if(tt <= 0)
 		{ tt = DEFAULT_CC_RECONNECT; }
 
-	timeout.time += tt / 1000;
-	timeout.millitm += tt % 1000;
-	if(timeout.millitm >= 1000)
-	{
-		timeout.time++;
-		timeout.millitm -= 1000;
-	}
-
+	add_ms_to_timeb(&timeout, tt);
 	return (comp_timeb(&cur_time, &timeout) >= 0);
 }
 
