@@ -2642,7 +2642,7 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 			else
 			{
 				tpl_printf(vars, TPLADD, "CLIENTPROTO", "%s (%s)", proto, newcamd_get_client_name(cl->ncd_client_id));
-				tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "missing icon: IC_%s_%s", proto, newcamd_get_client_name(cl->ncd_client_id));
+				tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "missing icon: IC_%s_%s.tpl", proto, newcamd_get_client_name(cl->ncd_client_id));
 			}
 		}
 		else
@@ -2674,7 +2674,7 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 				else
 				{
 					tpl_printf(vars, TPLADD, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
-					tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "cccam extinfo: %s missing icon: IC_%s_%s_%s",
+					tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "cccam extinfo: %s missing icon: IC_%s_%s_%s.tpl",
 					cc->extended_mode ? cc->remote_oscam : "", proto, cc->remote_version, cc->remote_build);
 				}
 			}
@@ -2700,7 +2700,7 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 		else
 		{
 			tpl_addVar(vars, TPLADD, "CLIENTPROTO", (char *)proto);
-			tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "missing icon: IC_%s", proto);
+			tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "missing icon: IC_%s.tpl", proto);
 		}
 	}
 	else
@@ -3007,7 +3007,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				else
 				{
 					tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
-					tpl_printf(vars, TPLADDONCE, "LASTCHANNELTITLE", "missing icon: IC_%s", picon_name);
+					tpl_printf(vars, TPLADDONCE, "LASTCHANNELTITLE", "missing icon: IC_%s.tpl", picon_name);
 				}
 			}
 			else
