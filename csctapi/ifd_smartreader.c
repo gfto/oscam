@@ -1550,14 +1550,16 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 	}
  }
 
-static int32_t SR_Receive(struct s_reader *reader, unsigned char *buffer, uint32_t size, uint32_t delay, uint32_t timeout_us)   // delay and timeout not used (yet)!
+//static int32_t SR_Receive(struct s_reader *reader, unsigned char *buffer, uint32_t size, uint32_t delay, uint32_t timeout_us)   // temporary set back old way
+static int32_t SR_Receive(struct s_reader *reader, unsigned char *buffer, uint32_t size, uint32_t delay, uint32_t timeout)   // temporary set back old way
 {
 	(void) delay; // delay not used (yet)!
-	//(void) timeout; // timeout not used (yet)!
+	(void) timeout; // timeout not used (yet)! removing this did caused a regression temporarely back to old way
 	uint32_t  ret;
 
 	smart_fastpoll(reader, 1);
-	ret = smart_read(reader, buffer, size, (timeout_us/1000)); // convert timeout to ms precize
+//	ret = smart_read(reader, buffer, size, (timeout_us/1000)); // convert timeout to ms precize
+	ret = smart_read(reader, buffer, size, 3000); //keep for the moment deafult timeout new was a regression 
 	smart_fastpoll(reader, 0);
 	if(ret != size)
 		{ return ERROR; }
