@@ -216,7 +216,7 @@ A:hover SPAN {display:block;position:absolute;top:2em;right:1em;padding:10px;col
 ------------------------------------------------------------------------------------*/
 IMG {border:0px solid}
 IMG.icon {border:0px solid;width:22px;height:22px;background-color:#A00;border-radius:3px;-webkit-border-radius:3px}
-IMG.userpicon {max-height:22px;}
+IMG.userpicon,IMG.statususericon {max-height:22px;}
 
 /* 13. SPAN Elements
 ------------------------------------------------------------------------------------*/
