@@ -3,7 +3,8 @@
 HTML,DIV,TABLE,TBODY,TFOOT,THEAD,TR,TH,TD {margin:0;padding:0;border:0}
 
 #mainmenu li,#nav li{display:inline;list-style-type:none;margin-top:0px;}
-#mainmenu li{font-size: 16px;font-weight: bold;}
+#mainmenu li{font-size: 18px;font-weight: bold;}
+#nav li{font-size: 14px;}
 div#subnav ul#nav{margin-bottom: 20px;margin-top: 0;padding-top: 5px;}
 div#main ul#mainmenu.menu{margin-bottom: 0;margin-top: 0;padding-left: 0;padding-top: 5px;}
 ul#mainmenu.menu li.menu:hover,
