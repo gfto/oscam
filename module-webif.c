@@ -4947,7 +4947,7 @@ static void webif_process_logfile(struct templatevars * vars, struct uriparams *
 	else
 	{
 		tpl_printf(vars, TPLADD, "SWITCH", "%d", 0);
-		tpl_addVar(vars, TPLADD, "TEXT", "Stop Log");
+		tpl_addVar(vars, TPLADD, "TEXT", "Start Log");
 		tpl_addVar(vars, TPLADD, "LOGMENU", tpl_getTpl(vars, "LOGMENUDISABLELOG"));
 	}
 	tpl_addVar(vars, TPLAPPEND, "LOGMENU", tpl_getTpl(vars, "CLEARLOG"));
@@ -4977,7 +4977,7 @@ static void webif_process_userfile(struct templatevars * vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "TEXT", "Start Log");
 		tpl_addVar(vars, TPLADD, "LOGMENU", tpl_getTpl(vars, "LOGMENUONOFF"));
 	}
-	tpl_addVar(vars, TPLAPPEND, "LOGMENU", tpl_getTpl(vars, "CLEARLOG"));
+	tpl_addVar(vars, TPLAPPEND, "LOGMENU", tpl_getTpl(vars, "CLEARUSERLOG"));
 	tpl_addVar(vars, TPLADD, "FFVAL", "all");
 	tpl_addVar(vars, TPLADD, "FILTERFORMOPTIONS", tpl_getTpl(vars, "LOGMENUFILTERFORM"));
 	struct s_auth *account;
