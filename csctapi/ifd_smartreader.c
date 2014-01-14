@@ -114,6 +114,7 @@ static int32_t smart_read(struct s_reader *reader, unsigned char *buff, uint32_t
 		total_read += ret;
 		pthread_mutex_unlock(&crdr_data->g_read_mutex);
 		cs_ftime(&now);
+		if(ret>0) start=now; // reset timeout calculation again since reader is responsive!
 	} while(total_read < size && comp_timeb(&now, &start) < timeout_ms);
 
 	rdr_ddump_mask(reader, D_DEVICE, buff, total_read, "SR: Receive:");
@@ -305,7 +306,7 @@ void smartreader_init(struct s_reader *reader)
 
 	crdr_data->usb_dev = NULL;
 	crdr_data->usb_dev_handle = NULL;
-	crdr_data->usb_read_timeout = 20000;
+	crdr_data->usb_read_timeout = 15000;
 	crdr_data->usb_write_timeout = 10000;
 
 	crdr_data->type = TYPE_BM;    /* chip type */
@@ -1549,14 +1550,14 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 	}
  }
 
-static int32_t SR_Receive(struct s_reader *reader, unsigned char *buffer, uint32_t size, uint32_t delay, uint32_t timeout)   // delay and timeout not used (yet)!
+static int32_t SR_Receive(struct s_reader *reader, unsigned char *buffer, uint32_t size, uint32_t delay, uint32_t timeout_us)   // delay and timeout not used (yet)!
 {
 	(void) delay; // delay not used (yet)!
-	(void) timeout; // timeout not used (yet)!
+	//(void) timeout; // timeout not used (yet)!
 	uint32_t  ret;
 
 	smart_fastpoll(reader, 1);
-	ret = smart_read(reader, buffer, size, 4000);
+	ret = smart_read(reader, buffer, size, (timeout_us/1000)); // convert timeout to ms precize
 	smart_fastpoll(reader, 0);
 	if(ret != size)
 		{ return ERROR; }

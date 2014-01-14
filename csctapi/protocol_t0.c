@@ -529,18 +529,18 @@ int32_t Protocol_T14_ExchangeTPDU(struct s_reader *reader, unsigned char *cmd_ra
 	/* Send apdu */
 	timeout = ICC_Async_GetTimings(reader, reader->char_delay);  // we are going to send: char delay timeout
 	if(ICC_Async_Transmit(reader, cmd_len + 2, 0, buffer, 0, timeout) != OK) { rdr_log(reader," T14 transmit timeout error"); return ERROR; }   //send apdu
-	if(cmd_raw[0] == 0x02 && cmd_raw[1] == 0x09) { cs_sleepms(3500); }  //FIXME why wait? -> needed for init on overclocked T14 cards
-	timeout = ICC_Async_GetTimings(reader, reader->read_timeout);  // we are going to receive: WWT timeout
+	if(cmd_raw[0] == 0x02 && cmd_raw[1] == 0x09) { cs_sleepms(2500); }  //FIXME why wait? -> needed for init on overclocked T14 cards
 
-	if(ICC_Async_Receive(reader, 8, buffer, 0, timeout) != OK) { rdr_log(reader, " SHIT STILL T14 receive timeout error 1"); return ERROR; }   //Read one procedure byte
+	timeout = ICC_Async_GetTimings(reader, reader->read_timeout);  // we are going to receive: WWT timeout
+	if(ICC_Async_Receive(reader, 8, buffer, 0, timeout) != OK) { rdr_log(reader, " T14 receive timeout error 1"); return ERROR; }   //Read one procedure byte
 	recved = (int32_t)buffer[7];
 	if(recved)
 	{
 		timeout = ICC_Async_GetTimings(reader, reader->read_timeout);  // we are going to receive: WWT timeout
-		if(ICC_Async_Receive(reader, recved, buffer + 8, 0 , timeout) != OK) { rdr_log(reader, "SHIT STILL T14 receive timeout error 2"); return ERROR; }
+		if(ICC_Async_Receive(reader, recved, buffer + 8, 0 , timeout) != OK) { rdr_log(reader, " T14 receive timeout error 2"); return ERROR; }
 	}
 	timeout = ICC_Async_GetTimings(reader, reader->read_timeout);  // we are going to receive: WWT timeout
-	if(ICC_Async_Receive(reader, 1, &ixor, 0, timeout) != OK) { rdr_log(reader, "SHIT STILL T14 receive timeout error 3"); return ERROR; }
+	if(ICC_Async_Receive(reader, 1, &ixor, 0, timeout) != OK) { rdr_log(reader, " T14 receive timeout error 3"); return ERROR; }
 	for(i = 0; i < 8 + recved; i++)
 		{ ixor1 ^= buffer[i]; }
 	if(ixor1 != ixor)
