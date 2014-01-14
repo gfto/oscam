@@ -305,12 +305,12 @@ void smartreader_init(struct s_reader *reader)
 
 	crdr_data->usb_dev = NULL;
 	crdr_data->usb_dev_handle = NULL;
-	crdr_data->usb_read_timeout = 15000;
+	crdr_data->usb_read_timeout = 20000;
 	crdr_data->usb_write_timeout = 10000;
 
 	crdr_data->type = TYPE_BM;    /* chip type */
 	crdr_data->baudrate = -1;
-	crdr_data->bitbang_enabled = 1;  /* 0: normal mode 1: any of the bitbang modes enabled */
+	crdr_data->bitbang_enabled = 0;  /* 0: normal mode 1: any of the bitbang modes enabled */
 
 	crdr_data->writebuffer_chunksize = 4096;
 	crdr_data->max_packet_size = 0;
@@ -1556,7 +1556,7 @@ static int32_t SR_Receive(struct s_reader *reader, unsigned char *buffer, uint32
 	uint32_t  ret;
 
 	smart_fastpoll(reader, 1);
-	ret = smart_read(reader, buffer, size, 2000);
+	ret = smart_read(reader, buffer, size, 4000);
 	smart_fastpoll(reader, 0);
 	if(ret != size)
 		{ return ERROR; }
