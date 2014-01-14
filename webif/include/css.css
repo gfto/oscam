@@ -38,7 +38,7 @@ TABLE.menu {border-spacing:0px}
 TABLE.status {width:100%;background-color:white;empty-cells:show}
 TABLE.config {width:760px}
 TABLE.configreader {width:850px}
-TABLE.readers {}
+TABLE.readers {width:100%;}
 TABLE.stats {}
 TABLE.statsbalance TD:last-child{line-height:20px;width:125px}
 TABLE.statsbalance TD:last-child IMG.icon{float:right;margin-left:10px}
@@ -52,7 +52,7 @@ TABLE.invisiblelb TD {width:33%;font-size:12px;white-space: nowrap}
 TABLE.invisibleservices {margin-left:0;width: 80%}
 TABLE.invisibleservices TD {font-size:12px}
 TABLE.configmenu {line-height:16px}
-TABLE.users {}
+TABLE.users {width:100%;}
 TABLE.user_totals {}
 TABLE.ECM_totals {margin-top:10px}
 TABLE.footer tbody tr th,
@@ -112,7 +112,7 @@ TD.usercol2 {text-align:center}
 TD.usercol3 {text-align:center}
 TD.usercol4 {text-align:center}
 TD.usercol5 {text-align:center}
-TD.usercol6 {text-align:center}
+td.usercol6 {text-align:center}
 TD.usercol7 {text-align:center}
 TD.usercol8 {text-align:center}
 TD.usercol9 {text-align:center}
@@ -153,7 +153,6 @@ TR.p TD {background-color:#FDFBE1}
 TR.c TD {background-color:#F1F5E6}
 TR.a TD {background-color:#3F0}
 TR.online TD {background-color:#BFA}
-TR.online TD.usercol6 {background-color:#646464}
 TR.offline TD {}
 TR.expired TD {background-color:#FBA}
 TR.connected TD {background-color:#FFA}
@@ -253,3 +252,6 @@ TH.nameinfo {text-transform:uppercase;text-align:left;background-color:#999}
 .hidden {display:none}
 .visible {}
 .span, span, span a {text-align:center;text-decoration:none}
+tr.online td#lastchannel.usercol6{background-color:#646464;color:#FFFFFF;}
+ul#mainmenu.menu li.menu a,
+ul#mainmenu.menu li.menu_selected a{text-decoration:none;}

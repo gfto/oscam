@@ -158,6 +158,7 @@ USEREDITANTICASC              user_edit/user_edit_anticasc.html                 
 CONFIGANTICASC                config/anticasc.html                                        CS_ANTICASC
 CONFIGMENUANTICASC            config/menu_anticasc.html                                   CS_ANTICASC
 FILEMENUANTICASC              files/menu_anticasc.html                                    CS_ANTICASC
+USERANTICASC                  userconfig/userconfig_anticascbit.html                      CS_ANTICASC
 CWANTICASCTHV                 userconfig/userconfig_cwanticascthv.html                    CS_ANTICASC
 CWANTICASCTBV                 userconfig/userconfig_entry_cwanticasctbv.html              CS_ANTICASC
 CONFIGMENUMONITOR             config/menu_monitor.html                                    MODULE_MONITOR
@@ -201,6 +202,7 @@ CONFIGCWCYCLE                 config/cache_cwcycle.html                         
 CWCYCLETHV                    userconfig/userconfig_cwcyclethv.html                       CW_CYCLE_CHECK
 CWCYCLETBV                    userconfig/userconfig_entry_cwcycletbv.html                 CW_CYCLE_CHECK
 CMCAPTIONCWC                  config/menu_cmcaptioncwc.html                               CW_CYCLE_CHECK
+USERCWCYCLE                   userconfig/userconfig_cwcyclebit.html                       CW_CYCLE_CHECK
 LOCALCARDS                    config/global_localcards.html                               WITH_CARDREADER
 UNLOCKPARENTAL                config/global_unlockparental.html                           READER_SECA,READER_VIACCESS
 READERPINCODE                 readerconfig/readerconfig_hwreader_pincode.html             READER_CONAX,READER_CRYPTOWORKS,READER_VIACCESS,READER_SECA
