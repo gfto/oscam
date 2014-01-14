@@ -1,6 +1,1 @@
-	<script type="text/javascript">
-	<!--
-	addUnloadHandler();
-	window.onload=setTimeout(function(){saveScroll();window.location.href="##REFRESHURL##";},##REFRESHTIME## * 1000)
-	//-->
-	</script>
+	<SCRIPT TYPE="text/javascript">var oReloadTimer = null;var oCounterTimer = null;var iCounter = ##REFRESHTIME##;function initDoc() {if (oReloadTimer) window.clearInterval(oReloadTimer);oReloadTimer = window.setInterval("reloadDocument();",##REFRESHTIME## * 1000);if (oCounterTimer) window.clearInterval(oCounterTimer);oCounterTimer = window.setInterval("runReloadCounter();",1000);}function reloadDocument() {window.location.reload();}function runReloadCounter() {var oReloadContent = document.getElementById("ReloadContent");if (oReloadContent) {if (iCounter < 0) {iCounter = ##REFRESHTIME##;}oReloadContent.innerHTML = "This content will automatically reload in " + iCounter;iCounter--;}}window.onload = initDoc;</SCRIPT>
