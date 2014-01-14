@@ -10,7 +10,7 @@ extern char *LOG_LIST;
 void cs_lock_create(CS_MUTEX_LOCK *l, const char *name, uint32_t timeout_ms)
 {
 	memset(l, 0, sizeof(CS_MUTEX_LOCK));
-	l->timeout_ms = timeout_ms;
+	l->timeout = timeout_ms / 1000;
 	l->name = name;
 	pthread_mutex_init(&l->lock, NULL);
 	__cs_pthread_cond_init(&l->writecond);
@@ -32,7 +32,7 @@ void cs_lock_destroy(CS_MUTEX_LOCK *l)
 	cs_rwunlock_int(l, WRITELOCK);
 
 	//Do not destroy when having pending locks!
-	int32_t n = (l->timeout_ms / 10000) + 2;
+	int32_t n = (l->timeout / 10) + 2;
 	while((--n > 0) && (l->writelock || l->readlock)) { cs_sleepms(10); }
 
 	cs_rwlock_int(l, WRITELOCK);
@@ -60,7 +60,8 @@ void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type)
 	if(!l || !l->name || l->flag)
 		{ return; }
 
-	add_ms_to_timespec(&ts, l->timeout_ms);
+	ts.tv_sec = time(NULL) + l->timeout;
+	ts.tv_nsec = 0;
 
 	pthread_mutex_lock(&l->lock);
 

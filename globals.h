@@ -517,12 +517,12 @@ struct timeb
 
 typedef struct cs_mutexlock
 {
+	int32_t     timeout;
 	pthread_mutex_t lock;
 	pthread_cond_t  writecond, readcond;
 	const char  *name;
 	int8_t      flag;
 	int16_t     writelock, readlock;
-	uint32_t		timeout_ms;
 } CS_MUTEX_LOCK;
 
 #include "oscam-llist.h"
