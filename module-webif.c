@@ -3972,7 +3972,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							}
 							else
 							{
-								tpl_printf(vars, TPLADD, "UPICMISSING", "missing icon: IC_%s", xml_encode(vars, usr));
+								tpl_printf(vars, TPLADD, "UPICMISSING", "missing icon: IC_%s.tpl", xml_encode(vars, usr));
 							}
 						}
 
