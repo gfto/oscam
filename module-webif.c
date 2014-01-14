@@ -4043,7 +4043,11 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								tpl_addVar(vars, TPLADD, "LBLVALUE", xml_encode(vars, cl->lastreader));
 								tpl_addVar(vars, TPLADD, "LBLVALUEENC", urlencode(vars, cl->lastreader));
 								tpl_printf(vars, TPLADD, "MSVALUE", "%d", cl->cwlastresptime);
+#ifdef WITH_LB
 								tpl_addVar(vars, TPLAPPEND, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUEBIT"));
+#else
+								tpl_printf(vars, TPLAPPEND, "CLIENTLBVALUE", "%s (%dms)", xml_encode(vars, cl->lastreader), cl->cwlastresptime);
+#endif
 							}
 						}
 						if(cl->last_caid != NO_CAID_VALUE && cl->last_srvid != NO_SRVID_VALUE)
@@ -4121,14 +4125,23 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								tpl_addVar(vars, TPLADD, "LBLRPVALUE", rdr->label);
 								tpl_addVar(vars, TPLADD, "LBLRPVALUEENC", urlencode(vars, rdr->label));
 								tpl_printf(vars, TPLADD, "LBLRPSTRVALUE", "%d", rdr->lbvalue);
+#ifdef WITH_LB
 								tpl_addVar(vars, TPLADD, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUERP"));
+#else
+								tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "%d", rdr->lbvalue);
+#endif
+
 							}
 							else
 							{
 								tpl_addVar(vars, TPLADD, "LBLRPVALUE", rdr->label);
 								tpl_addVar(vars, TPLADD, "LBLRPVALUEENC", urlencode(vars, rdr->label));
 								tpl_addVar(vars, TPLADD, "LBLRPSTRVALUE", "no data");
+#ifdef WITH_LB
 								tpl_addVar(vars, TPLADD, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUERP"));
+#else
+								tpl_addVar(vars, TPLADD, "CLIENTLBVALUE", "no data");
+#endif
 							}
 							switch(rdr->card_status)
 							{
