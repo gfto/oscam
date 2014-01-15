@@ -213,7 +213,7 @@ SELECT {padding:2px}
 SELECT {padding:1px}
 input[type="submit"] {padding:2px 6px;}
 }
-input[type='checkbox'] {width:18px;height:18px;}
+input[type='checkbox'] {width:18px;height:18px;position: relative;top: 5px;}
 
 /* 11. LINKS
 ------------------------------------------------------------------------------------*/
