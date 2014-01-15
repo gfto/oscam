@@ -492,7 +492,13 @@ static int32_t irdeto_card_init(struct s_reader *reader, ATR *newatr)
 		camkey = 4;
 		sc_Acs57CamKey[2] = 0;
 	}
-
+// Dirthy hack for Ziggo will be removed when optimum values are find on these T14 cards for v2 and triple
+// There are also other readers suffering from simmilar issue for those cards.
+    if((reader->caid == 0x0604) && (reader->typ == R_SMART) &&  (reader->smart_type >= 2)) 
+    { 
+        // Quick and dirty containment for the SmargoV2,Triple and Ziggo irdeto caid: 0604 using smartreader protocol 
+        camkey = 999; 
+    } // end dirthy hack
 	rdr_debug_mask(reader, D_READER, "set camkey for type=%d", camkey);
 
 	switch(camkey)
@@ -530,6 +536,18 @@ static int32_t irdeto_card_init(struct s_reader *reader, ATR *newatr)
 		reader_chk_cmd(sc_Acs57_Cmd, acslength + 2);
 	}
 	break;
+// dirthy hack ziggo nl card smartredaer v2 and triple will be removed after findings optimum T14 values for v2 and triple
+	case 999: 
+    { 
+        // For some reason only 4 to 5 bytes are received, while 8 bytes are expected. 
+	         
+        int32_t rc; 
+        rc = reader_cmd2icc(reader, sc_GetCamKey383C, sizeof(sc_GetCamKey383C), cta_res, &cta_lr); 
+        rdr_debug_mask(reader, D_READER, "SmargoV2 camkey exchange containment: Ignoring returncode (%d), should have been 0.", rc); 
+        rdr_debug_mask(reader, D_READER, "In case cardinit NOK and/or no entitlements, retry by restarting oscam."); 
+    } 
+    break; 
+// end dirthy hack
 	default:
 		if(csystem_data->acs57 == 1)
 		{
