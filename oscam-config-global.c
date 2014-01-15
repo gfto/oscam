@@ -484,6 +484,7 @@ static const struct config_list webif_opts[] =
 	DEF_OPT_INT8("httphideidleclients"      , OFS(http_hide_idle_clients),  0),
 	DEF_OPT_STR("httphidetype"              , OFS(http_hide_type),              NULL),
 	DEF_OPT_INT8("httpshowpicons"           , OFS(http_showpicons),         0),
+	DEF_OPT_INT32("httppiconsize"           , OFS(http_picon_size),         22),
 	DEF_OPT_INT8("httpshowmeminfo"          , OFS(http_showmeminfo),        0),
 	DEF_OPT_INT8("httpshowuserinfo"         , OFS(http_showuserinfo),       0),
 	DEF_OPT_INT8("httpshowcacheexinfo"      , OFS(http_showcacheexinfo),    0),
