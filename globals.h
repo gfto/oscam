@@ -1622,6 +1622,7 @@ struct s_config
 	int32_t         aulow;
 	int32_t         hideclient_to;
 #ifdef WEBIF
+    int8_t          http_picon_size;
 	int32_t         http_port;
 	IN_ADDR_T       http_srvip;
 	char            *http_user;
