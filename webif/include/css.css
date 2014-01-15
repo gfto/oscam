@@ -220,7 +220,7 @@ A:link {color:#050840}
 A:visited {color:#050840}
 A:active {color:#050840}
 A:hover {color:#FF9E5F}
-A:hover IMG.icon {border: 2px solid black;width:20px;height:20px;color:red;}
+A:hover IMG.icon {border: 1px solid black;width:20px;height:20px;color:red;}
 A.tooltip  {position:relative;text-decoration:none;cursor:default}
 A.tooltip1 {position:relative;text-decoration:none;cursor:default;color:red}
 A.tooltip  SPAN {display:none;z-index:99}
@@ -232,7 +232,6 @@ A:hover SPAN {display:block;position:absolute;top:2em;right:1em;padding:10px;col
 IMG {border:0px solid}
 IMG.icon {border:0px solid;width:22px;height:22px;background-color:#A00;border-radius:3px;-webkit-border-radius:3px; max-height:22px;}
 IMG.statususericon, IMG.protoicon, IMG.usericon, IMG.readericon {min-height:22px;}
-
 
 /* 13. SPAN Elements
 ------------------------------------------------------------------------------------*/

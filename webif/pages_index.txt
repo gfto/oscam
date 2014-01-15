@@ -67,6 +67,9 @@ READERNAMEBIT                 readers/readernamebit.html
 READERNOICON                  readers/readernoicon.html
 READERCTYPBIT                 readers/readerctypbit.html
 READERCTYPNOICON              readers/readerctypnoicon.html
+READERLBWU                    readers/readers_lblweightu.html                            WITH_LB
+READERLBWD                    readers/readers_lblweightd.html                            WITH_LB
+READERLBBIT                   readers/readers_lblweightbit.html                          WITH_LB
 APIREADERS                    api.xml/readers.xml
 APIREADERSBIT                 api.xml/readers_readerlist.xml
 READERSBIT                    readers/readers_readerlist.html
