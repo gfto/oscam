@@ -494,7 +494,7 @@ static int32_t irdeto_card_init(struct s_reader *reader, ATR *newatr)
 	}
 // Dirthy hack for Ziggo will be removed when optimum values are find on these T14 cards for v2 and triple
 // There are also other readers suffering from simmilar issue for those cards.
-    if((reader->caid == 0x0604) && (reader->typ == R_SMART) &&  (reader->smart_type >= 2)) 
+    if(((reader->caid == 0x0604) || (reader->caid == 0x1722)) && (reader->typ == R_SMART) &&  (reader->smart_type >= 2)) 
     { 
         // Quick and dirty containment for the SmargoV2,Triple and Ziggo irdeto caid: 0604 using smartreader protocol 
         camkey = 999; 
