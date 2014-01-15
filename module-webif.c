@@ -892,6 +892,7 @@ static char *send_oscam_config_webif(struct templatevars *vars, struct uriparams
 	tpl_addVar(vars, TPLADD, "HTTPTPL", cfg.http_tpl);
 	tpl_addVar(vars, TPLADD, "HTTPSCRIPT", cfg.http_script);
 	tpl_addVar(vars, TPLADD, "HTTPJSCRIPT", cfg.http_jscript);
+	tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "%d", cfg.http_picon_size);
 
 	if(cfg.http_hide_idle_clients > 0) { tpl_addVar(vars, TPLADD, "CHECKED", "checked"); }
 	tpl_addVar(vars, TPLADD, "HTTPHIDETYPE", cfg.http_hide_type);
@@ -1139,6 +1140,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 		tpl_addVar(vars, TPLADD, "REFRESHURL", "readers.html");
 		tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 	}
+	if(!apicall) {tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.readericon {height:%dpx !important;}", cfg.http_picon_size);}
 	if((strcmp(getParam(params, "action"), "disable") == 0) || (strcmp(getParam(params, "action"), "enable") == 0))
 	{
 		if(cfg.http_readonly)
@@ -2778,14 +2780,15 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	char *user = getParam(params, "user");
 	int32_t found = 0;
 
-	if(!apicall) { setActiveMenu(vars, MNU_USERS); }
-
+	if(!apicall) {
+		setActiveMenu(vars, MNU_USERS);
+		if(!apicall) {tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.protoicon, img.usericon {height:%dpx !important;}", cfg.http_picon_size);}
+	}
 	if(strcmp(getParam(params, "action"), "reinit") == 0)
 	{
 		if(!cfg.http_readonly)
 			{ refresh_oscam(REFR_ACCOUNTS); }
 	}
-
 	if(strcmp(getParam(params, "action"), "delete") == 0)
 	{
 		if(cfg.http_readonly)
@@ -3660,7 +3663,10 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	time_t now = time((time_t *)0);
 	struct tm lt;
 
-	if(!apicall) { setActiveMenu(vars, MNU_STATUS); }
+	if(!apicall) {
+		setActiveMenu(vars, MNU_STATUS);
+		if(!apicall) {tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.statususericon,img.protoicon {height:%dpx !important;}", cfg.http_picon_size);}
+	}
 	char picon_name[32];
 	snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "LOGO");
 	if(picon_exists(picon_name))
