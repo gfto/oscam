@@ -1,16 +1,34 @@
-/* 1. RESET 
+/* 0. RESET
 ------------------------------------------------------------------------------------*/
 HTML,DIV,TABLE,TBODY,TFOOT,THEAD,TR,TH,TD {margin:0;padding:0;border:0}
 
-#mainmenu li,#nav li{display:inline;list-style-type:none;margin-top:0px;}
+/* 1. MENU
+------------------------------------------------------------------------------------*/
+/*shape*/
+#mainmenu{height:30px;}
+#nav{height:20px;}
+#mainmenu li, #nav li{display:inline;margin-left:2px;margin-right:2px;padding-top:5px;padding-bottom:3px;padding-left:3px;padding-right:3px;}
+#nav li{padding-top:0px;padding-bottom:0px;}
+ul#mainmenu.menu, ul#nav{padding-left:0px;margin:0;}
+ul#mainmenu.menu{padding-top:10px;}
+ul#nav{padding-top:0;}
+li.menu a, li.configmenu a, li.menu_selected a, li.configmenu_selected a{text-decoration:none;}
+
+/*size*/
 #mainmenu li{font-size: 18px;font-weight: bold;}
 #nav li{font-size: 14px;}
-div#subnav ul#nav{margin-bottom: 20px;margin-top: 0;padding-top: 5px;}
-div#main ul#mainmenu.menu{margin-bottom: 0;margin-top: 0;padding-left: 0;padding-top: 5px;}
-ul#mainmenu.menu li.menu:hover,
-ul#mainmenu.menu li.menu_selected,
-ul#nav.configmenu li.configmenu:hover,
-ul#nav.configmenu li.configmenu_selected{background-color:#ddeeee;}
+
+/*font*/
+#mainmenu, #nav{font-family:arial, helvetica, sans-serif;}
+
+/*color*/
+#mainmenu, #nav{background-color:#FFFFFF;}
+li.menu:hover,
+li.menu_selected,
+li.configmenu:hover,
+li.configmenu_selected{background-color:#DDDDDD;}
+
+
 
 
 
@@ -252,5 +270,3 @@ TH.nameinfo {text-transform:uppercase;text-align:left;background-color:#999}
 .visible {}
 .span, span, span a {text-align:center;text-decoration:none}
 tr.online td#lastchannel.usercol6{background-color:#646464;color:#FFFFFF;}
-ul#mainmenu.menu li.menu a,
-ul#mainmenu.menu li.menu_selected a{text-decoration:none;}
