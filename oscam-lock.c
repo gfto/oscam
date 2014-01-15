@@ -60,10 +60,9 @@ void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type)
 	if(!l || !l->name || l->flag)
 		{ return; }
 
-	ts.tv_sec = time(NULL) + l->timeout;
-	ts.tv_nsec = 0;
-
 	pthread_mutex_lock(&l->lock);
+
+	add_ms_to_timespec(&ts, l->timeout * 1000);
 
 	if(type == WRITELOCK)
 	{
