@@ -1140,7 +1140,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 		tpl_addVar(vars, TPLADD, "REFRESHURL", "readers.html");
 		tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 	}
-	if(!apicall) {tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.readericon {height:%dpx !important;}", cfg.http_picon_size);}
+	if(!apicall) {tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.readericon,img.protoicon {height:%dpx !important;}", cfg.http_picon_size);}
 	if((strcmp(getParam(params, "action"), "disable") == 0) || (strcmp(getParam(params, "action"), "enable") == 0))
 	{
 		if(cfg.http_readonly)
