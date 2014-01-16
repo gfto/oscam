@@ -28,6 +28,15 @@ li.menu_selected,
 li.configmenu:hover,
 li.configmenu_selected{background-color:#DDDDDD;}
 
+/* 2. FOOTER
+------------------------------------------------------------------------------------*/
+div.footer{padding-bottom:5px;padding-top:5px;margin-bottom:0px;}
+div.footer p{margin:2px;}
+
+/*color*/
+div.footer p{color:#000000;}
+div.footer{background-color:#EEEEEE;}
+
 /* 2. BASIC SETTINGS 
 ------------------------------------------------------------------------------------*/
 BODY {background-color:white;font-family:Arial;font-size:11px;text-align:center}
@@ -68,8 +77,6 @@ TABLE.configmenu {line-height:16px}
 TABLE.users {width:100%;}
 TABLE.user_totals {}
 TABLE.ECM_totals {margin-top:10px}
-TABLE.footer tbody tr th,
-TABLE.footer tbody tr td.centered{background-color:#EEEEEE}
 
 /* 5. TABLE HEADER - TH
 ------------------------------------------------------------------------------------*/
@@ -256,8 +263,6 @@ path.graph_grid {stroke:gray;stroke-opacity:0.5}
 
 /* 15. OTHER CLASS
 ------------------------------------------------------------------------------------*/
-DIV.footer {clear:both;border-top:1px solid #AAA;margin:20px auto;padding-top:10px;background-color:#EEEEEE}
-DIV.footerwidth {max-width:1300px}
 DIV.info {max-width:1300px;margin:20px auto;border-top:1px solid #AAA}
 TABLE.invisible TD:first-child {padding-left:0}
 TABLE.statusmeminfo,TABLE.statususerinfo,TABLE.statuscacheexinfo {width:60%;margin:10px auto;white-space: no-wrap;}
