@@ -227,7 +227,7 @@ A:link {color:#050840}
 A:visited {color:#050840}
 A:active {color:#050840}
 A:hover {color:#FF9E5F}
-A:hover IMG.icon {border: 1px solid black;width:20px;height:20px;color:red;}
+A:hover IMG.icon {background:red;}
 A.tooltip  {position:relative;text-decoration:none;cursor:default}
 A.tooltip1 {position:relative;text-decoration:none;cursor:default;color:red}
 A.tooltip  SPAN {display:none;z-index:99}
