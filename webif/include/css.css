@@ -266,3 +266,4 @@ TH.nameinfo {text-transform:uppercase;text-align:left;background-color:#999}
 .visible {}
 .span, span, span a {text-align:center;text-decoration:none}
 tr.online td#lastchannel.usercol6{background-color:#646464;color:#FFFFFF;}
+p#filename{color:#000000;font-weight:bold;font-size: 14px;}
