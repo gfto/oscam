@@ -3,13 +3,24 @@
 ##TPLMESSAGE##
 <DIV ID="subnav">
 	<UL ID="nav" CLASS="configmenu">
-		<LI CLASS="configmenu"><A HREF="userconfig.html?part=adduser">Add User</A></LI>
+		<LI CLASS="configmenu"><A HREF="#" onclick="adduser();">Add User</A></LI>
 		<LI CLASS="configmenu"><A HREF="userconfig.html?action=reinit">Reinit User DB</A></LI>
 		<LI CLASS="configmenu"><A HREF="userconfig.html?action=resetalluserstats">Reset Userstats</A></LI>
 		<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=users&amp;hidelabels=1">Show Graphs</A></LI>
+		<li class="configmenu"><a href="status.html">Refresh</a></li>
 	</UL>
 </DIV>
+<DIV CLASS="newuser" ID="newuser">
 	<TABLE CLASS="users">
+		<TR><FORM action="user_edit.html" method="get"><th>New User: <input name="user" type="text"><input type="submit" value="Add User"></th></FORM></TR>
+	</TABLE>
+</DIV>
+<DIV id="searchTable">
+	<TABLE CLASS="users">
+		<TR><th>Search: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="countDown()" /></th></TR>
+	</TABLE>
+</DIV>
+	<TABLE CLASS="users" id="dataTable">
 		<TR>
 			<TH COLSPAN="7"></TH>
 			<TH COLSPAN="8">ECM</TH>
