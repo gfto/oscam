@@ -272,3 +272,9 @@ TH.nameinfo {text-transform:uppercase;text-align:left;background-color:#999}
 .span, span, span a {text-align:center;text-decoration:none}
 tr.online td#lastchannel.usercol6{background-color:#646464;color:#FFFFFF;}
 p#filename{color:#000000;font-weight:bold;font-size: 14px;}
+
+/* AUTOHIDE UNUSED
+------------------------------------------------------------------------------------*/
+th#exp, td#exp.usercol20{display: none;}
+th#cwc, td#cwc.usercol13{display: none;}
+th#acasc, td#acasc.usercol19, td#acasc.usercol19{display: none;}
