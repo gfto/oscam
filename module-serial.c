@@ -363,7 +363,7 @@ static int32_t oscam_ser_send(struct s_client *client, const uchar *const buf, i
 	add_ms_to_timeb(&serialdata->tpe, (l * (serialdata->oscam_ser_delay + 1)));
 	n = oscam_ser_write(client, buf, l);
 	cs_ftime(&serialdata->tpe);
-	cs_ddump_mask(D_CLIENT, buf, l, "send %d of %d bytes to %s in %d ms", n, l, remote_txt(), 
+	cs_ddump_mask(D_CLIENT, buf, l, "send %d of %d bytes to %s in %"PRId64" ms", n, l, remote_txt(),
 		comp_timeb(&serialdata->tpe, &serialdata->tps));
 	if(n != l)
 		{ cs_log("transmit error. send %d of %d bytes only !", n, l); }
@@ -669,7 +669,7 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
 		serialdata->serial_errors++;
 	}
 	cs_ftime(&serialdata->tpe);
-	cs_ddump_mask(D_CLIENT, buf, n, "received %d bytes from %s in %d ms", n, remote_txt(), comp_timeb(&serialdata->tpe, &serialdata->tps));
+	cs_ddump_mask(D_CLIENT, buf, n, "received %d bytes from %s in %"PRId64" ms", n, remote_txt(), comp_timeb(&serialdata->tpe, &serialdata->tps));
 	client->last = serialdata->tpe.time;
 	switch(p)
 	{

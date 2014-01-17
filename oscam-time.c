@@ -3,9 +3,9 @@
 
 static enum clock_type clock_type = CLOCK_TYPE_UNKNOWN;
 
-int32_t comp_timeb(struct timeb *tpa, struct timeb *tpb)
+int64_t comp_timeb(struct timeb *tpa, struct timeb *tpb)
 {
-	return ((tpa->time - tpb->time) * 1000) + (tpa->millitm - tpb->millitm);
+	return (uint64_t)(((uint64_t)(tpa->time - tpb->time) * 1000ull) + (tpa->millitm - tpb->millitm));
 }
 
 /* Checks if year is a leap year. If so, 1 is returned, else 0. */
@@ -167,12 +167,12 @@ void add_ms_to_timeb(struct timeb *tb, int32_t ms)
 	tb->millitm += ms % 1000;
 	if(tb->millitm >= 1000)
 	{
-		tb->millitm -= 1000;
+		tb->millitm %= 1000;
 		tb->time++;
 	}
 }
 
-int32_t add_ms_to_timeb_diff(struct timeb *tb, int32_t ms)
+int64_t add_ms_to_timeb_diff(struct timeb *tb, int32_t ms)
 {
 	struct timeb tb_now;
 	add_ms_to_timeb(tb, ms);

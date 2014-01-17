@@ -197,13 +197,13 @@ void update_n_request(void){
 static void *cw_process(void)
 {
 	set_thread_name(__func__);
-	int32_t time_to_check_fbtimeout, time_to_check_ctimeout, next_check, ecmc_next, cache_next, n_request_next, msec_wait = 3000;
+	int64_t time_to_check_fbtimeout, time_to_check_ctimeout, next_check, ecmc_next, cache_next, n_request_next, msec_wait = 3000;
 	struct timeb t_now, tbc, ecmc_time, cache_time, n_request_time;
 	ECM_REQUEST *er = NULL;
 	time_t ecm_maxcachetime;
 
 #ifdef CS_CACHEEX
-	int32_t time_to_check_cacheex_wait_time;
+	int64_t time_to_check_cacheex_wait_time;
 #endif
 
 	cs_pthread_cond_init(&cw_process_sleep_cond_mutex, &cw_process_sleep_cond);

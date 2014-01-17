@@ -178,7 +178,7 @@ void *work_thread(void *ptr)
 				if(rc > 0)
 				{
 					cs_ftime(&end); // register end time
-					cs_debug_mask(D_TRACE, "[OSCAM-WORK] new event %d occurred on fd %d after %d ms inactivity", pfd[0].revents,
+					cs_debug_mask(D_TRACE, "[OSCAM-WORK] new event %d occurred on fd %d after %"PRId64" ms inactivity", pfd[0].revents,
 								  pfd[0].fd, comp_timeb(&end, &start));
 					data = &tmp_data;
 					data->ptr = NULL;

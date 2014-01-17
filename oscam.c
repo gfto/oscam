@@ -922,7 +922,7 @@ static void process_clients(void)
 		{
 			if(pfd[i].revents == 0) { continue; }  // skip sockets with no changes
 			rc--; //event handled!
-			cs_debug_mask(D_TRACE, "[OSCAM] new event %d occurred on fd %d after %d ms inactivity", pfd[i].revents,
+			cs_debug_mask(D_TRACE, "[OSCAM] new event %d occurred on fd %d after %"PRId64" ms inactivity", pfd[i].revents,
 						  pfd[i].fd, comp_timeb(&end, &start));
 			//clients
 			cl = cl_list[i];

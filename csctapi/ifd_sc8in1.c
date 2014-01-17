@@ -708,7 +708,7 @@ static int32_t Sc8in1_Selectslot(struct s_reader *reader, uint16_t slot)
 	}
 #ifdef WITH_DEBUG
 	cs_ftime(&tv_end);
-	rdr_debug_mask(reader, D_DEVICE, "SC8in1 Selectslot in %d ms", comp_timeb(&tv_end, &tv_start));
+	rdr_debug_mask(reader, D_DEVICE, "SC8in1 Selectslot in %"PRId64" ms", comp_timeb(&tv_end, &tv_start));
 #endif
 	return status;
 }

@@ -462,7 +462,7 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 	char ecmd5[17 * 3];
 	cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
 
-	rdr_debug_mask(reader, D_READER, "ecm hash: %s real time: %d ms", ecmd5, comp_timeb(&tpe, &tps));
+	rdr_debug_mask(reader, D_READER, "ecm hash: %s real time: %"PRId64" ms", ecmd5, comp_timeb(&tpe, &tps));
 	
 	reader_post_process(reader);
 }

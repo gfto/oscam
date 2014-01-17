@@ -111,9 +111,9 @@ static void reader_log_emm(struct s_reader *reader, EMM_PACKET *ep, int32_t i, i
 		if(!tps)
 			{ tps = &tpe; }
 
-		rdr_log(reader, "%s emmtype=%s, len=%d, idx=%d, cnt=%d: %s (%d ms)",
+		rdr_log(reader, "%s emmtype=%s, len=%d, idx=%d, cnt=%d: %s (%"PRId64" ms)",
 				username(ep->client), typedesc[cl->emmcache[i].type], ep->emm[2],
-				i, cl->emmcache[i].count, rtxt[rc],	comp_timeb(&tpe, tps));
+				i, cl->emmcache[i].count, rtxt[rc], comp_timeb(&tpe, tps));
 	}
 
 	if(rc)
