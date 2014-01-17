@@ -275,6 +275,6 @@ p#filename{color:#000000;font-weight:bold;font-size: 14px;}
 
 /* AUTOHIDE UNUSED
 ------------------------------------------------------------------------------------*/
-/*th#exp, td#exp.usercol20{display: none;}*/
+th#exp, td#exp.usercol20{display: none;}
 th#cwc, td#cwc.usercol13{display: none;}
-/*th#acasc, td#acasc.usercol19, td#acasc.usercol19{display: none;}*/
+th#acasc, td#acasc.usercol19, td#acasc.usercol20{display: none;}
