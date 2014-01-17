@@ -2884,6 +2884,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	{
 		filter = getParam(params, "label");
 	}
+	int8_t expdate_set = 0;
 	int32_t total_users = 0;
 	int32_t disabled_users = 0;
 	int32_t expired_users = 0;
@@ -2913,12 +2914,14 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "LASTCHANNEL", "");
 
 		if(account->expirationdate)
-		{
-			expired = " (expired)";
-			classname = "expired";
-			expired_users++;
-			isactive = 0;
-		}
+			expdate_set = 1;
+			if(account->expirationdate < now)
+			{
+				expired = " (expired)";
+				classname = "expired";
+				expired_users++;
+				isactive = 0;
+			}
 		else
 		{
 			expired = "";
@@ -3055,6 +3058,10 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			n_request = latestclient->n_request[0];
 		}
 
+		tpl_addVar(vars, TPLADD, "EXPIREVIEW", expdate_set ? "" : "exp");
+#ifdef CS_ANTICASC
+		tpl_addVar(vars, TPLADD, "ANTICASCVIEW", cfg.ac_enabled ? "" : "acasc");
+#endif
 		tpl_printf(vars, TPLADD, "CWOK", "%d", account->cwfound);
 		tpl_printf(vars, TPLADD, "CWNOK", "%d", account->cwnot);
 		tpl_printf(vars, TPLADD, "CWIGN", "%d", account->cwignored);
