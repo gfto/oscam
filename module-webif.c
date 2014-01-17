@@ -5135,6 +5135,7 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 						}
 					}
 					fclose(fpsave);
+					tpl_addVar(vars, TPLAPPEND, "APIFILENAME", " saved!");
 					// Reinit on save
 					switch(menu_id)
 					{
