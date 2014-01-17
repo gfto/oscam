@@ -1341,9 +1341,9 @@ static int32_t SR_Init(struct s_reader *reader)
 	if (crdr_data->rdrtype >= 2) {
 
 
-		rdr_debug_mask(reader, D_DEVICE, "SR: Setting smartreader latency timer to 1 ms");
-		//Set the FTDI latency timer to 1 ms is ftdi default latency.
-		ret = smartreader_set_latency_timer(reader, 1);
+		rdr_debug_mask(reader, D_DEVICE, "SR: Setting smartreader latency timer to 2 ms");
+		//Set the FTDI latency timer to 2 ms is ftdi default latency.
+		ret = smartreader_set_latency_timer(reader, 2);
 	} else {
 		rdr_debug_mask(reader, D_DEVICE, "SR: Setting smartreader latency timer to 1 ms");
 		//Set the FTDI latency timer to 1 ms is ftdi default latency.
@@ -1574,7 +1574,7 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 	crdr_data->inv = convention;//FIXME this one is set by icc_async and local smartreader reset routine
 	static const char *const parity_str[5] = {"NONE", "ODD", "EVEN", "MARK", "SPACE"};
 	rdr_log(reader,"autospeed = %u", reader->autospeed);
-	rdr_log(reader, "Effectif reader settings mhz =%u F= %u D= %u N=%u T=%u inv=%u parity=%s", reader->mhz, F, D, N, T, crdr_data->inv, parity_str[crdr_data->parity]);
+	rdr_log(reader, "Effective reader settings mhz =%u F= %u D= %u N=%u T=%u inv=%u parity=%s", reader->mhz, F, D, N, T, crdr_data->inv, parity_str[crdr_data->parity]);
 	smart_fastpoll(reader, 1);
 	uint32_t baud_temp2 = (double)(D * (reader->mhz * 10000) / (double)F);
 	smart_flush(reader);

@@ -894,7 +894,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 	else
 	{
 		if ((reader->typ == R_SMART) && (reader->autospeed == 1))
-			rdr_log(reader, "ATR Fsmax is %i MHz, clocking card to atr Fsmax for smartreader cardspeed off %.2f MHz (specified in reader->mhz)",
+			rdr_log(reader, "ATR Fsmax is %i MHz, clocking card to ATR Fsmax for smartreader cardspeed of %.2f MHz (specified in reader->mhz)",
 				atr_fs_table[FI] / 1000000, (float) reader->mhz / 100);
 		else 
 			rdr_log(reader, "ATR Fsmax is %i MHz, clocking card to wanted user cardspeed off %.2f MHz (specified in reader->mhz)",
