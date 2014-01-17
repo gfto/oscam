@@ -2884,7 +2884,6 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	{
 		filter = getParam(params, "label");
 	}
-	int8_t expdate_set = 0;
 	int32_t total_users = 0;
 	int32_t disabled_users = 0;
 	int32_t expired_users = 0;
@@ -2915,14 +2914,10 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 
 		if(account->expirationdate)
 		{
-			expdate_set = 1;
-			if(account->expirationdate < now)
-			{
-				expired = " (expired)";
-				classname = "expired";
-				expired_users++;
-				isactive = 0;
-			}
+			expired = " (expired)";
+			classname = "expired";
+			expired_users++;
+			isactive = 0;
 		}
 		else
 		{
@@ -3060,12 +3055,12 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			n_request = latestclient->n_request[0];
 		}
 
-		tpl_addVar(vars, TPLADD, "CWCCYCVIEW", cfg.cwcycle_check_enable ? "" : "cwc");
 		tpl_printf(vars, TPLADD, "CWOK", "%d", account->cwfound);
 		tpl_printf(vars, TPLADD, "CWNOK", "%d", account->cwnot);
 		tpl_printf(vars, TPLADD, "CWIGN", "%d", account->cwignored);
 		tpl_printf(vars, TPLADD, "CWTOUT", "%d", account->cwtout);
 #ifdef CW_CYCLE_CHECK
+		tpl_addVar(vars, TPLADD, "CWCCYCVIEW", cfg.cwcycle_check_enable ? "" : "cwc");
 		tpl_printf(vars, TPLADD, "CWCYCLECHECKED", "%d", account->cwcycledchecked);
 		tpl_printf(vars, TPLADD, "CWCYCLEOK", "%d", account->cwcycledok);
 		tpl_printf(vars, TPLADD, "CWCYCLENOK", "%d", account->cwcyclednok);
