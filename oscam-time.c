@@ -263,6 +263,14 @@ time_t cs_walltime(struct timeb *tp)
 	return(tp->time + skew);
 }
 
+/* Return real time clock value calculated based on cs_gettime(). Use this instead of time() */
+time_t cs_time(void)
+{
+	struct timeb tb;
+	cs_ftime(&tb);
+	return cs_walltime(&tb);
+}
+
 #ifdef __MACH__
 #include <mach/clock.h>
 #include <mach/mach.h>

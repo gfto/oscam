@@ -22,6 +22,8 @@ int64_t add_ms_to_timeb_diff(struct timeb *tb, int32_t ms);
 void sleepms_on_cond(pthread_mutex_t *mutex, pthread_cond_t *cond, uint32_t msec);
 
 time_t cs_walltime(struct timeb *tp);
+time_t cs_time(void);
+
 void cs_gettime(struct timespec *ts);
 
 enum clock_type cs_getclocktype(void);
