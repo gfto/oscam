@@ -24,6 +24,8 @@ void sleepms_on_cond(pthread_mutex_t *mutex, pthread_cond_t *cond, uint32_t msec
 time_t cs_walltime(struct timeb *tp);
 time_t cs_time(void);
 
+static inline bool cs_valid_time(struct timeb *tp) { return tp->time != 0; }
+
 void cs_gettime(struct timespec *ts);
 
 enum clock_type cs_getclocktype(void);

@@ -210,15 +210,14 @@ int32_t cs_open_logfiles(void)
 		else
 		{
 			setvbuf(fp, NULL, _IOFBF, 8 * 1024);
-			time_t t;
 			char line[80];
 			memset(line, '-', sizeof(line));
 			line[(sizeof(line) / sizeof(char)) - 1] = '\0';
-			time(&t);
+			time_t walltime = cs_time();
 			if(!cfg.disablelog)
 			{
 				char buf[28];
-				cs_ctime_r(&t, buf);
+				cs_ctime_r(&walltime, buf);
 				fprintf(fp, "\n%s\n>> OSCam <<  cardserver %s at %s%s\n", line, starttext, buf, line);
 			}
 		}
@@ -271,7 +270,7 @@ void cs_reinit_loghist(uint32_t size)
 }
 #endif
 
-static time_t log_ts;
+static struct timeb log_ts;
 
 static int32_t get_log_header(int32_t m, char *txt)
 {
@@ -279,8 +278,9 @@ static int32_t get_log_header(int32_t m, char *txt)
 	struct tm lt;
 	int32_t pos;
 
-	time(&log_ts);
-	localtime_r(&log_ts, &lt);
+	cs_ftime(&log_ts);
+	time_t walltime = cs_walltime(&log_ts);
+	localtime_r(&walltime, &lt);
 
 	pos = snprintf(txt, LOG_BUF_SIZE,  "[LOG000]%4d/%02d/%02d %02d:%02d:%02d ", lt.tm_year + 1900, lt.tm_mon + 1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec);
 
@@ -439,7 +439,7 @@ static pthread_mutex_t log_mutex;
 static char log_txt[LOG_BUF_SIZE];
 static char dupl[LOG_BUF_SIZE / 4];
 static char last_log_txt[LOG_BUF_SIZE];
-static time_t last_log_ts;
+static struct timeb last_log_ts;
 static unsigned int last_log_duplicates;
 
 void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar *buf, int32_t n, const char *fmt, ...)
@@ -466,11 +466,12 @@ void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar 
 				repeated_line = strcmp(last_log_txt, log_txt + len) == 0;
 				if(last_log_duplicates > 0)
 				{
-					if(!last_log_ts)  // Must be initialized once
+					if(!cs_valid_time(&last_log_ts))  // Must be initialized once
 						{ last_log_ts = log_ts; }
 					// Report duplicated lines when the new log line is different
 					// than the old or 60 seconds have passed.
-					if(!repeated_line || log_ts - last_log_ts >= 60)
+					int32_t gone = comp_timeb(&log_ts, &last_log_ts);
+					if(!repeated_line || gone >= 60*1000)
 					{
 						dupl_header_len = get_log_header(2, dupl);
 						snprintf(dupl + dupl_header_len - 1, sizeof(dupl) - dupl_header_len, "--- Skipped %u duplicated log lines ---", last_log_duplicates);
@@ -527,7 +528,6 @@ void logCWtoFile(ECM_REQUEST *er, uchar *cw)
 	char buf[256 + sizeof(srvname)];
 	char date[9];
 	unsigned char  i, parity, writeheader = 0;
-	time_t t;
 	struct tm timeinfo;
 
 	/*
@@ -541,8 +541,8 @@ void logCWtoFile(ECM_REQUEST *er, uchar *cw)
 		if(srvname[i] == ' ') { srvname[i] = '_'; }
 
 	/* calc log file name */
-	time(&t);
-	localtime_r(&t, &timeinfo);
+	time_t walltime = cs_time();
+	localtime_r(&walltime, &timeinfo);
 	strftime(date, sizeof(date), "%Y%m%d", &timeinfo);
 	snprintf(buf, sizeof(buf), "%s/%s_I%04X_%s.cwl", cfg.cwlogdir, date, er->srvid, srvname);
 
@@ -602,14 +602,13 @@ void cs_statistics(struct s_client *client)
 {
 	if(!cfg.disableuserfile)
 	{
-		time_t t;
 		struct tm lt;
 		char buf[LOG_BUF_SIZE];
 
 		float cwps;
 
-		time(&t);
-		localtime_r(&t, &lt);
+		time_t walltime = cs_time();
+		localtime_r(&walltime, &lt);
 		if(client->cwfound + client->cwnot > 0)
 		{
 			cwps = client->last - client->login;
