@@ -22,6 +22,8 @@ html body div#searchTable cacheex{margin-bottom: 25px;}
 table#dataTable.stats.upspace{width:80%;}
 table#dataTable.stats.upspace{margin-top: 0px;}
 table.cacheex{width:80%;margin-top: 20px;}
+table.upspace{margin-top: 40px;}
+html body form table.stats.upspace{margin-top: 20px;}
 
 /*font*/
 #mainmenu, #nav{font-family:arial, helvetica, sans-serif;}
@@ -35,7 +37,7 @@ li.configmenu_selected{background-color:#DDDDDD;}
 
 /* 2. FOOTER
 ------------------------------------------------------------------------------------*/
-div.footer{padding-bottom:5px;padding-top:5px;margin-bottom:0px;}
+div.footer{padding-bottom:5px;padding-top:5px;margin-bottom:0px;margin-top: 40px;}
 div.footer p{margin:2px;}
 
 /*color*/
@@ -63,7 +65,7 @@ TABLE {border-spacing:1px;margin-left:auto;margin-right:auto}
 /*TABLE.upspace {margin-top:28px}*/
 TABLE.menu {border-spacing:0px}
 TABLE.status {width:100%;background-color:white;empty-cells:show}
-TABLE.config {width:760px}
+TABLE.config {width:70%}
 TABLE.configreader {width:850px}
 TABLE.readers {width:100%;}
 TABLE.stats {}
@@ -268,7 +270,7 @@ path.graph_grid {stroke:gray;stroke-opacity:0.5}
 
 /* 15. OTHER CLASS
 ------------------------------------------------------------------------------------*/
-DIV.info {max-width:1300px;margin:20px auto;border-top:1px solid #AAA}
+DIV.info {max-width:1300px;margin:20px auto;}
 TABLE.invisible TD:first-child {padding-left:0}
 TABLE.statusmeminfo,TABLE.statususerinfo,TABLE.statuscacheexinfo {width:60%;margin:10px auto;white-space: no-wrap;}
 TH.nameinfo {text-transform:uppercase;text-align:left;background-color:#999}
