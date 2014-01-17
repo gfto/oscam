@@ -1365,15 +1365,9 @@ static int32_t gbox_client_init(struct s_client *cli)
 
 	gbox->peer.id = (gbox->peer.key[0] ^ gbox->peer.key[2]) << 8 | (gbox->peer.key[1] ^ gbox->peer.key[3]);
 
-	cli->gbox_peer_id[0] = gbox->peer.id >> 8;
-	cli->gbox_peer_id[1] = gbox->peer.id & 0xff;
-
 	gbox->id = (gbox->key[0] ^ gbox->key[2]) << 8 | (gbox->key[1] ^ gbox->key[3]);
 	gbox->ver = gbox_version_low_byte;
 	gbox->type = gbox_type_dvb;
-
-	cli->gbox_cw_id[0] = gbox->peer.id >> 8;
-	cli->gbox_cw_id[1] = (gbox->id >> 8) + (gbox->peer.id & 0xff);
 
 	cli->pfd = 0;
 	cli->crypted = 1;
@@ -1602,8 +1596,6 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 
 	memcpy(send_buf_1 + 18, er->ecm, er->ecmlen);
 
-	//  send_buf_1[len2]   = cli->gbox_cw_id[0];
-	//  send_buf_1[len2+1] = cli->gbox_cw_id[1];
 	send_buf_1[len2]   = (gbox->id >> 8) & 0xff;
 	send_buf_1[len2 + 1] = gbox->id & 0xff;
 	send_buf_1[len2 + 2] = gbox_version_low_byte;
