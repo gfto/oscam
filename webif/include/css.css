@@ -13,6 +13,9 @@ ul#mainmenu.menu, ul#nav{padding-left:0px;margin:0;}
 ul#mainmenu.menu{padding-top:10px;}
 ul#nav{padding-top:0;}
 li.menu a, li.configmenu a, li.menu_selected a, li.configmenu_selected a{text-decoration:none;}
+table#dataTable.users thead tr,
+table#dataTable.readers thead tr,
+table#dataTable.stats.upspace thead tr{cursor:pointer;}
 
 /*size*/
 #mainmenu li{font-size: 18px;font-weight: bold;}
