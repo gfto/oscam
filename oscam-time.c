@@ -161,9 +161,8 @@ void add_ms_to_timespec(struct timespec *timeout, int32_t msec)
 	timeout->tv_nsec = nano_secs % 1000000000;
 }
 
-int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms)
+void add_ms_to_timeb(struct timeb *tb, int32_t ms)
 {
-	struct timeb tb_now;
 	tb->time += ms / 1000;
 	tb->millitm += ms % 1000;
 	if(tb->millitm >= 1000)
@@ -171,6 +170,12 @@ int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms)
 		tb->millitm -= 1000;
 		tb->time++;
 	}
+}
+
+int32_t add_ms_to_timeb_diff(struct timeb *tb, int32_t ms)
+{
+	struct timeb tb_now;
+	add_ms_to_timeb(tb, ms);
 	cs_ftime(&tb_now);
 	return comp_timeb(tb, &tb_now);
 }

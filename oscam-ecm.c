@@ -262,7 +262,7 @@ static void *cw_process(void)
 				if(er->stage < 2 && er->cacheex_wait_time)
 				{
 					tbc = er->tps;
-					time_to_check_cacheex_wait_time = add_ms_to_timeb(&tbc, auto_timeout(er, er->cacheex_wait_time));
+					time_to_check_cacheex_wait_time = add_ms_to_timeb_diff(&tbc, auto_timeout(er, er->cacheex_wait_time));
 					if(comp_timeb(&t_now, &tbc) >= 0)
 					{
 						add_job(er->client, ACTION_CACHEEX_TIMEOUT, (void *)er, 0);
@@ -276,7 +276,7 @@ static void *cw_process(void)
 				{
 					//fbtimeout
 					tbc = er->tps;
-					time_to_check_fbtimeout = add_ms_to_timeb(&tbc, auto_timeout(er, get_fallbacktimeout(er->caid)));
+					time_to_check_fbtimeout = add_ms_to_timeb_diff(&tbc, auto_timeout(er, get_fallbacktimeout(er->caid)));
 					if(comp_timeb(&t_now, &tbc) >= 0)
 					{
 						add_job(er->client, ACTION_FALLBACK_TIMEOUT, (void *)er, 0);
@@ -292,7 +292,7 @@ static void *cw_process(void)
 			if(!er->readers_timeout_check)  //ecm stays in cache at least ctimeout+2seconds!
 			{
 				tbc = er->tps;
-				time_to_check_ctimeout = add_ms_to_timeb(&tbc, auto_timeout(er, cfg.ctimeout));
+				time_to_check_ctimeout = add_ms_to_timeb_diff(&tbc, auto_timeout(er, cfg.ctimeout));
 				if(comp_timeb(&t_now, &tbc) >= 0)
 				{
 					add_job(er->client, ACTION_CLIENT_TIMEOUT, (void *)er, 0);
@@ -308,7 +308,7 @@ static void *cw_process(void)
 		{
 			ac_do_stat();
 			cs_ftime(&ac_time);
-			ac_next = add_ms_to_timeb(&ac_time, cfg.ac_stime * 60 * 1000);
+			ac_next = add_ms_to_timeb_diff(&ac_time, cfg.ac_stime * 60 * 1000);
 		}
 #endif
 		if((ecmc_next = comp_timeb(&ecmc_time, &t_now)) <= 10)
@@ -376,7 +376,7 @@ static void *cw_process(void)
 #endif
 
 			cs_ftime(&ecmc_time);
-			ecmc_next = add_ms_to_timeb(&ecmc_time, 1000);
+			ecmc_next = add_ms_to_timeb_diff(&ecmc_time, 1000);
 		}
 
 
@@ -390,14 +390,14 @@ static void *cw_process(void)
 #endif
 
 			cs_ftime(&cache_time);
-			cache_next = add_ms_to_timeb(&cache_time, 3000);
+			cache_next = add_ms_to_timeb_diff(&cache_time, 3000);
 		}
 
 		if((n_request_next = comp_timeb(&n_request_time, &t_now)) <= 10)
 		{
 			update_n_request();
 			cs_ftime(&n_request_time);
-			n_request_next = add_ms_to_timeb(&n_request_time, 60 * 1000);
+			n_request_next = add_ms_to_timeb_diff(&n_request_time, 60 * 1000);
 		}
 
 

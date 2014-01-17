@@ -14,8 +14,11 @@ char *cs_ctime_r(const time_t *timep, char *buf);
 void cs_ftime(struct timeb *tp);
 void cs_sleepms(uint32_t msec);
 void cs_sleepus(uint32_t usec);
+
 void add_ms_to_timespec(struct timespec *timeout, int32_t msec);
-int32_t add_ms_to_timeb(struct timeb *tb, int32_t ms);
+void add_ms_to_timeb(struct timeb *tb, int32_t ms);
+int32_t add_ms_to_timeb_diff(struct timeb *tb, int32_t ms);
+
 void sleepms_on_cond(pthread_mutex_t *mutex, pthread_cond_t *cond, uint32_t msec);
 
 time_t cs_walltime(struct timeb *tp);
