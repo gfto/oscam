@@ -1,7 +1,13 @@
 ##TPLHEADER##
 ##TPLMENU##
 ##TPLMESSAGE##
-	<TABLE CLASS="stats upspace">
+<DIV id="searchTable cacheex">
+	<TABLE CLASS="cacheex">
+		<TR><th>Filter: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="countDown()" /></th></TR>
+	</TABLE>
+</DIV>
+	<TABLE CLASS="stats upspace" id="dataTable">
+	<thead>
 		<TR><TH COLSPAN="12">CacheEX Stats for ##OWN_CACHEEX_NODEID##</TH></TR>
 		<TR><TH>Direction</TH>
 			<TH>Type</TH>
@@ -16,8 +22,11 @@
 			<TH>Err</TH>
 			<TH>CW Diff</TH>
 		</TR>
+	</thead>
+	<tbody>
 ##TABLECLIENTROWS##
 ##TABLEREADERROWS##
+	</tbody>
 	</TABLE>
 	<TABLE CLASS="upspace">
 		<TR><TH>Total push</TH>

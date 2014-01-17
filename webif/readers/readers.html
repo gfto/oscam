@@ -3,7 +3,7 @@
 ##TPLMESSAGE##
 <DIV ID="subnav">
 	<UL ID="nav" CLASS="configmenu">
-		<LI CLASS="configmenu"><A HREF="#" onclick="addreader();cdstop();">Add Reader</A></LI>
+		<LI CLASS="configmenu"><A HREF="#" onclick="addreader();">Add Reader</A></LI>
 		<LI CLASS="configmenu"><A HREF="scanusb.html">Scan USB</A></LI>
 		<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=servers">Show Graphs</A></LI>
 		<li class="configmenu"><a href="readers.html">Refresh</a></li>
@@ -21,7 +21,9 @@
 		<TR><th>Search: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="countDown()" /></th></TR>
 	</TABLE>
 </DIV>
+<section class="container">
 	<TABLE CLASS="readers" id="dataTable">
+	<thead>
 		<TR>
 			<TH COLSPAN="4"></TH>
 			<TH COLSPAN="3">ECM</TH>
@@ -44,6 +46,10 @@
 ##TPLREADERLBWD##
 			<TH COLSPAN="6">Action</TH>
 		</TR>
+	</thead>
+	<tbody>
 ##READERLIST##
+	</tbody>
 	</TABLE>
+</section>
 ##TPLFOOTER##

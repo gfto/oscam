@@ -18,6 +18,11 @@ li.menu a, li.configmenu a, li.menu_selected a, li.configmenu_selected a{text-de
 #mainmenu li{font-size: 18px;font-weight: bold;}
 #nav li{font-size: 14px;}
 
+html body div#searchTable cacheex{margin-bottom: 25px;}
+table#dataTable.stats.upspace{width:80%;}
+table#dataTable.stats.upspace{margin-top: 0px;}
+table.cacheex{width:80%;margin-top: 20px;}
+
 /*font*/
 #mainmenu, #nav{font-family:arial, helvetica, sans-serif;}
 
@@ -55,7 +60,7 @@ H4.styleauthor:after {content:"Eneen"}
 /* 4. TABLES
 ------------------------------------------------------------------------------------*/
 TABLE {border-spacing:1px;margin-left:auto;margin-right:auto}
-TABLE.upspace {margin-top:28px}
+/*TABLE.upspace {margin-top:28px}*/
 TABLE.menu {border-spacing:0px}
 TABLE.status {width:100%;background-color:white;empty-cells:show}
 TABLE.config {width:760px}
