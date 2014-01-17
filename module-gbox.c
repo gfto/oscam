@@ -1371,7 +1371,6 @@ static int32_t gbox_client_init(struct s_client *cli)
 	gbox->id = (gbox->key[0] ^ gbox->key[2]) << 8 | (gbox->key[1] ^ gbox->key[3]);
 	gbox->ver = gbox_version_low_byte;
 	gbox->type = gbox_type_dvb;
-	rdr->gbox_peer_id = gbox->peer.id;
 
 	cli->gbox_cw_id[0] = gbox->peer.id >> 8;
 	cli->gbox_cw_id[1] = (gbox->id >> 8) + (gbox->peer.id & 0xff);
