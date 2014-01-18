@@ -63,7 +63,7 @@ void cs_rwlock_int(CS_MUTEX_LOCK *l, int8_t type)
 	pthread_mutex_lock(&l->lock);
 
 	add_ms_to_timespec(&ts, l->timeout * 1000);
-
+	ts.tv_nsec = 0; // 100% resemble previous code, I consider it wrong 
 	if(type == WRITELOCK)
 	{
 		l->writelock++;
