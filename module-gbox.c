@@ -40,6 +40,10 @@
 
 #define RECEIVE_BUFFER_SIZE	1024
 
+#define LOCAL_GBOX_MAJOR_VERSION	0x02
+#define LOCAL_GBOX_MINOR_VERSION	0x25
+#define LOCAL_GBOX_TYPE			0x40
+
 enum
 {
 	MSG_ECM = 0x445c,
@@ -91,19 +95,17 @@ struct gbox_peer
 	uchar gbox_count_ecm;
 };
 
+static uint16_t local_gbox_id = 0;
+static uchar local_gbox_password[4];
+static uchar local_gbox_checkcode[7];
+static LLIST *local_gbox_cards;
+
 struct gbox_data
 {
-	uint16_t id;
-	uchar checkcode[7];
-	uchar key[4];
-	uchar ver;
-	uchar type;
-	uint16_t exp_seq; // hello seq
 	struct gbox_peer peer;
 	CS_MUTEX_LOCK lock;
 	pthread_mutex_t hello_expire_mut;
 	pthread_cond_t hello_expire_cond;
-	LLIST *local_cards;
 };
 
 static void    gbox_send_boxinfo(struct s_client *cli);
@@ -120,11 +122,9 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
 static int32_t gbox_checkcode_recv(struct s_client *cli, uchar *checkcode);
 static int32_t gbox_decode_cmd(uchar *buf);
 static uint8_t gbox_compare_pw(uchar *my_pw, uchar *rec_pw);
+static uint16_t gbox_convert_password_to_id(uchar *password);
 uint32_t gbox_get_ecmchecksum(ECM_REQUEST *er);
-
-static const uint8_t gbox_version_high_byte = 0x02;
-static const uint8_t gbox_version_low_byte  = 0x25;
-static const uint8_t gbox_type_dvb          = 0x40;
+static void	init_local_gbox(void);
 
 
 void gbox_write_version(void)
@@ -135,7 +135,7 @@ void gbox_write_version(void)
 		cs_log("Couldn't open %s: %s\n", FILE_GBOX_VERSION, strerror(errno));
 		return;
 	}
-	fprintf(fhandle, "%02X.%02X\n", gbox_version_high_byte, gbox_version_low_byte);
+	fprintf(fhandle, "%02X.%02X\n", LOCAL_GBOX_MAJOR_VERSION, LOCAL_GBOX_MINOR_VERSION);
 	fclose(fhandle);
 }
 
@@ -166,7 +166,7 @@ void gbox_write_shared_cards_info(void)
 			//local cards should be written once - not for every peer
 			if(!local_written)
 			{
-				it = ll_iter_create(gbox->local_cards);
+				it = ll_iter_create(local_gbox_cards);
 				while((card = ll_iter_next(&it)))
 				{
 					fprintf(fhandle, "CardID %4d at oscam Card %08X Sl:%2d Lev:%2d dist:%2d id:%04X\n",
@@ -202,6 +202,11 @@ void hostname2ip(char *hostname, IN_ADDR_T *ip)
 static uint8_t gbox_compare_pw(uchar *my_pw, uchar *rec_pw)
 {
 	return my_pw[0] == rec_pw[0] && my_pw[1] == rec_pw[1] && my_pw[2] == rec_pw[2] && my_pw[3] == rec_pw[3];
+}
+
+static uint16_t gbox_convert_password_to_id(uchar *password)
+{
+	return (password[0] ^ password[2]) << 8 | (password[1] ^ password[3]);
 }
 
 void gbox_add_good_card(struct s_client *cl, uint16_t id_card, uint16_t caid, uint32_t prov, uint16_t sid_ok)
@@ -500,7 +505,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 				card->peer_id = ptr[2] << 8 | ptr[3];
 				ptr += 4;
 
-				if((cli->reader->gbox_maxdist >= card->dist) && (card->peer_id != gbox->id))
+				if((cli->reader->gbox_maxdist >= card->dist) && (card->peer_id != local_gbox_id))
 				{
 
 					LL_ITER it = ll_iter_create(gbox->peer.cards);
@@ -743,12 +748,12 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 	if((data[0] == 0x48) && (data[1] == 0x49))  // if MSG_HELLO1
 		{ cs_log("test cs2gbox"); }
 	else
-		{ gbox_decrypt(data, n, gbox->key); }
+		{ gbox_decrypt(data, n, local_gbox_password); }
 
 	cs_ddump_mask(D_READER, data, n, "gbox: decrypted received data (%d bytes):", n);
 
 	//verify my pass received
-	if (gbox_compare_pw(&data[2],&gbox->key[0]))
+	if (gbox_compare_pw(&data[2],&local_gbox_password[0]))
 	{
 		cs_debug_mask(D_READER, "received data, peer : %04x   data: %s", gbox->peer.id, cs_hexdump(0, data, l, tmp, sizeof(tmp)));
 
@@ -764,9 +769,9 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 		} else 
 		{
 			// if my pass ok verify CW | pass to peer
-			if((data[39] != ((gbox->id >> 8) & 0xff)) || (data[40] != (gbox->id & 0xff)))
+			if((data[39] != ((local_gbox_id >> 8) & 0xff)) || (data[40] != (local_gbox_id & 0xff)))
 			{
-				cs_log("gbox peer: %04X sends CW for other than my id: %04X", gbox->peer.id, gbox->id);
+				cs_log("gbox peer: %04X sends CW for other than my id: %04X", gbox->peer.id, local_gbox_id);
 				cs_writeunlock(&gbox->lock);
 				return -1;
 				//continue; // next client
@@ -803,47 +808,47 @@ static void gbox_calc_checkcode(struct gbox_data *gbox)
 {
 	if(gbox->peer.hello_stat != GBOX_STAT_HELLOL)
 	{
-		gbox->checkcode[0] = 0x15;
-		gbox->checkcode[1] = 0x30;
-		gbox->checkcode[2] = 0x02;
-		gbox->checkcode[3] = 0x04;
-		gbox->checkcode[4] = 0x19;
-		gbox->checkcode[5] = 0x19;
-		gbox->checkcode[6] = 0x66;
+		local_gbox_checkcode[0] = 0x15;
+		local_gbox_checkcode[1] = 0x30;
+		local_gbox_checkcode[2] = 0x02;
+		local_gbox_checkcode[3] = 0x04;
+		local_gbox_checkcode[4] = 0x19;
+		local_gbox_checkcode[5] = 0x19;
+		local_gbox_checkcode[6] = 0x66;
 
-		LL_ITER it = ll_iter_create(gbox->local_cards);
+		LL_ITER it = ll_iter_create(local_gbox_cards);
 		struct gbox_card *card;
 		while((card = ll_iter_next(&it)))
 		{
-			gbox->checkcode[0] ^= (0xFF & (card->provid_1 >> 24));
-			gbox->checkcode[1] ^= (0xFF & (card->provid_1 >> 16));
-			gbox->checkcode[2] ^= (0xFF & (card->provid_1 >> 8));
-			gbox->checkcode[3] ^= (0xFF & (card->provid_1));
-			gbox->checkcode[4] ^= (0xFF & (card->slot));
-			gbox->checkcode[5] ^= (0xFF & (card->peer_id >> 8));
-			gbox->checkcode[6] ^= (0xFF & (card->peer_id));
+			local_gbox_checkcode[0] ^= (0xFF & (card->provid_1 >> 24));
+			local_gbox_checkcode[1] ^= (0xFF & (card->provid_1 >> 16));
+			local_gbox_checkcode[2] ^= (0xFF & (card->provid_1 >> 8));
+			local_gbox_checkcode[3] ^= (0xFF & (card->provid_1));
+			local_gbox_checkcode[4] ^= (0xFF & (card->slot));
+			local_gbox_checkcode[5] ^= (0xFF & (card->peer_id >> 8));
+			local_gbox_checkcode[6] ^= (0xFF & (card->peer_id));
 		}
 		it = ll_iter_create(gbox->peer.cards);
 		while((card = ll_iter_next(&it)))
 		{
-			gbox->checkcode[0] ^= (0xFF & (card->provid_1 >> 24));
-			gbox->checkcode[1] ^= (0xFF & (card->provid_1 >> 16));
-			gbox->checkcode[2] ^= (0xFF & (card->provid_1 >> 8));
-			gbox->checkcode[3] ^= (0xFF & (card->provid_1));
-			gbox->checkcode[4] ^= (0xFF & (card->slot));
-			gbox->checkcode[5] ^= (0xFF & (card->peer_id >> 8));
-			gbox->checkcode[6] ^= (0xFF & (card->peer_id));
+			local_gbox_checkcode[0] ^= (0xFF & (card->provid_1 >> 24));
+			local_gbox_checkcode[1] ^= (0xFF & (card->provid_1 >> 16));
+			local_gbox_checkcode[2] ^= (0xFF & (card->provid_1 >> 8));
+			local_gbox_checkcode[3] ^= (0xFF & (card->provid_1));
+			local_gbox_checkcode[4] ^= (0xFF & (card->slot));
+			local_gbox_checkcode[5] ^= (0xFF & (card->peer_id >> 8));
+			local_gbox_checkcode[6] ^= (0xFF & (card->peer_id));
 		}
 	}
 	else
 	{
-		gbox->checkcode[0] = 0;
-		gbox->checkcode[1] = 0;
-		gbox->checkcode[2] = 0;
-		gbox->checkcode[3] = 0;
-		gbox->checkcode[4] = 0;
-		gbox->checkcode[5] = 0;
-		gbox->checkcode[6] = 0;
+		local_gbox_checkcode[0] = 0;
+		local_gbox_checkcode[1] = 0;
+		local_gbox_checkcode[2] = 0;
+		local_gbox_checkcode[3] = 0;
+		local_gbox_checkcode[4] = 0;
+		local_gbox_checkcode[5] = 0;
+		local_gbox_checkcode[6] = 0;
 	}
 }
 
@@ -959,7 +964,7 @@ static void gbox_send_hello_packet(struct s_client *cli, int8_t number, uchar *o
 
 	gbox_code_cmd(outbuf, MSG_HELLO);
 	memcpy(outbuf + 2, gbox->peer.key, 4);
-	memcpy(outbuf + 6, gbox->key, 4);
+	memcpy(outbuf + 6, local_gbox_password, 4);
 	// initial HELLO = 0, subsequent = 1
 	if(gbox->peer.hello_stat > GBOX_STAT_HELLOS)
 		{ outbuf[10] = 1; }
@@ -970,10 +975,10 @@ static void gbox_send_hello_packet(struct s_client *cli, int8_t number, uchar *o
 	if((number & 0x0F) == 0)
 	{
 		gbox_calc_checkcode(gbox);
-		memcpy(++ptr, gbox->checkcode, 7);
+		memcpy(++ptr, local_gbox_checkcode, 7);
 		ptr += 7;
-		*ptr = gbox_version_low_byte;
-		*(++ptr) = gbox_type_dvb;
+		*ptr = LOCAL_GBOX_MINOR_VERSION;
+		*(++ptr) = LOCAL_GBOX_TYPE;
 		memcpy(++ptr, cfg.gbox_hostname, hostname_len);
 		ptr += hostname_len;
 		*ptr = hostname_len;
@@ -1022,11 +1027,11 @@ static void gbox_send_hello(struct s_client *cli)
 	*/
 	packet = 0;
 	uchar *ptr = buf + 11;
-	if(ll_count(gbox->local_cards) != 0 && gbox->peer.hello_stat > GBOX_STAT_HELLOL)
+	if(ll_count(local_gbox_cards) != 0 && gbox->peer.hello_stat > GBOX_STAT_HELLOL)
 	{
 		memset(buf, 0, sizeof(buf));
 
-		LL_ITER it = ll_iter_create(gbox->local_cards);
+		LL_ITER it = ll_iter_create(local_gbox_cards);
 		struct gbox_card *card;
 		while((card = ll_iter_next(&it)))
 		{
@@ -1069,8 +1074,8 @@ static void gbox_send_checkcode(struct s_client *cli)
 	gbox_calc_checkcode(gbox);
 	gbox_code_cmd(outbuf, MSG_CHECKCODE);
 	memcpy(outbuf + 2, gbox->peer.key, 4);
-	memcpy(outbuf + 6, gbox->key, 4);
-	memcpy(outbuf + 10, gbox->checkcode, 7);
+	memcpy(outbuf + 6, local_gbox_password, 4);
+	memcpy(outbuf + 10, local_gbox_checkcode, 7);
 
 	gbox_send(cli, outbuf, 17);
 }
@@ -1083,9 +1088,9 @@ static void gbox_send_boxinfo(struct s_client *cli)
 
 	gbox_code_cmd(outbuf, MSG_BOXINFO);
 	memcpy(outbuf + 2, gbox->peer.key, 4);
-	memcpy(outbuf + 6, gbox->key, 4);
-	outbuf[0xA] = gbox_version_low_byte;
-	outbuf[0xB] = gbox_type_dvb;
+	memcpy(outbuf + 6, local_gbox_password, 4);
+	outbuf[0xA] = LOCAL_GBOX_MINOR_VERSION;
+	outbuf[0xB] = LOCAL_GBOX_TYPE;
 	memcpy(&outbuf[0xC], cfg.gbox_hostname, hostname_len);
 	gbox_send(cli, outbuf, hostname_len + 0xC);
 }
@@ -1174,9 +1179,9 @@ static void gbox_send_dcw(struct s_client *cl, ECM_REQUEST *er)
 	cs_debug_mask(D_READER, "-> CW  (->%d) from %s/%d (%04X) ", ere->gbox_hops, cli->reader->label, cli->port, ere->gbox_peer);
 }
 
-static uint8_t gbox_next_free_slot(struct gbox_data *gbox, uint16_t id)
+static uint8_t gbox_next_free_slot(uint16_t id)
 {
-	LL_ITER it = ll_iter_create(gbox->local_cards);
+	LL_ITER it = ll_iter_create(local_gbox_cards);
 	struct gbox_card *c;
 	uint8_t lastslot = 0;
 
@@ -1188,7 +1193,7 @@ static uint8_t gbox_next_free_slot(struct gbox_data *gbox, uint16_t id)
 	return ++lastslot;
 }
 
-static void gbox_add_local_card(struct gbox_data *gbox, uint16_t id, uint16_t caid, uint32_t prid, uint8_t slot, uint8_t card_reshare, uint8_t dist)
+static void gbox_add_local_card(uint16_t id, uint16_t caid, uint32_t prid, uint8_t slot, uint8_t card_reshare, uint8_t dist)
 {
 	struct gbox_card *c;
 
@@ -1228,12 +1233,11 @@ static void gbox_add_local_card(struct gbox_data *gbox, uint16_t id, uint16_t ca
 	c->slot = slot;
 	c->lvl = card_reshare;
 	c->dist = dist;
-	ll_append(gbox->local_cards, c);
+	ll_append(local_gbox_cards, c);
 }
 
 static void gbox_local_cards(struct s_client *cli)
 {
-	struct gbox_data *gbox = cli->gbox;
 	int32_t i;
 	uint32_t prid = 0;
 	int8_t slot = 0;
@@ -1248,11 +1252,11 @@ static void gbox_local_cards(struct s_client *cli)
 	uint8_t *node1 = NULL;
 #endif
 
-	if(!gbox->local_cards)
+	if(!local_gbox_cards)
 	{
-		gbox_free_cardlist(gbox->local_cards);
+		gbox_free_cardlist(local_gbox_cards);
 	}
-	gbox->local_cards = ll_create("local_cards");
+	local_gbox_cards = ll_create("local_cards");
 
 	//value >5 not allowed in gbox network
 	if(cli->reader->gbox_reshare > 5)
@@ -1265,7 +1269,7 @@ static void gbox_local_cards(struct s_client *cli)
 	{
 		if(cl->typ == 'r' && cl->reader && cl->reader->card_status == 2)
 		{
-			slot = gbox_next_free_slot(gbox, gbox->id);
+			slot = gbox_next_free_slot(local_gbox_id);
 			//SECA, Viaccess and Cryptoworks have multiple providers
 			if((cl->reader->caid >> 8 == 0x01) || (cl->reader->caid >> 8 == 0x05) ||
 					(cl->reader->caid >> 8 == 0x0D))
@@ -1274,19 +1278,19 @@ static void gbox_local_cards(struct s_client *cli)
 				{
 					prid = cl->reader->prid[i][1] << 16 |
 						   cl->reader->prid[i][2] << 8 | cl->reader->prid[i][3];
-					gbox_add_local_card(gbox, gbox->id, cl->reader->caid, prid, slot, card_reshare, 0);
+					gbox_add_local_card(local_gbox_id, cl->reader->caid, prid, slot, card_reshare, 0);
 				}
 			}
 			else
 				{ 
-					gbox_add_local_card(gbox, gbox->id, cl->reader->caid, 0, slot, card_reshare, 0); 
+					gbox_add_local_card(local_gbox_id, cl->reader->caid, 0, slot, card_reshare, 0); 
 
 					//Check for Betatunnel on gbox account in oscam.user
 					if (chk_is_betatunnel_caid(cl->reader->caid) == 1 && cli->ttab.n && cl->reader->caid == cli->ttab.bt_caidto[0])
 					{
 						//For now only first entry in tunnel tab. No sense in iteration?
 						//Add betatunnel card to transmitted list
-						gbox_add_local_card(gbox, gbox->id, cli->ttab.bt_caidfrom[0], 0, slot, card_reshare, 0);
+						gbox_add_local_card(local_gbox_id, cli->ttab.bt_caidfrom[0], 0, slot, card_reshare, 0);
 						cs_debug_mask(D_READER, "gbox created betatunnel card for caid: %04X->%04X",cli->ttab.bt_caidfrom[0],cl->reader->caid);
 					}
 				}
@@ -1305,18 +1309,18 @@ static void gbox_local_cards(struct s_client *cli)
 				checksum = (uint32_t)crc32(0L, node1, 8);
 				cc_peer_id = ((((checksum >> 24) & 0xFF) ^((checksum >> 8) & 0xFF)) << 8 |
 							  (((checksum >> 16) & 0xFF) ^(checksum & 0xFF)));
-				slot = gbox_next_free_slot(gbox, cc_peer_id);
+				slot = gbox_next_free_slot(cc_peer_id);
 				if((card->caid >> 8 == 0x01) || (card->caid >> 8 == 0x05) ||
 						(card->caid >> 8 == 0x0D))
 				{
 					it2 = ll_iter_create(card->providers);
 					while((provider = ll_iter_next(&it2)))
 					{
-						gbox_add_local_card(gbox, cc_peer_id, card->caid, provider->prov, slot, card->reshare, card->hop);
+						gbox_add_local_card(cc_peer_id, card->caid, provider->prov, slot, card->reshare, card->hop);
 					}
 				}
 				else
-					{ gbox_add_local_card(gbox, cc_peer_id, card->caid, 0, slot, card->reshare, card->hop); }
+					{ gbox_add_local_card(cc_peer_id, card->caid, 0, slot, card->reshare, card->hop); }
 			}
 		}   //end cccam
 #endif
@@ -1332,7 +1336,7 @@ static int32_t gbox_client_init(struct s_client *cli)
 		return -1;
 	}
 
-	if(!cfg.gbox_my_password || strlen(cfg.gbox_my_password) != 8)
+	if(!local_gbox_id)
 	{
 		cs_log("gbox: error, no/invalid password '%s' configured in oscam.conf!",
 			   cfg.gbox_my_password ? cfg.gbox_my_password : "");
@@ -1352,22 +1356,15 @@ static int32_t gbox_client_init(struct s_client *cli)
 	memset(&gbox->peer, 0, sizeof(struct gbox_peer));
 
 	uint32_t r_pwd = a2i(rdr->r_pwd, 4);
-	uint32_t key = a2i(cfg.gbox_my_password, 4);
 	int32_t i;
 	for(i = 3; i >= 0; i--)
 	{
 		gbox->peer.key[3 - i] = (r_pwd >> (8 * i)) & 0xff;
-		gbox->key[3 - i] = (key >> (8 * i)) & 0xff;
 	}
 
 	cs_ddump_mask(D_READER, gbox->peer.key, 4, "Peer password: %s:", rdr->r_pwd);
-	cs_ddump_mask(D_READER, gbox->key,      4, " My  password: %s:", cfg.gbox_my_password);
 
-	gbox->peer.id = (gbox->peer.key[0] ^ gbox->peer.key[2]) << 8 | (gbox->peer.key[1] ^ gbox->peer.key[3]);
-
-	gbox->id = (gbox->key[0] ^ gbox->key[2]) << 8 | (gbox->key[1] ^ gbox->key[3]);
-	gbox->ver = gbox_version_low_byte;
-	gbox->type = gbox_type_dvb;
+	gbox->peer.id = gbox_convert_password_to_id(&gbox->peer.key[0]);
 
 	cli->pfd = 0;
 	cli->crypted = 1;
@@ -1400,7 +1397,7 @@ static int32_t gbox_client_init(struct s_client *cli)
 	hostname2ip(cli->reader->device, &SIN_GET_ADDR(cli->udp_sa));
 
 	cs_log("proxy %s:%d (fd=%d, peer id=%04x, my id=%04x, my hostname=%s, listen port=%d)",
-		   rdr->device, rdr->r_port, cli->udp_fd, gbox->peer.id, gbox->id, cfg.gbox_hostname, rdr->r_port);
+		   rdr->device, rdr->r_port, cli->udp_fd, gbox->peer.id, local_gbox_id, cfg.gbox_hostname, rdr->r_port);
 
 	cli->pfd = cli->udp_fd;
 
@@ -1581,7 +1578,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 	send_buf_1[0] = MSG_ECM >> 8;
 	send_buf_1[1] = MSG_ECM & 0xff;
 	memcpy(send_buf_1 + 2, gbox->peer.key, 4);
-	memcpy(send_buf_1 + 6, gbox->key, 4);
+	memcpy(send_buf_1 + 6, local_gbox_password, 4);
 
 	send_buf_1[10] = (er->pid >> 8) & 0xFF;
 	send_buf_1[11] = er->pid & 0xFF;
@@ -1596,11 +1593,11 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 
 	memcpy(send_buf_1 + 18, er->ecm, er->ecmlen);
 
-	send_buf_1[len2]   = (gbox->id >> 8) & 0xff;
-	send_buf_1[len2 + 1] = gbox->id & 0xff;
-	send_buf_1[len2 + 2] = gbox_version_low_byte;
+	send_buf_1[len2]   = (local_gbox_id >> 8) & 0xff;
+	send_buf_1[len2 + 1] = local_gbox_id & 0xff;
+	send_buf_1[len2 + 2] = LOCAL_GBOX_MINOR_VERSION;
 	send_buf_1[len2 + 3] = 0x00;
-	send_buf_1[len2 + 4] = gbox_type_dvb;
+	send_buf_1[len2 + 4] = LOCAL_GBOX_TYPE;
 
 	send_buf_1[len2 + 5] = ercaid >> 8;
 	send_buf_1[len2 + 6] = ercaid & 0xFF;
@@ -1687,7 +1684,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 	send_buf_1[cont_1] = 0;
 	cont_1++;
 
-	memcpy(&send_buf_1[cont_1], gbox->checkcode, 7);
+	memcpy(&send_buf_1[cont_1], local_gbox_checkcode, 7);
 	cont_1 = cont_1 + 7;
 	memcpy(&send_buf_1[cont_1], gbox->peer.checkcode, 7);
 	cont_1 = cont_1 + 7;
@@ -1708,8 +1705,26 @@ static int32_t gbox_send_emm(EMM_PACKET *UNUSED(ep))
 	return 0;
 }
 
+//init my gbox with id, password and cards crc
+static void init_local_gbox(void)
+{
+	if(!cfg.gbox_my_password || strlen(cfg.gbox_my_password) != 8) { return; }
+
+	uint32_t key = a2i(cfg.gbox_my_password, 4);
+	int32_t i;
+	for(i = 3; i >= 0; i--)
+	{
+		local_gbox_password[3 - i] = (key >> (8 * i)) & 0xff;
+	}
+
+	cs_ddump_mask(D_READER, local_gbox_password,      4, " My  password: %s:", cfg.gbox_my_password);
+
+	local_gbox_id = gbox_convert_password_to_id(&local_gbox_password[0]);
+}
+
 void module_gbox(struct s_module *ph)
 {
+	init_local_gbox();
 	ph->ptab.nports = 1;
 	ph->ptab.ports[0].s_port = cfg.gbox_port;
 
@@ -1720,6 +1735,7 @@ void module_gbox(struct s_module *ph)
 	ph->listenertype = LIS_GBOX;
 
 	ph->s_handler = gbox_server;
+
 	ph->s_init = gbox_server_init;
 
 	ph->send_dcw = gbox_send_dcw;
