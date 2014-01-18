@@ -196,8 +196,8 @@ CONFIGCACHEEXCSP              config/cache_cacheexcsp.html                      
 CACHEEXPAGE                   cacheex/cacheex.html                                        CS_CACHEEX
 CACHEEXTABLEROW               cacheex/cacheex_tablerow.html                               CS_CACHEEX
 CACHEEXMENUITEM               include/menu_cacheexmenuitem.html                           CS_CACHEEX
-ICARRR                        images/ICARRR.gif                                           CS_CACHEEX
-ICARRL                        images/ICARRL.gif                                           CS_CACHEEX
+ICARRR                        images/ICARRR.svg                                           CS_CACHEEX
+ICARRL                        images/ICARRL.svg                                           CS_CACHEEX
 CACHEEXINFOBIT                status/status_cacheexinfo.html                              CS_CACHEEX
 SHOWCACHEEXINFO               config/webif_showcacheexinfo.html                           CS_CACHEEX
 PREAUTOCONF                   ghttp/pre_autoconf.html                                     MODULE_GHTTP

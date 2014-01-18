@@ -28,20 +28,17 @@
 ##TABLEREADERROWS##
 	</tbody>
 	</TABLE>
+	<BR><BR>
 	<TABLE CLASS="upspace">
-		<TR><TH>Total push</TH>
-			<TH>Total got</TH>
-			<TH>Total hit</TH>
-			<TH>Cache size</TH>
+		<TR>
+			<TH colspan="5">Cache Statistics</TH>
 		</TR>
-		<TR><TD CLASS="centered">##TOTAL_CACHEXPUSH_IMG##</TD>
-			<TD CLASS="centered">##TOTAL_CACHEXGOT_IMG##</TD>
-			<TD CLASS="centered">&nbsp;</TD><TD CLASS="centered">&nbsp;</TD>
-		</TR>
-		<TR><TD CLASS="centered">##TOTAL_CACHEXPUSH##</TD>
-			<TD CLASS="centered">##TOTAL_CACHEXGOT##</TD>
-			<TD CLASS="centered">##TOTAL_CACHEXHIT## (##REL_CACHEXHIT##%)</TD>
-			<TD CLASS="centered">##TOTAL_CACHESIZE##</TD>
+		<TR>
+			<TH>Total</TH>
+			<TD CLASS="centered" id="out"><b>push  </b>##TOTAL_CACHEXPUSH_IMG## ##TOTAL_CACHEXPUSH##</TD>
+			<TD CLASS="centered" id="in"><b>got   </b>##TOTAL_CACHEXGOT_IMG## ##TOTAL_CACHEXGOT##</TD>
+			<TD CLASS="centered"><b>hit:  </b>##TOTAL_CACHEXHIT## (##REL_CACHEXHIT##%)</TH>
+			<TD CLASS="centered"><b>size: </b>##TOTAL_CACHESIZE##</TD>
 		</TR>
 	</TABLE>
 ##TPLFOOTER##
