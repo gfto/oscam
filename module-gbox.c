@@ -93,6 +93,9 @@ struct gbox_peer
 	int32_t goodbye_cont;
 	uchar ecm_idx;
 	uchar gbox_count_ecm;
+	CS_MUTEX_LOCK lock;
+	pthread_mutex_t hello_expire_mut;
+	pthread_cond_t hello_expire_cond;
 };
 
 static uint16_t local_gbox_id = 0;
@@ -103,9 +106,6 @@ static LLIST *local_gbox_cards;
 struct gbox_data
 {
 	struct gbox_peer peer;
-	CS_MUTEX_LOCK lock;
-	pthread_mutex_t hello_expire_mut;
-	pthread_cond_t hello_expire_cond;
 };
 
 static void    gbox_send_boxinfo(struct s_client *cli);
@@ -551,7 +551,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		NULLFREE(gbox->peer.hostname);
 		if(!cs_malloc(&gbox->peer.hostname, hostname_len + 1))
 		{
-			cs_writeunlock(&gbox->lock);
+			cs_writeunlock(&gbox->peer.lock);
 			return -1;
 		}
 		memcpy(gbox->peer.hostname, data + payload_len - 1 - hostname_len, hostname_len);
@@ -612,7 +612,7 @@ static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 	struct gbox_ecm_request_ext *ere;
 	if(!cs_malloc(&ere, sizeof(struct gbox_ecm_request_ext)))
 	{
-        	cs_writeunlock(&gbox->lock);
+        	cs_writeunlock(&gbox->peer.lock);
               	return -1;
 	}
 
@@ -679,9 +679,9 @@ int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 	{
 	case MSG_BOXINFO:
 		// Keep alive message
-		pthread_mutex_lock(&gbox->hello_expire_mut);
-		pthread_cond_signal(&gbox->hello_expire_cond);
-		pthread_mutex_unlock(&gbox->hello_expire_mut);
+		pthread_mutex_lock(&gbox->peer.hello_expire_mut);
+		pthread_cond_signal(&gbox->peer.hello_expire_cond);
+		pthread_mutex_unlock(&gbox->peer.hello_expire_mut);
 		gbox_send_hello(cli);
 		break;
 	case MSG_GOODBYE:
@@ -692,9 +692,9 @@ int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 	case MSG_HELLO:
 		if(gbox_cmd_hello(cli, data, n) < 0)
 			{ return -1; }
-		pthread_mutex_lock(&gbox->hello_expire_mut);
-		pthread_cond_signal(&gbox->hello_expire_cond);
-		pthread_mutex_unlock(&gbox->hello_expire_mut);
+		pthread_mutex_lock(&gbox->peer.hello_expire_mut);
+		pthread_cond_signal(&gbox->peer.hello_expire_cond);
+		pthread_mutex_unlock(&gbox->peer.hello_expire_mut);
 		break;
 	case MSG_CW:
 		cli->last = time((time_t *)0);
@@ -711,15 +711,15 @@ int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 				n1++;
 			}
 		}
-		pthread_mutex_lock(&gbox->hello_expire_mut);
-		pthread_cond_signal(&gbox->hello_expire_cond);
-		pthread_mutex_unlock(&gbox->hello_expire_mut);
+		pthread_mutex_lock(&gbox->peer.hello_expire_mut);
+		pthread_cond_signal(&gbox->peer.hello_expire_cond);
+		pthread_mutex_unlock(&gbox->peer.hello_expire_mut);
 		break;
 	case MSG_CHECKCODE:
 		gbox_checkcode_recv(cli, data + 10);
-		pthread_mutex_lock(&gbox->hello_expire_mut);
-		pthread_cond_signal(&gbox->hello_expire_cond);
-		pthread_mutex_unlock(&gbox->hello_expire_mut);
+		pthread_mutex_lock(&gbox->peer.hello_expire_mut);
+		pthread_cond_signal(&gbox->peer.hello_expire_cond);
+		pthread_mutex_unlock(&gbox->peer.hello_expire_mut);
 		break;
 	case MSG_ECM:
 	{
@@ -739,7 +739,7 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 	if(!gbox)
 		{ return -1; }
 
-	cs_writelock(&gbox->lock);
+	cs_writelock(&gbox->peer.lock);
 
 	char tmp[0x50];
 	int32_t n = l;
@@ -762,7 +762,7 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 			if (!gbox_compare_pw(&data[6],&gbox->peer.key[0]))
 			{
 				cs_log("gbox peer: %04X sends wrong password", gbox->peer.id);
-				cs_writeunlock(&gbox->lock);
+				cs_writeunlock(&gbox->peer.lock);
 				return -1;
 				//continue; // next client
 			}
@@ -772,7 +772,7 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 			if((data[39] != ((local_gbox_id >> 8) & 0xff)) || (data[40] != (local_gbox_id & 0xff)))
 			{
 				cs_log("gbox peer: %04X sends CW for other than my id: %04X", gbox->peer.id, local_gbox_id);
-				cs_writeunlock(&gbox->lock);
+				cs_writeunlock(&gbox->peer.lock);
 				return -1;
 				//continue; // next client
 			}
@@ -782,14 +782,14 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 	{
 		cs_log("gbox: ATTACK ALERT: proxy %s:%d", cs_inet_ntoa(cli->ip), cli->reader->r_port);
 		cs_log("received data, peer : %04x   data: %s", gbox->peer.id, cs_hexdump(0, data, n, tmp, sizeof(tmp)));
-		cs_writeunlock(&gbox->lock);
+		cs_writeunlock(&gbox->peer.lock);
 		return -1;
 		//continue; // next client
 	}
 	if(gbox_cmd_switch(cli, data, n) < 0)
 		{ return -1; }
 
-	cs_writeunlock(&gbox->lock);
+	cs_writeunlock(&gbox->peer.lock);
 	return 0;
 }
 
@@ -896,15 +896,15 @@ static void gbox_expire_hello(struct s_client *cli)
 
 	set_thread_name(__func__);
 
-	cs_pthread_cond_init(&gbox->hello_expire_mut, &gbox->hello_expire_cond);
+	cs_pthread_cond_init(&gbox->peer.hello_expire_mut, &gbox->peer.hello_expire_cond);
 
 	while(1)
 	{
 		struct timespec ts;
 		add_ms_to_timespec(&ts, callback * 1000);
 
-		pthread_mutex_lock(&gbox->hello_expire_mut);
-		if(pthread_cond_timedwait(&gbox->hello_expire_cond, &gbox->hello_expire_mut, &ts) == ETIMEDOUT)
+		pthread_mutex_lock(&gbox->peer.hello_expire_mut);
+		if(pthread_cond_timedwait(&gbox->peer.hello_expire_cond, &gbox->peer.hello_expire_mut, &ts) == ETIMEDOUT)
 		{
 			switch(gbox->peer.hello_stat)
 			{
@@ -931,7 +931,7 @@ static void gbox_expire_hello(struct s_client *cli)
 				break;
 			}
 		}
-		pthread_mutex_unlock(&gbox->hello_expire_mut);
+		pthread_mutex_unlock(&gbox->peer.hello_expire_mut);
 	}
 }
 
@@ -1401,7 +1401,7 @@ static int32_t gbox_client_init(struct s_client *cli)
 
 	cli->pfd = cli->udp_fd;
 
-	cs_lock_create(&gbox->lock, "gbox_lock", 5000);
+	cs_lock_create(&gbox->peer.lock, "gbox_lock", 5000);
 
 	gbox->peer.online     = 0;
 	gbox->peer.ecm_idx    = 0;
@@ -1735,7 +1735,6 @@ void module_gbox(struct s_module *ph)
 	ph->listenertype = LIS_GBOX;
 
 	ph->s_handler = gbox_server;
-
 	ph->s_init = gbox_server_init;
 
 	ph->send_dcw = gbox_send_dcw;
