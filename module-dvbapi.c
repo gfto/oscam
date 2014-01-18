@@ -1287,7 +1287,6 @@ void dvbapi_stop_descrambling(int32_t demux_id)
 	memset(&demux[demux_id], 0 , sizeof(DEMUXTYPE));
 	demux[demux_id].pidindex = -1;
 	demux[demux_id].curindex = -1;
-
 	unlink(ECMINFO_FILE);
 	return;
 }
@@ -2609,17 +2608,17 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	}
 	else { cs_ftime(&demux[demux_id].emmstart); } // for all other caids delayed start!
 
-// set channel srvid+caid
-	dvbapi_client->last_srvid = demux[demux_id].program_number;
-	dvbapi_client->last_caid = 0;
-// reset idle-Time & last switch
-	dvbapi_client->lastswitch = dvbapi_client->last = time((time_t *)0); // ********** TO BE CHANGED LATER ON ***********
-
 #if defined WITH_AZBOX || defined WITH_MCA
 	openxcas_sid = program_number;
 #endif
 	
-	if(demux[demux_id].ECMpidcount == 0) { return demux_id; }  // for FTA it ends here!
+	if(demux[demux_id].ECMpidcount == 0) { // for FTA it ends here, but do logging and part of ecmhandler since there will be no ecms asked!
+		if(cfg.usrfileflag) { cs_statistics(dvbapi_client);} // add to user log previous channel + time on channel
+		dvbapi_client->last_srvid = demux[demux_id].program_number; // set new channel srvid
+		dvbapi_client->last_caid = NO_CAID_VALUE; // FTA channels have no caid!
+		dvbapi_client->lastswitch = dvbapi_client->last = time((time_t *)0); // reset idle-Time & last switch
+		return demux_id; 
+	}
 
 #if !defined WITH_STAPI && !defined WITH_COOLAPI && !defined WITH_MCA && !defined WITH_AZBOX
 	if (running) disable_unused_streampids(demux_id); // disable all streampids not in use anymore
