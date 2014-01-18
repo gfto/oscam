@@ -1,290 +1,123 @@
-/* 0. RESET
-------------------------------------------------------------------------------------*/
-HTML,DIV,TABLE,TBODY,TFOOT,THEAD,TR,TH,TD {margin:0;padding:0;border:0}
-
-/* 1. MENU
-------------------------------------------------------------------------------------*/
-/*shape*/
+*{margin:0;padding:0;}
 #mainmenu{height:30px;}
 #nav{height:20px;}
-#mainmenu li, #nav li{display:inline;margin-left:2px;margin-right:2px;padding-top:5px;padding-bottom:3px;padding-left:3px;padding-right:3px;}
-#nav li{padding-top:0px;padding-bottom:0px;}
-ul#mainmenu.menu, ul#nav{padding-left:0px;margin:0;}
+#mainmenu li,#nav li{display:inline;margin-left:2px;margin-right:2px;padding:5px 3px 3px;}
+#nav li{padding-top:0;padding-bottom:0;font-size:14px;}
+ul#mainmenu.menu,ul#nav{padding-left:0;margin:0;}
 ul#mainmenu.menu{padding-top:10px;}
 ul#nav{padding-top:0;}
-li.menu a, li.configmenu a, li.menu_selected a, li.configmenu_selected a{text-decoration:none;}
-table#dataTable.users thead tr,
-table#dataTable.readers thead tr,
-table#dataTable.stats.upspace thead tr{cursor:pointer;}
-
-/*size*/
-#mainmenu li{font-size: 18px;font-weight: bold;}
-#nav li{font-size: 14px;}
-
-html body div#searchTable cacheex{margin-bottom: 25px;}
-table#dataTable.stats.upspace{width:80%;}
-table#dataTable.stats.upspace{margin-top: 0px;}
-table.cacheex{width:80%;margin-top: 20px;}
-table.upspace{margin-top: 40px;}
-html body form table.stats.upspace{margin-top: 20px;}
-
-/*font*/
-#mainmenu, #nav{font-family:arial, helvetica, sans-serif;}
-
-/*color*/
-#mainmenu, #nav{background-color:#FFFFFF;}
-li.menu:hover,
-li.menu_selected,
-li.configmenu:hover,
-li.configmenu_selected{background-color:#DDDDDD;}
-
-/* 2. FOOTER
-------------------------------------------------------------------------------------*/
-div.footer{padding-bottom:5px;padding-top:5px;margin-bottom:0px;margin-top: 40px;}
-div.footer p{margin:2px;}
-
-/*color*/
-div.footer p{color:#000000;}
-div.footer{background-color:#EEEEEE;}
-
-/* 2. BASIC SETTINGS 
-------------------------------------------------------------------------------------*/
-BODY {background-color:white;font-family:Arial;font-size:11px;text-align:center}
-P {color:white}
-P.blinking {font-weight:bold;font-size:large;color:red;animation:blink 1000ms infinite;-webkit-animation:blink 1000ms infinite}
-H2 {color:#AAA;font-size:32px;line-height:32px;margin-top:0px; margin-bottom:0px}
-h4 {font-size:18px;line-height:9px;}
-h4 {color:#aaa;}
-H4.styleauthor:after {content:"Eneen"}
-
-/* 3. BLINKING TEXT - css3
-------------------------------------------------------------------------------------*/
-/* Standard (Mozilla) */@keyframes blink{from{opacity:1}to{opacity:0}}
-/* Chrome & Safari */   @-webkit-keyframes blink{from{opacity:1}to{opacity:0}}
-
-/* 4. TABLES
-------------------------------------------------------------------------------------*/
-TABLE {border-spacing:1px;margin-left:auto;margin-right:auto}
-/*TABLE.upspace {margin-top:28px}*/
-TABLE.menu {border-spacing:0px}
-TABLE.status {width:100%;background-color:white;empty-cells:show}
-TABLE.config {width:70%}
-TABLE.configreader {width:850px}
-TABLE.readers {width:100%;}
-TABLE.stats {}
-TABLE.statsbalance TD:last-child{line-height:20px;width:125px}
-TABLE.statsbalance TD:last-child IMG.icon{float:right;margin-left:10px}
-TABLE.invisible {margin-left:0}
-TABLE.invisible TD {font-size:12px}
-TABLE.invisibleser {margin-left:0;width:100%}
-TABLE.invisibleser TD {font-size:12px}
-TABLE.invisiblelb {border-spacing:0px;width:100%}
-TABLE.invisiblelb TH {width:33%;text-align:left}
-TABLE.invisiblelb TD {width:33%;font-size:12px;white-space: nowrap}
-TABLE.invisibleservices {margin-left:0;width: 80%}
-TABLE.invisibleservices TD {font-size:12px}
-TABLE.configmenu {line-height:16px}
-TABLE.users {width:100%;}
-TABLE.user_totals {}
-TABLE.ECM_totals {margin-top:10px}
-
-/* 5. TABLE HEADER - TH
-------------------------------------------------------------------------------------*/
-TH {height:10px;padding:5px;background-color:#CCC;color:black}
-TH.statuscol0 {text-align:center;width:10px}
-TH.statuscol1 {text-align:center}
-TH.statuscol2 {text-align:center}
-TH.statuscol3 {text-align:center}
-TH.statuscol4 {text-align:center}
-TH.statuscol5 {text-align:center}
-TH.statuscol6 {text-align:center}
-TH.statuscol7 {text-align:center}
-TH.statuscol8 {text-align:center}
-TH.statuscol9 {text-align:center}
-TH.statuscol10 {text-align:center}
-TH.statuscol11 {text-align:center}
-TH.statuscol12 {text-align:center}
-TH.statuscol13 {text-align:center}
-TH.statuscol14 {text-align:center}
-TH.statuscol15 {text-align:center}
-TH.statuscol16 {text-align:center}
-TH.withservices {}
-TH.notservices {}
-TH.lbservices {}
-
-/* 6. TABLE CELLS - TD
-------------------------------------------------------------------------------------*/
-TD {height:10px;padding:5px;background-color:#EEE;color:black;text-align:left}
-TD.centered {text-align:center}
-TD.centered DIV {margin:auto}
-TD.statuscol0 {text-align:center;width:10px}
-TD.statuscol1 {text-align:center}
-TD.statuscol2 {text-align:center}
-TD.statuscol3 {text-align:center}
-TD.statuscol4,TD.statuscol4 A {text-align:center;text-decoration:none}
-TD.statuscol5 {text-align:center}
-TD.statuscol6 {text-align:center}
-TD.statuscol7 {text-align:center}
-TD.statuscol8 {text-align:center}
-TD.statuscol9,TD.statuscol9 A {text-align:center;text-decoration:none}
-TD.statuscol10 {text-align:center}
-TD.statuscol11 {text-align:center}
-TD.statuscol12 {text-align:center}
-TD.statuscol13,TD.statuscol13 A {text-align:center;text-decoration:none}
-TD.statuscol14 {text-align:center}
-TD.statuscol14 A {text-decoration:none}
-TD.statuscol15 {text-align:center}
-TD.statuscol16 {text-align:center}
-TD.statuscol16 A {text-decoration:none}
-TD.usercol0 {text-align:center}
-TD.usercol1 {text-align:center;text-decoration:none}
-TD.usercol2 {text-align:center}
-TD.usercol3 {text-align:center}
-TD.usercol4 {text-align:center}
-TD.usercol5 {text-align:center}
-td.usercol6 {text-align:center}
-TD.usercol7 {text-align:center}
-TD.usercol8 {text-align:center}
-TD.usercol9 {text-align:center}
-TD.usercol10 {text-align:center}
-TD.usercol11 {text-align:center}
-TD.usercol12 {text-align:center}
-TD.usercol13 {text-align:center}
-TD.usercol14 {text-align:center}
-TD.usercol15 {text-align:center}
-TD.usercol16 {text-align:center}
-TD.usercol17 {text-align:center}
-TD.usercol18 {text-align:center}
-TD.usercol19 {text-align:center}
-TD.usercol20 {text-align:center}
-TD.usercol21 {text-align:center}
-TD.usercol22 {text-align:center}
-TD.usercol23 {text-align:center}
-TD.usercol24 {text-align:center}
-TD.usercol25 {text-align:center}
-TD.servicescol1 {}
-TD.servicescol2 {}
-TD.servicescol3 {border-left:2px solid #CCC}
-TD.menu {color:black;background-color:white;font-size:14px;font-weight:bold}
-TD.menu_selected {color:black;background-color:#E6FEBF;font-size:14px;font-weight:bold;font-style:italic}
-TD.configmenu {color:black;background-color:white;font-weight:bold}
-TD.configmenu_selected {color:black; background-color:#E6FEBF;font-weight:bold;font-style:italic}
-TD.subheadline {height:10px;border:0px;padding:5px;background-color:#CCC;color:black}
-TD.subheadline A {text-decoration:none}
-
-/* 7. TABLE ROW - TR
-------------------------------------------------------------------------------------*/
-TR.s TD {background-color:#E1E1EF}
-TR.l TD {background-color:#E1E1EF}
-TR.n TD {background-color:#E1E1EF}
-TR.h TD {background-color:#E1E1EF}
-TR.r TD {background-color:#FFF3E7}
-TR.p TD {background-color:#FDFBE1}
-TR.c TD {background-color:#F1F5E6}
-TR.a TD {background-color:#3F0}
-TR.online TD {background-color:#BFA}
-TR.offline TD {}
-TR.expired TD {background-color:#FBA}
-TR.connected TD {background-color:#FFA}
-TR.enabledreader {}
-TR.disabled TD:first-child IMG.icon {background-color:#0A0}
-TR.disabledreader TD:first-child IMG.icon {background-color:#0A0}
-TR.scanusbsubhead TD {background-color:#FDFBE1}
-TR.e_valid TD {background-color:#E6FEBF;font-family:"Courier New", monospace}
-TR.e_expired TD {background-color:#FFF3E7;font-family:"Courier New", monospace}
-TR.e_header TD {font-family:"Courier New", monospace}
-
-/* 8. DIV Elements
-------------------------------------------------------------------------------------*/
-DIV.log {margin:20px 0;border:1px dotted #AAA;background-color:#FAFAFA;padding:10px;font-family:"Courier New", monospace;color:#666;word-wrap:break-word; text-align:left}
-DIV.sidlist {border:1px dotted #AAA;background-color:#fffdf5;padding:2px;font-family:"Courier New", monospace;color:#666;word-wrap:break-word; text-align:left}
-DIV.sidlistclose {float:right;background-color:red;color:white}
-DIV.sidlistclose A {padding:0 3px;color:white;text-decoration:none}
-DIV.message {font-size: 12px;font-weight:bold;margin:5px 0}
-DIV.div_notifier {height:14px;width:14px;border-radius:7px;-webkit-border-radius:7px;background-color:red;margin-left:4px;text-align:center;float:right}
-DIV.debugmenu {line-height:20px}
-DIV.logmenu {line-height:20px}
-DIV.filterform {margin:10px}
-DIV.cccamentitlementtotals {margin-top:14px}
-DIV.cccamentitlementcontrols {margin-top:14px}
-DIV.warning {margin:42px 0 14px 0}
-DIV.logo {position:absolute;top:5px;left:5px}
-DIV.header {}
-DIV.groups {overflow:hidden;text-overflow:ellipsis;-o-text-overflow:ellipsis;white-space:nowrap;width:40px;text-align:center;cursor:pointer;cursor:default}
-DIV.newuser {display:none}
-/* 9. TEXTAREA
-------------------------------------------------------------------------------------*/
-TEXTAREA.bt {font-size:12px}
-TEXTAREA.editor {font-size:11px;width:98%;height:508px;border:1px dotted #AAA;background-color: #FAFAFA;padding:8px 10px;font-family:"Courier New", monospace; color:black;word-wrap:break-word;text-align:left}
-
-/* 10. BUTTON,INPUT,SELECT
-------------------------------------------------------------------------------------*/
-/* Firefox */
-SELECT {padding:2px}
-/* Safari and Chrome */
-@media screen and (-webkit-min-device-pixel-ratio:0) {
-SELECT {padding:1px}
-input[type="submit"] {padding:2px 6px;}
+table#datatable.users thead tr,table#datatable.readers thead tr,table#datatable.stats.upspace thead tr{cursor:pointer;}
+#wrapper{position:relative;min-height:100%;}
+#content{padding:1em 1em 2.5em;}
+div#content{margin-bottom:0;padding:0 0 75px;}
+#footer{position:absolute;bottom:0;width:100%;}
+div#wrapper div#content form table.config{margin-top:20px;margin-bottom:20px;}
+html body div#wrapper div#content table#dataTable.users{margin-top:0;}
+#mainmenu li{font-size:18px;font-weight:700;}
+html body div#searchtable cacheex{margin-bottom:25px;}
+table.cacheex, table#dataTable.stats.upspace{width:80%;}
+table.cacheex{margin-top:40px;}
+table.upspace{margin-top:0;}
+html body form table.stats.upspace{margin-top:20px;}
+#mainmenu,#nav{font-family:arial, helvetica, sans-serif;background-color:#FFF;}
+li.menu:hover,li.menu_selected,li.configmenu:hover,li.configmenu_selected{background-color:#DDD;}
+div.footer{padding-bottom:5px;padding-top:5px;margin-bottom:0;margin-top:40px;background-color:#EEE;}
+div.footer p{color:#000;margin:2px;}
+body{background-color:#FFF;font-family:Arial;font-size:11px;text-align:center;}
+p{color:#FFF;}
+p.blinking{font-weight:700;font-size:large;color:red;}
+h2{color:#AAA;font-size:32px;line-height:32px;margin-top:0;margin-bottom:0;}
+h4{font-size:18px;line-height:9px;margin-top:20px;margin-bottom:20px;color:#aaa;}
+h4.styleauthor:after{content:"Eneen";}
+table{border-spacing:1px;margin-left:auto;margin-right:auto;}
+table.menu{border-spacing:0;}
+table.status{width:100%;background-color:#FFF;empty-cells:show;}
+table.config{width:70%;}
+table.configreader{width:850px;}
+table.readers{width:100%;}
+table.statsbalance td:last-child{line-height:20px;width:125px;}
+table.statsbalance td:last-child img.icon{float:right;margin-left:10px;}
+table.invisible{margin-left:0;}
+table.invisibleser{margin-left:0;width:100%;}
+table.invisiblelb{border-spacing:0;width:100%;}
+table.invisiblelb th{width:33%;text-align:left;}
+table.invisiblelb td{width:33%;font-size:12px;white-space:nowrap;}
+table.invisibleservices{margin-left:0;width:80%;}
+table.configmenu{line-height:16px;}
+table.users{margin-top:20px;width:100%;}
+table.ecm_totals{margin-top:10px;}
+th{height:10px;background-color:#CCC;color:#000;padding:5px;}
+td{height:10px;background-color:#EEE;color:#000;text-align:left;padding:5px;}
+td.centered div{margin:auto;}
+td.servicescol3{border-left:2px solid #CCC;}
+td.menu{color:#000;background-color:#FFF;font-size:14px;font-weight:700;}
+td.menu_selected{color:#000;background-color:#E6FEBF;font-size:14px;font-weight:700;font-style:italic;}
+td.configmenu{color:#000;background-color:#FFF;font-weight:700;}
+td.configmenu_selected{color:#000;background-color:#E6FEBF;font-weight:700;font-style:italic;}
+td.subheadline{height:10px;border:0;background-color:#CCC;color:#000;padding:5px;}
+tr.c td{background-color:#F1F5E6;}
+tr.a td{background-color:#3F0;}
+tr.online td{background-color:#BFA;}
+tr.expired td{background-color:#FBA;}
+tr.connected td{background-color:#FFA;}
+tr.e_valid td{background-color:#E6FEBF;font-family:"Courier New", monospace;}
+tr.e_expired td{background-color:#FFF3E7;font-family:"Courier New", monospace;}
+tr.e_header td{font-family:"Courier New", monospace;}
+div.log{border:1px dotted #AAA;background-color:#FAFAFA;font-family:"Courier New", monospace;color:#666;text-align:left;margin:20px 0;padding:10px;}
+div.sidlist{border:1px dotted #AAA;background-color:#fffdf5;font-family:"Courier New", monospace;color:#666;text-align:left;padding:2px;}
+div.sidlistclose{float:right;background-color:red;color:#FFF;}
+div.sidlistclose a{color:#FFF;text-decoration:none;padding:0 3px;}
+div.message{font-size:12px;font-weight:700;margin:5px 0;}
+div.div_notifier{height:14px;width:14px;background-color:red;margin-left:4px;text-align:center;float:right;}
+div.filterform{margin:10px;}
+div.warning{margin:42px 0 14px;}
+div.logo{position:absolute;top:5px;left:5px;}
+div.groups{overflow:hidden;white-space:nowrap;width:40px;text-align:center;cursor:default;}
+textarea.editor{font-size:11px;width:98%;height:508px;border:1px dotted #AAA;background-color:#FAFAFA;font-family:"Courier New", monospace;color:#000;text-align:left;padding:8px 10px;}
+select{padding:2px;}
+input[type=checkbox]{width:18px;height:18px;position:relative;top:5px;}
+a.debugl:link{margin:0 1px;}
+a.debugls:link{background-color:#A00;color:#FFF;padding:1px 2px 2px;}
+a.debugls:visited{background-color:#A00;color:#FFF;}
+a:hover{color:#FF9E5F;}
+a:hover img.icon{background:red;}
+a.tooltip{position:relative;text-decoration:none;cursor:default;}
+a.tooltip1{position:relative;text-decoration:none;cursor:default;color:red;}
+a:hover span{display:block;position:absolute;top:2em;right:1em;color:#350;font-weight:400;background:#FFD;text-align:left;border:1px solid #666;padding:10px;}
+img{border:0 solid;}
+img.icon{border:0 solid;width:22px;height:22px;background-color:#A00;max-height:22px;}
+img.statususericon,img.protoicon,img.usericon,img.readericon{min-height:22px;}
+span.e_valid{background-color:#E6FEBF;}
+span.span_notifier{color:#FFF;margin-left:2px;background:red;padding:1px 3px;}
+span.idlesec_normal{font-size:9px;color:#000;}
+span.idlesec_alert{font-size:9px;color:red;}
+span.global_conf{color:blue;font-size:12px;cursor:default;padding:4px;}
+span.user_totals_headline{display:inline-block;margin:10px 0;}
+span.text_script{display:inline-block;font-weight:700;margin:28px;}
+div.info{max-width:1300px;margin:20px auto;}
+table.invisible td:first-child{padding-left:0;}
+table.statusmeminfo,table.statususerinfo,table.statuscacheexinfo{width:60%;white-space:no-wrap;margin:10px auto;}
+th.nameinfo{text-transform:uppercase;text-align:left;background-color:#999;}
+tr.online td#lastchannel.usercol6{background-color:#646464;color:#FFF;}
+p#filename{color:#000;font-weight:700;font-size:14px;}
+li.menu a,li.configmenu a,li.menu_selected a,li.configmenu_selected a,td.statuscol14 a,td.statuscol16 a,td.subheadline a{text-decoration:none;}
+html,body,* html #wrapper{height:100%;}
+div#wrapper div#content div#otherdropdown div form input,div#wrapper div#content table.ecm_totals{margin-bottom:20px;}
+table.invisible td,table.invisibleser td,table.invisibleservices td,textarea.bt{font-size:12px;}
+th.statuscol0,td.statuscol0{text-align:center;width:10px;}
+th.statuscol1,th.statuscol2,th.statuscol3,th.statuscol4,th.statuscol5,th.statuscol6,th.statuscol7,th.statuscol8,th.statuscol9,th.statuscol10,th.statuscol11,th.statuscol12,th.statuscol13,th.statuscol14,th.statuscol15,th.statuscol16,td.centered,td.statuscol1,td.statuscol2,td.statuscol3,td.statuscol5,td.statuscol6,td.statuscol7,td.statuscol8,td.statuscol10,td.statuscol11,td.statuscol12,td.statuscol14,td.statuscol15,td.statuscol16,td.usercol0,td.usercol2,td.usercol3,td.usercol4,td.usercol5,td.usercol6,td.usercol7,td.usercol8,td.usercol9,td.usercol10,td.usercol11,td.usercol12,td.usercol13,td.usercol14,td.usercol15,td.usercol16,td.usercol17,td.usercol18,td.usercol19,td.usercol20,td.usercol21,td.usercol22,td.usercol23,td.usercol24,td.usercol25{text-align:center;}
+td.statuscol4,td.statuscol4 a,td.statuscol9,td.statuscol9 a,td.statuscol13,td.statuscol13 a,td.usercol1,.span,span,span a{text-align:center;text-decoration:none;}
+tr.s td,tr.l td,tr.n td,tr.h td{background-color:#E1E1EF;}
+tr.r td,span.e_expired{background-color:#FFF3E7;}
+tr.p td,tr.scanusbsubhead td{background-color:#FDFBE1;}
+tr.disabled td:first-child img.icon,tr.disabledreader td:first-child img.icon{background-color:#0A0;}
+div.debugmenu,div.logmenu{line-height:20px;}
+div.cccamentitlementtotals,div.cccamentitlementcontrols{margin-top:14px;}
+div.newuser,.hidden,th#exp,td#exp.usercol20,th#cwc,td#cwc.usercol13,th#acasc,td#acasc.usercol19,td#acasc.usercol20{display:none;}
+a:link,a:visited,a:active{color:#050840;}
+a.tooltip span,a.tooltip1 span{display:none;z-index:99;}
+span.text_entitle,span.text_totalecm{display:inline-block;font-weight:700;margin:14px;}
+@media screen and -webkit-min-device-pixel-ratio0 {
+select{padding:1px;}
+input[type=submit]{padding:2px 6px;}
 }
-input[type='checkbox'] {width:18px;height:18px;position: relative;top: 5px;}
-
-/* 11. LINKS
-------------------------------------------------------------------------------------*/
-A.debugl:link {margin:0 1px;}
-A.debugls:link {background-color:#A00;padding:1px 2px 2px;color:#FFF}
-A.debugls:visited {background-color:#A00;color:#FFF}
-A:link {color:#050840}
-A:visited {color:#050840}
-A:active {color:#050840}
-A:hover {color:#FF9E5F}
-A:hover IMG.icon {background:red;}
-A.tooltip  {position:relative;text-decoration:none;cursor:default}
-A.tooltip1 {position:relative;text-decoration:none;cursor:default;color:red}
-A.tooltip  SPAN {display:none;z-index:99}
-A.tooltip1 SPAN {display:none;z-index:99}
-A:hover SPAN {display:block;position:absolute;top:2em;right:1em;padding:10px;color:#350;font-weight:normal;background:#FFD;text-align: left;border: 1px solid #666}
-
-/* 12. IMAGE
-------------------------------------------------------------------------------------*/
-IMG {border:0px solid}
-IMG.icon {border:0px solid;width:22px;height:22px;background-color:#A00;border-radius:3px;-webkit-border-radius:3px; max-height:22px;}
-IMG.statususericon, IMG.protoicon, IMG.usericon, IMG.readericon {min-height:22px;}
-
-/* 13. SPAN Elements
-------------------------------------------------------------------------------------*/
-SPAN.e_valid {background-color:#E6FEBF}
-SPAN.e_expired {background-color:#FFF3E7}
-SPAN.span_notifier {padding:1px 3px;border-radius:10px;color:#FFF;margin-left:2px;background:#F00}
-SPAN.idlesec_normal {font-size:9px;color:black}
-SPAN.idlesec_alert {font-size:9px;color:red}
-SPAN.global_conf {color:blue;font-size:12px;cursor:default;padding:4px}
-SPAN.user_totals_headline {display:inline-block;margin:10px 0}
-SPAN.debugt {}
-SPAN.text_script {display:inline-block;margin:28px;font-weight:bold}
-SPAN.text_entitle {display:inline-block;margin:14px;font-weight:bold}
-SPAN.text_totalecm {display:inline-block;margin:14px;font-weight:bold}
-
-/* 14. GRAPH
-------------------------------------------------------------------------------------*/
-rect.graph_bg {fill:white}
-text.graph_error {text-anchor:middle;fill:red}
-text.graph_grid_txt {fill:gray;text-anchor:end;style:font-size:12px}
-path.graph_grid {stroke:gray;stroke-opacity:0.5}
-
-/* 15. OTHER CLASS
-------------------------------------------------------------------------------------*/
-DIV.info {max-width:1300px;margin:20px auto;}
-TABLE.invisible TD:first-child {padding-left:0}
-TABLE.statusmeminfo,TABLE.statususerinfo,TABLE.statuscacheexinfo {width:60%;margin:10px auto;white-space: no-wrap;}
-TH.nameinfo {text-transform:uppercase;text-align:left;background-color:#999}
-.hidden {display:none}
-.visible {}
-.span, span, span a {text-align:center;text-decoration:none}
-tr.online td#lastchannel.usercol6{background-color:#646464;color:#FFFFFF;}
-p#filename{color:#000000;font-weight:bold;font-size: 14px;}
-
-/* AUTOHIDE UNUSED
-------------------------------------------------------------------------------------*/
-th#exp, td#exp.usercol20{display: none;}
-th#cwc, td#cwc.usercol13{display: none;}
-th#acasc, td#acasc.usercol19, td#acasc.usercol20{display: none;}
