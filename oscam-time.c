@@ -154,17 +154,32 @@ void cs_sleepus(uint32_t usec)
 
 void add_ms_to_timespec(struct timespec *timeout, int32_t msec)
 {
-	struct timeval now;
-	gettimeofday(&now, NULL);
-	int32_t nano_secs = ((now.tv_usec * 1000) + ((msec % 1000) * 1000 * 1000));
-	timeout->tv_sec = now.tv_sec + (msec / 1000) + (nano_secs / 1000000000);
-	timeout->tv_nsec = nano_secs % 1000000000;
+	struct timespec now;
+	int64_t nanosecs, secs;
+	const int64_t NANOSEC_PER_MS = 1000000;
+	const int64_t NANOSEC_PER_SEC = 1000000000;
+	cs_gettime(&now);
+	nanosecs = (int64_t) (msec * NANOSEC_PER_MS + now.tv_nsec);
+	if (nanosecs >= NANOSEC_PER_SEC){
+		secs = now.tv_sec + (nanosecs / NANOSEC_PER_SEC);
+		nanosecs %= NANOSEC_PER_SEC;
+	}
+	else{
+		secs = now.tv_sec;
+	}
+	timeout->tv_sec = (long)secs;
+	timeout->tv_nsec = (long)nanosecs;
 }
 
 void add_ms_to_timeb(struct timeb *tb, int32_t ms)
 {
-	tb->time += ms / 1000;
-	tb->millitm += ms % 1000;
+	if (ms >= 1000){
+		tb->time += ms / 1000;
+		tb->millitm += (ms % 1000);
+	}
+	else{
+		tb->millitm += ms;
+	}
 	if(tb->millitm >= 1000)
 	{
 		tb->millitm %= 1000;
