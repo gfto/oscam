@@ -67,7 +67,7 @@ table.upspace{margin-top:0;}
 table{border-spacing:1px;margin-left:auto;margin-right:auto;}
 table.menu{border-spacing:0;}
 table.status{width:100%;empty-cells:show;}
-table.config{width:70%;}
+table.config{width:60%;}
 table.configreader{width:850px;}
 table.readers{width:100%;}
 table.statsbalance td:last-child{line-height:20px;width:125px;}
@@ -87,12 +87,14 @@ table.statusmeminfo,table.statususerinfo,table.statuscacheexinfo{width:60%;white
 table#dataTable.users thead tr,
 table#dataTable.readers thead tr,
 table#dataTable.stats.upspace thead tr{cursor:pointer;}
+table.ECM_totals,
+table.user_totals{width:50%}
 
 /* TABLE TR */
 tr.e_valid td, tr.e_expired td, tr.e_header td{font-family:"Courier New", monospace;}
 
 /* TABLE TD */
-td{height:10px;text-align:left;padding:5px;}
+td{height:10px;text-align:left;padding:4px 2px 4px 2px;}
 td.centered div{margin:auto;}
 td.menu, td.configmenu, td.menu_selected, td.configmenu_selected{font-size:14px;font-weight:700;}
 td.subheadline{height:10px;border:0;padding:5px;}
@@ -103,6 +105,8 @@ th{height:10px;padding:5px;}
 th.nameinfo{text-transform:uppercase;text-align:left;}
 th.statuscol0,td.statuscol0{text-align:center;width:10px;}
 th.statuscol1,th.statuscol2,th.statuscol3,th.statuscol4,th.statuscol5,th.statuscol6,th.statuscol7,th.statuscol8,th.statuscol9,th.statuscol10,th.statuscol11,th.statuscol12,th.statuscol13,th.statuscol14,th.statuscol15,th.statuscol16,td.centered,td.statuscol1,td.statuscol2,td.statuscol3,td.statuscol5,td.statuscol6,td.statuscol7,td.statuscol8,td.statuscol10,td.statuscol11,td.statuscol12,td.statuscol14,td.statuscol15,td.statuscol16,td.usercol0,td.usercol2,td.usercol3,td.usercol4,td.usercol5,td.usercol6,td.usercol7,td.usercol8,td.usercol9,td.usercol10,td.usercol11,td.usercol12,td.usercol13,td.usercol14,td.usercol15,td.usercol16,td.usercol17,td.usercol18,td.usercol19,td.usercol20,td.usercol21,td.usercol22,td.usercol23,td.usercol24,td.usercol25{text-align:center;}
+th.statuscol0,td.statuscol1{width:0;}
+table#dataTable.users thead tr th{padding:0;}
 
 /* *** */
 textarea.editor{font-size:11px;width:98%;height:508px;font-family:"Courier New", monospace;text-align:left;padding:8px 10px;}
@@ -115,8 +119,6 @@ img.icon{border-radius:4px;border:0 solid;width:22px;height:22px;max-height:22px
 img.statususericon,img.protoicon,img.usericon,img.readericon{min-height:22px;}
 td#out.centered img,
 td#in.centered img{margin-bottom: -2px; margin-right: 10px; margin-left: 10px;}
-
-
 
 /* SPAN */
 span.span_notifier{margin-left:2px;padding:1px 3px;}
@@ -167,7 +169,6 @@ div.footer p{color:#000;}
 
 /* FOR LI CLASS */
 li.menu:hover,li.menu_selected,li.configmenu:hover,li.configmenu_selected{background-color:#DDD;}
-
 
 /* FOR TABLE */
 table.status{background-color:#FFF;}

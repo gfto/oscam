@@ -58,16 +58,18 @@
 	<tbody>
 ##USERCONFIGS##
 	</tbody>
-	</TABLE>
-	<SPAN CLASS="user_totals_headline">Totals for the server:</SPAN>
+	</TABLE><br>
 	<TABLE CLASS="user_totals">
 		<TR>
-			<TH TITLE="Total users">Total User</TH>
-			<TH TITLE="Total disabled users">Disabled User</TH>
-			<TH TITLE="Total expired users">Expired User</TH>
-			<TH TITLE="Total active users">Active User</TH>
-			<TH TITLE="Connected users">Connected User</TH>
-			<TH TITLE="Online users requesting ecms">Online User</TH>
+			<TH TITLE="Total users" colspan="6">User Info</TH>
+		</TR>
+		<TR>
+			<TH TITLE="Total users">Total</TH>
+			<TH TITLE="Total disabled users">Disabled</TH>
+			<TH TITLE="Total expired users">Expired</TH>
+			<TH TITLE="Total active users">Active</TH>
+			<TH TITLE="Connected users">Connected</TH>
+			<TH TITLE="Online users requesting ecms">Online</TH>
 		</TR>
 		<TR>
 			<TD CLASS="centered">##TOTAL_USERS##</TD>
@@ -77,47 +79,34 @@
 			<TD CLASS="centered">##TOTAL_CONNECTED##</TD>
 			<TD CLASS="centered">##TOTAL_ONLINE##</TD>
 		</TR>
-	</TABLE>
+	</TABLE><br>
 	<TABLE CLASS="ECM_totals">
 		<TR>
-			<TH TITLE="Sum of all ECM's in last 60s">ECMs(60s) ALL</TH>
-			<TH TITLE="SUM of all ECM's">ECMs ALL</TH>
-			<TH TITLE="Delivered ECM with status OK">ECMs OK</TH>
-			<TH TITLE="Delivered ECM from cache, part of OK">CACHE 1,2,3</TH>
-			<TH TITLE="Delivered ECM from tunneled, part of OK">ECMs TUN (OK/CACHE)</TH>
-			<TH TITLE="Delivered ECM with status not OK">ECMs NOK</TH>
-			<TH TITLE="Ignored ECM by filters, part of NOK">ECMs IGN</TH>
-			<TH TITLE="Timeout ECM, part of NOK">ECMs TOUT</TH>
-			<TH>Action</TH>
+			<th colspan="8">Total Ecm Info</th>
 		</TR>
 		<TR>
-			<TD CLASS="centered">##TOTAL_ECM_MIN##</TD>
-			<TD CLASS="centered">##TOTAL_CW##</TD>
+			<TH TITLE="Delivered ECM with status OK">OK incl. TUN</TH>
+			<TH TITLE="Delivered ECM from cache, part of OK">CACHE 1,2,3</TH>
+			<TH TITLE="Delivered ECM with status not OK">NOK</TH>
+			<TH TITLE="Timeout ECM, part of NOK">TOUT</TH>
+			<TH TITLE="Ignored ECM by filters, Excluded from calculation">Ignored</TH>
+			<TH TITLE="Sum of all ECM's in last 60s">last(60s)</TH>
+			<TH TITLE="SUM of all ECM's">ALL</TH>
+		</TR>
+		<TR>
 			<TD CLASS="centered">##TOTAL_CWOK## (##REL_CWOK##%)</TD>
 			<TD CLASS="centered">##TOTAL_CWCACHE## (##REL_CWCACHE##%)</TD>
-			<TD CLASS="centered">##TOTAL_CWTUN## (##REL_CWTUN##%)</TD>
 			<TD CLASS="centered">##TOTAL_CWNOK## (##REL_CWNOK##%)</TD>
-			<TD CLASS="centered">##TOTAL_CWIGN## (##REL_CWIGN##%)</TD>
 			<TD CLASS="centered">##TOTAL_CWTOUT## (##REL_CWTOUT##%)</TD>
+			<TD CLASS="centered">##TOTAL_CWIGN## (##REL_CWIGN##%)</TD>
+			<TD CLASS="centered">##TOTAL_ECM_MIN##</TD>
+			<TD CLASS="centered">##TOTAL_CW##</TD>
+		</TR>
+		<TR>
+			<TD CLASS="centered" colspan="2"><b>Total OK:  </b> ##TOTAL_CWPOS## (##REL_CWPOS##%)</TD>
+			<TD CLASS="centered" colspan="2"><b>Total NOK:  </b>##TOTAL_CWNEG## (##REL_CWNEG##%)</TD>
+			<TD CLASS="centered" colspan="2"><b>Reset ECM Statistics:</b></TD>
 			<TD CLASS="centered"><A HREF="userconfig.html?action=resetserverstats" TITLE="Reset statistics for server"><IMG CLASS="icon" SRC="image?i=ICRES" ALT="Reset Server Stats"></A></TD>
 		</TR>
-	</TABLE>
-	<TABLE CLASS="ECM_totals">
-		<TR>
-			<TH TITLE="Delivered ECM with POS Status">ECM's Positiv</TH>
-			<TH TITLE="Delivered ECM with NEG Status">ECM's Negativ</TH>
-		</TR>
-		<TR>
-			<TH TITLE="Delivered ECM with status OK/CACHE">READERs / CACHE 1,2,3</TH>
-			<TH TITLE="Delivered ECM with status NOK/IGN/TOUT">NOK / IGN / TOUT</TH>
-		</TR>
-		<TR>
-			<TD CLASS="centered">##REL_CWPOSOK##% / ##REL_CWPOSCACHE##%</TD>
-			<TD CLASS="centered">##REL_CWNEGNOK##% / ##REL_CWNEGIGN##% / ##REL_CWNEGTOUT##%</TD>
-		</TR>
-		<TR>
-			<TD CLASS="centered">##TOTAL_CWPOS## (##REL_CWPOS##%)</TD>
-			<TD CLASS="centered">##TOTAL_CWNEG## (##REL_CWNEG##%)</TD>
-		</TR>
-	</TABLE>
+	</TABLE><br>
 ##TPLFOOTER##
