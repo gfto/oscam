@@ -140,7 +140,6 @@ void gbox_write_shared_cards_info(void)
 {
 	int32_t card_count = 0;
 	int32_t i = 0;
-	int8_t local_written = 0;
 
 	FILE *fhandle;
 	fhandle = fopen(FILE_SHARED_CARDS_INFO, "w");
@@ -150,29 +149,26 @@ void gbox_write_shared_cards_info(void)
 		return;
 	}
 
-	struct s_client *cl;
 	LL_ITER it;
+	struct gbox_card *card;
+
+	//write local cards
+	it = ll_iter_create(local_gbox.cards);
+	while((card = ll_iter_next(&it)))
+	{
+		fprintf(fhandle, "CardID %4d at oscam Card %08X Sl:%2d Lev:%2d dist:%2d id:%04X\n",
+				card_count, card->provid_1,
+				card->slot, card->lvl, card->dist, card->peer_id);
+		card_count++;
+	} // end of while ll_iter_next
+
+	struct s_client *cl;
 	for(i = 0, cl = first_client; cl; cl = cl->next, i++)
 	{
 		if(cl->gbox)
 		{
 			struct s_reader *rdr = cl->reader;
 			struct gbox_peer *peer = cl->gbox;
-			struct gbox_card *card;
-
-			//local cards should be written once - not for every peer
-			if(!local_written)
-			{
-				it = ll_iter_create(local_gbox.cards);
-				while((card = ll_iter_next(&it)))
-				{
-					fprintf(fhandle, "CardID %4d at oscam Card %08X Sl:%2d Lev:%2d dist:%2d id:%04X\n",
-							card_count, card->provid_1,
-							card->slot, card->lvl, card->dist, card->peer_id);
-					card_count++;
-				} // end of while ll_iter_next
-				local_written = 1;
-			}
 
 			if((rdr->card_status == CARD_INSERTED) && (cl->typ == 'p'))
 			{
