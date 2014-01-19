@@ -325,6 +325,7 @@ bool cardreader_init(struct s_reader *reader)
 			if (reader->mhz >= 1600) reader->mhz = 1600; else
 			if (reader->mhz >= 1200) reader->mhz = 1200; else
 			if (reader->mhz >= 961)  reader->mhz =  961; else
+			if (reader->mhz >= 900)  reader->mhz =  900; else
 			if (reader->mhz >= 800)  reader->mhz =  800; else
 			if (reader->mhz >= 686)  reader->mhz =  686; else
 			if (reader->mhz >= 600)  reader->mhz =  600; else
