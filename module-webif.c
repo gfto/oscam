@@ -6618,7 +6618,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			tpl_printf(vars, TPLADD, "STARTDATE", "%02d.%02d.%02d", st.tm_mday, st.tm_mon + 1, st.tm_year % 100);
 			tpl_printf(vars, TPLADD, "STARTTIME", "%02d:%02d:%02d", st.tm_hour, st.tm_min, st.tm_sec);
 			tpl_printf(vars, TPLADD, "PROCESSID", "%d", getpid());
-			tpl_printf(vars, TPLADD, "RUNAS", "%s", username(first_client));
+			tpl_printf(vars, TPLADD, "RUNAS", "%s", urlencode(vars, username(first_client)));
 
 			time_t now = time((time_t *)0);
 			// XMLAPI
