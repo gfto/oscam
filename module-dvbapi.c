@@ -2489,7 +2489,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 					unassoc_fd[j] = 0;
 
 	char channame[32];
-	get_servicename(dvbapi_client, demux[demux_id].program_number, demux[demux_id].ECMpidcount > 0 ? demux[demux_id].ECMpids[0].CAID : 0, channame);
+	get_servicename(dvbapi_client, demux[demux_id].program_number, demux[demux_id].ECMpidcount > 0 ? demux[demux_id].ECMpids[0].CAID : NO_CAID_VALUE, channame);
 	cs_log("New program number: %04X (%s) [pmt_list_management %d]", program_number, channame, ca_pmt_list_management);
 
 	cs_capmt_notify(&demux[demux_id]);
