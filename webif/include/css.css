@@ -83,12 +83,9 @@ table.configmenu{line-height:16px;}
 table.users{margin-top:20px;width:100%;}
 table.ecm_totals{margin-top:10px;}
 table.invisible td:first-child{padding-left:0;}
-table.statusmeminfo,table.statususerinfo,table.statuscacheexinfo{width:60%;white-space:no-wrap;margin:10px auto;}
-table#dataTable.users thead tr,
-table#dataTable.readers thead tr,
-table#dataTable.stats.upspace thead tr{cursor:pointer;}
-table.ECM_totals,
-table.user_totals{width:50%}
+table.statusmeminfo,table.statususerinfo,table.statuscacheexinfo,table#cachexstats.upspace{width:60%;white-space:no-wrap;margin-top:0px;margin-bottom:0px;}
+table#dataTable.users thead tr,table#dataTable.readers thead tr,table#dataTable.stats.upspace thead tr{cursor:pointer;}
+table.ECM_totals,table.user_totals{width:50%}
 
 /* TABLE TR */
 tr.e_valid td, tr.e_expired td, tr.e_header td{font-family:"Courier New", monospace;}

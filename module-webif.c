@@ -900,6 +900,8 @@ static char *send_oscam_config_webif(struct templatevars *vars, struct uriparams
 	if(cfg.http_showmeminfo > 0) { tpl_addVar(vars, TPLADD, "SHOWMEMINFOCHECKED", "checked"); }
 	if(cfg.http_showuserinfo > 0) { tpl_addVar(vars, TPLADD, "SHOWUSERINFOCHECKED", "checked"); }
 	if(cfg.http_showcacheexinfo > 0) { tpl_addVar(vars, TPLADD, "SHOWCACHEEXINFOCHECKED", "checked"); }
+	if(cfg.http_showloadinfo > 0) { tpl_addVar(vars, TPLADD, "SHOWLOADINFOCHECKED", "checked"); }
+	if(cfg.http_showecminfo > 0) { tpl_addVar(vars, TPLADD, "SHOWECMINFOCHECKED", "checked"); }
 
 	char *value = mk_t_iprange(cfg.http_allowed);
 	tpl_addVar(vars, TPLADD, "HTTPALLOW", value);
@@ -3235,7 +3237,6 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	tpl_printf(vars, TPLADD, "TOTAL_CWPOS", "%d", first_client->cwfound + first_client->cwcache);
 	tpl_printf(vars, TPLADD, "TOTAL_CWNEG", "%d", first_client->cwnot + first_client->cwtout);
 
-
 	tpl_printf(vars, TPLADD, "REL_CWOK", "%.2f", first_client->cwfound * 100 / ecmsum);
 	tpl_printf(vars, TPLADD, "REL_CWNOK", "%.2f", first_client->cwnot * 100 / ecmsum);
 	tpl_printf(vars, TPLADD, "REL_CWIGN", "%.2f", first_client->cwignored * 100 / ecmsum);
@@ -3249,7 +3250,6 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	tpl_printf(vars, TPLADD, "REL_CWNEGNOK", "%.2f", first_client->cwnot * 100 / ecmneg);
 	tpl_printf(vars, TPLADD, "REL_CWNEGIGN", "%.2f", first_client->cwignored * 100 / ecmneg);
 	tpl_printf(vars, TPLADD, "REL_CWNEGTOUT", "%.2f", first_client->cwtout * 100 / ecmneg);
-
 
 	if(!apicall)
 		{ return tpl_getTpl(vars, "USERCONFIGLIST"); }
@@ -4455,26 +4455,27 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 		tpl_printf(vars, TPLADD, "TOTAL_ONLINE", "%d", user_count_active);
 		tpl_printf(vars, TPLADD, "TOTAL_CONNECTED", "%d", (user_count_all - user_count_active));
 	}
-
-	//userinfo////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//cwinfo
+	float ecmsum = first_client->cwfound + first_client->cwnot + first_client->cwtout + first_client->cwcache; //dont count TUN its included
+	if(ecmsum < 1){ecmsum = 1;}
+	tpl_printf(vars, TPLADD, "TOTAL_ECM_MIN", "%d", first_client->n_request[0]);
+	tpl_printf(vars, TPLADD, "TOTAL_CW", "%d", (int)ecmsum);
 	tpl_printf(vars, TPLADD, "TOTAL_CWOK", "%d", first_client->cwfound);
 	tpl_printf(vars, TPLADD, "TOTAL_CWNOK", "%d", first_client->cwnot);
 	tpl_printf(vars, TPLADD, "TOTAL_CWIGN", "%d", first_client->cwignored);
 	tpl_printf(vars, TPLADD, "TOTAL_CWTOUT", "%d", first_client->cwtout);
 	tpl_printf(vars, TPLADD, "TOTAL_CWCACHE", "%d", first_client->cwcache);
 	tpl_printf(vars, TPLADD, "TOTAL_CWTUN", "%d", first_client->cwtun);
-
-	float ecmsum = first_client->cwfound + first_client->cwnot + first_client->cwignored + first_client->cwtout + first_client->cwcache + first_client->cwtun;
-	if(ecmsum < 1)
-	{
-		ecmsum = 1;
-	}
+	tpl_printf(vars, TPLADD, "TOTAL_CWPOS", "%d", first_client->cwfound + first_client->cwcache);
+	tpl_printf(vars, TPLADD, "TOTAL_CWNEG", "%d", first_client->cwnot + first_client->cwtout);
 	tpl_printf(vars, TPLADD, "REL_CWOK", "%.2f", first_client->cwfound * 100 / ecmsum);
 	tpl_printf(vars, TPLADD, "REL_CWNOK", "%.2f", first_client->cwnot * 100 / ecmsum);
 	tpl_printf(vars, TPLADD, "REL_CWIGN", "%.2f", first_client->cwignored * 100 / ecmsum);
 	tpl_printf(vars, TPLADD, "REL_CWTOUT", "%.2f", first_client->cwtout * 100 / ecmsum);
 	tpl_printf(vars, TPLADD, "REL_CWCACHE", "%.2f", first_client->cwcache * 100 / ecmsum);
 	tpl_printf(vars, TPLADD, "REL_CWTUN", "%.2f", first_client->cwtun * 100 / ecmsum);
+	tpl_printf(vars, TPLADD, "REL_CWPOS", "%.2f", (first_client->cwfound + first_client->cwcache) * 100 / ecmsum);
+	tpl_printf(vars, TPLADD, "REL_CWNEG", "%.2f", (first_client->cwnot + first_client->cwtout) * 100 / ecmsum);
 
 	//copy struct to p_stat_old for cpu_usage calculation
 	p_stat_old = p_stat_cur;
@@ -4496,7 +4497,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 #endif
 	set_status_info(vars, p_stat_cur);
 
-	if(cfg.http_showmeminfo == 1 || cfg.http_showuserinfo == 1 || (cfg.http_showcacheexinfo == 1 && config_enabled(CS_CACHEEX))){
+	if(cfg.http_showmeminfo || cfg.http_showuserinfo || cfg.http_showloadinfo || cfg.http_showecminfo || (cfg.http_showcacheexinfo  && config_enabled(CS_CACHEEX))){
 		tpl_addVar(vars, TPLADD, "FOOTER", "footerwidth");
 		tpl_addVar(vars, TPLADD, "DISPLAYINFO", "visible");
 	}
@@ -4504,19 +4505,10 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 		tpl_addVar(vars, TPLADD, "DISPLAYINFO", "hidden");
 	}
 
-	if(cfg.http_showmeminfo == 1){
-		tpl_addVar(vars, TPLADD, "DISPLAYSYSINFO", "visible");
-	}
-	else{
-		tpl_addVar(vars, TPLADD, "DISPLAYSYSINFO", "hidden");
-	}
-
-	if(cfg.http_showuserinfo == 1){
-		tpl_addVar(vars, TPLADD, "DISPLAYUSERINFO", "visible");
-	}
-	else{
-		tpl_addVar(vars, TPLADD, "DISPLAYUSERINFO", "hidden");
-	}
+	tpl_addVar(vars, TPLADD, "DISPLAYSYSINFO", cfg.http_showmeminfo ? "visible" : "hidden");
+	tpl_addVar(vars, TPLADD, "DISPLAYUSERINFO", cfg.http_showuserinfo ? "visible" : "hidden");
+	tpl_addVar(vars, TPLADD, "DISPLAYLOADINFO", cfg.http_showloadinfo ?"visible" : "hidden");
+	tpl_addVar(vars, TPLADD, "DISPLAYECMINFO", cfg.http_showecminfo ? "visible" : "hidden");
 
 	if(cfg.http_showcacheexinfo == 1 && config_enabled(CS_CACHEEX)){
 		tpl_addVar(vars, TPLADD, "DISPLAYCACHEEXINFO", "visible");

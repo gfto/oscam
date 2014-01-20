@@ -11,23 +11,32 @@
 	</TR>
 	<TR>
 </TABLE>
-<TABLE CLASS="statususerinfo ##DISPLAYUSERINFO##">
-	<TR><TH COLSPAN="6" CLASS="nameinfo">ECM info</TH></TR>
+<TABLE CLASS="statususerinfo ##DISPLAYECMINFO##">
 	<TR>
-		<TH>Good</TH>
-		<TD CLASS="centered" TITLE="Delivered ECM with status OK"><B>OK :</B>&nbsp;##TOTAL_CWOK##&nbsp;(##REL_CWOK##%)</TD>
-		<TD CLASS="centered" TITLE="Delivered ECM from tunneled, part of OK"><B>TUN :</B>&nbsp;##TOTAL_CWTUN##&nbsp;(##REL_CWTUN##%)</TD>
-		<TD CLASS="centered" TITLE="Delivered ECM from cache, part of OK"><B>CACHE&nbsp;1,2,3 :</B>&nbsp;##TOTAL_CWCACHE##&nbsp;(##REL_CWCACHE##%)</TD>
-		<TD ROWSPAN="2" CLASS="centered"><B>Reset :</B>
-			<A HREF="status.html?action=resetserverstats" TITLE="Reset statistics for server">
-				<IMG class="icon" SRC="image?i=ICRES" ALT="Reset Server Stats">
-			</A>
-		</TD>
+		<th colspan="8" CLASS="nameinfo">Total Ecm Info</th>
 	</TR>
 	<TR>
-		<TH>Bad</TH>
-		<TD CLASS="centered" TITLE="Delivered ECM with status not OK"><B>NOK :</B>&nbsp;##TOTAL_CWNOK##&nbsp;(##REL_CWNOK##%)</TD>
-		<TD CLASS="centered" TITLE="Timeout ECM, part of NOK"><B>TOUT :</B>&nbsp;##TOTAL_CWTOUT##&nbsp;(##REL_CWTOUT##%)</TD>
-		<TD CLASS="centered" TITLE="Ignored ECM by filters, part of NOK"><B>IGN :</B>&nbsp;##TOTAL_CWIGN##&nbsp;(##REL_CWIGN##%)</TD>
+		<TH TITLE="Delivered ECM with status OK">OK incl. TUN</TH>
+		<TH TITLE="Delivered ECM from cache, part of OK">CACHE 1,2,3</TH>
+		<TH TITLE="Delivered ECM with status not OK">NOK</TH>
+		<TH TITLE="Timeout ECM, part of NOK">TOUT</TH>
+		<TH TITLE="Ignored ECM by filters, Excluded from calculation">Ignored</TH>
+		<TH TITLE="Sum of all ECM's in last 60s">last(60s)</TH>
+		<TH TITLE="SUM of all ECM's">ALL</TH>
+	</TR>
+	<TR>
+		<TD CLASS="centered">##TOTAL_CWOK## (##REL_CWOK##%)</TD>
+		<TD CLASS="centered">##TOTAL_CWCACHE## (##REL_CWCACHE##%)</TD>
+		<TD CLASS="centered">##TOTAL_CWNOK## (##REL_CWNOK##%)</TD>
+		<TD CLASS="centered">##TOTAL_CWTOUT## (##REL_CWTOUT##%)</TD>
+		<TD CLASS="centered">##TOTAL_CWIGN## (##REL_CWIGN##%)</TD>
+		<TD CLASS="centered">##TOTAL_ECM_MIN##</TD>
+		<TD CLASS="centered">##TOTAL_CW##</TD>
+	</TR>
+	<TR>
+		<TD CLASS="centered" colspan="2"><b>Total OK:  </b> ##TOTAL_CWPOS## (##REL_CWPOS##%)</TD>
+		<TD CLASS="centered" colspan="2"><b>Total NOK:  </b>##TOTAL_CWNEG## (##REL_CWNEG##%)</TD>
+		<TD CLASS="centered" colspan="2"><b>Reset ECM Statistics:</b></TD>
+		<TD CLASS="centered"><A HREF="userconfig.html?action=resetserverstats" TITLE="Reset statistics for server"><IMG CLASS="icon" SRC="image?i=ICRES" ALT="Reset Server Stats"></A></TD>
 	</TR>
 </TABLE>
