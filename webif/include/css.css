@@ -171,7 +171,7 @@ li.menu:hover,li.menu_selected,li.configmenu:hover,li.configmenu_selected{backgr
 table.status{background-color:#FFF;}
 
 /* FOR TABLE TR */
-tr.online td#lastchannel.usercol6{background-color:#646464;color:#FFF;}
+tr.online td#lastchannel.usercol6{background-color:#949494;color:#FFF;}
 tr.online td{background-color:#BFA;}
 tr.expired td{background-color:#FBA;}
 tr.connected td{background-color:#FFA;}
