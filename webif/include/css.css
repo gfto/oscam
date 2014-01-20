@@ -13,9 +13,9 @@ h4{font-size:18px;line-height:9px;margin-top:20px;margin-bottom:20px;}
 /* LINK */
 a.debugl:link{margin:0 1px;}
 a.debugls:link{padding:1px 2px 2px;}
-a:hover span{display:block;position:absolute;top:2em;right:1em;font-weight:400;text-align:left;border:1px solid #666;padding:10px;}
 a.tooltip, a.tooltip1{position:relative;text-decoration:none;cursor:default;}
 a.tooltip span,a.tooltip1 span{display:none;z-index:99;}
+a:hover span{display:block;position:absolute;top:1em;right:2em;padding:4px;font-weight:normal;text-align: left;}
 
 /* ID */
 #mainmenu{height:30px;}
@@ -148,7 +148,7 @@ h2, h4{color:#AAA;}
 a.debugls:link, a.debugls:visited{background-color:#A00;color:#FFF;}
 a:hover{color:#FF9E5F;}
 a:hover img.icon{background:red;}
-a:hover span{color:#350;background:#FFD;}
+a:hover span{color:#000;background:#FFC;border: 1px solid #000;}
 a.tooltip1{color:red;}
 a:link,a:visited,a:active{color:#050840;}
 
