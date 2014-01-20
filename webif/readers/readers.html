@@ -6,24 +6,24 @@
 		<LI CLASS="configmenu"><A HREF="#" onclick="addreader();">Add Reader</A></LI>
 		<LI CLASS="configmenu"><A HREF="scanusb.html">Scan USB</A></LI>
 		<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=servers">Show Graphs</A></LI>
-		<li class="configmenu"><a href="readers.html">Refresh</a></li>
+		<LI class="configmenu"><a href="readers.html">Refresh</A></LI>
 	</UL>
 </DIV>
-<DIV CLASS="newuser" ID="newreader">
+<DIV ID="newreader" CLASS="newuser">
 	<form action="readerconfig.html" method="get">
 		<TABLE CLASS="users">
-			<TR><th>NEW Reader Label: <input type="text" name="label" value="##NEXTREADER##">  Protocol: <select name="protocol">##ADDPROTOCOL##</select><input type="submit" name="action" value="Add"></th></TR>
+			<TR><TH>NEW Reader Label: <input type="text" name="label" value="##NEXTREADER##">  Protocol: <select name="protocol">##ADDPROTOCOL##</select><input type="submit" name="action" value="Add"></TH></TR>
 		</TABLE>
 	</form>
 </DIV>
-<DIV id="searchTable">
+<DIV ID="searchTable">
 	<TABLE CLASS="users">
-		<TR><th>Search: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="countDown()" /></th></TR>
+		<TR><TH>Search: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="countDown()" /></TH></TR>
 	</TABLE>
 </DIV>
-<section class="container">
-	<TABLE CLASS="readers" id="dataTable">
-	<thead>
+<SECTION CLASS="container">
+	<TABLE ID="dataTable" CLASS="readers">
+	<THEAD>
 		<TR>
 			<TH COLSPAN="4"></TH>
 			<TH COLSPAN="3">ECM</TH>
@@ -46,10 +46,10 @@
 ##TPLREADERLBWD##
 			<TH COLSPAN="6">Action</TH>
 		</TR>
-	</thead>
-	<tbody>
+	</THEAD>
+	<TBODY>
 ##READERLIST##
-	</tbody>
+	</TBODY>
 	</TABLE>
-</section>
+</SECTION>
 ##TPLFOOTER##

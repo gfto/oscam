@@ -1,32 +1,32 @@
 ##TPLHEADER##
 ##TPLMENU##
 ##TPLMESSAGE##
-<DIV id="searchTable cacheex">
+<DIV ID="searchTable cacheex">
 	<TABLE CLASS="cacheex">
-		<TR><th>Filter: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="countDown()" /></th></TR>
+		<TR><TH>Filter: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="countDown()" /></TH></TR>
 	</TABLE>
 </DIV>
 	<TABLE CLASS="stats upspace" id="dataTable">
-	<thead>
-		<TR><TH COLSPAN="12">CacheEX Stats for ##OWN_CACHEEX_NODEID##</TH></TR>
-		<TR><TH>Direction</TH>
-			<TH>Type</TH>
-			<TH>Name</TH>
-			<TH>IP</TH>
-			<TH>NODE</TH>
-			<TH>Cache EX Mode</TH>
-			<TH>Push</TH>
-			<TH>Got</TH>
-			<TH>CWC Info</TH>
-			<TH>Hit</TH>
-			<TH>Err</TH>
-			<TH>CW Diff</TH>
-		</TR>
-	</thead>
-	<tbody>
+		<THEAD>
+			<TR><TH COLSPAN="12">CacheEX Stats for ##OWN_CACHEEX_NODEID##</TH></TR>
+			<TR><TH>Direction</TH>
+				<TH>Type</TH>
+				<TH>Name</TH>
+				<TH>IP</TH>
+				<TH>NODE</TH>
+				<TH>Cache EX Mode</TH>
+				<TH>Push</TH>
+				<TH>Got</TH>
+				<TH>CWC Info</TH>
+				<TH>Hit</TH>
+				<TH>Err</TH>
+				<TH>CW Diff</TH>
+			</TR>
+		</THEAD>
+		<TBODY>
 ##TABLECLIENTROWS##
 ##TABLEREADERROWS##
-	</tbody>
+		</TBODY>
 	</TABLE>
 	<BR><BR>
 	<TABLE CLASS="upspace" id="cachexstats">

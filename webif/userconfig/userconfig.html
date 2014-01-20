@@ -7,30 +7,30 @@
 		<LI CLASS="configmenu"><A HREF="userconfig.html?action=reinit">Reinit User DB</A></LI>
 		<LI CLASS="configmenu"><A HREF="userconfig.html?action=resetalluserstats">Reset Userstats</A></LI>
 		<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=users&amp;hidelabels=1">Show Graphs</A></LI>
-		<li class="configmenu"><a href="userconfig.html">Refresh</a></li>
+		<LI CLASS="configmenu"><A HREF="userconfig.html">Refresh</A></LI>
 	</UL>
 </DIV>
-<DIV CLASS="newuser" ID="newuser">
+<DIV ID="newuser" CLASS="newuser">
 	<TABLE CLASS="users">
-		<TR><FORM action="user_edit.html" method="get"><th>New User: <input name="user" type="text"><input type="submit" value="Add User"></th></FORM></TR>
+		<TR><form action="user_edit.html" method="get"><TH>New User: <input name="user" type="text"><input type="submit" value="Add User"></TH></form></TR>
 	</TABLE>
 </DIV>
-<DIV id="searchTable">
+<DIV ID="searchTable">
 	<TABLE CLASS="users">
-		<TR><th>Search: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="countDown()" /></th></TR>
+		<TR><TH>Search: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="countDown()" /></TH></TR>
 	</TABLE>
 </DIV>
-	<TABLE CLASS="users" id="dataTable">
-	<thead>
+	<TABLE ID="dataTable" CLASS="users">
+	<THEAD>
 		<TR>
 			<TH COLSPAN="5"></TH>
-			<TH id="##GRPVIEW##"></TH>
+			<TH ID="##GRPVIEW##"></TH>
 			<TH></TH>
 			<TH COLSPAN="8">ECM</TH>
 			<TH COLSPAN="2">EMM</TH>
 ##TPLUSERCWCYCLE##
 ##TPLUSERANTICASC##
-			<TH id="##EXPIREVIEW##"></TH>
+			<TH ID="##EXPIREVIEW##"></TH>
 			<TH COLSPAN="3"></TH>
 		</TR>
 		<TR>
@@ -39,7 +39,7 @@
 			<TH TITLE="Idle Info">Status<BR>Idle Time</TH>
 			<TH>Address</TH>
 			<TH>Protocol</TH>
-			<TH id="##GRPVIEW##">Groups</TH>
+			<TH ID="##GRPVIEW##">Groups</TH>
 			<TH>Last Channel<BR>On Channel</TH>
 			<TH TITLE="Last ECM Time">LTIME</TH>
 			<TH TITLE="Delivered ECM with status OK">OK</TH>
@@ -53,14 +53,14 @@
 			<TH TITLE="Invalid EMM delivered">NOK</TH>
 ##TPLCWCYCLETHV##
 ##TPLCWANTICASCTHV##
-			<TH TITLE="Expiration date of account" id="##EXPIREVIEW##">Exp. Date</TH>
+			<TH ID="##EXPIREVIEW##" TITLE="Expiration date of account">Exp. Date</TH>
 			<TH COLSPAN="3" CLASS="centered">Action</TH>
 		</TR>
-	</thead>
-	<tbody>
+	</THEAD>
+	<TBODY>
 ##USERCONFIGS##
-	</tbody>
-	</TABLE><br>
+	</TBODY>
+	</TABLE><BR>
 	<TABLE CLASS="user_totals">
 		<TR>
 			<TH TITLE="Total users" colspan="6">User Info</TH>
@@ -81,10 +81,10 @@
 			<TD CLASS="centered">##TOTAL_CONNECTED##</TD>
 			<TD CLASS="centered">##TOTAL_ONLINE##</TD>
 		</TR>
-	</TABLE><br>
+	</TABLE><BR>
 	<TABLE CLASS="ECM_totals">
 		<TR>
-			<th colspan="8">Total Ecm Info</th>
+			<TH colspan="8">Total Ecm Info</TH>
 		</TR>
 		<TR>
 			<TH TITLE="Delivered ECM with status OK">OK incl. TUN</TH>
@@ -105,10 +105,10 @@
 			<TD CLASS="centered">##TOTAL_CW##</TD>
 		</TR>
 		<TR>
-			<TD CLASS="centered" colspan="2"><b>Total OK:  </b> ##TOTAL_CWPOS## (##REL_CWPOS##%)</TD>
-			<TD CLASS="centered" colspan="2"><b>Total NOK:  </b>##TOTAL_CWNEG## (##REL_CWNEG##%)</TD>
-			<TD CLASS="centered" colspan="2"><b>Reset ECM Statistics:</b></TD>
+			<TD CLASS="centered" colspan="2"><B>Total OK:  </B> ##TOTAL_CWPOS## (##REL_CWPOS##%)</TD>
+			<TD CLASS="centered" colspan="2"><B>Total NOK:  </B>##TOTAL_CWNEG## (##REL_CWNEG##%)</TD>
+			<TD CLASS="centered" colspan="2"><B>Reset ECM Statistics:</B></TD>
 			<TD CLASS="centered"><A HREF="userconfig.html?action=resetserverstats" TITLE="Reset statistics for server"><IMG CLASS="icon" SRC="image?i=ICRES" ALT="Reset Server Stats"></A></TD>
 		</TR>
-	</TABLE><br>
+	</TABLE><BR>
 ##TPLFOOTER##
