@@ -488,6 +488,8 @@ static const struct config_list webif_opts[] =
 	DEF_OPT_INT8("httpshowmeminfo"          , OFS(http_showmeminfo),        0),
 	DEF_OPT_INT8("httpshowuserinfo"         , OFS(http_showuserinfo),       0),
 	DEF_OPT_INT8("httpshowcacheexinfo"      , OFS(http_showcacheexinfo),    0),
+	DEF_OPT_INT8("httpshowecminfo"          , OFS(http_showecminfo),        0),
+	DEF_OPT_INT8("httpshowloadinfo"         , OFS(http_showloadinfo),       0),
 	DEF_OPT_FUNC("httpallowed"              , OFS(http_allowed),            iprange_fn, .free_value = iprange_free_fn),
 	DEF_OPT_INT8("httpreadonly"             , OFS(http_readonly),           0),
 	DEF_OPT_INT8("httpsavefullcfg"          , OFS(http_full_cfg),           0),
