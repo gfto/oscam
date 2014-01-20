@@ -44,7 +44,7 @@ div.footer p{margin:2px;}
 div.info{max-width:1300px;margin:20px auto;}
 div.debugmenu,div.logmenu{line-height:20px;}
 div.cccamentitlementtotals,div.cccamentitlementcontrols{margin-top:14px;}
-div.newuser,.hidden,th#exp,td#exp.usercol20,th#cwc,td#cwc.usercol13,th#acasc,td#acasc.usercol19,td#acasc.usercol20{display:none;}
+div.newuser,.hidden,th#exp,td#exp.usercol20,th#cwc,td#cwc.usercol13,th#acasc,td#acasc.usercol19,td#acasc.usercol20,th#grp,td#grp.usercol5{display:none;}
 
 /* DIV ID */
 div#content{margin-bottom:0;padding:0 0 75px;}
@@ -116,7 +116,7 @@ input[type=checkbox]{width:18px;height:18px;position:relative;top:5px;}
 /* IMG */
 img{border:0 solid;}
 img.icon{border-radius:4px;border:0 solid;width:22px;height:22px;max-height:22px;}
-img.statususericon,img.protoicon,img.usericon,img.readericon{min-height:22px;}
+img.statususericon,img.protoicon,img.usericon,img.readericon{min-height:15px;}
 td#out.centered img,
 td#in.centered img{margin-bottom: -2px; margin-right: 10px; margin-left: 10px;}
 

@@ -2884,7 +2884,8 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	{
 		filter = getParam(params, "label");
 	}
-	int32_t expdate_set = 0;
+	int8_t grp_set = 0;
+	int8_t expdate_set = 0;
 	int32_t total_users = 0;
 	int32_t disabled_users = 0;
 	int32_t expired_users = 0;
@@ -2898,7 +2899,17 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	
 	for(account = cfg.account; (account); account = account->next)
 	{
-		if(account->expirationdate){expdate_set++;}
+		if(account->expirationdate){
+			expdate_set = 1;
+		}
+		
+		if(account->next){
+			if(account->grp != account->next->grp){
+				grp_set = 1;
+			}
+		}
+		if(expdate_set && grp_set)
+		break;
 	}
 	
 	for(account = cfg.account; (account); account = account->next)
@@ -3062,6 +3073,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		}
 
 		tpl_addVar(vars, TPLADD, "EXPIREVIEW", expdate_set ? "" : "exp");
+		tpl_addVar(vars, TPLADD, "GRPVIEW", grp_set ? "" : "grp");
 #ifdef CS_ANTICASC
 		tpl_addVar(vars, TPLADD, "ANTICASCVIEW", cfg.ac_enabled ? "" : "acasc");
 #endif
