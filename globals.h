@@ -1633,6 +1633,8 @@ struct s_config
 	int8_t          http_showpicons;
 	int8_t          http_picon_size;
 	int8_t          http_showmeminfo;
+	int8_t          http_showecminfo;
+	int8_t          http_showloadinfo;
 	int8_t          http_showuserinfo;
 	int8_t          http_showcacheexinfo;
 	struct s_ip     *http_allowed;
