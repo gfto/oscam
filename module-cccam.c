@@ -1104,6 +1104,15 @@ void cc_UA_cccam2oscam(uint8_t *in, uint8_t *out, uint16_t caid)
 
 	//  //Place here your own adjustments!
 	//}
+
+	if (caid == 0x5581 || caid == 0x4aee) { // Bulcrypt fix
+		out[0] = in[4];
+		out[1] = in[5];
+		out[2] = in[6];
+		out[3] = in[7]; // hexbase
+		return;
+	}
+
 	int32_t ofs = get_UA_ofs(caid);
 	UA_left(in, tmp, ofs);
 	newcamd_to_hexserial(tmp, out, caid);
