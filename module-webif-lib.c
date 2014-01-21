@@ -115,7 +115,7 @@ void calculate_opaque(IN_ADDR_T addr, char *opaque)
 {
 	char noncetmp[128];
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
-	snprintf(noncetmp, sizeof(noncetmp), "%d:%s:%d", (int32_t)time((time_t)0), cs_inet_ntoa(addr), (int16_t)rand());
+	snprintf(noncetmp, sizeof(noncetmp), "%d:%s:%d", (int32_t)time(NULL), cs_inet_ntoa(addr), (int16_t)rand());
 	char_to_hex(MD5((unsigned char *)noncetmp, strlen(noncetmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char *)opaque);
 }
 
@@ -134,7 +134,7 @@ void calculate_nonce(char *nonce, char *result, char *opaque)
 {
 	struct s_nonce *noncelist, *prev, *foundnonce = NULL, *foundopaque = NULL, *foundexpired = NULL;
 	int32_t bucket = opaque[0] % AUTHNONCEHASHBUCKETS;
-	time_t now = time((time_t)0);
+	time_t now = time(NULL);
 	cs_writelock(&nonce_lock[bucket]);
 	for(noncelist = nonce_first[bucket], prev = NULL; noncelist; prev = noncelist, noncelist = noncelist->next)
 	{

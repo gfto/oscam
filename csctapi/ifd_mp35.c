@@ -24,16 +24,16 @@ typedef struct
 static const unsigned char fw_version[] = {0x2a, 0x41};
 
 // Commands for AD-Teknik MP3.5 and MP3.6
-static const unsigned char power_always_on[] = {0x2a, 0x8a};
-static const unsigned char set_vpp[] = {0x2a, 0x42};
-static const unsigned char set_data[] = {0x2a, 0x43};
-static const unsigned char set_oscillator[] = {0x2a, 0x5e};
-static const unsigned char terminate_com[] = {0x2a, 0x7b};
-static const unsigned char transthrough_mode[] = {0x2a, 0x7c};
+//static const unsigned char power_always_on[] = {0x2a, 0x8a};
+//static const unsigned char set_vpp[] = {0x2a, 0x42};
+//static const unsigned char set_data[] = {0x2a, 0x43};
+//static const unsigned char set_oscillator[] = {0x2a, 0x5e};
+//static const unsigned char terminate_com[] = {0x2a, 0x7b};
+//static const unsigned char transthrough_mode[] = {0x2a, 0x7c};
 static const unsigned char phoenix_mode[] = {0x2a, 0x7d};
-static const unsigned char smartmouse_mode[] = {0x2a, 0x7e};
+//static const unsigned char smartmouse_mode[] = {0x2a, 0x7e};
 static const unsigned char phoenix_6mhz_mode[] = {0x2a, 0x9a};
-static const unsigned char smartmouse_6mhz_mode[] = {0x2a, 0x9b};
+//static const unsigned char smartmouse_6mhz_mode[] = {0x2a, 0x9b};
 static const unsigned char fw_info[] = {0x2a, 0xa2};
 
 // Commands for AD-Teknik USB Phoenix

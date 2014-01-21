@@ -843,7 +843,7 @@ static void dvbapi_caidtab_fn(const char *UNUSED(token), char *caidasc, void *UN
 			{
 				char tmp1[5];
 				snprintf(tmp1, sizeof(tmp1), "%04X", (uint)prov);
-				int32_t cw_delay = strtol(tmp1, '\0', 10);
+				int32_t cw_delay = strtol(tmp1, NULL, 10);
 				entry->delay = cw_delay;
 			}
 			else

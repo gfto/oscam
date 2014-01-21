@@ -97,7 +97,7 @@ static void garbage_collector(void)
 		{
 			cs_writelock(&garbage_lock[i]);
 			first = garbage_first[i];
-			time_t deltime = time((time_t)0) - (2*cfg.ctimeout/1000 + 1);
+			time_t deltime = time(NULL) - (2*cfg.ctimeout/1000 + 1);
 			for(garbage = first, prev = NULL; garbage; prev = garbage, garbage = garbage->next)
 			{
 				if(deltime < garbage->time)     // all following elements are too new
