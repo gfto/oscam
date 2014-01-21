@@ -3770,6 +3770,36 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 			for(cl = first_client; cl ; cl = cl->next)
 				{ cl->wihidden = 0; }
 		}
+		else if(atoi(hideidle) == 3)
+		{
+			struct s_client *cl;
+			for(cl = first_client; cl ; cl = cl->next)
+			{
+				if(cl->typ == 'r'){
+					cl->wihidden = 0;
+				}
+			}
+		}
+		else if(atoi(hideidle) == 4)
+		{
+			struct s_client *cl;
+			for(cl = first_client; cl ; cl = cl->next)
+			{
+				if(cl->typ == 'p'){
+					cl->wihidden = 0;
+				}
+			}
+		}
+		else if(atoi(hideidle) == 5)
+		{
+			struct s_client *cl;
+			for(cl = first_client; cl ; cl = cl->next)
+			{
+				if(cl->typ == 'c'){
+					cl->wihidden = 0;
+				}
+			}
+		}
 		else
 		{
 			int32_t oldval = cfg.http_hide_idle_clients;
