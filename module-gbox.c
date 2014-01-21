@@ -388,7 +388,6 @@ static void gbox_auth_client(struct s_client *cli)
 		{
 			cs_auth_client(cli, account, NULL);
 			cli->account = account;
-			cl->account = account;
 			cli->grp = account->grp;
 		}
 	}
