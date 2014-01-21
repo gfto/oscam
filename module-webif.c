@@ -3014,7 +3014,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				lastchan = "";
 			}
 
-			if(cfg.http_showpicons && !apicall)
+			if(cfg.http_showpicons)
 			{
 				char picon_name[32];
 				snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%04X", clientcaid, clientsrvid);
@@ -3141,7 +3141,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "USERNAMEENC", urlencode(vars, account->usr));
 
 		static const char *user_tpl_name = "USERLABEL";
-		if(cfg.http_showpicons && !apicall)
+		if(cfg.http_showpicons)
 			user_tpl_name = picon_exists(xml_encode(vars, account->usr)) ? "USERICON" : "USERNOICON";
 		tpl_addVar(vars, TPLADD, "USERBIT", tpl_getTpl(vars, user_tpl_name));
 
@@ -6684,6 +6684,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 
 			// WebIf allows modifying many things. Thus, all pages except images/css are excpected to be non-threadsafe!
 			if(pgidx != 19 && pgidx != 20) { cs_writelock(&http_lock); }
+			uint8_t saved_http_showpicons = cfg.http_showpicons;
 			switch(pgidx)
 			{
 			case 0:
@@ -6737,7 +6738,9 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				break;
 				//case  17: js file
 			case 18:
+				cfg.http_showpicons = 0; // Disable picons when the API is used
 				result = send_oscam_api(vars, f, &params, keepalive, 1, extraheader);
+				cfg.http_showpicons = saved_http_showpicons; // Restore picons setting
 				break; //oscamapi.html
 			case 19:
 				result = send_oscam_image(vars, f, &params, NULL, modifiedheader, etagheader, extraheader);
@@ -6749,7 +6752,9 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				result = send_oscam_graph(vars);
 				break;
 			case 22:
+				cfg.http_showpicons = 0; // Disable picons when the API is used
 				result = send_oscam_api(vars, f, &params, keepalive, 1, extraheader);
+				cfg.http_showpicons = saved_http_showpicons; // Restore picons setting
 				break; //oscamapi.xml
 #ifdef CS_CACHEEX
 			case 23:
@@ -6757,7 +6762,9 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				break;
 #endif
 			case 24:
+				cfg.http_showpicons = 0; // Disable picons when the API is used
 				result = send_oscam_api(vars, f, &params, keepalive, 2, extraheader);
+				cfg.http_showpicons = saved_http_showpicons; // Restore picons setting
 				break; //oscamapi.json
 			case 25:
 				result = send_oscam_EMM(vars, &params);
