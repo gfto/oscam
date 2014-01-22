@@ -31,6 +31,7 @@
 #define FILE_GBOX_VERSION       "/tmp/gbx.ver"
 #define FILE_SHARED_CARDS_INFO  "/tmp/gbx_card.info"
 #define FILE_ATTACK_INFO        "/tmp/gbx_attack.txt"
+#define FILE_GBOX_PEER_ONL  	"/tmp/gbx_peer.onl"
 
 #define GBOX_STAT_HELLOL	0
 #define GBOX_STAT_HELLOS	1
@@ -123,6 +124,29 @@ static uint16_t gbox_convert_password_to_id(uchar *password);
 uint32_t gbox_get_ecmchecksum(ECM_REQUEST *er);
 static void	init_local_gbox(void);
 
+void gbox_write_peer_onl(void)
+{
+	FILE *fhandle = fopen(FILE_GBOX_PEER_ONL, "w");
+	if(!fhandle)
+	{
+		cs_log("Couldn't open %s: %s\n", FILE_GBOX_PEER_ONL, strerror(errno));
+		return;
+	}
+	struct s_client *cl;
+	for(cl = first_client; cl; cl = cl->next)
+	{
+		if(cl->gbox && (cl->typ == 'p'))
+		{
+			struct gbox_peer *peer = cl->gbox;
+			if (peer->online)
+				{ fprintf(fhandle, "1 %s  %s %04X 2.%02X\n",cl->reader->device, cs_inet_ntoa(cl->ip),peer->gbox.id, peer->gbox.minor_version); }
+			else
+				{ fprintf(fhandle, "0 %s  %s %04X 0.00\n",cl->reader->device, cs_inet_ntoa(cl->ip),peer->gbox.id); }
+		}
+	}
+	fclose(fhandle);
+	return;
+}	
 
 void gbox_write_version(void)
 {
@@ -579,6 +603,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 
 		gbox_write_shared_cards_info();
 		gbox_write_version();
+		gbox_write_peer_onl();
 	}
 	return 0;
 }
