@@ -62,7 +62,7 @@ li.menu a,li.configmenu a,li.menu_selected a,li.configmenu_selected a,td.statusc
 /* TABLE */
 table#datatable.users thead tr,table#datatable.readers thead tr,table#datatable.stats.upspace thead tr{cursor:pointer;}
 table.cacheex, table#dataTable.stats.upspace{width:80%;}
-table.cacheex{margin-top:40px;}
+table.cacheex{margin-top:20px;}
 table.upspace{margin-top:0;}
 table{border-spacing:1px;margin-left:auto;margin-right:auto;}
 table.menu{border-spacing:0;}
@@ -124,7 +124,7 @@ span.idlesec_normal, span.idlesec_alert{font-size:9px;}
 span.global_conf{font-size:12px;cursor:default;padding:4px;}
 span.user_totals_headline{display:inline-block;margin:10px 0;}
 span.text_script{display:inline-block;font-weight:700;margin:28px;}
-span.text_entitle,span.text_totalecm{display:inline-block;font-weight:700;margin:14px;}
+span.text_entitle,span.text_totalecm{display:inline-block;font-weight:700}
 
 /* GRAPH */
 text.graph_error {text-anchor:middle;}
