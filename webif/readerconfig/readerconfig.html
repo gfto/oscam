@@ -1,12 +1,12 @@
 ##TPLHEADER##
 ##TPLMENU##
 ##TPLMESSAGE##
+<div id="subnav"><ul id="nav"><span class="text_entitle">Edit Reader ##READERNAME##</span></ul></div>
 	<form action="readerconfig.html?action=execute" method="get">
 		<input name="label" type="hidden" value="##READERNAME##">
 		<input name="protocol" type="hidden" value="##PROTOCOL##">
 		<TABLE CLASS="configreader upspace">
-			<TR><TH COLSPAN="2">Edit Reader ##READERNAME##</TH></TR>
-			<TR><TH>&nbsp;</TH><TH>Reader general settings</TH></TR>
+			<TR><TH COLSPAN="2">Reader general settings</TH></TR>
 			<TR><TD>##TPLHELPPREFIX##server#description##TPLHELPSUFFIX##Description:</A></TD><TD><input name="description" type="text" size="63" maxlength="256" value="##DESCRIPTION##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##server#enable##TPLHELPSUFFIX##Enable:</A></TD><TD><input name="enable" type="hidden" value="0"><input name="enable" type="checkbox" value="1" ##ENABLED##></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##server#device##TPLHELPSUFFIX##Device:</A></TD><TD><input name="device" type="text" size="63" maxlength="127" value="##DEVICE##"></TD></TR>
@@ -56,7 +56,7 @@
 				</TABLE>
 			</TD>
 			<TR><TD>##TPLHELPPREFIX##server#blockemm-bylen##TPLHELPSUFFIX##Block EMM by Len:</A></TD><TD><input name="blockemm-bylen" type="text" size="63" maxlength="256" value="##BLOCKEMMBYLEN##"></TD></TR>
-			<TR><TH>&nbsp;</TH><TH>Reader services settings</TH></TR>
+			<TR><TH COLSPAN="2">Reader services settings</TH></TR>
 			<TR><TD COLSPAN="2">
 				<TABLE CLASS="invisiblelb">
 					<TR>
@@ -67,7 +67,7 @@
 ##SIDS##
 				</TABLE>
 			</TD></TR>
-			<TR><TH>&nbsp;</TH><TH>Reader specific settings for protocol ##PROTOCOL##</TH></TR>
+			<TR><TH COLSPAN="2">Reader specific settings for protocol ##PROTOCOL##</TH></TR>
 ##READERDEPENDINGCONFIG##
 ##TPLREADEREDITCACHEEXBIT##
 			<TR><TD COLSPAN="2" ALIGN="right"><input type="submit" name="action" value="Save" title="Save settings and reload Reader" ##BTNDISABLED##></TD></TR>
