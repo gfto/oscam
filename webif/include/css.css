@@ -38,7 +38,7 @@ div.div_notifier{height:14px;width:14px;margin-left:4px;text-align:center;float:
 div.filterform{margin:10px;}
 div.warning{margin:42px 0 14px;}
 div.logo{position:absolute;top:5px;left:5px;}
-div.groups{overflow:hidden;white-space:nowrap;width:40px;text-align:center;cursor:default;}
+div.groups{cursor:default;overflow:hidden;margin:0 auto;text-align:center;word-wrap:none;position:relative;width:40px}
 div.footer{padding-bottom:5px;padding-top:5px;margin-bottom:0;margin-top:40px;}
 div.footer p{margin:2px;}
 div.info{max-width:1300px;margin:20px auto;}
