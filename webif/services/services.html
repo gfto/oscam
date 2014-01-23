@@ -1,19 +1,20 @@
 ##TPLHEADER##
 ##TPLMENU##
-##TPLMESSAGE##
 <DIV ID="subnav"><UL ID="nav"></UL></DIV>
-	<form action="services_edit.html" method="get"><input type="hidden" name="action" value="add">
-		<TABLE CLASS="stats upspace">
-			<TR>
-				<TH>Label</TH>
-				<TH COLSPAN="3" CLASS="centered">Action</TH>
-			</TR>
+##TPLMESSAGE##
+<DIV ID="newservice" CLASS="newservice">
+	<TABLE ID="newservice" CLASS="newservice">
+		<TR>
+			<form action="services_edit.html" method="get"><TH>Service Name: <input name="service" type="text"><input type="submit" value="Add" title="Add new Service" ##BTNDISABLED##></TH></form>
+		</TR>
+	</TABLE>
+</DIV>
+	<TABLE CLASS="stats upspace" id="servicesedit">
+		<TR>
+			<TH CLASS="centered">Label</TH>
+			<TH CLASS="centered">Overview</TH>
+			<TH COLSPAN="2" CLASS="centered">Action</TH>
+		</TR>
 ##SERVICETABS##
-			<TR>
-				<TD>New Service:</TD>
-				<TD><input name="service" type="text"></TD>
-				<TD COLSPAN="2" CLASS="centered"><input type="submit" value="Add" title="Add new Service" ##BTNDISABLED##></TD>
-			</TR>
-		</TABLE>
-	</form>
+	</TABLE>
 ##TPLFOOTER##
