@@ -343,15 +343,15 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 
 
 	if(cfg.usrfile != NULL) { tpl_addVar(vars, TPLADD, "USERFILE", cfg.usrfile); }
-	if(cfg.disableuserfile == 1) { tpl_addVar(vars, TPLADD, "DISABLEUSERFILECHECKED", "selected"); }
+	if(cfg.disableuserfile == 0) { tpl_addVar(vars, TPLADD, "DISABLEUSERFILECHECKED", "checked"); }
 	if(cfg.usrfileflag == 1) { tpl_addVar(vars, TPLADD, "USERFILEFLAGCHECKED", "selected"); }
 	if(cfg.mailfile != NULL) { tpl_addVar(vars, TPLADD, "MAILFILE", cfg.mailfile); }
-	if(cfg.disablemail == 1) { tpl_addVar(vars, TPLADD, "DISABLEMAILCHECKED", "selected"); }
+	if(cfg.disablemail == 0) { tpl_addVar(vars, TPLADD, "DISABLEMAILCHECKED", "checked"); }
 
 	char *value = mk_t_logfile();
 	tpl_addVar(vars, TPLADD, "LOGFILE", value);
 	free_mk_t(value);
-	if(cfg.disablelog == 1) { tpl_addVar(vars, TPLADD, "DISABLELOGCHECKED", "selected"); }
+	if(cfg.disablelog == 0) { tpl_addVar(vars, TPLADD, "DISABLELOGCHECKED", "checked"); }
 	tpl_printf(vars, TPLADD, "MAXLOGSIZE", "%d", cfg.max_log_size);
 
 	tpl_addVar(vars, TPLADD, "LOGDUPSCHECKED", (cfg.logduplicatelines == 1) ? "checked" : "");
@@ -374,10 +374,10 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	tpl_addVar(vars, TPLADD, "UNLOCKPARENTALCHECKED", (cfg.ulparent == 1) ? "checked" : "");
 
 
-	if(cfg.block_same_ip)   { tpl_addVar(vars, TPLADD, "BLOCKSAMEIPCHECKED", "selected"); }
-	if(cfg.block_same_name) { tpl_addVar(vars, TPLADD, "BLOCKSAMENAMECHECKED", "selected"); }
+	if(cfg.block_same_ip)   { tpl_addVar(vars, TPLADD, "BLOCKSAMEIPCHECKED", "checked"); }
+	if(cfg.block_same_name) { tpl_addVar(vars, TPLADD, "BLOCKSAMENAMECHECKED", "checked"); }
 
-	if(cfg.waitforcards == 1)  { tpl_addVar(vars, TPLADD, "WAITFORCARDSCHECKED", "selected"); }
+	if(cfg.waitforcards == 1)  { tpl_addVar(vars, TPLADD, "WAITFORCARDSCHECKED", "checked"); }
 	tpl_printf(vars, TPLADD, "EXTRADELAY", "%d", cfg.waitforcards_extra_delay);
 	if(cfg.preferlocalcards == 1)
 	{
@@ -1944,7 +1944,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	if(rdr->cc_want_emu)
 		{ tpl_addVar(vars, TPLADD, "CCCWANTEMUCHECKED", "checked"); }
 	if(rdr->cc_keepalive)
-		{ tpl_addVar(vars, TPLADD, "KEEPALIVECHECKED", "selected"); }
+		{ tpl_addVar(vars, TPLADD, "KEEPALIVECHECKED", "checked"); }
 #endif
 
 	tpl_addVar(vars, TPLADD, "PROTOCOL", reader_get_type_desc(rdr, 0));
