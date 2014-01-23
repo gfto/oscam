@@ -2793,7 +2793,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		setActiveMenu(vars, MNU_USERS);
 		if(cfg.http_picon_size > 0)
 		{
-			tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.readericon,img.protoicon {height:%dpx !important;}", cfg.http_picon_size);
+			tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.readericon,img.protoicon,img.usericon {height:%dpx !important;}", cfg.http_picon_size);
 		}
 	}
 	if(strcmp(getParam(params, "action"), "reinit") == 0)
@@ -3699,7 +3699,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 		setActiveMenu(vars, MNU_STATUS);
 		if(cfg.http_picon_size > 0)
 		{
-			tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.readericon,img.protoicon {height:%dpx !important;}", cfg.http_picon_size);
+			tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.readericon,img.protoicon,img.statususericon {height:%dpx !important;}", cfg.http_picon_size);
 		}
 	}
 	char picon_name[32];
