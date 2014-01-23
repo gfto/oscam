@@ -1142,7 +1142,13 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 		tpl_addVar(vars, TPLADD, "REFRESHURL", "readers.html");
 		tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 	}
-	if(!apicall) {tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.readericon,img.protoicon {height:%dpx !important;}", cfg.http_picon_size);}
+	if(!apicall)
+	{
+		if(cfg.http_picon_size > 0)
+		{
+			tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.readericon,img.protoicon {height:%dpx !important;}", cfg.http_picon_size);
+		}
+	}
 	if((strcmp(getParam(params, "action"), "disable") == 0) || (strcmp(getParam(params, "action"), "enable") == 0))
 	{
 		if(cfg.http_readonly)
@@ -2782,9 +2788,13 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	char *user = getParam(params, "user");
 	int32_t found = 0;
 
-	if(!apicall) {
+	if(!apicall)
+	{
 		setActiveMenu(vars, MNU_USERS);
-		if(!apicall) {tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.protoicon, img.usericon {height:%dpx !important;}", cfg.http_picon_size);}
+		if(cfg.http_picon_size > 0)
+		{
+			tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.readericon,img.protoicon {height:%dpx !important;}", cfg.http_picon_size);
+		}
 	}
 	if(strcmp(getParam(params, "action"), "reinit") == 0)
 	{
@@ -3684,9 +3694,13 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	time_t now = time((time_t *)0);
 	struct tm lt;
 
-	if(!apicall) {
+	if(!apicall)
+	{
 		setActiveMenu(vars, MNU_STATUS);
-		if(!apicall) {tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.statususericon,img.protoicon {height:%dpx !important;}", cfg.http_picon_size);}
+		if(cfg.http_picon_size > 0)
+		{
+			tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.readericon,img.protoicon {height:%dpx !important;}", cfg.http_picon_size);
+		}
 	}
 	char picon_name[32];
 	snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "LOGO");
