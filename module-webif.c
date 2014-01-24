@@ -4225,10 +4225,18 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								txt = "UNKNOWN";
 								break;
 							case CARD_NEED_INIT:
+#ifdef CS_CACHEEX
 								if (cl->reader->cacheex.mode > 0)
-									{ txt = "CCcam CacheEX"; }
+								{
+									txt = "CCcam CacheEX";
+								}
 								else
-									{ txt = "NEEDINIT"; }
+								{
+#endif
+									txt = "NEEDINIT";
+#ifdef CS_CACHEEX
+								}
+#endif
 								break;
 							case CARD_INSERTED:
 								if(cl->typ == 'p')
