@@ -112,7 +112,6 @@ table#dataTable.users thead tr th{padding:0;}
 /* *** */
 textarea.editor{font-size:11px;width:98%;height:508px;font-family:"Courier New", monospace;text-align:left;padding:8px 10px;}
 select{padding:2px;}
-input[type=checkbox]{width:18px;height:18px;position:relative;top:5px;}
 
 /* IMG */
 img{border:0 solid;}
