@@ -118,7 +118,6 @@ img{border:0 solid;}
 img.icon{border-radius:4px;border:0 solid;width:22px;height:22px;max-height:22px;}
 img.statususericon,img.protoicon,img.usericon,img.readericon{min-height:15px;}
 td#out.centered img,
-td#in.centered img{margin-bottom: -2px; margin-right: 10px; margin-left: 10px;}
 
 /* SPAN */
 span.span_notifier{margin-left:2px;padding:1px 3px;}
@@ -127,6 +126,7 @@ span.global_conf{font-size:12px;cursor:default;padding:4px;}
 span.user_totals_headline{display:inline-block;margin:10px 0;}
 span.text_script{display:inline-block;font-weight:700;margin:28px;}
 span.text_entitle,span.text_totalecm{display:inline-block;font-weight:700}
+span#checkboxtext{position: relative; left: 5px}
 
 /* GRAPH */
 text.graph_error {text-anchor:middle;}
@@ -147,13 +147,6 @@ p.blinking{color:red;}
 p#filename,td.subheadline p{color:#000;}
 h2, h4{color:#AAA;}
 
-/* FOR LINKS */
-a.debugls:link, a.debugls:visited{background-color:#A00;color:#FFF;}
-a:hover{color:#FF9E5F;}
-a:hover img.icon{background:red;}
-a:hover span{color:#000;background:#FFC;border: 1px solid #000;}
-a.tooltip1{color:red;}
-a:link,a:visited,a:active{color:#050840;}
 
 /* FOR ID */
 #mainmenu,#nav{background-color:#FFF;}
@@ -218,3 +211,12 @@ rect.graph_bg {fill:white}
 text.graph_error {fill:red}
 text.graph_grid_txt {fill:gray;}
 path.graph_grid {stroke:gray;}
+
+/* FOR LINKS */
+a.debugls:link, a.debugls:visited{background-color:#A00;color:#FFF;}
+a:hover{color:#FF9E5F;}
+a:hover img.icon{background:red;}
+a:hover span{color:#000;background:#FFC;border: 1px solid #000;}
+a:link,a:visited,a:active{color:#050840;}
+a.tooltip1{color:red}
+
