@@ -48,7 +48,7 @@ div.newuser,.hidden,th#exp,td#exp.usercol20,th#cwc,td#cwc.usercol13,th#acasc,td#
 
 /* DIV ID */
 div#content{margin-bottom:0;padding:0 0 75px;}
-div#wrapper div#content form table.config{margin-top:20px;margin-bottom:20px;}
+div#wrapper div#content form table.config{margin-bottom:20px;}
 div#wrapper div#content div#otherdropdown div form input,div#wrapper div#content table.ecm_totals{margin-bottom:20px;}
 
 /* UL ID */
@@ -62,7 +62,7 @@ li.menu a,li.configmenu a,li.menu_selected a,li.configmenu_selected a,td.statusc
 /* TABLE */
 table#datatable.users thead tr,table#datatable.readers thead tr,table#datatable.stats.upspace thead tr{cursor:pointer;}
 table.cacheex, table#dataTable.stats.upspace{width:80%;}
-table.cacheex{margin-top:20px;}
+table.cacheex{}
 table.upspace{margin-top:0;}
 table{border-spacing:1px;margin-left:auto;margin-right:auto;}
 table.menu{border-spacing:0;}
@@ -80,7 +80,7 @@ table.invisibleservices{margin-left:0;width:80%;}
 table.invisible{margin-left:0;}
 table.invisible td,table.invisibleser td,table.invisibleservices td,textarea.bt{font-size:12px;}
 table.configmenu{line-height:16px;}
-table.users{margin-top:20px;width:100%;}
+table.users{width:100%;}
 table.ecm_totals{margin-top:10px;}
 table.invisible td:first-child{padding-left:0;}
 table.statusmeminfo,table.statususerinfo,table.statuscacheexinfo,table#cachexstats.upspace{width:60%;white-space:no-wrap;margin-top:0px;margin-bottom:0px;}
