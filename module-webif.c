@@ -316,7 +316,7 @@ static void webif_save_config(char *section, struct templatevars *vars, struct u
 	}
 	if(write_config() == 0)
 	{
-		tpl_addMsg(vars, "Configuration was saved. You should restart OSCam now.");
+		tpl_addMsg(vars, "Configuration was saved.");
 		enum refreshtypes ref_type = REFR_SERVER;
 		if(streq(getParam(params, "part"), "anticasc"))
 			{ ref_type = REFR_ANTICASC; }
