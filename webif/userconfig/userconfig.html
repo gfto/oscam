@@ -1,60 +1,62 @@
 ##TPLHEADER##
 ##TPLMENU##
 ##TPLMESSAGE##
-<DIV ID="subnav">
-	<UL ID="nav" CLASS="configmenu">
-		<LI CLASS="configmenu"><A HREF="#" onclick="adduser();">Add User</A></LI>
-		<LI CLASS="configmenu"><A HREF="userconfig.html?action=reinit">Reinit User DB</A></LI>
-		<LI CLASS="configmenu"><A HREF="userconfig.html?action=resetalluserstats">Reset Userstats</A></LI>
-		<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=users&amp;hidelabels=1">Show Graphs</A></LI>
-		<LI CLASS="configmenu"><A HREF="userconfig.html">Refresh</A></LI>
-	</UL>
-</DIV>
-<DIV ID="newuser" CLASS="newuser">
-	<TABLE CLASS="users">
-		<TR><form action="user_edit.html" method="get"><TH>New User: <input name="user" type="text"><input type="submit" value="Add User"></TH></form></TR>
-	</TABLE>
-</DIV>
-<DIV ID="searchTable">
-	<TABLE CLASS="users">
-		<TR><TH>Search: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="countDown()" /></TH></TR>
-	</TABLE>
-</DIV>
+	<DIV ID="subnav">
+		<UL ID="nav" CLASS="configmenu">
+			<LI CLASS="configmenu"><A HREF="#" onclick="adduser();">Add User</A></LI>
+			<LI CLASS="configmenu"><A HREF="userconfig.html?action=reinit">Reinit User DB</A></LI>
+			<LI CLASS="configmenu"><A HREF="userconfig.html?action=resetalluserstats">Reset Userstats</A></LI>
+			<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=users&amp;hidelabels=1">Show Graphs</A></LI>
+			<LI CLASS="configmenu"><A HREF="userconfig.html">Refresh</A></LI>
+		</UL>
+	</DIV>
+	<DIV ID="newuser" CLASS="newuser">
+		<TABLE CLASS="users">
+			<TR><form action="user_edit.html" method="get"><TH>New User: <input name="user" type="text"><input type="submit" value="Add User"></TH></form></TR>
+		</TABLE>
+	</DIV>
+	<DIV ID="searchTable">
+		<TABLE CLASS="users">
+			<TR><TH>Search: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="reloadPause()" onBlur="countDown()" /> in all columns</TH></TR>
+		</TABLE>
+	</DIV>
 	<TABLE ID="dataTable" CLASS="users">
 	<THEAD>
 		<TR>
 			<TH COLSPAN="5"></TH>
 			<TH ID="##GRPVIEW##"></TH>
 			<TH></TH>
-			<TH COLSPAN="8">ECM</TH>
-			<TH COLSPAN="2">EMM</TH>
+			<TH COLSPAN="8"><H3>ECM</H3></TH>
+			<TH COLSPAN="2"><H3>EMM</H3></TH>
 ##TPLUSERCWCYCLE##
 ##TPLUSERANTICASC##
 			<TH ID="##EXPIREVIEW##"></TH>
-			<TH COLSPAN="3"></TH>
+			<TH COLSPAN="3"><H3>Action</H3></TH>
 		</TR>
 		<TR>
-			<TH>On/Off</TH>
-			<TH>Label</TH>
-			<TH TITLE="Idle Info">Status<BR>Idle Time</TH>
-			<TH>Address</TH>
-			<TH>Protocol</TH>
-			<TH ID="##GRPVIEW##">Groups</TH>
-			<TH>Last Channel<BR>On Channel</TH>
-			<TH TITLE="Last ECM Time">LTIME</TH>
-			<TH TITLE="Delivered ECM with status OK">OK</TH>
-			<TH TITLE="Delivered ECM with status not OK">NOK</TH>
-			<TH TITLE="Ignored ECM by filters, part of NOK">IGN</TH>
-			<TH TITLE="Timeout ECM, part of NOK">TOUT</TH>
-			<TH TITLE="Delivered ECM from cache, part of OK">CACHE</TH>
-			<TH TITLE="Delivered ECM from tunneled, part of OK">TUN</TH>
-			<TH TITLE="Sum of ECM's in last 60s">last 60s</TH>
-			<TH TITLE="Valid EMM delivered">OK</TH>
-			<TH TITLE="Invalid EMM delivered">NOK</TH>
+			<TH CLASS="nosort"><H3>On/Off</H3></TH>
+			<TH><H3>Label</H3></TH>
+			<TH CLASS="nosort" TITLE="Idle Info"><H3>Status<BR>Idle Time</H3></TH>
+			<TH CLASS="nosort"><H3>Address</H3></TH>
+			<TH><H3>Protocol</H3></TH>
+			<TH ID="##GRPVIEW##" CLASS="nosort"><H3>Groups</H3></TH>
+			<TH CLASS="nosort"><H3>Last Channel<BR>On Channel</H3></TH>
+			<TH TITLE="Last ECM Time"><H3>LTIME</H3></TH>
+			<TH TITLE="Delivered ECM with status OK"><H3>OK</H3></TH>
+			<TH TITLE="Delivered ECM with status not OK"><H3>NOK</H3></TH>
+			<TH TITLE="Ignored ECM by filters, part of NOK"><H3>IGN</H3></TH>
+			<TH TITLE="Timeout ECM, part of NOK"><H3>TOUT</H3></TH>
+			<TH TITLE="Delivered ECM from cache, part of OK"><H3>CACHE</H3></TH>
+			<TH TITLE="Delivered ECM from tunneled, part of OK"><H3>TUN</H3></TH>
+			<TH TITLE="Sum of ECM's in last 60s"><H3>last 60s</H3></TH>
+			<TH TITLE="Valid EMM delivered"><H3>OK</H3></TH>
+			<TH TITLE="Invalid EMM delivered"><H3>NOK</H3></TH>
 ##TPLCWCYCLETHV##
 ##TPLCWANTICASCTHV##
-			<TH ID="##EXPIREVIEW##" TITLE="Expiration date of account">Exp. Date</TH>
-			<TH COLSPAN="3" CLASS="centered">Action</TH>
+			<TH ID="##EXPIREVIEW##" CLASS="nosort" TITLE="Expiration date of account"><H3>Exp. Date</H3></TH>
+			<TH CLASS="nosort"><H3></H3></TH>
+			<TH CLASS="nosort"><H3></H3></TH>
+			<TH CLASS="nosort"><H3></H3></TH>
 		</TR>
 	</THEAD>
 	<TBODY>
@@ -84,7 +86,7 @@
 	</TABLE><BR>
 	<TABLE CLASS="ECM_totals">
 		<TR>
-			<TH colspan="8">Total Ecm Info</TH>
+			<TH COLSPAN="8">Total Ecm Info</TH>
 		</TR>
 		<TR>
 			<TH TITLE="Delivered ECM with status OK">OK incl. TUN</TH>
@@ -105,10 +107,21 @@
 			<TD CLASS="centered">##TOTAL_CW##</TD>
 		</TR>
 		<TR>
-			<TD CLASS="centered" colspan="2"><B>Total OK:  </B> ##TOTAL_CWPOS## (##REL_CWPOS##%)</TD>
-			<TD CLASS="centered" colspan="2"><B>Total NOK:  </B>##TOTAL_CWNEG## (##REL_CWNEG##%)</TD>
-			<TD CLASS="centered" colspan="2"><B>Reset ECM Statistics:</B></TD>
+			<TD CLASS="centered" COLSPAN="2"><B>Total OK:  </B> ##TOTAL_CWPOS## (##REL_CWPOS##%)</TD>
+			<TD CLASS="centered" COLSPAN="2"><B>Total NOK:  </B>##TOTAL_CWNEG## (##REL_CWNEG##%)</TD>
+			<TD CLASS="centered" COLSPAN="2"><B>Reset ECM Statistics:</B></TD>
 			<TD CLASS="centered"><A HREF="userconfig.html?action=resetserverstats" TITLE="Reset statistics for server"><IMG CLASS="icon" SRC="image?i=ICRES" ALT="Reset Server Stats"></A></TD>
 		</TR>
 	</TABLE><BR>
+
+	<!-- To initialize a TABLE sorter -->
+	<script type="text/javascript">
+		var sorter = new TINY.table.sorter('sorter','dataTable',{
+			headclass: 'head',
+			ascclass: 'asc',
+			descclass: 'desc',
+			sortdir: 1,
+			init: true
+		});
+	</script>
 ##TPLFOOTER##

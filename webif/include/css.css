@@ -84,7 +84,7 @@ table.users{width:100%;}
 table.ecm_totals{margin-top:10px;}
 table.invisible td:first-child{padding-left:0;}
 table.statusmeminfo,table.statususerinfo,table.statuscacheexinfo,table#cachexstats.upspace{width:60%;white-space:no-wrap;margin-top:0px;margin-bottom:0px;}
-table#dataTable.users thead tr,table#dataTable.readers thead tr,table#dataTable.stats.upspace thead tr{cursor:pointer;}
+table#dataTable.readers thead tr,table#dataTable.stats.upspace thead tr{cursor:pointer;}
 table.ECM_totals,table.user_totals{width:50%}
 table.newservice,table#servicesedit.stats.upspace{width:35%;text-align:center}
 table#servicesedit.stats.upspace tbody tr td{text-align:center}
@@ -220,3 +220,9 @@ a:hover span{color:#000;background:#FFC;border: 1px solid #000;}
 a:link,a:visited,a:active{color:#050840;}
 a.tooltip1{color:red}
 
+/* SORTING IN TABLE */
+.users th h3 {font-size:11px;padding:10px 2px}
+.users .head h3 {background-image: url(data:image/png;base64,R0lGODlhBQAIAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAgAAAIL3GQnuJ2f2lLI1AIAOw==); background-repeat: no-repeat;background-position:4px center; cursor:pointer; padding-left:10px;padding-right: 8px}
+.users .desc, .users .asc {background-color:#999}
+.users .desc h3 {background-image: url(data:image/png;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIFlD03K1sAOw==);background-repeat: no-repeat;background-position:4px center; cursor:pointer; padding-left:10px;padding-right: 8px}
+.users .asc h3 {background-image: url(data:image/png;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIF3GQnuF0AOw==);background-repeat: no-repeat;background-position:4px center; cursor:pointer; padding-left:10px;padding-right: 8px}
