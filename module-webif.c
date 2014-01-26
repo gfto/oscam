@@ -1249,7 +1249,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 				tpl_addVar(vars, TPLADD, "READERCLASS", rdr->enable ? "enabledreader" : "disabledreader");
 
 				const char *readername_tpl = "READERLABEL";
-				if(cfg.http_showpicons)
+				if(cfg.http_showpicons && !apicall)
 				{
 					readername_tpl = picon_exists(xml_encode(vars, rdr->label)) ? "READERNAMEBIT" : "READERNOICON";
 					tpl_addVar(vars, TPLADD, "CTYP", picon_exists(xml_encode(vars, reader_get_type_desc(rdr, 0))) ? tpl_getTpl(vars, "READERCTYPBIT") : tpl_getTpl(vars, "READERCTYPNOICON"));
@@ -2631,7 +2631,7 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 
 }
 
-static void webif_add_client_proto(struct templatevars *vars, struct s_client *cl, const char *proto)
+static void webif_add_client_proto(struct templatevars *vars, struct s_client *cl, const char *proto, int8_t apicall)
 {
 	tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", "");
 	tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
@@ -2639,7 +2639,7 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 #ifdef MODULE_NEWCAMD
 	if(streq(proto, "newcamd") && cl->typ == 'c')
 	{
-		if(cfg.http_showpicons)
+		if(cfg.http_showpicons && !apicall)
 		{
 			char picon_name[32];
 			snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s_%s", (char *)proto, newcamd_get_client_name(cl->ncd_client_id));
@@ -2668,7 +2668,7 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 		struct cc_data *cc = cl->cc;
 		if(cc && cc->remote_version && cc->remote_build)
 		{
-			if(cfg.http_showpicons)
+			if(cfg.http_showpicons && !apicall)
 			{
 				char picon_name[32];
 				snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s_%s_%s", proto, cc->remote_version, cc->remote_build);
@@ -2697,7 +2697,7 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 		return;
 	}
 #endif
-	if(cfg.http_showpicons)
+	if(cfg.http_showpicons && !apicall)
 	{
 		char picon_name[32];
 		snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s", proto);
@@ -3024,7 +3024,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				lastchan = "";
 			}
 
-			if(cfg.http_showpicons)
+			if(cfg.http_showpicons && !apicall)
 			{
 				char picon_name[32];
 				snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%04X", clientcaid, clientsrvid);
@@ -3140,7 +3140,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEPAPI", "");
 			}
 
-			webif_add_client_proto(vars, latestclient, proto);
+			webif_add_client_proto(vars, latestclient, proto, apicall);
 		}
 		else
 		{
@@ -3153,7 +3153,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "USERNAMEENC", urlencode(vars, account->usr));
 
 		static const char *user_tpl_name = "USERLABEL";
-		if(cfg.http_showpicons)
+		if(cfg.http_showpicons && !apicall)
 			user_tpl_name = picon_exists(xml_encode(vars, account->usr)) ? "USERICON" : "USERNOICON";
 		tpl_addVar(vars, TPLADD, "USERBIT", tpl_getTpl(vars, user_tpl_name));
 
@@ -4033,7 +4033,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						bool picon_shown = false;
 						const char *status_user_icon_tpl = NULL;
 
-						if(cfg.http_showpicons)
+						if(cfg.http_showpicons && !apicall)
 						{
 							if(picon_exists(xml_encode(vars, usr)))
 							{
@@ -4075,7 +4075,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					tpl_addVar(vars, TPLADD, "CLIENTIP", cs_inet_ntoa(cl->ip));
 					tpl_printf(vars, TPLADD, "CLIENTPORT", "%d", cl->port);
 					const char *proto = client_get_proto(cl);
-					webif_add_client_proto(vars, cl, proto);
+					webif_add_client_proto(vars, cl, proto, apicall);
 
 					if(!apicall)
 					{
@@ -4133,7 +4133,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							tpl_addVar(vars, TPLADD, "CLIENTSRVTYPE", cl->last_srvidptr && cl->last_srvidptr->type ? xml_encode(vars, cl->last_srvidptr->type) : "");
 							tpl_addVar(vars, TPLADD, "CLIENTSRVDESCRIPTION", cl->last_srvidptr && cl->last_srvidptr->desc ? xml_encode(vars, cl->last_srvidptr->desc) : "");
 							tpl_addVar(vars, TPLADD, "CLIENTTIMEONCHANNEL", sec2timeformat(vars, chsec));
-							if(cfg.http_showpicons)
+							if(cfg.http_showpicons && !apicall)
 							{
 								snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%04X", cl->last_caid, cl->last_srvid);
 								tpl_addVar(vars, TPLADD, "PICONNAME", picon_name);
@@ -6709,9 +6709,8 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 
 			char *result = NULL;
 
-			// WebIf allows modifying many things. Thus, all pages except images/css are excpected to be non-threadsafe!
-			if(pgidx != 19 && pgidx != 20) { cs_writelock(&http_lock); }
-			uint8_t saved_http_showpicons = cfg.http_showpicons;
+			// WebIf allows modifying many things. Thus, all pages except images/css/static are expected to be non-threadsafe!
+			if(pgidx != 19 && pgidx != 20 && pgidx != 21 && pgidx != 27) { cs_writelock(&http_lock); }
 			switch(pgidx)
 			{
 			case 0:
@@ -6765,9 +6764,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				break;
 				//case  17: js file
 			case 18:
-				cfg.http_showpicons = 0; // Disable picons when the API is used
 				result = send_oscam_api(vars, f, &params, keepalive, 1, extraheader);
-				cfg.http_showpicons = saved_http_showpicons; // Restore picons setting
 				break; //oscamapi.html
 			case 19:
 				result = send_oscam_image(vars, f, &params, NULL, modifiedheader, etagheader, extraheader);
@@ -6779,9 +6776,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				result = send_oscam_graph(vars);
 				break;
 			case 22:
-				cfg.http_showpicons = 0; // Disable picons when the API is used
 				result = send_oscam_api(vars, f, &params, keepalive, 1, extraheader);
-				cfg.http_showpicons = saved_http_showpicons; // Restore picons setting
 				break; //oscamapi.xml
 #ifdef CS_CACHEEX
 			case 23:
@@ -6789,9 +6784,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				break;
 #endif
 			case 24:
-				cfg.http_showpicons = 0; // Disable picons when the API is used
 				result = send_oscam_api(vars, f, &params, keepalive, 2, extraheader);
-				cfg.http_showpicons = saved_http_showpicons; // Restore picons setting
 				break; //oscamapi.json
 			case 25:
 				result = send_oscam_EMM(vars, &params);
@@ -6811,7 +6804,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				result = send_oscam_status(vars, &params, 0);
 				break;
 			}
-			if(pgidx != 19 && pgidx != 20) { cs_writeunlock(&http_lock); }
+			if(pgidx != 19 && pgidx != 20 && pgidx != 21 && pgidx != 27) { cs_writeunlock(&http_lock); }
 
 			if(result == NULL || !strcmp(result, "0") || strlen(result) == 0) { send_error500(f); }
 			else if(strcmp(result, "1"))
