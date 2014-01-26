@@ -1,33 +1,31 @@
 ##TPLHEADER##
 ##TPLMENU##
 ##TPLMESSAGE##
-<DIV ID="subnav">
-	<UL ID="nav" CLASS="configmenu">
-		<LI CLASS="configmenu"><A HREF="#" onclick="addreader();">Add Reader</A></LI>
-		<LI CLASS="configmenu"><A HREF="scanusb.html">Scan USB</A></LI>
-		<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=servers">Show Graphs</A></LI>
-		<LI class="configmenu"><a href="readers.html">Refresh</A></LI>
-	</UL>
-</DIV>
-<DIV ID="newreader" CLASS="newuser">
-	<form action="readerconfig.html" method="get">
-		<TABLE CLASS="users">
-			<TR><TH>NEW Reader Label: <input type="text" name="label" value="##NEXTREADER##">  Protocol: <select name="protocol">##ADDPROTOCOL##</select><input type="submit" name="action" value="Add"></TH></TR>
+	<DIV ID="subnav">
+		<UL ID="nav" CLASS="configmenu">
+			<LI CLASS="configmenu"><A HREF="#" onclick="addreader();">Add Reader</A></LI>
+			<LI CLASS="configmenu"><A HREF="scanusb.html">Scan USB</A></LI>
+			<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=servers">Show Graphs</A></LI>
+		</UL>
+	</DIV>
+	<DIV ID="newreader" CLASS="newreader">
+		<form action="readerconfig.html" method="get">
+			<TABLE CLASS="readers">
+				<TR><TH>NEW Reader Label: <input type="text" name="label" value="##NEXTREADER##">  Protocol: <select name="protocol">##ADDPROTOCOL##</select><input type="submit" name="action" value="Add"></TH></TR>
+			</TABLE>
+		</form>
+	</DIV>
+	<DIV ID="searchTable">
+		<TABLE CLASS="readers">
+			<TR><TH>Search: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="reloadPause()" onBlur="countDown()" /></TH></TR>
 		</TABLE>
-	</form>
-</DIV>
-<DIV ID="searchTable">
-	<TABLE CLASS="users">
-		<TR><TH>Search: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="reloadPause()" onBlur="countDown()" /></TH></TR>
-	</TABLE>
-</DIV>
-<SECTION CLASS="container">
+	</DIV>
 	<TABLE ID="dataTable" CLASS="readers">
 	<THEAD>
 		<TR>
 			<TH COLSPAN="4"></TH>
-			<TH COLSPAN="3">ECM</TH>
-			<TH COLSPAN="4">EMM</TH>
+			<TH COLSPAN="3"><H3>ECM</H3></TH>
+			<TH COLSPAN="4"><H3>EMM</H3></TH>
 ##TPLREADERLBWU##
 			<TH COLSPAN="6"></TH>
 		</TR>
@@ -51,5 +49,4 @@
 ##READERLIST##
 	</TBODY>
 	</TABLE>
-</SECTION>
 ##TPLFOOTER##

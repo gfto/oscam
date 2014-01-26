@@ -5,11 +5,11 @@ function reloadPause(){clearTimeout(oReloadTimer);};
 function runReloadCounter(){var oReloadContent=document.getElementById("ReloadContent");if(oReloadContent){if(counter<0){counter=counterfull;}counter--;}};
 function initDoc(){if(oReloadTimer)window.clearInterval(oReloadTimer);oReloadTimer=window.setInterval("reloadDocument();",counterfull*1000);if(oCounterTimer)window.clearInterval(oCounterTimer);oCounterTimer=window.setInterval("runReloadCounter();",1000);};
 
-/* Function for add new user in readers.html */
-function addreader(){cdpause();document.getElementById("searchTable").style.display="none";document.getElementById("newreader").style.display="block";};
+/* Function for add new reader in readers.html */
+function addreader(){reloadPause();document.getElementById("searchTable").style.display="none";document.getElementById("newreader").style.display="block";};
 
-/* Function for add new reader in userconfig.html */
-function adduser(){cdpause();document.getElementById("searchTable").style.display="none";document.getElementById("newuser").style.display="block";};
+/* Function for add new user in userconfig.html */
+function adduser(){reloadPause();document.getElementById("searchTable").style.display="none";document.getElementById("newuser").style.display="block";};
 
 /* Function for searching in table - uncompressed */
 function doSearch() {

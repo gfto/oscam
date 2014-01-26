@@ -60,7 +60,7 @@ ul#nav{padding-top:0;}
 li.menu a,li.configmenu a,li.menu_selected a,li.configmenu_selected a,td.statuscol14 a,td.statuscol16 a,td.subheadline a{text-decoration:none;}
 
 /* TABLE */
-table#datatable.users thead tr,table#datatable.readers thead tr,table#datatable.stats.upspace thead tr{cursor:pointer;}
+table#datatable.users thead tr,table#datatable.stats.upspace thead tr{cursor:pointer;}
 table.cacheex, table#dataTable.stats.upspace{width:80%;}
 table.cacheex{}
 table.upspace{margin-top:0;}
@@ -226,3 +226,7 @@ a.tooltip1{color:red}
 .users .desc, .users .asc {background-color:#999}
 .users .desc h3 {background-image: url(data:image/png;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIFlD03K1sAOw==);background-repeat: no-repeat;background-position:4px center; cursor:pointer; padding-left:10px;padding-right: 8px}
 .users .asc h3 {background-image: url(data:image/png;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIF3GQnuF0AOw==);background-repeat: no-repeat;background-position:4px center; cursor:pointer; padding-left:10px;padding-right: 8px}
+
+/* 1. NEW CLASS OR ID  */
+div.newreader {display:none;}
+
