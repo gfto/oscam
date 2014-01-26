@@ -4148,6 +4148,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								{
 									snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "0000_%04X", cl->last_srvid);
 									picon_ok = picon_exists(picon_name);
+									if(picon_ok) tpl_addVar(vars, TPLADD, "PICONNAME", picon_name);
 								}
 								if(picon_ok)
 								{									
