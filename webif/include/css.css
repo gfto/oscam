@@ -107,6 +107,7 @@ th.nameinfo{text-transform:uppercase;text-align:left;}
 th.statuscol0,td.statuscol0{text-align:center;width:10px;}
 th.statuscol1,th.statuscol2,th.statuscol3,th.statuscol4,th.statuscol5,th.statuscol6,th.statuscol7,th.statuscol8,th.statuscol9,th.statuscol10,th.statuscol11,th.statuscol12,th.statuscol13,th.statuscol14,th.statuscol15,th.statuscol16,td.centered,td.statuscol1,td.statuscol2,td.statuscol3,td.statuscol5,td.statuscol6,td.statuscol7,td.statuscol8,td.statuscol10,td.statuscol11,td.statuscol12,td.statuscol14,td.statuscol15,td.statuscol16,td.usercol0,td.usercol2,td.usercol3,td.usercol4,td.usercol5,td.usercol6,td.usercol7,td.usercol8,td.usercol9,td.usercol10,td.usercol11,td.usercol12,td.usercol13,td.usercol14,td.usercol15,td.usercol16,td.usercol17,td.usercol18,td.usercol19,td.usercol20,td.usercol21,td.usercol22,td.usercol23,td.usercol24,td.usercol25{text-align:center;}
 th.statuscol0,td.statuscol1{width:0;}
+th#sortable{cursor:pointer;}
 table#dataTable.users thead tr th{padding:0;}
 
 /* *** */

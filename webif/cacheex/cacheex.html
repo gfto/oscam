@@ -4,24 +4,25 @@
 <DIV ID="subnav"><UL ID="nav"></UL></DIV>
 	<DIV ID="searchTable cacheex">
 		<TABLE CLASS="cacheex">
-			<TR><TH>Filter: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="reloadPause()" onBlur="countDown()" /></TH></TR>
+			<TR><TH>Filter: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="countDown()" /></TH></TR>
 		</TABLE>
 	</DIV>
 	<TABLE ID="dataTable" CLASS="stats upspace">
 		<THEAD>
 			<TR><TH COLSPAN="12">CacheEX Stats for ##OWN_CACHEEX_NODEID##</TH></TR>
-			<TR><TH>Direction</TH>
-				<TH>Type</TH>
-				<TH>Name</TH>
-				<TH>IP</TH>
-				<TH>NODE</TH>
-				<TH>Cache EX Mode</TH>
-				<TH>Push</TH>
-				<TH>Got</TH>
-				<TH>CWC Info</TH>
-				<TH>Hit</TH>
-				<TH>Err</TH>
-				<TH>CW Diff</TH>
+			<TR>
+				<TH id="sortable">Direction</TH>
+				<TH id="sortable">Type</TH>
+				<TH id="sortable">Name</TH>
+				<TH id="sortable">IP</TH>
+				<TH id="sortable">NODE</TH>
+				<TH id="sortable">Cache EX Mode</TH>
+				<TH id="sortable">Push</TH>
+				<TH id="sortable">Got</TH>
+				<TH id="sortable">CWC Info</TH>
+				<TH id="sortable">Hit</TH>
+				<TH id="sortable">Err</TH>
+				<TH id="sortable">CW Diff</TH>
 			</TR>
 		</THEAD>
 		<TBODY>
