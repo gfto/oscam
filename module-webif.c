@@ -3002,12 +3002,13 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 
 		casc_users = 0;
 		casc_users2 = 0;
+		int8_t conn = 0;
 		if(latestclient != NULL)
 		{
 			char channame[32];
 			status = (!apicall) ? "<B>connected</B>" : "connected";
 			if(account->expirationdate && account->expirationdate < now) { classname = "expired"; }
-			else { classname = "connected"; }
+			else { classname = "connected";conn = 1; }
 
 			proto = client_get_proto(latestclient);
 			int clientcaid = latestclient->last_caid;
@@ -3150,7 +3151,14 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		}
 		else
 		{
-			tpl_addVar(vars, TPLADDONCE, "IDLESECS", "");
+			if (conn > 0)
+			{
+				tpl_addVar(vars, TPLADDONCE, "IDLESECS", sec2timeformat(vars, isec));
+			}
+			else
+			{
+				tpl_addVar(vars, TPLADDONCE, "IDLESECS", "");
+			}
 			tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", "");
 		}
 
