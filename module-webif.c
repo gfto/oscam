@@ -6693,6 +6693,13 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 
 			tpl_addVar(vars, TPLADD, "CS_VERSION", CS_VERSION);
 			tpl_addVar(vars, TPLADD, "CS_SVN_VERSION", CS_SVN_VERSION);
+			if(cfg.http_oscam_label != NULL){
+				tpl_addVar(vars, TPLADD, "HTTPOSCAMLABEL", cfg.http_oscam_label);
+			}
+			else
+			{
+				tpl_addVar(vars, TPLADD, "HTTPOSCAMLABEL", "Oscam");
+			}
 			tpl_addVar(vars, TPLADD, "HTTP_CHARSET", cs_http_use_utf8 ? "UTF-8" : "ISO-8859-1");
 			if(cfg.http_refresh > 0 && (pgidx == 3 || pgidx == -1))
 			{

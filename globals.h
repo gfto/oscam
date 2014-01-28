@@ -1645,6 +1645,7 @@ struct s_config
 	int8_t          http_force_sslv3;
 	char            *http_cert;
 	char            *http_help_lang;
+	char            *http_oscam_label;
 #endif
 	int8_t          http_full_cfg;
 	int32_t         failbantime;
