@@ -849,6 +849,7 @@ static char *send_oscam_config_webif(struct templatevars *vars, struct uriparams
 
 	tpl_addVar(vars, TPLADD, "HTTPUSER", cfg.http_user);
 	tpl_addVar(vars, TPLADD, "HTTPPASSWORD", cfg.http_pwd);
+	tpl_addVar(vars, TPLADD, "HTTPOSCAMLABEL", cfg.http_oscam_label);
 
 	// css style selector
 	tpl_printf(vars, TPLADD, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"\"%s>embedded</option>\n",
@@ -5130,8 +5131,7 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 		{ "oscam.srvid",     MNU_CFG_FSRVID,    FTYPE_CONFIG },
 		{ "oscam.provid",    MNU_CFG_FPROVID,   FTYPE_CONFIG },
 		{ "oscam.tiers",     MNU_CFG_FTIERS,    FTYPE_CONFIG },
-        { "oscam.ratelimit", MNU_CFG_RATELIMIT, FTYPE_CONFIG },
-        
+		{ "oscam.ratelimit", MNU_CFG_RATELIMIT, FTYPE_CONFIG },
 #ifdef HAVE_DVBAPI
 		{ "oscam.dvbapi",    MNU_CFG_FDVBAPI,   FTYPE_CONFIG },
 #endif
