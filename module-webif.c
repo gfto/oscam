@@ -3140,7 +3140,14 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			}
 			else
 			{
-				tpl_addVar(vars, TPLADDONCE, "IDLESECS", "");
+				if (conn > 0)
+				{
+					tpl_addVar(vars, TPLADDONCE, "IDLESECS", sec2timeformat(vars, isec));
+				}
+				else
+				{
+					tpl_addVar(vars, TPLADDONCE, "IDLESECS", "");
+				}
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNELAPI", "");
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNEL", "");
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "");
