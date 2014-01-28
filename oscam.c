@@ -310,7 +310,7 @@ static void write_versionfile(bool use_stdout)
 				st.tm_hour, st.tm_min, st.tm_sec);
 	}
 
-	fprintf(fp, "Version:        oscam-%s-r%s\n", CS_VERSION, CS_SVN_VERSION);
+	fprintf(fp, "Version:        oscam-%s-r%s (%s)\n", CS_VERSION, CS_SVN_VERSION, CS_TARGET);
 	fprintf(fp, "ConfigDir:      %s\n", cs_confdir);
 	
 	fprintf(fp, "\n");
