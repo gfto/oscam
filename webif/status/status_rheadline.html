@@ -1,6 +1,13 @@
 <TR>
-	<TD CLASS="subheadline" COLSPAN="17">
-		<p>Readers ##RCC##/##RCA##
-		<input type="button" onclick="window.location.href = 'status.html?hideidle=3';" value="Show hidden" title="Show hidden Reader"></p>
-	</TD>
+	<td CLASS="subheadline" COLSPAN="11">
+		<p>Readers ##RCC##/##RCA##</p>
+	</td>
+	<td CLASS="subheadline">
+		<form name="gotoform" method="post" action="">
+		<select size="1" onChange="gotosite(this.value)">
+			<option value=''>-- select Action --</option>
+			<option value='status.html?hideidle=3'>Show hidden Reader</option>
+		</select>
+		</form>
+	</td>
 </TR>

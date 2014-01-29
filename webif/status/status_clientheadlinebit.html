@@ -1,8 +1,15 @@
 <TR>
-	<TD CLASS="subheadline" COLSPAN="17">
-		<p>Clients ##UCS##/##UCA##
-		<input type="button" onclick="window.location.href = 'status.html?hideidle=5';" value="Show hidden" title="Show hidden User">
-		<input type="button" onclick="window.location.href = 'status.html?hideidle=0';" value="Show idle" title="Show Idle User">
-		<input type="button" onclick="window.location.href = 'status.html?hideidle=1';" value="Hide Idle" title="Hide Idle User"></p>
-	</TD>
+	<td CLASS="subheadline" COLSPAN="11">
+		<p>Clients ##UCS##/##UCA##</p>
+	</td>
+	<td CLASS="subheadline">
+		<form name="gotoform" method="post" action="">
+		<select onChange="gotosite(this.value)">
+			<option value="">-- select Action --</option>
+			<option value="status.html?hideidle=5">Show hidden User</option>
+			<option value="status.html?hideidle=0">Show Idle User</option>
+			<option value="status.html?hideidle=1">Hide Idle User</option>
+		</select>
+		</form>
+	</td>
 </TR>

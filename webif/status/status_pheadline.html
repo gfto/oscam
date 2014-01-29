@@ -1,6 +1,13 @@
 <TR>
-	<TD CLASS="subheadline" COLSPAN="17">
-		<p>Proxies ##PCC##/##PCA##
-		<input type="button" onclick="window.location.href = 'status.html?hideidle=4';" value="Show hidden" title="Show hidden Proxy"></p>
-	</TD>
+	<td CLASS="subheadline" COLSPAN="11">
+		<p>Proxies ##PCC##/##PCA##</p>
+	</td>
+	<td CLASS="subheadline">
+		<form name="gotoform" method="post" action="">
+		<select size="1" onChange="gotosite(this.value)">
+			<option value=''>-- select Action --</option>
+			<option value='status.html?hideidle=4'>Show hidden Proxy</option>
+		</select>
+		</form>
+	</td>
 </TR>
