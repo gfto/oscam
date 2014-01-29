@@ -109,6 +109,10 @@ th.statuscol1,th.statuscol2,th.statuscol3,th.statuscol4,th.statuscol5,th.statusc
 th.statuscol0,td.statuscol1{width:0;}
 th#sortable{cursor:pointer;}
 table#dataTable.users thead tr th{padding:0;}
+table#subservicetable.subservicetable{width:100%;background:#FFFFFF}
+table#subservicetable.subservicetable tbody tr td.servicescol1,
+table#subservicetable.subservicetable tbody tr td.servicescol2,
+table#subservicetable.subservicetable tbody tr td.servicescol3{width:30%;border:0;border-spacing:1px}
 
 /* *** */
 textarea.editor{font-size:11px;width:98%;height:508px;font-family:"Courier New", monospace;text-align:left;padding:8px 10px;}
