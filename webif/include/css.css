@@ -100,6 +100,7 @@ td.menu, td.configmenu, td.menu_selected, td.configmenu_selected{font-size:14px;
 td.subheadline{height:10px;border:0;padding:5px;}
 td.statuscol4,td.statuscol4 a,td.statuscol9,td.statuscol9 a,td.statuscol13,td.statuscol13 a,td.usercol1,.span,span,span a{text-align:center;text-decoration:none;}
 td.subheadline input{float:right;border-width:0;font-size:12px;margin-left:5px;margin-right:5px;padding:0;}
+td.subheadline form select{width:100px;text-align:center;font-size:10px;padding:0}
 
 /* TABLE TH */
 th{height:10px;padding:5px;}
