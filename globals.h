@@ -1033,6 +1033,7 @@ struct s_client
 
 #ifdef MODULE_GBOX
 	void            *gbox;
+	uint16_t	gbox_peer_id;
 #endif
 
 #ifdef MODULE_GHTTP
