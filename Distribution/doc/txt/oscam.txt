@@ -1,4 +1,4 @@
-oscam(1)															oscam(1)
+oscam(1)												     oscam(1)
 
 
 
@@ -16,7 +16,8 @@ DESCRIPTIONS
 
        ·  camd 3.3x TCP
 
-       ·  camd camd 3.5x / 3.57x UDP with cascading/remote server ECM support, ECM and EMM support with size > 256 bytes
+       ·  camd	camd  3.5x  / 3.57x UDP with cascading/remote server ECM support, ECM and EMM support with size > 256
+	  bytes
 
        ·  camd 3.78x TCP with cascading/remote server ECM support, ECM and EMM support with size > 256 bytes
 
@@ -49,8 +50,8 @@ OPTIONS
 	  set PID file, overrides pidfile of oscam.conf, default:none
 
        -c|--config-dir <directory>
-	  read configuration from <directory>, default:see CS_CONFDIR in globals.h, while starting OSCam prints warnings on invalid key‐
-	  words, comment lines start with # character.
+	  read configuration from <directory>, default:see CS_CONFDIR in globals.h, while starting OSCam prints warn‐
+	  ings on invalid keywords, comment lines start with # character.
 
        -d|--debug <level>
 	  debug level mask:
@@ -66,6 +67,8 @@ OPTIONS
 	     256 = load balancing logging
 	     512 = cache exchange logging
 	    1024 = client ECM logging
+	    2048 = CSP logging
+	    4096 = CWC logging
 	   65535 = debug all
 
        -g|--gcollect <mode>
@@ -110,8 +113,8 @@ OPTIONS
 
 SIGNALS
        SIGHUP
-	  reinit user db, TIERs, services, clients and anti-cascading, for  newcamd  connections:  after  reloading  the  ident,  please
-	  restart newcamd client
+	  reinit  user	db, TIERs, services, clients and anti-cascading, for newcamd connections: after reloading the
+	  ident, please restart newcamd client
 
        SIGUSR1
 	  shift debug level to next level (see debug level mask above)
@@ -120,10 +123,10 @@ SIGNALS
 	  get reader SC info
 
 SEE ALSO
-       list_smargo(1),	oscam.ac(5),  oscam.cacheex(5),  oscam.cert(5),  oscam.conf(5),  oscam.dvbapi(5),  oscam.guess(5), oscam.ird(5),
-       oscam.provid(5),  oscam.ratelimit(5),  oscam.server(5),	 oscam.services(5),   oscam.srvid(5),	oscam.tiers(5),   oscam.user(5),
-       oscam.whitelist(5)
+       list_smargo(1), oscam.ac(5), oscam.cacheex(5), oscam.cert(5), oscam.conf(5), oscam.dvbapi(5),  oscam.guess(5),
+       oscam.ird(5),   oscam.provid(5),   oscam.ratelimit(5),	oscam.server(5),  oscam.services(5),  oscam.srvid(5),
+       oscam.tiers(5), oscam.user(5), oscam.whitelist(5)
 
 
 
-																oscam(1)
+													     oscam(1)
