@@ -403,11 +403,6 @@ typedef unsigned char uchar;
 #define DEFAULT_LB_AUTO_TIMEOUT_P 30
 #define DEFAULT_LB_AUTO_TIMEOUT_T 300
 
-#define DEFAULT_GBOX_MAX_DIST      2
-#define DEFAULT_GBOX_MAX_ECM_SEND  3
-#define DEFAULT_GBOX_RECONNECT     300
-#define CS_GBOX_MAX_LOCAL_CARDS    16
-
 enum {E1_GLOBAL = 0, E1_USER, E1_READER, E1_SERVER, E1_LSERVER};
 
 //LB blocking events:

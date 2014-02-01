@@ -331,6 +331,19 @@ void gbox_init_ecm_request_ext(struct gbox_ecm_request_ext *ere)
 	ere->gbox_type = 0;
 }
 
+struct s_client *get_gbox_proxy(uint16_t gbox_id)
+{
+	struct s_client *cl;
+	for(cl = first_client; cl; cl = cl->next)
+	{
+		if(cl->typ == 'p' && cl->gbox && cl->gbox_peer_id == gbox_id)
+		{
+			return cl;
+		}
+	}
+	return NULL;
+}
+
 // if input client is typ proxy get client and vice versa
 struct s_client *switch_client_proxy(struct s_client *cli, uint16_t gbox_id)
 {
@@ -432,6 +445,7 @@ static void gbox_server_init(struct s_client *cl)
 		if(IP_ISSET(cl->ip))
 			{ cs_log("gbox: new connection from %s", cs_inet_ntoa(cl->ip)); }
 		//We cannot authenticate here, because we don't know gbox pw
+		cl->gbox_peer_id = NO_GBOX_ID;
 		cl->init_done = 1;
 	}
 	return;
@@ -776,7 +790,7 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 	//verify my pass received
 	if (gbox_compare_pw(&data[2],&local_gbox.password[0]))
 	{
-		if (!cli->gbox_peer_id)
+		if (cli->gbox_peer_id == NO_GBOX_ID)
 		{
 			if (gbox_auth_client(cli, &data[6]) < 0)
 				{ return -1; }
@@ -1395,8 +1409,13 @@ static int32_t gbox_client_init(struct s_client *cli)
 
 	cs_ddump_mask(D_READER, peer->gbox.password, 4, "Peer password: %s:", rdr->r_pwd);
 
-	peer->gbox.id = gbox_convert_password_to_id(&peer->gbox.password[0]);
-	cli->gbox_peer_id = peer->gbox.id;
+	peer->gbox.id = gbox_convert_password_to_id(&peer->gbox.password[0]);	
+	if (get_gbox_proxy(peer->gbox.id) || peer->gbox.id == NO_GBOX_ID)
+	{
+		cs_log("gbox: error, double/invalid gbox id: %04X", peer->gbox.id);	
+		return -1;
+	}
+	cli->gbox_peer_id = peer->gbox.id;	
 
 	cli->pfd = 0;
 	cli->crypted = 1;

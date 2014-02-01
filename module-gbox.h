@@ -3,7 +3,12 @@
 
 #ifdef MODULE_GBOX
 
-#define GBOX_MAXHOPS	10
+#define NO_GBOX_ID			0
+#define GBOX_MAXHOPS			10
+#define DEFAULT_GBOX_MAX_DIST		2
+#define DEFAULT_GBOX_MAX_ECM_SEND	3
+#define DEFAULT_GBOX_RECONNECT		300
+#define CS_GBOX_MAX_LOCAL_CARDS		16
 
 struct gbox_ecm_request_ext
 {

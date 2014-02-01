@@ -1,5 +1,6 @@
 #include "globals.h"
 #include "module-dvbapi.h"
+#include "module-gbox.h"
 #include "oscam-conf.h"
 #include "oscam-conf-chk.h"
 #include "oscam-conf-mk.h"
