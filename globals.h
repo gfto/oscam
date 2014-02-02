@@ -1789,6 +1789,7 @@ struct s_config
 	int8_t      block_same_name; //0=allow all, 1=block client requests to reader with same name (default=1)
 
 #ifdef CS_CACHEEX
+	uint8_t     wait_until_ctimeout;
 	CWCHECKTAB  cacheex_cwcheck_tab;
 	IN_ADDR_T   csp_srvip;
 	int32_t     csp_port;

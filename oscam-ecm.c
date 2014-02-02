@@ -80,9 +80,13 @@ void cacheex_timeout(ECM_REQUEST *er)
 		cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} cacheex timeout! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
 
 		//check if "normal" readers selected, if not send NOT FOUND!
-		if((!er->from_cacheex1_client && (er->reader_count + er->fallback_reader_count - er->cacheex_reader_count) <= 0)    //not-cacheex-1 client and no normal readers available (or filtered by LB)
-				||
-		    (er->from_cacheex1_client && !er->reader_nocacheex_avail)  //cacheex1-client and no normal readers available for others clients
+		if(  !cfg.wait_until_ctimeout
+			 &&
+			 (
+				(!er->from_cacheex1_client && (er->reader_count + er->fallback_reader_count - er->cacheex_reader_count) <= 0)    //not-cacheex-1 client and no normal readers available (or filtered by LB)
+					||
+				(er->from_cacheex1_client && !er->reader_nocacheex_avail)  //cacheex1-client and no normal readers available for others clients
+		     )
 		  )
 		{
 			er->rc = E_NOTFOUND;
