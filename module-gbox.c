@@ -790,24 +790,24 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 	//verify my pass received
 	if (gbox_compare_pw(&data[2],&local_gbox.password[0]))
 	{
-		if (cli->gbox_peer_id == NO_GBOX_ID)
-		{
-			if (gbox_auth_client(cli, &data[6]) < 0)
-				{ return -1; }
-			//NEEDFIX: Pretty sure this should not be done here
-			gbox_local_cards(cli);	
-			cl = switch_client_proxy(cli, cli->gbox_peer_id);
-
-			//clients may timeout - attach to peer's gbox/reader
-			cli->gbox = cl->gbox; //point to the same gbox as proxy
-			cli->reader = cl->reader; //point to the same reader as proxy
-
-			peer = cl->gbox;
-		}
 		cs_debug_mask(D_READER, "received data, peer : %04x   data: %s", cli->gbox_peer_id, cs_hexdump(0, data, l, tmp, sizeof(tmp)));
 
 		if (gbox_decode_cmd(data) != MSG_CW)
 		{
+			if (cli->gbox_peer_id == NO_GBOX_ID)
+			{
+				if (gbox_auth_client(cli, &data[6]) < 0)
+					{ return -1; }
+				//NEEDFIX: Pretty sure this should not be done here
+				gbox_local_cards(cli);	
+				cl = switch_client_proxy(cli, cli->gbox_peer_id);
+
+				//clients may timeout - attach to peer's gbox/reader
+				cli->gbox = cl->gbox; //point to the same gbox as proxy
+				cli->reader = cl->reader; //point to the same reader as proxy
+
+				peer = cl->gbox;
+			}
 			if (!peer) { return -1; }
 			if (!gbox_compare_pw(&data[6],&peer->gbox.password[0]))
 			{
@@ -841,6 +841,8 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 	}
 
 	if(!peer) { return -1; }
+	
+	cli->last = time((time_t *)0);
 
 	cs_writelock(&peer->lock);
 	if(gbox_cmd_switch(cl, data, n) < 0)
@@ -1410,7 +1412,7 @@ static int32_t gbox_client_init(struct s_client *cli)
 	cs_ddump_mask(D_READER, peer->gbox.password, 4, "Peer password: %s:", rdr->r_pwd);
 
 	peer->gbox.id = gbox_convert_password_to_id(&peer->gbox.password[0]);	
-	if (get_gbox_proxy(peer->gbox.id) || peer->gbox.id == NO_GBOX_ID)
+	if (get_gbox_proxy(peer->gbox.id) || peer->gbox.id == NO_GBOX_ID || peer->gbox.id == local_gbox.id)
 	{
 		cs_log("gbox: error, double/invalid gbox id: %04X", peer->gbox.id);	
 		return -1;
@@ -1777,6 +1779,10 @@ static void init_local_gbox(void)
 	cs_ddump_mask(D_READER, local_gbox.password,      4, " My  password: %s:", cfg.gbox_my_password);
 
 	local_gbox.id = gbox_convert_password_to_id(&local_gbox.password[0]);
+	if (local_gbox.id == NO_GBOX_ID)
+	{
+		cs_log("gbox: invalid local gbox id: %04X", local_gbox.id);	
+	}
 }
 
 void module_gbox(struct s_module *ph)
