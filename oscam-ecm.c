@@ -2303,18 +2303,20 @@ OUT:
 
 
 #ifdef WITH_LB
-	//cahe2 is handled by readers queue, so, if a same ecm hash with same readers, use these same readers to get cache2 from them! Not ask other readers!
-	struct ecm_request_t *ecm_eq = NULL;
-	ecm_eq = check_same_ecm(er);
-	if(ecm_eq)
-	{
-		//set all readers used by ecm_eq, so we get cache2 from them!
-		use_same_readers(er, ecm_eq);
-		cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [get_cw] found same ecm with same readers from client %s, use them!", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid, (check_client(ecm_eq->client) ? ecm_eq->client->account->usr : "-"));
+	if(cfg.lb_mode){
+		//cache2 is handled by readers queue, so, if a same ecm hash with same readers, use these same readers to get cache2 from them! Not ask other readers!
+		struct ecm_request_t *ecm_eq = NULL;
+		ecm_eq = check_same_ecm(er);
+		if(ecm_eq)
+		{
+			//set all readers used by ecm_eq, so we get cache2 from them!
+			use_same_readers(er, ecm_eq);
+			cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [get_cw] found same ecm with same readers from client %s, use them!", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid, (check_client(ecm_eq->client) ? ecm_eq->client->account->usr : "-"));
 
-		//set reader_count and fallback_reader_count
-		set_readers_counter(er);
-	}
+			//set reader_count and fallback_reader_count
+			set_readers_counter(er);
+		}
+    }
 #endif
 
 

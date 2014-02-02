@@ -1325,10 +1325,11 @@ void stat_get_best_reader(ECM_REQUEST *er)
 				//handle retrylimit
 				if(retrylimit)
 				{
-					if(s->time_avg > retrylimit)
-						{ current = -1; } //set lowest value for reader with time-avg>retrylimit
-					else
-						{ current = current - 1; } //so when all have same current, it prioritizes the one with s->time_avg<=retrylimit! This avoid a loop!
+					if(s->time_avg > retrylimit){  //set lowest value for reader with time-avg>retrylimit
+  					   current = s->time_avg;   //in this way, it will choose best time-avg reader among the worst ones
+					}else{
+					   current = current - 1;   //so when all have same current, it prioritizes the one with s->time_avg<=retrylimit! This avoid a loop!
+					}
 				}
 
 				break;
