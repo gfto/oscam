@@ -102,6 +102,7 @@ struct gbox_peer
 	CS_MUTEX_LOCK lock;
 	pthread_mutex_t hello_expire_mut;
 	pthread_cond_t hello_expire_cond;
+	struct s_client *my_user;
 };
 
 static struct gbox_data local_gbox;
@@ -631,8 +632,9 @@ static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 	struct s_client *cl;
 	int32_t diffcheck = 0;
 
-	cl = switch_client_proxy(cli, cli->gbox_peer_id);
-	peer = cl->gbox;
+	peer = cli->gbox;
+	if (!peer || !peer->my_user) { return -1; }
+	cl = peer->my_user;
 
 	// No ECMs with length < 8 expected
 	if ((((data[19] & 0x0f) << 8) | data[20]) < 8) { return -1; }
@@ -807,6 +809,7 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 				cli->reader = cl->reader; //point to the same reader as proxy
 
 				peer = cl->gbox;
+				if (peer) { peer->my_user = cli; }
 			}
 			if (!peer) { return -1; }
 			if (!gbox_compare_pw(&data[6],&peer->gbox.password[0]))
@@ -1089,7 +1092,7 @@ static void gbox_send_hello(struct s_client *cli)
 		while((card = ll_iter_next(&it)))
 		{
 			//send to user only cards which matching CAID from account and lvl > 0
-			if(chk_ctab(card->caid, &cli->account->ctab) && card->lvl > 0)
+			if(chk_ctab(card->caid, &peer->my_user->account->ctab) && card->lvl > 0)
 			{
 				*(++ptr) = card->provid_1 >> 24;
 				*(++ptr) = card->provid_1 >> 16;
@@ -1459,6 +1462,7 @@ static int32_t gbox_client_init(struct s_client *cli)
 	peer->online     = 0;
 	peer->ecm_idx    = 0;
 	peer->hello_stat = GBOX_STAT_HELLOL;
+	peer->my_user	 = NULL;
 
 	cli->reader->card_status = CARD_NEED_INIT;
 	gbox_send_hello(cli);
