@@ -5,7 +5,7 @@
 /* 2. BASIC DIVISION PAGES */
 html,body,* html #wrapper{height:100%}
 #wrapper{position:relative;min-height:100%}
-#content{margin-bottom:0;padding:0 8px 95px;}
+#content{margin-bottom:0;padding:0 8px 150px;}
 #footer{position:absolute;bottom:0;width:100%}
 
 /* 2. BASIC SETTINGS */
@@ -109,9 +109,10 @@ div.debugmenu,div.logmenu{line-height:20px}
 div.cccamentitlementtotals,div.cccamentitlementcontrols{margin-top:14px}
 div.newuser,.hidden,th#exp,td#exp.usercol20,th#cwc,td#cwc.usercol13,th#acasc,td#acasc.usercol19,td#acasc.usercol20,th#grp,td#grp.usercol5{display:none}
 
-/* 11. TEXTAREA,SELECT */
+/* 11. TEXTAREA,SELECT,INPUT */
 textarea.editor{font-size:11px;width:98%;height:508px;font-family:"Courier New", monospace;text-align:left;padding:8px 10px}
 select{padding:2px}
+input[type=checkbox]{vertical-align:text-bottom;_vertical-align:middle;margin-right:5px}
 
 /* 12. IMAGE */
 img{border:0 solid}
@@ -133,13 +134,7 @@ text.graph_error {text-anchor:middle;}
 text.graph_grid_txt {text-anchor:end;style:font-size:12px;}
 path.graph_grid {stroke-opacity:0.5;}
 
-/* 15. MEDIA */
-@media screen and (-webkit-min-device-pixel-ratio:0) {
-select{padding:1px;}
-input[type=submit]{padding:2px 6px;}
-}
-
-/* 16. Not Assigned */
+/* 15. Not Assigned */
 html body form table.stats.upspace{margin-top:20px}
 li.menu a,li.configmenu a,li.menu_selected a,li.configmenu_selected a,td.statuscol14 a,td.statuscol16 a,td.subheadline a{text-decoration:none}
 
