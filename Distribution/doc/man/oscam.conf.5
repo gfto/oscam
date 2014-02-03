@@ -694,6 +694,14 @@ drop CW mode:
 .RS 3n
 1 = use CW info from cache exchange, default:0
 .RE
+.PP
+\fBwait_until_ctimeout\fP = \fB0\fP|\fB1\fP
+.RS 3n
+answer when cache exchange timeout expires, if no normal readers are available for sending ECMs:
+
+ \fB0\fP = immediately send 'not found' to client (default)
+ \fB1\fP = wait for cache exchange answer until client timeout expires
+.RE
 .SS "The [camd33] section"
 \fBport\fP = \fB0\fP|\fBport\fP
 .RS 3n

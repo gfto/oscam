@@ -927,6 +927,16 @@ drop CW mode:
 1 = use CW info from cache exchange, default:0
 </DL>
 
+<P>
+
+<B>wait_until_ctimeout</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+answer when cache exchange timeout expires, if no normal readers are available for sending ECMs:
+<P>
+<BR>&nbsp;<B>0</B>&nbsp;=&nbsp;immediately&nbsp;send&nbsp;'not&nbsp;found'&nbsp;to&nbsp;client&nbsp;(default)
+<BR>&nbsp;<B>1</B>&nbsp;=&nbsp;wait&nbsp;for&nbsp;cache&nbsp;exchange&nbsp;answer&nbsp;until&nbsp;client&nbsp;timeout&nbsp;expires
+</DL>
+
 <A NAME="lbAJ">&nbsp;</A>
 <H3>The [camd33] section</H3>
 

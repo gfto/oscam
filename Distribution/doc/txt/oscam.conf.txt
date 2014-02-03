@@ -482,6 +482,12 @@ DESCRIPTIONS
        cwcycle_usecwcfromce = 0|1
 	  1 = use CW info from cache exchange, default:0
 
+       wait_until_ctimeout = 0|1
+	  answer when cache exchange timeout expires, if no normal readers are available for sending ECMs:
+
+	   0 = immediately send 'not found' to client (default)
+	   1 = wait for cache exchange answer until client timeout expires
+
    The [camd33] section
        port = 0|port
 	  TCP port for camd 3.3x clients, 0 = disabled, default:0
