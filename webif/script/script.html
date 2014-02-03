@@ -2,5 +2,12 @@
 ##TPLMENU##
 ##TPLMESSAGE##
 <DIV ID="subnav"><UL ID="nav"></UL></DIV>
-	<SPAN CLASS="text_script">OSCam execute script: ##SCRIPTNAME## --> Status: ##SCRIPTRESULT## --> Returncode: ##CODE##</SPAN>
+<SCRIPT LANGUAGE="JavaScript">function runscript(){var e=document.getElementById("scriptselect");var URL=e.options[e.selectedIndex].value;window.location.href=URL;}</SCRIPT>
+<br><br>
+<P ID="filename">OSCam execute script:</P>
+<div ID="otherdropdown">
+<select ID="scriptselect" name="action" size="1" onChange="runscript()">
+##SCRIPTOPTIONS##
+</select>
+</div><br><br><P ID="filename">##SCRIPTNAME## ##SCRIPTRESULT## ##CODE##</P>
 ##TPLFOOTER##

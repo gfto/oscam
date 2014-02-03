@@ -4939,39 +4939,64 @@ static char *send_oscam_shutdown(struct templatevars * vars, FILE * f, struct ur
 	}
 }
 
-static char *send_oscam_script(struct templatevars * vars)
+static char *send_oscam_script(struct templatevars * vars, struct uriparams * params)
 {
 	setActiveMenu(vars, MNU_SCRIPT);
-	char *result = "not found";
-	int32_t rc = 0;
-	if(!cfg.http_readonly)
+	tpl_printf(vars, TPLADD, "SCRIPTOPTIONS", "<option value=\"\">----select script----</option>\n");
+
+	if(!cfg.http_readonly && cfg.http_script)
 	{
-		if(cfg.http_script)
+		DIR *hdir;
+		struct dirent entry;
+		struct dirent *scriptresult;
+		if((hdir = opendir(cfg.http_script)) != NULL)
 		{
-			tpl_addVar(vars, TPLADD, "SCRIPTNAME", cfg.http_script);
-			rc = system(cfg.http_script);
-			if(rc == -1)
+			while(cs_readdir_r(hdir, &entry, &scriptresult) == 0 && scriptresult != NULL)
 			{
-				result = "done";
+				if(is_ext(entry.d_name, ".script") || is_ext(entry.d_name, ".sh"))
+				{
+					tpl_printf(vars, TPLAPPEND, "SCRIPTOPTIONS", "<option value=\"script.html?scriptname=%s\">%s</option>\n",entry.d_name,entry.d_name);
+				}
 			}
-			else
+			closedir(hdir);
+		}
+
+		char *scriptname = getParam(params, "scriptname");
+		char *result = "not executable";
+		char system_str[256];
+		struct stat s;
+		snprintf(system_str, 256, "%s/%s", cfg.http_script, scriptname);
+
+		if(!stat(system_str,&s))
+		{
+			if(s.st_mode & S_IFREG)
 			{
-				result = "failed";
+				if(s.st_mode & S_IXUSR)
+				{
+					int32_t rc = 0;
+					rc = system(system_str);
+					if(rc == 0){
+						result = "done";}
+					else{
+						result = "failed";}
+					tpl_printf(vars, TPLAPPEND, "CODE", "returncode: %d", rc);
+					tpl_printf(vars, TPLADD, "SCRIPTNAME", "scriptname: %s", scriptname);
+					tpl_printf(vars, TPLADD, "SCRIPTRESULT", "scriptresult: %s", result);
+					}
+				else
+				{
+					tpl_printf(vars, TPLADD, "SCRIPTRESULT", "scriptresult: %s", result);
+				}
 			}
 		}
 		else
 		{
-			tpl_addVar(vars, TPLADD, "SCRIPTNAME", "no script defined");
+			result = "not found";
+			tpl_printf(vars, TPLADD, "SCRIPTRESULT", "scriptresult: %s", result);
 		}
-		tpl_addVar(vars, TPLADD, "SCRIPTRESULT", result);
-		tpl_printf(vars, TPLADD, "CODE", "%d", rc);
-	}
-	else
-	{
-		tpl_addMsg(vars, "Sorry, Webif is in readonly mode. No script execution possible!");
+		
 	}
 	return tpl_getTpl(vars, "SCRIPT");
-
 }
 
 static char *send_oscam_scanusb(struct templatevars * vars)
@@ -6784,7 +6809,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				result = send_oscam_shutdown(vars, f, &params, 0, keepalive, extraheader);
 				break;
 			case 12:
-				result = send_oscam_script(vars);
+				result = send_oscam_script(vars, &params);
 				break;
 			case 13:
 				result = send_oscam_scanusb(vars);
