@@ -150,7 +150,7 @@ input[type=submit]{padding:2px 6px;}
 body{background-color:#FFF;}
 p{color:#FFF;}
 p.blinking{color:red;}
-p#filename,td.subheadline p{color:#000;}
+p#filename,td.subheadline p,p#text_totalecm{color:#000;}
 h2, h4{color:#AAA;}
 
 
