@@ -111,6 +111,7 @@ READERCONFIGCAMD35BIT         readerconfig/readerconfig_camd35bit.html          
 READERCONFIGCS378XBIT         readerconfig/readerconfig_cs378xbit.html                    MODULE_CAMD35_TCP
 READERCONFIGRADEGASTBIT       readerconfig/readerconfig_radegastbit.html                  MODULE_RADEGAST
 READERCONFIGGHTTPBIT          readerconfig/readerconfig_ghttpbit.html
+READERCONFIGGBOXBIT           readerconfig/readerconfig_gboxbit.html                      MODULE_GBOX
 READERCONFIGNCD525BIT         readerconfig/readerconfig_ncd525bit.html                    MODULE_NEWCAMD
 READERCONFIGNCD524BIT         readerconfig/readerconfig_ncd524bit.html                    MODULE_NEWCAMD
 READERCONFIGCCCAMBIT          readerconfig/readerconfig_cccambit.html                     MODULE_CCCAM
@@ -128,7 +129,7 @@ FAILBAN                       failban/failban.html
 APIFAILBAN                    api.xml/failban.xml
 FAILBANBIT                    failban/failban_failbanrow.html
 APIFAILBANBIT                 api.xml/failban_failbanrow.xml
-CONFIGGBOX                    config/gbox.html
+CONFIGGBOX                    config/gbox.html                                            MODULE_GBOX
 CONFIGMONITOR                 config/monitor.html
 CONFIGWEBIF                   config/webif.html
 CONFIGLCD                     config/lcd.html
@@ -178,6 +179,7 @@ CONFIGCAMD35                  config/camd35.html                                
 CONFIGMENUCAMD35              config/menu_camd35.html                                     MODULE_CAMD35
 USEREDITCCCAM                 user_edit/user_edit_cccam.html                              MODULE_CCCAM
 CONFIGCCCAM                   config/cccam.html                                           MODULE_CCCSHARE
+CONFIGMENUGBOX                config/menu_gbox.html                                       MODULE_GBOX
 CONFIGMENUCCCAM               config/menu_cccam.html                                      MODULE_CCCSHARE
 CONFIGNEWCAMD                 config/newcamd.html                                         MODULE_NEWCAMD
 CONFIGMENUNEWCAMD             config/menu_newcamd.html                                    MODULE_NEWCAMD

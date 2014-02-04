@@ -83,6 +83,7 @@ static struct pstat p_stat_old;
 #define MNU_CFG_DVBAPI 11
 #define MNU_CFG_WEBIF 12
 #define MNU_CFG_LCD 13
+#define MNU_CFG_GBOX 14
 
 #define MNU_CFG_FVERSION 12
 #define MNU_CFG_FCONF 13
@@ -717,6 +718,20 @@ static char *send_oscam_config_newcamd(struct templatevars *vars, struct uripara
 }
 #endif
 
+#ifdef MODULE_GBOX
+static char *send_oscam_config_gbox(struct templatevars *vars, struct uriparams *params)
+{
+	setActiveSubMenu(vars, MNU_CFG_GBOX);
+	webif_save_config("gbox", vars, params);
+
+	tpl_addVar(vars, TPLADD, "HOSTNAME", xml_encode(vars, cfg.gbox_hostname));
+	tpl_printf(vars, TPLADD, "PORT", "%d", cfg.gbox_port);
+	tpl_addVar(vars, TPLADD, "MYPASSWORD", xml_encode(vars, cfg.gbox_my_password));
+
+	return tpl_getTpl(vars, "CONFIGGBOX");
+}
+#endif
+
 #ifdef MODULE_RADEGAST
 static char *send_oscam_config_radegast(struct templatevars *vars, struct uriparams *params)
 {
@@ -1099,6 +1114,9 @@ static char *send_oscam_config(struct templatevars *vars, struct uriparams *para
 #endif
 #ifdef MODULE_CCCAM
 	else if(!strcmp(part, "cccam")) { return send_oscam_config_cccam(vars, params); }
+#endif
+#ifdef MODULE_GBOX
+	else if(!strcmp(part, "gbox")) { return send_oscam_config_gbox(vars, params); }
 #endif
 #ifdef HAVE_DVBAPI
 	else if(!strcmp(part, "dvbapi")) { return send_oscam_config_dvbapi(vars, params); }
@@ -1948,6 +1966,12 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		{ tpl_addVar(vars, TPLADD, "KEEPALIVECHECKED", "checked"); }
 #endif
 
+#ifdef MODULE_GBOX
+	tpl_printf(vars, TPLADD, "GBOXMAXDISTANCE",   "%d", rdr->gbox_maxdist);
+	tpl_printf(vars, TPLADD, "GBOXMAXECMSEND",   "%d", rdr->gbox_maxecmsend);
+	tpl_printf(vars, TPLADD, "GBOXRESHARE",   "%d", rdr->gbox_reshare);
+#endif
+
 	tpl_addVar(vars, TPLADD, "PROTOCOL", reader_get_type_desc(rdr, 0));
 
 	// Show only parameters which needed for the reader
@@ -1976,6 +2000,9 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		break;
 	case R_GHTTP:
 		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGGHTTPBIT"));
+		break;
+	case R_GBOX:
+		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGGBOXBIT"));
 		break;
 	case R_NEWCAMD:
 		if(rdr->ncd_proto == NCD_525)

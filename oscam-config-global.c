@@ -781,10 +781,10 @@ static bool gbox_should_save_fn(void *UNUSED(var))
 static const struct config_list gbox_opts[] =
 {
 	DEF_OPT_SAVE_FUNC(gbox_should_save_fn),
-	DEF_OPT_STR("gbox_hostname"	, OFS(gbox_hostname),		NULL),
+	DEF_OPT_STR("hostname"		,OFS(gbox_hostname),		NULL),
 	DEF_OPT_INT32("gbox_reconnect"	, OFS(gbox_reconnect),		DEFAULT_GBOX_RECONNECT),
 	DEF_OPT_INT32("port"		, OFS(gbox_port),		0),
-	DEF_OPT_SSTR("gbox_my_password"	, OFS(gbox_my_password),	"", SIZEOF(gbox_my_password)),
+	DEF_OPT_SSTR("my_password"	, OFS(gbox_my_password),	"", SIZEOF(gbox_my_password)),
 	DEF_LAST_OPT
 };
 #else
