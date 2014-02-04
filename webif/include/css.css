@@ -34,10 +34,9 @@ a:hover span{display:block;position:absolute;top:1em;right:2em;padding:4px;font-
 #nav li{display:inline;margin-left:2px;margin-right:2px;padding:5px 3px 3px;padding-top:0;padding-bottom:0;font-size:14px}
 
 /* 6. TABLE */
-table#datatable.users thead tr, table#datatable.stats.upspace thead tr{cursor:pointer}
+table#datatable.stats.upspace thead tr{cursor:pointer}
 table.cacheex, table#dataTable.stats.upspace{width:80%}
 table.cacheex{}
-table.upspace{margin-top:0}
 table{border-spacing:1px;margin-left:auto;margin-right:auto}
 table.menu{border-spacing:0}
 table.status{width:100%;empty-cells:show}
@@ -57,11 +56,11 @@ table.configmenu{line-height:16px}
 table.users{width:100%}
 table.ecm_totals{margin-top:10px}
 table.invisible td:first-child{padding-left:0}
-table.statusmeminfo, table.statususerinfo, table.statuscacheexinfo, table#cachexstats.upspace{width:60%;white-space:no-wrap;margin-top:0px;margin-bottom:0px}
+table.statusmeminfo, table.statususerinfo, table.statuscacheexinfo, table#cachexstats{width:60%;white-space:no-wrap;margin-top:0px;margin-bottom:0px}
 table#dataTable.readers thead tr, table#dataTable.stats.upspace thead tr{cursor:pointer}
 table.ECM_totals,table.user_totals{width:50%}
-table.newservice,table#servicesedit.stats.upspace{width:35%;text-align:center}
-table#servicesedit.stats.upspace tbody tr td{text-align:center}
+table.newservice,table#servicesedit.stats{width:35%;text-align:center}
+table#servicesedit.stats tbody tr td{text-align:center}
 table.newservice{margin-top:5px}
 
 /* 7. TABLE TR */
@@ -73,7 +72,6 @@ th.nameinfo{text-transform:uppercase;text-align:left}
 th.statuscol0, td.statuscol0{text-align:center;width:10px}
 th.statuscol1, th.statuscol2, th.statuscol3, th.statuscol4, th.statuscol5, th.statuscol6, th.statuscol7, th.statuscol8, th.statuscol9, th.statuscol10, th.statuscol11, th.statuscol12, th.statuscol13, th.statuscol14, th.statuscol15, th.statuscol16, td.centered, td.statuscol1, td.statuscol2, td.statuscol3,td.statuscol5,td.statuscol6,td.statuscol7,td.statuscol8,td.statuscol10,td.statuscol11,td.statuscol12,td.statuscol14,td.statuscol15,td.statuscol16,td.usercol0,td.usercol2,td.usercol3,td.usercol4,td.usercol5,td.usercol6,td.usercol7,td.usercol8,td.usercol9,td.usercol10,td.usercol11,td.usercol12,td.usercol13,td.usercol14,td.usercol15,td.usercol16,td.usercol17,td.usercol18,td.usercol19,td.usercol20,td.usercol21,td.usercol22,td.usercol23,td.usercol24,td.usercol25{text-align:center}
 th.statuscol0, td.statuscol1{width:0}
-table#dataTable.users thead tr th{padding:0}
 table#subservicetable.subservicetable{width:100%;background:#FFF}
 table#subservicetable.subservicetable tbody tr td.servicescol1,
 table#subservicetable.subservicetable tbody tr td.servicescol2,
