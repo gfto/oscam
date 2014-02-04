@@ -1789,6 +1789,14 @@ static void init_local_gbox(void)
 	}
 }
 
+static void gbox_s_idle(struct s_client *cl)
+{
+	//prevent users from timing out
+	//later handle more sophisticated
+	cs_debug_mask(D_READER, "gbox client idle prevented: %s", username(cl));
+	cl->last = time((time_t *)0);
+}
+
 void module_gbox(struct s_module *ph)
 {
 	init_local_gbox();
@@ -1811,5 +1819,7 @@ void module_gbox(struct s_module *ph)
 	ph->c_recv_chk = gbox_recv_chk;
 	ph->c_send_ecm = gbox_send_ecm;
 	ph->c_send_emm = gbox_send_emm;
+
+	ph->s_idle = gbox_s_idle;
 }
 #endif
