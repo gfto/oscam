@@ -35,7 +35,7 @@ a:hover span{display:block;position:absolute;top:1em;right:2em;padding:4px;font-
 
 /* 6. TABLE */
 table#datatable.stats.upspace thead tr{cursor:pointer}
-table.cacheex, table#dataTable.stats.upspace{width:80%}
+table.cacheex, table#dataTable.stats{width:80%}
 table.cacheex{}
 table{border-spacing:1px;margin-left:auto;margin-right:auto}
 table.menu{border-spacing:0}
@@ -104,7 +104,7 @@ div.footer p{margin:5px}
 div.info{max-width:1300px;margin:20px auto}
 div.debugmenu,div.logmenu{line-height:20px}
 div.cccamentitlementtotals,div.cccamentitlementcontrols{margin-top:14px}
-div#newuser,.hidden,th#exp,td#exp.usercol20,th#cwc,td#cwc.usercol13,th#acasc,td#acasc.usercol19,td#acasc.usercol20,th#grp,td#grp.usercol5{display:none}
+div#newuser, div#newreader,.hidden,th#exp,td#exp.usercol20,th#cwc,td#cwc.usercol13,th#acasc,td#acasc.usercol19,td#acasc.usercol20,th#grp,td#grp.usercol5{display:none}
 
 /* 11. TEXTAREA,SELECT,INPUT */
 textarea.editor{font-size:11px;width:98%;height:508px;font-family:"Courier New", monospace;text-align:left;padding:8px 10px}
