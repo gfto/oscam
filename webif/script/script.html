@@ -3,11 +3,12 @@
 ##TPLMESSAGE##
 <DIV ID="subnav"><UL ID="nav"></UL></DIV>
 <SCRIPT LANGUAGE="JavaScript">function runscript(){var e=document.getElementById("scriptselect");var URL=e.options[e.selectedIndex].value;window.location.href=URL;}</SCRIPT>
-<br><br>
+<BR><BR>
 <P ID="filename">OSCam execute script:</P>
-<div ID="otherdropdown">
+<DIV ID="otherdropdown">
 <select ID="scriptselect" name="action" size="1" onChange="runscript()">
 ##SCRIPTOPTIONS##
 </select>
-</div><br><br><P ID="filename">##SCRIPTNAME## ##SCRIPTRESULT## ##CODE##</P>
+</DIV><BR><BR>
+<P ID="filename">##SCRIPTNAME## ##SCRIPTRESULT## ##CODE##</P>
 ##TPLFOOTER##

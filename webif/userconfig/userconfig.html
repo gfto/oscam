@@ -2,14 +2,14 @@
 ##TPLMENU##
 ##TPLMESSAGE##
 <DIV ID="subnav">
-	<UL ID="nav" CLASS="configmenu">
+	<UL ID="nav">
 		<LI CLASS="configmenu"><A HREF="#" onclick="adduser();">Add User</A></LI>
 		<LI CLASS="configmenu"><A HREF="userconfig.html?action=reinit">Reinit User DB</A></LI>
 		<LI CLASS="configmenu"><A HREF="userconfig.html?action=resetalluserstats">Reset Userstats</A></LI>
 		<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=users&amp;hidelabels=1">Show Graphs</A></LI>
 	</UL>
 </DIV>
-<DIV ID="newuser" CLASS="newuser">
+<DIV ID="newuser">
 	<TABLE CLASS="users">
 		<TR><form action="user_edit.html" method="get"><TH>New User: <input name="user" type="text"><input type="submit" value="Add User"></TH></form></TR>
 	</TABLE>
@@ -38,7 +38,7 @@
 			<TH>Status<BR>Address</TH>
 			<TH>Protocol</TH>
 			<TH ID="##GRPVIEW##">Groups</TH>
-			<TH>Idle Time<br>On Channel</TH>
+			<TH>Idle Time<BR>On Channel</TH>
 			<TH>Last Channel</TH>
 			<TH TITLE="Last ECM Time">LTIME</TH>
 			<TH TITLE="Delivered ECM with status OK">OK</TH>

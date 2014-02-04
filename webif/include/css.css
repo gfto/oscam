@@ -73,9 +73,8 @@ th.nameinfo{text-transform:uppercase;text-align:left}
 th.statuscol0, td.statuscol0{text-align:center;width:10px}
 th.statuscol1, th.statuscol2, th.statuscol3, th.statuscol4, th.statuscol5, th.statuscol6, th.statuscol7, th.statuscol8, th.statuscol9, th.statuscol10, th.statuscol11, th.statuscol12, th.statuscol13, th.statuscol14, th.statuscol15, th.statuscol16, td.centered, td.statuscol1, td.statuscol2, td.statuscol3,td.statuscol5,td.statuscol6,td.statuscol7,td.statuscol8,td.statuscol10,td.statuscol11,td.statuscol12,td.statuscol14,td.statuscol15,td.statuscol16,td.usercol0,td.usercol2,td.usercol3,td.usercol4,td.usercol5,td.usercol6,td.usercol7,td.usercol8,td.usercol9,td.usercol10,td.usercol11,td.usercol12,td.usercol13,td.usercol14,td.usercol15,td.usercol16,td.usercol17,td.usercol18,td.usercol19,td.usercol20,td.usercol21,td.usercol22,td.usercol23,td.usercol24,td.usercol25{text-align:center}
 th.statuscol0, td.statuscol1{width:0}
-th#sortable{cursor:pointer}
 table#dataTable.users thead tr th{padding:0}
-table#subservicetable.subservicetable{width:100%;background:#FFFFFF}
+table#subservicetable.subservicetable{width:100%;background:#FFF}
 table#subservicetable.subservicetable tbody tr td.servicescol1,
 table#subservicetable.subservicetable tbody tr td.servicescol2,
 table#subservicetable.subservicetable tbody tr td.servicescol3{width:30%;border:0;border-spacing:1px}
@@ -103,11 +102,11 @@ div.warning{margin:42px 0 14px}
 div.logo{position:absolute;top:5px;left:5px}
 div.groups{cursor:default;overflow:hidden;margin:0 auto;text-align:center;word-wrap:none;position:relative;width:40px}
 div.footer{padding-bottom:5px;padding-top:5px;margin-bottom:0;margin-top:40px}
-div.footer p{margin:6px}
+div.footer p{margin:5px}
 div.info{max-width:1300px;margin:20px auto}
 div.debugmenu,div.logmenu{line-height:20px}
 div.cccamentitlementtotals,div.cccamentitlementcontrols{margin-top:14px}
-div.newuser,.hidden,th#exp,td#exp.usercol20,th#cwc,td#cwc.usercol13,th#acasc,td#acasc.usercol19,td#acasc.usercol20,th#grp,td#grp.usercol5{display:none}
+div#newuser,.hidden,th#exp,td#exp.usercol20,th#cwc,td#cwc.usercol13,th#acasc,td#acasc.usercol19,td#acasc.usercol20,th#grp,td#grp.usercol5{display:none}
 
 /* 11. TEXTAREA,SELECT,INPUT */
 textarea.editor{font-size:11px;width:98%;height:508px;font-family:"Courier New", monospace;text-align:left;padding:8px 10px}
@@ -143,13 +142,12 @@ li.menu a,li.configmenu a,li.menu_selected a,li.configmenu_selected a,td.statusc
 body{background-color:#FFF;color:#000}
 h2, h4{color:#AAA}
 p.blinking{color:red}
-p#filename, td.subheadline p, p#text_totalecm{color:#000}
 
 /* LINKS */
 a.debugls:link, a.debugls:visited{background-color:#A00;color:#FFF}
 a:hover{color:#FF9E5F}
 a:hover img.icon{background:red}
-a:hover span{color:#000;background:#FFC;border:1px solid #000}
+a:hover span{background:#FFC;border:1px solid #000}
 a:link, a:visited, a:active{color:#050840}
 a.tooltip1{color:red}
 
@@ -175,17 +173,17 @@ tr.r td,span.e_expired{background-color:#FFF3E7}
 tr.p td,tr.scanusbsubhead td{background-color:#FDFBE1}
 
 /* TABLE TH */
-th{background-color:#CCC;color:#000}
+th{background-color:#CCC}
 th.nameinfo{background-color:#999}
 
 /* TABLE TD */
-td{background-color:#EEE;color:#000}
+td{background-color:#EEE}
 td.servicescol3{border-left:2px solid #CCC}
-td.menu{color:#000;background-color:#FFF}
-td.menu_selected{color:#000;background-color:#E6FEBF}
-td.configmenu{color:#000;background-color:#FFF}
-td.configmenu_selected{color:#000;background-color:#E6FEBF}
-td.subheadline{background-color:#CCC;color:#000}
+td.menu{background-color:#FFF}
+td.menu_selected{background-color:#E6FEBF}
+td.configmenu{background-color:#FFF}
+td.configmenu_selected{background-color:#E6FEBF}
+td.subheadline{background-color:#CCC}
 
 /* DIV */
 div.log{border:1px dotted #AAA;background-color:#FAFAFA;color:#666}
@@ -204,7 +202,7 @@ img.icon{background-color:#A00}
 /* SPAN */
 span.e_valid{background-color:#E6FEBF}
 span.span_notifier{color:#FFF;background:red}
-span.idlesec_normal{color:#000}
+span.idlesec_normal{}
 span.idlesec_alert{color:red}
 span.global_conf{color:blue}
 
