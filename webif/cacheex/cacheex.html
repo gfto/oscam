@@ -7,7 +7,7 @@
 			<TR><TH>Filter: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="countDown()" /></TH></TR>
 		</TABLE>
 	</DIV>
-	<TABLE ID="dataTable" CLASS="stats upspace">
+	<TABLE ID="dataTable" CLASS="stats">
 		<THEAD>
 			<TR><TH COLSPAN="12">CacheEX Stats for ##OWN_CACHEEX_NODEID##</TH></TR>
 			<TR>
@@ -31,14 +31,14 @@
 		</TBODY>
 	</TABLE>
 	<BR><BR>
-	<TABLE CLASS="upspace" ID="cachexstats">
+	<TABLE ID="cachexstats" CLASS="upspace">
 		<TR>
 			<TH COLSPAN="5">Cache Statistics</TH>
 		</TR>
 		<TR>
 			<TH>Total</TH>
-			<TD CLASS="centered" ID="out"><B>push  </B>##TOTAL_CACHEXPUSH_IMG## ##TOTAL_CACHEXPUSH##</TD>
-			<TD CLASS="centered" ID="in"><B>got   </B>##TOTAL_CACHEXGOT_IMG## ##TOTAL_CACHEXGOT##</TD>
+			<TD ID="out" CLASS="centered"><B>push  </B>##TOTAL_CACHEXPUSH_IMG## ##TOTAL_CACHEXPUSH##</TD>
+			<TD ID="in" CLASS="centered"><B>got   </B>##TOTAL_CACHEXGOT_IMG## ##TOTAL_CACHEXGOT##</TD>
 			<TD CLASS="centered"><B>hit: </B>##TOTAL_CACHEXHIT## (##REL_CACHEXHIT##%)</TD>
 			<TD CLASS="centered"><B>size: </B>##TOTAL_CACHESIZE##</TD>
 		</TR>
