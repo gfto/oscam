@@ -30,16 +30,16 @@
 ##TPLUSERCWCYCLE##
 ##TPLUSERANTICASC##
 			<TH ID="##EXPIREVIEW##"></TH>
-			<TH COLSPAN="3"></TH>
+			<TH COLSPAN="3">Action</TH>
 		</TR>
-		<TR>
-			<TH>On/Off</TH>
+		<TR onClick="cdpause()"> <!--  Resolve  -->
+			<TH CLASS="nosort">On/Off</TH>
 			<TH>Label</TH>
-			<TH>Status<BR>Address</TH>
+			<TH CLASS="nosort">Status<BR>Address</TH>
 			<TH>Protocol</TH>
 			<TH ID="##GRPVIEW##">Groups</TH>
-			<TH>Idle Time<BR>On Channel</TH>
-			<TH>Last Channel</TH>
+			<TH CLASS="nosort">Idle Time<BR>On Channel</TH>
+			<TH CLASS="nosort">Last Channel</TH>
 			<TH TITLE="Last ECM Time">LTIME</TH>
 			<TH TITLE="Delivered ECM with status OK">OK</TH>
 			<TH TITLE="Delivered ECM with status not OK">NOK</TH>
@@ -47,13 +47,15 @@
 			<TH TITLE="Timeout ECM, part of NOK">TOUT</TH>
 			<TH TITLE="Delivered ECM from cache, part of OK">CACHE</TH>
 			<TH TITLE="Delivered ECM from tunneled, part of OK">TUN</TH>
-			<TH TITLE="Sum of ECM's in last 60s">last 60s</TH>
+			<TH CLASS="nosort" TITLE="Sum of ECM's in last 60s">last 60s</TH>
 			<TH TITLE="Valid EMM delivered">OK</TH>
 			<TH TITLE="Invalid EMM delivered">NOK</TH>
 ##TPLCWCYCLETHV##
 ##TPLCWANTICASCTHV##
-			<TH ID="##EXPIREVIEW##" TITLE="Expiration date of account">Exp. Date</TH>
-			<TH COLSPAN="3" CLASS="centered">Action</TH>
+			<TH ID="##EXPIREVIEW##" CLASS="nosort" TITLE="Expiration date of account">Exp. Date</TH>
+			<TH CLASS="nosort"></TH>
+			<TH CLASS="nosort"></TH>
+			<TH CLASS="nosort"></TH>
 		</TR>
 	</THEAD>
 	<TBODY>
@@ -110,4 +112,15 @@
 			<TD CLASS="centered"><A HREF="userconfig.html?action=resetserverstats" TITLE="Reset statistics for server"><IMG CLASS="icon" SRC="image?i=ICRES" ALT="Reset Server Stats"></A></TD>
 		</TR>
 	</TABLE><BR>
+
+	<!-- To initialize a TABLE sorter -->
+	<script type="text/javascript">
+		var sorter = new TINY.table.sorter('sorter','dataTable',{
+			headclass: 'head', // Header Class //
+			ascclass: 'asc', // Ascending Class //
+			descclass: 'desc', // Descending Class //
+			sortdir: 1, // Sort Direction (1 or -1) //
+			init: true// Init Now? (true or false) //
+		});
+	</script>
 ##TPLFOOTER##
