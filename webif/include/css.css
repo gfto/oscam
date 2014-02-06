@@ -1,39 +1,55 @@
-/* ------------------ GENERALY CSS SETTINGS ------------------ */
-/* 1. RESET */
-*{margin:0;padding:0}
+/* ================================= GENERALY CSS SETTINGS ================================= */
+/* 1. RESET  */
+* {margin:0;padding:0}
 
 /* 2. BASIC DIVISION PAGES */
-html,body,* html #wrapper{height:100%}
-#wrapper{position:relative;min-height:100%}
-#content{margin-bottom:0;padding:0 8px 150px;}
-#footer{position:absolute;bottom:0;width:100%}
+html,body,* html #wrapper {height:100%}
+#wrapper {position:relative;min-height:100%}
+#content {margin-bottom:0;padding:0 8px 150px}
+#footer {position:absolute;bottom:0;width:100%}
 
-/* 2. BASIC SETTINGS */
-body{font-family:Arial;font-size:11px;text-align:center}
-p.blinking{font-weight:700;font-size:large}
+/* 3. BASIC SETTINGS */
+
+/* Set default font and text align 
+ * Color setting in COLOR section
+ */
+body {
+	font-family:Arial;
+	font-size:11px;
+	text-align:center
+}
+
+/* Large red text in shutdown.html, autoconf.html 
+ * Color setting in COLOR section
+ */
+p.text-large-red {
+	font-weight:700;
+	font-size:large
+}
+
 p#filename{font-weight:700;font-size:14px;margin: 10px 0}
 p.styleauthor:after {content:"Streamboard Team"}
 h2{font-size:32px;line-height:32px;margin-top:0;margin-bottom:0}
 h4{font-size:18px;line-height:9px;margin-top:20px;margin-bottom:20px}
 
-/* 3. LINKS */
+/* 4. LINKS */
 a.debugl:link{margin:0 1px}
 a.debugls:link{padding:1px 2px 2px}
 a.tooltip, a.tooltip1{position:relative;text-decoration:none;cursor:default}
 a.tooltip span, a.tooltip1 span{display:none;z-index:99}
 a:hover span{display:block;position:absolute;top:1em;right:2em;padding:4px;font-weight:normal;text-align:left}
 
-/* 4. MAIN MENU */
+/* 5. MAIN MENU */
 #main{}
 #mainmenu{height:30px;padding-top:10px}
 #mainmenu li{display:inline;margin-left:2px;margin-right:2px;padding:5px 3px 3px;font-size:18px;font-weight:700}
 
-/* 5. SUBNAV */
+/* 6. SUBNAV */
 #subnav{}
 #nav{height:20px;}
 #nav li{display:inline;margin-left:2px;margin-right:2px;padding:5px 3px 3px;padding-top:0;padding-bottom:0;font-size:14px}
 
-/* 6. TABLE */
+/* 7. TABLE */
 table#datatable.stats.upspace thead tr{cursor:pointer}
 table.cacheex, table#dataTable.stats{width:80%}
 table.cacheex{}
@@ -63,10 +79,10 @@ table.newservice,table#servicesedit.stats{width:35%;text-align:center}
 table#servicesedit.stats tbody tr td{text-align:center}
 table.newservice{margin-top:5px}
 
-/* 7. TABLE TR */
+/* 8. TABLE TR */
 tr.e_valid td, tr.e_expired td, tr.e_header td{font-family:"Courier New", monospace}
 
-/* 8. TABLE TH */
+/* 9. TABLE TH */
 th{height:10px;padding:5px}
 th.nameinfo{text-transform:uppercase;text-align:left}
 th.statuscol0, td.statuscol0{text-align:center;width:10px}
@@ -77,7 +93,7 @@ table#subservicetable.subservicetable tbody tr td.servicescol1,
 table#subservicetable.subservicetable tbody tr td.servicescol2,
 table#subservicetable.subservicetable tbody tr td.servicescol3{width:30%;border:0;border-spacing:1px}
 
-/* 9. TABLE TD */
+/* 10. TABLE TD */
 td{height:10px;text-align:left;padding:5px}
 td.centered div{margin:auto}
 td.menu, td.configmenu, td.menu_selected, td.configmenu_selected{font-size:14px;font-weight:700}
@@ -86,7 +102,7 @@ td.statuscol4, td.statuscol4 a, td.statuscol9, td.statuscol9 a, td.statuscol13, 
 td.subheadline input{float:right;border-width:0;font-size:12px;margin-left:5px;margin-right:5px;padding:0}
 td.subheadline form select{width:100px;text-align:center;font-size:10px;padding:0}
 
-/* 10. DIV */
+/* 11. DIV */
 div#wrapper div#content form table.config{margin-bottom:20px}
 div#wrapper div#content div#otherdropdown div form input,div#wrapper div#content table.ecm_totals{margin-bottom:20px}
 div.log{font-family:"Courier New", monospace;text-align:left;margin:20px 0;padding:10px}
@@ -106,19 +122,19 @@ div.debugmenu,div.logmenu{line-height:20px}
 div.cccamentitlementtotals,div.cccamentitlementcontrols{margin-top:14px}
 div#newuser, div#newreader,.hidden,th#exp,td#exp.usercol20,th#cwc,td#cwc.usercol13,th#acasc,td#acasc.usercol19,td#acasc.usercol20,th#grp,td#grp.usercol5{display:none}
 
-/* 11. TEXTAREA,SELECT,INPUT */
+/* 12. TEXTAREA,SELECT,INPUT */
 textarea.editor{font-size:11px;width:98%;height:508px;font-family:"Courier New", monospace;text-align:left;padding:8px 10px}
 select{padding:2px}
 input[type=checkbox]{vertical-align:text-bottom;_vertical-align:middle;margin-right:5px}
 
-/* 12. IMAGE */
+/* 13. IMAGE */
 img{border:0 solid}
 img.icon{border-radius:4px;border:0 solid;width:22px;height:22px;max-height:22px}
 img.statususericon,img.protoicon,img.usericon,img.readericon{min-height:15px}
 td#out.centered img,
 td#in.centered img{margin-bottom: -2px; margin-right: 10px; margin-left: 10px}
 
-/* 13. SPAN */
+/* 14. SPAN */
 span.span_notifier{margin-left:2px;padding:1px 3px}
 span.idlesec_normal, span.idlesec_alert{font-size:9px}
 span.global_conf{font-size:12px;cursor:default;padding:4px}
@@ -126,15 +142,15 @@ span.user_totals_headline{display:inline-block;margin:10px 0}
 span.text_script{display:inline-block;font-weight:700;margin:28px}
 span.text_entitle, span.text_totalecm{display:inline-block;font-weight:700}
 
-/* 14. GRAPH */
+/* 15. GRAPH */
 text.graph_error {text-anchor:middle;}
 text.graph_grid_txt {text-anchor:end;style:font-size:12px;}
 path.graph_grid {stroke-opacity:0.5;}
 
-/* 15. Not Assigned */
+/* 16. Not Assigned */
 html body form table.stats.upspace{margin-top:20px}
 li.menu a,li.configmenu a,li.menu_selected a,li.configmenu_selected a,td.statuscol14 a,td.statuscol16 a,td.subheadline a{text-decoration:none}
-
+.margintop {margin-top:30px}
 
 /* SORTING IN TABLE */
 .users th {font-size:11px}
@@ -143,11 +159,23 @@ li.menu a,li.configmenu a,li.menu_selected a,li.configmenu_selected a,td.statusc
 .users .desc {background-image: url(data:image/png;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIFlD03K1sAOw==);background-repeat:no-repeat;background-position:4px center;cursor:pointer;padding-left:10px;padding-right:8px}
 .users .asc {background-image: url(data:image/png;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIF3GQnuF0AOw==);background-repeat:no-repeat;background-position:4px center;cursor:pointer;padding-left:10px;padding-right:8px}
 
-/* -------------------------- COLORS ------------------------- */
+/* ================================= COLORS ================================= */
 /* BASIC SETTINGS */
-body{background-color:#FFF;color:#000}
-h2, h4{color:#AAA}
-p.blinking{color:red}
+
+/* Set default color */
+body {
+	background-color:#FFF;
+	color:#000
+}
+
+p.text-large-red {
+	color:red
+}
+
+h2, h4 {
+	color:#AAA
+}
+
 
 /* LINKS */
 a.debugls:link, a.debugls:visited{background-color:#A00;color:#FFF}
