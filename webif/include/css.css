@@ -211,17 +211,44 @@ text.graph_error {text-anchor:middle;}
 text.graph_grid_txt {text-anchor:end;style:font-size:12px;}
 path.graph_grid {stroke-opacity:0.5;}
 
-/* ******** 16. Not Assigned */
+/* ******** 17. SORTING IN TABLE */
+
+/* Classes are for sorting  */
+.users th {
+	font-size:11px
+}
+.users .head {
+	background-image: url(data:image/png;base64,R0lGODlhBQAIAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAgAAAIL3GQnuJ2f2lLI1AIAOw==);
+	background-repeat:no-repeat;
+	background-position:4px center;
+	cursor:pointer;
+	padding-left:12px;
+	padding-right:8px
+}
+.users .desc, .users .asc {
+	background-color:#999
+}
+.users .desc {
+	background-image: url(data:image/png;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIFlD03K1sAOw==);
+	background-repeat:no-repeat;
+	background-position:4px center;
+	cursor:pointer;
+	padding-left:10px;
+	padding-right:8px
+}
+.users .asc {
+	background-image: url(data:image/png;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIF3GQnuF0AOw==);
+	background-repeat:no-repeat;
+	background-position:4px center;
+	cursor:pointer;
+	padding-left:10px;
+	padding-right:8px
+}
+
+/* ******** 18. Not Assigned */
 html body form table.stats.upspace{margin-top:20px}
 li.menu a,li.configmenu a,li.menu_selected a,li.configmenu_selected a,td.statuscol14 a,td.statuscol16 a,td.subheadline a{text-decoration:none}
 .margintop {margin-top:30px}
-
-/* ******** SORTING IN TABLE */
-.users th {font-size:11px}
-.users .head {background-image: url(data:image/png;base64,R0lGODlhBQAIAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAgAAAIL3GQnuJ2f2lLI1AIAOw==); background-repeat: no-repeat;background-position:4px center;cursor:pointer;padding-left:12px;padding-right:8px}
-.users .desc, .users .asc {background-color:#999}
-.users .desc {background-image: url(data:image/png;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIFlD03K1sAOw==);background-repeat:no-repeat;background-position:4px center;cursor:pointer;padding-left:10px;padding-right:8px}
-.users .asc {background-image: url(data:image/png;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIF3GQnuF0AOw==);background-repeat:no-repeat;background-position:4px center;cursor:pointer;padding-left:10px;padding-right:8px}
 
 /* ================================= COLORS ================================= */
 /* BASIC SETTINGS */
@@ -230,30 +257,45 @@ body {
 	background-color:#FFF;
 	color:#000
 }
-
 p.text-large-red {
 	color:red
 }
-
 h2, h4 {
 	color:#AAA
 }
 
-
 /* LINKS */
-a.debugls:link, a.debugls:visited{background-color:#A00;color:#FFF}
-a:hover{color:#FF9E5F}
-a:hover img.icon{background:red}
-a:hover span{background:#FFC;border:1px solid #000}
-a:link, a:visited, a:active{color:#050840}
-a.tooltip1{color:red}
+a.debugls:link, a.debugls:visited {
+	background-color:#A00;
+	color:#FFF
+}
+a:hover {
+	color:#FF9E5F
+}
+a:hover img.icon {
+	background:red
+}
+a:hover span {
+	background:#FFC;
+	border:1px solid #000
+}
+a:link, a:visited, a:active {
+	color:#050840
+}
 
 /* MAIN MENU & SUBNAV*/
-#mainmenu,#nav{background-color:#FFF}
-li.menu:hover, li.menu_selected, li.configmenu:hover, li.configmenu_selected{background-color:#DDD}
+#mainmenu, #nav {
+	background-color:#FFF
+}
+li.menu:hover, li.menu_selected, 
+li.configmenu:hover, li.configmenu_selected {
+	background-color:#DDD
+}
 
 /* TABLE */
-table.status{background-color:#FFF}
+table.status {
+	background-color:#FFF
+}
 
 /* TABLE TR */
 tr.online td#lastchannel.usercol6{background-color:#949494;color:#FFF}
