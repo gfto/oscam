@@ -77,14 +77,41 @@ a:hover span {
 }
 
 /* ******** 5. MAIN MENU */
-#main{}
-#mainmenu{height:30px;padding-top:10px}
-#mainmenu li{display:inline;margin-left:2px;margin-right:2px;padding:5px 3px 3px;font-size:18px;font-weight:700}
+
+/* ID are for creating main menu in menu.html */
+#main {}
+#mainmenu {
+	height:30px;
+	padding-top:10px
+}
+#mainmenu li {
+	display:inline;
+	margin-left:2px;
+	margin-right:2px;
+	padding:5px 3px 3px;
+	font-size:18px;
+	font-weight:700
+}
 
 /* ******** 6. SUBNAV */
-#subnav{}
-#nav{height:20px;}
-#nav li{display:inline;margin-left:2px;margin-right:2px;padding:5px 3px 3px;padding-top:0;padding-bottom:0;font-size:14px}
+
+/* ID are for creating subnavigation menu in 
+ * cacheex.html, config\menu.html, entitlements.html, failban.html,
+ * files\menu.html, readerconfig.html, readers.html, readerstats.html, script.html, 
+ * services.html, services_edit.html, status.html, user_edit.html, userconfig.html */
+#subnav {}
+#nav {
+	height:20px;
+}
+#nav li {
+	display:inline;
+	margin-left:2px;
+	margin-right:2px;
+	padding:5px 3px 3px;
+	padding-top:0;
+	padding-bottom:0;
+	font-size:14px
+}
 
 /* ******** 7. TABLE */
 table#datatable.stats.upspace thead tr{cursor:pointer}
