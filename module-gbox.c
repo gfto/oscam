@@ -28,10 +28,17 @@
 #include "oscam-reader.h"
 #include "oscam-garbage.h"
 
+#if defined(__CYGWIN__) 
+#define FILE_GBOX_VERSION       "C:/tmp/gbx.ver"
+#define FILE_SHARED_CARDS_INFO  "C:/tmp/gbx_card.info"
+#define FILE_ATTACK_INFO        "C:/tmp/gbx_attack.txt"
+#define FILE_GBOX_PEER_ONL  	"C:/tmp/gbx_peer.onl"
+#else
 #define FILE_GBOX_VERSION       "/tmp/gbx.ver"
 #define FILE_SHARED_CARDS_INFO  "/tmp/gbx_card.info"
 #define FILE_ATTACK_INFO        "/tmp/gbx_attack.txt"
 #define FILE_GBOX_PEER_ONL  	"/tmp/gbx_peer.onl"
+#endif
 
 #define GBOX_STAT_HELLOL	0
 #define GBOX_STAT_HELLOS	1
