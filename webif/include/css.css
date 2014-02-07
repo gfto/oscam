@@ -125,7 +125,7 @@ table.cacheex{}
 table{border-spacing:1px;margin-left:auto;margin-right:auto}
 table.menu{border-spacing:0}
 table.status{width:100%;empty-cells:show}
-table.config{width:60%}
+table.config{width:60%;margin-bottom:20px}
 table.configreader{width:850px}
 table.readers{width:100%}
 table.statsbalance td:last-child{line-height:20px;width:125px}
@@ -139,7 +139,7 @@ table.invisible{margin-left:0}
 table.invisible td, table.invisibleser td, table.invisibleservices td, textarea.bt{font-size:12px}
 table.configmenu{line-height:16px}
 table.users{width:100%}
-table.ecm_totals{margin-top:10px}
+table.ecm_totals{margin-top:10px;margin-bottom:20px}
 table.invisible td:first-child{padding-left:0}
 table.statusmeminfo, table.statususerinfo, table.statuscacheexinfo, table#cachexstats{width:60%;white-space:no-wrap;margin-top:0px;margin-bottom:0px}
 table#dataTable.readers thead tr, table#dataTable.stats.upspace thead tr{cursor:pointer}
@@ -172,24 +172,113 @@ td.subheadline input{float:right;border-width:0;font-size:12px;margin-left:5px;m
 td.subheadline form select{width:100px;text-align:center;font-size:10px;padding:0}
 
 /* ******** 11. DIV */
-div#wrapper div#content form table.config{margin-bottom:20px}
-div#wrapper div#content div#otherdropdown div form input,div#wrapper div#content table.ecm_totals{margin-bottom:20px}
-div.log{font-family:"Courier New", monospace;text-align:left;margin:20px 0;padding:10px}
-div.sidlist{font-family:"Courier New", monospace;text-align:left;padding:2px}
-div.sidlistclose{float:right}
-div.sidlistclose a{text-decoration:none;padding:0 3px}
-div.message{font-size:12px;font-weight:700;margin:5px 0}
-div.div_notifier{height:14px;width:14px;margin-left:4px;text-align:center;float:right}
-div.filterform{margin:10px}
-div.warning{margin:42px 0 14px}
-div.logo{position:absolute;top:5px;left:5px}
-div.groups{cursor:default;overflow:hidden;margin:0 auto;text-align:center;word-wrap:none;position:relative;width:40px}
-div.footer{padding-bottom:5px;padding-top:5px;margin-bottom:0;margin-top:40px}
-div.footer p{margin:5px}
-div.info{max-width:1300px;margin:20px auto}
-div.debugmenu,div.logmenu{line-height:20px}
-div.cccamentitlementtotals,div.cccamentitlementcontrols{margin-top:14px}
-div#newuser, div#newreader,.hidden,th#exp,td#exp.usercol20,th#cwc,td#cwc.usercol13,th#acasc,td#acasc.usercol19,td#acasc.usercol20,th#grp,td#grp.usercol5{display:none}
+
+/* in status.html, entitlements_genericbit.html */
+div.log {
+	font-family:"Courier New", monospace;
+	text-align:left;
+	margin:20px 0;
+	padding:10px
+}
+
+/* in module-webif.c class for services.html */
+div.sidlist {
+	font-family:"Courier New", monospace;
+	text-align:left;
+	padding:2px
+}
+div.sidlistclose {
+	float:right
+}
+div.sidlistclose a {
+	text-decoration:none;
+	padding:0 3px
+}
+
+/* in message.html */
+div.message {
+	font-size:12px;
+	font-weight:700;
+	margin:5px 0
+}
+
+/* FIND OUT MORE */
+div.div_notifier {
+	height:14px;
+	width:14px;
+	margin-left:4px;
+	text-align:center;
+	float:right
+}
+
+/* in file.html */
+div.filterform {
+	margin:10px
+}
+
+/* in pre_autoconf.html, pre_shutdown.html */
+div.warning {
+	margin:42px 0 14px
+}
+
+/* in logobit.html - Logo for Oscam */
+div.logo {
+	position:absolute;
+	top:5px;
+	left:5px
+}
+
+/* in READERS and USERS items */
+div.groups {
+	cursor:default;
+	overflow:hidden;
+	margin:0 auto;
+	text-align:center;
+	word-wrap:none;
+	position:relative;
+	width:40px
+}
+
+/* in footer.html */
+div.footer {
+	padding-bottom:5px;
+	padding-top:5px;
+	margin-bottom:0;
+	margin-top:40px
+}
+div.footer p {
+	margin:5px
+}
+
+/* in status.html, main DIV for statistics info */
+div.info {
+	max-width:1300px;
+	margin:20px auto
+}
+
+/* debugmenu	- status_sdebug.html 
+ * logmenu		- file.html
+*/
+div.debugmenu,div.logmenu {
+	line-height:20px
+}
+
+/* in entitlements_cccambit.html */
+div.cccamentitlementtotals,
+div.cccamentitlementcontrols {
+	margin-top:14px
+}
+
+/* definition only for show or hide columns or DIV
+ * #newuser		- in userconfig.html
+ * #newreader	- in readers.html
+ * #exp, #cwc, #acasc, #grp	- only in module-webif.c for show/hide columns in userconfig.html
+ */
+#newuser, #newreader,
+#exp, #cwc, #acasc, #grp,
+.hidden {
+	display:none
+}
 
 /* ******** 12. TEXTAREA,SELECT,INPUT */
 
