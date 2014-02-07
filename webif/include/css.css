@@ -201,7 +201,7 @@ img{border:0 solid}
 img.icon{border-radius:4px;border:0 solid;width:22px;height:22px;max-height:22px}
 img.statususericon,img.protoicon,img.usericon,img.readericon{min-height:15px}
 td#out.centered img,
-td#in.centered img{margin-bottom: -2px; margin-right: 10px; margin-left: 10px}
+td#in.centered img{margin-bottom:-2px; margin-right: 10px; margin-left: 10px}
 
 /* ******** 14. SPAN */
 
@@ -211,7 +211,9 @@ span.span_notifier {
 	padding:1px 3px
 }
 
-/* in module-webif.c value for STATUS item ( FIND OUT MORE !!! )*/
+/* in module-webif.c value for STATUS item ( more info in Changeset 6668 by alno )
+ * Class for formating values in statusview column "Idle" 
+ * In new WebIf column Idle is not used. Info about Idle is in title */
 span.idlesec_normal, span.idlesec_alert {
 	font-size:9px
 }
@@ -363,10 +365,16 @@ img.icon{background-color:#A00}
 
 /* SPAN */
 span.e_valid{background-color:#E6FEBF}
-span.span_notifier{color:#FFF;background:red}
-span.idlesec_normal{}
-span.idlesec_alert{color:red}
-span.global_conf{color:blue}
+span.span_notifier {
+	color:#FFF;background:red
+}
+span.idlesec_normal {}
+span.idlesec_alert {
+	color:red
+}
+span.global_conf {
+	color:blue
+}
 
 /* GRAPH */
 rect.graph_bg {fill:white;}
