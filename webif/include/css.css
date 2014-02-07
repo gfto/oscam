@@ -197,11 +197,37 @@ select{padding:2px}
 input[type=checkbox]{vertical-align:text-bottom;_vertical-align:middle;margin-right:5px}
 
 /* ******** 13. IMAGE */
-img{border:0 solid}
-img.icon{border-radius:4px;border:0 solid;width:22px;height:22px;max-height:22px}
-img.statususericon,img.protoicon,img.usericon,img.readericon{min-height:15px}
+
+/* generaly settings for images */
+img {
+	border:0 solid
+}
+
+/* for icons with following Action */
+img.icon {
+	border-radius:4px;
+	border:0 solid;
+	width:22px;
+	height:22px;
+	max-height:22px
+}
+
+/* statususericon	- in STATUS item
+ * protoicon		- in STATUS, READERS item
+ * usericon			- in USERS item
+ * readericon		- in READERS item
+ */
+img.statususericon, img.protoicon,
+img.usericon, img.readericon {
+	min-height:15px
+}
+
 td#out.centered img,
-td#in.centered img{margin-bottom:-2px; margin-right: 10px; margin-left: 10px}
+td#in.centered img {
+	margin-bottom:-2px;
+	margin-right:10px;
+	margin-left: 10px
+}
 
 /* ******** 14. SPAN */
 
