@@ -192,9 +192,28 @@ div.cccamentitlementtotals,div.cccamentitlementcontrols{margin-top:14px}
 div#newuser, div#newreader,.hidden,th#exp,td#exp.usercol20,th#cwc,td#cwc.usercol13,th#acasc,td#acasc.usercol19,td#acasc.usercol20,th#grp,td#grp.usercol5{display:none}
 
 /* ******** 12. TEXTAREA,SELECT,INPUT */
-textarea.editor{font-size:11px;width:98%;height:508px;font-family:"Courier New", monospace;text-align:left;padding:8px 10px}
-select{padding:2px}
-input[type=checkbox]{vertical-align:text-bottom;_vertical-align:middle;margin-right:5px}
+
+/* texteditor in file.html */
+textarea.editor {
+	font-size:11px;
+	width:98%;
+	height:508px;
+	font-family:"Courier New", monospace;
+	text-align:left;
+	padding:8px 10px
+}
+
+/* generaly settings for all select */
+select {
+	padding:2px
+}
+
+/* solution for align vertical checkbox with text */
+input[type=checkbox] {
+	vertical-align:text-bottom;
+	_vertical-align:middle;
+	margin-right:5px
+}
 
 /* ******** 13. IMAGE */
 
@@ -384,13 +403,21 @@ div.div_notifier{background-color:red}
 div.footer{background-color:#EEE;;border-top:3px solid #CCC}
 
 /* TEXTAREA */
-textarea.editor{border:1px dotted #AAA;background-color:#FAFAFA;color:#000}
+textarea.editor {
+	border:1px dotted #AAA;
+	background-color:#FAFAFA;
+	color:#000
+}
 
 /* IMAGE */
-img.icon{background-color:#A00}
+img.icon {
+	background-color:#A00
+}
 
 /* SPAN */
-span.e_valid{background-color:#E6FEBF}
+span.e_valid {
+	background-color:#E6FEBF
+}
 span.span_notifier {
 	color:#FFF;background:red
 }
