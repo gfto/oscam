@@ -33,6 +33,9 @@ p.text-large-red {
 	margin: 10px 0
 }
 
+/* in readerstats.html for P */
+#text_totalecm {}
+
 /* in footer.html */
 p.styleauthor:after {content:"Streamboard Team"}
 
@@ -57,12 +60,14 @@ a.debugls:link {
 }
 
 /* Tooltip in cccamentitletooltip.html, foundentitlements.html, noentitlements.html and module-webif.c */
-a.tooltip {
+a.tooltip,
+a.tooltip1 {
 	position:relative;
 	text-decoration:none;
 	cursor:default
 }
-a.tooltip span {
+a.tooltip span,
+a.tooltip1 span {
 	display:none;
 	z-index:99
 }
@@ -199,12 +204,30 @@ td#out.centered img,
 td#in.centered img{margin-bottom: -2px; margin-right: 10px; margin-left: 10px}
 
 /* ******** 14. SPAN */
-span.span_notifier{margin-left:2px;padding:1px 3px}
-span.idlesec_normal, span.idlesec_alert{font-size:9px}
-span.global_conf{font-size:12px;cursor:default;padding:4px}
-span.user_totals_headline{display:inline-block;margin:10px 0}
-span.text_script{display:inline-block;font-weight:700;margin:28px}
-span.text_entitle, span.text_totalecm{display:inline-block;font-weight:700}
+
+/* in module-webif.c and userconfig_notify.html */
+span.span_notifier {
+	margin-left:2px;
+	padding:1px 3px
+}
+
+/* in module-webif.c value for STATUS item ( FIND OUT MORE !!! )*/
+span.idlesec_normal, span.idlesec_alert {
+	font-size:9px
+}
+
+/* in readerconfig_cccambit.html, user_edit_anticasc.html and user_edit_cccam.html */
+span.global_conf {
+	font-size:12px;
+	cursor:default;
+	padding:4px
+}
+
+/* in entitlements.html, readerconfig.html and user_edit.html */
+span.text_entitle {
+	display:inline-block;
+	font-weight:700
+}
 
 /* ******** 15. GRAPH */
 text.graph_error {text-anchor:middle;}
