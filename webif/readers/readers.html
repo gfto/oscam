@@ -1,25 +1,25 @@
 ##TPLHEADER##
 ##TPLMENU##
 ##TPLMESSAGE##
-<DIV ID="subnav">
-	<UL ID="nav">
-		<LI CLASS="configmenu"><A HREF="#" onclick="addreader();">Add Reader</A></LI>
-		<LI CLASS="configmenu"><A HREF="scanusb.html">Scan USB</A></LI>
-		<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=servers">Show Graphs</A></LI>
-	</UL>
-</DIV>
-<DIV ID="newreader">
-	<form action="readerconfig.html" method="get">
+	<DIV ID="subnav">
+		<UL ID="nav">
+			<LI CLASS="configmenu"><A HREF="#" onclick="addreader();">Add Reader</A></LI>
+			<LI CLASS="configmenu"><A HREF="scanusb.html">Scan USB</A></LI>
+			<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=servers">Show Graphs</A></LI>
+		</UL>
+	</DIV>
+	<DIV ID="newreader">
+		<form action="readerconfig.html" method="get">
+			<TABLE CLASS="readers">
+				<TR><TH>NEW Reader Label: <input type="text" name="label" value="##NEXTREADER##">  Protocol: <select name="protocol">##ADDPROTOCOL##</select><input type="submit" name="action" value="Add"></TH></TR>
+			</TABLE>
+		</form>
+	</DIV>
+	<DIV ID="searchTable">
 		<TABLE CLASS="readers">
-			<TR><TH>NEW Reader Label: <input type="text" name="label" value="##NEXTREADER##">  Protocol: <select name="protocol">##ADDPROTOCOL##</select><input type="submit" name="action" value="Add"></TH></TR>
+			<TR><TH>Search: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="initDoc()" /></TH></TR>
 		</TABLE>
-	</form>
-</DIV>
-<DIV ID="searchTable">
-	<TABLE CLASS="readers">
-		<TR><TH>Search: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="initDoc()" /></TH></TR>
-	</TABLE>
-</DIV>
+	</DIV>
 	<TABLE ID="dataTable" CLASS="readers">
 	<THEAD>
 		<TR>

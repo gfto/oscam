@@ -1,24 +1,24 @@
 ##TPLHEADER##
 ##TPLMENU##
 ##TPLMESSAGE##
-<DIV ID="subnav">
-	<UL ID="nav">
-		<LI CLASS="configmenu"><A HREF="#" onclick="adduser();">Add User</A></LI>
-		<LI CLASS="configmenu"><A HREF="userconfig.html?action=reinit">Reinit User DB</A></LI>
-		<LI CLASS="configmenu"><A HREF="userconfig.html?action=resetalluserstats">Reset Userstats</A></LI>
-		<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=users&amp;hidelabels=1">Show Graphs</A></LI>
-	</UL>
-</DIV>
-<DIV ID="newuser">
-	<TABLE CLASS="users">
-		<TR><form action="user_edit.html" method="get"><TH>New User: <input name="user" type="text"><input type="submit" value="Add User"></TH></form></TR>
-	</TABLE>
-</DIV>
-<DIV ID="searchTable">
-	<TABLE CLASS="users">
-		<TR><TH>Search: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="initDoc()" /></TH></TR>
-	</TABLE>
-</DIV>
+	<DIV ID="subnav">
+		<UL ID="nav">
+			<LI CLASS="configmenu"><A HREF="#" onclick="adduser();">Add User</A></LI>
+			<LI CLASS="configmenu"><A HREF="userconfig.html?action=reinit">Reinit User DB</A></LI>
+			<LI CLASS="configmenu"><A HREF="userconfig.html?action=resetalluserstats">Reset Userstats</A></LI>
+			<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=users&amp;hidelabels=1">Show Graphs</A></LI>
+		</UL>
+	</DIV>
+	<DIV ID="newuser">
+		<TABLE CLASS="users">
+			<TR><form action="user_edit.html" method="get"><TH>New User: <input name="user" type="text"><input type="submit" value="Add User"></TH></form></TR>
+		</TABLE>
+	</DIV>
+	<DIV ID="searchTable">
+		<TABLE CLASS="users">
+			<TR><TH>Search: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="initDoc()" /></TH></TR>
+		</TABLE>
+	</DIV>
 	<TABLE ID="dataTable" CLASS="users">
 	<THEAD>
 		<TR>
@@ -61,8 +61,8 @@
 	<TBODY>
 ##USERCONFIGS##
 	</TBODY>
-	</TABLE><BR>
-	<TABLE CLASS="user_totals">
+	</TABLE>
+	<TABLE CLASS="user_totals smallmargintop">
 		<TR>
 			<TH TITLE="Total users" COLSPAN="6">User Info</TH>
 		</TR>
@@ -82,8 +82,8 @@
 			<TD CLASS="centered">##TOTAL_CONNECTED##</TD>
 			<TD CLASS="centered">##TOTAL_ONLINE##</TD>
 		</TR>
-	</TABLE><BR>
-	<TABLE CLASS="ECM_totals">
+	</TABLE>
+	<TABLE CLASS="ECM_totals smallmargintop">
 		<TR>
 			<TH COLSPAN="8">Total Ecm Info</TH>
 		</TR>
@@ -111,7 +111,7 @@
 			<TD CLASS="centered" COLSPAN="2"><B>Reset ECM Statistics:</B></TD>
 			<TD CLASS="centered"><A HREF="userconfig.html?action=resetserverstats" TITLE="Reset statistics for server"><IMG CLASS="icon" SRC="image?i=ICRES" ALT="Reset Server Stats"></A></TD>
 		</TR>
-	</TABLE><BR>
+	</TABLE>
 
 	<!-- To initialize a TABLE sorter -->
 	<script type="text/javascript">

@@ -127,6 +127,14 @@ table {
 	margin-right:auto
 }
 
+/* margin top from previous table */
+.margintop {
+	margin-top:30px
+}
+.smallmargintop {
+	margin-top:15px
+}
+
 /* Table in status.html */
 table.status {
 	width:100%;
@@ -578,7 +586,7 @@ path.graph_grid {stroke-opacity:0.5;}
 /* ******** 18. Not Assigned */
 html body form table.stats{margin-top:20px}
 li.menu a,li.configmenu a,li.menu_selected a,li.configmenu_selected a,td.statuscol14 a,td.statuscol16 a,td.subheadline a{text-decoration:none}
-.margintop {margin-top:30px}
+
 
 /* ================================= COLORS ================================= */
 /* BASIC SETTINGS */
