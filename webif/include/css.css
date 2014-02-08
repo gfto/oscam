@@ -149,6 +149,29 @@ table.configreader {
 	width:850px
 }
 
+/* Table in readerstats.html */
+table.statsbalance td:last-child {
+	line-height:20px;
+	width:125px
+}
+table.statsbalance td:last-child img.icon {
+	float:right;
+	margin-left:10px
+}
+
+/* Table in USERS in userconfig.html */
+table.users {
+	width:100%
+}
+table.ECM_totals {
+	margin-top:10px;
+	margin-bottom:20px
+}
+table.ECM_totals,
+table.user_totals {
+	width:50%
+}
+
 /* Tables in CACHEEX in cacheex.html */
 table.cacheex, table#dataTable.stats{width:80%}
 
@@ -159,22 +182,21 @@ table.menu {
 	border-spacing:0
 }
 
-table.statsbalance td:last-child{line-height:20px;width:125px}
-table.statsbalance td:last-child img.icon{float:right;margin-left:10px}
-table.invisibleser{margin-left:0;width:100%}
-table.invisiblelb{border-spacing:0;width:100%}
-table.invisiblelb th{width:33%;text-align:left}
-table.invisiblelb td{width:33%;font-size:12px;white-space:nowrap}
-table.invisibleservices{margin-left:0;width:80%}
-table.invisible{margin-left:0}
-table.invisible td, table.invisibleser td, table.invisibleservices td, textarea.bt{font-size:12px}
-table.configmenu{line-height:16px}
-table.users{width:100%}
-table.ecm_totals{margin-top:10px;margin-bottom:20px}
-table.invisible td:first-child{padding-left:0}
+/* Table for settings in configuration of readers and users */
+table.invisible {
+	margin-left:0
+}
+table.invisible td { 
+	font-size:12px
+}
+table.invisible td:first-child {
+	padding-left:0
+}
+
+
+
 table.statusmeminfo, table.statususerinfo, table.statuscacheexinfo, table#cachexstats{width:60%;white-space:no-wrap;margin-top:0px;margin-bottom:0px}
 table#dataTable.readers thead tr, table#dataTable.stats thead tr{cursor:pointer}
-table.ECM_totals,table.user_totals{width:50%}
 table.newservice,table#servicesedit.stats{width:35%;text-align:center}
 table#servicesedit.stats tbody tr td{text-align:center}
 table.newservice{margin-top:5px}
@@ -413,6 +435,11 @@ textarea.editor {
 	font-family:"Courier New", monospace;
 	text-align:left;
 	padding:8px 10px
+}
+
+/* class for textarea */
+textarea.bt {
+	font-size:12px
 }
 
 /* generaly settings for all select */
