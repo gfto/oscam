@@ -154,22 +154,95 @@ tr.e_valid td, tr.e_expired td, tr.e_header td{font-family:"Courier New", monosp
 /* ******** 9. TABLE TH */
 th{height:10px;padding:5px}
 th.nameinfo{text-transform:uppercase;text-align:left}
-th.statuscol0, td.statuscol0{text-align:center;width:10px}
-th.statuscol1, th.statuscol2, th.statuscol3, th.statuscol4, th.statuscol5, th.statuscol6, th.statuscol7, th.statuscol8, th.statuscol9, th.statuscol10, th.statuscol11, th.statuscol12, th.statuscol13, th.statuscol14, th.statuscol15, th.statuscol16, td.centered, td.statuscol1, td.statuscol2, td.statuscol3,td.statuscol5,td.statuscol6,td.statuscol7,td.statuscol8,td.statuscol10,td.statuscol11,td.statuscol12,td.statuscol14,td.statuscol15,td.statuscol16,td.usercol0,td.usercol2,td.usercol3,td.usercol4,td.usercol5,td.usercol6,td.usercol7,td.usercol8,td.usercol9,td.usercol10,td.usercol11,td.usercol12,td.usercol13,td.usercol14,td.usercol15,td.usercol16,td.usercol17,td.usercol18,td.usercol19,td.usercol20,td.usercol21,td.usercol22,td.usercol23,td.usercol24,td.usercol25{text-align:center}
-th.statuscol0, td.statuscol1{width:0}
+th.statuscol0{text-align:center;width:10px}
+
+th.statuscol1, th.statuscol2, 
+th.statuscol3, th.statuscol4, 
+th.statuscol5, th.statuscol6, 
+th.statuscol7, th.statuscol8, 
+th.statuscol9, th.statuscol10, 
+th.statuscol11, th.statuscol12, 
+th.statuscol13, th.statuscol14, 
+th.statuscol15, th.statuscol16 {
+	text-align:center
+}
+
+th.statuscol0{width:0}
 table#subservicetable.subservicetable{width:100%;background:#FFF}
-table#subservicetable.subservicetable tbody tr td.servicescol1,
-table#subservicetable.subservicetable tbody tr td.servicescol2,
-table#subservicetable.subservicetable tbody tr td.servicescol3{width:30%;border:0;border-spacing:1px}
 
 /* ******** 10. TABLE TD */
-td{height:10px;text-align:left;padding:5px}
-td.centered div{margin:auto}
-td.menu, td.configmenu, td.menu_selected, td.configmenu_selected{font-size:14px;font-weight:700}
-td.subheadline{height:10px;border:0;padding:5px}
-td.statuscol4, td.statuscol4 a, td.statuscol9, td.statuscol9 a, td.statuscol13, td.statuscol13 a, td.usercol1, .span, span, span a{text-align:center;text-decoration:none}
-td.subheadline input{float:right;border-width:0;font-size:12px;margin-left:5px;margin-right:5px;padding:0}
-td.subheadline form select{width:100px;text-align:center;font-size:10px;padding:0}
+
+/* generaly definition for all TD */
+td {
+	height:10px;
+	text-align:left;
+	padding:5px
+}
+
+/* in readerstatsnotfound.html, readerstatstimeoutbit.html
+ * status_clientheadlinebit.html, status_clientheadlinewith.html
+ * status_pheadline.html, status_rheadline.html
+ */ 
+td.subheadline {
+	height:10px;
+	border:0;
+	padding:5px
+}
+
+/* in status_clientheadlinebit.html, status_clientheadlinewith.html
+ * status_pheadline.html, status_rheadline.html
+ */
+td.subheadline form select {
+	width:100px;
+	text-align:center;
+	font-size:10px;
+	padding:0
+}
+
+/* FIND OUT MORE ?!?! */
+td.statuscol0 {
+	text-align:center;
+	width:10px
+}
+td.statuscol1 {
+	width:0
+}
+td.statuscol4, td.statuscol4 a,
+td.statuscol9, td.statuscol9 a,
+td.statuscol13, td.statuscol13 a,
+td.usercol1, .span, span, span a {
+	text-align:center;
+	text-decoration:none
+}
+td.centered, td.statuscol1,
+td.statuscol2, td.statuscol3,
+td.statuscol5, td.statuscol6,
+td.statuscol7, td.statuscol8,
+td.statuscol10, td.statuscol11,
+td.statuscol12, td.statuscol14,
+td.statuscol15, td.statuscol16,
+td.usercol0, td.usercol2,
+td.usercol3, td.usercol4,
+td.usercol5, td.usercol6,
+td.usercol7, td.usercol8,
+td.usercol9, td.usercol10,
+td.usercol11, td.usercol12,
+td.usercol13, td.usercol14,
+td.usercol15, td.usercol16,
+td.usercol17, td.usercol18,
+td.usercol19, td.usercol20,
+td.usercol21, td.usercol22,
+td.usercol23, td.usercol24,
+td.usercol25 {
+	text-align:center
+}
+
+/* in readerconfig_sidokbit.html */
+td.servicescol1, td.servicescol2, td.servicescol3 {
+	width:30%;
+	border:0;
+	border-spacing:1px
+}
 
 /* ******** 11. DIV */
 
@@ -471,25 +544,43 @@ tr.r td,span.e_expired{background-color:#FFF3E7}
 tr.p td,tr.scanusbsubhead td{background-color:#FDFBE1}
 
 /* TABLE TH */
-th{background-color:#CCC}
-th.nameinfo{background-color:#999}
+th {
+	background-color:#CCC
+}
+th.nameinfo {
+	background-color:#999
+}
 
 /* TABLE TD */
-td{background-color:#EEE}
-td.servicescol3{border-left:2px solid #CCC}
-td.menu{background-color:#FFF}
-td.menu_selected{background-color:#E6FEBF}
-td.configmenu{background-color:#FFF}
-td.configmenu_selected{background-color:#E6FEBF}
-td.subheadline{background-color:#CCC}
+td {
+	background-color:#EEE
+}
+td.subheadline {
+	background-color:#CCC
+}
 
 /* DIV */
-div.log{border:1px dotted #AAA;background-color:#FAFAFA;color:#666}
-div.sidlist{border:1px dotted #AAA;background-color:#fffdf5;color:#666}
-div.sidlistclose{background-color:red;color:#FFF}
-div.sidlistclose a{color:#FFF}
-div.div_notifier{background-color:red}
-div.footer{background-color:#EEE;;border-top:3px solid #CCC}
+div.log {
+	border:1px dotted #AAA;
+	background-color:#FAFAFA;
+	color:#666
+}
+div.sidlist {
+	border:1px dotted #AAA;
+	background-color:#FFFDF5;
+	color:#666
+}
+div.sidlistclose {
+	background-color:red;
+	color:#FFF
+}
+div.sidlistclose a {
+	color:#FFF
+}
+div.footer {
+	background-color:#EEE;
+	border-top:3px solid #CCC
+}
 
 /* TEXTAREA */
 textarea.editor {
