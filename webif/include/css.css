@@ -120,21 +120,45 @@ a:hover span {
 
 /* ******** 7. TABLE */
 
+/* generaly definition for all tables */
+table {
+	border-spacing:1px;
+	margin-left:auto;
+	margin-right:auto
+}
+
 /* Table in status.html */
 table.status {
 	width:100%;
 	empty-cells:show
 }
 
-/* Table in cacheex.html */
+/* Tables for all part in CONFIGURATION item and in user_edit.html */
+table.config {
+	width:60%;
+	margin-bottom:20px
+}
+
+/* Tables in readers.html */
+table.readers {
+	width:100%
+}
+
+/* Table in readerconfig.html */
+table.configreader {
+	width:850px
+}
+
+/* Tables in CACHEEX in cacheex.html */
 table.cacheex, table#dataTable.stats{width:80%}
 
+/* Table in savetemplates.html 
+ * OLD DESIGN FOR MENU IN savetemplates.html !!!
+ */
+table.menu {
+	border-spacing:0
+}
 
-table{border-spacing:1px;margin-left:auto;margin-right:auto}
-table.menu{border-spacing:0}
-table.config{width:60%;margin-bottom:20px}
-table.configreader{width:850px}
-table.readers{width:100%}
 table.statsbalance td:last-child{line-height:20px;width:125px}
 table.statsbalance td:last-child img.icon{float:right;margin-left:10px}
 table.invisibleser{margin-left:0;width:100%}
@@ -149,7 +173,7 @@ table.users{width:100%}
 table.ecm_totals{margin-top:10px;margin-bottom:20px}
 table.invisible td:first-child{padding-left:0}
 table.statusmeminfo, table.statususerinfo, table.statuscacheexinfo, table#cachexstats{width:60%;white-space:no-wrap;margin-top:0px;margin-bottom:0px}
-table#dataTable.readers thead tr, table#dataTable.stats.upspace thead tr{cursor:pointer}
+table#dataTable.readers thead tr, table#dataTable.stats thead tr{cursor:pointer}
 table.ECM_totals,table.user_totals{width:50%}
 table.newservice,table#servicesedit.stats{width:35%;text-align:center}
 table#servicesedit.stats tbody tr td{text-align:center}
@@ -504,7 +528,7 @@ path.graph_grid {stroke-opacity:0.5;}
 }
 
 /* ******** 18. Not Assigned */
-html body form table.stats.upspace{margin-top:20px}
+html body form table.stats{margin-top:20px}
 li.menu a,li.configmenu a,li.menu_selected a,li.configmenu_selected a,td.statuscol14 a,td.statuscol16 a,td.subheadline a{text-decoration:none}
 .margintop {margin-top:30px}
 
