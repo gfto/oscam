@@ -147,15 +147,34 @@ table.ECM_totals,table.user_totals{width:50%}
 table.newservice,table#servicesedit.stats{width:35%;text-align:center}
 table#servicesedit.stats tbody tr td{text-align:center}
 table.newservice{margin-top:5px}
+table.subservicetable{width:100%;background:#FFF}
 
 /* ******** 8. TABLE TR */
-tr.e_valid td, tr.e_expired td, tr.e_header td{font-family:"Courier New", monospace}
+
+/* for entitlement */
+tr.e_valid td, tr.e_expired td, tr.e_header td {
+	font-family:"Courier New", monospace
+}
 
 /* ******** 9. TABLE TH */
-th{height:10px;padding:5px}
-th.nameinfo{text-transform:uppercase;text-align:left}
-th.statuscol0{text-align:center;width:10px}
 
+/* generaly definition for all TD */
+th {
+	height:10px;
+	padding:5px
+}
+
+/* in status_cacheexinfo.html, status_systeminfo.html */
+th.nameinfo {
+	text-transform:uppercase;
+	text-align:left
+}
+
+/* in STATUS item (FIND OUT MORE) */
+th.statuscol0 {
+	text-align:center;
+	width:10px
+}
 th.statuscol1, th.statuscol2, 
 th.statuscol3, th.statuscol4, 
 th.statuscol5, th.statuscol6, 
@@ -166,9 +185,9 @@ th.statuscol13, th.statuscol14,
 th.statuscol15, th.statuscol16 {
 	text-align:center
 }
-
-th.statuscol0{width:0}
-table#subservicetable.subservicetable{width:100%;background:#FFF}
+th.statuscol0 {
+	width:0
+}
 
 /* ******** 10. TABLE TD */
 
