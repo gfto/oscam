@@ -119,12 +119,19 @@ a:hover span {
 }
 
 /* ******** 7. TABLE */
-table#datatable.stats.upspace thead tr{cursor:pointer}
+
+/* Table in status.html */
+table.status {
+	width:100%;
+	empty-cells:show
+}
+
+/* Table in cacheex.html */
 table.cacheex, table#dataTable.stats{width:80%}
-table.cacheex{}
+
+
 table{border-spacing:1px;margin-left:auto;margin-right:auto}
 table.menu{border-spacing:0}
-table.status{width:100%;empty-cells:show}
 table.config{width:60%;margin-bottom:20px}
 table.configreader{width:850px}
 table.readers{width:100%}
