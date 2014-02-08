@@ -173,7 +173,9 @@ table.user_totals {
 }
 
 /* Tables in CACHEEX in cacheex.html */
-table.cacheex, table#dataTable.stats{width:80%}
+table.cacheex, table#dataTable.stats {
+	width:80%
+}
 
 /* Table in savetemplates.html 
  * OLD DESIGN FOR MENU IN savetemplates.html !!!
@@ -193,14 +195,33 @@ table.invisible td:first-child {
 	padding-left:0
 }
 
+/* Table statusmeminfo	- in status_systeminfo.html
+ * Table statususerinfo	- in status_userinfo.html
+ * Table statuscacheexinfo	- in status_cacheexinfo.html
+ * Table cachexstats	- in cacheex.html
+ */
+table.statusmeminfo, table.statususerinfo, 
+table.statuscacheexinfo, table#cachexstats {
+	width:60%;
+	white-space:no-wrap;
+	margin-top:0px;
+	margin-bottom:0px
+}
 
+/* Table in services.html */
+#addnewservice,#servicesedit {
+	width:35%;
+	text-align:center
+}
+#servicesedit td {
+	text-align:center
+}
 
-table.statusmeminfo, table.statususerinfo, table.statuscacheexinfo, table#cachexstats{width:60%;white-space:no-wrap;margin-top:0px;margin-bottom:0px}
-table#dataTable.readers thead tr, table#dataTable.stats thead tr{cursor:pointer}
-table.newservice,table#servicesedit.stats{width:35%;text-align:center}
-table#servicesedit.stats tbody tr td{text-align:center}
-table.newservice{margin-top:5px}
-table.subservicetable{width:100%;background:#FFF}
+/* Table in user_edit.html, readerconfig.html */
+table.subservicetable {
+	width:100%;
+	background:#FFF
+}
 
 /* ******** 8. TABLE TR */
 
