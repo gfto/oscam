@@ -231,12 +231,25 @@ table.subservicetable {
 	background:#FFF
 }
 
+/* OTHER TABLES */
+
+/* in emm.html, emm_running.html,
+ * entitlements_bit.html, entitlements_cccambit.html
+ * failban.html, 
+ */
+table.stats {}
+
 /* ******** 8. TABLE TR */
 
 /* for entitlement */
 tr.e_valid td, tr.e_expired td, tr.e_header td {
 	font-family:"Courier New", monospace
 }
+
+/* OTHER TR */
+
+/* in readers_readerlist.html */
+tr.enabledreader, tr.disabledreader {}
 
 /* ******** 9. TABLE TH */
 
@@ -270,6 +283,11 @@ th.statuscol15, th.statuscol16 {
 th.statuscol0 {
 	width:0
 }
+
+/* OTHER TABLEs TH */
+
+/* in readerconfig.html */
+th.withservices, th.notservices, th.lbservices {}
 
 /* ******** 10. TABLE TD */
 
@@ -584,7 +602,6 @@ path.graph_grid {stroke-opacity:0.5;}
 }
 
 /* ******** 18. Not Assigned */
-html body form table.stats{margin-top:20px}
 li.menu a,li.configmenu a,li.menu_selected a,li.configmenu_selected a,td.statuscol14 a,td.statuscol16 a,td.subheadline a{text-decoration:none}
 
 
@@ -666,6 +683,8 @@ td.subheadline {
 }
 
 /* DIV */
+
+/* in entitlements_genericbit.html */
 div.log {
 	border:1px dotted #AAA;
 	background-color:#FAFAFA;
