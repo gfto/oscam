@@ -127,14 +127,6 @@ table {
 	margin-right:auto
 }
 
-/* margin top from previous table */
-.margintop {
-	margin-top:30px
-}
-.smallmargintop {
-	margin-top:15px
-}
-
 /* Table in status.html */
 table.status {
 	width:100%;
@@ -172,7 +164,6 @@ table.users {
 	width:100%
 }
 table.ECM_totals {
-	margin-top:10px;
 	margin-bottom:20px
 }
 table.ECM_totals,
@@ -206,13 +197,19 @@ table.invisible td:first-child {
 /* Table statusmeminfo	- in status_systeminfo.html
  * Table statususerinfo	- in status_userinfo.html
  * Table statuscacheexinfo	- in status_cacheexinfo.html
- * Table cachexstats	- in cacheex.html
  */
 table.statusmeminfo, table.statususerinfo, 
-table.statuscacheexinfo, table#cachexstats {
+table.statuscacheexinfo {
 	width:60%;
 	white-space:no-wrap;
 	margin-top:0px;
+	margin-bottom:0px
+}
+
+/* Table cachexstats	- in cacheex.html */
+table#cachexstats {
+	width:60%;
+	white-space:no-wrap;
 	margin-bottom:0px
 }
 
@@ -316,6 +313,16 @@ td.subheadline form select {
 	text-align:center;
 	font-size:10px;
 	padding:0
+}
+
+/* other settings for seubheadline */
+td.subheadline a {
+	text-decoration:none
+}
+td.subheadline p {
+	text-align:left;
+	font-weight:bold;
+	margin-left:5px
 }
 
 /* FIND OUT MORE ?!?! */
@@ -601,7 +608,15 @@ path.graph_grid {stroke-opacity:0.5;}
 	padding-right:8px
 }
 
-/* ******** 18. Not Assigned */
+/* ******** 18. OTHER SETTINGS */
+/* margin top from previous table */
+.margintop {
+	margin-top:30px
+}
+.smallmargintop {
+	margin-top:15px
+}
+
 li.menu a,li.configmenu a,li.menu_selected a,li.configmenu_selected a,td.statuscol14 a,td.statuscol16 a,td.subheadline a{text-decoration:none}
 
 
