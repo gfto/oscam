@@ -29,6 +29,8 @@
 //CMD0x3e - CACHEEX Cache-push id answer
 //CMD0x3f - CACHEEX cache-push
 
+//CMD0x4a - Oscam Version 
+//CMD0x4b - Oscam Version 
 //used variable ncd_skey for storing remote node id: ncd_skey[0..7] : 8
 //bytes node id ncd_skey[8] : 1=valid node id received
 
@@ -951,6 +953,41 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 /*
  *	client functions
  */
+
+void store_received_client_svn_version(struct s_client *cl, uchar *recvbuf)
+{
+	//cs_ddump_mask(D_EMM, recvbuf, 128, "svn recv:");
+	snprintf(cl->remote_oscam_svn, recvbuf[1]+1, "%s", recvbuf + 20);
+	cs_log("receive oscam svn_version over camd3: %s from: %s", cl->remote_oscam_svn, username(cl));
+}
+
+void send_oscam_svn_version(struct s_client *cl, uint8_t send_back)
+{
+	if(cl->reader)
+	{
+		if(!cl->reader->send_oscam_version) { return; }
+	}
+	else 
+	{
+	if(cl->account)
+		if(!cl->account->send_oscam_version) { return; }
+	}
+	if(!cl->crypted) { return; }
+	//if(!tcp_connect(cl)) { return; }
+	uchar sbuf[128];
+	int8_t len;
+	memset(sbuf, 0xFF, sizeof(sbuf));
+	if(send_back)
+	sbuf[0] = 0x4b;
+	else
+	sbuf[0] = 0x4a;
+	len = snprintf((char *)sbuf + 20, sizeof(sbuf) - 20, "OSCam v%s, build r%s (%s)", CS_VERSION, CS_SVN_VERSION, CS_TARGET);
+	sbuf[1] = len;
+	cs_log("send own oscam svn_version over camd3: OSCam v%s, build r%s (%s) to: %s", CS_VERSION, CS_SVN_VERSION, CS_TARGET, username(cl));
+	//cs_ddump_mask(D_EMM, sbuf, 128, "svn send:");
+	camd35_send(cl, sbuf, sbuf[1]);	
+}
+
 void send_keepalive(struct s_client *cl)
 {
 
@@ -1002,7 +1039,7 @@ int32_t camd35_client_init(struct s_client *cl)
 	cs_log("camd35 proxy %s:%d", cl->reader->device, cl->reader->r_port);
 
 	send_keepalive(cl);
-
+	send_oscam_svn_version(cl, 0);
 	return(0);
 }
 
@@ -1013,6 +1050,8 @@ void camd35_idle(void)
 
 	if(!cl->reader)
 		{ return; }
+
+	send_oscam_svn_version(cl, 0);
 
 	if(cl->reader->keepalive)
 	{
@@ -1078,6 +1117,13 @@ static void *camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 	case 19:  // EMM
 		if(n > 2)
 			{ camd35_process_emm(mbuf, n, mbuf[1]); }
+		break;
+	case 0x4a: // receive oscam_svn from client
+		store_received_client_svn_version(client, mbuf);
+		send_oscam_svn_version(client, 1);
+		break;
+	case 0x4b: // receive back oscam_svn
+		store_received_client_svn_version(client, mbuf);
 		break;
 	case 55:
 		//keepalive msg
@@ -1245,6 +1291,19 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 	}
 #endif
 
+	if(buf[0] == 0x4a) // receive oscam_svn from client
+	{
+		store_received_client_svn_version(client, buf);
+		send_oscam_svn_version(client, 1);
+		return -1;
+	}
+
+	if(buf[0] == 0x4b) // receive back oscam_svn
+	{
+		store_received_client_svn_version(client, buf);
+		return -1;
+	}
+
 	if(buf[0] == 55)  //keepalive answer
 		{ return -1; }
 
@@ -1267,7 +1326,6 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 	memcpy(dcw, buf + 20, 16);
 	return (idx);
 }
-
 /*
  *  module definitions
  */

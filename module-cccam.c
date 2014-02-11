@@ -2454,6 +2454,7 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 }
 #endif
 
+
 int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 {
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
@@ -2514,6 +2515,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 				snprintf((char *)token, sizeof(token),
 						 "PARTNER: OSCam v%s, build r%s (%s) [EXT,SID,SLP]", CS_VERSION,
 						 CS_SVN_VERSION, CS_TARGET);
+				cs_log("send own oscam svn_version over cccam ext: OSCam v%s, build r%s (%s) [EXT,SID,SLP]", CS_VERSION, CS_SVN_VERSION, CS_TARGET, username(cl));
 				cc_cmd_send(cl, token, strlen((char *)token) + 1, MSG_CW_NOK1);
 			}
 
@@ -2742,8 +2744,9 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 			if(strncmp(msg, "PARTNER:", 8) == 0)
 			{
 				//When Data starts with "PARTNER:" we have an Oscam-cccam-compatible client/server!
-
-				strncpy(cc->remote_oscam, msg + 9, sizeof(cc->remote_oscam) - 1);
+				//cs_ddump_mask(D_EMM, msg, sizeof(msg), "msg rcv:");
+				strncpy(cl->remote_oscam_svn, msg + 9, sizeof(cl->remote_oscam_svn) - 1);
+				cs_log("receive oscam svn_version over cccam ext: %s from: %s", cl->remote_oscam_svn, username(cl));
 				int32_t has_param = check_extended_mode(cl, msg);
 				if(!cc->is_oscam_cccam)
 				{
@@ -2769,8 +2772,10 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 					snprintf((char *)token, sizeof(token),
 							 "PARTNER: OSCam v%s, build r%s (%s)%s",
 							 CS_VERSION, CS_SVN_VERSION, CS_TARGET, param);
+					cs_log("send own oscam svn_version over cccam ext: OSCam v%s, build r%s (%s)%s to: %s", CS_VERSION, CS_SVN_VERSION, CS_TARGET, param, username(cl));
 					cc_cmd_send(cl, token, strlen((char *)token) + 1, MSG_CW_NOK1);
 				}
+				
 			}
 			else
 			{
