@@ -501,6 +501,13 @@ select {
 	padding:2px
 }
 
+/* settings for first option in select 
+ * otherdropdown	- in script.html, menu.html
+ */
+#otherdropdown option:first-child{
+    display:none
+}
+
 /* solution for align vertical checkbox with text */
 input[type=checkbox] {
 	vertical-align:text-bottom;
