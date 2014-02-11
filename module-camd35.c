@@ -958,7 +958,7 @@ void store_received_client_svn_version(struct s_client *cl, uchar *recvbuf)
 {
 	//cs_ddump_mask(D_EMM, recvbuf, 128, "svn recv:");
 	snprintf(cl->remote_oscam_svn, recvbuf[1]+1, "%s", recvbuf + 20);
-	cs_log("receive oscam svn_version over camd3: %s from: %s", cl->remote_oscam_svn, username(cl));
+	cs_debug_mask(D_TRACE, "receive oscam svn_version over camd3: %s from: %s", cl->remote_oscam_svn, username(cl));
 }
 
 void send_oscam_svn_version(struct s_client *cl, uint8_t send_back)
@@ -983,7 +983,7 @@ void send_oscam_svn_version(struct s_client *cl, uint8_t send_back)
 	sbuf[0] = 0x4a;
 	len = snprintf((char *)sbuf + 20, sizeof(sbuf) - 20, "OSCam v%s, build r%s (%s)", CS_VERSION, CS_SVN_VERSION, CS_TARGET);
 	sbuf[1] = len;
-	cs_log("send own oscam svn_version over camd3: OSCam v%s, build r%s (%s) to: %s", CS_VERSION, CS_SVN_VERSION, CS_TARGET, username(cl));
+	cs_debug_mask(D_TRACE, "send own oscam svn_version over camd3: OSCam v%s, build r%s (%s) to: %s", CS_VERSION, CS_SVN_VERSION, CS_TARGET, username(cl));
 	//cs_ddump_mask(D_EMM, sbuf, 128, "svn send:");
 	camd35_send(cl, sbuf, sbuf[1]);	
 }

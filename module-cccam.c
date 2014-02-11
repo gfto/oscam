@@ -2746,7 +2746,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 				//When Data starts with "PARTNER:" we have an Oscam-cccam-compatible client/server!
 				//cs_ddump_mask(D_EMM, msg, sizeof(msg), "msg rcv:");
 				strncpy(cl->remote_oscam_svn, msg + 9, sizeof(cl->remote_oscam_svn) - 1);
-				cs_log("receive oscam svn_version over cccam ext: %s from: %s", cl->remote_oscam_svn, username(cl));
+				cs_debug_mask(D_TRACE, "receive oscam svn_version over cccam ext: %s from: %s", cl->remote_oscam_svn, username(cl));
 				int32_t has_param = check_extended_mode(cl, msg);
 				if(!cc->is_oscam_cccam)
 				{
@@ -2772,7 +2772,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 					snprintf((char *)token, sizeof(token),
 							 "PARTNER: OSCam v%s, build r%s (%s)%s",
 							 CS_VERSION, CS_SVN_VERSION, CS_TARGET, param);
-					cs_log("send own oscam svn_version over cccam ext: OSCam v%s, build r%s (%s)%s to: %s", CS_VERSION, CS_SVN_VERSION, CS_TARGET, param, username(cl));
+					cs_debug_mask(D_TRACE, "send own oscam svn_version over cccam ext: OSCam v%s, build r%s (%s)%s to: %s", CS_VERSION, CS_SVN_VERSION, CS_TARGET, param, username(cl));
 					cc_cmd_send(cl, token, strlen((char *)token) + 1, MSG_CW_NOK1);
 				}
 				
