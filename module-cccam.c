@@ -2515,7 +2515,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 				snprintf((char *)token, sizeof(token),
 						 "PARTNER: OSCam v%s, build r%s (%s) [EXT,SID,SLP]", CS_VERSION,
 						 CS_SVN_VERSION, CS_TARGET);
-				cs_log("send own oscam svn_version over cccam ext: OSCam v%s, build r%s (%s) [EXT,SID,SLP]", CS_VERSION, CS_SVN_VERSION, CS_TARGET, username(cl));
+				cs_debug_mask(D_TRACE, "send own oscam svn_version over cccam ext: OSCam v%s, build r%s (%s) [EXT,SID,SLP]", CS_VERSION, CS_SVN_VERSION, CS_TARGET);
 				cc_cmd_send(cl, token, strlen((char *)token) + 1, MSG_CW_NOK1);
 			}
 
