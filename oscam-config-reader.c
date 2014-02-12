@@ -930,12 +930,13 @@ static void reader_fixups_fn(void *var)
 	{
 #ifdef CS_CACHEEX
 		if(rdr && rdr->cacheex.mode>1)
-			{ rdr->keepalive = 1; } //with cacheex, it is required!
+			{ rdr->keepalive = 1; }   //with cacheex, it is required!
 #endif
 		if(rdr->keepalive)
-			{ rdr->tcp_rto = 60; } //we cannot check on rto before send keepalive (each 30s), so set rto > 30
+			{ rdr->tcp_rto = 60; }	  //we cannot check on rto before send keepalive (each 30s), so set rto > 30
 	}
 }
+
 
 #define OFS(X) offsetof(struct s_reader, X)
 #define SIZEOF(X) sizeof(((struct s_reader *)0)->X)
@@ -943,44 +944,43 @@ static void reader_fixups_fn(void *var)
 static const struct config_list reader_opts[] =
 {
 	DEF_OPT_FIXUP_FUNC(reader_fixups_fn),
-	DEF_OPT_FUNC("label"			, 0,				reader_label_fn),
+	DEF_OPT_FUNC("label"                , 0,                            reader_label_fn),
 #ifdef WEBIF
-	DEF_OPT_STR("description"		, OFS(description),		NULL),
+	DEF_OPT_STR("description"           , OFS(description),             NULL),
 #endif
-	DEF_OPT_INT8("enable"			, OFS(enable),			1),
-	DEF_OPT_FUNC("protocol"			, 0,				protocol_fn),
-	DEF_OPT_FUNC("device"			, 0,				device_fn),
-	DEF_OPT_HEX("key"			, OFS(ncd_key),			SIZEOF(ncd_key)),
-	DEF_OPT_SSTR("user"			, OFS(r_usr),			"",SIZEOF(r_usr)),
-	DEF_OPT_SSTR("password"			, OFS(r_pwd),			"", SIZEOF(r_pwd)),
-	DEF_OPT_SSTR("pincode"			, OFS(pincode),			"none", SIZEOF(pincode)),
+	DEF_OPT_INT8("enable"               , OFS(enable),                  1),
+	DEF_OPT_FUNC("protocol"             , 0,                            protocol_fn),
+	DEF_OPT_FUNC("device"               , 0,                            device_fn),
+	DEF_OPT_HEX("key"                   , OFS(ncd_key),                 SIZEOF(ncd_key)),
+	DEF_OPT_SSTR("user"                 , OFS(r_usr),                   "", SIZEOF(r_usr)),
+	DEF_OPT_SSTR("password"             , OFS(r_pwd),                   "", SIZEOF(r_pwd)),
+	DEF_OPT_SSTR("pincode"              , OFS(pincode),                 "none", SIZEOF(pincode)),
 #ifdef MODULE_GBOX
-	DEF_OPT_INT8("gbox_max_distance"	, OFS(gbox_maxdist),		DEFAULT_GBOX_MAX_DIST),
-	DEF_OPT_INT8("gbox_max_ecm_send"	, OFS(gbox_maxecmsend),		DEFAULT_GBOX_MAX_ECM_SEND),
-	DEF_OPT_INT8("gbox_reshare"		, OFS(gbox_reshare),		0),
+	DEF_OPT_INT8("gbox_max_distance"    , OFS(gbox_maxdist),            DEFAULT_GBOX_MAX_DIST),
+	DEF_OPT_INT8("gbox_max_ecm_send"    , OFS(gbox_maxecmsend),         DEFAULT_GBOX_MAX_ECM_SEND),
+	DEF_OPT_INT8("gbox_reshare"         , OFS(gbox_reshare),            0),
 #endif
-	DEF_OPT_STR("readnano"			, OFS(emmfile),			NULL),
-	DEF_OPT_FUNC("services"			, OFS(sidtabs),			reader_services_fn),
-	DEF_OPT_FUNC("lb_whitelist_services"	, OFS(lb_sidtabs),		reader_lb_services_fn),
-	DEF_OPT_INT32("inactivitytimeout"	, OFS(tcp_ito),			DEFAULT_INACTIVITYTIMEOUT),
-	DEF_OPT_INT32("reconnecttimeout"	, OFS(tcp_rto),			DEFAULT_TCP_RECONNECT_TIMEOUT),
-	DEF_OPT_INT32("reconnectdelay"		, OFS(tcp_reconnect_delay),	60000),
-	DEF_OPT_INT32("resetcycle"		, OFS(resetcycle),		0),
-	DEF_OPT_INT8("disableserverfilter"	, OFS(ncd_disable_server_filt), 0),
-	DEF_OPT_INT8("connectoninit"		, OFS(ncd_connect_on_init),	0),
-	DEF_OPT_INT8("keepalive"		, OFS(keepalive),		0),
-	DEF_OPT_UINT8("sendoscamversion"	, OFS(send_oscam_version),	1),
-	DEF_OPT_INT8("smargopatch"		, OFS(smargopatch),		0),
-	DEF_OPT_INT8("autospeed"		, OFS(autospeed),		1),
-	DEF_OPT_UINT8("sc8in1_dtrrts_patch"	, OFS(sc8in1_dtrrts_patch),	0),
-	DEF_OPT_INT8("fallback"			, OFS(fallback),		0),
-	DEF_OPT_FUNC_X("fallback_percaid"	, OFS(fallback_percaid),	ftab_fn, FTAB_READER | FTAB_FBPCAID),
+	DEF_OPT_STR("readnano"              , OFS(emmfile),                 NULL),
+	DEF_OPT_FUNC("services"             , OFS(sidtabs),                 reader_services_fn),
+	DEF_OPT_FUNC("lb_whitelist_services"    , OFS(lb_sidtabs),              reader_lb_services_fn),
+	DEF_OPT_INT32("inactivitytimeout"   , OFS(tcp_ito),                 DEFAULT_INACTIVITYTIMEOUT),
+	DEF_OPT_INT32("reconnecttimeout"    , OFS(tcp_rto),                 DEFAULT_TCP_RECONNECT_TIMEOUT),
+	DEF_OPT_INT32("reconnectdelay"		, OFS(tcp_reconnect_delay),		60000),
+	DEF_OPT_INT32("resetcycle"          , OFS(resetcycle),              0),
+	DEF_OPT_INT8("disableserverfilter"  , OFS(ncd_disable_server_filt), 0),
+	DEF_OPT_INT8("connectoninit"        , OFS(ncd_connect_on_init),     0),
+	DEF_OPT_INT8("keepalive"			, OFS(keepalive),				0),
+	DEF_OPT_INT8("smargopatch"          , OFS(smargopatch),             0),
+	DEF_OPT_INT8("autospeed"            , OFS(autospeed),               1),
+	DEF_OPT_UINT8("sc8in1_dtrrts_patch" , OFS(sc8in1_dtrrts_patch),     0),
+	DEF_OPT_INT8("fallback"             , OFS(fallback),                0),
+	DEF_OPT_FUNC_X("fallback_percaid"   , OFS(fallback_percaid),        ftab_fn, FTAB_READER | FTAB_FBPCAID),
 #ifdef CS_CACHEEX
-	DEF_OPT_INT8("cacheex"			, OFS(cacheex.mode),		0),
-	DEF_OPT_INT8("cacheex_maxhop"		, OFS(cacheex.maxhop),		0),
-	DEF_OPT_FUNC("cacheex_ecm_filter"	, OFS(cacheex.filter_caidtab),	cacheex_hitvaluetab_fn),
-	DEF_OPT_UINT8("cacheex_allow_request"	, OFS(cacheex.allow_request),	0),
-	DEF_OPT_UINT8("cacheex_drop_csp"	, OFS(cacheex.drop_csp),	0),
+	DEF_OPT_INT8("cacheex"              , OFS(cacheex.mode),            0),
+	DEF_OPT_INT8("cacheex_maxhop"       , OFS(cacheex.maxhop),          0),
+	DEF_OPT_FUNC("cacheex_ecm_filter"       , OFS(cacheex.filter_caidtab),  cacheex_hitvaluetab_fn),
+	DEF_OPT_UINT8("cacheex_allow_request"   , OFS(cacheex.allow_request),   0),
+	DEF_OPT_UINT8("cacheex_drop_csp"        , OFS(cacheex.drop_csp),        0),
 #endif
 	DEF_OPT_FUNC("caid"                 , OFS(ctab),                    reader_caid_fn),
 	DEF_OPT_FUNC("atr"                  , 0,                            atr_fn),

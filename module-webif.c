@@ -1509,8 +1509,6 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	// keepalive
 	tpl_addVar(vars, TPLADD, "RDRKEEPALIVE", (rdr->keepalive == 1) ? "checked" : "");
 
-	tpl_addVar(vars, TPLADD, "RDRSENDOSCAMVERSION", (rdr->send_oscam_version == 1) ? "checked" : "");
-
 	// Connect on init (newcamd only)
 	if(!apicall)
 	{
@@ -2600,11 +2598,6 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	{
 		tpl_printf(vars, TPLADD, "KEEPALIVEVALUE", "%d", account->ncd_keepalive);
 	}
-	if(!apicall)
-	{
-		if(account->send_oscam_version)
-			{ tpl_addVar(vars, TPLADD, "SENDOSCAMVERSION", "selected"); }
-	}
 
 #ifdef CS_ANTICASC
 	tpl_printf(vars, TPLADD, "AC_USERS", "%d", account->ac_users);
@@ -2712,9 +2705,9 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 					tpl_addVar(vars, TPLADD, "CCA", (char *)proto);
 					tpl_addVar(vars, TPLADD, "CCB", cc->remote_version);
 					tpl_addVar(vars, TPLADD, "CCC", cc->remote_build);
-					tpl_addVar(vars, TPLADD, "CCD", cc->extended_mode ? cl->remote_oscam_svn : "");
+					tpl_addVar(vars, TPLADD, "CCD", cc->extended_mode ? cc->remote_oscam : "");
 					tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTOCCCAMPIC"));
-					tpl_addVar(vars, TPLADD, "CLIENTPROTOTITLE", cc->extended_mode ? cl->remote_oscam_svn : "");
+					tpl_addVar(vars, TPLADD, "CLIENTPROTOTITLE", cc->extended_mode ? cc->remote_oscam : "");
 				}
 				else
 				{
@@ -2726,7 +2719,7 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 			else
 			{
 				tpl_printf(vars, TPLADDONCE, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
-				tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", cc->extended_mode ? cl->remote_oscam_svn : "");
+				tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", cc->extended_mode ? cc->remote_oscam : "");
 			}
 		}
 		return;
@@ -2740,18 +2733,18 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 		{
 			tpl_addVar(vars, TPLADD, "OTHER", (char *)proto);
 			tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTOOTHERPIC"));
-			tpl_addVar(vars, TPLADD, "CLIENTPROTOTITLE",  cl->remote_oscam_svn);
+			tpl_addVar(vars, TPLADD, "CLIENTPROTOTITLE", "");
 		}
 		else
 		{
 			tpl_addVar(vars, TPLADD, "CLIENTPROTO", (char *)proto);
-			tpl_addVar(vars, TPLADD, "CLIENTPROTOTITLE",  cl->remote_oscam_svn);
+			tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "missing icon: IC_%s.tpl", proto);
 		}
 	}
 	else
 	{
 		tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", (char *)proto);
-		tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE",  cl->remote_oscam_svn);
+		tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
 	}
 }
 

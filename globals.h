@@ -1096,7 +1096,6 @@ struct s_client
 #endif
 
 	void            *module_data;       // private module data
-	char			remote_oscam_svn[128];
 
 	struct s_client *next;                          //make client a linked list
 	struct s_client *nexthashed;
@@ -1196,7 +1195,6 @@ struct s_emmlen_range
 struct s_reader                                     //contains device info, reader info and card info
 {
 	uint8_t         keepalive;
-	uint8_t			send_oscam_version;
 	uint8_t     changes_since_shareupdate;
 	int32_t         resetcycle;                     // ECM until reset
 	int32_t         resetcounter;                   // actual count
@@ -1415,7 +1413,6 @@ struct s_auth
 {
 	char            usr[64];
 	char            *pwd;
-	uint8_t			send_oscam_version;
 #ifdef WEBIF
 	char            *description;
 #endif
