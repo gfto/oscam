@@ -1525,7 +1525,7 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
 
 		for(i = 0, n = 0; i < cfg.max_pending && n == 0; i++)
 		{
-			if(!cl->reader->disablecrccws && cl->ecmtask[i].gbox_crc == crc)
+			if(cl->ecmtask[i].gbox_crc == crc)
 			{
 				id_card = data[10] << 8 | data[11];
 				gbox_add_good_card(cl, id_card, cl->ecmtask[i].caid, cl->ecmtask[i].prid, cl->ecmtask[i].srvid);
@@ -1536,24 +1536,10 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
 				cl->ecmtask[i].gbox_ecm_ok = 2;
 				memcpy(ea.cw, dcw, 16);
 				*rc = 1;
-				return cl->ecmtask[i].idx;
-			}
-			else
-			{
-				id_card = data[10] << 8 | data[11];
-				gbox_add_good_card(cl, id_card, cl->ecmtask[i].caid, cl->ecmtask[i].prid, cl->ecmtask[i].srvid);
-				if(cl->ecmtask[i].gbox_ecm_ok == 0 || cl->ecmtask[i].gbox_ecm_ok == 2)
-					{ return -1; }
-				struct s_ecm_answer ea;
-				memset(&ea, 0, sizeof(struct s_ecm_answer));
-				cl->ecmtask[i].gbox_ecm_ok = 2;
-				memcpy(ea.cw, dcw, 16);
-				*rc = 1;
-				cs_debug_mask(D_READER,"WARNING: gbox dcw crc disabled by [reader] config, rcvd-crc=%08X  calc-crc=%08X",crc, cl->ecmtask[i].gbox_crc);
 				return cl->ecmtask[i].idx;
 			}
 		}
-		cs_debug_mask(D_READER, "gbox: received corrupted dcw");
+		cs_debug_mask(D_READER, "gbox: no task found for crc=%08x", crc);
 	}
 	return -1;
 }
