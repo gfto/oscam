@@ -842,8 +842,8 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 	}  // error my pass
 	else
 	{
-		cs_log("gbox: ATTACK ALERT: proxy %s:%d", cs_inet_ntoa(cli->ip), cli->reader->r_port);
-		cs_log("received data, peer : %04x   data: %s", cli->gbox_peer_id, cs_hexdump(0, data, n, tmp, sizeof(tmp)));
+		cs_log("gbox: ATTACK ALERT from IP %s", cs_inet_ntoa(cli->ip));
+		cs_log("received data, data: %s", cs_hexdump(0, data, n, tmp, sizeof(tmp)));
 		return -1;
 		//continue; // next client
 	}
