@@ -730,6 +730,7 @@ int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 	case MSG_GOODBYE:
 		//needfix what to do after Goodbye?
 		//suspect: we get goodbye as signal of SID not found
+		cs_debug_mask(D_READER, "gbox: received goodbye message from %s\n",username(cli));	
 		break;
 	case MSG_HELLO1:
 	case MSG_HELLO:
@@ -827,8 +828,11 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 			}
 		} else 
 		{
+			uint8_t id_offset = 39;
+			if (peer && (peer->gbox.minor_version == 0x30))	//mbox CW message is corrupt
+				{ id_offset++; }
 			// if my pass ok verify CW | pass to peer
-			if((data[39] != ((local_gbox.id >> 8) & 0xff)) || (data[40] != (local_gbox.id & 0xff)))
+			if((data[id_offset] != ((local_gbox.id >> 8) & 0xff)) || (data[id_offset+1] != (local_gbox.id & 0xff)))
 			{
 				cs_log("gbox peer: %04X sends CW for other than my id: %04X", cli->gbox_peer_id, local_gbox.id);
 				return -1;
