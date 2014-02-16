@@ -861,7 +861,7 @@ char *mk_t_allowedprotocols(struct s_auth *account)
 		{ return ""; }
 
 	int16_t i, tmp = 1, pos = 0, needed = 255, tagcnt;
-	char *tag[] = {"camd33", "camd35", "cs378x", "newcamd", "cccam", "gbox", "radegast", "dvbapi", "constcw", "serial"};
+	char *tag[] = {"camd33", "cs357x", "cs378x", "newcamd", "cccam", "gbox", "radegast", "dvbapi", "constcw", "serial"};
 	char *value, *dot = "";
 
 	if(!cs_malloc(&value, needed))

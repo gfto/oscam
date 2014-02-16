@@ -424,7 +424,7 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 	if(!buf)
 	{
-		cs_log("camd35: src_data missing.");
+		cs_log("%s: src_data missing.",client->reader->ph.desc);
 		return;
 	}
 
@@ -999,7 +999,7 @@ int32_t camd35_client_init(struct s_client *cl)
 	aes_set_key(&cl->aes_keys, (char *)MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp));
 	cl->crypted=1;
 
-	cs_log("camd35 proxy %s:%d", cl->reader->device, cl->reader->r_port);
+	cs_log("%s proxy %s:%d", cl->reader->ph.desc, cl->reader->device, cl->reader->r_port);
 
 	send_keepalive(cl);
 
@@ -1051,7 +1051,7 @@ static void *camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 		{
 			client->reader->last_s = time(NULL); // fixup: last send is now (if client is only sending emms connection would be dropped!)
 		}
-		cs_log("CAMD35_SERVER last = %d, last_s = %d, last_g = %d", (int) client->last, (int) client->reader->last_s, (int) client->reader->last_g);
+		cs_log("%s_SERVER last = %d, last_s = %d, last_g = %d", client->reader->ph.desc, (int) client->last, (int) client->reader->last_s, (int) client->reader->last_g);
 	}
 	client->last = time(NULL); // last client action is now
 
@@ -1084,7 +1084,7 @@ static void *camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 		send_keepalive_answer(client);
 		break;
 	default:
-		cs_log("unknown camd35 command from %s! (%d) n=%d", username(client), mbuf[0], n);
+		cs_log("unknown %s command from %s! (%d) n=%d", client->reader->ph.desc, username(client), mbuf[0], n);
 	}
 
 	return NULL; //to prevent compiler message
@@ -1277,7 +1277,7 @@ void module_camd35(struct s_module *ph)
 	ph->ptab.nports = 1;
 	ph->ptab.ports[0].s_port = cfg.c35_port;
 
-	ph->desc = "camd35";
+	ph->desc = "cs357x";
 	ph->type = MOD_CONN_UDP;
 	ph->large_ecm_support = 1;
 	ph->listenertype = LIS_CAMD35UDP;
