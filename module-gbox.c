@@ -635,6 +635,12 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 	return 0;
 }
 
+static int8_t is_blocked_peer(uint16_t peer)
+{
+	if (peer == NO_GBOX_ID) { return 1; }
+	else { return 0; }
+} 
+
 static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 {
 	struct gbox_peer *peer;
@@ -650,6 +656,15 @@ static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 
 	// GBOX_MAX_HOPS not violated
 	if (data[n - 15] + 1 > GBOX_MAXHOPS) { return -1; }
+
+	//Check for blocked peers
+	uint16_t requesting_peer = data[(((data[19] & 0x0f) << 8) | data[20]) + 21] << 8 | 
+				   data[(((data[19] & 0x0f) << 8) | data[20]) + 22];
+	if (is_blocked_peer(requesting_peer)) 
+	{ 
+		cs_debug_mask(D_READER, "ECM from peer %04X blocked", requesting_peer);
+		return -1;		
+	}			   
 
 	ECM_REQUEST *er;
 	if(!(er = get_ecmtask())) { return -1; }
@@ -677,11 +692,10 @@ static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 	er->pid = data[10] << 8 | data[11];
 	er->srvid = data[12] << 8 | data[13];
 
-	int32_t adr_caid_1 = (((data[19] & 0x0f) << 8) | data[20]) + 26;
-	if(data[adr_caid_1] == 0x05)
-		{ er->caid = (data[adr_caid_1] << 8); }
+	if(ecm[er->ecmlen + 5] == 0x05)
+		{ er->caid = (ecm[er->ecmlen + 5] << 8); }
 	else
-		{ er->caid = (data[adr_caid_1] << 8 | data[adr_caid_1 + 1]); }
+		{ er->caid = (ecm[er->ecmlen + 5] << 8 | ecm[er->ecmlen + 6]); }
 
 //	ei->extra = data[14] << 8 | data[15];
 	memcpy(er->ecm, data + 18, er->ecmlen);
