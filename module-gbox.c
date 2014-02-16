@@ -47,6 +47,8 @@
 #define GBOX_STAT_HELLO4	4
 
 #define RECEIVE_BUFFER_SIZE	1024
+#define MIN_GBOX_MESSAGE_LENGTH	10 //CMD + pw + pw. TODO: Check if is really min
+#define MIN_ECM_LENGTH		8
 
 #define LOCAL_GBOX_MAJOR_VERSION	0x02
 #define LOCAL_GBOX_MINOR_VERSION	0x25
@@ -643,8 +645,8 @@ static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 	if (!peer || !peer->my_user) { return -1; }
 	cl = peer->my_user;
 
-	// No ECMs with length < 8 expected
-	if ((((data[19] & 0x0f) << 8) | data[20]) < 8) { return -1; }
+	// No ECMs with length < MIN_LENGTH expected
+	if ((((data[19] & 0x0f) << 8) | data[20]) < MIN_ECM_LENGTH) { return -1; }
 
 	// GBOX_MAX_HOPS not violated
 	if (data[n - 15] + 1 > GBOX_MAXHOPS) { return -1; }
@@ -1167,19 +1169,21 @@ static int32_t gbox_recv(struct s_client *cli, uchar *buf, int32_t l)
 	uchar data[RECEIVE_BUFFER_SIZE];
 	int32_t n = l;
 
-	if(!cli->udp_fd || n > RECEIVE_BUFFER_SIZE) { return -1; }
-	if(cli->is_udp && cli->typ == 'c')
+	if(cli->udp_fd && cli->is_udp && cli->typ == 'c')
 	{
-		n = recv_from_udpipe(buf);
-		memcpy(&data[0], buf, n);
+		n = recv_from_udpipe(buf);		
+		if (n > MIN_GBOX_MESSAGE_LENGTH && n < RECEIVE_BUFFER_SIZE) //protect against too short or too long messages
+		{
+			memcpy(&data[0], buf, n);
+			gbox_check_header(cli, &data[0], n);
 
-		gbox_check_header(cli, &data[0], n);
-
-		//clients may timeout - dettach from peer's gbox/reader
-		cli->gbox = NULL;
-		cli->reader = NULL;
+			//clients may timeout - dettach from peer's gbox/reader
+			cli->gbox = NULL;
+			cli->reader = NULL;
+			return 0;	
+		}	
 	}
-	return 0;
+	return -1;
 }
 
 static void gbox_send_dcw(struct s_client *cl, ECM_REQUEST *er)
