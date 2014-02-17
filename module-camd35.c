@@ -1084,7 +1084,7 @@ static void *camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 		send_keepalive_answer(client);
 		break;
 	default:
-		cs_log("unknown %s command from %s! (%d) n=%d", client->reader->ph.desc, username(client), mbuf[0], n);
+		cs_log("unknown [cs357x/cs378x] command from %s! (%d) n=%d", username(client), mbuf[0], n);
 	}
 
 	return NULL; //to prevent compiler message
