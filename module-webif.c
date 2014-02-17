@@ -2410,7 +2410,7 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	if(!apicall)
 	{
 		if(account->disabled)
-			{ tpl_addVar(vars, TPLADD, "DISABLEDCHECKED", "selected"); }
+			{ tpl_addVar(vars, TPLADD, "DISABLEDCHECKED", "checked"); }
 	}
 	else
 	{
@@ -2592,7 +2592,7 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	if(!apicall)
 	{
 		if(account->ncd_keepalive)
-			{ tpl_addVar(vars, TPLADD, "KEEPALIVE", "selected"); }
+			{ tpl_addVar(vars, TPLADD, "KEEPALIVE", "checked"); }
 	}
 	else
 	{
