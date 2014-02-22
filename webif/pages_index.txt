@@ -11,13 +11,12 @@ APIHEADER                     api.xml/header.xml
 JSONHEADER                    api.json/header.json
 CSS                           include/css.css
 JSCRIPT                       include/jscript.js
-JQUERY                        include/jquery.js
 PROTONEWCAMDPIC               include/protonewcamdpic.html
 PROTOCCCAMPIC                 include/protocccampic.html
 PROTOOTHERPIC                 include/protootherpic.html
-TOUCH_CSS                     touch/css.css                                            TOUCH
-TOUCH_STATUS                  touch/status.html                                        TOUCH
-TOUCH_JSCRIPT                 touch/jscript.js                                         TOUCH
+TOUCH_CSS                     touch/css.css                                               TOUCH
+TOUCH_STATUS                  touch/status.html                                           TOUCH
+TOUCH_JSCRIPT                 touch/jscript.js                                            TOUCH
 APIERROR                      api.xml/error.xml
 APICONFIRMATION               api.xml/confirmation.xml
 FOOTER                        include/footer.html
@@ -236,3 +235,23 @@ ICHID                         images/ICHID.svg
 ICRES                         images/ICRES.svg
 ICSPAC                        images/ICSPAC.gif
 ICEMM                         images/ICEMM.svg
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
