@@ -97,6 +97,9 @@ a:hover span {
 	font-size:18px;
 	font-weight:700
 }
+li.menu a, li.menu_selected a {
+	text-decoration:none
+}
 
 /* ******** 6. SUBNAV */
 
@@ -116,6 +119,9 @@ a:hover span {
 	padding-top:0;
 	padding-bottom:0;
 	font-size:14px
+}
+li.configmenu a, li.configmenu_selected a {
+	text-decoration:none
 }
 
 /* ******** 7. TABLE */
@@ -363,6 +369,10 @@ td.usercol25 {
 	text-align:center
 }
 
+td.statuscol14 a, td.statuscol16 a, td.subheadline a {
+	text-decoration:none
+}
+
 /* in readerconfig_sidokbit.html */
 td.servicescol1, td.servicescol2, td.servicescol3 {
 	width:30%;
@@ -458,7 +468,7 @@ div.info {
 /* debugmenu	- status_sdebug.html 
  * logmenu		- file.html
 */
-div.debugmenu,div.logmenu {
+div.debugmenu, div.logmenu {
 	line-height:20px
 }
 
@@ -504,7 +514,7 @@ select {
 /* settings for first option in select 
  * otherdropdown	- in script.html, menu.html
  */
-#otherdropdown option:first-child{
+#otherdropdown option:first-child {
     display:none
 }
 
@@ -624,9 +634,6 @@ path.graph_grid {stroke-opacity:0.5;}
 	margin-top:15px
 }
 
-li.menu a,li.configmenu a,li.menu_selected a,li.configmenu_selected a,td.statuscol14 a,td.statuscol16 a,td.subheadline a{text-decoration:none}
-
-
 /* ================================= COLORS ================================= */
 /* BASIC SETTINGS */
 
@@ -675,18 +682,35 @@ table.status {
 }
 
 /* TABLE TR */
-tr.online td#lastchannel.usercol6{background-color:#949494;color:#FFF}
-tr.online td{background-color:#BFA}
-tr.expired td{background-color:#FBA}
-tr.connected td{background-color:#FFA}
-tr.disabled td:first-child img.icon,tr.disabledreader td:first-child img.icon{background-color:#0A0}
-tr.a td{background-color:#3F0}
-tr.c td{background-color:#F1F5E6}
-tr.e_valid td{background-color:#E6FEBF}
-tr.e_expired td{background-color:#FFF3E7}
-tr.s td,tr.l td,tr.n td,tr.h td{background-color:#E1E1EF}
-tr.r td,span.e_expired{background-color:#FFF3E7}
-tr.p td,tr.scanusbsubhead td{background-color:#FDFBE1}
+tr.online td#lastchannel.usercol6 {background-color:#949494;color:#FFF}
+tr.online td {background-color:#BFA}
+tr.offline td {}
+tr.expired td {background-color:#FBA}
+tr.connected td {background-color:#FFA}
+tr.disabled td {}
+
+tr.disabled td:first-child img.icon,
+tr.disabledreader td:first-child img.icon {
+	background-color:#0A0
+}
+
+tr.enabledreader {}
+tr.disabledreader {}
+
+tr.a td {background-color:#3F0}
+tr.c td {background-color:#F1F5E6}
+tr.e_valid td {background-color:#E6FEBF}
+tr.e_expired td {background-color:#FFF3E7}
+
+tr.s td, 
+tr.l td,
+tr.n td,
+tr.h td {
+	background-color:#E1E1EF
+}
+
+tr.r td, span.e_expired {background-color:#FFF3E7}
+tr.p td, tr.scanusbsubhead td {background-color:#FDFBE1}
 
 /* TABLE TH */
 th {
