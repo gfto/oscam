@@ -411,6 +411,7 @@ void send_file(FILE *f, char *filename, char *subdir, time_t modifiedheader, uin
 	char path[255];
 	char *CSS = NULL;
 	char *JSCRIPT = NULL;
+	char *JQUERY = NULL;
 	char *TOUCH_CSS = NULL;
 	char *TOUCH_JSCRIPT = NULL;
 
@@ -433,6 +434,16 @@ void send_file(FILE *f, char *filename, char *subdir, time_t modifiedheader, uin
 		}
 		mimetype = "text/javascript";
 		filen = 2;
+	}
+	else if(!strcmp(filename, "JQ"))
+	{
+		filename = cfg.http_jscript ? cfg.http_jscript : "";
+		if(subdir && strlen(subdir) > 0)
+		{
+			filename = tpl_getFilePathInSubdir(cfg.http_tpl ? cfg.http_tpl : "", subdir, "jquery", ".js", path, 255);
+		}
+		mimetype = "text/javascript";
+		filen = 3;
 	}
 
 	if(strlen(filename) > 0 && file_exists(filename))
@@ -485,22 +496,23 @@ void send_file(FILE *f, char *filename, char *subdir, time_t modifiedheader, uin
 	{
 		CSS = tpl_getUnparsedTpl("CSS", 1, "");
 		JSCRIPT = tpl_getUnparsedTpl("JSCRIPT", 1, "");
+		JQUERY = tpl_getUnparsedTpl("JQUERY", 1, "");
 #ifdef TOUCH
 		TOUCH_CSS = tpl_getUnparsedTpl("TOUCH_CSS", 1, "");
 		TOUCH_JSCRIPT = tpl_getUnparsedTpl("TOUCH_JSCRIPT", 1, "");
-		char *res_tpl = !subdir || strcmp(subdir, TOUCH_SUBDIR)
-						? (filen == 1 ? CSS : JSCRIPT)
-							: (filen == 1 ? TOUCH_CSS : TOUCH_JSCRIPT);
-		if(strlen(res_tpl) > 0) { result = res_tpl; }
+		if(!subdir || strcmp(subdir, TOUCH_SUBDIR)) {
+			if( filen == 1 && strlen(CSS)){ result = CSS; }
+			else if ( filen == 2 && strlen(JSCRIPT)){ result = JSCRIPT; }
+			else if ( filen == 3 && strlen(JQUERY)){ result = JQUERY; }
+		} else {
+			if( filen == 1 && strlen(TOUCH_CSS)){ result = TOUCH_CSS; }
+			else if ( filen == 2 && strlen(TOUCH_JSCRIPT)){ result = TOUCH_JSCRIPT; }
+			else if ( filen == 3 && strlen(JQUERY)){ result = JQUERY; }
+ 		}
 #else
-		if(filen == 1 && strlen(CSS) > 0)
-		{
-			result = CSS;
-		}
-		else if(filen == 2 && strlen(JSCRIPT) > 0)
-		{
-			result = JSCRIPT;
-		}
+		if(filen == 1 && strlen(CSS) > 0){ result = CSS;}
+		else if(filen == 2 && strlen(JSCRIPT) > 0){result = JSCRIPT;}
+		else if(filen == 3 && strlen(JQUERY) > 0){result = JQUERY;}
 #endif
 		moddate = first_client->login;
 	}
@@ -519,6 +531,7 @@ void send_file(FILE *f, char *filename, char *subdir, time_t modifiedheader, uin
 	if(allocated) { NULLFREE(allocated); }
 	NULLFREE(CSS);
 	NULLFREE(JSCRIPT);
+	NULLFREE(JQUERY);
 	NULLFREE(TOUCH_CSS);
 	NULLFREE(TOUCH_JSCRIPT);
 }

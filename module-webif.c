@@ -6541,6 +6541,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			"/emm_running.html",
 			"/robots.txt",
 			"/ghttp.html",
+			"/jquery.js",
 		};
 
 		int32_t pagescnt = sizeof(pages) / sizeof(char *); // Calculate the amount of items in array
@@ -6725,6 +6726,10 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 		{
 			send_file(f, "JS", subdir, modifiedheader, etagheader, extraheader);
 		}
+		else if(pgidx == 29)
+		{
+			send_file(f, "JQ", subdir, modifiedheader, etagheader, extraheader);
+		}
 		else
 		{
 			time_t t;
@@ -6887,6 +6892,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			case 28:
 				result = send_oscam_ghttp(vars, &params, 0);
 				break;
+				//case  29: jquery.js file
 #endif
 			default:
 				result = send_oscam_status(vars, &params, 0);
