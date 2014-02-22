@@ -1239,11 +1239,11 @@ static void gbox_send_dcw(struct s_client *cl, ECM_REQUEST *er)
 	buf[35] = ere->gbox_caid & 0xff;	//CAID
 	buf[36] = ere->gbox_slot;  		//Slot
 	buf[37] = ere->gbox_prid >> 8;		//ProvID
-	buf[38] = ere->gbox_prid & 0xff;	//ProvID
+	buf[38] = ere->gbox_prid & 0xff;	//ProvID; //NEEDFIX: CHID / 0000
 	buf[39] = ere->gbox_peer >> 8;		//Target peer
 	buf[40] = ere->gbox_peer & 0xff;	//Target peer
-	buf[41] = 0x04;           		//don't know what this is
-	buf[42] = 0x33;           		//don't know what this is
+	buf[41] = 0x01;           		//card / cache / emu; NEEDFIX: set later properly
+	buf[42] = 0x30;           		//1st nibble unknown / 2nd nibble distance
 	buf[43] = ere->gbox_unknown;		//meaning unknown, copied from ECM request
 
 	//This copies the routing info from ECM to answer.
@@ -1541,9 +1541,10 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
 		*rc = 1;
 		memcpy(dcw, data + 14, 16);
 		uint32_t crc = data[30] << 24 | data[31] << 16 | data[32] << 8 | data[33];
-		char tmp[16];
-		cs_debug_mask(D_READER, "gbox: received cws=%s, peer=%04x, ecm_pid=%04x, sid=%04x, crc=%08x",
-					  cs_hexdump(0, dcw, 16, tmp, sizeof(tmp)), data[10] << 8 | data[11], data[6] << 8 | data[7], data[8] << 8 | data[9], crc);
+		char tmp[32];
+		cs_debug_mask(D_READER, "gbox: received cws=%s, peer=%04x, ecm_pid=%04x, sid=%04x, crc=%08x, type=%02x, dist=%01x, unkn1=%01x, unkn2=%02x, chid/provid=%04x",
+					  cs_hexdump(0, dcw, 32, tmp, sizeof(tmp)),  
+					  data[10] << 8 | data[11], data[6] << 8 | data[7], data[8] << 8 | data[9], crc, data[41], data[42] & 0x0f, data[42] >> 4, data[43], data[37] << 8 | data[38]);
 
 		for(i = 0, n = 0; i < cfg.max_pending && n == 0; i++)
 		{
