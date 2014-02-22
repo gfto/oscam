@@ -419,6 +419,20 @@ char *gbox_username(struct s_client *client)
 	return "anonymous";
 }
 
+static int8_t gbox_disconnect_double_peers(struct s_client *cli)
+{
+	struct s_client *cl;
+	for(cl = first_client; cl; cl = cl->next)
+	{
+		if (cl->typ == 'c' && cl->gbox_peer_id == cli->gbox_peer_id && cl != cli)
+		{
+			cs_debug_mask(D_READER, "gbox: disconnected double client %s",username(cl));
+			cs_disconnect_client(cl);		
+		}
+	}
+	return 0;
+}
+
 static int8_t gbox_auth_client(struct s_client *cli, uchar *gbox_password)
 {
 	uint16_t gbox_id = gbox_convert_password_to_id(gbox_password);
@@ -439,6 +453,7 @@ static int8_t gbox_auth_client(struct s_client *cli, uchar *gbox_password)
 		struct s_auth *account = get_account_by_name(gbox_username(cl));
 		if(account)
 		{
+			gbox_disconnect_double_peers(cli);
 			cs_auth_client(cli, account, NULL);
 			cli->account = account;
 			cli->grp = account->grp;
