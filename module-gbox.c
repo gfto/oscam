@@ -126,7 +126,7 @@ static void    gbox_init_ecm_request_ext(struct gbox_ecm_request_ext *ere);
 static int32_t gbox_client_init(struct s_client *cli);
 static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l);
 static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n);
-static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, uchar *data, int32_t UNUSED(n));
+static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, uchar *data, int32_t n);
 static int32_t gbox_checkcode_recv(struct s_client *cli, uchar *checkcode);
 static int32_t gbox_decode_cmd(uchar *buf);
 static uint8_t gbox_compare_pw(uchar *my_pw, uchar *rec_pw);
@@ -773,7 +773,7 @@ int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 		break;
 	case MSG_CW:
 		cli->last = time((time_t *)0);
-		idx = gbox_recv_chk(cli, dcw, &rc1, data, rc1);
+		idx = gbox_recv_chk(cli, dcw, &rc1, data, n);
 		if(idx < 0) { break; }  // no dcw received
 		if(!idx) { idx = cli->last_idx; }
 		cli->reader->last_g = time((time_t *)0); // for reconnect timeout
@@ -859,11 +859,9 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 			}
 		} else 
 		{
-			uint8_t id_offset = 39;
-			if (peer && (peer->gbox.minor_version == 0x30))	//mbox CW message is corrupt
-				{ id_offset++; }
 			// if my pass ok verify CW | pass to peer
-			if((data[id_offset] != ((local_gbox.id >> 8) & 0xff)) || (data[id_offset+1] != (local_gbox.id & 0xff)))
+			if(((data[39] != ((local_gbox.id >> 8) & 0xff)) || (data[40] != (local_gbox.id & 0xff))) &&
+				((data[40] != ((local_gbox.id >> 8) & 0xff)) || (data[41] != (local_gbox.id & 0xff)))) //some mbox CW messages are corrupt
 			{
 				cs_log("gbox peer: %04X sends CW for other than my id: %04X", cli->gbox_peer_id, local_gbox.id);
 				return -1;
@@ -1538,30 +1536,30 @@ static int32_t gbox_client_init(struct s_client *cli)
 	return 0;
 }
 
-static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, uchar *data, int32_t UNUSED(n))
+static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, uchar *data, int32_t n)
 {
-	uint16_t id_card = 0;
-	struct s_client *cl;
-	if(cli->typ != 'p')
+	if(gbox_decode_cmd(data) == MSG_CW && n > 43)
 	{
-		cl = switch_client_proxy(cli, cli->gbox_peer_id);
-	}
-	else
-	{
-		cl = cli;
-	}
-	if(gbox_decode_cmd(data) == MSG_CW)
-	{
-		int i, n;
+		int i, k;
+		uint16_t id_card = 0;
+		struct s_client *cl;
+		if(cli->typ != 'p')
+		{
+			cl = switch_client_proxy(cli, cli->gbox_peer_id);
+		}
+		else
+		{
+			cl = cli;
+		}
 		*rc = 1;
 		memcpy(dcw, data + 14, 16);
 		uint32_t crc = data[30] << 24 | data[31] << 16 | data[32] << 8 | data[33];
 		char tmp[32];
-		cs_debug_mask(D_READER, "gbox: received cws=%s, peer=%04x, ecm_pid=%04x, sid=%04x, crc=%08x, type=%02x, dist=%01x, unkn1=%01x, unkn2=%02x, chid/provid=%04x",
+		cs_debug_mask(D_READER, "gbox: received cws=%s, peer=%04X, ecm_pid=%04X, sid=%04X, crc=%08X, type=%02X, dist=%01X, unkn1=%01X, unkn2=%02X, chid/provid=%04X",
 					  cs_hexdump(0, dcw, 32, tmp, sizeof(tmp)),  
 					  data[10] << 8 | data[11], data[6] << 8 | data[7], data[8] << 8 | data[9], crc, data[41], data[42] & 0x0f, data[42] >> 4, data[43], data[37] << 8 | data[38]);
 
-		for(i = 0, n = 0; i < cfg.max_pending && n == 0; i++)
+		for(i = 0, k = 0; i < cfg.max_pending && k == 0; i++)
 		{
 			if(cl->ecmtask[i].gbox_crc == crc)
 			{
