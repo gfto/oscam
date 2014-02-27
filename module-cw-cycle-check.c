@@ -245,7 +245,15 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 					{
 						cs_debug_mask(D_CWC, "cyclecheck [Dump Stored CW] Client: %s EA: %s CW: %s Time: %ld", user, cwc_ecmf, cwc_cw, cwc->time);
 						cs_debug_mask(D_CWC, "cyclecheck [Dump CheckedCW] Client: %s EA: %s CW: %s Time: %ld Timediff: %ld", user, er_ecmf, cwstr, now, now - cwc->time);
+						if(now - cwc->time >= cwc->cycletime - cwc->dyncycletime)
+						{
+							cs_debug_mask(D_CWC, "cyclecheck [Same CW but much too late] Client: %s EA: %s CW: %s Time: %ld Timediff: %ld", user, er_ecmf, cwstr, now, now - cwc->time);
+							ret = 2; // declare it as bad(old)
+						}
+						else
+						{				
 						ret = 4; // Return 4 same CW
+						}
 						upd_entry = 0;
 					}		
 					break;
@@ -264,7 +272,15 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 					{
 						cs_debug_mask(D_CWC, "cyclecheck [Dump Stored CW] Client: %s EA: %s CW: %s Time: %ld", user, cwc_ecmf, cwc_cw, cwc->time);
 						cs_debug_mask(D_CWC, "cyclecheck [Dump CheckedCW] Client: %s EA: %s CW: %s Time: %ld Timediff: %ld", user, er_ecmf, cwstr, now, now - cwc->time);
+						if(now - cwc->time >= cwc->cycletime - cwc->dyncycletime)
+						{
+							cs_debug_mask(D_CWC, "cyclecheck [Same CW but much too late] Client: %s EA: %s CW: %s Time: %ld Timediff: %ld", user, er_ecmf, cwstr, now, now - cwc->time);
+							ret = 2; // declare it as bad(old)
+						}
+						else
+						{				
 						ret = 4;  // Return 4 same CW
+						}
 						upd_entry = 0;
 						break;
 					}
@@ -555,9 +571,9 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 				new->locktime = now + (get_fallbacktimeout(er->caid) / 1000);
 				new->dyncycletime = 0; // to react of share timings
 // cycletime over Cacheex
-				new->stage = (cycletime_fr > 0 && next_cw_cycle_fr < 2) ? 3 : 0;
-				new->cycletime = (cycletime_fr > 0 && next_cw_cycle_fr < 2) ? cycletime_fr : 99;
-				new->nextcyclecw = (cycletime_fr > 0 && next_cw_cycle_fr < 2) ? next_cw_cycle_fr : 2; //2=we dont know which next cw Cycle;  0= next cw Cycle CW0; 1= next cw Cycle CW1;
+				new->stage = (cfg.cwcycle_usecwcfromce && cycletime_fr > 0 && next_cw_cycle_fr < 2) ? 3 : 0;
+				new->cycletime = (cfg.cwcycle_usecwcfromce && cycletime_fr > 0 && next_cw_cycle_fr < 2) ? cycletime_fr : 99;
+				new->nextcyclecw = (cfg.cwcycle_usecwcfromce && cycletime_fr > 0 && next_cw_cycle_fr < 2) ? next_cw_cycle_fr : 2; //2=we dont know which next cw Cycle;  0= next cw Cycle CW0; 1= next cw Cycle CW1;
 				ret = (cycletime_fr > 0 && next_cw_cycle_fr < 2) ? 8 : 6;
 //		
 				new->prev = new->next = NULL;
@@ -623,6 +639,48 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 	return ret;
 }
 
+static void count_ok(struct s_client *client)
+{
+	if(client)
+	{
+		client->cwcycledchecked++;
+		client->cwcycledok++;
+	}
+	if(client && client->account)
+	{
+		client->account->cwcycledchecked++;
+		client->account->cwcycledok++;
+	}
+}
+
+static void count_nok(struct s_client *client)
+{
+	if(client)
+	{
+		client->cwcycledchecked++;
+		client->cwcyclednok++;
+	}
+	if(client && client->account)
+	{
+		client->account->cwcycledchecked++;
+		client->account->cwcyclednok++;
+	}
+}
+
+static void count_ign(struct s_client *client)
+{
+	if(client)
+	{
+		client->cwcycledchecked++;
+		client->cwcycledign++;
+	}
+	if(client && client->account)
+	{
+		client->account->cwcycledchecked++;
+		client->account->cwcycledign++;
+	}
+}
+
 uint8_t checkcwcycle(struct s_client *client, ECM_REQUEST *er, struct s_reader *reader, uchar *cw, int8_t rc, uint8_t cycletime_fr, uint8_t next_cw_cycle_fr)
 {
 
@@ -661,18 +719,7 @@ uint8_t checkcwcycle(struct s_client *client, ECM_REQUEST *er, struct s_reader *
 		switch(checkvalidCW(er, c_reader, 1))
 		{
 			case 0: // NDS CWCYCLE NOK
-				if(client)
-				{
-					client->cwcycledchecked++;
-					client->cwcyclednok++;
-				}
-				first_client->cwcycledchecked++;
-				first_client->cwcyclednok++;
-				if(client && client->account)
-				{
-					client->account->cwcycledchecked++;
-					client->account->cwcyclednok++;
-				}
+				count_nok(client);
 				snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NDS NOK");
 				if(cfg.onbadcycle > 0)    // ignore ECM Request
 				{
@@ -686,50 +733,28 @@ uint8_t checkcwcycle(struct s_client *client, ECM_REQUEST *er, struct s_reader *
 				}
 
 			case 1:  // NDS Cycle OK
-				if(client)
-				{
-					client->cwcycledchecked++;
-					client->cwcycledok++;
-				}
-				first_client->cwcycledchecked++;
-				first_client->cwcycledok++;
-				if(client && client->account)
-				{
-					client->account->cwcycledchecked++;
-					client->account->cwcycledok++;
-				}
+				count_ok(client);
 				snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NDS OK");
 				return 1;
 
-			case 2: // CycleCheck ignored (possible Swapp)
-				if(client)
+			case 2: // CycleCheck NDS Swapp drop or ignored
+				if(cfg.onbadcycle == 2)
 				{
-					client->cwcycledchecked++;
-					client->cwcycledign++;
+					count_nok(client);
+					snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NDS Swapp");
+					cs_log("cyclecheck [Swapped NDS CW] for: %s %s from: %s -> drop cw", user, er_ecmf, c_reader);//D_CWC| D_TRACE
+					return 0;
 				}
-				first_client->cwcycledchecked++;
-				first_client->cwcycledign++;
-				if(client && client->account)
+				else
 				{
-					client->account->cwcycledchecked++;
-					client->account->cwcycledign++;
-				}
-				snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NDS IGN");
+					count_ign(client);
+					snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NDS Swapp");
+					cs_log("cyclecheck [Swapped NDS CW] for: %s %s from: %s -> pass through", user, er_ecmf, c_reader);//D_CWC| D_TRACE
 				return 1;
+				}
 
 			case 5: //answer from fixed Fallbackreader with Bad Cycle
-				if(client)
-				{
-					client->cwcycledchecked++;
-					client->cwcyclednok++;
-				}
-				first_client->cwcycledchecked++;
-				first_client->cwcyclednok++;
-				if(client && client->account)
-				{
-					client->account->cwcycledchecked++;
-					client->account->cwcyclednok++;
-				}
+				count_nok(client);
 				snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NDS NOK but IGN (fixed FB)");
 				cs_log("cyclecheck [Bad CW Cycle] for: %s %s from: %s -> But Ignored because of answer from Fixed Fallback Reader", user, er_ecmf, c_reader);
 				return 1;
@@ -740,34 +765,12 @@ uint8_t checkcwcycle(struct s_client *client, ECM_REQUEST *er, struct s_reader *
 	{
 
 	case 0: // CWCYCLE OK
-		if(client)
-		{
-			client->cwcycledchecked++;
-			client->cwcycledok++;
-		}
-		first_client->cwcycledchecked++;
-		first_client->cwcycledok++;
-		if(client && client->account)
-		{
-			client->account->cwcycledchecked++;
-			client->account->cwcycledok++;
-		}
+		count_ok(client);
 		snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc OK");
 		break;
 
 	case 1: // CWCYCLE NOK
-		if(client)
-		{
-			client->cwcycledchecked++;
-			client->cwcyclednok++;
-		}
-		first_client->cwcycledchecked++;
-		first_client->cwcyclednok++;
-		if(client && client->account)
-		{
-			client->account->cwcycledchecked++;
-			client->account->cwcyclednok++;
-		}
+		count_nok(client);
 		snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NOK");
 		if(cfg.onbadcycle > 0)    // ignore ECM Request
 		{
@@ -781,35 +784,13 @@ uint8_t checkcwcycle(struct s_client *client, ECM_REQUEST *er, struct s_reader *
 		}
 
 	case 2: // ER to OLD
-		if(client)
-		{
-			client->cwcycledchecked++;
-			client->cwcyclednok++;
-		}
-		first_client->cwcycledchecked++;
-		first_client->cwcyclednok++;
-		if(client && client->account)
-		{
-			client->account->cwcycledchecked++;
-			client->account->cwcyclednok++;
-		}
+		count_nok(client);
 		snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NOK(old)");
 		cs_log("cyclecheck [Bad CW Cycle] for: %s %s from: %s -> ECM Answer is too OLD -> drop cw (ECM Answer)", user, er_ecmf, c_reader);//D_CWC| D_TRACE
 		return 0;
 
 	case 3: // CycleCheck ignored (stage 3 to stage 4)
-		if(client)
-		{
-			client->cwcycledchecked++;
-			client->cwcycledign++;
-		}
-		first_client->cwcycledchecked++;
-		first_client->cwcycledign++;
-		if(client && client->account)
-		{
-			client->account->cwcycledchecked++;
-			client->account->cwcycledign++;
-		}
+		count_ign(client);
 		snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc IGN");
 		break;
 
@@ -818,18 +799,7 @@ uint8_t checkcwcycle(struct s_client *client, ECM_REQUEST *er, struct s_reader *
 		break;
 
 	case 5: //answer from fixed Fallbackreader with Bad Cycle
-		if(client)
-		{
-			client->cwcycledchecked++;
-			client->cwcyclednok++;
-		}
-		first_client->cwcycledchecked++;
-		first_client->cwcyclednok++;
-		if(client && client->account)
-		{
-			client->account->cwcycledchecked++;
-			client->account->cwcyclednok++;
-		}
+		count_nok(client);
 		snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NOK but IGN (fixed FB)");
 		cs_log("cyclecheck [Bad CW Cycle] for: %s %s from: %s -> But Ignored because of answer from Fixed Fallback Reader", user, er_ecmf, c_reader);
 		break;
@@ -840,18 +810,7 @@ uint8_t checkcwcycle(struct s_client *client, ECM_REQUEST *er, struct s_reader *
 		break;
 
 	case 8: // use Cyclecheck from CE Source
-		if(client)
-		{
-			client->cwcycledchecked++;
-			client->cwcycledok++;
-		}
-		first_client->cwcycledchecked++;
-		first_client->cwcycledok++;
-		if(client && client->account)
-		{
-			client->account->cwcycledchecked++;
-			client->account->cwcycledok++;
-		}
+		count_ok(client);
 		snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc OK(CE)");
 		break;
 
