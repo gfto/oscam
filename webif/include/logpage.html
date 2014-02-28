@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+	"http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+	<title>##HTTPOSCAMLABEL## r##CS_SVN_VERSION##</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=##HTTP_CHARSET##">
+	<meta name="robots" content="noindex,nofollow">
+	<link rel="stylesheet" type="text/css" href="site.css">
+	<link href="favicon.ico" rel="icon" type="image/x-icon">
+	<script src="oscam.js" type="text/javascript" charset="utf-8"></script>
+	<script src="jquery.js" type="text/javascript" charset="utf-8"></script>
+	<script type="text/javascript" charset="utf-8">
+
+	// beginn parameters
+	var maxloglines = 200;
+	var pollintervall = 1000;
+	var aniduration = 10;
+	// end parameters - do not change things below
+	
+	var parameters = "?lasttime=0";
+	var lastdebuglevel = 0;
+	var stoppoll = 0;
+
+	// manage the delivered data / loglines
+	function addLog(data) {
+		var lines = data.split('\n');
+		$.each(lines, function(key, line) {
+			var parts = line.split('|');
+			if(parts[2]){ 
+				if(parts[0] == 'debug') {
+					setDebuglevel(parts);
+				} else if (parts[0] == 'message') {
+					if (parts[1] == 'nolog'){
+						stoppoll = 1;
+						$("#livelogdata").append('<li>' + parts[2] + '</li>\n');
+					} else if (parts[1] == 'nodebug'){
+						$("#debugmenu").remove()
+					}
+				} else {
+					$("#livelogdata").append('<li class="' + parts[1] + '">' + parts[2] + '</li>\n');
+					parameters = "?lasttime=" + parts[0];
+					
+					if ($("#livelogdata li").length >= maxloglines) { 
+						$("#livelogdata li").eq(0).remove(); 
+					}
+					
+					if ($("#livelog:hover").length) { 
+						$('#livelog').stop(true);
+					} else {
+						$("#livelog").animate({ scrollTop: $("#livelog").prop("scrollHeight") }, aniduration);
+					}
+				}
+			}
+		});
+	}
+
+	// format the debuglevel switcher
+	function setDebuglevel(parts) {
+		var cs_dblevel = parseInt(parts[1]);
+		var maxlevel = parseInt(parts[2]);
+		if(lastdebuglevel != cs_dblevel) {
+			var lvl = 0;
+			$("#debugfrom").text(' Switch Debug from ' + cs_dblevel + ' to ');
+			for( var i = 0; i < maxlevel; i++){
+				lvl = 1 << i;
+				$("#debug" + lvl).attr('class', (cs_dblevel & lvl)?'debugls':'debugl');
+			}
+			lastdebuglevel = cs_dblevel;
+		}
+	}
+	
+	// set debuglevel to specified value
+	function callDebug(value) {
+		parameters = parameters + "&debug=" + value;
+	}
+	
+	// polling
+	function waitForMsg(){
+		$.ajax({
+			type: "GET",
+			url: "logpoll.html" + parameters,
+			async: true,
+			cache: false,
+			success: function(data){
+				addLog(data);
+				if(!stoppoll) {
+					setTimeout("waitForMsg()", pollintervall);
+				}
+			},
+			error: function(XMLHttpRequest,textStatus,errorThrown) {
+				setTimeout("waitForMsg()", 15000);
+			}
+		});
+	}
+
+	// start polling
+	$(document).ready(function() { waitForMsg(); });
+	</script>
+</HEAD>
+<BODY>
+<DIV ID="wrapper"> <!-- Start wrapper -->
+	<DIV ID="content"> <!-- Start content -->
+##TPLMENU##
+##TPLMESSAGE##
+	<H3>Live Log</H3>
+	<DIV ID="livelog">
+		<UL ID="livelogdata"></UL>
+	</DIV>
+	<DIV id="debugmenu" CLASS="debugmenu">
+		<SPAN CLASS="debugt" id="debugfrom"> Switch Debug from&nbsp;0 to&nbsp;</SPAN>
+		<SPAN CLASS="debugl"><A id="debug0" onclick="callDebug(0);return false;" CLASS="debugl" HREF="#" TITLE="no debugging (default)">&nbsp;0&nbsp;</A></SPAN>
+		<SPAN CLASS="debugl"><A id="debug1" onclick="callDebug(1);return false;" CLASS="debugl" HREF="#" TITLE="detailed error messages">&nbsp;1&nbsp;</A></SPAN>
+		<SPAN CLASS="debugl"><A id="debug2" onclick="callDebug(2);return false;" CLASS="debugl" HREF="#" TITLE="ATR parsing info, ECM dumps, CW dumps">&nbsp;2&nbsp;</A></SPAN>
+		<SPAN CLASS="debugl"><A id="debug4" onclick="callDebug(4);return false;" CLASS="debugl" HREF="#" TITLE="traffic from/to the reader">&nbsp;4&nbsp;</A></SPAN>
+		<SPAN CLASS="debugl"><A id="debug8" onclick="callDebug(8);return false;" CLASS="debugl" HREF="#" TITLE="traffic from/to the clients">&nbsp;8&nbsp;</A></SPAN>
+		<SPAN CLASS="debugl"><A id="debug16" onclick="callDebug(16);return false;" CLASS="debugl" HREF="#" TITLE="traffic to the reader-device on IFD layer">&nbsp;16&nbsp;</A></SPAN>
+		<SPAN CLASS="debugl"><A id="debug32" onclick="callDebug(32);return false;" CLASS="debugl" HREF="#" TITLE="traffic to the reader-device on I/O layer">&nbsp;32&nbsp;</A></SPAN>
+		<SPAN CLASS="debugl"><A id="debug64" onclick="callDebug(64);return false;" CLASS="debugl" HREF="#" TITLE="EMM logging">&nbsp;64&nbsp;</A></SPAN>
+		<SPAN CLASS="debugl"><A id="debug128" onclick="callDebug(128);return false;" CLASS="debugl" HREF="#" TITLE="DVBAPI logging">&nbsp;128&nbsp;</A></SPAN>
+		<SPAN CLASS="debugl"><A id="debug256" onclick="callDebug(256);return false;" CLASS="debugl" HREF="#" TITLE="Loadbalancer logging">&nbsp;256&nbsp;</A></SPAN>
+		<SPAN CLASS="debugl"><A id="debug512" onclick="callDebug(512);return false;" CLASS="debugl" HREF="#" TITLE="CACHEEX logging">&nbsp;512&nbsp;</A></SPAN>
+		<SPAN CLASS="debugl"><A id="debug1024" onclick="callDebug(1024);return false;" CLASS="debugl" HREF="#" TITLE="Client ECM logging">&nbsp;1024&nbsp;</A></SPAN>
+		<SPAN CLASS="debugl"><A id="debug2048" onclick="callDebug(2048);return false;" CLASS="debugl" HREF="#" TITLE="CSP logging">&nbsp;2048&nbsp;</A></SPAN>
+		<SPAN CLASS="debugl"><A id="debug4096" onclick="callDebug(4096);return false;" CLASS="debugl" HREF="#" TITLE="CWC logging">&nbsp;4096&nbsp;</A></SPAN>
+		<SPAN CLASS="debugl"><A id="debug65535" onclick="callDebug(65535);return false;" CLASS="debugl" HREF="#" TITLE="debug all">&nbsp;ALL&nbsp;</A></SPAN>
+	</DIV>
+##TPLFOOTER##

@@ -1,4 +1,185 @@
-##TPLHEADER##
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+	<title>##HTTPOSCAMLABEL## r##CS_SVN_VERSION##</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=##HTTP_CHARSET##">
+	<meta name="robots" content="noindex,nofollow">
+	<link rel="stylesheet" type="text/css" href="site.css">
+	<link href="favicon.ico" rel="icon" type="image/x-icon">
+	<script type="text/javascript" src="oscam.js"></script>
+	<script type="text/javascript" src="jquery.js" charset="utf-8"></script>
+	<style type="text/css">##HTTPPICONSIZE##</style>
+	<script type="text/javascript" charset="utf-8">
+	
+	// beginn parameters
+	var pollintervall = 10000;
+	// end parameters - do not change things below
+	
+	var parameters = "?part=userstats";
+
+	function runden(value) {
+		var k = (Math.round(value * 100) / 100).toString();
+		k += (k.indexOf('.') == -1)? '.00' : '00';
+		return k.substring(0, k.indexOf('.') + 3);
+	}
+
+	function setUserVals(data) {
+
+		// show heartbeat
+		$( "#loadindex" ).fadeIn( 500 );
+
+		// update user lines
+		$.each(data.users, function(i, item) {
+			var uid = "#" + item.user.name;
+						
+			if(item.user.classname == 'online' || item.user.classname == 'connected'){
+				$( uid ).attr('class', item.user.classname);
+				$( uid + " td.usercol2").attr( 'title', 'SLEEP: ' + item.user.stats.expectsleep );
+				$( uid + " td.usercol2").html( item.user.status + "<br>" + item.user.ip);
+				$( uid + " td.usercol3").html( item.user.stats.idle + "<br>" + item.user.stats.timeonchannel.toHHMMSS());
+
+				if(item.user.protoicon.length > 0){
+					if($( uid + " td.usercol4").html().length == 0 ) {
+						var protoimage = $('<img class="protoicon" src="image?i=IC_' + item.user.protoicon + '" />');
+						protoimage.hide();
+						$( uid + " td.usercol4" ).prepend(protoimage);
+						protoimage.fadeIn('slow');
+					}
+				} else {
+					$( uid + " td.usercol4").text( item.user.protocol );
+				}
+				
+				$( uid + " td.usercol4").attr( 'title', item.user.prototitle );
+				$( uid + " td.usercol5").attr( 'id', item.user.grpviewid );
+				$( uid + " td.usercol5 div.groups").attr( 'title', item.user.groups );
+				$( uid + " td.usercol5 div.groups").text( item.user.groups );
+
+				// channel icon
+				$( uid + " td.usercol6").attr( 'title', item.user.lastchanneltitle );
+				if(item.user.lca.length > 0){
+					var image;
+					if($( uid + " td.usercol6").html().length == 0 ) {
+						image = $('<img class="usericon" src="image?i=IC_' + item.user.lca + '" />');
+						image.hide();
+						$( uid + " td.usercol6" ).prepend(image);
+						image.fadeIn('slow');
+					} else {
+						image = $( uid + " td.usercol6 img.usericon");
+						if(image.attr('src') != ('image?i=IC_' + item.user.lca)) {
+							image.fadeOut('fast', function () {
+								image.attr('src', 'image?i=IC_' + item.user.lca ); 
+								image.fadeIn('slow'); 
+							});
+							image.attr('alt', item.user.lcb );
+							image.attr('title', item.user.lastchanneltitle );
+						}
+					}
+				} else {
+					$( uid + " td.usercol6").text(item.user.lastchannel );
+				}
+
+				$( uid + " td.usercol7").text( item.user.stats.cwlastresptime );
+				//usercol8 ???
+				$( uid + " td.usercol9").text( item.user.stats.cwok );
+				$( uid + " td.usercol10").text( item.user.stats.cwnok );
+				$( uid + " td.usercol11").text( item.user.stats.cwignore );
+				$( uid + " td.usercol12").text( item.user.stats.cwtimeout );
+				//usercol13 ???
+				$( uid + " td.usercol14").text( item.user.stats.cwcache );
+				$( uid + " td.usercol15").text( item.user.stats.cwtun );
+				$( uid + " td.usercol16").text( item.user.stats.cwcache );
+				$( uid + " td.usercol17").text( item.user.stats.emmok );
+				$( uid + " td.usercol18").text( item.user.stats.emmnok );
+				//usercol19 ??
+				$( uid + " td.usercol20").attr( 'title', item.user.expview );
+				$( uid + " td.usercol20").text( item.user.stats.expdate );
+				$( uid + " td.usercol21").text( item.user.stats.n_requ_m );
+			} else {
+				if($( uid ).attr('class') == 'online' || $( uid ).attr('class') == 'connected'){
+					// last status was online so cleanup offline
+					$( uid ).attr('class', item.user.classname);
+					$( uid + " td.usercol2").attr( 'title', 'SLEEP: ');
+					$( uid + " td.usercol2").html( item.user.status );
+					$( uid + " td.usercol3").html( '' );
+					if($( uid ).attr('class') == 'offline'){
+						$( uid + " td.usercol4").text( '' );
+						$( uid + " td.usercol4").attr( 'title', '' );
+						var protoimage = $( uid + " td.usercol4 img.protoicon");
+						if(image){
+							protoimage.fadeOut('slow');
+							protoimage.remove();
+						}
+					}
+					//$( uid + " td.usercol5").attr( 'id', item.user.grpviewid );
+					$( uid + " td.usercol5 div.groups").attr( 'title', '' );
+					$( uid + " td.usercol5 div.groups").text( '' );
+					//channelicon
+					var image = $( uid + " td.usercol6 img.usericon");
+					if(image){
+						image.fadeOut('slow');
+						image.remove();
+					}
+				}
+			}
+		});
+		
+		// update user totals
+		$( "#tot_users" ).text( data.totals.usertotal );
+		$( "#tot_disabled" ).text( data.totals.userdisabled );
+		$( "#tot_expired" ).text( data.totals.userexpired );
+		$( "#tot_active" ).text( data.totals.useractive );
+		$( "#tot_connected" ).text( data.totals.userconnected );
+		$( "#tot_online" ).text( data.totals.useronline );
+		
+		// update result totals
+		$( "#tot_cwok" ).text( data.totals.cwok + " (" + data.totals.cwok_rel + "%)");
+		$( "#tot_cwcache" ).text( data.totals.cwcache + " (" + data.totals.cwcache_rel + "%)");
+		$( "#tot_cwnok" ).text( data.totals.cwnok + " (" + data.totals.cwnok_rel + "%)");
+		$( "#tot_cwtout" ).text( data.totals.cwtimeout + " (" + data.totals.cwtimeout_rel + "%)");
+		$( "#tot_cwign" ).text( data.totals.cwignore + " (" + data.totals.cwignore_rel + "%)");
+		$( "#tot_ecmmin" ).text( data.totals.ecm_min );
+		$( "#tot_cw" ).text( data.totals.tot_cw );
+		var cwpos = parseInt(data.totals.cwok) + parseInt(data.totals.cwcache);
+		var cwpos_rel = runden(parseFloat(data.totals.cwok_rel) + parseFloat(data.totals.cwcache_rel));
+		$( "#tot_cwpos" ).html( "<B>Total OK:  </B> "+ cwpos + " (" + cwpos_rel + "%)");
+		var cwneg = parseInt(data.totals.cwnok) + parseInt(data.totals.cwtimeout);
+		var cwneg_rel = runden(parseFloat(data.totals.cwnok_rel) + parseFloat(data.totals.cwtimeout_rel));
+		$( "#tot_cwneg" ).html( "<B>Total NOK:  </B> "+ cwneg + " (" + cwneg_rel + "%)");
+		
+		
+		
+		// hide heartbeat
+		$( "#loadindex" ).fadeOut( 500 );
+	}
+	
+	// polling
+	function waitForMsg(){
+		$.ajax({
+			type: "GET",
+			url: "oscamapi.json" + parameters,
+			dataType: "JSON",
+			async: true,
+			cache: false,
+			success: function(data){
+				setUserVals(data);
+				setTimeout("waitForMsg()", pollintervall);
+			},
+			error: function(XMLHttpRequest,textStatus,errorThrown) {
+				setTimeout("waitForMsg()", 15000);
+			}
+		});
+	}
+
+	// start polling
+	$(document).ready(function() { waitForMsg(); });	
+	
+	</script>
+</HEAD>
+<BODY>
+<DIV ID="wrapper"> <!-- Start wrapper -->
+	<DIV ID="content"> <!-- Start content -->
+##LOGOBIT##
 ##TPLMENU##
 ##TPLMESSAGE##
 	<DIV ID="subnav">
@@ -75,12 +256,12 @@
 			<TH TITLE="Online users requesting ecms">Online</TH>
 		</TR>
 		<TR>
-			<TD CLASS="centered">##TOTAL_USERS##</TD>
-			<TD CLASS="centered">##TOTAL_DISABLED##</TD>
-			<TD CLASS="centered">##TOTAL_EXPIRED##</TD>
-			<TD CLASS="centered">##TOTAL_ACTIVE##</TD>
-			<TD CLASS="centered">##TOTAL_CONNECTED##</TD>
-			<TD CLASS="centered">##TOTAL_ONLINE##</TD>
+			<TD id="tot_users" CLASS="centered">##TOTAL_USERS##</TD>
+			<TD id="tot_disabled" CLASS="centered">##TOTAL_DISABLED##</TD>
+			<TD id="tot_expired" CLASS="centered">##TOTAL_EXPIRED##</TD>
+			<TD id="tot_active" CLASS="centered">##TOTAL_ACTIVE##</TD>
+			<TD id="tot_connected" CLASS="centered">##TOTAL_CONNECTED##</TD>
+			<TD id="tot_online" CLASS="centered">##TOTAL_ONLINE##</TD>
 		</TR>
 	</TABLE>
 	<TABLE CLASS="ECM_totals smallmargintop">
@@ -97,22 +278,22 @@
 			<TH TITLE="SUM of all ECM's">ALL</TH>
 		</TR>
 		<TR>
-			<TD CLASS="centered">##TOTAL_CWOK## (##REL_CWOK##%)</TD>
-			<TD CLASS="centered">##TOTAL_CWCACHE## (##REL_CWCACHE##%)</TD>
-			<TD CLASS="centered">##TOTAL_CWNOK## (##REL_CWNOK##%)</TD>
-			<TD CLASS="centered">##TOTAL_CWTOUT## (##REL_CWTOUT##%)</TD>
-			<TD CLASS="centered">##TOTAL_CWIGN## (##REL_CWIGN##%)</TD>
-			<TD CLASS="centered">##TOTAL_ECM_MIN##</TD>
-			<TD CLASS="centered">##TOTAL_CW##</TD>
+			<TD id="tot_cwok" CLASS="centered">##TOTAL_CWOK## (##REL_CWOK##%)</TD>
+			<TD id="tot_cwcache" CLASS="centered">##TOTAL_CWCACHE## (##REL_CWCACHE##%)</TD>
+			<TD id="tot_cwnok" CLASS="centered">##TOTAL_CWNOK## (##REL_CWNOK##%)</TD>
+			<TD id="tot_cwtout" CLASS="centered">##TOTAL_CWTOUT## (##REL_CWTOUT##%)</TD>
+			<TD id="tot_cwign" CLASS="centered">##TOTAL_CWIGN## (##REL_CWIGN##%)</TD>
+			<TD id="tot_ecmmin" CLASS="centered">##TOTAL_ECM_MIN##</TD>
+			<TD id="tot_cw" CLASS="centered">##TOTAL_CW##</TD>
 		</TR>
 		<TR>
-			<TD CLASS="centered" COLSPAN="2"><B>Total OK:  </B> ##TOTAL_CWPOS## (##REL_CWPOS##%)</TD>
-			<TD CLASS="centered" COLSPAN="2"><B>Total NOK:  </B>##TOTAL_CWNEG## (##REL_CWNEG##%)</TD>
+			<TD id="tot_cwpos" CLASS="centered" COLSPAN="2"><B>Total OK:  </B> ##TOTAL_CWPOS## (##REL_CWPOS##%)</TD>
+			<TD id="tot_cwneg" CLASS="centered" COLSPAN="2"><B>Total NOK:  </B>##TOTAL_CWNEG## (##REL_CWNEG##%)</TD>
 			<TD CLASS="centered" COLSPAN="2"><B>Reset ECM Statistics:</B></TD>
 			<TD CLASS="centered"><A HREF="userconfig.html?action=resetserverstats" TITLE="Reset statistics for server"><IMG CLASS="icon" SRC="image?i=ICRES" ALT="Reset Server Stats"></A></TD>
 		</TR>
 	</TABLE>
-
+	<DIV id="loadindex" style="width:30px; height:30px; position:absolute; top:5px; left:5px; background-color:orange; display: none;border-radius: 15px;"></DIV>
 	<!-- To initialize a TABLE sorter -->
 	<script type="text/javascript">
 		var sorter = new TINY.table.sorter('sorter','dataTable',{

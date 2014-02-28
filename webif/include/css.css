@@ -588,7 +588,7 @@ span.text_entitle {
 
 /* ******** 15. GRAPH */
 text.graph_error {text-anchor:middle;}
-text.graph_grid_txt {text-anchor:end;style:font-size:12px;}
+text.graph_grid_txt {text-anchor:end;font-size:12px;}
 path.graph_grid {stroke-opacity:0.5;}
 
 /* ******** 17. SORTING IN TABLE */
@@ -634,6 +634,22 @@ path.graph_grid {stroke-opacity:0.5;}
 	margin-top:15px
 }
 
+li.menu a,li.configmenu a,li.menu_selected a,li.configmenu_selected a,td.statuscol14 a,td.statuscol16 a,td.subheadline a{text-decoration:none}
+
+/*  for UL in logpoll.html */
+#livelog {
+	height:500px;
+	max-width:1500px;
+	overflow-y:scroll;
+	list-style:none;
+	text-align:left;
+	margin:5px auto 15px;
+	border:1px dotted #AAA;
+	background-color:#FAFAFA;
+	color:#666;
+	font-family: "Courier New",monospace
+}
+		
 /* ================================= COLORS ================================= */
 /* BASIC SETTINGS */
 

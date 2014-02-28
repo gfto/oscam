@@ -11,6 +11,7 @@ APIHEADER                     api.xml/header.xml
 JSONHEADER                    api.json/header.json
 CSS                           include/css.css
 JSCRIPT                       include/jscript.js
+JQUERY                        include/jquery.js
 PROTONEWCAMDPIC               include/protonewcamdpic.html
 PROTOCCCAMPIC                 include/protocccampic.html
 PROTOOTHERPIC                 include/protootherpic.html
@@ -39,6 +40,8 @@ SYSTEMINFOBIT                 status/status_systeminfo.html
 USERINFOBIT                   status/status_userinfo.html
 APISTATUS                     api.xml/status.xml
 JSONSTATUS                    api.json/status.json
+JSONUSER                      api.json/user.json
+JSONUSERBIT                   api.json/userbit.json
 CLIENTSTATUSBIT               status/status_clientstatusbit.html
 CLIENTLBLVALUEBIT             status/status_lblvaluereaderbit.html
 CLIENTCURRENTCHANNEL          status/status_currentchannel.html
@@ -88,6 +91,8 @@ CCENTITLEMENTS                include/cccamentitlements.html
 CCENTITLETOOLTIP              include/cccamentitletooltip.html
 NOENTITLEMENTS                include/noentitlements.html
 FOUNDENTITLEMENTS             include/foundentitlements.html
+LOGPAGE                       include/logpage.html
+POLL                          include/poll.html
 ENTITLEMENTS                  entitlements/entitlements.html                              WITH_CARDREADER,MODULE_CCCAM
 ENTITLEMENTGENERICBIT         entitlements/entitlements_genericbit.html                   WITH_CARDREADER
 ENTITLEMENTBIT                entitlements/entitlements_bit.html                          WITH_CARDREADER
