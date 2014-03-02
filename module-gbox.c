@@ -112,6 +112,7 @@ struct gbox_peer
 	pthread_mutex_t hello_expire_mut;
 	pthread_cond_t hello_expire_cond;
 	struct s_client *my_user;
+	LL_ITER last_it;
 };
 
 static struct gbox_data local_gbox;
@@ -199,22 +200,19 @@ void gbox_write_shared_cards_info(void)
 	struct s_client *cl;
 	for(i = 0, cl = first_client; cl; cl = cl->next, i++)
 	{
-		if(cl->gbox)
+		if(cl->gbox && cl->reader->card_status == CARD_INSERTED && cl->typ == 'p')
 		{
 			struct gbox_peer *peer = cl->gbox;
 
-			if((cl->reader->card_status == CARD_INSERTED) && (cl->typ == 'p'))
+			it = ll_iter_create(peer->gbox.cards);
+			while((card = ll_iter_next(&it)))
 			{
-				it = ll_iter_create(peer->gbox.cards);
-				while((card = ll_iter_next(&it)))
-				{
-					fprintf(fhandle, "CardID %4d at %s Card %08X Sl:%2d Lev:%2d dist:%2d id:%04X\n",
-							card_count, cl->reader->device, card->provid_1,
-							card->slot, card->lvl, card->dist, card->peer_id);
-					card_count++;
-				} // end of while ll_iter_next
-			} // end of if INSERTED && 'p'
-		} // end of if cl->gbox
+				fprintf(fhandle, "CardID %4d at %s Card %08X Sl:%2d Lev:%2d dist:%2d id:%04X\n",
+						card_count, cl->reader->device, card->provid_1,
+						card->slot, card->lvl, card->dist, card->peer_id);
+				card_count++;
+			} // end of while ll_iter_next
+		} // end of if cl->gbox INSERTED && 'p'
 	} // end of for cl->next
 	fclose(fhandle);
 	return;
@@ -283,28 +281,6 @@ void gbox_free_card(struct gbox_card *card)
 	ll_destroy_data_NULL(card->badsids);
 	ll_destroy_data_NULL(card->goodsids);
 	add_garbage(card);
-	return;
-}
-
-void gbox_remove_cards_without_goodsids(LLIST *card_list)
-{
-	if(card_list)
-	{
-		LL_ITER it = ll_iter_create(card_list);
-		struct gbox_card *card;
-		while((card = ll_iter_next(&it)))
-		{
-			if(ll_count(card->goodsids) == 0)
-			{
-				ll_iter_remove(&it);
-				gbox_free_card(card);
-			}
-			else
-			{
-				ll_destroy_data_NULL(card->badsids);
-			}
-		}
-	}
 	return;
 }
 
@@ -385,7 +361,7 @@ void gbox_reconnect_client(uint16_t gbox_id)
 			SIN_GET_PORT(cl->udp_sa) = htons((uint16_t)cl->reader->r_port);
 			hostname2ip(cl->reader->device, &(cl->ip));
 			cl->reader->tcp_connected = 0;
-			cl->reader->card_status = CARD_NEED_INIT;
+			cl->reader->card_status = NO_CARD;
 			struct gbox_peer *peer = cl->gbox;
 			peer->online = 0;
 			peer->ecm_idx = 0;
@@ -476,10 +452,30 @@ static void gbox_server_init(struct s_client *cl)
 	return;
 }
 
+int8_t get_card_action(struct gbox_card *card, uint32_t provid1, uint16_t peer_id, uint8_t slot, struct gbox_peer *peer)
+{
+	LL_ITER it;
+	struct gbox_card *card_s;
+	if (!card) { return 1; }	//insert
+	if (card->provid_1 < provid1) { return -1; }	//remove
+	if (card->peer_id == peer_id && card->provid_1 == provid1 && card->slot == slot)
+		{ return 0; }	//keep
+	else
+	{ 
+		it = ll_iter_create(peer->gbox.cards);
+		while ((card_s = ll_iter_next(&it)))
+		{
+			//card is still somewhere else we need to remove current
+			if (card_s->peer_id == peer_id && card_s->provid_1 == provid1 && card_s->slot == slot)
+				{ return -1; } //remove		
+		}
+		return 1; //insert
+	}	
+}
+
 int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 {
 	struct gbox_peer *peer = cli->gbox;
-	int32_t i;
 	int32_t ncards_in_msg = 0;
 	int32_t payload_len = n;
 	//TODO: checkcode_len can be made void
@@ -487,6 +483,10 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 	int32_t hostname_len = 0;
 	int32_t footer_len = 0;
 	uint8_t *ptr = 0;
+	uint8_t *current_ptr = 0;
+	LL_ITER it,previous_it;
+	struct gbox_card *card_s;
+	struct gbox_card *card;
 
 	if(!(gbox_decode_cmd(data) == MSG_HELLO1)) 
 	{
@@ -494,19 +494,17 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 	}
 	cs_ddump_mask(D_READER, data, payload_len, "gbox: decompressed data (%d bytes):", payload_len);
 
-	if((data[0x0B] == 0) | ((data[0x0A] == 1) && (data[0x0B] == 0x80)))
+	if((data[0xB] & 0xF) == 0) //is first packet 
 	{
-		if(peer->gbox.cards)
-			{ gbox_remove_cards_without_goodsids(peer->gbox.cards); }
-		else
+		if(!peer->gbox.cards)
 			{ peer->gbox.cards = ll_create("peer.cards"); }
-	}
-	if((data[0xB] & 0xF) == 0)
-	{
+		it = ll_iter_create(peer->gbox.cards);	
 		checkcode_len = 7;
 		hostname_len = data[payload_len - 1];
 		footer_len = hostname_len + 2;
 	}
+	else
+		{ it = peer->last_it; }
 
 	if(gbox_decode_cmd(data) == MSG_HELLO1)
 		{ ptr = data + 11; }
@@ -537,66 +535,66 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 			break;
 		}
 
+		ncards_in_msg += ptr[4];
+
 		//caid check
 		if(chk_ctab(caid, &cli->reader->ctab))
 		{
-
 			provid1 =  ptr[0] << 24 | ptr[1] << 16 | ptr[2] << 8 | ptr[3];
-			uint8_t ncards = ptr[4];
-
+	
+			current_ptr = ptr; 
 			ptr += 5;
 
-			for(i = 0; i < ncards; i++)
+			// for all cards of current caid/provid,
+			while (ptr < current_ptr + 5 + current_ptr[4] * 4)
 			{
-				// for all n cards and current caid/provid,
-				// create card info from data and add card to peer.cards
-				struct gbox_card *card;
-				if(!cs_malloc(&card, sizeof(struct gbox_card)))
-					{ continue; }
-
-				card->caid = caid;
-				card->provid = provid;
-				card->provid_1 = provid1;
-				card->slot = ptr[0];
-				card->dist = ptr[1] & 0xf;
-				card->lvl = ptr[1] >> 4;
-				card->peer_id = ptr[2] << 8 | ptr[3];
-				ptr += 4;
-
-				if((cli->reader->gbox_maxdist >= card->dist) && (card->peer_id != local_gbox.id))
+				previous_it = it;
+				card_s = ll_iter_next(&it);
+				switch (get_card_action(card_s,provid1,ptr[2] << 8 | ptr[3],ptr[0],peer))
 				{
-
-					LL_ITER it = ll_iter_create(peer->gbox.cards);
-					struct gbox_card *card_s;
-					uint8_t v_card = 0;
-					while((card_s = ll_iter_next(&it)))    // don't add card if already in peer.cards list
-					{
-						if(card_s->peer_id == card->peer_id && card_s->provid_1 == card->provid_1)
-						{
-							gbox_free_card(card);
-							card = NULL;
-							v_card = 1;
-							break;
-						}
+				case -1:
+					//IDEA: Later put card to a list of temporary not available cards
+					//reason: not loose good/bad sids
+					//can be later removed by daily garbage collector for example
+					cs_debug_mask(D_READER, "delete card: caid=%04X, provid=%06X, slot=%d, level=%d, dist=%d, peer=%04X",
+								  card_s->caid, card_s->provid, card_s->slot, card_s->lvl, card_s->dist, card_s->peer_id);
+					//delete card because not send anymore 
+					ll_iter_remove(&it);
+					gbox_free_card(card_s);				
+					break;
+				case 0:
+					ptr += 4;	
+					break;
+				case 1:	
+					// create card info from data and add card to peer.cards
+					if(!cs_malloc(&card, sizeof(struct gbox_card)))
+						{ continue; }
+					card->caid = caid;
+					card->provid = provid;
+					card->provid_1 = provid1;
+					card->slot = ptr[0];
+					card->dist = ptr[1] & 0xf;
+					card->lvl = ptr[1] >> 4;
+					card->peer_id = ptr[2] << 8 | ptr[3];
+					card->badsids = ll_create("badsids");
+					card->goodsids = ll_create("goodsids");
+				
+					if (!card_s)
+						{ ll_append(peer->gbox.cards, card); }
+					else
+					{ 
+						ll_iter_insert(&previous_it, card); 
+						it = previous_it;
 					}
-
-					if(v_card != 1)    // new card - not in list
-					{
-						card->badsids = ll_create("badsids");
-						card->goodsids = ll_create("goodsids");
-						ll_append(peer->gbox.cards, card);
-						ncards_in_msg++;
-						cs_debug_mask(D_READER, "   card: caid=%04x, provid=%06x, slot=%d, level=%d, dist=%d, peer=%04x",
-									  card->caid, card->provid, card->slot, card->lvl, card->dist, card->peer_id);
-					}
-				}
-				else     // don't add card
-				{
-					gbox_free_card(card);
-					card = NULL;
-				}
-				cli->reader->tcp_connected = 2; // we have card
-			} // end for ncards
+					ll_iter_next(&it);
+					cs_debug_mask(D_READER, "new card: caid=%04X, provid=%06X, slot=%d, level=%d, dist=%d, peer=%04X",
+								  card->caid, card->provid, card->slot, card->lvl, card->dist, card->peer_id);			
+					ptr += 4;
+					break;
+				default:
+					break;	
+				}	//switch	
+			} // end while cards for provider
 		}
 		else
 		{
@@ -620,18 +618,39 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		peer->gbox.type = data[payload_len - footer_len];
 	} // end if first hello packet
 
+	//This is a goodbye / reset packet (goodbye data[0xA] / reset !data[0xA] 
+	if((data[0x0B] & 0x8F) == 0x80 && !ncards_in_msg) //first + last packet with no cards 
+	{
+		gbox_free_cardlist(peer->gbox.cards);
+		peer->online = 0;
+		peer->hello_stat = GBOX_STAT_HELLOL;
+		cli->reader->tcp_connected = 0;
+		cli->reader->card_status = NO_CARD;
+		cli->reader->last_s = cli->reader->last_g = 0;
+		peer->gbox.cards = ll_create("peer.cards");		
+	}
+	
 	if(data[0x0B] & 0x80)   //last packet
 	{
+		//delete cards at the end of the list if there are some
+		while ((card_s = ll_iter_next(&it)))
+		{
+			cs_debug_mask(D_READER, "delete card: caid=%04X, provid=%06X, slot=%d, level=%d, dist=%d, peer=%04X",
+						  card_s->caid, card_s->provid, card_s->slot, card_s->lvl, card_s->dist, card_s->peer_id);
+			//delete card because not send anymore 
+			ll_iter_remove(&it);
+			gbox_free_card(card_s);									
+		}
 		peer->online = 1;
 		if(!data[0xA])
 		{
-			cs_log("<-HelloS from %s (%s:%d) V2.%02X with %d cards", cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, ncards_in_msg);
+			cs_log("<-HelloS in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, ncards_in_msg,ll_count(peer->gbox.cards));
 			peer->hello_stat = GBOX_STAT_HELLOR;
 			gbox_send_hello(cli);
 		}
 		else
 		{
-			cs_log("<-HelloR from %s (%s:%d) V2.%02X with %d cards", cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, ncards_in_msg);
+			cs_log("<-HelloR in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, ncards_in_msg,ll_count(peer->gbox.cards));
 			gbox_send_checkcode(cli);
 		}
 		if(peer->hello_stat == GBOX_STAT_HELLOS)
@@ -647,6 +666,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		gbox_write_version();
 		gbox_write_peer_onl();
 	}
+	peer->last_it = it; //save position for next hello
 	return 0;
 }
 
@@ -1251,12 +1271,31 @@ static void gbox_send_dcw(struct s_client *cl, ECM_REQUEST *er)
 	buf[34] = ere->gbox_caid >> 8;		//CAID
 	buf[35] = ere->gbox_caid & 0xff;	//CAID
 	buf[36] = ere->gbox_slot;  		//Slot
-	buf[37] = ere->gbox_prid >> 8;		//ProvID
-	buf[38] = ere->gbox_prid & 0xff;	//ProvID; //NEEDFIX: CHID / 0000
+	if (buf[34] == 0x06)			//if irdeto
+	{
+		buf[37] = er->chid >> 8;	//CHID
+		buf[38] = er->chid & 0xff;	//CHID
+	}
+	else
+	{
+		if (local_gbox.minor_version == 0x2A)
+		{
+			buf[37] = 0xff;		//gbox.net sends 0xff
+			buf[38] = 0xff;		//gbox.net sends 0xff
+		}
+		else
+		{
+			buf[37] = 0;		//gbox sends 0
+			buf[38] = 0;		//gbox sends 0
+		}	
+	}
 	buf[39] = ere->gbox_peer >> 8;		//Target peer
 	buf[40] = ere->gbox_peer & 0xff;	//Target peer
-	buf[41] = 0x01;           		//card / cache / emu; NEEDFIX: set later properly
-	buf[42] = 0x30;           		//1st nibble unknown / 2nd nibble distance
+	if (er->rc == E_CACHE1 || er->rc == E_CACHE2 || er->rc == E_CACHEEX)
+		{ buf[41] = 0x03; }		//cache
+	else
+		{ buf[41] = 0x01; }		//card, emu, needs probably further investigation
+	buf[42] = 0x30;				//1st nibble unknown / 2nd nibble distance
 	buf[43] = ere->gbox_unknown;		//meaning unknown, copied from ECM request
 
 	//This copies the routing info from ECM to answer.
@@ -1562,7 +1601,7 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
 		memcpy(dcw, data + 14, 16);
 		uint32_t crc = data[30] << 24 | data[31] << 16 | data[32] << 8 | data[33];
 		char tmp[32];
-		cs_debug_mask(D_READER, "gbox: received cws=%s, peer=%04X, ecm_pid=%04X, sid=%04X, crc=%08X, type=%02X, dist=%01X, unkn1=%01X, unkn2=%02X, chid/provid=%04X",
+		cs_debug_mask(D_READER, "gbox: received cws=%s, peer=%04X, ecm_pid=%04X, sid=%04X, crc=%08X, type=%02X, dist=%01X, unkn1=%01X, unkn2=%02X, chid/0x0000/0xffff=%04X",
 					  cs_hexdump(0, dcw, 32, tmp, sizeof(tmp)),  
 					  data[10] << 8 | data[11], data[6] << 8 | data[7], data[8] << 8 | data[9], crc, data[41], data[42] & 0x0f, data[42] >> 4, data[43], data[37] << 8 | data[38]);
 
