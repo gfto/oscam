@@ -1422,6 +1422,13 @@ static void gbox_local_cards(struct s_client *cli)
 
 static int32_t gbox_client_init(struct s_client *cli)
 {
+	if(!cfg.gbox_port || cfg.gbox_port > 65535)
+	{
+		cs_log("gbox: error, no/invalid port=%d configured in oscam.conf!",
+			   cfg.gbox_port ? cfg.gbox_port : 0);
+		return -1;
+	}	
+	
 	if(!cfg.gbox_hostname || strlen(cfg.gbox_hostname) > 128)
 	{
 		cs_log("gbox: error, no/invalid hostname '%s' configured in oscam.conf!",
@@ -1494,8 +1501,8 @@ static int32_t gbox_client_init(struct s_client *cli)
 	SIN_GET_PORT(cli->udp_sa) = htons((uint16_t)rdr->r_port);
 	hostname2ip(cli->reader->device, &SIN_GET_ADDR(cli->udp_sa));
 
-	cs_log("proxy %s:%d (fd=%d, peer id=%04x, my id=%04x, my hostname=%s, listen port=%d)",
-		   rdr->device, rdr->r_port, cli->udp_fd, peer->gbox.id, local_gbox.id, cfg.gbox_hostname, rdr->r_port);
+	cs_log("proxy %s (fd=%d, peer id=%04X, my id=%04X, my hostname=%s, my listen port=%d, peer's listen port=%d)",
+		   rdr->device, cli->udp_fd, peer->gbox.id, local_gbox.id, cfg.gbox_hostname, cfg.gbox_port, rdr->r_port);
 
 	cli->pfd = cli->udp_fd;
 
@@ -1789,7 +1796,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 	memcpy(&send_buf_1[cont_1], peer->gbox.checkcode, 7);
 	cont_1 = cont_1 + 7;
 
-	cs_debug_mask(D_READER, "Gbox sending ecm for %06x : %s", er->prid , cli->reader->label);
+	cs_debug_mask(D_READER, "gbox sending ecm for %04X:%06X -> %s", er->caid, er->prid , cli->reader->label);
 	er->gbox_ecm_ok = 1;
 	gbox_send(cli, send_buf_1, cont_1);
 	cli->pending++;
