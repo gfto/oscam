@@ -235,23 +235,3 @@ ICHID                         images/ICHID.svg
 ICRES                         images/ICRES.svg
 ICSPAC                        images/ICSPAC.gif
 ICEMM                         images/ICEMM.svg
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

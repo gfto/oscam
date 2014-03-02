@@ -4535,7 +4535,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	tpl_printf(vars, TPLADD, "REL_CACHEXHIT", "%.2f", (first_client ? first_client->cwcacheexhit : 0) * 100 / cachesum);
 	tpl_addVar(vars, TPLADD, "CACHEEXSTATS", tpl_getTpl(vars, "STATUSCACHEX"));
 #endif
-	//userinfo////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//User info
 	struct s_auth *account;
 	int8_t isactive;
 	int32_t total_users = 0;
@@ -4576,7 +4576,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 		tpl_printf(vars, TPLADD, "TOTAL_ONLINE", "%d", user_count_active);
 		tpl_printf(vars, TPLADD, "TOTAL_CONNECTED", "%d", (user_count_all - user_count_active));
 	}
-	//cwinfo
+	//CW info
 	float ecmsum = first_client->cwfound + first_client->cwnot + first_client->cwtout + first_client->cwcache; //dont count TUN its included
 	if(ecmsum < 1){ecmsum = 1;}
 	tpl_printf(vars, TPLADD, "TOTAL_ECM_MIN", "%d", first_client->n_request[0]);
