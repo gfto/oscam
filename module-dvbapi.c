@@ -2635,7 +2635,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 void dvbapi_handlesockmsg(unsigned char *buffer, uint32_t len, int32_t connfd)
 {
 	uint32_t val = 0, size = 0, i, k;
-	pmt_stopmarking = 0; // to stop_descrambling marking in PMT 6 mode
 
 	for(k = 0; k < len; k += 3 + size + val)
 	{
@@ -3608,8 +3607,9 @@ static void *dvbapi_main_local(void *cli)
 			{
 				if(type[i] == 1 && pmthandling == 0)
 				{
-					pmthandling = 1; // pmthandling in progress!
-					connfd = -1;     // initially no socket to read from
+					pmthandling = 1;     // pmthandling in progress!
+					pmt_stopmarking = 0; // to stop_descrambling marking in PMT 6 mode
+					connfd = -1;         // initially no socket to read from
 					int new = 0;
 
 					if (pfd2[i].fd == listenfd)
@@ -3637,15 +3637,54 @@ static void *dvbapi_main_local(void *cli)
 
 					//reading and completing data from socket
 					if (connfd > 0) {
-						uint32_t pmtlen = 0;
+						uint32_t pmtlen = 0, chunks_processed = 0;
 
 						int tries = 100;
 						do {
 							len = recv(connfd, mbuf + pmtlen, sizeof(mbuf) - pmtlen, MSG_DONTWAIT);
 							if (len > 0)
 								pmtlen += len;
-							else {
-								if (pmtlen > 0) //all data read
+							if (pmtlen > 0) {
+								// check and try to process complete PMT objects by chunks to avoid PMT buffer overflows
+								if (pmtlen > 4 && mbuf[0] == 0x9f && mbuf[1] == 0x80 && mbuf[2] == 0x32)
+								{
+									// parse packet size (ASN.1)
+									uint32_t val = 0, size = 0, chunksize = 0;
+									if (mbuf[3] & 0x80)
+									{
+										val = 0;
+										size = mbuf[3] & 0x7F;
+										if (pmtlen > 4 + size)
+										{
+											uint32_t k;
+											for (k = 0; k < size; k++)
+												val = (val << 8) | mbuf[3 + 1 + k];
+											size++;
+										}
+									}
+									else
+									{
+										val = mbuf[3] & 0x7F;
+										size = 1;
+									}
+
+									// handle if we have a complete PMT object
+									chunksize = 3 + size + val;
+									if (chunksize < sizeof(mbuf))
+									{
+										cs_ddump_mask(D_DVBAPI, mbuf, chunksize, "[DVBAPI] Parsing #%d PMT object(s):", ++chunks_processed);
+										dvbapi_handlesockmsg(mbuf, chunksize, connfd);
+
+										// if we read more data then processed, move it to beginning
+										if (pmtlen > chunksize)
+											memmove(mbuf, mbuf + chunksize, pmtlen - chunksize);
+										pmtlen -= chunksize;
+										continue;
+									}
+								}
+							}
+							if (len <= 0) {
+								if (pmtlen > 0 || chunks_processed > 0) //all data read
 									break;
 								else {          //wait for data become available and try again
 
@@ -3663,7 +3702,7 @@ static void *dvbapi_main_local(void *cli)
 						// if the connection is new and we read no data, then add it to the poll,
 						// otherwise this socket will not be checked with poll when data arives
 						// because fd it is not yet assigned with the demux
-						if (new && !pmtlen) {
+						if (new && !pmtlen && !chunks_processed) {
 							for (j = 0; j < MAX_DEMUX; j++) {
 								if (!unassoc_fd[j]) {
 									unassoc_fd[j] = connfd;
