@@ -1823,7 +1823,7 @@ static int8_t add_to_ecmlen(struct s_reader *rdr, READER_STAT *s)
 
 void update_ecmlen_from_stat(struct s_reader *rdr)
 {
-	if(!rdr || &rdr->lb_stat)
+	if(!rdr || !&rdr->lb_stat)
 		{ return; }
 
 	cs_readlock(&rdr->lb_stat_lock);
