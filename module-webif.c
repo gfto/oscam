@@ -1157,6 +1157,34 @@ static bool picon_exists(char *name)
 	return strlen(tpl_getTplPath(picon_name, cfg.http_tpl, path, sizeof(path) - 1)) && file_exists(path);
 }
 
+static void clear_rdr_stats(struct s_reader *rdr)
+{
+	int i;
+	for(i = 0; i < 4; i++)
+	{
+		rdr->emmerror[i] = 0;
+		rdr->emmwritten[i] = 0;
+		rdr->emmskipped[i] = 0;
+		rdr->emmblocked[i] = 0;
+	}
+	rdr->ecmsok = 0;
+	rdr->ecmsnok = 0;
+	rdr->ecmshealthok = 0;
+	rdr->ecmshealthnok = 0;
+	rdr->ecmsfilteredhead = 0;
+	rdr->ecmsfilteredlen = 0;
+}
+
+static void clear_all_rdr_stats(void)
+{
+	struct s_reader *rdr;
+	LL_ITER itr = ll_iter_create(configured_readers);
+	while((rdr = ll_iter_next(&itr)))
+	{
+		clear_rdr_stats(rdr);
+	}
+}
+
 static char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, int32_t apicall)
 {
 	struct s_reader *rdr;
@@ -1174,6 +1202,10 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 		if(cfg.http_picon_size > 0)
 		{
 			tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.readericon,img.protoicon {height:%dpx !important;}", cfg.http_picon_size);
+		}
+		if(strcmp(getParam(params, "action"), "resetallrdrstats") == 0)
+		{
+			clear_all_rdr_stats();
 		}
 	}
 	if((strcmp(getParam(params, "action"), "disable") == 0) || (strcmp(getParam(params, "action"), "enable") == 0))
