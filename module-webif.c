@@ -2785,6 +2785,25 @@ static void clear_all_account_stats(void)
 	}
 }
 
+#ifdef CS_CACHEEX
+static void cacheex_clear_all_stats(void)
+{
+	struct s_auth *account = cfg.account;
+	while(account)
+	{
+		cacheex_clear_account_stats(account);
+		account = account->next;
+	}
+	struct s_client *cl;
+	for(cl = first_client->next; cl ; cl = cl->next)
+	{
+		cacheex_clear_client_stats(cl);
+		ll_clear_data(cl->ll_cacheex_stats);
+	}
+	cacheex_clear_client_stats(first_client);
+}
+#endif
+
 static void clear_system_stats(void)
 {
 	first_client->cwfound = 0;
@@ -5987,6 +6006,14 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 	int16_t i, written = 0;
 	struct s_client *cl;
 	time_t now = time((time_t *)0);
+
+	if(!apicall)
+	{
+		if(strcmp(getParam(params, "action"), "resetallcacheexstats") == 0)
+		{
+			cacheex_clear_all_stats();
+		}
+	}
 
 	tpl_printf(vars, TPLADD, "OWN_CACHEEX_NODEID", "%" PRIu64 "X", cacheex_node_id(cacheex_peer_id));
 
