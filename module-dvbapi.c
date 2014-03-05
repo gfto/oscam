@@ -3672,7 +3672,8 @@ static void *dvbapi_main_local(void *cli)
 									chunksize = 3 + size + val;
 									if (chunksize < sizeof(mbuf))
 									{
-										cs_ddump_mask(D_DVBAPI, mbuf, chunksize, "[DVBAPI] Parsing #%d PMT object(s):", ++chunks_processed);
+										chunks_processed++;
+										cs_ddump_mask(D_DVBAPI, mbuf, chunksize, "[DVBAPI] Parsing #%d PMT object(s):", chunks_processed);
 										dvbapi_handlesockmsg(mbuf, chunksize, connfd);
 
 										// if we read more data then processed, move it to beginning
