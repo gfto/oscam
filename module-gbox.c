@@ -49,6 +49,7 @@
 #define RECEIVE_BUFFER_SIZE	1024
 #define MIN_GBOX_MESSAGE_LENGTH	10 //CMD + pw + pw. TODO: Check if is really min
 #define MIN_ECM_LENGTH		8
+#define HELLO_KEEPALIVE_TIME	120 //send hello to peer every 2min in case no ecm received
 
 #define LOCAL_GBOX_MAJOR_VERSION	0x02
 #define LOCAL_GBOX_MINOR_VERSION	0x25
@@ -109,19 +110,16 @@ struct gbox_peer
 	uchar ecm_idx;
 	uchar gbox_count_ecm;
 	CS_MUTEX_LOCK lock;
-	pthread_mutex_t hello_expire_mut;
-	pthread_cond_t hello_expire_cond;
 	struct s_client *my_user;
 	LL_ITER last_it;
 };
 
 static struct gbox_data local_gbox;
 
-static void    gbox_send_boxinfo(struct s_client *cli);
+//static void    gbox_send_boxinfo(struct s_client *cli);
 static void    gbox_send_hello(struct s_client *cli);
 static void    gbox_send_hello_packet(struct s_client *cli, int8_t number, uchar *outbuf, uchar *ptr, int32_t nbcards);
 static void    gbox_send_checkcode(struct s_client *cli);
-static void    gbox_expire_hello(struct s_client *cli);
 static void    gbox_local_cards(struct s_client *cli);
 static void    gbox_init_ecm_request_ext(struct gbox_ecm_request_ext *ere); 	
 static int32_t gbox_client_init(struct s_client *cli);
@@ -433,6 +431,7 @@ static int8_t gbox_auth_client(struct s_client *cli, uchar *gbox_password)
 			cs_auth_client(cli, account, NULL);
 			cli->account = account;
 			cli->grp = account->grp;
+			cli->lastecm = time(NULL);
 			return 0;
 		}
 	}
@@ -765,17 +764,12 @@ static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 
 int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 {
-	struct gbox_peer *peer = cli->gbox;
 	int32_t n1 = 0, rc1 = 0, i1, idx;
 	uchar dcw[16];
 
 	switch(gbox_decode_cmd(data))
 	{
 	case MSG_BOXINFO:
-		// Keep alive message
-		pthread_mutex_lock(&peer->hello_expire_mut);
-		pthread_cond_signal(&peer->hello_expire_cond);
-		pthread_mutex_unlock(&peer->hello_expire_mut);
 		gbox_send_hello(cli);
 		break;
 	case MSG_GOODBYE:
@@ -787,9 +781,6 @@ int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 	case MSG_HELLO:
 		if(gbox_cmd_hello(cli, data, n) < 0)
 			{ return -1; }
-		pthread_mutex_lock(&peer->hello_expire_mut);
-		pthread_cond_signal(&peer->hello_expire_cond);
-		pthread_mutex_unlock(&peer->hello_expire_mut);
 		break;
 	case MSG_CW:
 		cli->last = time((time_t *)0);
@@ -806,15 +797,9 @@ int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 				n1++;
 			}
 		}
-		pthread_mutex_lock(&peer->hello_expire_mut);
-		pthread_cond_signal(&peer->hello_expire_cond);
-		pthread_mutex_unlock(&peer->hello_expire_mut);
 		break;
 	case MSG_CHECKCODE:
 		gbox_checkcode_recv(cli, data + 10);
-		pthread_mutex_lock(&peer->hello_expire_mut);
-		pthread_cond_signal(&peer->hello_expire_cond);
-		pthread_mutex_unlock(&peer->hello_expire_mut);
 		break;
 	case MSG_ECM:
 	{
@@ -1008,52 +993,6 @@ uint32_t gbox_get_ecmchecksum(ECM_REQUEST *er)
 	return checksum[3] << 24 | checksum[2] << 16 | checksum[1] << 8 | checksum[0];
 }
 
-static void gbox_expire_hello(struct s_client *cli)
-{
-	struct gbox_peer *peer = cli->gbox;
-	int32_t callback = 60;
-
-	set_thread_name(__func__);
-
-	cs_pthread_cond_init(&peer->hello_expire_mut, &peer->hello_expire_cond);
-
-	while(1)
-	{
-		struct timespec ts;
-		add_ms_to_timespec(&ts, callback * 1000);
-
-		pthread_mutex_lock(&peer->hello_expire_mut);
-		if(pthread_cond_timedwait(&peer->hello_expire_cond, &peer->hello_expire_mut, &ts) == ETIMEDOUT)
-		{
-			switch(peer->hello_stat)
-			{
-			case GBOX_STAT_HELLOS:
-				peer->hello_stat = GBOX_STAT_HELLOL;
-				gbox_send_hello(cli);
-				callback = 180;
-				break;
-
-			case GBOX_STAT_HELLOR:
-				callback = 300;
-				break;
-
-			case GBOX_STAT_HELLO3:
-				peer->hello_stat = GBOX_STAT_HELLOS;
-				//          gbox_send_boxinfo(cli);
-				//          gbox_send_hello(cli);
-				callback = 900;
-				peer->hello_stat = GBOX_STAT_HELLO3;
-				break;
-
-			case GBOX_STAT_HELLO4:
-				gbox_send_boxinfo(cli);
-				break;
-			}
-		}
-		pthread_mutex_unlock(&peer->hello_expire_mut);
-	}
-}
-
 static void gbox_send(struct s_client *cli, uchar *buf, int32_t l)
 {
 	struct gbox_peer *peer = cli->gbox;
@@ -1195,7 +1134,7 @@ static void gbox_send_checkcode(struct s_client *cli)
 
 	gbox_send(cli, outbuf, 17);
 }
-
+/*
 static void gbox_send_boxinfo(struct s_client *cli)
 {
 	struct gbox_peer *peer = cli->gbox;
@@ -1210,7 +1149,7 @@ static void gbox_send_boxinfo(struct s_client *cli)
 	memcpy(&outbuf[0xC], cfg.gbox_hostname, hostname_len);
 	gbox_send(cli, outbuf, hostname_len + 0xC);
 }
-
+*/
 static int32_t gbox_recv(struct s_client *cli, uchar *buf, int32_t l)
 {
 	uchar data[RECEIVE_BUFFER_SIZE];
@@ -1561,24 +1500,6 @@ static int32_t gbox_client_init(struct s_client *cli)
 	if(!cli->reader->gbox_maxdist)
 		{ cli->reader->gbox_maxdist = DEFAULT_GBOX_MAX_DIST; }
 
-	// create expire thread
-	pthread_t t;
-	pthread_attr_t attr;
-	pthread_attr_init(&attr);
-	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
-	int32_t ret = pthread_create(&t, &attr, (void *)gbox_expire_hello, cli);
-
-	if(ret)
-	{
-		cs_log("ERROR: can't create gbox expire thread (errno=%d %s)", ret, strerror(ret));
-		pthread_attr_destroy(&attr);
-		return -1;
-	}
-	else
-		{ pthread_detach(t); }
-
-	pthread_attr_destroy(&attr);
-
 	return 0;
 }
 
@@ -1880,8 +1801,23 @@ static void init_local_gbox(void)
 
 static void gbox_s_idle(struct s_client *cl)
 {
+	uint32_t time_since_lastecm;
+	struct s_client *proxy = get_gbox_proxy(cl->gbox_peer_id);
+	struct gbox_peer *peer;
+	
+	time_since_lastecm = abs(cl->lastecm - time(NULL));
+	if (time_since_lastecm > HELLO_KEEPALIVE_TIME && cl->gbox_peer_id != NO_GBOX_ID && proxy && proxy->gbox)
+	{
+		peer = proxy->gbox;
+		cs_debug_mask(D_READER, "gbox time since last ecm in sec: %d => trigger keepalive hello",time_since_lastecm);
+		if (!peer->online)
+			{ peer->hello_stat = GBOX_STAT_HELLOL; }
+		else
+			{ peer->hello_stat = GBOX_STAT_HELLOS; }
+		gbox_send_hello(proxy);
+		peer->hello_stat = GBOX_STAT_HELLOR;
+	}	
 	//prevent users from timing out
-	//later handle more sophisticated
 	cs_debug_mask(D_READER, "gbox client idle prevented: %s", username(cl));
 	cl->last = time((time_t *)0);
 }
