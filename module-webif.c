@@ -4537,45 +4537,28 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 #endif
 	//User info
 	struct s_auth *account;
-	int8_t isactive;
 	int32_t total_users = 0;
 	int32_t disabled_users = 0;
 	int32_t expired_users = 0;
-	int32_t active_users = 0;
 	for(account = cfg.account; (account); account = account->next)
 	{
 		total_users++;
-		isactive = 1;
 		if(account->expirationdate && account->expirationdate < now)
 		{
 			expired_users++;
-			isactive = 0;
 		}
 		if(account->disabled != 0)
 		{
 			disabled_users++;
-			isactive = 0;
-		}
-		if(isactive)
-		{
-			active_users++;
 		}
 	}
 	tpl_printf(vars, TPLADD, "TOTAL_USERS", "%d", total_users);
-	tpl_printf(vars, TPLADD, "TOTAL_ACTIVE", "%d", user_count_all);
+	tpl_printf(vars, TPLADD, "TOTAL_ACTIVE", "%d", total_users - expired_users - disabled_users);
 	tpl_printf(vars, TPLADD, "TOTAL_EXPIRED", "%d", expired_users);
 	tpl_printf(vars, TPLADD, "TOTAL_DISABLED", "%d", disabled_users);
+	tpl_printf(vars, TPLADD, "TOTAL_ONLINE", "%d", cfg.http_hide_idle_clients ? user_count_shown : user_count_active);
+	tpl_printf(vars, TPLADD, "TOTAL_CONNECTED", "%d", user_count_all);
 
-	if(cfg.http_hide_idle_clients == 1 || cfg.hideclient_to < 1)
-	{
-		tpl_printf(vars, TPLADD, "TOTAL_ONLINE", "%d", user_count_shown);
-		tpl_printf(vars, TPLADD, "TOTAL_CONNECTED", "%d", (user_count_all - user_count_shown));
-	}
-	else
-	{
-		tpl_printf(vars, TPLADD, "TOTAL_ONLINE", "%d", user_count_active);
-		tpl_printf(vars, TPLADD, "TOTAL_CONNECTED", "%d", (user_count_all - user_count_active));
-	}
 	//CW info
 	float ecmsum = first_client->cwfound + first_client->cwnot + first_client->cwtout + first_client->cwcache; //dont count TUN its included
 	if(ecmsum < 1){ecmsum = 1;}
