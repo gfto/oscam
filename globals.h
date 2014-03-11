@@ -1201,7 +1201,7 @@ struct s_reader                                     //contains device info, read
 	uint32_t        auprovid;                       // AU only for this provid
 	int8_t          audisabled;                     // exclude reader from auto AU
 	int8_t          needsemmfirst;                  // 0: reader descrambles without emm first, 1: reader needs emms before it can descramble
-	struct timeb    emm_last;                       // time of last succesfull written emm
+	struct timeb    emm_last;                       // time of last successfully written emm
 	int8_t          smargopatch;
 	int8_t          autospeed;                      // 1 clockspeed set according to atr f max
 	struct s_client *client;                        // pointer to 'r'client this reader is running in

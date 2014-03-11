@@ -316,7 +316,7 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader *reader)
 		rdr_debug_mask(reader, D_READER, "Tiger session key negotiated");
 		return OK;
 	}
-	rdr_log(reader, "Negotiate sessionkey was not successfull! Please check tivusat rsa key");
+	rdr_log(reader, "Negotiate sessionkey was not successful! Please check tivusat rsa key");
 	return ERROR;
 
 }
@@ -462,7 +462,7 @@ static int32_t NegotiateSessionKey(struct s_reader *reader)
 	}
 	if RENEW_SESSIONKEY()
 	{
-		rdr_log(reader, "Negotiate sessionkey was not successfull! Please check rsa key and boxkey");
+		rdr_log(reader, "Negotiate sessionkey was not successful! Please check rsa key and boxkey");
 		return ERROR;
 	}
 

@@ -524,7 +524,7 @@ static int32_t seca_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	if((cta_res[0] == 0x90) && ((cta_res[1] == 0x00) || (cta_res[1] == 0x19)))
 	{
 		if(ep->type == GLOBAL) { return OK; }  //do not print new provider info after global emm
-		if(set_provider_info(reader, i) == OK)  //after successfull EMM, print32_t new provider info
+		if(set_provider_info(reader, i) == OK)  //after successful EMM, print32_t new provider info
 			{ return OK; }
 	}
 	return ERROR;

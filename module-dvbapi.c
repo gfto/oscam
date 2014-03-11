@@ -426,9 +426,9 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 	default:
 		break;
 	}
-	if(ret != -1)  // filter set succesfull
+	if(ret != -1)  // filter set successful
 	{
-		cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d Filter #%d started succesfully (caid %04X provid %06X pid %04X)", demux_id, n + 1, caid, provid, pid);
+		cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d Filter #%d started successfully (caid %04X provid %06X pid %04X)", demux_id, n + 1, caid, provid, pid);
 		if(type == TYPE_EMM && add_to_emm_list){ 
 			add_emmfilter_to_list(demux_id, filt, caid, provid, pid, count, n + 1, true);
 		}
@@ -645,7 +645,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 		case DVBAPI_1:
 #if defined(__powerpc__)
 			ioctl(fd, DMX_STOP); // for old boxes dvbapi1 complaint like dm500 ppcold, no action feedback.
-			retfilter = 1; // set always succesfull, but we will never know for sure
+			retfilter = 1; // set always successful, but we will never know for sure
 #else
 			retfilter = ioctl(fd, DMX_STOP); // for modern dvbapi boxes, they do give filter status back to us
 #endif
@@ -874,7 +874,7 @@ int32_t dvbapi_start_emm_filter(int32_t demux_index)
 				{
 					demux[demux_index].emm_filter++; // increase total active filters
 				}
-				else   // not set succesfull so add it to the list for try again later on!
+				else   // not set successful, so add it to the list for try again later on!
 				{
 					add_emmfilter_to_list(demux_index, filter, demux[demux_index].EMMpids[l].CAID, demux[demux_index].EMMpids[l].PROVID, demux[demux_index].EMMpids[l].PID, fcount, 0, false);
 				}

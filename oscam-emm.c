@@ -634,7 +634,7 @@ void do_emm_from_file(struct s_reader *reader)
 
 	int32_t rc = cardreader_do_emm(reader, eptmp);
 	if(rc == OK)
-		{ rdr_log(reader, "EMM from file %s was successful written.", token); }
+		{ rdr_log(reader, "EMM from file %s was successfully written.", token); }
 	else
 		{ rdr_log(reader, "ERROR: EMM read from file %s NOT processed correctly! (rc=%d)", token, rc); }
 

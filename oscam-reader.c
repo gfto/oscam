@@ -845,7 +845,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 	client->last_srvid = NO_SRVID_VALUE;
 	client->pfd = client->udp_fd;
 	rdr->tcp_connected = 1;
-	rdr_debug_mask(rdr, D_TRACE, "connect succesfull fd=%d", client->udp_fd);
+	rdr_debug_mask(rdr, D_TRACE, "connect successful fd=%d", client->udp_fd);
 	return client->udp_fd;
 }
 
