@@ -473,22 +473,18 @@ static int8_t gbox_auth_client(struct s_client *cli, uchar *gbox_password)
 {
 	uint16_t gbox_id = gbox_convert_password_to_id(gbox_password);
 	struct s_client *cl = switch_client_proxy(cli, gbox_id);
-	if (cl->gbox)
-	{
-		struct gbox_peer *peer = cl->gbox;
-		if (!gbox_compare_pw(&peer->gbox.password[0],gbox_password))
-			{ return -1; }
-	}
+
 	if(cl->typ == 'p' && cl->gbox && cl->reader)
 	{
-		cli->crypted = 1; //display as crypted
-		cli->gbox = cl->gbox; //point to the same gbox as proxy
-		cli->reader = cl->reader; //point to the same reader as proxy
-		cli->gbox_peer_id = cl->gbox_peer_id; //signal authenticated
-
+		struct gbox_peer *peer = cl->gbox;
 		struct s_auth *account = get_account_by_name(gbox_username(cl));
-		if(account)
+
+		if (gbox_compare_pw(&peer->gbox.password[0],gbox_password) && account)
 		{
+			cli->crypted = 1; //display as crypted
+			cli->gbox = cl->gbox; //point to the same gbox as proxy
+			cli->reader = cl->reader; //point to the same reader as proxy
+			cli->gbox_peer_id = cl->gbox_peer_id; //signal authenticated
 			gbox_disconnect_double_peers(cli);
 			cs_auth_client(cli, account, NULL);
 			cli->account = account;
@@ -911,7 +907,10 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 			if (cli->gbox_peer_id == NO_GBOX_ID)
 			{
 				if (gbox_auth_client(cli, &data[6]) < 0)
-					{ return -1; }
+				{ 
+					cs_debug_mask(D_READER, "gbox: Authentication failed. Please check user in oscam.server and oscam.user");
+					return -1;
+				}
 				//NEEDFIX: Pretty sure this should not be done here
 				gbox_local_cards(cli);	
 				cl = switch_client_proxy(cli, cli->gbox_peer_id);
