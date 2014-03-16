@@ -1346,6 +1346,9 @@ struct s_reader                                     //contains device info, read
 #endif
 	unsigned char   rom[15];
 	unsigned char   irdId[4];
+	uint16_t		VgCredit;
+	uint16_t        VgPin;
+	unsigned char   VgRegionC[8];
 #ifdef WITH_LB
 	int32_t         lb_weight;                      //loadbalance weight factor, if unset, weight=100. The higher the value, the higher the usage-possibility
 	int32_t         lb_usagelevel;                  //usagelevel for loadbalancer
@@ -1380,6 +1383,7 @@ struct s_reader                                     //contains device info, read
 	int8_t          fix_9993;
 	uint8_t         ins7E[0x1A + 1];
 	uint8_t         ins7E11[0x01 + 1];
+	uint8_t         ins2e06[0x04 + 1];
 	int8_t          ins7e11_fast_reset;
 	uint8_t         sc8in1_dtrrts_patch; // fix for kernel commit 6a1a82df91fa0eb1cc76069a9efe5714d087eccd
 #ifdef MODULE_GBOX

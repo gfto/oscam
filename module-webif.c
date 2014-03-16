@@ -1730,6 +1730,12 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_printf(vars, TPLAPPEND, "INS7E11", "%02X", rdr->ins7E11[0]);
 	}
 
+	// ins2e06
+	if(rdr->ins2e06[0x04])
+	{
+		for(i = 0; i < 4 ; i++) { tpl_printf(vars, TPLAPPEND, "INS2E06", "%02X", rdr->ins2e06[i]); }
+	}
+
 	// ATR
 	if(rdr->atr[0])
 		for(i = 0; i < rdr->atrlen / 2; i++)
@@ -3746,7 +3752,35 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					tpl_addVar(vars, TPLAPPEND, "READERPROVIDS", i == 0 ? "(sysid)<BR>\n" : "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<BR>\n");
 				}
 
+				//regional code for Vg card
+				if(rdr->VgRegionC[0])
+				{
+					for(i = 0; i < 8; i++) { tpl_printf(vars, TPLAPPEND, "READER_RCODE", "%c", rdr->VgRegionC[i]); }
+				}
+				else
+				{
+					tpl_addVar(vars, TPLADD, "READER_RCODE", "n/a");
+				}
 
+				//Pin Vg card
+				if(rdr->VgPin)
+				{
+                    tpl_printf(vars, TPLAPPEND, "READERPIN", "%04i", rdr->VgPin);
+				}
+				else
+				{
+					tpl_addVar(vars, TPLADD, "READERPIN", "n/a");
+				}
+
+				//credit on Vg card
+				if(rdr->VgCredit)
+				{
+					tpl_printf(vars, TPLAPPEND, "READERCREDIT", "%i", rdr->VgCredit);
+				}
+				else
+				{
+					tpl_addVar(vars, TPLADD, "READERCREDIT", "n/a");
+				}
 
 				if(rdr->card_valid_to)
 				{

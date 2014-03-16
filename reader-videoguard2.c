@@ -401,13 +401,6 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 
 	unsigned char buff[256];
 
-	static const unsigned char ins7416[5] = { 0xD0, 0x74, 0x16, 0x00, 0x00 };
-	if(do_cmd(reader, ins7416, NULL, NULL, cta_res) < 0)
-	{
-		rdr_log(reader, "classD0 ins7416: failed");
-		return ERROR;
-	}
-
 	static const unsigned char ins02[5] = { 0xD0, 0x02, 0x00, 0x00, 0x08 };
 	// D0 02 command is not always present in command table but should be supported
 	// on most cards so do not use do_cmd()
@@ -438,7 +431,110 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 		rdr_log(reader, "Rom version: %c%c%c%c", reader->rom[5], reader->rom[6], reader->rom[7], reader->rom[8]);
 	}
 
+	/* get Vg credit on card */
+	unsigned char ins7404[5] = { 0xD0, 0x74, 0x04, 0x00, 0x00 };
+	l = read_cmd_len(reader, ins7404);     //get command len for ins7404
+	ins7404[4] = l;
+	if(!write_cmd_vg(ins7404, NULL) || !status_ok(cta_res + l))
+	{
+		rdr_log(reader, "Unable to get smartcard credit");
+	}
+	else
+	{
+		if (cta_res[0] == 0x15)
+		{
+			reader->VgCredit = ((cta_res[8] << 8) + cta_res[9]) / 100;
+			rdr_log(reader, "Credit available on card: %i €", reader->VgCredit);
+		}
+	}
 
+	if(reader->ins7E11[0x01])
+	{
+		unsigned char ins742b[5] = { 0xD0, 0x74, 0x2b, 0x00, 0x00 };
+
+		l = read_cmd_len(reader, ins742b);  //get command len for ins742b
+
+		if(l < 2)
+		{
+			rdr_log(reader, "No TA1 change for this card is possible by ins7E11");
+		}
+		else
+		{
+			ins742b[4] = l;
+			bool ta1ok = 0;
+
+			if(!write_cmd_vg(ins742b, NULL) || !status_ok(cta_res + ins742b[4]))  //get supported TA1 bytes
+			{
+				rdr_log(reader, "classD0 ins742b: failed");
+				return ERROR;
+			}
+			else
+			{
+				int32_t i;
+
+				for(i = 2; i < l; i++)
+				{
+					if(cta_res[i] == reader->ins7E11[0x00])
+					{
+						ta1ok = 1;
+						break;
+					}
+				}
+			}
+			if(ta1ok == 0)
+			{
+				rdr_log(reader, "The value %02X of ins7E11 is not supported,try one between %02X and %02X", reader->ins7E11[0x00], cta_res[2], cta_res[ins742b[4] - 1]);
+			}
+			else
+			{
+				static const uint8_t ins7E11[5] = { 0xD0, 0x7E, 0x11, 0x00, 0x01 };
+
+				reader->ins7e11_fast_reset = 0;
+
+				l = do_cmd(reader, ins7E11, reader->ins7E11, NULL, cta_res);
+
+				if(l < 0 || !status_ok(cta_res))
+				{
+					rdr_log(reader, "classD0 ins7E11: failed");
+					return ERROR;
+				}
+				else
+				{
+					unsigned char TA1;
+
+					if(ATR_GetInterfaceByte(newatr, 1, ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK)
+					{
+						if(TA1 != reader->ins7E11[0x00])
+						{
+							rdr_log(reader, "classD0 ins7E11: Scheduling card reset for TA1 change from %02X to %02X", TA1, reader->ins7E11[0x00]);
+							reader->ins7e11_fast_reset = 1;
+#ifdef WITH_COOLAPI
+							if(reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART || reader->typ == R_INTERNAL)
+							{
+#else
+							if(reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART)
+							{
+#endif
+								add_job(reader->client, ACTION_READER_RESET_FAST, NULL, 0);
+							}
+							else
+							{
+								add_job(reader->client, ACTION_READER_RESTART, NULL, 0);
+							}
+							return OK; // Skip the rest of the init since the card will be reset anyway
+						}
+					}
+				}
+			}
+		}
+	}
+	static const unsigned char ins7416[5] = { 0xD0, 0x74, 0x16, 0x00, 0x00 };
+
+	if(do_cmd(reader, ins7416, NULL, NULL, cta_res) < 0)
+	{
+		rdr_log(reader, "classD0 ins7416: failed");
+		return ERROR;
+	}
 	unsigned char boxID [4];
 
 	if(reader->boxid > 0)
@@ -550,10 +646,21 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 		}
 	}
 
-	static const unsigned char ins4C[5] = { 0xD0, 0x4C, 0x00, 0x00, 0x09 };
-	unsigned char payload4C[9] = { 0, 0, 0, 0, 3, 0, 0, 0, 4 };
+	unsigned char ins4C[5] = { 0xD0, 0x4C, 0x00, 0x00, 0x09 };
+	unsigned char len4c = 0, mode = 0;
+	unsigned char payload4C[0xF] = { 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+	if(cmd_table_get_info(reader, ins4C, &len4c, &mode))
+	{
+		ins4C[4] = len4c;				//don't mind if payload is > of ins len, it will be cutted after write_cmd_vg()
+		if(len4c > 9)
+		{
+			payload4C[8] = 0x44;        //value taken from v14 boot log
+			rdr_log(reader, "Extended 4C detected");
+		}
+	}
+
 	memcpy(payload4C, boxID, 4);
-	if(!write_cmd_vg(ins4C, payload4C) || !status_ok(cta_res + l))
+	if(!write_cmd_vg(ins4C, payload4C) || !status_ok(cta_res ))
 	{
 		rdr_log(reader, "classD0 ins4C: failed - sending boxid failed");
 		return ERROR;
@@ -571,6 +678,9 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 	memcpy(reader->hexserial + 2, cta_res + 3, 4);
 	memcpy(reader->sa, cta_res + 3, 3);
 	reader->caid = cta_res[24] * 0x100 + cta_res[25];
+	memset(reader->VgRegionC, 0, 8);
+	memcpy(reader->VgRegionC, cta_res + 60, 8);
+	rdr_log(reader, "Region Code: %c%c%c%c%c%c%c%c", reader->VgRegionC[0], reader->VgRegionC[1], reader->VgRegionC[2], reader->VgRegionC[3], reader->VgRegionC[4], reader->VgRegionC[5], reader->VgRegionC[6], reader->VgRegionC[7]);
 
 	/* we have one provider, 0x0000 */
 	reader->nprov = 1;
@@ -620,8 +730,48 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 		rdr_log(reader, "classD1 ins58: failed");
 		return ERROR;
 	}
+	/*new ins74 present at boot*/
+
+	static const unsigned char ins7423[5] = { 0xD1, 0x74, 0x23, 0x00, 0x00 };
+	if(do_cmd(reader, ins7423, NULL, NULL, cta_res) < 0)
+	{
+		rdr_log(reader, "classD1 ins7423: failed");
+	}
+
+	static const unsigned char ins742A[5] = { 0xD1, 0x74, 0x2A, 0x00, 0x00 };
+	if(do_cmd(reader, ins742A, NULL, NULL, cta_res) < 0)
+	{
+		rdr_log(reader, "classD1 ins742A: failed");
+	}
+
+	static const unsigned char ins741B[5] = { 0xD1, 0x74, 0x1B, 0x00, 0x00 };
+	if(do_cmd(reader, ins741B, NULL, NULL, cta_res) < 0)
+	{
+		rdr_log(reader, "classD1 ins741B: failed");
+	}
 
 	static const unsigned char ins4Ca[5] = { 0xD1, 0x4C, 0x00, 0x00, 0x00 };
+	unsigned char ins741C[5] = { 0xD1, 0x74, 0x1C, 0x00, 0x00 };
+	if(len4c > 9)
+		{
+			if((l = read_cmd_len(reader, ins741C)) < 0)  // We need to know the exact len
+			{
+				return ERROR;
+			}
+			ins741C[4] = l;
+			if(do_cmd(reader, ins741C, NULL, NULL, cta_res) < 0)	//from log this payload is copied on 4c
+			{
+				rdr_log(reader, "classD1 ins741C: failed");
+			}
+			else
+			{
+				if(l > 8)	//if payload4c is length 0xF, we can't copy over more than 8 bytes in the next memcopy
+				{
+					l = 8;
+				}
+				memcpy(payload4C + 8, cta_res, l);
+			}
+		}
 	l = do_cmd(reader, ins4Ca, payload4C, NULL, cta_res);
 	if(l < 0 || !status_ok(cta_res))
 	{
@@ -639,129 +789,59 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 			return ERROR;
 		}
 	}
-
-	if(reader->ins7E11[0x01])
+	/* get PIN settings */
+	static const unsigned char ins7411[5] = { 0xD1, 0x74, 0x11, 0x00, 0x00 };
+	unsigned char payload2e4[4];
+	if(do_cmd(reader, ins7411, NULL, NULL, cta_res) < 0)
 	{
-		unsigned char ins742b[5] = { 0xD0, 0x74, 0x2b, 0x00, 0x00 };
-
-		l = read_cmd_len(reader, ins742b);  //get command len for ins742b
-
-		if(l < 2)
-		{
-			rdr_log(reader, "No TA1 change for this card is possible by ins7E11");
-		}
-		else
-		{
-			ins742b[4] = l;
-			bool ta1ok = 0;
-
-			if(!write_cmd_vg(ins742b, NULL) || !status_ok(cta_res + ins742b[4]))  //get supported TA1 bytes
-			{
-				rdr_log(reader, "classD0 ins742b: failed");
-				return ERROR;
-			}
-			else
-			{
-				int32_t i;
-
-				for(i = 2; i < l; i++)
-				{
-					if(cta_res[i] == reader->ins7E11[0x00])
-					{
-						ta1ok = 1;
-						break;
-					}
-				}
-			}
-			if(ta1ok == 0)
-			{
-				rdr_log(reader, "The value %02X of ins7E11 is not supported,try one between %02X and %02X", reader->ins7E11[0x00], cta_res[2], cta_res[ins742b[4] - 1]);
-			}
-			else
-			{
-				static const uint8_t ins7E11[5] = { 0xD0, 0x7E, 0x11, 0x00, 0x01 };
-
-				reader->ins7e11_fast_reset = 0;
-
-				l = do_cmd(reader, ins7E11, reader->ins7E11, NULL, cta_res);
-
-				if(l < 0 || !status_ok(cta_res))
-				{
-					rdr_log(reader, "classD0 ins7E11: failed");
-					return ERROR;
-				}
-				else
-				{
-					unsigned char TA1;
-
-					if(ATR_GetInterfaceByte(newatr, 1, ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK)
-					{
-						if(TA1 != reader->ins7E11[0x00])
-						{
-							rdr_log(reader, "classD0 ins7E11: Scheduling card reset for TA1 change from %02X to %02X", TA1, reader->ins7E11[0x00]);
-							reader->ins7e11_fast_reset = 1;
-#ifdef WITH_COOLAPI
-							if(reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART || reader->typ == R_INTERNAL)
-							{
-#else
-							if(reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART)
-							{
-#endif
-								add_job(reader->client, ACTION_READER_RESET_FAST, NULL, 0);
-							}
-							else
-							{
-								add_job(reader->client, ACTION_READER_RESTART, NULL, 0);
-							}
-							return OK; // Skip the rest of the init since the card will be reset anyway
-						}
-					}
-				}
-			}
-		}
+		rdr_log(reader, "classD1 ins7411: unable to get PIN");
+		return ERROR;
+	}
+	else
+	{
+		memset(payload2e4, 0, 4);
+		memcpy(payload2e4, cta_res + 2, 4);
+		reader->VgPin = (cta_res[4] << 8) + cta_res[5];
+		rdr_log(reader, "Pincode read: %i", reader->VgPin);
 	}
 
-	/* get parental lock settings */
-	static const unsigned char ins74e[5] = {0xD0, 0x74, 0x0E, 0x00, 0x00};
-	if(cmd_exists(reader, ins74e))
+	/* get PCB(content rating) settings */
+	static const unsigned char ins74e[5] = {0xD1, 0x74, 0x0E, 0x00, 0x00};
+	if(do_cmd(reader, ins74e, NULL, NULL, cta_res) < 0)
 	{
-		l = do_cmd(reader, ins74e, NULL, NULL, cta_res);
-		if(l < 0 || !status_ok(cta_res + l))
-		{
-			rdr_log(reader, "classD0 ins74e: failed to get parental lock settings");
-		}
-		else
-		{
-			char tmp[l > 0 ? l * 3 : 1];
-			rdr_log(reader, "parental lock setting: %s", cs_hexdump(1, cta_res + 2, l - 2, tmp, sizeof(tmp)));
-		}
+		rdr_log(reader, "classD1 ins74e: failed to get PCB settings");
+	}
+	else
+	{
+		rdr_log(reader, "PCB settings: %X %X %X %X", cta_res[2], cta_res[3], cta_res[4], cta_res[5]);
 	}
 
-	/* disable parental lock */
-	static const uchar ins2e[5] = {0xD0, 0x2E, 0x00, 0x00, 0x04};
-	static const uchar payload2e[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+	/* send PIN */
+	static const unsigned char ins2epin[5] = {0xD1, 0x2E, 0x04, 0x00, 0x04};
 	if(cfg.ulparent)
 	{
-		if(cmd_exists(reader, ins74e) && write_cmd_vg(ins2e, payload2e) && status_ok(cta_res + l))
+		l = do_cmd(reader, ins2epin, payload2e4, NULL, cta_res);
+		if(l < 0 || !status_ok(cta_res))
 		{
-			rdr_log(reader, "parental lock disabled");
+			rdr_log(reader, "classD1 ins2E: failed");
+			rdr_log(reader, "Cannot disable parental control");
+			return ERROR;
 		}
 		else
 		{
-			rdr_log(reader, "cannot disable parental lock");
+			rdr_log(reader, "Parental control disabled");
 		}
-		if(cmd_exists(reader, ins74e))
+	}
+	/* send check control for pin, needed on some cards */
+	/* the presence and the value of payloads is provider's dependent*/
+		if(reader->ins2e06[4])
+	{
+		static const unsigned char ins2e06[5] = { 0xD1, 0x2E, 0x06, 0x00, 0x04 };
+		l = do_cmd(reader, ins2e06, reader->ins2e06, NULL, cta_res);
+		if(l < 0 || !status_ok(cta_res))
 		{
-			l = do_cmd(reader, ins74e, NULL, NULL, cta_res);
-			if(l < 0 || !status_ok(cta_res + l))
-			{
-				rdr_log(reader, "classD0 ins74e: failed to get parental lock settings");
-			}
-			else
-			{
-				char tmp[l > 0 ? l * 3 : 1];
-				rdr_log(reader, "parental lock setting after disabling: %s", cs_hexdump(1, cta_res + 2, l - 2, tmp, sizeof(tmp)));
-			}
+			rdr_log(reader, "classD1 ins2E: failed");
+			return ERROR;
 		}
 	}
 
@@ -841,7 +921,7 @@ static int32_t videoguard2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 	l = do_cmd(reader, ins40, tbuff, NULL, cta_res);
 	if(l < 0 || !status_ok(cta_res))
 	{
-		rdr_log(reader, "classD0 ins40: (%d) status not ok %02x %02x", l, cta_res[0], cta_res[1]);
+		rdr_log(reader, "classD1 ins40: (%d) status not ok %02x %02x", l, cta_res[0], cta_res[1]);
 		rdr_log(reader, "The card is not answering correctly! Restarting reader for safety");
 		add_job(reader->client, ACTION_READER_RESTART, NULL, 0);
 		return ERROR;
