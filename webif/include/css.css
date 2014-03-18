@@ -109,7 +109,7 @@ li.menu a, li.menu_selected a {
  * services.html, services_edit.html, status.html, user_edit.html, userconfig.html */
 #subnav {}
 #nav {
-	height:20px;
+	height:22px;
 }
 #nav li {
 	display:inline;
@@ -365,7 +365,16 @@ td.usercol17, td.usercol18,
 td.usercol19, td.usercol20,
 td.usercol21, td.usercol22,
 td.usercol23, td.usercol24,
-td.usercol25 {
+td.usercol25, td.readercol0,
+td.readercol1,td.readercol2,
+td.readercol3,td.readercol4,
+td.readercol5,td.readercol6,
+td.readercol7,td.readercol8,
+td.readercol9,td.readercol10,
+td.readercol11,td.readercol12,
+td.readercol13,td.readercol14,
+td.readercol15,td.readercol16,
+td.readercol17 {
 	text-align:center
 }
 
@@ -469,7 +478,8 @@ div.info {
  * logmenu		- file.html
 */
 div.debugmenu, div.logmenu {
-	line-height:20px
+	line-height:20px;
+	margin-bottom:15px
 }
 
 /* in entitlements_cccambit.html */
@@ -481,10 +491,10 @@ div.cccamentitlementcontrols {
 /* definition only for show or hide columns or DIV
  * #newuser		- in userconfig.html
  * #newreader	- in readers.html
- * #exp, #cwc, #acasc, #grp	- only in module-webif.c for show/hide columns in userconfig.html
+ * #exp, #cwc, #acasc - only in module-webif.c for show/hide columns in userconfig.html
  */
 #newuser, #newreader,
-#exp, #cwc, #acasc, #grp,
+#exp, #cwc, #acasc,
 .hidden {
 	display:none
 }
@@ -588,7 +598,7 @@ span.text_entitle {
 
 /* ******** 15. GRAPH */
 text.graph_error {text-anchor:middle;}
-text.graph_grid_txt {text-anchor:end;style:font-size:12px;}
+text.graph_grid_txt {text-anchor:end;font-size:12px;}
 path.graph_grid {stroke-opacity:0.5;}
 
 /* ******** 17. SORTING IN TABLE */
@@ -633,6 +643,112 @@ path.graph_grid {stroke-opacity:0.5;}
 .smallmargintop {
 	margin-top:15px
 }
+
+/*  for UL in logpoll.html */
+#livelog {
+	height:500px;
+	max-width:1500px;
+	overflow-y:auto;
+	list-style:none;
+	text-align:left;
+	margin:5px auto 15px;
+	border:1px dotted #AAA;
+	background-color:#FAFAFA;
+	color:#666;
+	font-family: "Courier New",monospace
+}
+#livelogdata {
+	list-style:none;
+}
+li.regex {
+	list-style-type:none;
+}
+input.regexinput {
+	cursor:text;
+	padding:2px;
+	margin: 3px 15px 1px 3px;
+	width:400px;
+}
+#regexok, #regexreset {
+	margin-top:20px;
+	width:70px;
+}
+div.colorPicker-picker {
+	height: 16px;
+	width: 16px;
+	display: inline;
+	margin: 3px;
+	padding: 4px 8px;
+	border: 1px solid #ccc;
+	cursor: pointer;
+	line-height: 16px;
+	font-size:0.75em;
+	font-weight:bold;
+	text-align: center;
+}
+
+div.colorPicker-palette {
+	width: 110px;
+	position: absolute;
+	border: 1px solid #598FEF;
+	background-color: #EFEFEF;
+	padding: 2px;
+	z-index: 9999;
+}
+	div.colorPicker_hexWrap {width: 100%; float:left }
+	div.colorPicker_hexWrap label {font-size: 95%; color: #2F2F2F; margin: 5px 2px; width: 25%}
+	div.colorPicker_hexWrap input {margin: 5px 2px; padding: 0; font-size: 95%; border: 1px solid #000; width: 65%; }
+
+div.colorPicker-swatch {
+	height: 12px;
+	width: 12px;
+	border: 1px solid #000;
+	margin: 2px;
+	float: left;
+	cursor: pointer;
+	line-height: 12px;
+}
+
+/* User-Page polling */
+#inc,#dec {
+	padding:0 3px;
+	margin: -3px 3px;
+	border:none;
+	background-color:#A00;
+	color:#FFF;
+	border-radius:4px;
+	font-size:14px;
+	font-weight:700;
+	width: 22px;
+	height: 22px;
+}
+#inc:hover,#dec:hover {
+	background-color:red;
+}
+li.pollselect {
+	display:inline;
+	list-style:none;
+	position: absolute;
+	right: 10px;
+}
+input.pintervall {
+	font-size:14px;
+	font-weight:500;
+	width:18px;
+	height:18px;
+	color:#000;
+	background-color:transparent;
+	border:none;
+	border-radius:4px;
+	text-align:right;
+	margin: 0 4px;
+}
+
+/* polling heartbeat */
+#picolor {
+	background-color:#A00; 
+}
+
 
 /* ================================= COLORS ================================= */
 /* BASIC SETTINGS */
@@ -785,3 +901,31 @@ rect.graph_bg {fill:white;}
 text.graph_error {fill:red;}
 text.graph_grid_txt {fill:gray;}
 path.graph_grid {stroke:gray;}
+
+#chart {
+	position:absolute;
+	width: 150px;
+	height: 90px;
+	border: 1px dotted #ff0000;
+	background-color: #eaeaea;
+	padding:3px;	
+}
+#charthead {
+	background-color: transparent;
+	width:100%;
+	height:5px;
+	font-size:3;
+}
+#graph {
+	width:98%;
+	bottom:0;
+	position:absolute;
+}
+div.bar {
+	width: 5px;
+	margin: 2px;
+	display: inline-block;
+	position: relative;
+	background-color: #aeaeae;
+	vertical-align: baseline;
+}

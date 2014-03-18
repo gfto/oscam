@@ -1,15 +1,47 @@
-##TPLHEADER##
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+	<title>##HTTPOSCAMLABEL## r##CS_SVN_VERSION##</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=##HTTP_CHARSET##">
+	<meta name="robots" content="noindex,nofollow">
+	<link rel="stylesheet" type="text/css" href="site.css">
+	<link href="favicon.ico" rel="icon" type="image/x-icon">
+	<script type="text/javascript" src="jquery.js" charset="utf-8"></script>
+	<script type="text/javascript" src="oscam.js"></script>
+	<style type="text/css">##HTTPPICONSIZE##</style>
+	<script type="text/javascript">
+	
+	var page = 'status';
+	var jsonurl = 'oscamapi.json';
+	var parameters = '?part=status';
+	var stoppoll = 0;
+	var pollintervall = 0;
+	var httprefresh = '##REFRESHTIME##';
+
+	</script>
+</HEAD>
+<BODY>
+<DIV ID="wrapper"> <!-- Start wrapper -->
+	<DIV ID="content"> <!-- Start content -->
+	<div id = "chart">
+		<div id = "charthead" ></div>
+		<div id = "graph" ></div>
+	</div>
+##LOGOBIT##
 ##TPLMENU##
 <DIV ID="subnav">
 	<UL ID="nav">
 		<LI><B>Oscam r##CS_SVN_VERSION##</B></LI>
 		<LI CLASS="configmenu"><A HREF="http://www.streamboard.tv/oscam/timeline" TARGET="_blank">Timeline</A></LI>
 		<LI CLASS="configmenu"><A HREF="#statusfooter">Status</A></LI>
+		<LI ID="poll" CLASS="pollselect" style="display: none;">Pollintervall:<input type="text" name="pintervall" class="pintervall" value="" readonly/>sec.<button id="dec">&ndash;</button><button id="inc">+</button></LI>
+		<LI ID="nopoll" CLASS="pollselect" style="display: none;">httprefresh no set - polling disabled</LI>
 	</UL>
 </DIV>
 <TABLE CLASS="status">
 	<TR>
-		<TH COLSPAN="2" CLASS="statuscol0">hide/reset</TH>
+		<TH COLSPAN="2" CLASS="statuscol0">Hide/Reset</TH>
 		<TH CLASS="statuscol4">Label</TH>
 		<TH CLASS="statuscol5">AU</TH>
 		<TH CLASS="statuscol7">Address</TH>
@@ -29,13 +61,10 @@
 ##CLIENTHEADLINE##
 ##CLIENTSTATUS##
 </TABLE>
-<DIV CLASS="log">
-##LOGHISTORY##
-</DIV>
-##SDEBUG##
 <DIV CLASS="info ##DISPLAYINFO##">
 ##SYSTEM_INFO##
 ##USER_INFO##
 ##CACHEEX_INFO##
 </DIV>
+<DIV id="picolor"></DIV>
 ##TPLFOOTER##

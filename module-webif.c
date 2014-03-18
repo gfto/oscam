@@ -4,7 +4,7 @@
 //
 // OSCam HTTP server module
 //
-
+#include "cscrypt/md5.h"
 #include "module-anticasc.h"
 #include "module-cacheex.h"
 #include "module-cccam.h"
@@ -67,7 +67,8 @@ static struct pstat p_stat_old;
 #define MNU_CACHEEX 7
 #define MNU_SCRIPT 8
 #define MNU_SHUTDOWN 9
-#define MNU_TOTAL_ITEMS 10 // sum of items above
+#define MNU_LIVELOG 10
+#define MNU_TOTAL_ITEMS 11 // sum of items above
 /* constants for submenuactivating */
 #define MNU_CFG_GLOBAL 0
 #define MNU_CFG_LOADBAL 1
@@ -1189,6 +1190,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 {
 	struct s_reader *rdr;
 	int32_t i;
+	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 
 	if(!apicall) { setActiveMenu(vars, MNU_READERS); }
 	if(cfg.http_refresh > 0)
@@ -1290,6 +1292,8 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 		tpl_printf(vars, TPLADD, "NEXTREADER", "Reader-%d", i); //Next Readername
 	}
 
+	int jsondelimiter = 0;
+
 	ll_iter_reset(&itr); //going to iterate all configured readers
 	while((rdr = ll_iter_next(&itr)))
 	{
@@ -1299,93 +1303,99 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 
 			// used for API and WebIf
 			tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, rdr->label));
+
+			MD5((unsigned char *)rdr->label, strlen(rdr->label), md5tmp);
+			int z;
+			tpl_addVar(vars, TPLADD, "LABELMD5","");
+			for (z = 0; z < MD5_DIGEST_LENGTH; z++){
+			    tpl_printf(vars, TPLAPPEND, "LABELMD5", "%02x", md5tmp[z]);
+			}
+
 			tpl_addVar(vars, TPLADD, "READERNAMEENC", urlencode(vars, rdr->label));
 			tpl_addVar(vars, TPLADD, "CTYP", reader_get_type_desc(rdr, 0));
 
-			// used only for WebIf
-			if(!apicall)
+			tpl_addVar(vars, TPLADD, "READERCLASS", rdr->enable ? "enabledreader" : "disabledreader");
+
+			const char *readername_tpl = "READERLABEL";
+			if(cfg.http_showpicons && !apicall)
 			{
-				tpl_addVar(vars, TPLADD, "READERCLASS", rdr->enable ? "enabledreader" : "disabledreader");
+				readername_tpl = picon_exists(xml_encode(vars, rdr->label)) ? "READERNAMEBIT" : "READERNOICON";
+				tpl_addVar(vars, TPLADD, "CTYP", picon_exists(xml_encode(vars, reader_get_type_desc(rdr, 0))) ? tpl_getTpl(vars, "READERCTYPBIT") : tpl_getTpl(vars, "READERCTYPNOICON"));
+			}
+			tpl_addVar(vars, TPLADD, "READERNAME", tpl_getTpl(vars, readername_tpl));
 
-				const char *readername_tpl = "READERLABEL";
-				if(cfg.http_showpicons && !apicall)
-				{
-					readername_tpl = picon_exists(xml_encode(vars, rdr->label)) ? "READERNAMEBIT" : "READERNOICON";
-					tpl_addVar(vars, TPLADD, "CTYP", picon_exists(xml_encode(vars, reader_get_type_desc(rdr, 0))) ? tpl_getTpl(vars, "READERCTYPBIT") : tpl_getTpl(vars, "READERCTYPNOICON"));
-				}
-				tpl_addVar(vars, TPLADD, "READERNAME", tpl_getTpl(vars, readername_tpl));
+			char *value = mk_t_group(rdr->grp);
+			tpl_addVar(vars, TPLADD, "GROUPS", value);
+			free_mk_t(value);
+			tpl_printf(vars, TPLADD, "EMMERRORUK", "%d", rdr->emmerror[UNKNOWN]);
+			tpl_printf(vars, TPLADD, "EMMERRORG", "%d", rdr->emmerror[GLOBAL]);
+			tpl_printf(vars, TPLADD, "EMMERRORS", "%d", rdr->emmerror[SHARED]);
+			tpl_printf(vars, TPLADD, "EMMERRORUQ", "%d", rdr->emmerror[UNIQUE]);
 
-				char *value = mk_t_group(rdr->grp);
-				tpl_addVar(vars, TPLADD, "GROUPS", value);
-				free_mk_t(value);
-				tpl_printf(vars, TPLADD, "EMMERRORUK", "%d", rdr->emmerror[UNKNOWN]);
-				tpl_printf(vars, TPLADD, "EMMERRORG", "%d", rdr->emmerror[GLOBAL]);
-				tpl_printf(vars, TPLADD, "EMMERRORS", "%d", rdr->emmerror[SHARED]);
-				tpl_printf(vars, TPLADD, "EMMERRORUQ", "%d", rdr->emmerror[UNIQUE]);
+			tpl_printf(vars, TPLADD, "EMMWRITTENUK", "%d", rdr->emmwritten[UNKNOWN]);
+			tpl_printf(vars, TPLADD, "EMMWRITTENG", "%d", rdr->emmwritten[GLOBAL]);
+			tpl_printf(vars, TPLADD, "EMMWRITTENS", "%d", rdr->emmwritten[SHARED]);
+			tpl_printf(vars, TPLADD, "EMMWRITTENUQ", "%d", rdr->emmwritten[UNIQUE]);
 
-				tpl_printf(vars, TPLADD, "EMMWRITTENUK", "%d", rdr->emmwritten[UNKNOWN]);
-				tpl_printf(vars, TPLADD, "EMMWRITTENG", "%d", rdr->emmwritten[GLOBAL]);
-				tpl_printf(vars, TPLADD, "EMMWRITTENS", "%d", rdr->emmwritten[SHARED]);
-				tpl_printf(vars, TPLADD, "EMMWRITTENUQ", "%d", rdr->emmwritten[UNIQUE]);
+			tpl_printf(vars, TPLADD, "EMMSKIPPEDUK", "%d", rdr->emmskipped[UNKNOWN]);
+			tpl_printf(vars, TPLADD, "EMMSKIPPEDG", "%d", rdr->emmskipped[GLOBAL]);
+			tpl_printf(vars, TPLADD, "EMMSKIPPEDS", "%d", rdr->emmskipped[SHARED]);
+			tpl_printf(vars, TPLADD, "EMMSKIPPEDUQ", "%d", rdr->emmskipped[UNIQUE]);
 
-				tpl_printf(vars, TPLADD, "EMMSKIPPEDUK", "%d", rdr->emmskipped[UNKNOWN]);
-				tpl_printf(vars, TPLADD, "EMMSKIPPEDG", "%d", rdr->emmskipped[GLOBAL]);
-				tpl_printf(vars, TPLADD, "EMMSKIPPEDS", "%d", rdr->emmskipped[SHARED]);
-				tpl_printf(vars, TPLADD, "EMMSKIPPEDUQ", "%d", rdr->emmskipped[UNIQUE]);
+			tpl_printf(vars, TPLADD, "EMMBLOCKEDUK", "%d", rdr->emmblocked[UNKNOWN]);
+			tpl_printf(vars, TPLADD, "EMMBLOCKEDG", "%d", rdr->emmblocked[GLOBAL]);
+			tpl_printf(vars, TPLADD, "EMMBLOCKEDS", "%d", rdr->emmblocked[SHARED]);
+			tpl_printf(vars, TPLADD, "EMMBLOCKEDUQ", "%d", rdr->emmblocked[UNIQUE]);
 
-				tpl_printf(vars, TPLADD, "EMMBLOCKEDUK", "%d", rdr->emmblocked[UNKNOWN]);
-				tpl_printf(vars, TPLADD, "EMMBLOCKEDG", "%d", rdr->emmblocked[GLOBAL]);
-				tpl_printf(vars, TPLADD, "EMMBLOCKEDS", "%d", rdr->emmblocked[SHARED]);
-				tpl_printf(vars, TPLADD, "EMMBLOCKEDUQ", "%d", rdr->emmblocked[UNIQUE]);
-
-				tpl_printf(vars, TPLADD, "ECMSOK", "%u (%.2f%%)", rdr->ecmsok, rdr->ecmshealthok);
-				tpl_printf(vars, TPLADD, "ECMSNOK", "%u (%.2f%%)", rdr->ecmsnok, rdr->ecmshealthnok);
-				tpl_printf(vars, TPLADD, "ECMSFILTEREDHEAD", "%d", rdr->ecmsfilteredhead);
-				tpl_printf(vars, TPLADD, "ECMSFILTEREDLEN", "%d", rdr->ecmsfilteredlen);
+			tpl_printf(vars, TPLADD, "ECMSOK", "%u (%.2f%%)", rdr->ecmsok, rdr->ecmshealthok);
+			tpl_printf(vars, TPLADD, "ECMSNOK", "%u (%.2f%%)", rdr->ecmsnok, rdr->ecmshealthnok);
+			tpl_printf(vars, TPLADD, "ECMSFILTEREDHEAD", "%d", rdr->ecmsfilteredhead);
+			tpl_printf(vars, TPLADD, "ECMSFILTEREDLEN", "%d", rdr->ecmsfilteredlen);
 #ifdef WITH_LB
-				tpl_printf(vars, TPLADD, "LBWEIGHT", "%d", rdr->lb_weight);
+			tpl_printf(vars, TPLADD, "LBWEIGHT", "%d", rdr->lb_weight);
 #endif
-				if(!is_network_reader(rdr))    //reader is physical
+			if(!is_network_reader(rdr))    //reader is physical
+			{
+				tpl_addVar(vars, TPLADD, "REFRICO", "image?i=ICREF");
+				tpl_addVar(vars, TPLADD, "READERREFRESH", tpl_getTpl(vars, "READERREFRESHBIT"));
+				tpl_addVar(vars, TPLADD, "ENTICO", "image?i=ICENT");
+				tpl_addVar(vars, TPLADD, "ENTITLEMENT", tpl_getTpl(vars, "READERENTITLEBIT"));
+			}
+			else
+			{
+				tpl_addVar(vars, TPLADD, "READERREFRESH", "");
+				if(rdr->typ == R_CCCAM)
 				{
-					tpl_addVar(vars, TPLADD, "REFRICO", "image?i=ICREF");
-					tpl_addVar(vars, TPLADD, "READERREFRESH", tpl_getTpl(vars, "READERREFRESHBIT"));
 					tpl_addVar(vars, TPLADD, "ENTICO", "image?i=ICENT");
 					tpl_addVar(vars, TPLADD, "ENTITLEMENT", tpl_getTpl(vars, "READERENTITLEBIT"));
 				}
 				else
 				{
-					tpl_addVar(vars, TPLADD, "READERREFRESH", "");
-					if(rdr->typ == R_CCCAM)
-					{
-						tpl_addVar(vars, TPLADD, "ENTICO", "image?i=ICENT");
-						tpl_addVar(vars, TPLADD, "ENTITLEMENT", tpl_getTpl(vars, "READERENTITLEBIT"));
-					}
-					else
-					{
-						tpl_addVar(vars, TPLADD, "ENTITLEMENT", "");
-					}
+					tpl_addVar(vars, TPLADD, "ENTITLEMENT", "");
 				}
+			}
 
-				if(rdr->enable == 0)
-				{
-					tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICENA");
-					tpl_addVar(vars, TPLADD, "SWITCHTITLE", "Enable this reader");
-					tpl_addVar(vars, TPLADD, "SWITCH", "enable");
-					tpl_addVar(vars, TPLADD, "WRITEEMM", "");
-				}
-				else
-				{
-					tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICDIS");
-					tpl_addVar(vars, TPLADD, "SWITCHTITLE", "Disable this reader");
-					tpl_addVar(vars, TPLADD, "SWITCH", "disable");
+			if(rdr->enable == 0)
+			{
+				tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICENA");
+				tpl_addVar(vars, TPLADD, "SWITCHTITLE", "Enable this reader");
+				tpl_addVar(vars, TPLADD, "SWITCH", "enable");
+				tpl_addVar(vars, TPLADD, "WRITEEMM", "");
+			}
+			else
+			{
+				tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICDIS");
+				tpl_addVar(vars, TPLADD, "SWITCHTITLE", "Disable this reader");
+				tpl_addVar(vars, TPLADD, "SWITCH", "disable");
 
-					tpl_addVar(vars, TPLADD, "EMMICO", "image?i=ICEMM");
-					tpl_addVar(vars, TPLADD, "WRITEEMM", tpl_getTpl(vars, "READERWRITEEMMBIT"));
-				}
+				tpl_addVar(vars, TPLADD, "EMMICO", "image?i=ICEMM");
+				tpl_addVar(vars, TPLADD, "WRITEEMM", tpl_getTpl(vars, "READERWRITEEMMBIT"));
+			}
 
+			if(!apicall)
+			{
 				// Add to WebIf Template
 				tpl_addVar(vars, TPLAPPEND, "READERLIST", tpl_getTpl(vars, "READERSBIT"));
-
 			}
 			else
 			{
@@ -1393,11 +1403,22 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 				// used only for API
 				tpl_addVar(vars, TPLADD, "APIREADERENABLED", !rdr->enable ? "0" : "1");
 				if(cl)
-					{ tpl_printf(vars, TPLADD, "APIREADERTYPE", "%c", cl->typ ? cl->typ : 'x'); }
+				{
+					tpl_printf(vars, TPLADD, "APIREADERTYPE", "%c", cl->typ ? cl->typ : 'x');
+				}
 
-				// Add to API Template
-				tpl_addVar(vars, TPLAPPEND, "APIREADERLIST", tpl_getTpl(vars, "APIREADERSBIT"));
+				if(apicall==1)
+				{
+					// Add to API Template
+					tpl_addVar(vars, TPLAPPEND, "APIREADERLIST", tpl_getTpl(vars, "APIREADERSBIT"));
+				}
+				if(apicall==2)
+				{
+					tpl_printf(vars, TPLAPPEND, "APIREADERLIST","%s%s",jsondelimiter?",":"", tpl_getTpl(vars, "JSONREADERBIT"));
+					jsondelimiter++;
+				}
 			}
+
 		}
 	}
 
@@ -1435,13 +1456,22 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 		for(i = 0; i < CS_MAX_MOD; i++)
 		{
 			if(cardreaders[i].desc)
-				{ tpl_printf(vars, TPLAPPEND, "ADDPROTOCOL", "<option>%s</option>\n", xml_encode(vars, cardreaders[i].desc)); }
+			{
+				tpl_printf(vars, TPLAPPEND, "ADDPROTOCOL", "<option>%s</option>\n", xml_encode(vars, cardreaders[i].desc));
+			}
 		}
 		return tpl_getTpl(vars, "READERS");
 	}
 	else
 	{
-		return tpl_getTpl(vars, "APIREADERS");
+		if(apicall == 1)
+		{
+			return tpl_getTpl(vars, "APIREADERS");
+		}
+		else
+		{
+			return tpl_getTpl(vars, "JSONREADER");
+		}
 	}
 }
 
@@ -2709,11 +2739,12 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 {
 	tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", "");
 	tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
+	tpl_addVar(vars, TPLADDONCE, "PROTOICON", "");
 	if(!cl) { return; }
 #ifdef MODULE_NEWCAMD
 	if(streq(proto, "newcamd") && cl->typ == 'c')
 	{
-		if(cfg.http_showpicons && !apicall)
+		if(cfg.http_showpicons )
 		{
 			char picon_name[32];
 			snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s_%s", (char *)proto, newcamd_get_client_name(cl->ncd_client_id));
@@ -2721,7 +2752,12 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 			{
 				tpl_addVar(vars, TPLADD, "NCMDA", (char *)proto);
 				tpl_addVar(vars, TPLADD, "NCMDB", (char *)newcamd_get_client_name(cl->ncd_client_id));
-				tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTONEWCAMDPIC"));
+				if (!apicall) {
+					tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTONEWCAMDPIC"));
+				} else {
+					tpl_printf(vars, TPLADD, "CLIENTPROTO", "%s (%s)", proto, newcamd_get_client_name(cl->ncd_client_id));
+					tpl_printf(vars, TPLADDONCE, "PROTOICON", "%s_%s",(char *)proto, (char *)newcamd_get_client_name(cl->ncd_client_id));
+				}
 			}
 			else
 			{
@@ -2742,7 +2778,7 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 		struct cc_data *cc = cl->cc;
 		if(cc && cc->remote_version && cc->remote_build)
 		{
-			if(cfg.http_showpicons && !apicall)
+			if(cfg.http_showpicons )
 			{
 				char picon_name[32];
 				snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s_%s_%s", proto, cc->remote_version, cc->remote_build);
@@ -2752,7 +2788,12 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 					tpl_addVar(vars, TPLADD, "CCB", cc->remote_version);
 					tpl_addVar(vars, TPLADD, "CCC", cc->remote_build);
 					tpl_addVar(vars, TPLADD, "CCD", cc->extended_mode ? cc->remote_oscam : "");
-					tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTOCCCAMPIC"));
+					if (!apicall) {
+						tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTOCCCAMPIC"));
+					} else {
+						tpl_printf(vars, TPLADDONCE, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
+						tpl_printf(vars, TPLADDONCE, "PROTOICON", "%s_%s_%s",(char *)proto, cc->remote_version, cc->remote_build);
+					}
 					tpl_addVar(vars, TPLADD, "CLIENTPROTOTITLE", cc->extended_mode ? cc->remote_oscam : "");
 				}
 				else
@@ -2771,14 +2812,19 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 		return;
 	}
 #endif
-	if(cfg.http_showpicons && !apicall)
+	if(cfg.http_showpicons)
 	{
 		char picon_name[32];
 		snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s", proto);
 		if(picon_exists(picon_name))
 		{
 			tpl_addVar(vars, TPLADD, "OTHER", (char *)proto);
-			tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTOOTHERPIC"));
+			if (!apicall) {
+				tpl_addVar(vars, TPLADD, "CLIENTPROTO", tpl_getTpl(vars, "PROTOOTHERPIC"));
+			} else {
+				tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", (char *)proto);
+				tpl_printf(vars, TPLADDONCE, "PROTOICON", "%s",(char *)proto);
+			}
 			tpl_addVar(vars, TPLADD, "CLIENTPROTOTITLE", "");
 		}
 		else
@@ -2880,6 +2926,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	struct s_client *cl;
 	char *user = getParam(params, "user");
 	int32_t found = 0;
+	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 
 	if(!apicall)
 	{
@@ -3033,6 +3080,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "CLIENTCAID", "");
 		tpl_addVar(vars, TPLADD, "CLIENTSRVID", "");
 		tpl_addVar(vars, TPLADD, "LASTCHANNEL", "");
+		tpl_addVar(vars, TPLADD, "USERMD5", "");
 
 		if(account->expirationdate && account->expirationdate < now)
 		{
@@ -3118,7 +3166,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				lastchan = "";
 			}
 
-			if(cfg.http_showpicons && !apicall)
+			if(cfg.http_showpicons )
 			{
 				char picon_name[32];
 				snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%04X", clientcaid, clientsrvid);
@@ -3133,7 +3181,14 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 					tpl_addVar(vars, TPLADDONCE, "LCA", picon_name);
 					tpl_addVar(vars, TPLADDONCE, "LCB", lastchan);
 					tpl_addVar(vars, TPLADDONCE, "LASTCHANNELTITLE", lastchan);
-					tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", tpl_getTpl(vars, "USERCONFIGLASTCHANEL"));
+					if(!apicall)
+					{
+						tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", tpl_getTpl(vars, "USERCONFIGLASTCHANEL"));
+					}
+					else
+					{
+						tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
+					}
 				}
 				else
 				{
@@ -3263,6 +3318,11 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		}
 
 		tpl_addVar(vars, TPLADD, "CLASSNAME", classname);
+		MD5((unsigned char *)account->usr, strlen(account->usr), md5tmp);
+		int z;
+		for (z = 0; z < MD5_DIGEST_LENGTH; z++){
+		    tpl_printf(vars, TPLAPPEND, "USERMD5", "%02x", md5tmp[z]);
+		}
 		tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, account->usr));
 		tpl_addVar(vars, TPLADD, "USERNAMEENC", urlencode(vars, account->usr));
 
@@ -3297,7 +3357,12 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			{ tpl_addVar(vars, TPLAPPEND, "USERCONFIGS", tpl_getTpl(vars, "USERCONFIGLISTBIT")); }
 		else if(!filter || strcmp(filter, account->usr) == 0 || strcmp(filter, "all") == 0 || strlen(filter) == 0)
 		{
-			tpl_addVar(vars, TPLAPPEND, "APIUSERCONFIGS", tpl_getTpl(vars, "APIUSERCONFIGLISTBIT"));
+			if(apicall == 1){
+				tpl_addVar(vars, TPLAPPEND, "APIUSERCONFIGS", tpl_getTpl(vars, "APIUSERCONFIGLISTBIT"));
+			} else if (apicall == 2){
+				tpl_printf(vars, TPLADD, "JSONDELIMITER", "%s", (total_users > 1)?",":"");
+				tpl_addVar(vars, TPLAPPEND, "APIUSERCONFIGS", tpl_getTpl(vars, "JSONUSERBIT"));
+			}
 			++clientcount;
 		}
 	}
@@ -3383,7 +3448,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	{
 		if(!filter || clientcount > 0)
 		{
-			return tpl_getTpl(vars, "APIUSERCONFIGLIST");
+			return tpl_getTpl(vars, (apicall==1)?"APIUSERCONFIGLIST":"JSONUSER");
 		}
 		else
 		{
@@ -3830,6 +3895,94 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 		{ return tpl_getTpl(vars, "APICCCAMCARDLIST"); }
 }
 
+static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * params)
+{
+	if(strcmp(getParam(params, "lasttime"), "start") == 0){
+		setActiveMenu(vars, MNU_LIVELOG); 
+		return tpl_getTpl(vars, "LOGPAGE");
+	}
+
+	int dot = 0; //Delimiter
+
+#ifndef WITH_DEBUG
+	//cs_log("*** Warning: Debug Support not compiled in ***");
+	tpl_printf(vars, TPLAPPEND, "DATA","%s\"nodebug\":\"1\"",dot?",":"");
+	dot++;
+#else
+	char *debuglvl = getParam(params, "debug");
+	if(strlen(debuglvl) > 0) {
+		int32_t dblvl = atoi(debuglvl);
+		if(cs_dblevel != dblvl) {
+			if(dblvl >= 0 && dblvl <= 65535) { cs_dblevel = dblvl; }
+			cs_log("%s debug_level=%d", "all", cs_dblevel);
+		}
+	}
+	tpl_printf(vars, TPLAPPEND, "DATA","%s\"debug\":\"%d\"", dot?",":"", cs_dblevel);
+	dot++;
+	tpl_printf(vars, TPLAPPEND, "DATA","%s\"maxdebug\":\"%d\"",dot?",":"", MAX_DEBUG_LEVELS);
+#endif
+
+	if(cfg.loghistorysize == 0){
+		tpl_printf(vars, TPLAPPEND, "DATA","%s\"logdisabled\":\"1\"",dot?",":"");
+		return tpl_getTpl(vars, "POLL");
+		dot++;
+	}
+
+	char *t_loghistptr = loghistptr, *ptr1 = NULL;
+	if(loghistptr >= loghist + (cfg.loghistorysize) - 1)
+		{ t_loghistptr = loghist; }
+	
+	int32_t d = 0, l1 = strlen(t_loghistptr + 1) + 2;
+	char *lastpos = loghist + (cfg.loghistorysize) - 1;
+	
+	tpl_printf(vars, TPLAPPEND, "DATA", "%s\"lines\":[", dot?",":"");
+
+	int i;
+	dot=0;
+	for(ptr1 = t_loghistptr + l1, i = 0; i < 200; i++, ptr1 = ptr1 + l1)
+	{
+		l1 = strlen(ptr1) + 1;
+		if(!d && ((ptr1 >= lastpos) || (l1 < 2)))
+		{
+			ptr1 = loghist;
+			l1 = strlen(ptr1) + 1;
+			d++;
+		}
+		
+		if(d && ((ptr1 >= t_loghistptr) || (l1 < 2)))
+			{ break; }
+		
+		
+		char p_usr[32];
+		size_t pos1 = strcspn(ptr1, "\t") + 1;
+		cs_strncpy(p_usr, ptr1 , pos1 > sizeof(p_usr) ? sizeof(p_usr) : pos1);
+		
+		char *p_txt = ptr1 + pos1;
+				
+		int year;
+		struct tm lt;
+		sscanf(p_txt, "%04d/%02d/%02d  %02d:%02d:%02d", &year, &lt.tm_mon, &lt.tm_mday, &lt.tm_hour, &lt.tm_min, &lt.tm_sec);
+		lt.tm_year = year - 1900;
+		time_t logtime = mktime(&lt);
+		int lasttime = atoi(getParam(params, "lasttime"));
+
+		pos1 = strcspn(p_txt, "\n") + 1;
+		char str_out[pos1];
+		cs_strncpy(str_out, p_txt , pos1);
+
+		if(p_txt[0] && (int)logtime > lasttime){
+			tpl_printf(vars, TPLAPPEND, "DATA","%s{\"ts\":\"%d\",\"usr\":\"%s\",\"line\":\"%s\"}",
+									dot?",":"",
+									(int)logtime,
+									xml_encode(vars, p_usr),
+									xml_encode(vars, str_out));
+			dot=1; // next in Array with leading delimiter
+		}
+	}
+	tpl_addVar(vars, TPLAPPEND, "DATA", "]");
+	return tpl_getTpl(vars, "POLL");
+}
+
 static char *send_oscam_status(struct templatevars * vars, struct uriparams * params, int32_t apicall)
 {
 	int32_t i;
@@ -3837,6 +3990,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	int32_t lsec, isec, chsec, con, cau = 0;
 	time_t now = time((time_t *)0);
 	struct tm lt;
+	int delimiter=0;
 
 	if(!apicall)
 	{
@@ -3997,7 +4151,6 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 			tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", "");
 			tpl_addVar(vars, TPLADD, "CLIENTLASTRESPONSETIME", "");
 			tpl_addVar(vars, TPLADD, "CLIENTLASTRESPONSETIMEHIST", "");
-			tpl_addVar(vars, TPLADD, "JSONARRAYDELIMITER", cl->next ? "," : "");
 
 			if(cl->typ == 'c')
 				{ user_count_all++; }
@@ -4070,34 +4223,31 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						else if((now - cl->lastemm) / 60 > cfg.aulow) { cau = -1; }
 						else { cau = 1; }
 
-						if(!apicall)
+						if(cau == 0)
 						{
-							if(cau == 0)
-							{
-								tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "OFF");
-							}
+							tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "OFF");
+						}
+						else
+						{
+							if(cau == -1)
+							{ tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", !apicall?"<A HREF=\"#\" CLASS=\"tooltip\">ON":""); }
 							else
+							{ tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", !apicall?"<A HREF=\"#\" CLASS=\"tooltip\">ACTIVE":""); }
+							tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", !apicall?"<SPAN>":"");
+							if(cl->typ == 'c')
 							{
-								if(cau == -1)
-									{ tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "<A HREF=\"#\" CLASS=\"tooltip\">ON"); }
-								else
-									{ tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "<A HREF=\"#\" CLASS=\"tooltip\">ACTIVE"); }
-								tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", "<SPAN>");
-								if(cl->typ == 'c')
+								struct s_reader *rdr;
+								LL_ITER itr = ll_iter_create(cl->aureader_list);
+								while((rdr = ll_iter_next(&itr)))
 								{
-									struct s_reader *rdr;
-									LL_ITER itr = ll_iter_create(cl->aureader_list);
-									while((rdr = ll_iter_next(&itr)))
-									{
-										if(rdr->audisabled)
-											{ tpl_printf(vars, TPLAPPEND, "CLIENTCAUHTTP", "(%s)<BR>", xml_encode(vars, rdr->label)); }
-										else
-											{ tpl_printf(vars, TPLAPPEND, "CLIENTCAUHTTP", "%s<BR>", xml_encode(vars, rdr->label)); }
-									}
+									if(rdr->audisabled)
+									{ tpl_printf(vars, TPLAPPEND, "CLIENTCAUHTTP", "(%s)<BR>", xml_encode(vars, rdr->label)); }
+									else
+									{ tpl_printf(vars, TPLAPPEND, "CLIENTCAUHTTP", "%s<BR>", xml_encode(vars, rdr->label)); }
 								}
-								else { tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", xml_encode(vars, cl->reader->label)); }
-								tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", "</SPAN></A>");
 							}
+							else { tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", xml_encode(vars, cl->reader->label)); }
+							tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", !apicall?"</SPAN></A>":"");
 						}
 					}
 					else
@@ -4143,6 +4293,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));
 							tpl_printf(vars, TPLADD, "CSIDX", "%p", cl);
 						}
+						tpl_printf(vars, TPLADD, "CSIDXPLAIN", "%p", cl);
 					}
 					else
 					{
@@ -4170,38 +4321,36 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						tpl_addVar(vars, TPLADD, "READERNAMEENC", urlencode(vars, usr));
 					}
 
-					if(!apicall)
+					bool picon_shown = false;
+					const char *status_user_icon_tpl = NULL;
+
+					if(cfg.http_showpicons)
 					{
-						bool picon_shown = false;
-						const char *status_user_icon_tpl = NULL;
-
-						if(cfg.http_showpicons && !apicall)
+						if(picon_exists(xml_encode(vars, usr)))
 						{
-							if(picon_exists(xml_encode(vars, usr)))
-							{
-								switch (cl->typ) {
-								case 'c': status_user_icon_tpl = "SUSERICON"; picon_shown = true; break;
-								case 'p': // Fall through
-								case 'r': status_user_icon_tpl = "SREADERICON"; picon_shown = true; break;
-								}
-							}
-							else
-							{
-								tpl_printf(vars, TPLADD, "UPICMISSING", "missing icon: IC_%s.tpl", xml_encode(vars, usr));
-							}
-						}
-
-						if (!picon_shown) {
 							switch (cl->typ) {
-							case 'c': status_user_icon_tpl = "SUSER"; break;
+							case 'c': status_user_icon_tpl = "SUSERICON"; picon_shown = true; break;
 							case 'p': // Fall through
-							case 'r': status_user_icon_tpl = "SREADER"; break;
+							case 'r': status_user_icon_tpl = "SREADERICON"; picon_shown = true; break;
 							}
 						}
-
-						if (status_user_icon_tpl)
-							tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, status_user_icon_tpl));
+						else
+						{
+							tpl_printf(vars, TPLADD, "UPICMISSING", "missing icon: IC_%s.tpl", xml_encode(vars, usr));
+							tpl_addVar(vars, TPLADD, "USERENC", "");
+						}
 					}
+
+					if (!picon_shown) {
+						switch (cl->typ) {
+						case 'c': status_user_icon_tpl = "SUSER"; break;
+						case 'p': // Fall through
+						case 'r': status_user_icon_tpl = "SREADER"; break;
+						}
+					}
+
+					if (status_user_icon_tpl)
+						tpl_addVar(vars, TPLADD, "STATUSUSERICON", tpl_getTpl(vars, status_user_icon_tpl));
 
 					tpl_printf(vars, TPLADD, "CLIENTCAU", "%d", cau);
 					if(!apicall)
@@ -4234,6 +4383,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					}
 					else
 					{
+						tpl_printf(vars, TPLADD, "CLIENTLOGINDATEFMT", "%02d.%02d.%02d  %02d:%02d:%02d", lt.tm_mday, lt.tm_mon + 1, lt.tm_year % 100, lt.tm_hour, lt.tm_min, lt.tm_sec);
 						char tbuffer [30];
 						strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &lt);
 						tpl_addVar(vars, TPLADD, "CLIENTLOGINDATE", tbuffer);
@@ -4252,6 +4402,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							if(apicall)
 							{
 								tpl_addVar(vars, TPLADD, "LASTREADER", cl->lastreader);
+								tpl_printf(vars, TPLADD, "MSVALUE", "%d", cl->cwlastresptime);
 							}
 							else
 							{
@@ -4275,7 +4426,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							tpl_addVar(vars, TPLADD, "CLIENTSRVTYPE", cl->last_srvidptr && cl->last_srvidptr->type ? xml_encode(vars, cl->last_srvidptr->type) : "");
 							tpl_addVar(vars, TPLADD, "CLIENTSRVDESCRIPTION", cl->last_srvidptr && cl->last_srvidptr->desc ? xml_encode(vars, cl->last_srvidptr->desc) : "");
 							tpl_addVar(vars, TPLADD, "CLIENTTIMEONCHANNEL", sec2timeformat(vars, chsec));
-							if(cfg.http_showpicons && !apicall)
+							if(cfg.http_showpicons)
 							{
 								snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%04X", cl->last_caid, cl->last_srvid);
 								tpl_addVar(vars, TPLADD, "PICONNAME", picon_name);
@@ -4293,11 +4444,13 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								else
 								{
 									tpl_addVar(vars, TPLADDONCE, "CURRENTPICON", tpl_getTpl(vars, "CLIENTCURRENTCHANNEL"));
+									tpl_addVar(vars, TPLADD, "PICONNAME", "");
 								}
 							}
 							else
 							{
 								tpl_addVar(vars, TPLADDONCE, "CURRENTPICON", tpl_getTpl(vars, "CLIENTCURRENTCHANNELBIT"));
+								tpl_addVar(vars, TPLADD, "PICONNAME", "0000_0000");
 							}
 						}
 						else
@@ -4542,9 +4695,13 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 				if(shown)
 				{
 					if(apicall == 1)
-						{ tpl_addVar(vars, TPLAPPEND, "APISTATUSBITS", tpl_getTpl(vars, "APISTATUSBIT")); }
+					{ tpl_addVar(vars, TPLAPPEND, "APISTATUSBITS", tpl_getTpl(vars, "APISTATUSBIT")); }
 					if(apicall == 2)
-						{ tpl_addVar(vars, TPLAPPEND, "JSONSTATUSBITS", tpl_getTpl(vars, "JSONSTATUSBIT")); }
+					{
+						tpl_addVar(vars, TPLADD, "JSONARRAYDELIMITER", delimiter?",":"");
+						tpl_addVar(vars, TPLAPPEND, "JSONSTATUSBITS", tpl_getTpl(vars, "JSONSTATUSBIT"));
+						delimiter++;
+					}
 				}
 			}
 
@@ -4556,7 +4713,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	cs_readunlock(&clientlist_lock);
 	cs_readunlock(&readerlist_lock);
 
-	if(cfg.loghistorysize)
+	if(cfg.loghistorysize && 0 == 1)
 	{
 		char *t_loghistptr = loghistptr, *ptr1 = NULL;
 		if(loghistptr >= loghist + (cfg.loghistorysize) - 1)
@@ -4741,9 +4898,16 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	if(apicall)
 	{
 		if(apicall == 1)
-			{ return tpl_getTpl(vars, "APISTATUS"); }
+		{ return tpl_getTpl(vars, "APISTATUS"); }
 		if(apicall == 2)
-			{ return tpl_getTpl(vars, "JSONSTATUS"); }
+		{
+			tpl_printf(vars, TPLADD, "UCS", "%d", user_count_shown);
+			tpl_printf(vars, TPLADD, "UCA", "%d", user_count_all);
+			tpl_printf(vars, TPLADD, "UCAC", "%d", user_count_active);
+			tpl_printf(vars, TPLADD, "CFGH", "%d", cfg.hideclient_to);
+			tpl_printf(vars, TPLADD, "PICONENABLED", "%d", cfg.http_showpicons?1:0);
+			return tpl_getTpl(vars, "JSONSTATUS");
+		}
 	}
 
 	if(config_enabled(TOUCH) && streq(tpl_getVar(vars, "SUBDIR"), TOUCH_SUBDIR))
@@ -6625,6 +6789,8 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			"/emm_running.html",
 			"/robots.txt",
 			"/ghttp.html",
+			"/logpoll.html",
+			"/jquery.js",
 		};
 
 		int32_t pagescnt = sizeof(pages) / sizeof(char *); // Calculate the amount of items in array
@@ -6809,6 +6975,10 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 		{
 			send_file(f, "JS", subdir, modifiedheader, etagheader, extraheader);
 		}
+		else if(pgidx == 30)
+		{
+			send_file(f, "JQ", subdir, modifiedheader, etagheader, extraheader);
+		}
 		else
 		{
 			time_t t;
@@ -6864,7 +7034,8 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				tpl_printf(vars, TPLADD, "APIREADONLY", "%d", cfg.http_readonly);
 				if(strcmp(getParam(&params, "callback"), ""))
 				{
-					tpl_addVar(vars, TPLADD, "CALLBACK", getParam(&params, "callback"));
+					tpl_printf(vars, TPLADD, "CALLBACK", "%s%s", getParam(&params, "callback"), "(");
+					tpl_addVar(vars, TPLADD, "ENDBRACKET", ")");
 				}
 
 			}
@@ -6971,7 +7142,12 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			case 28:
 				result = send_oscam_ghttp(vars, &params, 0);
 				break;
+
 #endif
+			case 29:
+				result = send_oscam_logpoll(vars, &params);
+				break;
+				
 			default:
 				result = send_oscam_status(vars, &params, 0);
 				break;

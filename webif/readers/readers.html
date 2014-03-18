@@ -1,4 +1,30 @@
-##TPLHEADER##
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+	<title>##HTTPOSCAMLABEL## r##CS_SVN_VERSION##</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=##HTTP_CHARSET##">
+	<meta name="robots" content="noindex,nofollow">
+	<link rel="stylesheet" type="text/css" href="site.css">
+	<link href="favicon.ico" rel="icon" type="image/x-icon">
+	<script type="text/javascript" src="jquery.js" charset="utf-8"></script>
+	<script type="text/javascript" src="oscam.js"></script>
+	<style type="text/css">##HTTPPICONSIZE##</style>
+	<script type="text/javascript">
+	
+	var page = 'reader';
+	var jsonurl = 'oscamapi.json';
+	var parameters = '?part=readerlist';
+	var stoppoll = 0;
+	var pollintervall = 0;
+	var httprefresh = '##REFRESHTIME##';
+
+	</script>
+</HEAD>
+<BODY>
+<DIV ID="wrapper"> <!-- Start wrapper -->
+	<DIV ID="content"> <!-- Start content -->
+##LOGOBIT##
 ##TPLMENU##
 ##TPLMESSAGE##
 	<DIV ID="subnav">
@@ -7,7 +33,8 @@
 			<LI CLASS="configmenu"><A HREF="scanusb.html">Scan USB</A></LI>
 			<LI CLASS="configmenu"><A HREF="readers.html?action=resetallrdrstats">Reset Readerstats</A></LI>
 			<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=servers">Show Graphs</A></LI>
-			<LI CLASS="configmenu"><A HREF="#" onclick="cdpause()">Stop Refresh</A></LI>
+			<LI ID="poll" CLASS="pollselect" style="display: none;">Pollintervall:<input type="text" name="pintervall" class="pintervall" value="" readonly/>sec.<button id="dec">&ndash;</button><button id="inc">+</button></LI>
+			<LI ID="nopoll" CLASS="pollselect" style="display: none;">httprefresh no set - polling disabled</LI>
 		</UL>
 	</DIV>
 	<DIV ID="newreader">
@@ -51,4 +78,5 @@
 ##READERLIST##
 	</TBODY>
 	</TABLE>
+	<DIV id="picolor"></DIV>
 ##TPLFOOTER##

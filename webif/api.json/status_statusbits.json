@@ -1,27 +1,38 @@
-{
+##JSONARRAYDELIMITER##{
 "thid": "##CSIDX##",
 "type": "##CLIENTTYPE##",
 "name": "##CLIENTUSER##",
+"name_enc": "##USERENC##",
 "desc": "##CLIENTDESCRIPTION##",
 "protocol": "##CLIENTPROTO##",
 "protocolext": "##CLIENTPROTOTITLE##",
+"protoicon":"##PROTOICON##",
 "au": "##CLIENTCAU##",
+"aufmt":"##CLIENTCAUHTTP##",
 "request": {
     "caid": "##CLIENTCAID##",
     "srvid": "##CLIENTSRVID##",
     "ecmtime": "##CLIENTLASTRESPONSETIME##",
     "ecmhistory": "##CLIENTLASTRESPONSETIMEHIST##",
     "answered": "##LASTREADER##",
+    "picon":"##PICONNAME##",
+    "chprovider":"##CLIENTSRVPROVIDER##",
+    "chname":"##CLIENTSRVNAME##",
+    "chantitle":"##LASTCHANNELTITLE##",
+    "msvalue":"##MSVALUE##",
+    "lbvalue":"##LBLRPSTRVALUE##",
     "$": "##CLIENTSRVPROVIDER####CLIENTSRVNAME##"
 },
 "times": {
     "login": "##CLIENTLOGINDATE##",
+    "loginfmt":"##CLIENTLOGINDATEFMT##",
     "online": "##CLIENTLOGINSECS##",
     "idle": "##CLIENTIDLESECS##"
 },
 "connection": {
     "ip": "##CLIENTIP##",
     "port": "##CLIENTPORT##",
+    "status":"##CLIENTCON##",
     "$": "##CLIENTCON##"
 }
-}##JSONARRAYDELIMITER##
+}

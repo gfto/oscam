@@ -1,4 +1,30 @@
-##TPLHEADER##
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+	<title>##HTTPOSCAMLABEL## r##CS_SVN_VERSION##</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=##HTTP_CHARSET##">
+	<meta name="robots" content="noindex,nofollow">
+	<link rel="stylesheet" type="text/css" href="site.css">
+	<link href="favicon.ico" rel="icon" type="image/x-icon">
+	<script type="text/javascript" src="jquery.js" charset="utf-8"></script>
+	<script type="text/javascript" src="oscam.js"></script>
+	<style type="text/css">##HTTPPICONSIZE##</style>
+	<script type="text/javascript">
+	
+	var page = 'user';
+	var jsonurl = 'oscamapi.json';
+	var parameters = "?part=userstats";
+	var stoppoll = 0;
+	var pollintervall = 0;
+	var httprefresh = '##REFRESHTIME##';
+	
+	</script>
+</HEAD>
+<BODY>
+<DIV ID="wrapper"> <!-- Start wrapper -->
+	<DIV ID="content"> <!-- Start content -->
+##LOGOBIT##
 ##TPLMENU##
 ##TPLMESSAGE##
 	<DIV ID="subnav">
@@ -7,6 +33,8 @@
 			<LI CLASS="configmenu"><A HREF="userconfig.html?action=reinit">Reinit User DB</A></LI>
 			<LI CLASS="configmenu"><A HREF="userconfig.html?action=resetalluserstats">Reset Userstats</A></LI>
 			<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=users&amp;hidelabels=1">Show Graphs</A></LI>
+			<LI ID="poll" CLASS="pollselect" style="display: none;">Pollintervall:<input type="text" name="pintervall" class="pintervall" value="" readonly/>sec.<button id="dec">&ndash;</button><button id="inc">+</button></LI>
+			<LI ID="nopoll" CLASS="pollselect" style="display: none;">httprefresh no set - polling disabled</LI>
 		</UL>
 	</DIV>
 	<DIV ID="newuser">
@@ -64,7 +92,7 @@
 	</TABLE>
 	<TABLE CLASS="user_totals smallmargintop">
 		<TR>
-			<TH TITLE="Total users" COLSPAN="6">User Info</TH>
+			<TH TITLE="Total users" COLSPAN="6">Users Info</TH>
 		</TR>
 		<TR>
 			<TH TITLE="Total users">Total</TH>
@@ -75,12 +103,12 @@
 			<TH TITLE="Total expired users">Expired</TH>
 		</TR>
 		<TR>
-			<TD CLASS="centered">##TOTAL_USERS##</TD>
-			<TD CLASS="centered">##TOTAL_ACTIVE##</TD>
-			<TD CLASS="centered">##TOTAL_CONNECTED##</TD>
-			<TD CLASS="centered">##TOTAL_ONLINE##</TD>
-			<TD CLASS="centered">##TOTAL_DISABLED##</TD>
-			<TD CLASS="centered">##TOTAL_EXPIRED##</TD>
+ 			<TD id="tot_users" CLASS="centered">##TOTAL_USERS##</TD>
+ 			<TD id="tot_active" CLASS="centered">##TOTAL_ACTIVE##</TD>
+ 			<TD id="tot_connected" CLASS="centered">##TOTAL_CONNECTED##</TD>
+ 			<TD id="tot_online" CLASS="centered">##TOTAL_ONLINE##</TD>
+ 			<TD id="tot_disabled" CLASS="centered">##TOTAL_DISABLED##</TD>
+ 			<TD id="tot_expired" CLASS="centered">##TOTAL_EXPIRED##</TD>
 		</TR>
 	</TABLE>
 	<TABLE CLASS="ECM_totals smallmargintop">
@@ -97,22 +125,22 @@
 			<TH TITLE="SUM of all ECM's">ALL</TH>
 		</TR>
 		<TR>
-			<TD CLASS="centered">##TOTAL_CWOK## (##REL_CWOK##%)</TD>
-			<TD CLASS="centered">##TOTAL_CWCACHE## (##REL_CWCACHE##%)</TD>
-			<TD CLASS="centered">##TOTAL_CWNOK## (##REL_CWNOK##%)</TD>
-			<TD CLASS="centered">##TOTAL_CWTOUT## (##REL_CWTOUT##%)</TD>
-			<TD CLASS="centered">##TOTAL_CWIGN## (##REL_CWIGN##%)</TD>
-			<TD CLASS="centered">##TOTAL_ECM_MIN##</TD>
-			<TD CLASS="centered">##TOTAL_CW##</TD>
+			<TD id="tot_cwok" CLASS="centered">##TOTAL_CWOK## (##REL_CWOK##%)</TD>
+			<TD id="tot_cwcache" CLASS="centered">##TOTAL_CWCACHE## (##REL_CWCACHE##%)</TD>
+			<TD id="tot_cwnok" CLASS="centered">##TOTAL_CWNOK## (##REL_CWNOK##%)</TD>
+			<TD id="tot_cwtout" CLASS="centered">##TOTAL_CWTOUT## (##REL_CWTOUT##%)</TD>
+			<TD id="tot_cwign" CLASS="centered">##TOTAL_CWIGN## (##REL_CWIGN##%)</TD>
+			<TD id="tot_ecmmin" CLASS="centered">##TOTAL_ECM_MIN##</TD>
+			<TD id="tot_cw" CLASS="centered">##TOTAL_CW##</TD>
 		</TR>
 		<TR>
-			<TD CLASS="centered" COLSPAN="2"><B>Total OK:  </B> ##TOTAL_CWPOS## (##REL_CWPOS##%)</TD>
-			<TD CLASS="centered" COLSPAN="2"><B>Total NOK:  </B>##TOTAL_CWNEG## (##REL_CWNEG##%)</TD>
+			<TD id="tot_cwpos" CLASS="centered" COLSPAN="2"><B>Total OK:  </B> ##TOTAL_CWPOS## (##REL_CWPOS##%)</TD>
+			<TD id="tot_cwneg" CLASS="centered" COLSPAN="2"><B>Total NOK:  </B>##TOTAL_CWNEG## (##REL_CWNEG##%)</TD>
 			<TD CLASS="centered" COLSPAN="2"><B>Reset ECM Statistics:</B></TD>
 			<TD CLASS="centered"><A HREF="userconfig.html?action=resetserverstats" TITLE="Reset statistics for server"><IMG CLASS="icon" SRC="image?i=ICRES" ALT="Reset Server Stats"></A></TD>
 		</TR>
 	</TABLE>
-
+	<DIV id="picolor"></DIV>
 	<!-- To initialize a TABLE sorter -->
 	<script type="text/javascript">
 		var sorter = new TINY.table.sorter('sorter','dataTable',{
