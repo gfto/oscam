@@ -431,103 +431,30 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 		rdr_log(reader, "Rom version: %c%c%c%c", reader->rom[5], reader->rom[6], reader->rom[7], reader->rom[8]);
 	}
 
+
 	/* get Vg credit on card */
 	unsigned char ins7404[5] = { 0xD0, 0x74, 0x04, 0x00, 0x00 };
-	l = read_cmd_len(reader, ins7404);     //get command len for ins7404
-	ins7404[4] = l;
-	if(!write_cmd_vg(ins7404, NULL) || !status_ok(cta_res + l))
-	{
-		rdr_log(reader, "Unable to get smartcard credit");
-	}
-	else
-	{
-		if (cta_res[0] == 0x15)
-		{
-			reader->VgCredit = ((cta_res[8] << 8) + cta_res[9]) / 100;
-			rdr_log(reader, "Credit available on card: %i €", reader->VgCredit);
-		}
-	}
+	if ((l = read_cmd_len(reader, ins7404)) > 0)                     //get command len for ins7404
+    {
+        ins7404[4] = l;
+        if(!write_cmd_vg(ins7404, NULL) || !status_ok(cta_res + l))
+        {
+            rdr_log(reader, "classD0 ins7404: failed");
+        }
+        else
+        {
+            if (cta_res[0] == 0x15)
+            {
+                reader->VgCredit = ((cta_res[8] << 8) + cta_res[9]) / 100;
+                rdr_log(reader, "Credit available on card: %i €", reader->VgCredit);
+            }
+        }
+    }
+    else
+    {                                                           //case V13
+        rdr_log(reader, "Unable to get smartcard credit");
+    }
 
-	if(reader->ins7E11[0x01])
-	{
-		unsigned char ins742b[5] = { 0xD0, 0x74, 0x2b, 0x00, 0x00 };
-
-		l = read_cmd_len(reader, ins742b);  //get command len for ins742b
-
-		if(l < 2)
-		{
-			rdr_log(reader, "No TA1 change for this card is possible by ins7E11");
-		}
-		else
-		{
-			ins742b[4] = l;
-			bool ta1ok = 0;
-
-			if(!write_cmd_vg(ins742b, NULL) || !status_ok(cta_res + ins742b[4]))  //get supported TA1 bytes
-			{
-				rdr_log(reader, "classD0 ins742b: failed");
-				return ERROR;
-			}
-			else
-			{
-				int32_t i;
-
-				for(i = 2; i < l; i++)
-				{
-					if(cta_res[i] == reader->ins7E11[0x00])
-					{
-						ta1ok = 1;
-						break;
-					}
-				}
-			}
-			if(ta1ok == 0)
-			{
-				rdr_log(reader, "The value %02X of ins7E11 is not supported,try one between %02X and %02X", reader->ins7E11[0x00], cta_res[2], cta_res[ins742b[4] - 1]);
-			}
-			else
-			{
-				static const uint8_t ins7E11[5] = { 0xD0, 0x7E, 0x11, 0x00, 0x01 };
-
-				reader->ins7e11_fast_reset = 0;
-
-				l = do_cmd(reader, ins7E11, reader->ins7E11, NULL, cta_res);
-
-				if(l < 0 || !status_ok(cta_res))
-				{
-					rdr_log(reader, "classD0 ins7E11: failed");
-					return ERROR;
-				}
-				else
-				{
-					unsigned char TA1;
-
-					if(ATR_GetInterfaceByte(newatr, 1, ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK)
-					{
-						if(TA1 != reader->ins7E11[0x00])
-						{
-							rdr_log(reader, "classD0 ins7E11: Scheduling card reset for TA1 change from %02X to %02X", TA1, reader->ins7E11[0x00]);
-							reader->ins7e11_fast_reset = 1;
-#ifdef WITH_COOLAPI
-							if(reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART || reader->typ == R_INTERNAL)
-							{
-#else
-							if(reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART)
-							{
-#endif
-								add_job(reader->client, ACTION_READER_RESET_FAST, NULL, 0);
-							}
-							else
-							{
-								add_job(reader->client, ACTION_READER_RESTART, NULL, 0);
-							}
-							return OK; // Skip the rest of the init since the card will be reset anyway
-						}
-					}
-				}
-			}
-		}
-	}
 	static const unsigned char ins7416[5] = { 0xD0, 0x74, 0x16, 0x00, 0x00 };
 
 	if(do_cmd(reader, ins7416, NULL, NULL, cta_res) < 0)
@@ -664,6 +591,93 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 	{
 		rdr_log(reader, "classD0 ins4C: failed - sending boxid failed");
 		return ERROR;
+	}
+
+	static const unsigned char ins7403[5] = { 0xD0, 0x74, 0x03, 0x00, 0x00 };   //taken from v13 boot log
+	if(do_cmd(reader, ins7403, NULL, NULL, cta_res) < 0)
+	{
+		rdr_log(reader, "classD0 ins7403: failed");
+	}
+
+	if(reader->ins7E11[0x01])                                                   //the position of the ins7E is taken from v13 log
+	{
+		unsigned char ins742b[5] = { 0xD0, 0x74, 0x2b, 0x00, 0x00 };
+
+		l = read_cmd_len(reader, ins742b);  //get command len for ins742b
+
+		if(l < 2)
+		{
+			rdr_log(reader, "No TA1 change for this card is possible by ins7E11");
+		}
+		else
+		{
+			ins742b[4] = l;
+			bool ta1ok = 0;
+
+			if(!write_cmd_vg(ins742b, NULL) || !status_ok(cta_res + ins742b[4]))  //get supported TA1 bytes
+			{
+				rdr_log(reader, "classD0 ins742b: failed");
+				return ERROR;
+			}
+			else
+			{
+				int32_t i;
+
+				for(i = 2; i < l; i++)
+				{
+					if(cta_res[i] == reader->ins7E11[0x00])
+					{
+						ta1ok = 1;
+						break;
+					}
+				}
+			}
+			if(ta1ok == 0)
+			{
+				rdr_log(reader, "The value %02X of ins7E11 is not supported,try one between %02X and %02X", reader->ins7E11[0x00], cta_res[2], cta_res[ins742b[4] - 1]);
+			}
+			else
+			{
+				static const uint8_t ins7E11[5] = { 0xD0, 0x7E, 0x11, 0x00, 0x01 };
+
+				reader->ins7e11_fast_reset = 0;
+
+				l = do_cmd(reader, ins7E11, reader->ins7E11, NULL, cta_res);
+
+				if(l < 0 || !status_ok(cta_res))
+				{
+					rdr_log(reader, "classD0 ins7E11: failed");
+					return ERROR;
+				}
+				else
+				{
+					unsigned char TA1;
+
+					if(ATR_GetInterfaceByte(newatr, 1, ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK)
+					{
+						if(TA1 != reader->ins7E11[0x00])
+						{
+							rdr_log(reader, "classD0 ins7E11: Scheduling card reset for TA1 change from %02X to %02X", TA1, reader->ins7E11[0x00]);
+							reader->ins7e11_fast_reset = 1;
+#ifdef WITH_COOLAPI
+							if(reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART || reader->typ == R_INTERNAL)
+							{
+#else
+							if(reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART)
+							{
+#endif
+								add_job(reader->client, ACTION_READER_RESET_FAST, NULL, 0);
+							}
+							else
+							{
+								add_job(reader->client, ACTION_READER_RESTART, NULL, 0);
+							}
+							return OK; // Skip the rest of the init since the card will be reset anyway
+						}
+					}
+				}
+			}
+		}
 	}
 
 	//int16_t int32_t SWIRDstatus = cta_res[1];
