@@ -478,7 +478,7 @@ function getLogColor(text){
 		var color = localStorage['color' + i];
 		var fcolor = localStorage['fcolor' + i];
 		var regex = new RegExp(pattern);
-		if(pattern && (pattern != '') && (text.match(regex) == pattern)){
+		if(pattern && (pattern != '') && (regex.exec(text))){
 			return {
 				color : color,
 				fcolor : fcolor
@@ -501,7 +501,7 @@ function isWhitelisted(text){
 			var whitelisted = localStorage['whitelisted' + i];
 			var pattern = localStorage['regex' + i];
 			var regex = new RegExp(pattern);
-			if(pattern && (pattern != '') && (text.match(regex) == pattern) && whitelisted == '1'){
+			if(pattern && (pattern != '') && (whitelisted == '1') && (regex.exec(text)) ){	
 				return 1;
 			}
 		}
