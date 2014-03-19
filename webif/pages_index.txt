@@ -7,8 +7,10 @@
 #  DEPENDANCYx   - The config variable which is responsible for this template
 
 HEADER                        include/header.html
+HEADERSHORT                   include/header_short.html
 APIHEADER                     api.xml/header.xml
 JSONHEADER                    api.json/header.json
+BODY                          include/body.html
 CSS                           include/css.css
 JSCRIPT                       include/jscript.js
 JQUERY                        include/jquery.js
@@ -93,7 +95,8 @@ CCENTITLEMENTS                include/cccamentitlements.html
 CCENTITLETOOLTIP              include/cccamentitletooltip.html
 NOENTITLEMENTS                include/noentitlements.html
 FOUNDENTITLEMENTS             include/foundentitlements.html
-LOGPAGE                       include/logpage.html
+LOGPAGE                       logpage/logpage.html
+LOGDEBUGMENU                  logpage/logpage_debugmenu.html
 POLL                          include/poll.html
 ENTITLEMENTS                  entitlements/entitlements.html                              WITH_CARDREADER,MODULE_CCCAM
 ENTITLEMENTGENERICBIT         entitlements/entitlements_genericbit.html                   WITH_CARDREADER

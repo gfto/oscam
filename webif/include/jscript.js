@@ -519,10 +519,6 @@ function updateLogpage(data) {
 	if(data.oscam.debug){
 		setDebuglevel(data.oscam.debug, data.oscam.maxdebug);
 	}
-	if(data.oscam.nodebug ){
-		$("#debugmenu > span").remove();
-		$("#debugmenu").text('Oscam compiled without debug support');
-	}
 	if(data.oscam.logdisabled){
 		stoppoll = 1;
 		$("#livelogdata").append('<li>Log is disabled</li>\n');

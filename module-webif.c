@@ -3904,11 +3904,7 @@ static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * p
 
 	int dot = 0; //Delimiter
 
-#ifndef WITH_DEBUG
-	//cs_log("*** Warning: Debug Support not compiled in ***");
-	tpl_printf(vars, TPLAPPEND, "DATA","%s\"nodebug\":\"1\"",dot?",":"");
-	dot++;
-#else
+#ifdef WITH_DEBUG
 	char *debuglvl = getParam(params, "debug");
 	if(strlen(debuglvl) > 0) {
 		int32_t dblvl = atoi(debuglvl);
@@ -4049,18 +4045,6 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 			add_job(rdr->client, ACTION_READER_RESTART, NULL, 0);
 			cs_log("Reader %s restarted by WebIF from %s", rdr->label, cs_inet_ntoa(GET_IP()));
 		}
-	}
-
-	char *debuglvl = getParam(params, "debug");
-	if(strlen(debuglvl) > 0)
-	{
-#ifndef WITH_DEBUG
-		cs_log("*** Warning: Debug Support not compiled in ***");
-#else
-		int32_t dblvl = atoi(debuglvl);
-		if(dblvl >= 0 && dblvl <= 65535) { cs_dblevel = dblvl; }
-		cs_log("%s debug_level=%d", "all", cs_dblevel);
-#endif
 	}
 
 	char *hide = getParam(params, "hide");
@@ -4713,52 +4697,6 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	cs_readunlock(&clientlist_lock);
 	cs_readunlock(&readerlist_lock);
 
-	if(cfg.loghistorysize && 0 == 1)
-	{
-		char *t_loghistptr = loghistptr, *ptr1 = NULL;
-		if(loghistptr >= loghist + (cfg.loghistorysize) - 1)
-			{ t_loghistptr = loghist; }
-		int32_t d = 0, l1 = strlen(t_loghistptr + 1) + 2;
-		char *lastpos = loghist + (cfg.loghistorysize) - 1;
-
-		for(ptr1 = t_loghistptr + l1, i = 0; i < 200; i++, ptr1 = ptr1 + l1)
-		{
-			l1 = strlen(ptr1) + 1;
-			if(!d && ((ptr1 >= lastpos) || (l1 < 2)))
-			{
-				ptr1 = loghist;
-				l1 = strlen(ptr1) + 1;
-				d++;
-			}
-
-			if(d && ((ptr1 >= t_loghistptr) || (l1 < 2)))
-				{ break; }
-
-			char p_usr[32];
-			size_t pos1 = strcspn(ptr1, "\t") + 1;
-			cs_strncpy(p_usr, ptr1 , pos1 > sizeof(p_usr) ? sizeof(p_usr) : pos1);
-
-			char *p_txt = ptr1 + pos1;
-
-			if(!apicall)
-			{
-				if(p_txt[0])
-					tpl_printf(vars, TPLAPPEND, "LOGHISTORY",
-							   "\t\t<SPAN CLASS=\"%s\">%s\t\t</SPAN><BR>\n", xml_encode(vars, p_usr), xml_encode(vars, p_txt));
-			}
-			else
-			{
-				if(apicall == 1)
-					if(strcmp(getParam(params, "appendlog"), "1") == 0)
-						{ tpl_addVar(vars, TPLAPPEND, "LOGHISTORY", p_txt); }
-			}
-		}
-	}
-	else
-	{
-		tpl_addVar(vars, TPLADD, "LOGHISTORY", "loghistorysize is set to 0 in your configuration<BR>\n");
-	}
-
 #ifdef CS_CACHEEX
 	char *getting = "<IMG SRC=\"image?i=ICARRL\" ALT=\"Getting\">";
 	char *pushing = "<IMG SRC=\"image?i=ICARRR\" ALT=\"Pushing\">";
@@ -4863,37 +4801,6 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 
 	tpl_addVar(vars, TPLADDONCE, "SYSTEM_INFO", tpl_getTpl(vars, "SYSTEMINFOBIT"));
 	tpl_addVar(vars, TPLADDONCE, "USER_INFO", tpl_getTpl(vars, "USERINFOBIT"));
-
-#ifdef WITH_DEBUG
-	// Debuglevel Selector
-	int32_t lvl;
-	for(i = 0; i < MAX_DEBUG_LEVELS; i++)
-	{
-		lvl = 1 << i;
-		tpl_printf(vars, TPLADD, "TMPC", "DCLASS%d", lvl);
-		tpl_printf(vars, TPLADD, "TMPV", "DEBUGVAL%d", lvl);
-		if(cs_dblevel & lvl)
-		{
-			tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMPC"), "debugls");
-			tpl_printf(vars, TPLADD, tpl_getVar(vars, "TMPV"), "%d", cs_dblevel - lvl);
-		}
-		else
-		{
-			tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMPC"), "debugl");
-			tpl_printf(vars, TPLADD, tpl_getVar(vars, "TMPV"), "%d", cs_dblevel + lvl);
-		}
-	}
-
-	if(cs_dblevel == D_ALL_DUMP)
-		{ tpl_addVar(vars, TPLADD, "DCLASS65535", "debugls"); }
-	else
-		{ tpl_addVar(vars, TPLADD, "DCLASS65535", "debugl"); }
-
-	tpl_addVar(vars, TPLADD, "NEXTPAGE", "status.html");
-	tpl_addVar(vars, TPLADD, "DCLASS", "debugl"); //default
-	tpl_printf(vars, TPLADD, "ACTDEBUG", "%d", cs_dblevel);
-	tpl_addVar(vars, TPLADD, "SDEBUG", tpl_getTpl(vars, "DEBUGSELECT"));
-#endif
 
 	if(apicall)
 	{
@@ -7000,6 +6907,10 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			tpl_addVar(vars, TPLADD, "CS_VERSION", CS_VERSION);
 			tpl_addVar(vars, TPLADD, "CS_SVN_VERSION", CS_SVN_VERSION);
 			tpl_addVar(vars, TPLADD, "CS_TARGET", CS_TARGET);
+#ifdef WITH_DEBUG
+			tpl_addVar(vars, TPLADD, "LOG_DEBUGMENU", tpl_getTpl(vars, "LOGDEBUGMENU"));
+#endif
+
 			if(cfg.http_oscam_label != NULL){
 				tpl_addVar(vars, TPLADD, "HTTPOSCAMLABEL", cfg.http_oscam_label);
 			}
