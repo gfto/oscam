@@ -1749,6 +1749,7 @@ struct s_config
 	int8_t      dvbapi_boxtype;
 	int8_t      dvbapi_pmtmode;
 	int8_t      dvbapi_requestmode;
+	int32_t     dvbapi_listenport;                  // TCP port to listen instead of camd.socket (network mode, default=0 -> disabled)
 	SIDTABS     dvbapi_sidtabs;
 	int32_t     dvbapi_delayer;                     // delayer ms, minimum time to write cw
 #endif

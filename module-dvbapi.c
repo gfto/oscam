@@ -323,6 +323,48 @@ void remove_emmfilter_from_list(int32_t demux_id, uint16_t caid, uint32_t provid
 		{ return; }
 }
 
+int32_t dvbapi_net_filter_request(int32_t demux_index, uint32_t filter_number, struct dmx_sct_filter_params *sFP2)
+{
+	int32_t request;
+	int32_t sct_filter_size = sizeof(struct dmx_sct_filter_params);
+	unsigned char packet[3 + 4 + sct_filter_size];
+	int32_t size = 0;
+
+	// preparing packet - header
+	packet[size++] = demux[demux_index].adapter_index;          //adapter index - 1 byte
+
+	// type of request
+	if (sFP2)
+		request = DMX_SET_FILTER;
+	else
+		request = DMX_STOP;
+	memcpy(&packet[size], &request, 4);                         //request - 4 bytes
+	size += 4;
+
+	packet[size++] = demux_index;                               //demux index - 1 byte
+	packet[size++] = filter_number;                             //filter number - 1 byte
+
+	// filter data when starting
+	if (sFP2)
+	{
+		memcpy(&packet[size], sFP2, sct_filter_size);   //dmx_sct_filter_params struct
+		size += sct_filter_size;
+	}
+	else    // pid when stopping
+	{
+		int16_t pid = demux[demux_index].demux_fd[filter_number].pid;
+		packet[size++] = pid >> 8;
+		packet[size++] = pid & 0xff;
+	}
+
+	// sending
+	cs_ddump_mask(D_DVBAPI, packet, size, "[DVBAPI] Sending filter request packet (fd=%d):", demux[demux_index].socket_fd);
+	if (demux[demux_index].socket_fd > 0)
+		send(demux[demux_index].socket_fd, &packet, size, MSG_DONTWAIT);
+	// always returning success as the client could close socket
+	return 0;
+}
+
 int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t caid, uint32_t provid, uchar *filt, uchar *mask, int32_t timeout, int32_t pidindex, int32_t count, int32_t type, int8_t add_to_emm_list)
 {
 #if defined WITH_AZBOX || defined WITH_MCA
@@ -353,7 +395,10 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 	switch(api)
 	{
 	case DVBAPI_3:
-		ret = demux[demux_id].demux_fd[n].fd = dvbapi_open_device(0, demux[demux_id].demux_index, demux[demux_id].adapter_index);
+		if (cfg.dvbapi_listenport)
+			ret = demux[demux_id].demux_fd[n].fd = DUMMY_FD;
+		else
+			ret = demux[demux_id].demux_fd[n].fd = dvbapi_open_device(0, demux[demux_id].demux_index, demux[demux_id].adapter_index);
 		if(ret < 0) { return ret; }  // return if device cant be opened!
 		struct dmx_sct_filter_params sFP2;
 
@@ -388,7 +433,10 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 		{
 			memcpy(sFP2.filter.filter, filt, 16);
 			memcpy(sFP2.filter.mask, mask, 16);
-			ret = ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER, &sFP2);
+			if (cfg.dvbapi_listenport)
+				ret = dvbapi_net_filter_request(demux_id, n, &sFP2);
+			else
+				ret = ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER, &sFP2);
 		}
 		break;
 
@@ -449,6 +497,13 @@ static int32_t dvbapi_detect_api(void)
 	cs_log("Detected Coolstream API");
 	return 1;
 #else
+	if (cfg.dvbapi_listenport)
+	{
+		selected_api = DVBAPI_3;
+		selected_box = 1;
+		cs_log("[DVBAPI] Using TCP listen socket, API forced to DVBAPIv3 (%d), userconfig boxtype: %d", selected_api, cfg.dvbapi_boxtype);
+		return 1;
+	}
 	int32_t i = 0, n = 0, devnum = -1, dmx_fd = 0, boxnum = sizeof(devices) / sizeof(struct box_devices);
 	char device_path[128], device_path2[128];
 
@@ -639,7 +694,10 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 		switch(selected_api)
 		{
 		case DVBAPI_3:
-			retfilter = ioctl(fd, DMX_STOP); // for modern dvbapi boxes, they do give filter status back to us
+			if (cfg.dvbapi_listenport)
+				retfilter = dvbapi_net_filter_request(demux_index, num, NULL);
+			else
+				retfilter = ioctl(fd, DMX_STOP); // for modern dvbapi boxes, they do give filter status back to us
 			break;
 
 		case DVBAPI_1:
@@ -674,9 +732,14 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 			cs_log("ERROR: Demuxer #%d could not stop Filter #%d (fd:%d api:%d errno=%d %s)", demux_index, num + 1, fd, selected_api, errno, strerror(errno));
 		}
 #ifndef WITH_COOLAPI // no fd close for coolapi and stapi, all others do close fd!
-		retfd = close(fd);
-		if(errno == 9) { retfd = 0; }  // no error on bad file descriptor
-		if(selected_api == STAPI) { retfd = 0; }  // stapi closes its own filter fd!
+		if (!cfg.dvbapi_listenport)
+		{
+			retfd = close(fd);
+			if(errno == 9) { retfd = 0; }  // no error on bad file descriptor
+			if(selected_api == STAPI) { retfd = 0; }  // stapi closes its own filter fd!
+		}
+		else
+			retfd = 0;
 #endif
 		if(retfd)
 		{
@@ -2740,6 +2803,33 @@ int32_t dvbapi_init_listenfd(void)
 	return listenfd;
 }
 
+int32_t dvbapi_net_init_listenfd(void)
+{
+	int32_t listenfd;
+	struct sockaddr_in servaddr;
+
+	memset(&servaddr, 0, sizeof(struct sockaddr_in));
+	servaddr.sin_family = AF_INET;
+	servaddr.sin_addr.s_addr = INADDR_ANY;
+	servaddr.sin_port = htons((uint16_t)cfg.dvbapi_listenport);
+
+	if((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+		{ return 0; }
+
+	int32_t opt = 1;
+	setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(opt));
+#ifdef SO_REUSEPORT
+	setsockopt(listenfd, SOL_SOCKET, SO_REUSEPORT, (void *)&opt, sizeof(opt));
+#endif
+
+	if(bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
+		{ return 0; }
+	if(listen(listenfd, 5) < 0)
+		{ return 0; }
+
+	return listenfd;
+}
+
 static pthread_mutex_t event_handler_lock;
 
 void event_handler(int32_t UNUSED(signal))
@@ -3316,7 +3406,10 @@ static void *dvbapi_main_local(void *cli)
 	int32_t listenfd = -1;
 	if(cfg.dvbapi_boxtype != BOXTYPE_IPBOX_PMT && cfg.dvbapi_pmtmode != 2 && cfg.dvbapi_pmtmode != 5 && cfg.dvbapi_pmtmode != 6)
 	{
-		listenfd = dvbapi_init_listenfd();
+		if (!cfg.dvbapi_listenport)
+			listenfd = dvbapi_init_listenfd();
+		else
+			listenfd = dvbapi_net_init_listenfd();
 		if(listenfd < 1)
 		{
 			cs_log("ERROR: Could not init camd.socket.");
@@ -3420,7 +3513,7 @@ static void *dvbapi_main_local(void *cli)
 			uint32_t ecmcounter = 0, emmcounter = 0;
 			for(g = 0; g < MAX_FILTER; g++)
 			{
-				if(demux[i].demux_fd[g].fd > 0 && selected_api != STAPI && selected_api != COOLAPI)
+				if(!cfg.dvbapi_listenport && demux[i].demux_fd[g].fd > 0 && selected_api != STAPI && selected_api != COOLAPI)
 				{
 					pfd2[pfdcount].fd = demux[i].demux_fd[g].fd;
 					pfd2[pfdcount].events = (POLLIN | POLLPRI);
@@ -3644,9 +3737,32 @@ static void *dvbapi_main_local(void *cli)
 							len = recv(connfd, mbuf + pmtlen, sizeof(mbuf) - pmtlen, MSG_DONTWAIT);
 							if (len > 0)
 								pmtlen += len;
+							if (cfg.dvbapi_listenport && len == 0) {
+								//client disconnects, stop all assigned decoding
+								for (j = 0; j < MAX_DEMUX; j++)
+									if (demux[j].socket_fd == connfd)
+										dvbapi_stop_descrambling(j);
+							}
 							if (pmtlen > 0) {
-								// check and try to process complete PMT objects by chunks to avoid PMT buffer overflows
-								if (pmtlen > 4 && mbuf[0] == 0x9f && mbuf[1] == 0x80 && mbuf[2] == 0x32)
+								// check and try to process complete PMT objects and filter data
+								// by chunks to avoid PMT buffer overflows
+								if (pmtlen > 8 && mbuf[0] == 0xff && mbuf[1] == 0xff) //filter data
+								{
+									int32_t demux_index = mbuf[4];
+									int32_t filter_num = mbuf[5];
+									int32_t len = ((mbuf[7] << 8) + mbuf[8]) & 0x0FFF;
+									uint32_t chunksize = 6 + 3 + len;
+
+									chunks_processed++;
+									dvbapi_process_input(demux_index, filter_num, mbuf + 6, len + 3);
+
+									// if we read more data then processed, move it to beginning
+									if (pmtlen > chunksize)
+										memmove(mbuf, mbuf + chunksize, pmtlen - chunksize);
+									pmtlen -= chunksize;
+									continue;
+								}
+								else if (pmtlen > 4 && mbuf[0] == 0x9f && mbuf[1] == 0x80 && mbuf[2] == 0x32)
 								{
 									// parse packet size (ASN.1)
 									uint32_t val = 0, size = 0, chunksize = 0;
@@ -4291,7 +4407,7 @@ int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er)
 		}
 	}
 
-	int32_t ret = dvbapi_activate_section_filter(fd, curpid->ECM_PID, filter, mask);
+	int32_t ret = dvbapi_activate_section_filter(demux_index, n, fd, curpid->ECM_PID, filter, mask);
 	if(ret < 0)   // something went wrong setting filter!
 	{
 		cs_log("[DVBAPI] Demuxer #%d Filter #%d (fd %d) error setting section filtering -> stop filter!", demux_index, n + 1, fd);
@@ -4307,7 +4423,7 @@ int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er)
 	return n;
 }
 
-int32_t dvbapi_activate_section_filter(int32_t fd, int32_t pid, uchar *filter, uchar *mask)
+int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t fd, int32_t pid, uchar *filter, uchar *mask)
 {
 
 	int32_t ret = -1;
@@ -4346,7 +4462,10 @@ int32_t dvbapi_activate_section_filter(int32_t fd, int32_t pid, uchar *filter, u
 		{
 			memcpy(sFP2.filter.filter, filter, 16);
 			memcpy(sFP2.filter.mask, mask, 16);
-			ret = ioctl(fd, DMX_SET_FILTER, &sFP2);
+			if (cfg.dvbapi_listenport)
+				ret = dvbapi_net_filter_request(demux_index, num, &sFP2);
+			else
+				ret = ioctl(fd, DMX_SET_FILTER, &sFP2);
 		}
 		break;
 	}
