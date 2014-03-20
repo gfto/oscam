@@ -1852,11 +1852,6 @@ static int32_t gbox_send_emm(EMM_PACKET *UNUSED(ep))
 //init my gbox with id, password and cards crc
 static void init_local_gbox(void)
 {
-	remove(FILE_GBOX_VERSION);
-	remove(FILE_SHARED_CARDS_INFO);
-	remove(FILE_ATTACK_INFO);
-	remove(FILE_GBOX_PEER_ONL);
-	remove(FILE_STATS);
 	local_gbox.id = 0;
 	memset(&local_gbox.password[0], 0, 4);
 	memset(&local_gbox.checkcode[0], 0, 7);
