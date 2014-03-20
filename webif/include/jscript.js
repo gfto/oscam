@@ -227,6 +227,11 @@ $(function(){
 		}
 
 	});
+	
+	$(".debugls a, .debugl a").click(function(){
+		parameters = parameters + "&debug=" + $( this ).attr('sendval');
+		return false;
+	});
 
 });
 
@@ -455,17 +460,15 @@ function setDebuglevel(debug, maxdebug) {
 		$("#debugfrom").text(' Switch Debug from ' + cs_dblevel + ' to ');
 		for( var i = 0; i < maxlevel; i++){
 			lvl = 1 << i;
+			if(cs_dblevel & lvl){
+				$("#debug" + lvl).attr('sendval', cs_dblevel - lvl);
+			} else {
+				$("#debug" + lvl).attr('sendval', cs_dblevel + lvl);
+			}
 			$("#debug" + lvl).attr('class', (cs_dblevel & lvl)?'debugls':'debugl');
 		}
 		lastdebuglevel = cs_dblevel;
 	}
-}
-
-/*
- * LiveLog Functions: set debuglevel to specified value
- */
-function callDebug(value) {
-	parameters = parameters + "&debug=" + value;
 }
 
 /*
