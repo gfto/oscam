@@ -734,6 +734,12 @@ DESCRIPTIONS
 
 	  pc is for generic pc support (currently supported on VDR with vdr-plugin-dvbapi)
 
+       listen_port = 0|port
+	  TCP port to listen instead of camd.socket, 0 = disabled, default:0
+
+	  Enables  filtering  and  obtaining  data  over  network, demux is not opened and the ECM/CAT/EMM filtering is done on
+	  client.
+
        cw_delay = milli-seconds
 	  delay of CW writing, default:none
 
