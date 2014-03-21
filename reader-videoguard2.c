@@ -446,7 +446,7 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
             if (cta_res[0] == 0x15)
             {
                 reader->VgCredit = ((cta_res[8] << 8) + cta_res[9]) / 100;
-                rdr_log(reader, "Credit available on card: %i €", reader->VgCredit);
+                rdr_log(reader, "Credit available on card: %i euro", reader->VgCredit);
             }
         }
     }
@@ -587,7 +587,7 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 	}
 
 	memcpy(payload4C, boxID, 4);
-	if(!write_cmd_vg(ins4C, payload4C) || !status_ok(cta_res ))
+	if(!write_cmd_vg(ins4C, payload4C))
 	{
 		rdr_log(reader, "classD0 ins4C: failed - sending boxid failed");
 		return ERROR;
