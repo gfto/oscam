@@ -3412,7 +3412,7 @@ static void *dvbapi_main_local(void *cli)
 			listenfd = dvbapi_net_init_listenfd();
 		if(listenfd < 1)
 		{
-			cs_log("ERROR: Could not init camd.socket.");
+			cs_log("ERROR: Could not init socket: (errno=%d: %s)", errno, strerror(errno));
 			return NULL;
 		}
 	}
