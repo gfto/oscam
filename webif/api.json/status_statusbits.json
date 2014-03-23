@@ -3,6 +3,7 @@
 "type": "##CLIENTTYPE##",
 "name": "##CLIENTUSER##",
 "name_enc": "##USERENC##",
+"upicmissing": "##UPICMISSING##",
 "desc": "##CLIENTDESCRIPTION##",
 "protocol": "##CLIENTPROTO##",
 "protocolext": "##CLIENTPROTOTITLE##",

@@ -161,14 +161,18 @@ $(function(){
 		if(pollintervall > 98000) return;
 		$(":text[name='pintervall']").val( Number($(":text[name='pintervall']").val()) + 1 );
 		pollintervall = $(":text[name='pintervall']").val() * 1000;
-		sessionStorage.pollintervall = pollintervall;
+		if(!nostorage){
+			sessionStorage.pollintervall = pollintervall;
+		}
 	});
 	// Pollinterval DOWN
 	$("#dec").click(function(){
 		if(pollintervall < 2000) return;
 		$(":text[name='pintervall']").val( Number($(":text[name='pintervall']").val()) - 1 );
 		pollintervall = $(":text[name='pintervall']").val() * 1000;
-		sessionStorage.pollintervall = pollintervall;
+		if(!nostorage){
+			sessionStorage.pollintervall = pollintervall;
+		}
 	});
 	// Hover for showing Chart on Statuspage
 	$('table.status').on('mouseover', 'tr > td.statuscol14', function(e){
@@ -206,6 +210,7 @@ $(function(){
 			localStorage['color' + i] = color?color:'';
 			localStorage['fcolor' + i] = fcolor?fcolor:'';
 			localStorage['whitelisted' + i] = $('#whitelisted' + i).prop('checked')?'1':'0';
+			localStorage['hidden' + i] = $('#hidden' + i).prop('checked')?'1':'0';
 		}
 
 	});
@@ -216,12 +221,14 @@ $(function(){
 			for(var i = 1; i < 6; i++) {
 				$('#regex' + i).val('');
 				$('#whitelisted' + i).prop('checked', false);
+				$('#hidden' + i).prop('checked', false);
 				$('#color' + i).val('');
 				$('#fcolor' + i).val('');
 				localStorage['regex' + i] = '';
 				localStorage['color' + i] = '';
 				localStorage['fcolor' + i] = '';
 				localStorage['whitelisted' + i] = '0';
+				localStorage['hidden' + i] = '0';
 			}
 			$('li.regex > div.colorPicker-picker').css('background-color','#FFFFFF');
 		}
@@ -231,6 +238,16 @@ $(function(){
 	$(".debugls a, .debugl a").click(function(){
 		parameters = parameters + "&debug=" + $( this ).attr('sendval');
 		return false;
+	});
+	
+	$("#savelog").on('click', function (event) {
+		var txt = '';
+		$("#livelogdata li").each(function( i ) {
+			txt += $(this).text() + '\n';
+		});
+		// Data URI
+		txtData = 'data:application/txt;charset=utf-8,' + encodeURIComponent(txt);
+		$(this).attr({'href': txtData,	'target': '_blank'});
 	});
 
 });
@@ -476,15 +493,21 @@ function setDebuglevel(debug, maxdebug) {
  */
 function getLogColor(text){
 
+	if(nostorage){
+		return null;
+	}
+	
 	for(var i = 1; i < 6; i++) {
 		var pattern = localStorage['regex' + i];
 		var color = localStorage['color' + i];
 		var fcolor = localStorage['fcolor' + i];
+		var hidden = localStorage['hidden' + i];
 		var regex = new RegExp(pattern);
 		if(pattern && (pattern != '') && (regex.exec(text))){
 			return {
 				color : color,
-				fcolor : fcolor
+				fcolor : fcolor,
+				hidden : hidden
 			}
 		}
 	}
@@ -495,6 +518,11 @@ function getLogColor(text){
  * Livelog Functions: get whitelist state
  */
 function isWhitelisted(text){
+	
+	if(nostorage){
+		return 1;
+	}
+	
 	var numwhite = 0;
 	for(var i = 1; i < 6; i++) {
 		numwhite += parseInt(localStorage['whitelisted' + i]);
@@ -530,28 +558,36 @@ function updateLogpage(data) {
 	$.each(data.oscam.lines, function(i, item) {
 
 		if ( isWhitelisted( item.line ) ){
+			var newcolor = getLogColor(item.line);
 			var newline = $('<li class="' + item.usr + '">' + item.line + '</li>\n');
-			var newcolor = getLogColor(newline.text());
+			var hiddenline = 0;
 			if(newcolor){
-				if(newcolor.color && newcolor.color != ''){
-					newline.css('background-color', newcolor.color);
+				if(newcolor.hidden != '1'){
+					if(newcolor.color && newcolor.color != ''){
+						newline.css('background-color', newcolor.color);
+					}
+					if(newcolor.fcolor && newcolor.fcolor != ''){
+						newline.css('color', newcolor.fcolor);
+					}
+					$("#livelogdata").append(newline);
+				} else {
+					hiddenline = 1;
 				}
-				if(newcolor.fcolor && newcolor.fcolor != ''){
-					newline.css('color', newcolor.fcolor);
-				}
-			}
-
-			$("#livelogdata").append(newline);
-
-			if ($("#livelogdata li").length >= maxloglines) {
-				$("#livelogdata li").eq(0).remove();
-			}
-			if ($("#livelog:hover").length) {
-				$('#livelog').stop(true);
 			} else {
-				//$("#livelog").animate({ scrollTop: $("#livelog").prop("scrollHeight") }, aniduration);
-				$("#livelog").scrollTop($("#livelog").prop("scrollHeight"));
+				$("#livelogdata").append(newline);
 			}
+
+			if(!hiddenline){
+				if ($("#livelogdata li").length >= maxloglines) {
+					$("#livelogdata li").eq(0).remove();
+				}
+				if ($("#livelog:hover").length) {
+					$('#livelog').stop(true);
+				} else {
+					$("#livelog").scrollTop($("#livelog").prop("scrollHeight"));
+				}
+			}
+
 		}
 		parameters = "?lasttime=" + item.ts;
 
@@ -658,27 +694,29 @@ function updateStatuspage(data){
 			} else {
 				$( uid + " > td.statuscol9").text(item.protocol);
 			}
-			if(data.oscam.piconenabled == "1" && item.name_enc){
-				$( uid + " > td.statuscol4").append('<a href="user_edit.html?user=' + item.name + '"><img class="statususericon" title="Edit User: ' + item.name + '" src="image?i=IC_' + item.name_enc + '"></img></a>');
-			} else {
-				$( uid + " > td.statuscol4").append('<a href="user_edit.html?user=' + item.name + '" title="Edit User: ' + item.name + '">' + item.name + '</a>');
+			if (data.oscam.piconenabled == "1" && !item.upicmissing){
+				$( uid + " > td.statuscol4").append('<a href="user_edit.html?user=' + item.name_enc + '"><img class="statususericon" title="Edit User: ' + item.name + '" src="image?i=IC_' + item.name_enc + '"></img></a>');
+			} else { 
+				$( uid + " > td.statuscol4").append('<a href="user_edit.html?user=' + item.name_enc + '" title="Edit User: ' + item.name + '\n' + item.upicmissing + '">' + item.name + '</a>');
 			}
 			$( uid + " > td.statuscol13").append('<A HREF="files.html?file=oscam.srvid" TITLE="' + item.request + '"/>');
 		}
 
-		$( uid ).attr('class', item.type);
+		$( uid ).attr({	'class': item.type,
+						'data-ref': item.request.ecmhistory })
+						.removeAttr('style');
 
 		// fix for anonymous newcamd-clients
-		if ($(uid+" > td.statuscol4").text().match('anonymous')) {
+		if ($(uid + " > td.statuscol4").text().match('anonymous')) {
 			if(data.oscam.piconenabled == "1" && item.protoicon){
-				$( uid + " > td.statuscol9").html('<img class="protoicon" title="'+item.protocolext+'" alt="'+item.protocolext+'" src="image?i=IC_' + item.protoicon + '"></img>');
+				$( uid + " > td.statuscol9").html('<img class="protoicon" title="' + item.protocolext + '" alt="' + item.protocolext + '" src="image?i=IC_' + item.protoicon + '"></img>');
 			} else {
 				$( uid + " > td.statuscol9").text(item.protocol);
 			}
-			if(data.oscam.piconenabled == "1" && item.name_enc){
-				$( uid + " > td.statuscol4").html('<a href="user_edit.html?user=' + item.name + '"><img class="statususericon" title="Edit User: ' + item.name + '" src="image?i=IC_' + item.name_enc + '"></img></a>');
+			if(data.oscam.piconenabled == "1" && !item.upicmissing){
+				$( uid + " > td.statuscol4").html('<a href="user_edit.html?user=' + item.name_enc + '"><img class="statususericon" title="Edit User: ' + item.name + '" src="image?i=IC_' + item.name_enc + '"></img></a>');
 			} else {
-				$( uid + " > td.statuscol4").html('<a href="user_edit.html?user=' + item.name + '" title="Edit User: ' + item.name + '">' + item.name + '</a>');
+				$( uid + " > td.statuscol4").html('<a href="user_edit.html?user=' + item.name_enc + '" title="Edit User: ' + item.name + '\n' + item.upicmissing + '">' + item.name + '</a>');
 			}
 		}
 
@@ -741,9 +779,9 @@ function updateStatuspage(data){
 		} else {
 			// picon is not delivered in JSON - we set the text of column
 			if(item.request.chprovider && item.request.chname && item.request.srvid != '0000'){
-				$( uid + " > td.statuscol13").text(item.request.chprovider + item.request.chname);
+				$( uid + " > td.statuscol13").html(item.request.chprovider + item.request.chname);
 			} else {
-				$( uid + " > td.statuscol13").text('');
+				$( uid + " > td.statuscol13").html('');
 			}
 		}
 
@@ -753,9 +791,9 @@ function updateStatuspage(data){
 			if(item.request.lbvalue && item.request.lbvalue !='no data'){
 				//console.log("LB for " +item.name+ " is "+ item.request.lbvalue);
 				if(!$( uid + " > td.statuscol14 > a").length){
-					//console.log("create link")
-					$( uid + " > td.statuscol14").text('');
-					$( uid + " > td.statuscol14").append('<a href="readerstats.html?label="' + item.name + '"&amp;hide=4" TITLE="Show statistics for: '+item.name+'">');
+					$( uid + " > td.statuscol14")
+						.text('')
+						.append('<a href="readerstats.html?label="' + item.name + '"&amp;hide=4" TITLE="Show statistics for: ' + item.name + '">');
 				}
 				$( uid + " > td.statuscol14 > a").text(item.request.lbvalue);
 			} else {
@@ -763,19 +801,22 @@ function updateStatuspage(data){
 			}
 		}
 
-		//console.log('Set col Time of '+item.name+' to ' + item.times.loginfmt);
-		$( uid + " > td.statuscol15").text(item.times.loginfmt);
-		$( uid + " > td.statuscol15").attr('title', 'Online: ' + item.times.online.toHHMMSS() + ' IDLE: ' + item.times.idle.toHHMMSS());
+		$( uid + " > td.statuscol15")
+			.text(item.times.loginfmt)
+			.attr('title', 'Online: ' + item.times.online.toHHMMSS() + ' IDLE: ' + item.times.idle.toHHMMSS());
 
 		// read entitlements and cccam-cards
 		var $html = $( uid + " > td.statuscol16").toHtmlString();
-		if ( $html != undefined ) var buffer = $html.substring($html.indexOf('<br>'),$html.indexOf('</a>'));
+		
+		if ( $html != undefined ) {
+			var buffer = $html.substring($html.indexOf('<br>'),$html.indexOf('</a>'));
+		}
+		
 		$( uid + " > td.statuscol16").text(item.connection.status);
-		if ( buffer ) $( uid + " > td.statuscol16").append(buffer+'</a>');
-
-		$( uid ).attr('data-ref', item.request.ecmhistory );
-		$( uid ).removeAttr('style');
-		//$( uid ).attr('data-ref', "100,200,300,400,500,600,700,800,5000" ); //testdata
+		
+		if ( buffer ) {
+			$( uid + " > td.statuscol16").append(buffer + '</a>');
+		}
 
 		if(newrow){
 			newrow.fadeIn("slow");
@@ -786,8 +827,7 @@ function updateStatuspage(data){
 	//remove non existing
 	$("tr.c").each(function() {
 		if(updatedclients.indexOf($(this).attr('id')) == -1){
-			$(this).fadeOut('slow');
-			$(this).remove();
+			$(this).fadeOut('slow').remove();
 		}
 	});
 
@@ -905,34 +945,51 @@ function setPollrefresh(){
 	if (httprefresh) {
 		pollintervall = parseInt(httprefresh) * 1000;
 		if (pollintervall > 99000) pollintervall == 99000;
-		if (sessionStorage.pollintervall) pollintervall = sessionStorage.pollintervall;
-		else sessionStorage.pollintervall = pollintervall;
+		if(!nostorage){
+			if (sessionStorage.pollintervall) pollintervall = sessionStorage.pollintervall;
+			else sessionStorage.pollintervall = pollintervall;
+		}
 	}
 }
+
+// static for paranoid Browsers
+var nostorage = 0;
 
 /*
  * General: Start Polling
  */
 $(document).ready(function() {
+	
+	if(!localStorage){ 
+		nostorage = 1;
+		// remove whole filter block - makes no sense
+		// without saving
+		$('#regex').remove();
+	}
+	
 	switch(page){
 		case 'livelog':
 
-			for(var i = 1; i < 6; i++) {
-				var pattern = localStorage['regex' + i];
-				var color = localStorage['color' + i];
-				var fcolor = localStorage['fcolor' + i];
-				$('#regex' + i).val(pattern?pattern:'');
-				$('#color' + i).val(color?color:'');
-				$('#fcolor' + i).val(fcolor?fcolor:'');
-				$('#color' + i).colorPicker();
-				$('#fcolor' + i).colorPicker();
-				$('#whitelisted' + i).prop('checked', localStorage['whitelisted' + i] == '1'?true:false);
+			if(!nostorage){
+				for(var i = 1; i < 6; i++) {
+					var pattern = localStorage['regex' + i];
+					var color = localStorage['color' + i];
+					var fcolor = localStorage['fcolor' + i];
+					$('#regex' + i).val(pattern?pattern:'');
+					$('#color' + i).val(color?color:'');
+					$('#fcolor' + i).val(fcolor?fcolor:'');
+					$('#color' + i).colorPicker();
+					$('#fcolor' + i).colorPicker();
+					$('#whitelisted' + i).prop('checked', localStorage['whitelisted' + i] == '1'?true:false);
+					$('#hidden' + i).prop('checked', localStorage['hidden' + i] == '1'?true:false);
+				}
 			}
 			waitForMsg();
 
 		break;
 		default:
 			if (page == 'status') $( "#chart" ).hide();
+		
 			// if httprefresh set to 0 hide pollselector
 			setPollrefresh();
 			if (httprefresh) {
@@ -942,6 +999,7 @@ $(document).ready(function() {
 			} else {
 				$("#nopoll").show();
 			}
+			
 		break;
 	}
 });

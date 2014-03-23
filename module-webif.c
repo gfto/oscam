@@ -4139,6 +4139,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 			tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", "");
 			tpl_addVar(vars, TPLADD, "CLIENTLASTRESPONSETIME", "");
 			tpl_addVar(vars, TPLADD, "CLIENTLASTRESPONSETIMEHIST", "");
+			tpl_addVar(vars, TPLADD, "UPICMISSING" , "");
 
 			if(cl->typ == 'c')
 				{ user_count_all++; }
@@ -4325,7 +4326,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						else
 						{
 							tpl_printf(vars, TPLADD, "UPICMISSING", "missing icon: IC_%s.tpl", xml_encode(vars, usr));
-							tpl_addVar(vars, TPLADD, "USERENC", "");
+							tpl_addVar(vars, TPLADD, "USERENC", urlencode(vars, usr));
 						}
 					}
 
