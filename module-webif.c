@@ -1320,14 +1320,19 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 
 			tpl_addVar(vars, TPLADD, "READERCLASS", rdr->enable ? "enabledreader" : "disabledreader");
 
-			const char *readername_tpl = "READERLABEL";
+			if(rdr->description)
+				tpl_printf(vars, TPLADD, "DESCRIPTION","&#013;(%s)",xml_encode(vars, rdr->description));
+			else
+				tpl_addVar(vars, TPLADD, "DESCRIPTION", "");
+
 			if(cfg.http_showpicons && !apicall)
 			{
-				readername_tpl = picon_exists(xml_encode(vars, rdr->label)) ? "READERNAMEBIT" : "READERNOICON";
+				tpl_addVar(vars, TPLADD, "READERBIT", tpl_getTpl(vars, picon_exists(xml_encode(vars, rdr->label)) ? "READERNAMEBIT" : "READERNOICON"));
 				tpl_addVar(vars, TPLADD, "CTYP", picon_exists(xml_encode(vars, reader_get_type_desc(rdr, 0))) ? tpl_getTpl(vars, "READERCTYPBIT") : tpl_getTpl(vars, "READERCTYPNOICON"));
 			}
-			tpl_addVar(vars, TPLADD, "READERNAME", tpl_getTpl(vars, readername_tpl));
-
+			else
+				tpl_addVar(vars, TPLADD, "READERBIT", tpl_getTpl(vars, "READERLABEL"));
+			
 			char *value = mk_t_group(rdr->grp);
 			tpl_addVar(vars, TPLADD, "GROUPS", value);
 			free_mk_t(value);
@@ -3330,15 +3335,19 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, account->usr));
 		tpl_addVar(vars, TPLADD, "USERNAMEENC", urlencode(vars, account->usr));
 
-		static const char *user_tpl_name = "USERLABEL";
+		if(account->description)
+			tpl_printf(vars, TPLADD, "DESCRIPTION","&#013;(%s)",xml_encode(vars, account->description));
+		else
+			tpl_addVar(vars, TPLADD, "DESCRIPTION", "");
+
 		if(cfg.http_showpicons && !apicall)
-			user_tpl_name = picon_exists(xml_encode(vars, account->usr)) ? "USERICON" : "USERNOICON";
-		tpl_addVar(vars, TPLADD, "USERBIT", tpl_getTpl(vars, user_tpl_name));
+			tpl_addVar(vars, TPLADD, "USERBIT", tpl_getTpl(vars, picon_exists(xml_encode(vars, account->usr)) ? "USERICON" : "USERNOICON"));
+		else
+			tpl_addVar(vars, TPLADD, "USERBIT", tpl_getTpl(vars, "USERLABEL"));
 
 		char *value = mk_t_group(account->grp);
 		tpl_addVar(vars, TPLADD, "GROUPS", value);
 		free_mk_t(value);
-		tpl_addVar(vars, TPLADD, "DESCRIPTION", xml_encode(vars, account->description ? account->description : ""));
 		tpl_addVar(vars, TPLADD, "STATUS", status);
 		tpl_addVar(vars, TPLAPPEND, "STATUS", expired);
 
@@ -4294,11 +4303,17 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					tpl_addVar(vars, TPLADD, "CLIENTUSER", xml_encode(vars, usr));
 					if(cl->typ == 'c')
 					{
-						tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", xml_encode(vars, (cl->account && cl->account->description) ? cl->account->description : ""));
+						if(cl->account && cl->account->description)
+							tpl_printf(vars, TPLADD, "CLIENTDESCRIPTION","&#013;(%s)",xml_encode(vars, cl->account->description));
+						else
+							tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", "");
 					}
 					else if(cl->typ == 'p' || cl->typ == 'r')
 					{
-						tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", xml_encode(vars, cl->reader->description ? cl->reader->description : ""));
+						if(cl->account && cl->reader->description)
+							tpl_printf(vars, TPLADD, "CLIENTDESCRIPTION","&#013;(%s)",xml_encode(vars, cl->reader->description));
+						else
+							tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", "");
 					}
 
 					tpl_addVar(vars, TPLADD, "STATUSUSERICON", xml_encode(vars, usr));
@@ -4324,10 +4339,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							}
 						}
 						else
-						{
-							tpl_printf(vars, TPLADD, "UPICMISSING", "missing icon: IC_%s.tpl", xml_encode(vars, usr));
-							tpl_addVar(vars, TPLADD, "USERENC", urlencode(vars, usr));
-						}
+							tpl_printf(vars, TPLADD, "UPICMISSING", "&#013;missing icon: IC_%s.tpl", xml_encode(vars, usr));
 					}
 
 					if (!picon_shown) {
@@ -4701,6 +4713,44 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	}
 	cs_readunlock(&clientlist_lock);
 	cs_readunlock(&readerlist_lock);
+
+	if(apicall==1 && strcmp(getParam(params, "appendlog"), "1") == 0)
+	{
+		if(cfg.loghistorysize)
+		{
+			char *t_loghistptr = loghistptr, *ptr1 = NULL;
+			if(loghistptr >= loghist + (cfg.loghistorysize) - 1)
+				{ t_loghistptr = loghist; }
+			int32_t d = 0, l1 = strlen(t_loghistptr + 1) + 2;
+			char *lastpos = loghist + (cfg.loghistorysize) - 1;
+
+			for(ptr1 = t_loghistptr + l1, i = 0; i < 200; i++, ptr1 = ptr1 + l1)
+			{
+				l1 = strlen(ptr1) + 1;
+				if(!d && ((ptr1 >= lastpos) || (l1 < 2)))
+				{
+					ptr1 = loghist;
+					l1 = strlen(ptr1) + 1;
+					d++;
+				}
+
+				if(d && ((ptr1 >= t_loghistptr) || (l1 < 2)))
+					{ break; }
+
+				char p_usr[32];
+				size_t pos1 = strcspn(ptr1, "\t") + 1;
+				cs_strncpy(p_usr, ptr1 , pos1 > sizeof(p_usr) ? sizeof(p_usr) : pos1);
+
+				char *p_txt = ptr1 + pos1;
+
+				tpl_addVar(vars, TPLAPPEND, "LOGHISTORY", p_txt);
+			}
+		}
+		else
+		{
+			tpl_addVar(vars, TPLADD, "LOGHISTORY", "loghistorysize is set to 0 in your configuration");
+		}
+	}
 
 #ifdef CS_CACHEEX
 	char *getting = "<IMG SRC=\"image?i=ICARRL\" ALT=\"Getting\">";

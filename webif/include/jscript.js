@@ -695,9 +695,9 @@ function updateStatuspage(data){
 				$( uid + " > td.statuscol9").text(item.protocol);
 			}
 			if (data.oscam.piconenabled == "1" && !item.upicmissing){
-				$( uid + " > td.statuscol4").append('<a href="user_edit.html?user=' + item.name_enc + '"><img class="statususericon" title="Edit User: ' + item.name + '" src="image?i=IC_' + item.name_enc + '"></img></a>');
-			} else { 
-				$( uid + " > td.statuscol4").append('<a href="user_edit.html?user=' + item.name_enc + '" title="Edit User: ' + item.name + '\n' + item.upicmissing + '">' + item.name + '</a>');
+				$( uid + " > td.statuscol4").append('<a href="user_edit.html?user=' + item.name_enc + '"><img class="statususericon" title="Edit User: ' + item.name + item.desc + '" src="image?i=IC_' + item.name_enc + '"></img></a>');
+			} else {
+				$( uid + " > td.statuscol4").append('<a href="user_edit.html?user=' + item.name_enc + '" title="Edit User: ' + item.name + item.desc + item.upicmissing + '">' + item.name + '</a>');
 			}
 			$( uid + " > td.statuscol13").append('<A HREF="files.html?file=oscam.srvid" TITLE="' + item.request + '"/>');
 		}
@@ -714,9 +714,9 @@ function updateStatuspage(data){
 				$( uid + " > td.statuscol9").text(item.protocol);
 			}
 			if(data.oscam.piconenabled == "1" && !item.upicmissing){
-				$( uid + " > td.statuscol4").html('<a href="user_edit.html?user=' + item.name_enc + '"><img class="statususericon" title="Edit User: ' + item.name + '" src="image?i=IC_' + item.name_enc + '"></img></a>');
+				$( uid + " > td.statuscol4").html('<a href="user_edit.html?user=' + item.name_enc + '"><img class="statususericon" title="Edit User: ' + item.name + item.desc + '" src="image?i=IC_' + item.name_enc + '"></img></a>');
 			} else {
-				$( uid + " > td.statuscol4").html('<a href="user_edit.html?user=' + item.name_enc + '" title="Edit User: ' + item.name + '\n' + item.upicmissing + '">' + item.name + '</a>');
+				$( uid + " > td.statuscol4").html('<a href="user_edit.html?user=' + item.name_enc + '" title="Edit User: ' + item.name + item.desc + item.upicmissing + '">' + item.name + '</a>');
 			}
 		}
 
