@@ -3750,11 +3750,11 @@ static void *dvbapi_main_local(void *cli)
 								{
 									int32_t demux_index = mbuf[4];
 									int32_t filter_num = mbuf[5];
-									int32_t len = ((mbuf[7] << 8) + mbuf[8]) & 0x0FFF;
-									uint32_t chunksize = 6 + 3 + len;
+									int32_t data_len = ((mbuf[7] << 8) + mbuf[8]) & 0x0FFF;
+									uint32_t chunksize = 6 + 3 + data_len;
 
 									chunks_processed++;
-									dvbapi_process_input(demux_index, filter_num, mbuf + 6, len + 3);
+									dvbapi_process_input(demux_index, filter_num, mbuf + 6, data_len + 3);
 
 									// if we read more data then processed, move it to beginning
 									if (pmtlen > chunksize)
