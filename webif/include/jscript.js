@@ -250,8 +250,26 @@ $(function(){
 		$(this).attr({'href': txtData,	'target': '_blank'});
 	});
 
+	$("#showhidesettings").click(function(){
+		if($("#showhidesettings").val() == 'Show Settings'){
+			$("#showhidesettings").val('Hide Settings');
+			$("#regexdata").fadeIn('slow');
+		} else {
+			$("#showhidesettings").val('Show Settings');
+			$("#regexdata").fadeOut('slow');
+		}
+	});
+
+
 });
 
+/*
+ * Genaral: Update page footer
+ */
+function updateFooter(data){
+	$( "#curtime" ).text( ' ' + data.oscam.curdate + ' | ' + data.oscam.curtime + ' ' );
+	$( "#uptime" ).text( data.oscam.uptimefmt );
+}
 
 /*
  * Userpage Functions: Update Page
@@ -269,8 +287,9 @@ function updateUserpage(data) {
 		switch (item.user.classname) {
 			case 'online':
 			$( uid ).attr('class', item.user.classname);
-			$( uid + " td.usercol2").attr( 'title', 'SLEEP: ' + item.user.stats.expectsleep );
-			$( uid + " td.usercol2").html( "<B>" + item.user.status + "</B><br>" + item.user.ip);
+			$( uid + " td.usercol2")
+				.attr( 'title', 'SLEEP: ' + item.user.stats.expectsleep )
+				.html( "<B>" + item.user.status + "</B><br>" + item.user.ip);
 			$( uid + " td.usercol3").html( item.user.stats.idle + "<br>" + item.user.stats.timeonchannel.toHHMMSS());
 
 			if(item.user.protoicon.length > 0){
@@ -325,14 +344,16 @@ function updateUserpage(data) {
 			$( uid + " td.usercol19").text( item.user.stats.cwrate + item.user.stats.cwrate2 );
 			$( uid + " td.usercol22").text( item.user.stats.cascusercomb );
 			$( uid + " td.usercol21").text( item.user.stats.n_requ_m );
-			$( uid + " td.usercol20").attr( 'title', item.user.expview );
-			$( uid + " td.usercol20").text( item.user.stats.expdate );
+			$( uid + " td.usercol20")
+				.attr( 'title', item.user.expview )
+				.text( item.user.stats.expdate );
 			break;
 
 			case 'connected':
 			$( uid ).attr('class', item.user.classname);
-			$( uid + " td.usercol2").attr( 'title', 'SLEEP: ' );
-			$( uid + " td.usercol2").html( "<B>" + item.user.status + "</B><br>" + item.user.ip);
+			$( uid + " td.usercol2")
+				.attr( 'title', 'SLEEP: ' )
+				.html( "<B>" + item.user.status + "</B><br>" + item.user.ip);
 			$( uid + " td.usercol3").html( item.user.stats.idle + "<br>" + item.user.stats.timeonchannel.toHHMMSS());
 
 			if(item.user.protoicon.length > 0){
@@ -377,12 +398,14 @@ function updateUserpage(data) {
 			if($( uid ).attr('class') == 'online' || $( uid ).attr('class') == 'connected'){
 				// last status was online so cleanup offline
 				$( uid ).attr('class', item.user.classname);
-				$( uid + " td.usercol2").attr( 'title', 'SLEEP: ');
-				$( uid + " td.usercol2").html( item.user.status );
+				$( uid + " td.usercol2")
+					.attr( 'title', 'SLEEP: ')
+					.html( item.user.status );
 				$( uid + " td.usercol3").text( '' );
 				$( uid + " td.usercol7").text( '0' );
-				$( uid + " td.usercol4").text( '' );
-				$( uid + " td.usercol4").attr( 'title', '' );
+				$( uid + " td.usercol4")
+					.text( '' )
+					.attr( 'title', '' );
 				var protoimage = $( uid + " td.usercol4 img.protoicon");
 				if(image){
 					protoimage.fadeOut('slow');
@@ -425,8 +448,7 @@ function updateUserpage(data) {
 	$( "#tot_cwneg" ).html( "<B>Total NOK:  </B> "+ cwneg + " (" + cwneg_rel + "%)");
 
 	// update footer
-	$( "#curtime" ).text( ' ' + data.oscam.curdate + ' | ' + data.oscam.curtime + ' ' );
-	$( "#uptime" ).text( data.oscam.uptimefmt );
+	updateFooter(data);
 
 	// hide heartbeat
 	setTimeout(function (){$( "input.pintervall" ).css("background-color",orgstyle);}, 300);
@@ -459,8 +481,7 @@ function updateReaderpage(data) {
 	});
 
 	// update footer
-	$( "#curtime" ).text( ' ' + data.oscam.curdate + ' | ' + data.oscam.curtime + ' ' );
-	$( "#uptime" ).text( data.oscam.uptimefmt );
+	updateFooter(data);
 
 	// hide heartbeat
 	setTimeout(function (){$( "input.pintervall" ).css("background-color",orgstyle);}, 300);
@@ -594,8 +615,7 @@ function updateLogpage(data) {
 	});
 
 	// update footer
-	$( "#curtime" ).text( ' ' + data.oscam.curdate + ' | ' + data.oscam.curtime + ' ' );
-	$( "#uptime" ).text( data.oscam.uptimefmt );
+	updateFooter(data);
 
 }
 
@@ -628,8 +648,9 @@ function generateBar(value){
 function addremoveSubheadline(remove, data) {
 
 	if(remove == 1 && $("#clientsubheadline").length) {
-		$("#clientsubheadline").fadeOut('slow');
-		$("#clientsubheadline").remove();
+		$("#clientsubheadline")
+			.fadeOut('slow')
+			.remove();
 	}
 
 	if(remove == 0 && ! $("#clientsubheadline").length){
@@ -648,6 +669,64 @@ function addremoveSubheadline(remove, data) {
 		$('table.status').append(headline);
 		headline.fadeIn('slow');
 	}
+}
+
+/*
+ *  Statuspage Functions: Update Totals cacheEx
+ */
+function updateCacheexotals(data){
+	$( "#total_cachexpush" ).text( data.oscam.status.totals.total_cachexpush );
+	$( "#total_cachexgot" ).text( data.oscam.status.totals.total_cachexgot );
+	$( "#total_cachexhit" ).text( data.oscam.status.totals.total_cachexhit );
+	$( "#rel_cachexhit" ).text( data.oscam.status.totals.rel_cachexhit );
+	$( "#total_cachesize" ).text( data.oscam.status.totals.total_cachesize );
+}
+
+/*
+ *  Statuspage Functions: Update Totals User + ECM
+ */
+function updateTotals(data){
+	$( "#total_users" ).text( data.oscam.status.totals.total_users );
+	$( "#total_active" ).text( data.oscam.status.totals.total_active );
+	$( "#total_connected" ).text( data.oscam.status.totals.total_connected );
+	$( "#total_online" ).text( data.oscam.status.totals.total_online );
+	$( "#total_disabled" ).text( data.oscam.status.totals.total_disabled );
+	$( "#total_expired" ).text( data.oscam.status.totals.total_expired );
+	$( "#total_cwok" ).text( data.oscam.status.totals.total_cwok );
+	$( "#rel_cwok" ).text( data.oscam.status.totals.rel_cwok );
+	$( "#total_cwcache" ).text( data.oscam.status.totals.total_cwcache );
+	$( "#rel_cwcache" ).text( data.oscam.status.totals.rel_cwcache );
+	$( "#total_cwnok" ).text( data.oscam.status.totals.total_cwnok );
+	$( "#rel_cwnok" ).text( data.oscam.status.totals.rel_cwnok );
+	$( "#total_cwtout" ).text( data.oscam.status.totals.total_cwtout );
+	$( "#rel_cwtout" ).text( data.oscam.status.totals.rel_cwtout );
+	$( "#total_cwign" ).text( data.oscam.status.totals.total_cwign );
+	$( "#rel_cwign" ).text( data.oscam.status.totals.rel_cwign );
+	$( "#total_ecm_min" ).text( data.oscam.status.totals.total_ecm_min );
+	$( "#total_cw" ).text( data.oscam.status.totals.total_cw );
+	$( "#total_cwpos" ).text( data.oscam.status.totals.total_cwpos );
+	$( "#rel_cwpos" ).text( data.oscam.status.totals.rel_cwpos );
+	$( "#total_cwneg" ).text( data.oscam.status.totals.total_cwneg );
+	$( "#rel_cwneg" ).text( data.oscam.status.totals.rel_cwneg );
+}
+
+/*
+ *  Statuspage Functions: Update Totals Sysinfo
+ */
+function updateSysinfo(data){
+	$( "#mem_cur_total" ).text( data.oscam.sysinfo.mem_cur_total );
+	$( "#mem_cur_free" ).text( data.oscam.sysinfo.mem_cur_free );
+	$( "#mem_cur_used" ).text( data.oscam.sysinfo.mem_cur_used );
+	$( "#mem_cur_buff" ).text( data.oscam.sysinfo.mem_cur_buff );
+	$( "#oscam_vmsize" ).text( data.oscam.sysinfo.oscam_vmsize );
+	$( "#oscam_rsssize" ).text( data.oscam.sysinfo.oscam_rsssize );
+	$( "#cpu_load_0" ).text( data.oscam.sysinfo.cpu_load_0 );
+	$( "#cpu_load_1" ).text( data.oscam.sysinfo.cpu_load_1 );
+	$( "#cpu_load_2" ).text( data.oscam.sysinfo.cpu_load_2 );
+	$( "#oscam_refresh" ).text( data.oscam.sysinfo.oscam_refresh );
+	$( "#oscam_cpu_user" ).text( data.oscam.sysinfo.oscam_cpu_user );
+	$( "#oscam_cpu_sys" ).text( data.oscam.sysinfo.oscam_cpu_sys );
+	$( "#oscam_cpu_sum" ).text( data.oscam.sysinfo.oscam_cpu_sum );
 }
 
 /*
@@ -849,54 +928,16 @@ function updateStatuspage(data){
 	$( "#pcc" ).text( connectedproxys );
 
 	// update footer
-	$( "#curtime" ).text( ' ' + data.oscam.curdate + ' | ' + data.oscam.curtime + ' ' );
-	$( "#uptime" ).text( data.oscam.uptimefmt );
+	updateFooter(data)
 
 	// sysinfos
-	$( "#mem_cur_total" ).text( data.oscam.sysinfo.mem_cur_total );
-	$( "#mem_cur_free" ).text( data.oscam.sysinfo.mem_cur_free );
-	$( "#mem_cur_used" ).text( data.oscam.sysinfo.mem_cur_used );
-	$( "#mem_cur_buff" ).text( data.oscam.sysinfo.mem_cur_buff );
-	$( "#oscam_vmsize" ).text( data.oscam.sysinfo.oscam_vmsize );
-	$( "#oscam_rsssize" ).text( data.oscam.sysinfo.oscam_rsssize );
-	$( "#cpu_load_0" ).text( data.oscam.sysinfo.cpu_load_0 );
-	$( "#cpu_load_1" ).text( data.oscam.sysinfo.cpu_load_1 );
-	$( "#cpu_load_2" ).text( data.oscam.sysinfo.cpu_load_2 );
-	$( "#oscam_refresh" ).text( data.oscam.sysinfo.oscam_refresh );
-	$( "#oscam_cpu_user" ).text( data.oscam.sysinfo.oscam_cpu_user );
-	$( "#oscam_cpu_sys" ).text( data.oscam.sysinfo.oscam_cpu_sys );
-	$( "#oscam_cpu_sum" ).text( data.oscam.sysinfo.oscam_cpu_sum );
+	if($( "#mem_cur_total" ).length) updateSysinfo(data);
 
 	// user + ecm totals
-	$( "#total_users" ).text( data.oscam.status.totals.total_users );
-	$( "#total_active" ).text( data.oscam.status.totals.total_active );
-	$( "#total_connected" ).text( data.oscam.status.totals.total_connected );
-	$( "#total_online" ).text( data.oscam.status.totals.total_online );
-	$( "#total_disabled" ).text( data.oscam.status.totals.total_disabled );
-	$( "#total_expired" ).text( data.oscam.status.totals.total_expired );
-	$( "#total_cwok" ).text( data.oscam.status.totals.total_cwok );
-	$( "#rel_cwok" ).text( data.oscam.status.totals.rel_cwok );
-	$( "#total_cwcache" ).text( data.oscam.status.totals.total_cwcache );
-	$( "#rel_cwcache" ).text( data.oscam.status.totals.rel_cwcache );
-	$( "#total_cwnok" ).text( data.oscam.status.totals.total_cwnok );
-	$( "#rel_cwnok" ).text( data.oscam.status.totals.rel_cwnok );
-	$( "#total_cwtout" ).text( data.oscam.status.totals.total_cwtout );
-	$( "#rel_cwtout" ).text( data.oscam.status.totals.rel_cwtout );
-	$( "#total_cwign" ).text( data.oscam.status.totals.total_cwign );
-	$( "#rel_cwign" ).text( data.oscam.status.totals.rel_cwign );
-	$( "#total_ecm_min" ).text( data.oscam.status.totals.total_ecm_min );
-	$( "#total_cw" ).text( data.oscam.status.totals.total_cw );
-	$( "#total_cwpos" ).text( data.oscam.status.totals.total_cwpos );
-	$( "#rel_cwpos" ).text( data.oscam.status.totals.rel_cwpos );
-	$( "#total_cwneg" ).text( data.oscam.status.totals.total_cwneg );
-	$( "#rel_cwneg" ).text( data.oscam.status.totals.rel_cwneg );
+	if($( "#total_users" ).length) updateTotals(data);
 
 	// cachex
-	$( "#total_cachexpush" ).text( data.oscam.status.totals.total_cachexpush );
-	$( "#total_cachexgot" ).text( data.oscam.status.totals.total_cachexgot );
-	$( "#total_cachexhit" ).text( data.oscam.status.totals.total_cachexhit );
-	$( "#rel_cachexhit" ).text( data.oscam.status.totals.rel_cachexhit );
-	$( "#total_cachesize" ).text( data.oscam.status.totals.total_cachesize );
+	if($( "#total_cachexpush" ).length) updateCacheexotals(data);
 
 	// hide heartbeat
 	setTimeout(function (){$( "input.pintervall" ).css("background-color",orgstyle);}, 300);
