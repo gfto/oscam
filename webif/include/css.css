@@ -53,12 +53,15 @@ h4 {
 a.debugl:link {
 	margin:0 1px
 }
+a.debugl:hover{
+	background-color:#A00;
+	color:#FFF
+}
 
 /* in module-webif.c for debug selection in STATUS item and FILES item -> part logfile */
 a.debugls:link {
 	padding:1px 2px 2px
 }
-
 /* Tooltip in cccamentitletooltip.html, foundentitlements.html, noentitlements.html and module-webif.c */
 a.tooltip,
 a.tooltip1 {
@@ -642,6 +645,10 @@ path.graph_grid {stroke-opacity:0.5;}
 }
 .smallmargintop {
 	margin-top:15px
+}
+
+a#savelog{
+	text-decoration:none
 }
 
 /*  for UL in logpoll.html */
