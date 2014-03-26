@@ -960,6 +960,14 @@ function updatePage(data){
 	}
 }
 
+function setPollerr(error){
+	if(error && !$("#pollerr").length()){
+		$("body").append('<div id="pollerr" style="top:5px;left:5px;background-color:red;color:yellow;">POLLERR</div>');
+	} else {
+		if($("#pollerr").length()) {$("#pollerr").fadeOut('slow').remove();}
+	}
+}
+
 /*
  * General Polling
  */
@@ -971,6 +979,7 @@ function waitForMsg(){
 		async: true,
 		cache: false,
 		success: function(data){
+			setPollerr(0);
 			updatePage(data);
 			if(!stoppoll) {
 				setTimeout("waitForMsg()", pollintervall);
@@ -978,6 +987,7 @@ function waitForMsg(){
 		},
 		error: function(XMLHttpRequest, textStatus, errorThrown) {
 			setTimeout("waitForMsg()", 15000);
+			setPollerr(1);
 		}
 	});
 }

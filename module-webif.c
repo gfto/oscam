@@ -625,6 +625,8 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 
 	tpl_addVar(vars, TPLADD, "CACHEEXSTATSSELECTED", (cfg.cacheex_enable_stats == 1) ? "checked" : "");
 
+	tpl_addVar(vars, TPLADD, "WTTCHECKED", (cfg.wait_until_ctimeout == 1) ? "checked" : "");
+
 	if(cfg.csp_port)
 		{ tpl_printf(vars, TPLADD, "PORT", "%d", cfg.csp_port); }
 
