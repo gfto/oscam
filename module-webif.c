@@ -4707,7 +4707,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	cs_readunlock(&clientlist_lock);
 	cs_readunlock(&readerlist_lock);
 
-	if(apicall==1 && strcmp(getParam(params, "appendlog"), "1") == 0)
+	if(!apicall || (apicall == 1 && strcmp(getParam(params, "appendlog"), "1") == 0))
 	{
 		if(cfg.loghistorysize)
 		{
