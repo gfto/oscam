@@ -3910,9 +3910,16 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 
 static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * params)
 {
+
+	int full_log = 0;
+
 	if(strcmp(getParam(params, "lasttime"), "start") == 0){
 		setActiveMenu(vars, MNU_LIVELOG); 
 		return tpl_getTpl(vars, "LOGPAGE");
+	}
+	else
+	{
+		full_log = atoi(getParam(params, "lasttime"));
 	}
 
 	int dot = 0; //Delimiter
@@ -3972,7 +3979,7 @@ static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * p
 		char str_out[pos1];
 		cs_strncpy(str_out, p_txt, pos1);
 
-		if(p_txt[0] && p_txt[0] == '0'){
+		if(p_txt[0] && (p_txt[0] == '0' || full_log)){
 			tpl_printf(vars, TPLAPPEND, "DATA","%s{\"usr\":\"%s\",\"line\":\"%s\"}",
 									dot?",":"",
 									xml_encode(vars, p_usr),
