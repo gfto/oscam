@@ -961,10 +961,10 @@ function updatePage(data){
 }
 
 function setPollerr(error){
-	if(error && !$("#pollerr").length()){
+	if(error && !$("#pollerr").length){
 		$("body").append('<div id="pollerr" style="top:5px;left:5px;background-color:red;color:yellow;">POLLERR</div>');
 	} else {
-		if($("#pollerr").length()) {$("#pollerr").fadeOut('slow').remove();}
+		if($("#pollerr").length) {$("#pollerr").fadeOut('slow').remove();}
 	}
 }
 
