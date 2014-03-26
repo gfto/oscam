@@ -712,6 +712,7 @@ function updateTotals(data){
 /*
  *  Statuspage Functions: Update Totals Sysinfo
  */
+var first_run = 1;
 function updateSysinfo(data){
 	$( "#mem_cur_total" ).text( data.oscam.sysinfo.mem_cur_total );
 	$( "#mem_cur_free" ).text( data.oscam.sysinfo.mem_cur_free );
@@ -722,10 +723,13 @@ function updateSysinfo(data){
 	$( "#cpu_load_0" ).text( data.oscam.sysinfo.cpu_load_0 );
 	$( "#cpu_load_1" ).text( data.oscam.sysinfo.cpu_load_1 );
 	$( "#cpu_load_2" ).text( data.oscam.sysinfo.cpu_load_2 );
-	$( "#oscam_refresh" ).text( data.oscam.sysinfo.oscam_refresh );
-	$( "#oscam_cpu_user" ).text( data.oscam.sysinfo.oscam_cpu_user );
-	$( "#oscam_cpu_sys" ).text( data.oscam.sysinfo.oscam_cpu_sys );
-	$( "#oscam_cpu_sum" ).text( data.oscam.sysinfo.oscam_cpu_sum );
+    if(!first_run){
+		$( "#oscam_refresh" ).text( data.oscam.sysinfo.oscam_refresh );
+		$( "#oscam_cpu_user" ).text( data.oscam.sysinfo.oscam_cpu_user );
+		$( "#oscam_cpu_sys" ).text( data.oscam.sysinfo.oscam_cpu_sys );
+		$( "#oscam_cpu_sum" ).text( data.oscam.sysinfo.oscam_cpu_sum );
+	}
+	first_run = 0;
 }
 
 /*
@@ -810,6 +814,7 @@ function updateStatuspage(data){
 			break;
 		}
 
+		$( uid + " > td.statuscol4").attr('title', item.name + (item.desc ? '\n' + item.desc.replace('&#013;', ''): ''));
 		$( uid + " > td.statuscol7").text(item.connection.ip);
 		$( uid + " > td.statuscol8").text(item.connection.port);
 		$( uid + " > td.statuscol9").attr('title', item.protocolext);

@@ -4009,16 +4009,6 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 			tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.readericon,img.protoicon,img.statususericon {height:%dpx !important;}", cfg.http_picon_size);
 		}
 	}
-	char picon_name[32];
-	snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "LOGO");
-	if(picon_exists(picon_name))
-	{
-		tpl_addVar(vars, TPLADD, "LOGO", tpl_getTpl(vars, "LOGOBIT"));
-	}
-	else
-	{
-		tpl_addVar(vars, TPLADD, "LOGO", "");
-	}
 	if(strcmp(getParam(params, "action"), "kill") == 0)
 	{
 		char *cptr = getParam(params, "threadid");
@@ -4320,14 +4310,17 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					if (cl->typ == 'c') {
 						tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, usr));
 						tpl_addVar(vars, TPLADD, "USERENC", urlencode(vars, usr));
+						tpl_addVar(vars, TPLADD, "READERNAME","");
 					} else if (cl->typ == 'p' || cl->typ == 'r') {
 						tpl_addVar(vars, TPLADD, "READERNAME", xml_encode(vars, usr));
 						tpl_addVar(vars, TPLADD, "READERNAMEENC", urlencode(vars, usr));
+						tpl_addVar(vars, TPLADD, "USERNAME", "");
 					}
 
 					bool picon_shown = false;
 					const char *status_user_icon_tpl = NULL;
 
+					char picon_name[32];
 					if(cfg.http_showpicons)
 					{
 						if(picon_exists(xml_encode(vars, usr)))
@@ -6981,6 +6974,17 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			}
 
+			char picon_name[32];
+			snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "LOGO");
+			if(picon_exists(picon_name))
+			{
+				tpl_addVar(vars, TPLADD, "LOGO", tpl_getTpl(vars, "LOGOBIT"));
+			}
+			else
+			{
+				tpl_addVar(vars, TPLADD, "LOGO", "");
+			}
+			
 			tpl_printf(vars, TPLADD, "CURDATE", "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon + 1, lt.tm_year % 100);
 			tpl_printf(vars, TPLADD, "CURTIME", "%02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
 			localtime_r(&first_client->login, &st);

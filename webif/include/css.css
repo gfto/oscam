@@ -445,8 +445,8 @@ div.warning {
 /* in logobit.html - Logo for Oscam */
 div.logo {
 	position:absolute;
-	top:5px;
-	left:5px
+	top:10px;
+	left:10px
 }
 
 /* in READERS and USERS items */
@@ -564,6 +564,11 @@ img.usericon, img.readericon {
 	min-height:15px
 }
 
+/* logo IC_LOGO.tpl */
+div.logo img {
+	max-height:44px
+}
+
 td#out.centered img,
 td#in.centered img {
 	margin-bottom:-2px;
@@ -670,6 +675,13 @@ a#savelog{
 li.regex {
 	list-style-type:none;
 }
+#regexdata_nav {
+	margin-bottom:8px
+}
+#regex ul {
+	white-space:nowrap
+}
+
 input.regexinput {
 	cursor:text;
 	padding:2px;
