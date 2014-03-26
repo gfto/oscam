@@ -3947,7 +3947,7 @@ static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * p
 	tpl_printf(vars, TPLAPPEND, "DATA", "%s\"lines\":[", dot?",":"");
 
 	int i;
-	dot=0;
+	dot = 0;
 	for(ptr1 = t_loghistptr + l1, i = 0; i < 200; i++, ptr1 = ptr1 + l1)
 	{
 		l1 = strlen(ptr1) + 1;
@@ -3967,27 +3967,18 @@ static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * p
 		cs_strncpy(p_usr, ptr1 , pos1 > sizeof(p_usr) ? sizeof(p_usr) : pos1);
 		
 		char *p_txt = ptr1 + pos1;
-				
-		int year;
-		int month;
-		struct tm lt;
-		sscanf(p_txt, "%04d/%02d/%02d  %02d:%02d:%02d", &year, &month, &lt.tm_mday, &lt.tm_hour, &lt.tm_min, &lt.tm_sec);
-		lt.tm_year = year - 1900;
-		lt.tm_mon = month - 1;
-		time_t logtime = mktime(&lt);
-		long lasttime = atol(getParam(params, "lasttime"));
 
 		pos1 = strcspn(p_txt, "\n") + 1;
 		char str_out[pos1];
-		cs_strncpy(str_out, p_txt , pos1);
+		cs_strncpy(str_out, p_txt, pos1);
 
-		if(p_txt[0] && logtime > lasttime){
-			tpl_printf(vars, TPLAPPEND, "DATA","%s{\"ts\":\"%ld\",\"usr\":\"%s\",\"line\":\"%s\"}",
+		if(p_txt[0] && p_txt[0] == '0'){
+			tpl_printf(vars, TPLAPPEND, "DATA","%s{\"usr\":\"%s\",\"line\":\"%s\"}",
 									dot?",":"",
-									logtime,
 									xml_encode(vars, p_usr),
-									xml_encode(vars, str_out));
-			dot=1; // next in Array with leading delimiter
+									xml_encode(vars, str_out + 1));
+			dot = 1; // next in Array with leading delimiter
+			p_txt[0] = '1'; // mark as delivered
 		}
 	}
 	tpl_addVar(vars, TPLAPPEND, "DATA", "]");
@@ -4745,7 +4736,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 
 				char *p_txt = ptr1 + pos1;
 
-				tpl_addVar(vars, TPLAPPEND, "LOGHISTORY", p_txt);
+				tpl_addVar(vars, TPLAPPEND, "LOGHISTORY", p_txt +1);
 			}
 		}
 		else

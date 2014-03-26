@@ -608,12 +608,11 @@ function updateLogpage(data) {
 					$("#livelog").scrollTop($("#livelog").prop("scrollHeight"));
 				}
 			}
-
 		}
-		parameters = "?lasttime=" + item.ts;
-
 	});
 
+	parameters = "?lasttime=0";
+	
 	// update footer
 	updateFooter(data);
 

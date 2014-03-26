@@ -321,7 +321,7 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 	{
 		char *usrtxt = log->cl_text;
 		char *target_ptr = NULL;
-		int32_t target_len = strlen(usrtxt) + (strlen(txt) - 8) + 1;
+		int32_t target_len = strlen(usrtxt) + 1 +(strlen(txt) - 8) + 1;
 
 		cs_writelock(&loghistory_lock);
 		char *lastpos = loghist + (cfg.loghistorysize) - 1;
@@ -347,8 +347,7 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 			*loghistptr = '\0';
 		}
 		cs_writeunlock(&loghistory_lock);
-
-		snprintf(target_ptr, target_len + 1, "%s\t%s", usrtxt, txt + 8);
+		snprintf(target_ptr, target_len + 1, "%s\t0%s", usrtxt, txt + 8);
 	}
 #endif
 
