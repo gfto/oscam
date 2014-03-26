@@ -3969,20 +3969,22 @@ static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * p
 		char *p_txt = ptr1 + pos1;
 				
 		int year;
+		int month;
 		struct tm lt;
-		sscanf(p_txt, "%04d/%02d/%02d  %02d:%02d:%02d", &year, &lt.tm_mon, &lt.tm_mday, &lt.tm_hour, &lt.tm_min, &lt.tm_sec);
+		sscanf(p_txt, "%04d/%02d/%02d  %02d:%02d:%02d", &year, &month, &lt.tm_mday, &lt.tm_hour, &lt.tm_min, &lt.tm_sec);
 		lt.tm_year = year - 1900;
+		lt.tm_mon = month - 1;
 		time_t logtime = mktime(&lt);
-		int lasttime = atoi(getParam(params, "lasttime"));
+		long lasttime = atol(getParam(params, "lasttime"));
 
 		pos1 = strcspn(p_txt, "\n") + 1;
 		char str_out[pos1];
 		cs_strncpy(str_out, p_txt , pos1);
 
-		if(p_txt[0] && (int)logtime > lasttime){
-			tpl_printf(vars, TPLAPPEND, "DATA","%s{\"ts\":\"%d\",\"usr\":\"%s\",\"line\":\"%s\"}",
+		if(p_txt[0] && logtime > lasttime){
+			tpl_printf(vars, TPLAPPEND, "DATA","%s{\"ts\":\"%ld\",\"usr\":\"%s\",\"line\":\"%s\"}",
 									dot?",":"",
-									(int)logtime,
+									logtime,
 									xml_encode(vars, p_usr),
 									xml_encode(vars, str_out));
 			dot=1; // next in Array with leading delimiter
