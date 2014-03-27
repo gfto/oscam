@@ -910,7 +910,7 @@ function updateStatuspage(data){
 			var buffer = $html.substring($html.indexOf('<br>'),$html.indexOf('</a>'));
 		}
 		
-		$( uid + " > td.statuscol16").text(item.connection.status);
+		$( uid + " > td.statuscol16").text(item.connection.status).attr('class', 'statuscol16 statuscol16' + item.connection.status);
 		
 		if ( buffer ) {
 			$( uid + " > td.statuscol16").append(buffer + '</a>');
