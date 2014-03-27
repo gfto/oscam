@@ -89,7 +89,7 @@ const char *client_get_proto(struct s_client *cl)
 	case 'c':
 		if(cccam_client_extended_mode(cl))
 		{
-			ctyp = "cccam ext";
+			ctyp = "cccam_ext";
 			break;
 		}
 	default:
