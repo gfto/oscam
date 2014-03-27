@@ -136,6 +136,7 @@ CONFIGMENU                    config/menu.html
 FILEMENU                      files/menu.html
 FILE                          files/file.html
 FILTERFORM                    files/file_filterform.html
+FILEEDITCSS                   files/file_edit_css.html
 APIFILE                       api.xml/file.xml
 FAILBAN                       failban/failban.html
 APIFAILBAN                    api.xml/failban.xml

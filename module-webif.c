@@ -101,7 +101,8 @@ static struct pstat p_stat_old;
 #define MNU_CFG_CACHE 24
 #define MNU_CFG_WHITELIST 25
 #define MNU_CFG_RATELIMIT 26
-#define MNU_CFG_TOTAL_ITEMS 27 // sum of items above. Use it for "All inactive" in function calls too.
+#define MNU_CFG_FCSS 27
+#define MNU_CFG_TOTAL_ITEMS 28 // sum of items above. Use it for "All inactive" in function calls too.
 
 static void set_status_info_var(struct templatevars *vars, char *varname, int no_data, char *fmt, double value) {
 	if (no_data)
@@ -5376,7 +5377,7 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 {
 	bool writable = false;
 	const struct files *entry;
-	static const struct files config_files[] =
+	static struct files config_files[] =
 	{
 		{ "oscam.version",   MNU_CFG_FVERSION,  FTYPE_VERSION },
 		{ "oscam.conf",      MNU_CFG_FCONF,     FTYPE_CONFIG },
@@ -5388,6 +5389,7 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 		{ "oscam.provid",    MNU_CFG_FPROVID,   FTYPE_CONFIG },
 		{ "oscam.tiers",     MNU_CFG_FTIERS,    FTYPE_CONFIG },
 		{ "oscam.ratelimit", MNU_CFG_RATELIMIT, FTYPE_CONFIG },
+		{ "css_file_name",   MNU_CFG_FCSS,      FTYPE_CONFIG },
 #ifdef HAVE_DVBAPI
 		{ "oscam.dvbapi",    MNU_CFG_FDVBAPI,   FTYPE_CONFIG },
 #endif
@@ -5398,6 +5400,13 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 		{ "userfile",        MNU_CFG_FUSERFILE, FTYPE_USERFILE },
 		{ NULL, 0, 0 },
 	};
+
+	if(cfg.http_css)
+	{
+		config_files[10].file = basename(cfg.http_css);
+		tpl_addVar(vars, TPLADD, "FILE_USER_CSS", xml_encode(vars, basename(cfg.http_css)));
+		tpl_addVar(vars, TPLADD, "FILEEDITCSS_SHOW", tpl_getTpl(vars, "FILEEDITCSS"));
+	}
 
 	if(!apicall) { setActiveMenu(vars, MNU_FILES); }
 
