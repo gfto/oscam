@@ -446,7 +446,8 @@ div.warning {
 div.logo {
 	position:absolute;
 	top:10px;
-	left:10px
+	left:10px;
+	z-index:-1
 }
 
 /* in READERS and USERS items */
@@ -652,10 +653,6 @@ path.graph_grid {stroke-opacity:0.5;}
 	margin-top:15px
 }
 
-a#savelog{
-	text-decoration:none
-}
-
 /*  for UL in logpoll.html */
 #livelog {
 	height:500px;
@@ -674,23 +671,19 @@ a#savelog{
 }
 li.regex {
 	list-style-type:none;
-}
-#regexdata_nav {
-	margin-bottom:8px
-}
-#regex ul {
 	white-space:nowrap
 }
-
 input.regexinput {
 	cursor:text;
 	padding:2px;
 	margin: 3px 15px 1px 3px;
 	width:400px;
 }
-#regexok, #regexreset {
-	margin-top:20px;
-	width:70px;
+#regexdata_nav input {
+	width:100px;margin-bottom:8px;
+}
+#regexdata_save input {
+	width:90px;margin-top:10px;
 }
 div.colorPicker-picker {
 	height: 16px;
@@ -803,7 +796,7 @@ a:link, a:visited, a:active {
 }
 
 /* MAIN MENU & SUBNAV*/
-#mainmenu, #nav {
+li.menu, li.configmenu {
 	background-color:#FFF
 }
 li.menu:hover, li.menu_selected, 
