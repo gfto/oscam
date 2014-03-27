@@ -1029,15 +1029,21 @@ var nostorage = 0;
  * General: Start Polling
  */
 $(document).ready(function() {
-	
+
 	if(!localStorage){ 
 		nostorage = 1;
 		// remove whole filter block - makes no sense
 		// without saving
 		$('#regex').remove();
 	}
-	
-	if(typeof page != 'undefined') switch(page){
+
+	if(typeof page != 'undefined') {
+
+		var title = $(document).attr('title');
+		$(document).attr('title', title + ' (' + page +')');
+
+		switch(page){
+
 		case 'livelog':
 
 			if(!nostorage){
@@ -1056,10 +1062,10 @@ $(document).ready(function() {
 			}
 			waitForMsg();
 
-		break;
+			break;
 		default:
 			if (page == 'status') $( "#chart" ).hide();
-		
+
 			// if httprefresh set to 0 hide pollselector
 			setPollrefresh();
 			if (httprefresh) {
@@ -1069,8 +1075,10 @@ $(document).ready(function() {
 			} else {
 				$("#nopoll").show();
 			}
-			
+
 		break;
+
+		}
 	}
 });
 

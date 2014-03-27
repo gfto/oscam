@@ -5868,6 +5868,236 @@ static char *send_oscam_EMM(struct templatevars * vars, struct uriparams * param
 	return tpl_getTpl(vars, "ASKEMM");
 }
 
+#ifdef CS_CACHEEX
+static uint64_t get_cacheex_node(struct s_client * cl)
+{
+	uint64_t node = 0x00;
+	struct s_module *module = (cl->reader ? &cl->reader->ph : get_module(cl));
+#ifdef MODULE_CCCAM
+	if(module->num == R_CCCAM && cl->cc)
+	{
+		struct cc_data *cc = cl->cc;
+		memcpy(&node, cc->peer_node_id, 8);
+	}
+	else
+#endif
+#ifdef MODULE_CAMD35
+		if(module->num == R_CAMD35)
+		{
+			memcpy(&node, cl->ncd_skey, 8);
+		}
+		else
+#endif
+#ifdef MODULE_CAMD35_TCP
+			if(module->num == R_CS378X)
+			{
+				memcpy(&node, cl->ncd_skey, 8);
+			}
+			else
+#endif
+				{}
+	return node;
+}
+
+
+static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * params, int8_t apicall)
+{
+
+	int jsondelimiter = 0;
+
+	if(!apicall) { setActiveMenu(vars, MNU_CACHEEX); }
+
+	if(strcmp(getParam(params, "x"), "x") == 0)
+	{
+		// avoid compilerwarning unused vars
+	}
+	if(cfg.http_refresh > 0)
+	{
+		tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg.http_refresh);
+		tpl_addVar(vars, TPLADD, "REFRESHURL", "cacheex.html");
+		tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
+	}
+	char *level[] = {"NONE", "CACHE PULL", "CACHE PUSH", "REVERSE CACHE PUSH"};
+	char *getting = "<IMG SRC=\"image?i=ICARRL\" ALT=\"Getting\">";
+	char *pushing = "<IMG SRC=\"image?i=ICARRR\" ALT=\"Pushing\">";
+	char *rowvariable = "";
+
+	int16_t i, written = 0;
+	struct s_client *cl;
+	time_t now = time((time_t *)0);
+
+	if(!apicall)
+	{
+		if(strcmp(getParam(params, "action"), "resetallcacheexstats") == 0)
+		{
+			cacheex_clear_all_stats();
+		}
+	}
+
+	tpl_printf(vars, TPLADD, "OWN_CACHEEX_NODEID", "%" PRIu64 "X", cacheex_node_id(cacheex_peer_id));
+
+	for(i = 0, cl = first_client; cl ; cl = cl->next, i++)
+	{
+		if(cl->typ == 'c' && cl->account && cl->account->cacheex.mode)
+		{
+			tpl_addVar(vars, TPLADD, "TYPE", "Client");
+			if(!apicall) { tpl_addVar(vars, TPLADD, "NAME", xml_encode(vars, cl->account->usr)); }
+			else { tpl_addVar(vars, TPLADD, "NAME", cl->account->usr); }
+			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
+			tpl_printf(vars, TPLADD, "NODE", "%" PRIu64 "X", get_cacheex_node(cl));
+			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->account->cacheex.mode]);
+			tpl_printf(vars, TPLADD, "PUSH", "%d", cl->account->cwcacheexpush);
+			tpl_printf(vars, TPLADD, "GOT", "%d", cl->account->cwcacheexgot);
+			tpl_printf(vars, TPLADD, "CWCINFO", "%d", cl->account->cwc_info);
+			tpl_printf(vars, TPLADD, "HIT", "%d", cl->account->cwcacheexhit);
+			tpl_printf(vars, TPLADD, "ERR", "%d", cl->account->cwcacheexerr);
+			tpl_printf(vars, TPLADD, "ERRCW", "%d", cl->account->cwcacheexerrcw);
+			tpl_addVar(vars, TPLADD, "ROWTYPE", "client");
+			if(apicall == 2)
+			{
+				tpl_addVar(vars, TPLADD, "DIRECTION", (cl->account->cacheex.mode == 3) ? "getting":"pushing");
+				rowvariable = "JSONCACHEEXBITS";
+			}
+			else
+			{
+				tpl_addVar(vars, TPLADD, "DIRECTIONIMG", (cl->account->cacheex.mode == 3) ? getting : pushing);
+				rowvariable = "TABLECLIENTROWS";
+			}
+			written = 1;
+		}
+		else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
+		{
+			tpl_addVar(vars, TPLADD, "TYPE", "Reader");
+			if(!apicall) { tpl_addVar(vars, TPLADD, "NAME", xml_encode(vars, cl->reader->label)); }
+			else { tpl_addVar(vars, TPLADD, "NAME", cl->reader->label); }
+			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
+			tpl_printf(vars, TPLADD, "NODE", "%" PRIu64 "X", get_cacheex_node(cl));
+			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->reader->cacheex.mode]);
+			tpl_printf(vars, TPLADD, "PUSH", "%d", cl->cwcacheexpush);
+			tpl_printf(vars, TPLADD, "CWCINFO", "%d", cl->cwc_info);
+			tpl_printf(vars, TPLADD, "GOT", "%d", cl->cwcacheexgot);
+			tpl_printf(vars, TPLADD, "CWCINFO", "%d", cl->cwc_info);
+			tpl_printf(vars, TPLADD, "HIT", "%d", cl->cwcacheexhit);
+			tpl_printf(vars, TPLADD, "ERR", "%d", cl->cwcacheexerr);
+			tpl_printf(vars, TPLADD, "ERRCW", "%d", cl->cwcacheexerrcw);
+			tpl_addVar(vars, TPLADD, "ROWTYPE", "reader");
+			if(apicall == 2)
+			{
+				tpl_addVar(vars, TPLADD, "DIRECTION", (cl->account->cacheex.mode == 3) ? "getting":"pushing");
+				rowvariable = "JSONCACHEEXBITS";
+			}
+			else
+			{
+				tpl_addVar(vars, TPLADD, "DIRECTIONIMG", (cl->account->cacheex.mode == 3) ? getting : pushing);
+				rowvariable = "TABLEREADERROWS";
+			}
+			written = 1;
+		}
+		else if(get_module(cl)->listenertype == LIS_CSPUDP)
+		{
+			tpl_addVar(vars, TPLADD, "TYPE", "csp");
+			tpl_addVar(vars, TPLADD, "NAME", "csp");
+			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
+			tpl_addVar(vars, TPLADD, "NODE", "csp");
+			if(cl->cwcacheexping)
+			{
+				tpl_printf(vars, TPLADD, "LEVEL", "csp (%d ms)", cl->cwcacheexping);
+			}
+			else
+			{
+				tpl_addVar(vars, TPLADD, "LEVEL", "csp");
+			}
+			tpl_printf(vars, TPLADD, "PUSH", "%d", cl->cwcacheexpush);
+			tpl_printf(vars, TPLADD, "GOT", "%d", cl->cwcacheexgot);
+			tpl_printf(vars, TPLADD, "HIT", "%d", cl->cwcacheexhit);
+			tpl_printf(vars, TPLADD, "ERR", "%d", cl->cwcacheexerr);
+			tpl_printf(vars, TPLADD, "ERRCW", "%d", cl->cwcacheexerrcw);
+			tpl_addVar(vars, TPLADD, "ROWTYPE", "client");
+			if(apicall == 2)
+			{
+				tpl_addVar(vars, TPLADD, "DIRECTION", "getting");
+				rowvariable = "JSONCACHEEXBITS";
+			}
+			else
+			{
+				tpl_addVar(vars, TPLADD, "DIRECTIONIMG", getting);
+				rowvariable = "TABLECLIENTROWS";
+			}
+			written = 1;
+		}
+
+		if(written)
+		{
+			tpl_addVar(vars, TPLAPPEND, rowvariable, tpl_getTpl(vars, apicall == 2 ? "JSONCACHEEXBIT":"CACHEEXTABLEROW"));
+			jsondelimiter++;
+
+			if(cl->ll_cacheex_stats)
+			{
+				LL_ITER itr = ll_iter_create(cl->ll_cacheex_stats);
+				S_CACHEEX_STAT_ENTRY *cacheex_stats_entry;
+
+				while((cacheex_stats_entry = ll_iter_next(&itr)))
+				{
+
+					tpl_addVar(vars, TPLADD, "DIRECTIONIMG", "");
+					if(now - cacheex_stats_entry->cache_last < 20)
+						{ tpl_addVar(vars, TPLADD, "TYPE", cacheex_stats_entry->cache_direction == 0 ? pushing : getting); }
+					else
+						{ tpl_addVar(vars, TPLADD, "TYPE", ""); }
+					tpl_printf(vars, TPLADD, "ROWID", "%04X_%06X_%04X", cacheex_stats_entry->cache_caid,
+								cacheex_stats_entry->cache_prid,
+								cacheex_stats_entry->cache_srvid);
+					tpl_printf(vars, TPLADD, "NAME", "%04X:%06X:%04X", cacheex_stats_entry->cache_caid,
+							   cacheex_stats_entry->cache_prid,
+							   cacheex_stats_entry->cache_srvid);
+					if(cacheex_stats_entry->cache_direction == 0)
+					{
+						tpl_printf(vars, TPLADD, "PUSH", "%d", cacheex_stats_entry->cache_count);
+						tpl_addVar(vars, TPLADD, "GOT", "");
+					}
+					else
+					{
+						tpl_printf(vars, TPLADD, "GOT", "%d", cacheex_stats_entry->cache_count);
+						tpl_addVar(vars, TPLADD, "PUSH", "");
+					}
+					tpl_addVar(vars, TPLADD, "HIT", "");
+					char channame[32];
+					char *lastchan = xml_encode(vars, get_servicename(cl, cacheex_stats_entry->cache_srvid, cacheex_stats_entry->cache_caid, channame));
+					tpl_addVar(vars, TPLADD, "LEVEL", lastchan);
+					tpl_addVar(vars, TPLAPPEND, rowvariable, tpl_getTpl(vars, apicall == 2 ? "JSONCACHEEXBIT":"CACHEEXTABLEROW"));
+
+				}
+			}
+			written = 0;
+		}
+	}
+
+	float cachesum = first_client ? first_client->cwcacheexgot : 1;
+	if(cachesum < 1)
+	{
+		cachesum = 1;
+	}
+	tpl_printf(vars, TPLADD, "TOTAL_CACHEXPUSH", "%d", first_client ? first_client->cwcacheexpush : 0);
+	tpl_addVar(vars, TPLADD, "TOTAL_CACHEXPUSH_IMG", pushing);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHEXGOT", "%d", first_client ? first_client->cwcacheexgot : 0);
+	tpl_addVar(vars, TPLADD, "TOTAL_CACHEXGOT_IMG", getting);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHEXHIT", "%d", first_client ? first_client->cwcacheexhit : 0);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHESIZE", "%d", cache_size());
+
+	tpl_printf(vars, TPLADD, "REL_CACHEXHIT", "%.2f", (first_client ? first_client->cwcacheexhit : 0) * 100 / cachesum);
+
+	if(apicall == 2)
+	{
+		return tpl_getTpl(vars, "JSONCACHEEX");
+	}
+	else
+	{
+		return tpl_getTpl(vars, "CACHEEXPAGE");
+	}
+
+}
+#endif
+
 static char *send_oscam_api(struct templatevars * vars, FILE * f, struct uriparams * params, int8_t *keepalive, int8_t apicall, char *extraheader)
 {
 	if(strcmp(getParam(params, "part"), "status") == 0)
@@ -5882,6 +6112,12 @@ static char *send_oscam_api(struct templatevars * vars, FILE * f, struct uripara
 	{
 		return send_oscam_failban(vars, params, apicall);
 	}
+#ifdef CS_CACHEEX
+	else if(strcmp(getParam(params, "part"), "cacheex") == 0)
+	{
+		return send_oscam_cacheex(vars, params, apicall);
+	}
+#endif
 	else if(strcmp(getParam(params, "part"), "files") == 0)
 	{
 		return send_oscam_files(vars, params, apicall);
@@ -6144,195 +6380,6 @@ static char *send_oscam_graph(struct templatevars * vars)
 {
 	return tpl_getTpl(vars, "GRAPH");
 }
-
-#ifdef CS_CACHEEX
-static uint64_t get_cacheex_node(struct s_client * cl)
-{
-	uint64_t node = 0x00;
-	struct s_module *module = (cl->reader ? &cl->reader->ph : get_module(cl));
-#ifdef MODULE_CCCAM
-	if(module->num == R_CCCAM && cl->cc)
-	{
-		struct cc_data *cc = cl->cc;
-		memcpy(&node, cc->peer_node_id, 8);
-	}
-	else
-#endif
-#ifdef MODULE_CAMD35
-		if(module->num == R_CAMD35)
-		{
-			memcpy(&node, cl->ncd_skey, 8);
-		}
-		else
-#endif
-#ifdef MODULE_CAMD35_TCP
-			if(module->num == R_CS378X)
-			{
-				memcpy(&node, cl->ncd_skey, 8);
-			}
-			else
-#endif
-				{}
-	return node;
-}
-
-
-static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * params, int8_t apicall)
-{
-
-	if(!apicall) { setActiveMenu(vars, MNU_CACHEEX); }
-
-	if(strcmp(getParam(params, "x"), "x") == 0)
-	{
-		// avoid compilerwarning unused vars
-	}
-	if(cfg.http_refresh > 0)
-	{
-		tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg.http_refresh);
-		tpl_addVar(vars, TPLADD, "REFRESHURL", "cacheex.html");
-		tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
-	}
-	char *level[] = {"NONE", "CACHE PULL", "CACHE PUSH", "REVERSE CACHE PUSH"};
-	char *getting = "<IMG SRC=\"image?i=ICARRL\" ALT=\"Getting\">";
-	char *pushing = "<IMG SRC=\"image?i=ICARRR\" ALT=\"Pushing\">";
-	char *rowvariable = "";
-
-	int16_t i, written = 0;
-	struct s_client *cl;
-	time_t now = time((time_t *)0);
-
-	if(!apicall)
-	{
-		if(strcmp(getParam(params, "action"), "resetallcacheexstats") == 0)
-		{
-			cacheex_clear_all_stats();
-		}
-	}
-
-	tpl_printf(vars, TPLADD, "OWN_CACHEEX_NODEID", "%" PRIu64 "X", cacheex_node_id(cacheex_peer_id));
-
-	for(i = 0, cl = first_client; cl ; cl = cl->next, i++)
-	{
-		if(cl->typ == 'c' && cl->account && cl->account->cacheex.mode)
-		{
-			tpl_addVar(vars, TPLADD, "TYPE", "Client");
-			if(!apicall) { tpl_addVar(vars, TPLADD, "NAME", xml_encode(vars, cl->account->usr)); }
-			else { tpl_addVar(vars, TPLADD, "NAME", cl->account->usr); }
-			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
-			tpl_printf(vars, TPLADD, "NODE", "%" PRIu64 "X", get_cacheex_node(cl));
-			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->account->cacheex.mode]);
-			tpl_printf(vars, TPLADD, "PUSH", "%d", cl->account->cwcacheexpush);
-			tpl_printf(vars, TPLADD, "GOT", "%d", cl->account->cwcacheexgot);
-			tpl_printf(vars, TPLADD, "CWCINFO", "%d", cl->account->cwc_info);
-			tpl_printf(vars, TPLADD, "HIT", "%d", cl->account->cwcacheexhit);
-			tpl_printf(vars, TPLADD, "ERR", "%d", cl->account->cwcacheexerr);
-			tpl_printf(vars, TPLADD, "ERRCW", "%d", cl->account->cwcacheexerrcw);
-			tpl_addVar(vars, TPLADD, "DIRECTIONIMG", (cl->account->cacheex.mode == 3) ? getting : pushing);
-			rowvariable = "TABLECLIENTROWS";
-			written = 1;
-		}
-		else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
-		{
-			tpl_addVar(vars, TPLADD, "TYPE", "Reader");
-			if(!apicall) { tpl_addVar(vars, TPLADD, "NAME", xml_encode(vars, cl->reader->label)); }
-			else { tpl_addVar(vars, TPLADD, "NAME", cl->reader->label); }
-			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
-			tpl_printf(vars, TPLADD, "NODE", "%" PRIu64 "X", get_cacheex_node(cl));
-			tpl_addVar(vars, TPLADD, "LEVEL", level[cl->reader->cacheex.mode]);
-			tpl_printf(vars, TPLADD, "PUSH", "%d", cl->cwcacheexpush);
-			tpl_printf(vars, TPLADD, "CWCINFO", "%d", cl->cwc_info);
-			tpl_printf(vars, TPLADD, "GOT", "%d", cl->cwcacheexgot);
-			tpl_printf(vars, TPLADD, "CWCINFO", "%d", cl->cwc_info);
-			tpl_printf(vars, TPLADD, "HIT", "%d", cl->cwcacheexhit);
-			tpl_printf(vars, TPLADD, "ERR", "%d", cl->cwcacheexerr);
-			tpl_printf(vars, TPLADD, "ERRCW", "%d", cl->cwcacheexerrcw);
-			tpl_addVar(vars, TPLADD, "DIRECTIONIMG", (cl->reader->cacheex.mode == 3) ? pushing : getting);
-			rowvariable = "TABLEREADERROWS";
-			written = 1;
-		}
-		else if(get_module(cl)->listenertype == LIS_CSPUDP)
-		{
-			tpl_addVar(vars, TPLADD, "TYPE", "csp");
-			tpl_addVar(vars, TPLADD, "NAME", "csp");
-			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
-			tpl_addVar(vars, TPLADD, "NODE", "csp");
-			if(cl->cwcacheexping)
-			{
-				tpl_printf(vars, TPLADD, "LEVEL", "csp (%d ms)", cl->cwcacheexping);
-			}
-			else
-			{
-				tpl_addVar(vars, TPLADD, "LEVEL", "csp");
-			}
-			tpl_printf(vars, TPLADD, "PUSH", "%d", cl->cwcacheexpush);
-			tpl_printf(vars, TPLADD, "GOT", "%d", cl->cwcacheexgot);
-			tpl_printf(vars, TPLADD, "HIT", "%d", cl->cwcacheexhit);
-			tpl_printf(vars, TPLADD, "ERR", "%d", cl->cwcacheexerr);
-			tpl_printf(vars, TPLADD, "ERRCW", "%d", cl->cwcacheexerrcw);
-			tpl_addVar(vars, TPLADD, "DIRECTIONIMG", getting);
-			rowvariable = "TABLECLIENTROWS";
-			written = 1;
-		}
-
-		if(written)
-		{
-			tpl_addVar(vars, TPLAPPEND, rowvariable, tpl_getTpl(vars, "CACHEEXTABLEROW"));
-
-			if(cl->ll_cacheex_stats)
-			{
-				LL_ITER itr = ll_iter_create(cl->ll_cacheex_stats);
-				S_CACHEEX_STAT_ENTRY *cacheex_stats_entry;
-
-				while((cacheex_stats_entry = ll_iter_next(&itr)))
-				{
-
-					tpl_addVar(vars, TPLADD, "DIRECTIONIMG", "");
-					if(now - cacheex_stats_entry->cache_last < 20)
-						{ tpl_addVar(vars, TPLADD, "TYPE", cacheex_stats_entry->cache_direction == 0 ? pushing : getting); }
-					else
-						{ tpl_addVar(vars, TPLADD, "TYPE", ""); }
-					tpl_printf(vars, TPLADD, "NAME", "%04X:%06X:%04X", cacheex_stats_entry->cache_caid,
-							   cacheex_stats_entry->cache_prid,
-							   cacheex_stats_entry->cache_srvid);
-					if(cacheex_stats_entry->cache_direction == 0)
-					{
-						tpl_printf(vars, TPLADD, "PUSH", "%d", cacheex_stats_entry->cache_count);
-						tpl_addVar(vars, TPLADD, "GOT", "");
-					}
-					else
-					{
-						tpl_printf(vars, TPLADD, "GOT", "%d", cacheex_stats_entry->cache_count);
-						tpl_addVar(vars, TPLADD, "PUSH", "");
-					}
-					tpl_addVar(vars, TPLADD, "HIT", "");
-					char channame[32];
-					char *lastchan = xml_encode(vars, get_servicename(cl, cacheex_stats_entry->cache_srvid, cacheex_stats_entry->cache_caid, channame));
-					tpl_addVar(vars, TPLADD, "LEVEL", lastchan);
-					tpl_addVar(vars, TPLAPPEND, rowvariable, tpl_getTpl(vars, "CACHEEXTABLEROW"));
-
-				}
-			}
-			written = 0;
-		}
-	}
-
-	float cachesum = first_client ? first_client->cwcacheexgot : 1;
-	if(cachesum < 1)
-	{
-		cachesum = 1;
-	}
-	tpl_printf(vars, TPLADD, "TOTAL_CACHEXPUSH", "%d", first_client ? first_client->cwcacheexpush : 0);
-	tpl_addVar(vars, TPLADD, "TOTAL_CACHEXPUSH_IMG", pushing);
-	tpl_printf(vars, TPLADD, "TOTAL_CACHEXGOT", "%d", first_client ? first_client->cwcacheexgot : 0);
-	tpl_addVar(vars, TPLADD, "TOTAL_CACHEXGOT_IMG", getting);
-	tpl_printf(vars, TPLADD, "TOTAL_CACHEXHIT", "%d", first_client ? first_client->cwcacheexhit : 0);
-	tpl_printf(vars, TPLADD, "TOTAL_CACHESIZE", "%d", cache_size());
-
-	tpl_printf(vars, TPLADD, "REL_CACHEXHIT", "%.2f", (first_client ? first_client->cwcacheexhit : 0) * 100 / cachesum);
-
-	return tpl_getTpl(vars, "CACHEEXPAGE");
-}
-#endif
 
 #ifdef MODULE_GHTTP
 static bool ghttp_autoconf(struct templatevars * vars, struct uriparams * params)
