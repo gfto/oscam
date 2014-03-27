@@ -4738,7 +4738,14 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 
 				char *p_txt = ptr1 + pos1;
 
-				tpl_addVar(vars, TPLAPPEND, "LOGHISTORY", p_txt +1);
+				if(!apicall)
+				{	
+					if(p_txt[0]) tpl_printf(vars, TPLAPPEND, "LOGHISTORY","\t\t<SPAN CLASS=\"%s\">%s\t\t</SPAN><BR>\n", xml_encode(vars, p_usr), xml_encode(vars, p_txt +1));
+				}
+				else
+				{
+					tpl_addVar(vars, TPLAPPEND, "LOGHISTORY", p_txt +1);
+				}
 			}
 		}
 		else
