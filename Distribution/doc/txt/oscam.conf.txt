@@ -692,6 +692,9 @@ DESCRIPTIONS
 
 	  Create file /tmp/.pauseoscam to pause DVB API, e.g. if STB goes into standby and OSCam remains as SC server only.
 
+       listen_port = 0|port
+	  TCP/IP port for SAT IP clients, filtering has to be done on client site, 0 = disabled, default:0
+
        user = username
 	  user name for DVB API client, default:anonymous
 
@@ -735,12 +738,6 @@ DESCRIPTIONS
 	  ipbox-pmt can be used on any DGS based images (with or without camd.socket support), verified on HD models only
 
 	  pc is for generic pc support (currently supported on VDR with vdr-plugin-dvbapi)
-
-       listen_port = 0|port
-	  TCP port to listen instead of camd.socket, 0 = disabled, default:0
-
-	  Enables filtering and obtaining data over network, demux is not opened  and  the  ECM/CAT/EMM  filtering  is	done  on
-	  client.
 
        cw_delay = milli-seconds
 	  delay of CW writing, default:none
@@ -850,7 +847,7 @@ MONITOR
 
        ·  reload
 
-	  reinit  user	db, clients and anti-cascading, for newcamd connections: after reloading the provid, please restart new‐
+	  reinit user db, clients and anti-cascading, for newcamd connections: after reloading the provid, please  restart  new‐
 	  camd client
 
 
@@ -895,7 +892,7 @@ MONITOR
 WEB INTERFACE
        ·  template system
 
-	  The web interface allows you to create your own template. For developing your own template request  the  orignal  tem‐
+	  The  web  interface  allows you to create your own template. For developing your own template request the orignal tem‐
 	  plate with the non-linked page savetemplates.html. Store your own template in the directory specified by httptpl.
 
 CACHING
@@ -910,8 +907,8 @@ CACHING
 	  ECM and checksum in cache already.
 
 SEE ALSO
-       list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cacheex(5), oscam.cert(5), oscam.dvbapi(5), oscam.guess(5), oscam.ird(5),
-       oscam.provid(5), oscam.ratelimit(5), oscam.server(5), oscam.services(5), oscam.srvid(5),  oscam.tiers(5),  oscam.user(5),
+       list_smargo(1), oscam(1), oscam.ac(5), oscam.cacheex(5), oscam.cert(5),	oscam.dvbapi(5),  oscam.guess(5),  oscam.ird(5),
+       oscam.provid(5),  oscam.ratelimit(5),  oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5),
        oscam.whitelist(5)
 
 

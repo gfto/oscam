@@ -986,6 +986,11 @@ send message to peers in seconds, default:300
 Create file /tmp/.pauseoscam to pause DVB API, e.g. if STB goes into standby and OSCam remains as SC server only.
 .RE
 .PP
+\fBlisten_port\fP = \fB0\fP|\fBport\fP
+.RS 3n
+TCP/IP port for SAT IP clients, filtering has to be done on client site, 0 = disabled, default:0
+.RE
+.PP
 \fBuser\fP = \fBusername\fP
 .RS 3n
 user name for DVB API client, default:anonymous
@@ -1046,13 +1051,6 @@ ipbox-pmt can be used on any DGS based images (with or without camd.socket suppo
 verified on HD models only
 
 pc is for generic pc support (currently supported on VDR with vdr-plugin-dvbapi)
-.RE
-.PP
-\fBlisten_port\fP = \fB0\fP|\fBport\fP
-.RS 3n
-TCP port to listen instead of camd.socket, 0 = disabled, default:0
-
-Enables filtering and obtaining data over network, demux is not opened and the ECM/CAT/EMM filtering is done on client.
 .RE
 .PP
 \fBcw_delay\fP = \fBmilli-seconds\fP
