@@ -583,6 +583,8 @@ function isWhitelisted(text){
  */
 function updateLogpage(data) {
 
+	lockpoll = 1;
+	
 	if(data.oscam.debug){
 		setDebuglevel(data.oscam.debug, data.oscam.maxdebug);
 	}
@@ -629,6 +631,8 @@ function updateLogpage(data) {
 	
 	// update footer
 	updateFooter(data);
+	
+	lockpoll = 0;
 
 }
 
@@ -985,7 +989,16 @@ function setPollerr(error){
 /*
  * General Polling
  */
+var lockpoll = 0;
 function waitForMsg(){
+	
+	if(lockpoll > 0){
+		/* assumed that previous poll is not finnished yet we not
+		   call new data and just set the next intervall */
+		setTimeout("waitForMsg()", pollintervall);
+		return;
+	}
+	
 	$.ajax({
 		type: "GET",
 		url: jsonurl + parameters,
