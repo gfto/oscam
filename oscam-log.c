@@ -26,6 +26,7 @@ static int log_list_queued;
 static pthread_t log_thread;
 static pthread_cond_t log_thread_sleep_cond;
 static pthread_mutex_t log_thread_sleep_cond_mutex;
+static uint64_t counter = 0;
 
 struct s_log
 {
@@ -40,6 +41,7 @@ struct s_log
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 static CS_MUTEX_LOCK loghistory_lock;
 char *loghist = NULL;     // ptr of log-history
+char *loghistid = NULL;
 char *loghistptr = NULL;
 #endif
 
@@ -236,13 +238,14 @@ int32_t cs_open_logfiles(void)
 */
 void cs_reinit_loghist(uint32_t size)
 {
-	char *tmp = NULL, *tmp2;
+	char *tmp = NULL, *tmp2, *tmp3 = NULL, *tmp4;
 	if(size != cfg.loghistorysize)
 	{
-		if(size == 0 || cs_malloc(&tmp, size))
+		if(size == 0 || (cs_malloc(&tmp, size) && cs_malloc(&tmp3, size/3+8)))
 		{
 			cs_writelock(&loghistory_lock);
 			tmp2 = loghist;
+			tmp4 = loghistid;
 			// On shrinking, the log is not copied and the order is reversed
 			if(size < cfg.loghistorysize)
 			{
@@ -250,6 +253,7 @@ void cs_reinit_loghist(uint32_t size)
 				cs_sleepms(20); // Monitor or webif may be currently outputting the loghistory but don't use locking so we sleep a bit...
 				loghistptr = tmp;
 				loghist = tmp;
+				loghistid = tmp3;
 			}
 			else
 			{
@@ -257,14 +261,18 @@ void cs_reinit_loghist(uint32_t size)
 				{
 					memcpy(tmp, loghist, cfg.loghistorysize);
 					loghistptr = tmp + (loghistptr - loghist);
+					memcpy(tmp3, loghistid, cfg.loghistorysize/3);
+				} else { 
+					loghistptr = tmp;
 				}
-				else { loghistptr = tmp; }
 				loghist = tmp;
+				loghistid = tmp3;
 				cs_sleepms(20); // Monitor or webif may be currently outputting the loghistory but don't use locking so we sleep a bit...
 				cfg.loghistorysize = size;
 			}
 			cs_writeunlock(&loghistory_lock);
 			if(tmp2 != NULL) { add_garbage(tmp2); }
+			if(tmp4 != NULL) { add_garbage(tmp4); }
 		}
 	}
 }
@@ -321,7 +329,7 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 	{
 		char *usrtxt = log->cl_text;
 		char *target_ptr = NULL;
-		int32_t target_len = strlen(usrtxt) + 1 +(strlen(txt) - 8) + 1;
+		int32_t target_len = strlen(usrtxt) + (strlen(txt) - 8) + 1;
 
 		cs_writelock(&loghistory_lock);
 		char *lastpos = loghist + (cfg.loghistorysize) - 1;
@@ -331,7 +339,7 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 			target_len = strlen(usrtxt) + (strlen(txt) - 8) + 1;
 		}
 		if(!loghistptr)
-			{ loghistptr = loghist; }
+			{ loghistptr = loghist;	}
 
 		if(loghistptr + target_len + 1 > lastpos)
 		{
@@ -346,8 +354,12 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 			loghistptr = loghistptr + target_len + 1;
 			*loghistptr = '\0';
 		}
+		++counter;
 		cs_writeunlock(&loghistory_lock);
-		snprintf(target_ptr, target_len + 1, "%s\t0%s", usrtxt, txt + 8);
+		snprintf(target_ptr, target_len + 1, "%s\t%s", usrtxt, txt + 8);
+		uint64_t *id;
+		id = (uint64_t*)(loghistid + (target_ptr-loghist)/3);
+		*id = counter;
 	}
 #endif
 
@@ -762,6 +774,7 @@ void log_free(void)
 	pthread_join(log_thread, NULL);
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 	NULLFREE(loghist);
-	loghist = loghistptr = NULL;
+	NULLFREE(loghistid);
+	loghist = loghistptr = loghistid = NULL;
 #endif
 }

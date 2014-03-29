@@ -38,6 +38,7 @@ extern int32_t exit_oscam;
 extern char *entitlement_type[];
 extern char *RDR_CD_TXT[];
 extern char *loghist;
+extern char *loghistid;
 extern char *loghistptr;
 
 int32_t ssl_active = 0;
@@ -3914,18 +3915,18 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * params)
 {
 
-	int full_log = 0;
+	uint64_t lastid = 0;
 
-	if(strcmp(getParam(params, "lasttime"), "start") == 0){
+	if(strcmp(getParam(params, "lastid"), "start") == 0){
 		setActiveMenu(vars, MNU_LIVELOG); 
 		return tpl_getTpl(vars, "LOGPAGE");
 	}
 	else
 	{
-		full_log = atoi(getParam(params, "lasttime"));
+		lastid = strtoull(getParam(params, "lastid"), NULL, 10);
 	}
 
-	int dot = 0; //Delimiter
+	char *dot = ""; //Delimiter
 
 #ifdef WITH_DEBUG
 	char *debuglvl = getParam(params, "debug");
@@ -3936,28 +3937,26 @@ static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * p
 			cs_log("%s debug_level=%d", "all", cs_dblevel);
 		}
 	}
-	tpl_printf(vars, TPLAPPEND, "DATA","%s\"debug\":\"%d\"", dot?",":"", cs_dblevel);
-	dot++;
-	tpl_printf(vars, TPLAPPEND, "DATA","%s\"maxdebug\":\"%d\"",dot?",":"", MAX_DEBUG_LEVELS);
+	tpl_printf(vars, TPLAPPEND, "DATA","%s\"debug\":\"%d\"", dot, cs_dblevel);
+	dot = ",";
+	tpl_printf(vars, TPLAPPEND, "DATA","%s\"maxdebug\":\"%d\"",dot, MAX_DEBUG_LEVELS);
 #endif
 
 	if(cfg.loghistorysize == 0){
-		tpl_printf(vars, TPLAPPEND, "DATA","%s\"logdisabled\":\"1\"",dot?",":"");
+		tpl_printf(vars, TPLAPPEND, "DATA","%s\"logdisabled\":\"1\"",dot);
 		return tpl_getTpl(vars, "POLL");
-		dot++;
 	}
 
 	char *t_loghistptr = loghistptr, *ptr1 = NULL;
 	if(loghistptr >= loghist + (cfg.loghistorysize) - 1)
 		{ t_loghistptr = loghist; }
 	
-	int32_t d = 0, l1 = strlen(t_loghistptr + 1) + 2;
+	int32_t i, d = 0, l1 = strlen(t_loghistptr + 1) + 2;
 	char *lastpos = loghist + (cfg.loghistorysize) - 1;
 	
-	tpl_printf(vars, TPLAPPEND, "DATA", "%s\"lines\":[", dot?",":"");
+	tpl_printf(vars, TPLAPPEND, "DATA", "%s\"lines\":[", dot);
 
-	int i;
-	dot = 0;
+	dot = "";
 	for(ptr1 = t_loghistptr + l1, i = 0; i < 200; i++, ptr1 = ptr1 + l1)
 	{
 		l1 = strlen(ptr1) + 1;
@@ -3969,8 +3968,7 @@ static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * p
 		}
 		
 		if(d && ((ptr1 >= t_loghistptr) || (l1 < 2)))
-			{ break; }
-		
+			{ break; }		
 		
 		char p_usr[32];
 		size_t pos1 = strcspn(ptr1, "\t") + 1;
@@ -3981,14 +3979,16 @@ static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * p
 		pos1 = strcspn(p_txt, "\n") + 1;
 		char str_out[pos1];
 		cs_strncpy(str_out, p_txt, pos1);
+		uint64_t *id;
+		id = (uint64_t*)(loghistid + (ptr1-loghist)/3);
 
-		if(p_txt[0] && (p_txt[0] == '0' || full_log)){
-			tpl_printf(vars, TPLAPPEND, "DATA","%s{\"usr\":\"%s\",\"line\":\"%s\"}",
-									dot?",":"",
+		if(*id > lastid){
+			tpl_printf(vars, TPLAPPEND, "DATA","%s{\"id\":\"%" PRIu64 "\",\"usr\":\"%s\",\"line\":\"%s\"}",
+									dot,
+									*id,
 									xml_encode(vars, p_usr),
-									xml_encode(vars, str_out + 1));
-			dot = 1; // next in Array with leading delimiter
-			p_txt[0] = '1'; // mark as delivered
+									xml_encode(vars, str_out));
+			dot = ","; // next in Array with leading delimiter
 		}
 	}
 	tpl_addVar(vars, TPLAPPEND, "DATA", "]");
@@ -4745,7 +4745,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 				}
 				else
 				{
-					tpl_addVar(vars, TPLAPPEND, "LOGHISTORY", p_txt +1);
+					tpl_addVar(vars, TPLAPPEND, "LOGHISTORY", p_txt);
 				}
 			}
 		}

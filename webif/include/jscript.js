@@ -624,9 +624,8 @@ function updateLogpage(data) {
 				}
 			}
 		}
+		parameters = "?lastid=" + item.id; 
 	});
-
-	parameters = "?lasttime=0";
 	
 	// update footer
 	updateFooter(data);
