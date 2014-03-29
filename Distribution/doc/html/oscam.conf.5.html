@@ -175,7 +175,6 @@ define file saving NDS Videoguard mail messages from provider, default:none
 
 <B>enableled</B> = <B>0</B>|<B>1</B>|<B>2</B>
 <DL COMPACT><DT><DD>
-<P>
 <BR>&nbsp;<B>0</B>&nbsp;=&nbsp;LED&nbsp;support&nbsp;disabled&nbsp;(default)
 <BR>&nbsp;<B>1</B>&nbsp;=&nbsp;LED&nbsp;support&nbsp;enabled&nbsp;for&nbsp;routers
 <BR>&nbsp;<B>2</B>&nbsp;=&nbsp;LED&nbsp;support&nbsp;enabled&nbsp;for&nbsp;Qbox&nbsp;HD
@@ -199,7 +198,11 @@ additional delay in milli-seconds after waiting for local SCs on startup before 
 
 <B>preferlocalcards</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
-1 = try decoding on local cards first, default:0
+SC decoding behavior: 
+<P>
+<BR>&nbsp;<B>0</B>&nbsp;=&nbsp;local&nbsp;SCs&nbsp;used&nbsp;like&nbsp;a&nbsp;remote&nbsp;reader
+<BR>&nbsp;<B>1</B>&nbsp;=&nbsp;prefer&nbsp;cache&nbsp;exchange&nbsp;based&nbsp;SCs&nbsp;(default)
+<BR>&nbsp;<B>2</B>&nbsp;=&nbsp;prefer&nbsp;local&nbsp;SCs
 </DL>
 
 <P>

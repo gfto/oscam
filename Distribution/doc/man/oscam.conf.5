@@ -130,7 +130,6 @@ define file saving NDS Videoguard mail messages from provider, default:none
 .PP
 \fBenableled\fP = \fB0\fP|\fB1\fP|\fB2\fP
 .RS 3n
-
  \fB0\fP = LED support disabled (default)
  \fB1\fP = LED support enabled for routers
  \fB2\fP = LED support enabled for Qbox HD
@@ -148,7 +147,11 @@ additional delay in milli-seconds after waiting for local SCs on startup before 
 .PP
 \fBpreferlocalcards\fP = \fB0\fP|\fB1\fP
 .RS 3n
-1 = try decoding on local cards first, default:0
+SC decoding behavior: 
+
+ \fB0\fP = local SCs used like a remote reader
+ \fB1\fP = prefer cache exchange based SCs (default)
+ \fB2\fP = prefer local SCs
 .RE
 .PP
 \fBreaderrestartseconds\fP = \fBseconds\fP
