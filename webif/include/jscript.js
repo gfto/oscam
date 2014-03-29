@@ -976,6 +976,10 @@ function updatePage(data){
 	case 'livelog':	updateLogpage(data); 		break;
 	default: 					break;
 	}
+
+	if ( typeof afterpoll == 'function' ) { 
+		afterpoll();
+	}
 }
 
 function setPollerr(error){
