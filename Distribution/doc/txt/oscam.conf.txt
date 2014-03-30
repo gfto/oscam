@@ -394,6 +394,9 @@ DESCRIPTIONS
 	  set right language for wiki entry point, default:en
 
    The [lcd] section
+       httposcamlabel = text
+	  set individual label in web interface header, default:OSCam
+
        enablelcd = 0|1
 	  1 =enable LCD output, default:0
 

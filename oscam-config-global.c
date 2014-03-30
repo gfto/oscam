@@ -498,7 +498,7 @@ static const struct config_list webif_opts[] =
 	DEF_OPT_FUNC("httpdyndns"               , OFS(http_dyndns),             http_dyndns_fn),
 	DEF_OPT_INT32("aulow"                   , OFS(aulow),                   30),
 	DEF_OPT_INT32("hideclient_to"           , OFS(hideclient_to),           25),
-	DEF_OPT_STR("httposcamlabel"            , OFS(http_oscam_label),        "Oscam"),
+	DEF_OPT_STR("httposcamlabel"            , OFS(http_oscam_label),        "OSCam"),
 	DEF_LAST_OPT
 };
 #else
