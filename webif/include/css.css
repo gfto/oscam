@@ -941,3 +941,6 @@ div.bar {
 	background-color: #aeaeae;
 	vertical-align: baseline;
 }
+.statuslog{
+	display:none;
+}
