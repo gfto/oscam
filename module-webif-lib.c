@@ -473,7 +473,7 @@ void send_file(FILE *f, char *filename, char *subdir, time_t modifiedheader, uin
 		if(filen == 1 && cfg.http_prepend_embedded_css)    // Prepend Embedded CSS
 		{
 			char separator [255];
-			snprintf(separator, 255, "\n/* Beginn embedded CSS File: %s */\n", basename(cfg.http_css));
+			snprintf(separator, 255, "\n/* Beginn embedded CSS File: %s */\n", cfg.http_css);
 			char *oldallocated = allocated;
 			CSS = tpl_getUnparsedTpl("CSS", 1, "");
 			int32_t newsize = strlen(CSS) + strlen(separator) + 2;

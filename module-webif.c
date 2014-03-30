@@ -1325,7 +1325,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 			tpl_addVar(vars, TPLADD, "READERCLASS", rdr->enable ? "enabledreader" : "disabledreader");
 
 			if(rdr->description)
-				tpl_printf(vars, TPLADD, "DESCRIPTION","&#013;(%s)",xml_encode(vars, rdr->description));
+				tpl_printf(vars, TPLADD, "DESCRIPTION","%s(%s)",!apicall?"&#013;":"",xml_encode(vars, rdr->description));
 			else
 				tpl_addVar(vars, TPLADD, "DESCRIPTION", "");
 
@@ -3340,7 +3340,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "USERNAMEENC", urlencode(vars, account->usr));
 
 		if(account->description)
-			tpl_printf(vars, TPLADD, "DESCRIPTION","&#013;(%s)",xml_encode(vars, account->description));
+			tpl_printf(vars, TPLADD, "DESCRIPTION","%s(%s)",!apicall?"&#013;":"",xml_encode(vars, account->description));
 		else
 			tpl_addVar(vars, TPLADD, "DESCRIPTION", "");
 
@@ -4297,14 +4297,14 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					if(cl->typ == 'c')
 					{
 						if(cl->account && cl->account->description)
-							tpl_printf(vars, TPLADD, "CLIENTDESCRIPTION","&#013;(%s)",xml_encode(vars, cl->account->description));
+							tpl_printf(vars, TPLADD, "CLIENTDESCRIPTION","%s(%s)",!apicall?"&#013;":"",xml_encode(vars, cl->account->description));
 						else
 							tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", "");
 					}
 					else if(cl->typ == 'p' || cl->typ == 'r')
 					{
 						if(cl->account && cl->reader->description)
-							tpl_printf(vars, TPLADD, "CLIENTDESCRIPTION","&#013;(%s)",xml_encode(vars, cl->reader->description));
+							tpl_printf(vars, TPLADD, "CLIENTDESCRIPTION","%s(%s)",!apicall?"&#013;":"",xml_encode(vars, cl->reader->description));
 						else
 							tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", "");
 					}
@@ -4335,7 +4335,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							}
 						}
 						else
-							tpl_printf(vars, TPLADD, "UPICMISSING", "&#013;missing icon: IC_%s.tpl", xml_encode(vars, usr));
+							tpl_printf(vars, TPLADD, "UPICMISSING", "%smissing icon: IC_%s.tpl",!apicall?"&#013;":"",xml_encode(vars, usr));
 					}
 
 					if (!picon_shown) {
@@ -5403,8 +5403,13 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 
 	if(cfg.http_css)
 	{
-		config_files[10].file = basename(cfg.http_css);
-		tpl_addVar(vars, TPLADD, "FILE_USER_CSS", xml_encode(vars, basename(cfg.http_css)));
+		if(strchr(cfg.http_css,'/'))
+			config_files[10].file = strrchr(cfg.http_css, '/')+1;
+		else if(strchr(cfg.http_css,'\\'))
+			config_files[10].file = strrchr(cfg.http_css, '\\')+1;
+		else
+			config_files[10].file = cfg.http_css;
+		tpl_addVar(vars, TPLADD, "FILE_USER_CSS", xml_encode(vars, config_files[10].file));
 		tpl_addVar(vars, TPLADD, "FILEEDITCSS_SHOW", tpl_getTpl(vars, "FILEEDITCSS"));
 	}
 
@@ -7039,16 +7044,8 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			}
 
-			char picon_name[32];
-			snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "LOGO");
-			if(picon_exists(picon_name))
-			{
+			if(picon_exists("LOGO")||strlen(tpl_getTpl(vars, "IC_LOGO"))>3)
 				tpl_addVar(vars, TPLADD, "LOGO", tpl_getTpl(vars, "LOGOBIT"));
-			}
-			else
-			{
-				tpl_addVar(vars, TPLADD, "LOGO", "");
-			}
 			
 			tpl_printf(vars, TPLADD, "CURDATE", "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon + 1, lt.tm_year % 100);
 			tpl_printf(vars, TPLADD, "CURTIME", "%02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);

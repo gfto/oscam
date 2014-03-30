@@ -26,7 +26,10 @@ static int log_list_queued;
 static pthread_t log_thread;
 static pthread_cond_t log_thread_sleep_cond;
 static pthread_mutex_t log_thread_sleep_cond_mutex;
+
+#if defined(WEBIF) || defined(MODULE_MONITOR)
 static uint64_t counter = 0;
+#endif
 
 struct s_log
 {
