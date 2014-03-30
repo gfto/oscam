@@ -1053,10 +1053,11 @@ $(document).ready(function() {
 		$('#regex').remove();
 	}
 
-	if(typeof page != 'undefined') {
+	// Title
+	var pagename = (typeof page != 'undefined'? page : $(location).attr('pathname').replace(/.*\/|\.[^.]*$/g, ''));
+	$(document).attr('title', $(document).attr('title') + ' (' + pagename[0].toUpperCase() + pagename.slice(1) +')');
 
-		var title = $(document).attr('title');
-		$(document).attr('title', title + ' (' + page +')');
+	if(typeof page != 'undefined') {
 
 		switch(page){
 

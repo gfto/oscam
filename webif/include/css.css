@@ -5,7 +5,7 @@
 /* ******** 2. BASIC DIVISION PAGES */
 html,body,* html #wrapper {height:100%}
 #wrapper {position:relative;min-height:100%}
-#content {margin-bottom:0;padding:0 8px 150px}
+#content {margin-bottom:0;padding:0 8px 120px}
 #footer {position:absolute;bottom:0;width:100%}
 
 /* ******** 3. BASIC SETTINGS */
@@ -90,7 +90,9 @@ a:hover span {
 #main {}
 #mainmenu {
 	height:30px;
-	padding-top:10px
+	padding-top:10px;
+	display:inline-block;
+	position:relative
 }
 #mainmenu li {
 	display:inline;
@@ -447,7 +449,7 @@ div.logo {
 	position:absolute;
 	top:10px;
 	left:10px;
-	z-index:-1
+	z-index:0
 }
 
 /* in READERS and USERS items */
@@ -483,7 +485,7 @@ div.info {
 */
 div.debugmenu, div.logmenu {
 	line-height:20px;
-	margin-bottom:15px
+	margin-bottom:8px
 }
 
 /* in entitlements_cccambit.html */
@@ -655,7 +657,8 @@ path.graph_grid {stroke-opacity:0.5;}
 
 /*  for UL in logpoll.html */
 #livelog {
-	height:500px;
+	resize:vertical;
+	height:580px;
 	max-width:1500px;
 	overflow-y:auto;
 	list-style:none;
@@ -680,10 +683,12 @@ input.regexinput {
 	width:400px;
 }
 #regexdata_nav input {
-	width:100px;margin-bottom:8px;
+	width:100px;
+	margin-bottom:8px
 }
 #regexdata_save input {
-	width:90px;margin-top:10px;
+	width:90px;
+	margin-top:10px
 }
 div.colorPicker-picker {
 	height: 16px;
@@ -794,9 +799,11 @@ a:hover span {
 a:link, a:visited, a:active {
 	color:#050840
 }
-
+#savelog {
+	text-decoration:none
+}
 /* MAIN MENU & SUBNAV*/
-li.menu, li.configmenu {
+#mainmenu, #nav {
 	background-color:#FFF
 }
 li.menu:hover, li.menu_selected, 

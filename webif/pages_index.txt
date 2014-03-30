@@ -235,6 +235,8 @@ READERCONFIGVIDEOGUARD        readerconfig/readerconfig_hwreader_videoguard.html
 READERCONFIGSC8IN1            readerconfig/readerconfig_hwreader_sc8in1.html              CARDREADER_SC8IN1
 READERCONFIGSMARGO            readerconfig/readerconfig_hwreader_smargo.html              CARDREADER_SMARGO,CARDREADER_PHOENIX
 ICMLOGO                       images/ICMLOGO.svg
+# with parm IC_LOGO oscam can compile with integrated logo e.g.
+# IC_LOGO					  images/ICMLOGO_GREY.svg
 ICMAI                         images/favicon.ico
 ICSTA                         images/ICSTA.svg
 ICDEL                         images/ICDEL.svg
