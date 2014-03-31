@@ -846,7 +846,7 @@ int32_t dvbapi_start_emm_filter(int32_t demux_index)
 				caid = ncaid;
 				cs_debug_mask(D_DVBAPI, "[EMM Filter] setting emm filter for betatunnel: %04X -> %04X", caid, rdr->caid);
 			}
-			else
+			else if (cs->get_emm_filter)
 			{
 				cs->get_emm_filter(rdr, &dmx_filter, &filter_count);
 			}

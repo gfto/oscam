@@ -151,12 +151,19 @@ static int32_t dgcrypt_do_ecm(struct s_reader *rdr, const ECM_REQUEST *er, struc
 	return OK;
 }
 
+static int32_t dgcrypt_get_emm_filter(struct s_reader *rdr __attribute__((unused)), struct s_csystem_emm_filter **emm_filters __attribute__((unused)), unsigned int *filter_count)
+{
+	*filter_count = 0;
+	return OK;
+}
+
 void reader_dgcrypt(struct s_cardsystem *ph)
 {
 	// DGCrypt system does not send EMMs
-	ph->card_init = dgcrypt_card_init;
-	ph->do_ecm    = dgcrypt_do_ecm;
-	ph->caids[0]  = 0x4ABF;
-	ph->desc      = "dgcrypt";
+	ph->card_init      = dgcrypt_card_init;
+	ph->do_ecm         = dgcrypt_do_ecm;
+	ph->get_emm_filter = dgcrypt_get_emm_filter;
+	ph->caids[0]       = 0x4ABF;
+	ph->desc           = "dgcrypt";
 }
 #endif
