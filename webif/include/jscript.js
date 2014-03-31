@@ -276,6 +276,19 @@ $(function(){
 			waitForMsg();
 		}
 	});
+
+	$("#onlineidle").click(function(){
+		if($("#onlineidle").text() == 'Login*') {
+			$("#onlineidle")
+				.text('Online & Idle*')
+				.attr('title', 'Login info (click to switch)');
+		} else {
+			$("#onlineidle")
+				.text('Login*')
+				.attr('title', 'Online & Idle info (click to switch)');
+		}
+		if(!nostorage) localStorage.loi = $("#onlineidle").text();
+	});
 });
 
 /*
@@ -902,9 +915,15 @@ function updateStatuspage(data){
 			}
 		}
 
-		$( uid + " > td.statuscol15")
-			.text(item.times.loginfmt)
-			.attr('title', 'Online: ' + item.times.online.toHHMMSS() + ' IDLE: ' + item.times.idle.toHHMMSS());
+		if($("#onlineidle").text() != 'Login*') {
+			$( uid + " > td.statuscol15")
+				.html(item.times.online.toHHMMSS() + '<br>' + item.times.idle.toHHMMSS())
+				.attr('title', 'Login: ' + item.times.loginfmt);
+		} else {
+			$( uid + " > td.statuscol15")
+				.html(item.times.loginfmt.substring(0,8) + '<br>' + item.times.loginfmt.substring(10,18))
+				.attr('title', 'Online: ' + item.times.online.toHHMMSS() + '\nIDLE: ' + item.times.idle.toHHMMSS());
+		}
 
 		// read entitlements and cccam-cards
 		var $html = $( uid + " > td.statuscol16").toHtmlString();
@@ -1081,7 +1100,20 @@ $(document).ready(function() {
 
 			break;
 		default:
-			if (page == 'status') $( "#chart" ).hide();
+			if (page == 'status') {
+				$( "#chart" ).hide();
+				if(!nostorage) {
+					if (localStorage.loi == 'Login*') {
+						$("#onlineidle")
+							.text('Login*')
+							.attr('title', 'Online & Idle info (click to switch)');
+					} else {
+						$("#onlineidle")
+							.text('Online & Idle*')
+							.attr('title', 'Login info (click to switch)');
+					}
+				}
+			}
 
 			// if httprefresh set to 0 hide pollselector
 			setPollrefresh();

@@ -276,7 +276,7 @@ th.nameinfo {
 /* in STATUS item (FIND OUT MORE) */
 th.statuscol0 {
 	text-align:center;
-	width:10px
+	width:0
 }
 th.statuscol1, th.statuscol2, 
 th.statuscol3, th.statuscol4, 
@@ -288,8 +288,8 @@ th.statuscol13, th.statuscol14,
 th.statuscol15, th.statuscol16 {
 	text-align:center
 }
-th.statuscol0 {
-	width:0
+th.statuscol15 {
+	cursor:pointer
 }
 
 /* OTHER TABLEs TH */
