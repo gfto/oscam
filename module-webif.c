@@ -3392,7 +3392,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	tpl_printf(vars, TPLADD, "TOTAL_ONLINE", "%d", online_users);
 
 
-	float ecmsum = first_client->cwfound + first_client->cwnot + first_client->cwtout + first_client->cwcache; //dont count TUN its included
+	float ecmsum = first_client->cwfound + first_client->cwnot + first_client->cwtout + first_client->cwcache + first_client->cwignored; //dont count TUN its included
 	if(ecmsum < 1) 	ecmsum = 1;
 	float ecmpos = first_client->cwfound + first_client->cwcache; // dont count TUN its included
 	if(ecmpos < 1) ecmpos = 1;

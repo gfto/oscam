@@ -835,13 +835,13 @@ function updateStatuspage(data){
 
 		switch (item.au) {
 			case '0':
-				$( uid + " > td.statuscol5").text('OFF');
+				$( uid + " > td.statuscol5").text('OFF').attr('class', 'statuscol5 statuscol5OFF');
 			break;
 			case '-1':
-				$( uid + " > td.statuscol5").html('<a class="tooltip" href="#">ON<span>' + item.aufmt + '</span></a>');
+				$( uid + " > td.statuscol5").html('<a class="tooltip" href="#">ON<span>' + item.aufmt + '</span></a>').attr('class', 'statuscol5 statuscol5ON');
 			break;
 			default:
-				$( uid + " > td.statuscol5").html('<a class="tooltip" href="#">ACTIVE<span>' + item.aufmt + '</span></a>');
+				$( uid + " > td.statuscol5").html('<a class="tooltip" href="#">ACTIVE<span>' + item.aufmt + '</span></a>').attr('class', 'statuscol5 statuscol5ACTIVE');
 			break;
 		}
 
