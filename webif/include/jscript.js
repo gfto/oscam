@@ -465,7 +465,7 @@ function updateUserpage(data) {
 	$( "#tot_cwcache" ).html( data.oscam.totals.cwcache + " (" + data.oscam.totals.cwcache_rel + "%)");
 	$( "#tot_cwnok" ).html( data.oscam.totals.cwnok + " (" + data.oscam.totals.cwnok_rel + "%)");
 	$( "#tot_cwtout" ).html( data.oscam.totals.cwtimeout + " (" + data.oscam.totals.cwtimeout_rel + "%)");
-	$( "#tot_cwign" ).html( data.oscam.totals.cwignore + " (" + data.oscam.totals.cwignore_rel + "%)");
+	$( "#tot_cwign" ).html( data.oscam.totals.cwignore );
 	$( "#tot_ecmmin" ).html( data.oscam.totals.ecm_min );
 	$( "#tot_cw" ).html( data.oscam.totals.tot_cw );
 	var cwpos = parseInt(data.oscam.totals.cwok) + parseInt(data.oscam.totals.cwcache);
@@ -731,7 +731,7 @@ function updateTotals(data){
 	$( "#total_cwtout" ).text( data.oscam.status.totals.total_cwtout );
 	$( "#rel_cwtout" ).text( data.oscam.status.totals.rel_cwtout );
 	$( "#total_cwign" ).text( data.oscam.status.totals.total_cwign );
-	$( "#rel_cwign" ).text( data.oscam.status.totals.rel_cwign );
+	//$( "#rel_cwign" ).text( data.oscam.status.totals.rel_cwign );
 	$( "#total_ecm_min" ).text( data.oscam.status.totals.total_ecm_min );
 	$( "#total_cw" ).text( data.oscam.status.totals.total_cw );
 	$( "#total_cwpos" ).text( data.oscam.status.totals.total_cwpos );
