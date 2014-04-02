@@ -5917,8 +5917,6 @@ static uint64_t get_cacheex_node(struct s_client * cl)
 static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * params, int8_t apicall)
 {
 
-	int jsondelimiter = 0;
-
 	if(!apicall) { setActiveMenu(vars, MNU_CACHEEX); }
 
 	if(strcmp(getParam(params, "x"), "x") == 0)
@@ -5966,17 +5964,8 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 			tpl_printf(vars, TPLADD, "HIT", "%d", cl->account->cwcacheexhit);
 			tpl_printf(vars, TPLADD, "ERR", "%d", cl->account->cwcacheexerr);
 			tpl_printf(vars, TPLADD, "ERRCW", "%d", cl->account->cwcacheexerrcw);
-			tpl_addVar(vars, TPLADD, "ROWTYPE", "client");
-			if(apicall == 2)
-			{
-				tpl_addVar(vars, TPLADD, "DIRECTION", (cl->account->cacheex.mode == 3) ? "getting":"pushing");
-				rowvariable = "JSONCACHEEXBITS";
-			}
-			else
-			{
-				tpl_addVar(vars, TPLADD, "DIRECTIONIMG", (cl->account->cacheex.mode == 3) ? getting : pushing);
-				rowvariable = "TABLECLIENTROWS";
-			}
+			tpl_addVar(vars, TPLADD, "DIRECTIONIMG", (cl->account->cacheex.mode == 3) ? getting : pushing);
+			rowvariable = "TABLECLIENTROWS";
 			written = 1;
 		}
 		else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
@@ -5994,17 +5983,8 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 			tpl_printf(vars, TPLADD, "HIT", "%d", cl->cwcacheexhit);
 			tpl_printf(vars, TPLADD, "ERR", "%d", cl->cwcacheexerr);
 			tpl_printf(vars, TPLADD, "ERRCW", "%d", cl->cwcacheexerrcw);
-			tpl_addVar(vars, TPLADD, "ROWTYPE", "reader");
-			if(apicall == 2)
-			{
-				tpl_addVar(vars, TPLADD, "DIRECTION", (cl->account->cacheex.mode == 3) ? "getting":"pushing");
-				rowvariable = "JSONCACHEEXBITS";
-			}
-			else
-			{
-				tpl_addVar(vars, TPLADD, "DIRECTIONIMG", (cl->account->cacheex.mode == 3) ? getting : pushing);
-				rowvariable = "TABLEREADERROWS";
-			}
+			tpl_addVar(vars, TPLADD, "DIRECTIONIMG", (cl->reader->cacheex.mode == 3) ? pushing : getting);
+			rowvariable = "TABLEREADERROWS";
 			written = 1;
 		}
 		else if(get_module(cl)->listenertype == LIS_CSPUDP)
@@ -6026,24 +6006,14 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 			tpl_printf(vars, TPLADD, "HIT", "%d", cl->cwcacheexhit);
 			tpl_printf(vars, TPLADD, "ERR", "%d", cl->cwcacheexerr);
 			tpl_printf(vars, TPLADD, "ERRCW", "%d", cl->cwcacheexerrcw);
-			tpl_addVar(vars, TPLADD, "ROWTYPE", "client");
-			if(apicall == 2)
-			{
-				tpl_addVar(vars, TPLADD, "DIRECTION", "getting");
-				rowvariable = "JSONCACHEEXBITS";
-			}
-			else
-			{
-				tpl_addVar(vars, TPLADD, "DIRECTIONIMG", getting);
-				rowvariable = "TABLECLIENTROWS";
-			}
+			tpl_addVar(vars, TPLADD, "DIRECTIONIMG", getting);
+			rowvariable = "TABLECLIENTROWS";
 			written = 1;
 		}
 
 		if(written)
 		{
-			tpl_addVar(vars, TPLAPPEND, rowvariable, tpl_getTpl(vars, apicall == 2 ? "JSONCACHEEXBIT":"CACHEEXTABLEROW"));
-			jsondelimiter++;
+			tpl_addVar(vars, TPLAPPEND, rowvariable, tpl_getTpl(vars, "CACHEEXTABLEROW"));
 
 			if(cl->ll_cacheex_stats)
 			{
@@ -6058,9 +6028,6 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 						{ tpl_addVar(vars, TPLADD, "TYPE", cacheex_stats_entry->cache_direction == 0 ? pushing : getting); }
 					else
 						{ tpl_addVar(vars, TPLADD, "TYPE", ""); }
-					tpl_printf(vars, TPLADD, "ROWID", "%04X_%06X_%04X", cacheex_stats_entry->cache_caid,
-								cacheex_stats_entry->cache_prid,
-								cacheex_stats_entry->cache_srvid);
 					tpl_printf(vars, TPLADD, "NAME", "%04X:%06X:%04X", cacheex_stats_entry->cache_caid,
 							   cacheex_stats_entry->cache_prid,
 							   cacheex_stats_entry->cache_srvid);
@@ -6078,7 +6045,7 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 					char channame[32];
 					char *lastchan = xml_encode(vars, get_servicename(cl, cacheex_stats_entry->cache_srvid, cacheex_stats_entry->cache_caid, channame));
 					tpl_addVar(vars, TPLADD, "LEVEL", lastchan);
-					tpl_addVar(vars, TPLAPPEND, rowvariable, tpl_getTpl(vars, apicall == 2 ? "JSONCACHEEXBIT":"CACHEEXTABLEROW"));
+					tpl_addVar(vars, TPLAPPEND, rowvariable, tpl_getTpl(vars, "CACHEEXTABLEROW"));
 
 				}
 			}
@@ -6100,15 +6067,7 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 
 	tpl_printf(vars, TPLADD, "REL_CACHEXHIT", "%.2f", (first_client ? first_client->cwcacheexhit : 0) * 100 / cachesum);
 
-	if(apicall == 2)
-	{
-		return tpl_getTpl(vars, "JSONCACHEEX");
-	}
-	else
-	{
-		return tpl_getTpl(vars, "CACHEEXPAGE");
-	}
-
+	return tpl_getTpl(vars, "CACHEEXPAGE");
 }
 #endif
 
