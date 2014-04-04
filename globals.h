@@ -1699,9 +1699,9 @@ struct s_config
 	uint32_t        cc_recv_timeout;                // The poll() timeout parameter in ms. Default: DEFAULT_CC_RECV_TIMEOUT (2000 ms).
 #endif
 #ifdef MODULE_GBOX
+	uint32_t        gbx_port[CS_MAXPORTS];
 	char            *gbox_hostname;
 	int32_t         gbox_reconnect;
-	int32_t         gbox_port;
 	char            gbox_my_password[9];
 #endif
 #ifdef MODULE_SERIAL

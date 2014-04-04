@@ -264,6 +264,27 @@ char *mk_t_cccam_port(void)
 }
 #endif
 
+#ifdef MODULE_GBOX
+/*
+ * Creates a string ready to write as a token into config or WebIf for the gbox udp ports. You must free the returned value through free_mk_t().
+ */
+char *mk_t_gbox_port(void)
+{
+	int32_t i, pos = 0, needed = CS_MAXPORTS * 6 + 8;
+
+	char *value;
+	if(!cs_malloc(&value, needed)) { return ""; }
+	char *dot = "";
+	for(i = 0; i < CS_MAXPORTS; i++)
+	{
+		if(!cfg.gbx_port[i]) { break; }
+
+		pos += snprintf(value + pos, needed - pos, "%s%d", dot, cfg.gbx_port[i]);
+		dot = ",";
+	}
+	return value;
+}
+#endif
 
 /*
  * Creates a string ready to write as a token into config or WebIf for AESKeys. You must free the returned value through free_mk_t().

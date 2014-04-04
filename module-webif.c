@@ -738,7 +738,9 @@ static char *send_oscam_config_gbox(struct templatevars *vars, struct uriparams 
 	webif_save_config("gbox", vars, params);
 
 	tpl_addVar(vars, TPLADD, "HOSTNAME", xml_encode(vars, cfg.gbox_hostname));
-	tpl_printf(vars, TPLADD, "PORT", "%d", cfg.gbox_port);
+	char *value = mk_t_gbox_port();
+	tpl_addVar(vars, TPLAPPEND, "PORT", value);
+	free_mk_t(value);
 	tpl_addVar(vars, TPLADD, "MYPASSWORD", xml_encode(vars, cfg.gbox_my_password));
 
 	return tpl_getTpl(vars, "CONFIGGBOX");

@@ -1467,12 +1467,12 @@ static void gbox_local_cards(struct s_client *cli)
 
 static int32_t gbox_client_init(struct s_client *cli)
 {
-	if(!cfg.gbox_port || cfg.gbox_port > 65535)
+	if(!cfg.gbx_port[0] || cfg.gbx_port[0] > 65535)
 	{
 		cs_log("gbox: error, no/invalid port=%d configured in oscam.conf!",
-			   cfg.gbox_port ? cfg.gbox_port : 0);
+			   cfg.gbx_port[0] ? cfg.gbx_port[0] : 0);
 		return -1;
-	}	
+	}
 	
 	if(!cfg.gbox_hostname || strlen(cfg.gbox_hostname) > 128)
 	{
@@ -1546,8 +1546,8 @@ static int32_t gbox_client_init(struct s_client *cli)
 	SIN_GET_PORT(cli->udp_sa) = htons((uint16_t)rdr->r_port);
 	hostname2ip(cli->reader->device, &SIN_GET_ADDR(cli->udp_sa));
 
-	cs_log("proxy %s (fd=%d, peer id=%04X, my id=%04X, my hostname=%s, my listen port=%d, peer's listen port=%d)",
-		   rdr->device, cli->udp_fd, peer->gbox.id, local_gbox.id, cfg.gbox_hostname, cfg.gbox_port, rdr->r_port);
+	cs_log("proxy %s (fd=%d, peer id=%04X, my id=%04X, my hostname=%s, peer's listen port=%d)",
+		   rdr->device, cli->udp_fd, peer->gbox.id, local_gbox.id, cfg.gbox_hostname, rdr->r_port);
 
 	cli->pfd = cli->udp_fd;
 
@@ -1905,9 +1905,13 @@ static void gbox_s_idle(struct s_client *cl)
 void module_gbox(struct s_module *ph)
 {
 	init_local_gbox();
-	ph->ptab.nports = 1;
-	ph->ptab.ports[0].s_port = cfg.gbox_port;
-
+	int32_t i;
+	for(i = 0; i < CS_MAXPORTS; i++)
+	{
+		if(!cfg.gbx_port[i]) { break; }
+		ph->ptab.nports++;
+		ph->ptab.ports[i].s_port = cfg.gbx_port[i];
+	}
 	ph->desc = "gbox";
 	ph->num = R_GBOX;
 	ph->type = MOD_CONN_UDP;
