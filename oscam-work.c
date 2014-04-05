@@ -264,7 +264,9 @@ void *work_thread(void *ptr)
 				}
 				break;
 			case ACTION_READER_RESET:
+#if WITH_CARDREADER == 1
 				cardreader_do_reset(reader);
+#endif
 				break;
 			case ACTION_READER_ECM_REQUEST:
 				reader_get_ecm(reader, data->ptr);
@@ -285,10 +287,14 @@ void *work_thread(void *ptr)
 				break;
 			case ACTION_READER_RESET_FAST:
 				reader->card_status = CARD_NEED_INIT;
+#if WITH_CARDREADER == 1
 				cardreader_do_reset(reader);
+#endif
 				break;
 			case ACTION_READER_CHECK_HEALTH:
+#if WITH_CARDREADER == 1
 				cardreader_do_checkhealth(reader);
+#endif
 				break;
 			case ACTION_READER_CAPMT_NOTIFY:
 				if(reader->ph.c_capmt) { reader->ph.c_capmt(cl, data->ptr); }

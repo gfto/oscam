@@ -21,6 +21,59 @@
 #include "oscam-time.h"
 #include "reader-irdeto.h"
 
+#ifdef DVBAPI_SAMYGO
+
+static int _ioctl(int fd, int request, ...)
+{
+    typedef struct dmx_sct_filter_params dmx_sct_filter_params_t;
+    typedef struct dmxSctFilterParams dmxSctFilterParams_t;
+
+    va_list ap;
+    va_start(ap, request);
+    int ret = -1;
+    switch(request)
+    {
+    case DMX_SET_FILTER:
+        {
+            dmx_sct_filter_params_t *sFP2 = va_arg(ap, dmx_sct_filter_params_t*);
+
+            // preparing packet
+			unsigned char packet[sizeof(request) + sizeof(dmx_sct_filter_params_t)];
+			memcpy(&packet, &request, sizeof(request));
+			memcpy(&packet[sizeof(request)], sFP2, sizeof(dmx_sct_filter_params_t));
+                        
+            ret = send(fd, packet, sizeof(packet), 0);
+            //ret = send(fd, sFP2, sizeof(dmx_sct_filter_params_t), 0);
+		    //cs_log("****** send DMX_SET_FILTER %d", ret);
+        }
+        break;
+    case DMX_SET_FILTER1:
+        {
+            dmxSctFilterParams_t *sFP1 = va_arg(ap, dmxSctFilterParams_t*);
+            ret = send(fd, sFP1, sizeof(dmxSctFilterParams_t), 0);
+		    //cs_log("****** send DMX_SET_FILTER1 %d", ret);
+        }
+        break;
+    case DMX_STOP:
+        {
+            ret = send(fd, &request, sizeof(request), 0);
+		    //cs_log("****** send DMX_STOP %d", ret);
+            ret = 1;
+        }
+        break;
+    default:
+		cs_log("ERROR: Invalid ioctl request");
+    }
+    va_end(ap);
+
+    if(ret > 0)
+        ret = 1;
+
+    return ret;
+}
+#define ioctl _ioctl
+#endif
+
 // tunemm_caid_map
 #define FROM_TO 0
 #define TO_FROM 1
@@ -490,6 +543,14 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 
 static int32_t dvbapi_detect_api(void)
 {
+#ifdef DVBAPI_SAMYGO
+	selected_api = DVBAPI_3;
+	selected_box = 0;
+	disable_pmt_files = 1;
+	cs_log("Using SamyGO dvbapi v0.1 (c) bugficks 2013");
+	return 1;
+#endif
+
 #ifdef WITH_COOLAPI
 	selected_api = COOLAPI;
 	selected_box = 5;
@@ -597,11 +658,27 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter)
 		strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path) - 1);
 	}
 
+#ifdef DVBAPI_SAMYGO
+
+	struct sockaddr_un saddr;
+    memset(&saddr, 0, sizeof(saddr));
+	saddr.sun_family = AF_UNIX;
+	strncpy(saddr.sun_path, device_path, sizeof(saddr.sun_path) - 1);
+    dmx_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if(connect(dmx_fd, (struct sockaddr *)&saddr, sizeof(saddr)) < 0)
+    {
+		cs_log("ERROR: Can't open device %s (errno=%d %s)", device_path, errno, strerror(errno));
+        dmx_fd = -1;
+    }
+
+#else
+
 	if((dmx_fd = open(device_path, O_RDWR | O_NONBLOCK)) < 0)
 	{
 		cs_log("ERROR: Can't open device %s (errno=%d %s)", device_path, errno, strerror(errno));
 		return -1;
 	}
+#endif
 
 	cs_debug_mask(D_DVBAPI, "DEVICE open (%s) fd %d", device_path, dmx_fd);
 
@@ -2699,6 +2776,29 @@ void dvbapi_handlesockmsg(unsigned char *buffer, uint32_t len, int32_t connfd)
 {
 	uint32_t val = 0, size = 0, i, k;
 
+#ifdef DVBAPI_SAMYGO
+    uchar *dest;
+    if(!cs_malloc(&dest, len + 7 - 12 - 4))
+	    return;
+
+    memcpy(dest, "\x03\xFF\xFF\x00\x00\x13\x00", 7);
+
+    dest[1] = buffer[3];
+    dest[2] = buffer[4];
+    dest[5] = buffer[11] + 1;
+
+    memcpy(dest + 7, buffer + 12, len - 12 - 4);
+
+    if(buffer && buffer[0] == 2)
+    {
+
+	    dvbapi_parse_capmt(dest, 7 + len - 12 - 4, connfd, NULL);
+	    free(dest);
+
+        return;
+    }
+#endif
+
 	for(k = 0; k < len; k += 3 + size + val)
 	{
 		if(buffer[0 + k] != 0x9F || buffer[1 + k] != 0x80)
@@ -4312,6 +4412,11 @@ int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er)
 {
 
 	if(!er) { return -1; }
+
+#ifdef DVBAPI_SAMYGO
+    //cs_log("****** %s demux_index: %d caid: %04X", __func__, demux_index, er->caid);
+    return 0;
+#endif
 
 	if(selected_api != DVBAPI_3 && selected_api != DVBAPI_1 && selected_api != STAPI)   // only valid for dvbapi3, dvbapi1 and STAPI
 	{

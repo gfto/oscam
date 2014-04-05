@@ -1058,12 +1058,16 @@ void reader_get_ecm(struct s_reader *reader, ECM_REQUEST *er)
 		return;
 	}
 
+#if WITH_CARDREADER == 1
 	cardreader_process_ecm(reader, cl, er);  // forward request to physical reader
+#endif
 }
 
 void reader_do_card_info(struct s_reader *reader)
 {
+#if WITH_CARDREADER == 1
 	cardreader_get_card_info(reader);
+#endif
 	if(reader->ph.c_card_info)
 		{ reader->ph.c_card_info(); }
 }
@@ -1147,7 +1151,9 @@ int32_t reader_init(struct s_reader *reader)
 	}
 	else
 	{
+#if WITH_CARDREADER == 1
 		if(!cardreader_init(reader))
+#endif
 			{ return 0; }
 	}
 
@@ -1369,8 +1375,9 @@ void init_cardreader(void)
 	cs_writelock(&system_lock);
 	struct s_reader *rdr;
 
+#if WITH_CARDREADER == 1
 	cardreader_init_locks();
-
+#endif
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr)))
 	{

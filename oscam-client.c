@@ -593,7 +593,9 @@ void client_check_status(struct s_client *cl)
 
 		break;
 	case 'r':
+#if WITH_CARDREADER == 1
 		cardreader_checkhealth(cl, cl->reader);
+#endif
 		break;
 	case 'p':
 	{
@@ -677,8 +679,10 @@ void free_client(struct s_client *cl)
 
 		if(rdr->ph.cleanup)
 			{ rdr->ph.cleanup(cl); }
+#if WITH_CARDREADER == 1
 		if(cl->typ == 'r')
 			{ cardreader_close(rdr); }
+#endif
 		if(cl->typ == 'p')
 			{ network_tcp_connection_close(rdr, "cleanup"); }
 		cl->reader = NULL;
