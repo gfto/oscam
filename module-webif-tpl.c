@@ -402,10 +402,13 @@ char *tpl_getUnparsedTpl(const char *name, int8_t removeHeader, const char *subd
 											check_conf(CARDREADER_SMART, ptr2);
 											check_conf(CARDREADER_DB2COM, ptr2);
 											check_conf(CARDREADER_STAPI, ptr2);
+											check_conf(WEBIF_LIVELOG, ptr2);
+											check_conf(WEBIF_JQUERY, ptr2);
 											check_conf(TOUCH, ptr2);
 											check_conf(CS_ANTICASC, ptr2);
 											check_conf(CS_CACHEEX, ptr2);
 											check_conf(HAVE_DVBAPI, ptr2);
+											check_conf(CLOCKFIX, ptr2);
 											check_conf(IPV6SUPPORT, ptr2);
 											check_conf(IRDETO_GUESSING, ptr2);
 											check_conf(LCDSUPPORT, ptr2);

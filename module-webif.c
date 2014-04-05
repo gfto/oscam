@@ -282,6 +282,9 @@ static void setActiveMenu(struct templatevars *vars, int8_t active)
 		else
 			{ tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "menu"); }
 	}
+	#ifdef WEBIF_LIVELOG
+			tpl_addVar(vars, TPLADD, "LOGPAGEMENU", tpl_getTpl(vars, "LOGMENU"));
+	#endif
 }
 
 /*
@@ -923,10 +926,14 @@ static char *send_oscam_config_webif(struct templatevars *vars, struct uriparams
 	tpl_addVar(vars, TPLADD, "HTTPTPL", cfg.http_tpl);
 	tpl_addVar(vars, TPLADD, "HTTPSCRIPT", cfg.http_script);
 	tpl_addVar(vars, TPLADD, "HTTPJSCRIPT", cfg.http_jscript);
+#ifndef WEBIF_JQUERY
+	tpl_addVar(vars, TPLADD, "HTTPEXTERNJQUERY", cfg.http_extern_jquery);
+#endif
 	tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "%d", cfg.http_picon_size);
 
 	if(cfg.http_hide_idle_clients > 0) { tpl_addVar(vars, TPLADD, "CHECKED", "checked"); }
 	tpl_addVar(vars, TPLADD, "HTTPHIDETYPE", cfg.http_hide_type);
+	if(cfg.http_status_log > 0) { tpl_addVar(vars, TPLADD, "SHOWLOGCHECKED", "checked"); }
 	if(cfg.http_showpicons > 0) { tpl_addVar(vars, TPLADD, "SHOWPICONSCHECKED", "checked"); }
 	if(cfg.http_showmeminfo > 0) { tpl_addVar(vars, TPLADD, "SHOWMEMINFOCHECKED", "checked"); }
 	if(cfg.http_showuserinfo > 0) { tpl_addVar(vars, TPLADD, "SHOWUSERINFOCHECKED", "checked"); }
@@ -952,6 +959,10 @@ static char *send_oscam_config_webif(struct templatevars *vars, struct uriparams
 
 #ifdef WITH_SSL
 	tpl_addVar(vars, TPLADD, "HTTPFORCESSLV3SELECT", (cfg.http_force_sslv3 == 1) ? "checked" : "");
+#endif
+
+#ifndef WEBIF_JQUERY
+	tpl_addVar(vars, TPLADDONCE, "CONFIGWEBIFJQUERY", tpl_getTpl(vars, "CONFIGWEBIFJQUERYBIT"));
 #endif
 
 	tpl_printf(vars, TPLADD, "AULOW", "%d", cfg.aulow);
@@ -3542,7 +3553,7 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, str
 			{
 				cc_UA_cccam2oscam(card->hexserial, serbuf, card->caid);
 				char tmp[20];
-				tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_Oscam:%s", cs_hexdump(0, serbuf, 8, tmp, 20));
+				tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_OSCam:%s", cs_hexdump(0, serbuf, 8, tmp, 20));
 				tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_CCcam:%s", cs_hexdump(0, card->hexserial, 8, tmp, 20));
 			}
 			if(!apicall)
@@ -3914,10 +3925,16 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 		{ return tpl_getTpl(vars, "APICCCAMCARDLIST"); }
 }
 
+#ifdef WEBIF_LIVELOG
 static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * params)
 {
 
 	uint64_t lastid = 0;
+
+#ifdef WITH_DEBUG
+	tpl_addVar(vars, TPLADD, "LOG_DEBUGMENU", tpl_getTpl(vars, "LOGDEBUGMENU"));
+#endif
+	tpl_addVar(vars, TPLADD, "TITLEADD10", "Move mouse over log-window to stop scroll");
 
 	if(strcmp(getParam(params, "lastid"), "start") == 0){
 		setActiveMenu(vars, MNU_LIVELOG); 
@@ -3996,6 +4013,7 @@ static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * p
 	tpl_addVar(vars, TPLAPPEND, "DATA", "]");
 	return tpl_getTpl(vars, "POLL");
 }
+#endif
 
 static char *send_oscam_status(struct templatevars * vars, struct uriparams * params, int32_t apicall)
 {
@@ -4053,6 +4071,18 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 			add_job(rdr->client, ACTION_READER_RESTART, NULL, 0);
 			cs_log("Reader %s restarted by WebIF from %s", rdr->label, cs_inet_ntoa(GET_IP()));
 		}
+	}
+
+	char *debuglvl = getParam(params, "debug");
+	if(strlen(debuglvl) > 0)
+	{
+#ifndef WITH_DEBUG
+		cs_log("*** Warning: Debug Support not compiled in ***");
+#else
+		int32_t dblvl = atoi(debuglvl);
+		if(dblvl >= 0 && dblvl <= 65535) { cs_dblevel = dblvl; }
+		cs_log("%s debug_level=%d", "all", cs_dblevel);
+#endif
 	}
 
 	char *hide = getParam(params, "hide");
@@ -4712,7 +4742,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	cs_readunlock(&clientlist_lock);
 	cs_readunlock(&readerlist_lock);
 
-	if(!apicall || (apicall == 1 && strcmp(getParam(params, "appendlog"), "1") == 0))
+	if(cfg.http_status_log || (apicall == 1 && strcmp(getParam(params, "appendlog"), "1") == 0))
 	{
 		if(cfg.loghistorysize)
 		{
@@ -4861,6 +4891,43 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 
 	tpl_addVar(vars, TPLADDONCE, "SYSTEM_INFO", tpl_getTpl(vars, "SYSTEMINFOBIT"));
 	tpl_addVar(vars, TPLADDONCE, "USER_INFO", tpl_getTpl(vars, "USERINFOBIT"));
+	
+#ifdef WITH_DEBUG 
+	if(cfg.http_status_log)
+	{
+		// Debuglevel Selector 
+		int32_t lvl; 
+		for(i = 0; i < MAX_DEBUG_LEVELS; i++) 
+		{ 
+			lvl = 1 << i; 
+			tpl_printf(vars, TPLADD, "TMPC", "DCLASS%d", lvl); 
+			tpl_printf(vars, TPLADD, "TMPV", "DEBUGVAL%d", lvl); 
+			if(cs_dblevel & lvl) 
+			{ 
+				tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMPC"), "debugls"); 
+				tpl_printf(vars, TPLADD, tpl_getVar(vars, "TMPV"), "%d", cs_dblevel - lvl); 
+			} 
+			else 
+			{ 
+				tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMPC"), "debugl"); 
+				tpl_printf(vars, TPLADD, tpl_getVar(vars, "TMPV"), "%d", cs_dblevel + lvl); 
+			} 
+		} 
+
+		if(cs_dblevel == D_ALL_DUMP) 
+			{ tpl_addVar(vars, TPLADD, "DCLASS65535", "debugls"); } 
+		else 
+			{ tpl_addVar(vars, TPLADD, "DCLASS65535", "debugl"); } 
+
+		tpl_addVar(vars, TPLADD, "NEXTPAGE", "status.html"); 
+		tpl_addVar(vars, TPLADD, "DCLASS", "debugl"); //default 
+		tpl_printf(vars, TPLADD, "ACTDEBUG", "%d", cs_dblevel); 
+		tpl_addVar(vars, TPLADD, "SDEBUG", tpl_getTpl(vars, "DEBUGSELECT")); 
+	}
+#endif 
+
+	if(cfg.http_status_log)	
+		tpl_addVar(vars, TPLADDONCE, "LOG_HISTORY", tpl_getTpl(vars, "LOGHISTORYBIT"));
 
 	if(apicall)
 	{
@@ -6986,17 +7053,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			tpl_addVar(vars, TPLADD, "CS_VERSION", CS_VERSION);
 			tpl_addVar(vars, TPLADD, "CS_SVN_VERSION", CS_SVN_VERSION);
 			tpl_addVar(vars, TPLADD, "CS_TARGET", CS_TARGET);
-#ifdef WITH_DEBUG
-			tpl_addVar(vars, TPLADD, "LOG_DEBUGMENU", tpl_getTpl(vars, "LOGDEBUGMENU"));
-#endif
-
-			if(cfg.http_oscam_label != NULL){
-				tpl_addVar(vars, TPLADD, "HTTPOSCAMLABEL", cfg.http_oscam_label);
-			}
-			else
-			{
-				tpl_addVar(vars, TPLADD, "HTTPOSCAMLABEL", "Oscam");
-			}
+			tpl_addVar(vars, TPLADD, "HTTPOSCAMLABEL", cfg.http_oscam_label);
 			tpl_addVar(vars, TPLADD, "HTTP_CHARSET", cs_http_use_utf8 ? "UTF-8" : "ISO-8859-1");
 			if(cfg.http_refresh > 0 && (pgidx == 3 || pgidx == -1))
 			{
@@ -7004,6 +7061,11 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
 				tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			}
+#ifdef WEBIF_JQUERY
+			tpl_addVar(vars, TPLADD, "SRCJQUERY", "jquery.js");
+#else
+			tpl_addVar(vars, TPLADD, "SRCJQUERY", cfg.http_extern_jquery);
+#endif
 
 			if(picon_exists("LOGO")||strlen(tpl_getTpl(vars, "IC_LOGO"))>3)
 				tpl_addVar(vars, TPLADD, "LOGO", tpl_getTpl(vars, "LOGOBIT"));
@@ -7135,12 +7197,12 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			case 28:
 				result = send_oscam_ghttp(vars, &params, 0);
 				break;
-
 #endif
+#ifdef WEBIF_LIVELOG
 			case 29:
 				result = send_oscam_logpoll(vars, &params);
 				break;
-				
+#endif				
 			default:
 				result = send_oscam_status(vars, &params, 0);
 				break;

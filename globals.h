@@ -1627,11 +1627,15 @@ struct s_config
 	char            *http_jscript;
 	char            *http_tpl;
 	char            *http_script;
+#ifndef WEBIF_JQUERY
+	char            *http_extern_jquery;
+#endif
 	int32_t         http_refresh;
 	int8_t          http_hide_idle_clients;
 	char            *http_hide_type;
 	int8_t          http_showpicons;
 	int8_t          http_picon_size;
+	int8_t          http_status_log;
 	int8_t          http_showmeminfo;
 	int8_t          http_showecminfo;
 	int8_t          http_showloadinfo;

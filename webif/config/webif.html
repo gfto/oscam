@@ -14,7 +14,7 @@
 			<TR><TD>##TPLHELPPREFIX##conf#serverip_9##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name="serverip" type="text" size="15" maxlength="15" value="##SERVERIP##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httpuser##TPLHELPSUFFIX##Http user:</A></TD><TD><input name="httpuser" type="text" size="63" maxlength="64" value="##HTTPUSER##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httppwd##TPLHELPSUFFIX##Http pwd:</A></TD><TD><input name="httppwd" type="text" size="63" maxlength="64" value="##HTTPPASSWORD##"></TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#httposcamlabel##TPLHELPSUFFIX##Oscam Label:</A></TD><TD><input name="httposcamlabel" type="text" size="63" maxlength="64" value="##HTTPOSCAMLABEL##"></TD></TR>
+			<TR><TD>##TPLHELPPREFIX##conf#httposcamlabel##TPLHELPSUFFIX##OSCam Label:</A></TD><TD><input name="httposcamlabel" type="text" size="63" maxlength="64" value="##HTTPOSCAMLABEL##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httprefresh##TPLHELPSUFFIX##Http refresh:</A></TD><TD><input name="httprefresh" type="text" size="5" maxlength="5" value="##HTTPREFRESH##"> s</TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httpallowed##TPLHELPSUFFIX##Http allowed:</A></TD><TD><input name="httpallowed" type="text" size="63" maxlength="200" value="##HTTPALLOW##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httphelplang##TPLHELPSUFFIX##Http Help Language (en|de|fr|it):</A></TD><TD><input name="httphelplang" type="text" size="3" maxlength="2" value="##HTTPHELPLANG##"></TD></TR>
@@ -34,6 +34,7 @@
 			<TR><TH></TH><TH>Script settings</TH></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httpjscript##TPLHELPSUFFIX##Http javascript:</A></TD><TD><input name="httpjscript" type="text" size="63" maxlength="127" value="##HTTPJSCRIPT##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httpscript##TPLHELPSUFFIX##Http script:</A></TD><TD><input name="httpscript" type="text" size="63" maxlength="127" value="##HTTPSCRIPT##"></TD></TR>
+##CONFIGWEBIFJQUERY##
 			<TR><TH></TH><TH>Picons settings</TH></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httpshowpicons##TPLHELPSUFFIX##Http Show Picons:</A></TD>
 				<TD>
@@ -46,10 +47,11 @@
 			<TR><TH></TH><TH>Show/Hide in Status</TH></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httphideidleclients##TPLHELPSUFFIX##Http Hide Idle Clients:</A></TD><TD><input name="httphideidleclients" value="0" type="hidden"><input name="httphideidleclients" type="checkbox" value="1" ##CHECKED##></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httphidetype##TPLHELPSUFFIX##Http Hide Type:</A></TD><TD><input name="httphidetype" type="text" size="10" maxlength="10" value="##HTTPHIDETYPE##"></TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#httpshowstats##TPLHELPSUFFIX##Show info in STATUS:</A></TD>
+			<TR><TD>##TPLHELPPREFIX##conf#httpshowstats##TPLHELPSUFFIX##Show in STATUS:</A></TD>
 				<TD>
 					<TABLE CLASS="invisible">
 						<TR>
+							<TD><input name="http_status_log" type="hidden" value="0"><input name="http_status_log" type="checkbox" value="1" ##SHOWLOGCHECKED##> Log</TD>
 							<TD><input name="httpshowmeminfo" type="hidden" value="0"><input name="httpshowmeminfo" type="checkbox" value="1" ##SHOWMEMINFOCHECKED##> Memory info</TD>
 							<TD><input name="httpshowloadinfo" type="hidden" value="0"><input name="httpshowloadinfo" type="checkbox" value="1" ##SHOWLOADINFOCHECKED##> Load info</TD>
 							<TD><input name="httpshowuserinfo" type="hidden" value="0"><input name="httpshowuserinfo" type="checkbox" value="1" ##SHOWUSERINFOCHECKED##> Users info</TD>

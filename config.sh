@@ -1,6 +1,6 @@
 #!/bin/sh
 
-addons="WEBIF TOUCH HAVE_DVBAPI IRDETO_GUESSING CS_ANTICASC WITH_DEBUG MODULE_MONITOR WITH_SSL WITH_LB CS_CACHEEX CW_CYCLE_CHECK LCDSUPPORT LEDSUPPORT IPV6SUPPORT CLOCKFIX"
+addons="WEBIF TOUCH HAVE_DVBAPI IRDETO_GUESSING CS_ANTICASC WITH_DEBUG MODULE_MONITOR WITH_SSL WITH_LB CS_CACHEEX CW_CYCLE_CHECK LCDSUPPORT LEDSUPPORT IPV6SUPPORT CLOCKFIX WEBIF_LIVELOG WEBIF_JQUERY"
 protocols="MODULE_CAMD33 MODULE_CAMD35 MODULE_CAMD35_TCP MODULE_NEWCAMD MODULE_CCCAM MODULE_CCCSHARE MODULE_GBOX MODULE_RADEGAST MODULE_SERIAL MODULE_CONSTCW MODULE_PANDORA MODULE_GHTTP"
 readers="READER_NAGRA READER_IRDETO READER_CONAX READER_CRYPTOWORKS READER_SECA READER_VIACCESS READER_VIDEOGUARD READER_DRE READER_TONGFANG READER_BULCRYPT READER_GRIFFIN READER_DGCRYPT"
 card_readers="CARDREADER_PHOENIX CARDREADER_INTERNAL CARDREADER_SC8IN1 CARDREADER_MP35 CARDREADER_SMARGO CARDREADER_DB2COM CARDREADER_STAPI CARDREADER_STINGER"
@@ -21,6 +21,8 @@ CONFIG_CW_CYCLE_CHECK=y
 # CONFIG_LEDSUPPORT=n
 # CONFIG_IPV6SUPPORT=n
 CONFIG_CLOCKFIX=y
+CONFIG_WEBIF_LIVELOG=y
+CONFIG_WEBIF_JQUERY=y
 # CONFIG_MODULE_CAMD33=n
 CONFIG_MODULE_CAMD35=y
 CONFIG_MODULE_CAMD35_TCP=y
@@ -273,6 +275,8 @@ update_deps() {
 	# Calculate dependencies
 	enabled_any $(get_opts readers) $(get_opts card_readers) && enable_opt WITH_CARDREADER >/dev/null
 	disabled_all $(get_opts readers) $(get_opts card_readers) && disable_opt WITH_CARDREADER >/dev/null
+	disabled WEBIF && disable_opt WEBIF_LIVELOG >/dev/null
+	disabled WEBIF && disable_opt WEBIF_JQUERY >/dev/null
 	enabled MODULE_CCCSHARE && enable_opt MODULE_CCCAM >/dev/null
 	enabled_any CARDREADER_DB2COM CARDREADER_MP35 CARDREADER_SC8IN1 CARDREADER_STINGER && enable_opt CARDREADER_PHOENIX >/dev/null
 }
@@ -409,6 +413,8 @@ print_components() {
 menu_addons() {
 	${DIALOG} --checklist "\nChoose add-ons:\n " $height $width $listheight \
 		WEBIF				"Web Interface"				$(check_test "WEBIF") \
+		WEBIF_LIVELOG			"LiveLog"					$(check_test "WEBIF_LIVELOG") \
+		WEBIF_JQUERY			"Jquery onboard (if disabled -> webload)"	$(check_test "WEBIF_JQUERY") \
 		TOUCH				"Touch Web Interface"				$(check_test "TOUCH") \
 		HAVE_DVBAPI			"DVB API"					$(check_test "HAVE_DVBAPI") \
 		IRDETO_GUESSING		"Irdeto guessing"			$(check_test "IRDETO_GUESSING") \
@@ -421,8 +427,8 @@ menu_addons() {
 		CW_CYCLE_CHECK			"CW Cycle Check"			$(check_test "CW_CYCLE_CHECK") \
 		LCDSUPPORT			"LCD support"				$(check_test "LCDSUPPORT") \
 		LEDSUPPORT			"LED support"				$(check_test "LEDSUPPORT") \
-		IPV6SUPPORT			"IPv6 support (experimental)"		$(check_test "IPV6SUPPORT") \
 		CLOCKFIX			"Clockfix (disable on old systems!)"		$(check_test "CLOCKFIX") \
+		IPV6SUPPORT			"IPv6 support (experimental)"		$(check_test "IPV6SUPPORT") \
 		2> ${tempfile}
 
 	opt=${?}

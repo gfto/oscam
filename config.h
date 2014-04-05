@@ -2,6 +2,8 @@
 #define CONFIG_H_
 
 #define WEBIF 1
+#define WEBIF_LIVELOG 1
+#define WEBIF_JQUERY 1
 #define TOUCH 1
 //#define WITH_SSL 1
 #if defined(__linux__)

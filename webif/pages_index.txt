@@ -13,9 +13,9 @@ JSONHEADER                    api.json/header.json
 BODY                          include/body.html
 CSS                           include/css.css
 JSCRIPT                       include/jscript.js
-JQUERY                        include/jquery.js
-PROTONEWCAMDPIC               include/protonewcamdpic.html
-PROTOCCCAMPIC                 include/protocccampic.html
+JQUERY                        include/jquery.js                                           WEBIF_JQUERY
+PROTONEWCAMDPIC               include/protonewcamdpic.html                                MODULE_NEWCAMD
+PROTOCCCAMPIC                 include/protocccampic.html                                  MODULE_CCCAM
 PROTOOTHERPIC                 include/protootherpic.html
 TOUCH_CSS                     touch/css.css                                               TOUCH
 TOUCH_STATUS                  touch/status.html                                           TOUCH
@@ -49,11 +49,11 @@ JSONREADERBIT                 api.json/readerbit.json
 JSONCACHEEX                   api.json/cacheex.json                                      CS_CACHEEX
 JSONCACHEEXBIT                api.json/cacheexbit.json                                   CS_CACHEEX
 CLIENTSTATUSBIT               status/status_clientstatusbit.html
-CLIENTLBLVALUEBIT             status/status_lblvaluereaderbit.html
+CLIENTLBLVALUEBIT             status/status_lblvaluereaderbit.html                        WITH_LB
 CLIENTCURRENTCHANNEL          status/status_currentchannel.html
 CLIENTCURRENTCHANNELBIT       status/status_currentchannelbit.html
 CLIENTCURRENTCHANNELPIC       status/status_currentchannelpic.html
-CLIENTLBLVALUERP              status/status_lbvaluereaderproxy.html
+CLIENTLBLVALUERP              status/status_lbvaluereaderproxy.html                       WITH_LB
 CLIENTHEADLINEBIT             status/status_clientheadlinebit.html
 CLIENTHEADLINEWITH            status/status_clientheadlinewith.html
 CLIENTPHEADLINE               status/status_pheadline.html
@@ -93,12 +93,13 @@ READERSTATSROWTIMEOUTBIT      readerstats/readerstatstimeoutbit.html
 READERSTATSROWNOTFOUNDBIT     readerstats/readerstatsnotfound.html
 SCANUSB                       scanusb/scanusb.html
 SCANUSBBIT                    scanusb/scanusb_usbbit.html
-CCENTITLEMENTS                include/cccamentitlements.html
-CCENTITLETOOLTIP              include/cccamentitletooltip.html
+CCENTITLEMENTS                include/cccamentitlements.html                              MODULE_CCCAM
+CCENTITLETOOLTIP              include/cccamentitletooltip.html                            MODULE_CCCAM
 NOENTITLEMENTS                include/noentitlements.html
 FOUNDENTITLEMENTS             include/foundentitlements.html
-LOGPAGE                       logpage/logpage.html
-LOGDEBUGMENU                  logpage/logpage_debugmenu.html
+LOGPAGE                       logpage/logpage.html                                        WEBIF_LIVELOG
+LOGMENU                       logpage/logpage_menu.html                                   WEBIF_LIVELOG
+LOGDEBUGMENU                  logpage/logpage_debugmenu.html                              WEBIF_LIVELOG
 POLL                          include/poll.html
 ENTITLEMENTS                  entitlements/entitlements.html                              WITH_CARDREADER,MODULE_CCCAM
 ENTITLEMENTGENERICBIT         entitlements/entitlements_genericbit.html                   WITH_CARDREADER
@@ -118,11 +119,11 @@ READERCONFIGSIDOKBIT          readerconfig/readerconfig_sidokbit.html
 READERCONFIGSIDNOBIT          readerconfig/readerconfig_sidnobit.html
 READERCONFIGSIDLBOKBIT        readerconfig/readerconfig_sidlbokbit.html
 READERCONFIGSTDHWREADERBIT    readerconfig/readerconfig_hwreader.html                     WITH_CARDREADER
-READERCONFIGHOPBIT            readerconfig/readerconfig_hopbit.html
+READERCONFIGHOPBIT            readerconfig/readerconfig_hopbit.html                       MODULE_CCCAM
 READERCONFIGCAMD35BIT         readerconfig/readerconfig_camd35bit.html                    MODULE_CAMD35
 READERCONFIGCS378XBIT         readerconfig/readerconfig_cs378xbit.html                    MODULE_CAMD35_TCP
 READERCONFIGRADEGASTBIT       readerconfig/readerconfig_radegastbit.html                  MODULE_RADEGAST
-READERCONFIGGHTTPBIT          readerconfig/readerconfig_ghttpbit.html
+READERCONFIGGHTTPBIT          readerconfig/readerconfig_ghttpbit.html                     MODULE_GHTTP
 READERCONFIGGBOXBIT           readerconfig/readerconfig_gboxbit.html                      MODULE_GBOX
 READERCONFIGNCD525BIT         readerconfig/readerconfig_ncd525bit.html                    MODULE_NEWCAMD
 READERCONFIGNCD524BIT         readerconfig/readerconfig_ncd524bit.html                    MODULE_NEWCAMD
@@ -143,12 +144,13 @@ APIFAILBAN                    api.xml/failban.xml
 FAILBANBIT                    failban/failban_failbanrow.html
 APIFAILBANBIT                 api.xml/failban_failbanrow.xml
 CONFIGGBOX                    config/gbox.html                                            MODULE_GBOX
-CONFIGMONITOR                 config/monitor.html
+CONFIGMONITOR                 config/monitor.html                                         MODULE_MONITOR
 CONFIGWEBIF                   config/webif.html
-CONFIGLCD                     config/lcd.html
+CONFIGWEBIFJQUERYBIT          config/webif_show_jquery.html
+CONFIGLCD                     config/lcd.html                                             LCDSUPPORT
 CONFIGGLOBAL                  config/global.html
 CONFIGCACHE                   config/cache.html
-CONFIGSERIALDEVICEBIT         config/serial_devices.html
+CONFIGSERIALDEVICEBIT         config/serial_devices.html                                  MODULE_SERIAL
 SERVICECONFIGLIST             services/services.html
 SERVICECONFIGLISTBIT          services/services_servicetabs.html
 SERVICECONFIGSIDBIT           services/services_servicetabs_sidlist.html
@@ -183,6 +185,7 @@ CONFIGMENUMONITOR             config/menu_monitor.html                          
 CONFIGMENUWEBIF               config/menu_webif.html
 CONFIGMENULCD                 config/menu_lcd.html                                        LCDSUPPORT
 ENABLELEDBIT                  config/global_enableledbit.html                             LEDSUPPORT
+LOGHISTORYBIT                 status/status_loghistory.html
 DEBUGSELECT                   status/status_sdebug.html                                   WITH_DEBUG
 CONFIGMENULB                  config/menu_loadbalancer.html                               WITH_LB
 CONFIGLOADBALANCER            config/loadbalancer.html                                    WITH_LB

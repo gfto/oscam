@@ -317,6 +317,8 @@ static void write_versionfile(bool use_stdout)
 	fprintf(fp, "ConfigDir:      %s\n", cs_confdir);
 	fprintf(fp, "\n");
 	write_conf(WEBIF, "Web interface support");
+	write_conf(WEBIF_LIVELOG, "LiveLog support");
+	write_conf(WEBIF_JQUERY, "jQuery support intern");
 	write_conf(TOUCH, "Touch interface support");
 	write_conf(WITH_SSL, "SSL support");
 	write_conf(HAVE_DVBAPI, "DVB API support");
