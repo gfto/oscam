@@ -283,7 +283,7 @@ static uint16_t gbox_convert_password_to_id(uchar *password)
 	return (password[0] ^ password[2]) << 8 | (password[1] ^ password[3]);
 }
 
-void gbox_add_good_card(struct s_client *cl, uint16_t id_card, uint16_t caid, uint32_t prov, uint16_t sid_ok, uint32_t cw_time)
+void gbox_add_good_card(struct s_client *cl, uint16_t id_card, uint16_t caid, uint8_t slot, uint16_t sid_ok, uint32_t cw_time)
 {
 	struct gbox_peer *peer = cl->gbox;
 	struct gbox_card *card = NULL;
@@ -292,7 +292,7 @@ void gbox_add_good_card(struct s_client *cl, uint16_t id_card, uint16_t caid, ui
 	LL_ITER it = ll_iter_create(peer->gbox.cards);
 	while((card = ll_iter_next(&it)))
 	{
-		if(card->peer_id == id_card && card->caid == caid && card->provid == prov)
+		if(card->peer_id == id_card && card->caid == caid && card->slot == slot)
 		{
 			card->no_cws_returned++;
 			if (!card->no_cws_returned)
@@ -1574,7 +1574,7 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
 {
 	if(gbox_decode_cmd(data) == MSG_CW && n > 43)
 	{
-		int i, k;
+		int i;
 		uint16_t id_card = 0;
 		struct s_client *cl;
 		if(cli->typ != 'p')
@@ -1594,19 +1594,16 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
 					  data[10] << 8 | data[11], data[6] << 8 | data[7], data[8] << 8 | data[9], crc, data[41], data[42] & 0x0f, data[42] >> 4, data[43], data[37] << 8 | data[38]);
 
 		struct timeb t_now;				
-		for(i = 0, k = 0; i < cfg.max_pending && k == 0; i++)
+		cs_ftime(&t_now);
+		for(i = 0; i < cfg.max_pending; i++)
 		{
 			if(cl->ecmtask[i].gbox_crc == crc)
 			{
 				id_card = data[10] << 8 | data[11];
-				cs_ftime(&t_now);
-				gbox_add_good_card(cl, id_card, cl->ecmtask[i].caid, cl->ecmtask[i].prid, cl->ecmtask[i].srvid, comp_timeb(&t_now, &cl->ecmtask[i].tps));
+				gbox_add_good_card(cl, id_card, cl->ecmtask[i].caid, data[36], cl->ecmtask[i].srvid, comp_timeb(&t_now, &cl->ecmtask[i].tps));
 				if(cl->ecmtask[i].gbox_ecm_ok == 0 || cl->ecmtask[i].gbox_ecm_ok == 2)
 					{ return -1; }
-				struct s_ecm_answer ea;
-				memset(&ea, 0, sizeof(struct s_ecm_answer));
 				cl->ecmtask[i].gbox_ecm_ok = 2;
-				memcpy(ea.cw, dcw, 16);
 				*rc = 1;
 				return cl->ecmtask[i].idx;
 			}
