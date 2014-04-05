@@ -680,7 +680,7 @@ DESCRIPTIONS
        hostname = hostname| IP address
 	  set hostname or IP address for gbox protocol, default:none
 
-       port = port
+       port = port[,port]...
 	  UDP port for gbox server, default:0
 
        my_password = password
