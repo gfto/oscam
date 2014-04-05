@@ -1,7 +1,7 @@
 ##TPLHEADER##
 ##TPLMENU##
 ##TPLFILEMENU##
-<SCRIPT LANGUAGE="JavaScript">function gotosite(){var URL = document.gotoform.url_list.options[document.gotoform.url_list.selectedIndex].value; window.location.href = URL;}</SCRIPT>
+<SCRIPT type="text/javascript">function gotosite(){var URL = document.gotoform.url_list.options[document.gotoform.url_list.selectedIndex].value; window.location.href = URL;}</SCRIPT>
 <P ID="filename">##APIFILENAME##</P>
 ##TPLMESSAGE##
 ##SDEBUG##
@@ -11,6 +11,6 @@
 		<input type="hidden" name="file" value="##PART##">
 		<textarea name="filecontent" class="editor" rows="50" cols="200">##FILECONTENT##</textarea>
 		##WRITEPROTECTION##
-		<P ID="filename"><input type="submit" name="action" value="Save" title="Save file" ##BTNDISABLED##></P>
+		<P ID="filesubmit"><input type="submit" name="action" value="Save" title="Save file" ##BTNDISABLED##></P>
 	</form>
 ##TPLFOOTER##

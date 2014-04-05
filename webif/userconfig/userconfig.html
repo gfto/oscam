@@ -11,25 +11,27 @@
 	</script>
 ##TPLBODY##
 ##TPLMENU##
-##TPLMESSAGE##
 	<DIV ID="subnav">
 		<UL ID="nav">
 			<LI CLASS="configmenu"><A HREF="#" onclick="adduser();">Add User</A></LI>
 			<LI CLASS="configmenu"><A HREF="userconfig.html?action=reinit">Reinit User DB</A></LI>
 			<LI CLASS="configmenu"><A HREF="userconfig.html?action=resetalluserstats">Reset Userstats</A></LI>
 			<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=users&amp;hidelabels=1">Show Graphs</A></LI>
-			<LI ID="poll" CLASS="pollselect" style="display: none;">Pollintervall:<input type="text" name="pintervall" class="pintervall" value="" readonly/>sec.<button id="dec">&ndash;</button><button id="inc">+</button></LI>
+			<LI ID="poll" CLASS="pollselect" style="display: none;">Pollintervall:<input type="text" name="pintervall" class="pintervall" value="" readonly>sec.<button id="dec">&ndash;</button><button id="inc">+</button></LI>
 			<LI ID="nopoll" CLASS="pollselect" style="display: none;">httprefresh no set - polling disabled</LI>
 		</UL>
 	</DIV>
+##TPLMESSAGE##
 	<DIV ID="newuser">
+		<form action="user_edit.html" method="get">
 		<TABLE CLASS="users">
-			<TR><form action="user_edit.html" method="get"><TH>New User: <input name="user" type="text"><input type="submit" value="Add User"></TH></form></TR>
+			<TR><TH>New User: <input name="user" type="text"><input type="submit" value="Add User"></TH></TR>
 		</TABLE>
+		</form>
 	</DIV>
 	<DIV ID="searchTable">
 		<TABLE CLASS="users">
-			<TR><TH>Search: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="initDoc()" /></TH></TR>
+			<TR><TH>Search: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="initDoc()"></TH></TR>
 		</TABLE>
 	</DIV>
 	<TABLE ID="dataTable" CLASS="users">

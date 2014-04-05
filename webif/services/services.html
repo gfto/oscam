@@ -1,15 +1,17 @@
 ##TPLHEADER##
 ##TPLMENU##
 	<DIV ID="subnav">
-		<UL ID="nav"></UL>
+		<UL ID="nav"><LI></LI></UL>
 	</DIV>
 ##TPLMESSAGE##
 	<DIV ID="newservice">
+		<form action="services_edit.html" method="get">
 		<TABLE ID="addnewservice">
 			<TR>
-				<form action="services_edit.html" method="get"><TH>Service Name: <input name="service" type="text"><input type="submit" value="Add" title="Add new Service" ##BTNDISABLED##></TH></form>
+				<TH>Service Name: <input name="service" type="text"><input type="submit" value="Add" title="Add new Service" ##BTNDISABLED##></TH>
 			</TR>
 		</TABLE>
+		</form>
 	</DIV>
 	<TABLE ID="servicesedit">
 		<TR>

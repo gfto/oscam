@@ -27,7 +27,7 @@ p.text-large-red {
 	font-size:large
 }
 /* in file.html, script.html */
-#filename {
+#filename,#filesubmit {
 	font-weight:700;
 	font-size:14px;
 	margin: 10px 0
@@ -672,7 +672,7 @@ path.graph_grid {stroke-opacity:0.5;}
 #livelogdata {
 	list-style:none;
 }
-li.regex {
+li.regex, li.regexdata_nav, li.regexdata_save{
 	list-style-type:none;
 	white-space:nowrap
 }
@@ -682,11 +682,11 @@ input.regexinput {
 	margin: 3px 15px 1px 3px;
 	width:400px;
 }
-#regexdata_nav input {
+.regexdata_nav input {
 	width:100px;
 	margin-bottom:8px
 }
-#regexdata_save input {
+.regexdata_save input {
 	width:90px;
 	margin-top:10px
 }
@@ -817,7 +817,7 @@ table.status {
 }
 
 /* TABLE TR */
-tr.online td#lastchannel.usercol6 {background-color:#949494;color:#FFF}
+tr.online td.usercol6 {background-color:#949494;color:#FFF}
 tr.online td {background-color:#BFA}
 tr.offline td {}
 tr.expired td {background-color:#FBA}
@@ -947,7 +947,4 @@ div.bar {
 	position: relative;
 	background-color: #aeaeae;
 	vertical-align: baseline;
-}
-.statuslog{
-	display:none;
 }

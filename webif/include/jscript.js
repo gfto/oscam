@@ -335,23 +335,37 @@ function updateUserpage(data) {
 
 			// channel icon
 			$( uid + " td.usercol6").attr( 'title', item.user.lastchanneltitle );
+
 			if(item.user.lca.length > 0){
-				var image;
-				if($( uid + " td.usercol6").html().length == 0 ) {
-					image = $('<img class="usericon" src="image?i=IC_' + item.user.lca + '" />');
-					image.hide();
-					$( uid + " td.usercol6" ).prepend(image);
-					image.fadeIn('slow');
-				} else {
-					image = $( uid + " td.usercol6 img.usericon");
-					if(image.attr('src') != ('image?i=IC_' + item.user.lca)) {
-						image.fadeOut('fast', function () {
-							image.attr('src', 'image?i=IC_' + item.user.lca );
-							image.fadeIn('slow');
-						});
-						image.attr('alt', item.user.lcb );
+				// if we already have a picon within link
+				if($( uid + " > td.usercol6 > img.usericon" ).length){
+					// we compare the picon name and switch if different
+					var image = $( uid + " > td.usercol6 > img.usericon");
+					if( image.attr('src') != 'image?i=IC_' + item.user.lca){
+						// set title of link as tooltip
+						image.hide();
+						image.attr('src', 'image?i=IC_' + item.user.lca);
+						image.fadeIn('slow');
+						image.attr('alt', item.user.lastchanneltitle );
 						image.attr('title', item.user.lastchanneltitle );
 					}
+				} else {
+					// we have no image so we have to create one
+
+					// if we have picon clear text
+					$( uid + " > td.usercol6").text('');
+
+					// just to be sure that class of image is set
+					if($( uid + " > td.usercol6 > img" ).length){
+						$( uid + " > td.usercol6 > img" ).attr( 'class', 'usericon' );
+					}
+
+					newimage = $('<img class="usericon" src="image?i=IC_' + item.user.lca +'">');
+					newimage.hide();
+					$( uid + " > td.usercol6").append(newimage);
+					newimage.fadeIn('slow');
+					newimage.attr('alt', item.user.lastchanneltitle );
+					newimage.attr('title', item.user.lastchanneltitle );
 				}
 			} else {
 				$( uid + " td.usercol6").html(item.user.lastchannel );
