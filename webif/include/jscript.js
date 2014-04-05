@@ -278,6 +278,7 @@ $(function(){
 	});
 
 	$("#onlineidle").click(function(){
+		if (!httprefresh) return;
 		if($("#onlineidle").text() == 'Login*') {
 			$("#onlineidle")
 				.text('Online & Idle*')
@@ -1116,7 +1117,7 @@ $(document).ready(function() {
 		default:
 			if (page == 'status') {
 				$( "#chart" ).hide();
-				if(!nostorage) {
+				if(!nostorage && httprefresh) {
 					if (localStorage.loi == 'Login*') {
 						$("#onlineidle")
 							.text('Login*')

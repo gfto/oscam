@@ -4401,7 +4401,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					{
 						if((cl->typ != 'p' && cl->typ != 'r') || cl->reader->card_status == CARD_INSERTED)
 						{
-							tpl_printf(vars, TPLADD, "CLIENTLOGINDATE", "%02d.%02d.%02d  %02d:%02d:%02d", lt.tm_mday, lt.tm_mon + 1, lt.tm_year % 100, lt.tm_hour, lt.tm_min, lt.tm_sec);
+							tpl_printf(vars, TPLADD, "CLIENTLOGINDATE", "%02d.%02d.%02d<BR>%02d:%02d:%02d", lt.tm_mday, lt.tm_mon + 1, lt.tm_year % 100, lt.tm_hour, lt.tm_min, lt.tm_sec);
 							tpl_addVar(vars, TPLADD, "CLIENTLOGINSECS", sec2timeformat(vars, lsec));
 						}
 						else
