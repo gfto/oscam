@@ -348,6 +348,8 @@ void add_cache(ECM_REQUEST *er){
 		if(add_new_cw){
 			debug_ecm(D_CACHEEX|D_CSP, "got pushed ECM %s from %s", buf, er->from_csp ? "csp" : username(er->cacheex_src));
 
+			if(er->cw && get_first_cw(result)->cw)
+			
 			//compare er cw with mostly counted cached cw
 			if(memcmp(er->cw, get_first_cw(result)->cw, sizeof(er->cw)) != 0) {
 				er->cacheex_src->cwcacheexerrcw++;
