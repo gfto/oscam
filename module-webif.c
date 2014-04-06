@@ -3998,13 +3998,12 @@ static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * p
 		pos1 = strcspn(p_txt, "\n") + 1;
 		char str_out[pos1];
 		cs_strncpy(str_out, p_txt, pos1);
-		uint64_t *id;
-		id = (uint64_t*)(loghistid + (ptr1-loghist)/3);
+		uint64_t id = b2ll(8, (uchar *) (loghistid + ((ptr1-loghist)/3)));
 
-		if(*id > lastid){
+		if(id > lastid){
 			tpl_printf(vars, TPLAPPEND, "DATA","%s{\"id\":\"%" PRIu64 "\",\"usr\":\"%s\",\"line\":\"%s\"}",
 									dot,
-									*id,
+									id,
 									xml_encode(vars, p_usr),
 									xml_encode(vars, str_out));
 			dot = ","; // next in Array with leading delimiter

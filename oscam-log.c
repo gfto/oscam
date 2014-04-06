@@ -360,9 +360,7 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 		++counter;
 		cs_writeunlock(&loghistory_lock);
 		snprintf(target_ptr, target_len + 1, "%s\t%s", usrtxt, txt + 8);
-		uint64_t *id;
-		id = (uint64_t*)(loghistid + (target_ptr-loghist)/3);
-		*id = counter;
+		ull2b_buf(counter, (uchar *)(loghistid + ((target_ptr-loghist)/3)));
 	}
 #endif
 

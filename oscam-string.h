@@ -25,6 +25,7 @@ int32_t key_atob_l(char *asc, uchar *bin, int32_t l);
 uint32_t b2i(int32_t n, const uchar *b);
 uint64_t b2ll(int32_t n, uchar *b);
 uchar *i2b_buf(int32_t n, uint32_t i, uchar *b);
+void ull2b_buf(uint64_t i, uchar *b);
 uint32_t a2i(char *asc, int32_t bytes);
 
 int32_t boundary(int32_t exp, int32_t n);

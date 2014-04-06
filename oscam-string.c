@@ -312,6 +312,18 @@ uchar *i2b_buf(int32_t n, uint32_t i, uchar *b)
 	return b;
 }
 
+void ull2b_buf(uint64_t i, uchar *b)
+{
+	b[0] = (i >> 56) & 0xff;
+	b[1] = (i >> 48) & 0xff;
+	b[2] = (i >> 40) & 0xff;
+	b[3] = (i >> 32) & 0xff;
+	b[4] = (i >> 24) & 0xff;
+	b[5] = (i >> 16) & 0xff;
+	b[6] = (i >> 8) & 0xff;
+	b[7] = (i) & 0xff;
+}
+
 uint32_t a2i(char *asc, int32_t bytes)
 {
 	int32_t i, n;
