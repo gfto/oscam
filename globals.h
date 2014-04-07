@@ -1707,6 +1707,7 @@ struct s_config
 	char            *gbox_hostname;
 	int32_t         gbox_reconnect;
 	char            gbox_my_password[9];
+	char            gbox_my_vers[3];
 #endif
 #ifdef MODULE_SERIAL
 	char            *ser_device;

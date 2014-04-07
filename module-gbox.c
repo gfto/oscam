@@ -56,7 +56,6 @@
 #define STATS_WRITE_TIME	300 //write stats file every 5 min
 
 #define LOCAL_GBOX_MAJOR_VERSION	0x02
-#define LOCAL_GBOX_MINOR_VERSION	0x25
 #define LOCAL_GBOX_TYPE			0x40
 
 enum
@@ -140,6 +139,13 @@ static uint16_t gbox_convert_password_to_id(uchar *password);
 uint32_t gbox_get_ecmchecksum(ECM_REQUEST *er);
 static void	init_local_gbox(void);
 
+static uint8_t gbox_get_my_vers (void)
+{
+	uint8_t gbx_vers = a2i(cfg.gbox_my_vers,1);
+
+	return gbx_vers;
+}
+
 void gbox_write_peer_onl(void)
 {
 	FILE *fhandle = fopen(FILE_GBOX_PEER_ONL, "w");
@@ -172,7 +178,7 @@ void gbox_write_version(void)
 		cs_log("Couldn't open %s: %s\n", FILE_GBOX_VERSION, strerror(errno));
 		return;
 	}
-	fprintf(fhandle, "%02X.%02X\n", LOCAL_GBOX_MAJOR_VERSION, LOCAL_GBOX_MINOR_VERSION);
+	fprintf(fhandle, "%02X.%02X\n", LOCAL_GBOX_MAJOR_VERSION, gbox_get_my_vers());
 	fclose(fhandle);
 }
 
@@ -932,8 +938,7 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 		} else 
 		{
 			// if my pass ok verify CW | pass to peer
-			if(((data[39] != ((local_gbox.id >> 8) & 0xff)) || (data[40] != (local_gbox.id & 0xff))) &&
-				((data[40] != ((local_gbox.id >> 8) & 0xff)) || (data[41] != (local_gbox.id & 0xff)))) //some mbox CW messages are corrupt
+			if((data[39] != ((local_gbox.id >> 8) & 0xff)) || (data[40] != (local_gbox.id & 0xff))) 	
 			{
 				cs_log("gbox peer: %04X sends CW for other than my id: %04X", cli->gbox_peer_id, local_gbox.id);
 				return -1;
@@ -1729,7 +1734,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 
 	send_buf_1[len2]   = (local_gbox.id >> 8) & 0xff;
 	send_buf_1[len2 + 1] = local_gbox.id & 0xff;
-	send_buf_1[len2 + 2] = LOCAL_GBOX_MINOR_VERSION;
+	send_buf_1[len2 + 2] = gbox_get_my_vers();
 	send_buf_1[len2 + 3] = 0x00;
 	send_buf_1[len2 + 4] = LOCAL_GBOX_TYPE;
 
@@ -1852,7 +1857,7 @@ static void init_local_gbox(void)
 	local_gbox.id = 0;
 	memset(&local_gbox.password[0], 0, 4);
 	memset(&local_gbox.checkcode[0], 0, 7);
-	local_gbox.minor_version = LOCAL_GBOX_MINOR_VERSION;
+	local_gbox.minor_version = gbox_get_my_vers();
 	local_gbox.type = LOCAL_GBOX_TYPE;
 
 	if(!cfg.gbox_my_password || strlen(cfg.gbox_my_password) != 8) { return; }

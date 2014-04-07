@@ -809,6 +809,7 @@ static const struct config_list gbox_opts[] =
 	DEF_OPT_STR("hostname"		,OFS(gbox_hostname),		NULL),
 	DEF_OPT_INT32("gbox_reconnect"	, OFS(gbox_reconnect),		DEFAULT_GBOX_RECONNECT),
 	DEF_OPT_SSTR("my_password"	, OFS(gbox_my_password),	"", SIZEOF(gbox_my_password)),
+	DEF_OPT_SSTR("my_vers"		, OFS(gbox_my_vers),		"25", SIZEOF(gbox_my_vers)),
 	DEF_LAST_OPT
 };
 #else
