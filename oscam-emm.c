@@ -611,12 +611,13 @@ void do_emm_from_file(struct s_reader *reader)
 	}
 	fclose(fp);
 
+	if (eptmp) {
 	eptmp->caid[0] = (reader->caid >> 8) & 0xFF;
 	eptmp->caid[1] = reader->caid & 0xFF;
 	if(reader->nprov > 0)
 		{ memcpy(eptmp->provid, reader->prid[0], sizeof(eptmp->provid)); }
 	eptmp->emmlen = eptmp->emm[2] + 3;
-
+}
 	struct s_cardsystem *cs = get_cardsystem_by_caid(reader->caid);
 	if(cs && cs->get_emm_type && !cs->get_emm_type(eptmp, reader))
 	{
