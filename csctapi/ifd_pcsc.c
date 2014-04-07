@@ -119,9 +119,12 @@ static int32_t pcsc_init(struct s_reader *pcsc_reader)
 			return ERROR;
 		}
 
+		if (readers)
+		{
 		snprintf(crdr_data->pcsc_name, sizeof(crdr_data->pcsc_name), "%s", readers[reader_nb]);
-		NULLFREE(mszReaders);
 		NULLFREE(readers);
+		}
+		NULLFREE(mszReaders);
 	}
 	else
 	{

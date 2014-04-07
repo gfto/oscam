@@ -486,12 +486,14 @@ static int32_t MCR_DisplayText(struct s_reader *reader, char *text, uint16_t tex
 			NULLFREE(display);
 			return ERROR;
 		}
+if (display) {
 		memcpy(display->text, text, text_len);
 		display->text_length = text_len;
 		display->char_change_time = ch_time;
 		display->last_char = 0;
 		display->blocking = blocking;
 		display->next = NULL;
+		}
 		cs_writelock(&crdr_data->sc8in1_display_lock);
 		if(crdr_data->display == NULL)
 		{
