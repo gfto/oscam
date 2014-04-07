@@ -610,27 +610,29 @@ int8_t get_stats_linux(const pid_t pid, struct pstat* result)
 
 	FILE *f_stat = fopen("/proc/stat", "r");
 	if (!f_stat) {
+		fclose(f_pstat);
 		cs_log("ERROR: Can't open /proc/stat for reading: %s", strerror(errno));
 		return -1;
 	}
 
 	// read values from /proc/pid/stat
 	uint64_t rss;
-	if (fscanf(f_pstat, "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %" SCNu32
-				"%" SCNu32 "%" SCNd32 "%" SCNd32 "%*d %*d %*d %*d %*u %" SCNu64 "%" SCNu64,
+	if (fscanf(f_pstat, "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %" SCNd64
+				"%" SCNd64 "%" SCNd64 "%" SCNd64 "%*d %*d %*d %*d %*u %" SCNu64 "%" SCNu64,
 				&result->utime_ticks,&result->stime_ticks,
 				&result->cutime_ticks,&result->cstime_ticks,&result->vsize,
 				&rss) == EOF)
 	{
 		fclose(f_pstat);
+		fclose(f_stat);
 		return -1;
 	}
 	fclose(f_pstat);
 	result->rss = rss * getpagesize();
 
 	// read+calc cpu total time from /proc/stat
-	uint32_t cpu_time[10];
-	if (fscanf(f_stat, "%*s %" SCNu32 "%" SCNu32 "%" SCNu32 "%" SCNu32 "%" SCNu32 "%" SCNu32 "%" SCNu32 "%" SCNu32 "%" SCNu32 "%" SCNu32,
+	int64_t cpu_time[10] = {0,0,0,0,0,0,0,0,0,0};
+	if (fscanf(f_stat, "%*s %" SCNd64 "%" SCNd64 "%" SCNd64 "%" SCNd64 "%" SCNd64 "%" SCNd64 "%" SCNd64 "%" SCNd64 "%" SCNd64 "%" SCNd64,
 				&cpu_time[0], &cpu_time[1], &cpu_time[2], &cpu_time[3],
 				&cpu_time[4], &cpu_time[5], &cpu_time[6], &cpu_time[7],
 				&cpu_time[8], &cpu_time[9]) == EOF)
@@ -639,8 +641,9 @@ int8_t get_stats_linux(const pid_t pid, struct pstat* result)
 		return -1;
 	}
 	fclose(f_stat);
-	int i;
+	int8_t i;
 	result->cpu_total_time = 0;
+	// FIXME: On 32 Bit platforms, the single cpu times can overflow quite easily (clock_t from /proc/stat normally refers to a int32 here) resulting in useless calculation results!
 	for(i = 0; i < 10; i++) {
 		result->cpu_total_time += cpu_time[i];
 	}
@@ -683,8 +686,8 @@ void calc_cpu_usage_pct(struct pstat* cur_usage, struct pstat* last_usage)
 		cur_usage->check_available |= (1 << 10);
 	}
 	else{
-		int32_t cur_ticks = cur_usage->utime_ticks + cur_usage->cutime_ticks;
-		int32_t last_ticks = last_usage->utime_ticks + last_usage->cutime_ticks;
+		int64_t cur_ticks = cur_usage->utime_ticks + cur_usage->cutime_ticks;
+		int64_t last_ticks = last_usage->utime_ticks + last_usage->cutime_ticks;
 		//reset flags if set bevore
 		cur_usage->check_available &= ~(1 << 8);
 		cur_usage->check_available &= ~(1 << 9);

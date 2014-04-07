@@ -58,11 +58,11 @@ struct s_nonce
 
 //should be filled with informations for stats block
 struct pstat {
-	uint32_t utime_ticks;
-	int32_t cutime_ticks;
-	uint32_t stime_ticks;
-	int32_t cstime_ticks;
-	uint32_t cpu_total_time;
+	int64_t utime_ticks;
+	int64_t cutime_ticks;
+	int64_t stime_ticks;
+	int64_t cstime_ticks;
+	int64_t cpu_total_time;
 	uint64_t vsize; // virtual memory size in bytes
 	uint64_t rss; //Resident  Set  Size in bytes
 	uint64_t mem_total;  // Total Memory in bytes

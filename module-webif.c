@@ -7385,6 +7385,8 @@ static void *http_server(void *UNUSED(d))
 
 	cs_lock_create(&http_lock, "http_lock", 10000);
 	init_noncelocks();
+	
+	memset(&p_stat_cur, 0x0, sizeof(p_stat_cur));
 
 	if(pthread_key_create(&getip, NULL))
 	{
