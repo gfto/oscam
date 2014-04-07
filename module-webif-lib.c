@@ -485,6 +485,7 @@ void send_file(FILE *f, char *filename, char *subdir, time_t modifiedheader, uin
 				send_error500(f);
 				return;
 			}
+			if (CSS)
 			snprintf(allocated, newsize, "%s\n%s\n%s",
 					 CSS, separator, (oldallocated != NULL ? oldallocated : ""));
 			if(oldallocated) { NULLFREE(oldallocated); }
