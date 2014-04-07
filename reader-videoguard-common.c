@@ -1173,13 +1173,11 @@ void videoguard_mail_msg(struct s_reader *rdr, uint8_t *data)
 			NULLFREE(msg);
 			return;
 		}
-		if (msg) {
 		memset(msg->message, 0, msg_size);
 		memcpy(&msg->message[submsg_idx], &data[15], submsg_len);
 		msg->subject = 0;
 		ll_append(vg_msgs, msg);
-}
-		}
+	}
 	else
 	{
 		if(msg->written == 1 || msg->mask & (1 << idx))
