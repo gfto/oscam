@@ -2428,6 +2428,7 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes %s", (int32_t)count, username(cl));
 	//Read lastnodes:
 	uint8_t *data;
+	if (er)
 	er->csp_lastnodes = ll_create("csp_lastnodes");
 	while(count)
 	{
