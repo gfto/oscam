@@ -895,8 +895,9 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 			return;
 		}
 		cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes %s", (int32_t)count, username(cl));
-		if (er)
-		er->csp_lastnodes = ll_create("csp_lastnodes");
+		if (er){
+			er->csp_lastnodes = ll_create("csp_lastnodes");
+		}
 		while(count)
 		{
 			if(!cs_malloc(&data, 8))

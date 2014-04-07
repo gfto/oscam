@@ -3346,8 +3346,9 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 				}
 			}
 		}
-		if (er)
-		curpid->table = er->ecm[0];
+		if (er){
+			curpid->table = er->ecm[0];
+		}
 		request_cw(dvbapi_client, er, demux_id, 1); // register this ecm for delayed ecm response check
 	}
 
