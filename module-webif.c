@@ -1327,7 +1327,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 
 			MD5((unsigned char *)rdr->label, strlen(rdr->label), md5tmp);
 			int z;
-			tpl_addVar(vars, TPLADD, "LABELMD5","");
+			tpl_addVar(vars, TPLADD, "LABELMD5","id_");
 			for (z = 0; z < MD5_DIGEST_LENGTH; z++){
 			    tpl_printf(vars, TPLAPPEND, "LABELMD5", "%02x", md5tmp[z]);
 			}
@@ -4772,7 +4772,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 
 				if(!apicall)
 				{	
-					if(p_txt[0]) tpl_printf(vars, TPLAPPEND, "LOGHISTORY","\t\t<SPAN CLASS=\"%s\">%s\t\t</SPAN><BR>\n", xml_encode(vars, p_usr), xml_encode(vars, p_txt +1));
+					if(p_txt[0]) tpl_printf(vars, TPLAPPEND, "LOGHISTORY","\t\t<SPAN CLASS=\"%s\">%s\t\t</SPAN><BR>\n", xml_encode(vars, p_usr), xml_encode(vars, p_txt));
 				}
 				else
 				{
