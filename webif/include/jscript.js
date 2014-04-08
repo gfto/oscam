@@ -949,7 +949,7 @@ function updateStatuspage(data){
 		
 		$( uid + " > td.statuscol16").text(item.connection.status).attr('class', 'statuscol16 statuscol16' + item.connection.status);
 		
-		if ( buffer ) {
+		if ( buffer && item.connection.status != 'OFF' ) {
 			$( uid + " > td.statuscol16").append(buffer + '</a>');
 		}
 
