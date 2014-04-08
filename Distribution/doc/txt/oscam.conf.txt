@@ -686,6 +686,9 @@ DESCRIPTIONS
        my_password = password
 	  password for connection to local gbox peer, default:none
 
+       my_vers = version
+	  set gbox version in hexadecimal low byte, default:25
+
        gbox_reconnect = time
 	  send message to peers in seconds, default:300
 
