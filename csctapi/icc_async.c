@@ -716,7 +716,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 		}
 	}	
 	F = reader->mhz; } // all other readers
-	reader->worketu = (double)((double)(1 / (double)D) * ((double)Fi / (double)((double)F / 100)));  // expressed in us
+        reader->worketu = (double)((double)(1 / (double)D) * ((double)Fi / (double)((double)F / 100)));
 	rdr_log(reader, "Calculated work ETU is %.2f us reader mhz = %u", reader->worketu, reader->mhz);
 
 	//set timings according to ATR
@@ -737,7 +737,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 
 		WWT = (uint32_t) 960 * D * wi; //in work ETU
 
-		unsigned char tmpatr[7]; // this is card atr of conax with pairingecmrotation, they need some additional WWT time but this isnt in those ATRs
+		/*unsigned char tmpatr[7]; // this is card atr of conax with pairingecmrotation, they need some additional WWT time but this isnt in those ATRs
 		tmpatr[0] = 0x3B;
 		tmpatr[1] = 0x24;
 		tmpatr[2] = 0x00;
@@ -750,7 +750,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 	//	WWT = (uint32_t) 960 * D * wi; //in work ETU
 		if (!memcmp(reader->card_atr, tmpatr, sizeof(tmpatr))){ // check for conax pairingecmrotation card atr.
 		    WWT = WWT * 600; // if found add some additional WWT time
-		}
+		}*/
 		GT = 2; // standard guardtime
 		GT += 1; // start bit
 		GT += 8; // databits

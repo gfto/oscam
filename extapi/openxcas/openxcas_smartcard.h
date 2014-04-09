@@ -12,4 +12,6 @@
 
 #define SMARTCARD_DEV "/dev/scard"
 
+#define AZBOX_MODES 16
+
 #endif
