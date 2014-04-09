@@ -117,7 +117,7 @@ static int32_t videoguard12_card_init(struct s_reader *reader, ATR *newatr)
 	/* set information on the card stored in reader-videoguard-common.c */
 	set_known_card_info(reader, atr, &atr_size);
 
-	/*
+	
 	if((reader->ndsversion != NDS12) && ((csystem_data->card_system_version != NDS12) || (reader->ndsversion != NDSAUTO)))
 	{
 		// known ATR and not NDS12
@@ -128,7 +128,7 @@ static int32_t videoguard12_card_init(struct s_reader *reader, ATR *newatr)
 		rdr_log(reader, "Unknown ATR or not forced to NDS12");
 		return ERROR;
 	}
-*/
+
 	rdr_log(reader, "type: %s, baseyear: %i", csystem_data->card_desc, csystem_data->card_baseyear);
 	if(reader->ndsversion == NDS12)
 	{
