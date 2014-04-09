@@ -956,13 +956,13 @@ static int32_t videoguard2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 			// Log decrypted INS54
 			rdr_ddump_mask(reader, D_READER, rbuff, 5, "INS54:");
 			rdr_ddump_mask(reader, D_READER, rbuff + 5, rbuff[4], "Decrypted payload");
-
+/*
 			if(!cw_is_valid(rbuff + 5))  //sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
 			{
 				rdr_log(reader, "classD3 ins54: status 90 00 = ok but cw=00 -> channel not subscribed ");
 				return ERROR;
 			}
-
+*/
 			// copy cw1 in place
 			memcpy(ea->cw + 0, rbuff + 5, 8);
 
