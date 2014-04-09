@@ -365,13 +365,13 @@ static int32_t videoguard12_do_ecm(struct s_reader *reader, const ECM_REQUEST *e
 		l = vg12_do_cmd(reader, ins54, NULL, rbuff, cta_res);
 		if(l > 0 && status_ok(cta_res + l))
 		{
-/*	
-	if(!cw_is_valid(rbuff + 5))   //sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
+	
+	if(!cw_is_valid(rbuff + 5) && reader->caid == 0x09CD)   //sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
 			{
 				rdr_log(reader, "class4B ins54 status 90 00 but cw=00 -> channel not subscribed");
 				return ERROR;
 			}
-*/
+
 			if(er->ecm[0] & 1)
 			{
 				memset(ea->cw + 0, 0, 8);
