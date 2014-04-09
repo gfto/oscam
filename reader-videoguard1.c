@@ -100,7 +100,7 @@ static int32_t videoguard1_card_init(struct s_reader *reader, ATR *newatr)
 
 	get_hist;
 	/* 40 B0 09 4A 50 01 4E 5A */
-	if((hist_size < 7) || (hist[1] != 0xB0) || (hist[3] != 0x4A) || (hist[4] != 0x50))
+	if((hist_size < 7) || ((hist[0] != 0x40) && (hist[1] != 0xB0) && (hist[2] != 0x09) && (hist[3] != 0x4A) && (hist[4] != 0x50)))
 	{
 		return ERROR;
 	}
