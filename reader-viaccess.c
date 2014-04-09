@@ -953,7 +953,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
  	 	            { 
  	 	                curnumber_ecm =(ecm88Data[6]<<8) | (ecm88Data[7]); 
  	 	                //if number_ecm & nano E0 ecm  not suported 
- 	 	                if ((reader->last_geo.number_ecm == curnumber_ecm )&&((ecm88Data[9] == 0xE0)&&(ecm88Data[10] == 0x02))) 
+ 	 	                if ((ecm88Data[9] == 0xE0) && (ecm88Data[10] == 0x02)) 
  	 	                { 
  	 	                    cs_log("[viaccess-reader] ECM: Invalid ECM nano E0 Rejecting"); 
  	 	                    return ERROR; 
