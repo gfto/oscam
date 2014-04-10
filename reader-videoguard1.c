@@ -100,9 +100,8 @@ static int32_t videoguard1_card_init(struct s_reader *reader, ATR *newatr)
 
 	get_hist;
 	/* 40 B0 09 4A 50 01 4E 5A */
-	if((hist_size < 7) || ((hist[0] != 0x40) && (hist[1] != 0xB0) && (hist[2] != 0x09) && (hist[3] != 0x4A) && (hist[4] != 0x50)))
+	if((hist_size < 7) || (hist[1] != 0xB0) || (hist[3] != 0x4A) || (hist[4] != 0x50))
 	{
-		rdr_log(reader, "hist smaller than 7");
 		return ERROR;
 	}
 
@@ -118,13 +117,13 @@ static int32_t videoguard1_card_init(struct s_reader *reader, ATR *newatr)
 
 	if((reader->ndsversion != NDS1) && ((csystem_data->card_system_version != NDS1) || (reader->ndsversion != NDSAUTO)))
 	{
-		//   known ATR and not NDS1
-		//   or unknown ATR and not forced to NDS1
-		//   or known NDS1 ATR and forced to another NDS version
-		//   ... probably not NDS1 
-	return ERROR;
+		/* known ATR and not NDS1
+		   or unknown ATR and not forced to NDS1
+		   or known NDS1 ATR and forced to another NDS version
+		   ... probably not NDS1 */
+		return ERROR;
 	}
-	
+
 	rdr_log(reader, "type: %s, baseyear: %i", csystem_data->card_desc, csystem_data->card_baseyear);
 	if(reader->ndsversion == NDS1)
 	{
@@ -312,14 +311,12 @@ static int32_t videoguard1_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 		l = vg1_do_cmd(reader, ins54, NULL, rbuff, cta_res);
 		if(l > 0 && status_ok(cta_res + l))
 		{
-/*	
-	if(!cw_is_valid(rbuff + 5))   //sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
+			if(!cw_is_valid(rbuff + 5))   //sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
 			{
-	
-	     rdr_log(reader, "class48 ins54 status 90 00 but cw=00 -> channel not subscribed");
+				rdr_log(reader, "class48 ins54 status 90 00 but cw=00 -> channel not subscribed");
 				return ERROR;
 			}
-*/
+
 			if(er->ecm[0] & 1)
 			{
 				memset(ea->cw + 0, 0, 8);
