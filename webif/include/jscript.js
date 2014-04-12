@@ -795,14 +795,14 @@ function updateStatuspage(data){
 		if (item.connection.status == 'CARDOK') cardokreader++;
 		if (item.connection.status == 'CONNECTED') connectedproxys++;
 		var newrow;
-		if(item.type == "c") {
-			updatedclients += item.thid + ",";
-		}
+		
+		//add ID's for type c and m to list of existing elements. We need this to delete all not longer existing
+		updatedclients += item.thid + ",";
 
 		var uid = "#" + item.thid;
 		//console.log(updatedclients);
 
-		if( ! $( uid ).length && item.type == "c") {
+		if( ! $( uid ).length && 'rpcxm'.indexOf(item.type) > (-1)) {
 			//build new row
 			var rowcontent = '<TR ID="' + item.thid + '"><TD CLASS="statuscol0"/><TD CLASS="statuscol1"/><TD CLASS="statuscol4"/>';
 			rowcontent += '<TD CLASS="statuscol5"/><TD CLASS="statuscol7"/><TD CLASS="statuscol8"/><TD CLASS="statuscol9"/>';
@@ -811,9 +811,13 @@ function updateStatuspage(data){
 			newrow = $(rowcontent);
 			newrow.hide();
 			// if we have no clients we have to add the headline first
-			if($("tr.c").length == 0){addremoveSubheadline(0, data);}
+			if($("tr.c").length == 0 && item.type == 'c'){addremoveSubheadline(0, data);}
 			// append new clientrow to table
-			$('table.status').append(newrow);
+			if ('hms'.indexOf(item.type) > (-1)){
+				$('#tbodys').append(newrow);
+			} else {
+				$('#tbody' + item.type).append(newrow);	
+			}
 			$( uid + " > td.statuscol0").append('<a title="Hide this User" href="status.html?hide=' + item.thid + '"><img class="icon" alt="Hide User" src="image?i=ICHID"></img>');
 			$( uid + " > td.statuscol1").append('<a title="Kill this User ' + item.name + '" href="status.html?action=kill&threadid=' + item.thid + '"><img class="icon" alt="Kill this User ' + item.name + '" src="image?i=ICKIL"></img>');
 
@@ -917,7 +921,7 @@ function updateStatuspage(data){
 		if(item.type == 'c'){
 			$( uid + " > td.statuscol14").text(item.request.answered?item.request.answered + ' (' + item.request.msvalue + 'ms)':'');
 		} else {
-			if(item.request.lbvalue && item.request.lbvalue !='no data'){
+			if(item.request.lbvalue){
 				//console.log("LB for " +item.name+ " is "+ item.request.lbvalue);
 				if(!$( uid + " > td.statuscol14 > a").length){
 					$( uid + " > td.statuscol14")
@@ -940,18 +944,57 @@ function updateStatuspage(data){
 				.attr('title', 'Online: ' + item.times.online.toHHMMSS() + '\nIDLE: ' + item.times.idle.toHHMMSS());
 		}
 
-		// read entitlements and cccam-cards
-		var $html = $( uid + " > td.statuscol16").toHtmlString();
-		
-		if ( $html != undefined ) {
-			var buffer = $html.substring($html.indexOf('<br>'),$html.indexOf('</a>'));
+
+		var entitlement = '';
+
+		switch (item.type) {
+		case 'r':
+			// entitlement for native cards
+
+			var activeentitlements = item.connection.entitlements.length;
+			if(activeentitlements > 0) {
+				entitlement += '<br><a href="entitlements.html?label=' + item.rname_enc + '&hideexpired=1" class="tooltip">';
+				entitlement += '(' + activeentitlements + ' entitlement' + ((activeentitlements != 1) ? 's)' : ')');
+				entitlement += '<span>';
+				$.each(item.connection.entitlements, function(i, obj) {
+					entitlement += obj.caid + ':' + obj.provid + '<br>' + obj.exp + '<br><br>';
+				});
+				entitlement = entitlement.substring(0,entitlement.length-4);
+				entitlement += '</span></a>';
+			} else {
+				entitlement += '<br><a href="entitlements.html?label=';
+				entitlement += item.rname_enc + '&hideexpired=1" class="tooltip1">(no entitlements)<span>No active entitlements found</span></a>';
+			}
+			break;
+
+		case 'p':
+			if(item.connection.entitlements.length > 0 && item.protocol.indexOf('cccam') > -1){
+				// cccam
+				var entobj = item.connection.entitlements[0];
+				entitlement += '<br><a href="entitlements.html?label=' + item.rname_enc + '" class="tooltip' + entobj.cccreshare + '">';
+				entitlement += '(' + entobj.locals + ' of ' + entobj.cccount + ' cards)'
+				entitlement += '<span>card_count=' + entobj.cccount + '<br>';
+				entitlement += 'hop1=' + entobj.ccchop1 + '<br>';
+				entitlement += 'hop2=' + entobj.ccchop2 + '<br>';
+				entitlement += 'hopx=' + entobj.ccchopx + '<br>';
+				entitlement += 'currenthops=' + entobj.ccccurr + '<br><br>';
+				entitlement += 'reshare0=' + entobj.cccres0 + '<br>';
+				entitlement += 'reshare1=' + entobj.cccres1 + '<br>';
+				entitlement += 'reshare2=' + entobj.cccres2 + '<br>';
+				entitlement += 'resharex=' + entobj.cccresx + '</span></a>';
+			}
+			if(item.protocol.indexOf('gbox') > -1){
+				// TO DO gbox
+				var $html = $( uid + " > td.statuscol16").toHtmlString();
+				if ( $html != undefined ) {
+					entitlement = $html.substring($html.indexOf('<br>'),$html.indexOf('</a>'));
+					if(entitlement) entitlement += '</a>';
+				}
+			}
+			break;
 		}
-		
-		$( uid + " > td.statuscol16").text(item.connection.status).attr('class', 'statuscol16 statuscol16' + item.connection.status);
-		
-		if ( buffer && item.connection.status != 'OFF' ) {
-			$( uid + " > td.statuscol16").append(buffer + '</a>');
-		}
+
+		$( uid + " > td.statuscol16").empty().html(item.connection.status + entitlement).attr('class', 'statuscol16 statuscol16' + item.connection.status);
 
 		if(newrow){
 			newrow.fadeIn("slow");
@@ -959,8 +1002,8 @@ function updateStatuspage(data){
 
 	});
 
-	//remove non existing
-	$("tr.c").each(function() {
+	//remove non existing elements
+	$("tr.c, tr.m, tr.r, tr.p, tr.h").each(function() {
 		if(updatedclients.indexOf($(this).attr('id')) == -1){
 			$(this).fadeOut('slow').remove();
 		}

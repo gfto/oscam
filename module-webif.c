@@ -4174,6 +4174,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 			tpl_addVar(vars, TPLADD, "CLIENTLASTRESPONSETIME", "");
 			tpl_addVar(vars, TPLADD, "CLIENTLASTRESPONSETIMEHIST", "");
 			tpl_addVar(vars, TPLADD, "UPICMISSING" , "");
+			tpl_addVar(vars, TPLADD, "ENTITLEMENTS", "");
 
 			if(cl->typ == 'c')
 				{ user_count_all++; }
@@ -4583,7 +4584,8 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							}
 						}
 						tpl_addVar(vars, TPLADD, "CLIENTCON", txt);
-						if(rdr && (cl->typ == 'r') && (!apicall))  //reader
+
+						if(rdr && (cl->typ == 'r'))  //reader
 						{
 							if(rdr->ll_entitlements)
 							{
@@ -4598,14 +4600,19 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 									total_ent++;
 									if((ent->end > now) && (ent->type != 7))
 									{
-										if(active_ent) { tpl_addVar(vars, TPLAPPEND, "TMPSPAN", "<BR><BR>"); }
+										if(active_ent)	{tpl_addVar(vars, TPLAPPEND, "TMPSPAN", "<BR><BR>");}
 										active_ent++;
 										localtime_r(&ent->end, &end_t);
 										tpl_printf(vars, TPLAPPEND, "TMPSPAN", "%04X:%06X<BR>exp:%04d/%02d/%02d",
 												   ent->caid, ent->provid,
 												   end_t.tm_year + 1900, end_t.tm_mon + 1, end_t.tm_mday);
+										tpl_printf(vars, TPLAPPEND, "ENTITLEMENTS", "%s{\"caid\":\"%04X\",\"provid\":\"%06X\",\"exp\":\"%04d/%02d/%02d\"}",
+												active_ent > 1 ? ",": "",
+												ent->caid, ent->provid,
+												end_t.tm_year + 1900, end_t.tm_mon + 1, end_t.tm_mday);
 									}
 								}
+								tpl_printf(vars, TPLADD, "TOTENTITLEMENTS", "%d", total_ent);
 								if(((total_ent) && (active_ent == 0)) || (total_ent == 0))
 								{
 									tpl_addVar(vars, TPLAPPEND, "TMPSPAN", "No active entitlements found");
@@ -4621,16 +4628,16 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								}
 								tpl_addVar(vars, TPLADD, "ENTLABEL", urlencode(vars, cl->reader->label));
 								tpl_addVar(vars, TPLADD, "ENTVALUE", active_ent > 0 ? "" : "1");
-								tpl_addVar(vars, TPLAPPEND, "CLIENTCON", tpl_getTpl(vars, "FOUNDENTITLEMENTS"));
+								if (!apicall) tpl_addVar(vars, TPLAPPEND, "CLIENTCON", tpl_getTpl(vars, "FOUNDENTITLEMENTS"));
 							}
 							else
 							{
 								tpl_addVar(vars, TPLADD, "ENTLABEL",  urlencode(vars, cl->reader->label));
-								tpl_addVar(vars, TPLAPPEND, "CLIENTCON", tpl_getTpl(vars, "NOENTITLEMENTS"));
+								if (!apicall) tpl_addVar(vars, TPLAPPEND, "CLIENTCON", tpl_getTpl(vars, "NOENTITLEMENTS"));
 							}
 						}
 #ifdef MODULE_CCCAM
-						if(!apicall)
+						if(!apicall || apicall == 2)
 						{
 							if(rdr && (cl->typ == 'r' || cl->typ == 'p') && strncmp(proto, "cccam", 5) == 0 && rdr->tcp_connected && rdr->card_status != CARD_FAILURE)
 							{
@@ -4642,22 +4649,33 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 									{
 										int32_t cnt = ll_count(cards);
 										int32_t locals = rcc->num_hop1;
-										tpl_printf(vars, TPLADD, "TMP", "(%d of %d card%s)", locals, cnt, (cnt > 1) ? "s" : "");
-										tpl_printf(vars, TPLADD, "CCCOUNT", "%d", cnt);
-										tpl_printf(vars, TPLADD, "CCCHOP1", "%d", rcc->num_hop1);
-										tpl_printf(vars, TPLADD, "CCCHOP2", "%d", rcc->num_hop2);
-										tpl_printf(vars, TPLADD, "CCCHOPX", "%d", rcc->num_hopx);
-										tpl_printf(vars, TPLADD, "CCCCURR", "%d", cl->reader->currenthops);
-										tpl_printf(vars, TPLADD, "CCCRES0", "%d", rcc->num_reshare0);
-										tpl_printf(vars, TPLADD, "CCCRES1", "%d", rcc->num_reshare1);
-										tpl_printf(vars, TPLADD, "CCCRES2", "%d", rcc->num_reshare2);
-										tpl_printf(vars, TPLADD, "CCCRESX", "%d", rcc->num_resharex);
-										tpl_addVar(vars, TPLADD, "TMPSPAN", tpl_getTpl(vars, "CCENTITLEMENTS"));
-										tpl_addVar(vars, TPLADD, "CCCLABEL", urlencode(vars, cl->reader->label));
-										tpl_addVar(vars, TPLADD, "CCCRESHARE", rcc->num_reshare0 > 0 ? "1" : "");
-										tpl_addVar(vars, TPLADD, "CCCTMP", tpl_getVar(vars, "TMP"));
-										tpl_addVar(vars, TPLADD, "CCCTMPSPAN", tpl_getVar(vars, "TMPSPAN"));
-										tpl_addVar(vars, TPLAPPEND, "CLIENTCON", tpl_getTpl(vars, "CCENTITLETOOLTIP"));
+										if(!apicall)
+										{
+											tpl_printf(vars, TPLADD, "TMP", "(%d of %d card%s)", locals, cnt, (cnt > 1) ? "s" : "");
+											tpl_printf(vars, TPLADD, "CCCOUNT", "%d", cnt);
+											tpl_printf(vars, TPLADD, "CCCHOP1", "%d", rcc->num_hop1);
+											tpl_printf(vars, TPLADD, "CCCHOP2", "%d", rcc->num_hop2);
+											tpl_printf(vars, TPLADD, "CCCHOPX", "%d", rcc->num_hopx);
+											tpl_printf(vars, TPLADD, "CCCCURR", "%d", cl->reader->currenthops);
+											tpl_printf(vars, TPLADD, "CCCRES0", "%d", rcc->num_reshare0);
+											tpl_printf(vars, TPLADD, "CCCRES1", "%d", rcc->num_reshare1);
+											tpl_printf(vars, TPLADD, "CCCRES2", "%d", rcc->num_reshare2);
+											tpl_printf(vars, TPLADD, "CCCRESX", "%d", rcc->num_resharex);
+											tpl_addVar(vars, TPLADD, "TMPSPAN", tpl_getTpl(vars, "CCENTITLEMENTS"));
+											tpl_addVar(vars, TPLADD, "CCCLABEL", urlencode(vars, cl->reader->label));
+											tpl_addVar(vars, TPLADD, "CCCRESHARE", rcc->num_reshare0 > 0 ? "1" : "");
+											tpl_addVar(vars, TPLADD, "CCCTMP", tpl_getVar(vars, "TMP"));
+											tpl_addVar(vars, TPLADD, "CCCTMPSPAN", tpl_getVar(vars, "TMPSPAN"));
+											tpl_addVar(vars, TPLAPPEND, "CLIENTCON", tpl_getTpl(vars, "CCENTITLETOOLTIP"));
+										}
+										if (apicall == 2)
+										{
+											tpl_addVar(vars, TPLADD, "READERNAMEENC", urlencode(vars, cl->reader->label));
+											tpl_printf(vars, TPLADD, "ENTITLEMENTS", "{\"locals\":\"%d\",\"cccount\":\"%d\",\"ccchop1\":\"%d\",\"ccchop2\":\"%d\",\"ccchopx\":\"%d\",\"ccccurr\":\"%d\",\"cccres0\":\"%d\",\"cccres1\":\"%d\",\"cccres2\":\"%d\",\"cccresx\":\"%d\",\"cccreshare\":\"%s\"}",
+													locals, cnt, rcc->num_hop1, rcc->num_hop2, rcc->num_hopx, cl->reader->currenthops,
+													rcc->num_reshare0, rcc->num_reshare1, rcc->num_reshare2, rcc->num_resharex,
+													rcc->num_reshare0 > 0 ? "1" : "");
+										}
 									}
 								}
 							}
