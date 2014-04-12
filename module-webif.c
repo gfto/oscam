@@ -3268,7 +3268,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "EXPIREVIEW", expdate_set ? "" : "exp");
 		tpl_addVar(vars, TPLADD, "GRPVIEW", grp_set ? "" : "grp");
 #ifdef CS_ANTICASC
-		tpl_addVar(vars, TPLADD, "ANTICASCVIEW", cfg.ac_enabled ? "" : "acasc");
+		tpl_addVar(vars, TPLADD, "ANTICASCVIEW", cfg.ac_enabled ? "" : "acas");
 #endif
 		tpl_printf(vars, TPLADD, "CWOK", "%d", account->cwfound);
 		tpl_printf(vars, TPLADD, "CWNOK", "%d", account->cwnot);
@@ -3346,6 +3346,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "CLASSNAME", classname);
 		MD5((unsigned char *)account->usr, strlen(account->usr), md5tmp);
 		int z;
+		tpl_addVar(vars, TPLADD, "USERMD5","id_");
 		for (z = 0; z < MD5_DIGEST_LENGTH; z++){
 		    tpl_printf(vars, TPLAPPEND, "USERMD5", "%02x", md5tmp[z]);
 		}
@@ -4313,14 +4314,14 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							tpl_addVar(vars, TPLADD, "LBL", xml_encode(vars, usr));
 							tpl_printf(vars, TPLADD, "CID", "%p", cl);
 							tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));
-							tpl_printf(vars, TPLADD, "CSIDX", "%p", cl);
+							tpl_printf(vars, TPLADD, "CSIDX", "id_%p", cl);
 						}
-						tpl_printf(vars, TPLADD, "CSIDXPLAIN", "%p", cl);
+						tpl_printf(vars, TPLADD, "CSIDXPLAIN", "id_%p", cl);
 					}
 					else
 					{
 						tpl_printf(vars, TPLADD, "HIDEIDX", "%p", cl);
-						tpl_printf(vars, TPLADD, "CSIDX", "%p", cl);
+						tpl_printf(vars, TPLADD, "CSIDX", "id_%p", cl);
 					}
 					tpl_printf(vars, TPLADD, "CLIENTTYPE", "%c", cl->typ);
 					tpl_printf(vars, TPLADD, "CLIENTCNR", "%d", get_threadnum(cl));

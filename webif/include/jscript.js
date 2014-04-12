@@ -72,8 +72,8 @@ TINY.table=function(){
 		}
 		for(i;i<t.w;i++){
 			var c=t.h.cells[i]; t.c[i]={};
-			if(c.className!='nosort'){
-				c.className = this.p.headclass;
+			if(c.className.indexOf('nosort') == -1){
+				c.className=c.className.replace(/asc|desc|head/gi,'')+' '+this.p.headclass;
 				c.onclick=new Function(this.n+'.sort('+i+')');
 				c.onmousedown=function(){return false};
 			}
@@ -108,7 +108,7 @@ TINY.table=function(){
 			while(v.hasChildNodes()){v=v.firstChild}
 			t.a[i].v=v.nodeValue?v.nodeValue:''
 		}
-		for(i=0;i<t.w;i++){var c=t.h.cells[i]; if(c.className!='nosort'){c.className=this.p.headclass}}
+		for(i=0;i<t.w;i++){var c=t.h.cells[i]; if(c.className.indexOf('nosort') == -1){c.className=c.className.replace(/asc|desc|head/gi,'')+' '+this.p.headclass}}
 		if(t.p==t.y&&!f){t.a.reverse(); x.className=t.d?this.p.ascclass:this.p.descclass; t.d=t.d?0:1}
 		else{t.p=t.y; f&&this.p.sortdir==-1?t.a.sort(cp).reverse():t.a.sort(cp); t.d=0; x.className=this.p.ascclass}
 		for(i=0;i<t.l;i++){var r=t.r[t.a[i].o].cloneNode(true); n.appendChild(r)}

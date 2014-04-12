@@ -500,7 +500,7 @@ div.cccamentitlementcontrols {
  * #exp, #cwc, #acasc - only in module-webif.c for show/hide columns in userconfig.html
  */
 #newuser, #newreader,
-#exp, #cwc, #acasc,
+.exp, .cwc, .acas, .grp,
 .hidden {
 	display:none
 }
