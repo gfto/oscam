@@ -501,7 +501,7 @@ static const struct config_list webif_opts[] =
 	DEF_OPT_STR("httposcamlabel"            , OFS(http_oscam_label),        "OSCam"),
 	DEF_OPT_INT8("http_status_log"          , OFS(http_status_log),         0),
 #ifndef WEBIF_JQUERY
-	DEF_OPT_STR("http_extern_jquery"        , OFS(http_extern_jquery),      "http://code.jquery.com/jquery-1.11.0.min.js"),
+	DEF_OPT_STR("http_extern_jquery"        , OFS(http_extern_jquery),      "//code.jquery.com/jquery-1.11.0.min.js"),
 #endif
 	DEF_LAST_OPT
 };
