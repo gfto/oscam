@@ -4343,7 +4343,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					}
 
 					tpl_addVar(vars, TPLADD, "STATUSUSERICON", xml_encode(vars, usr));
-					if (cl->typ == 'c') {
+					if (cl->typ == 'c' || cl->typ == 'm') {
 						tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, usr));
 						tpl_addVar(vars, TPLADD, "USERENC", urlencode(vars, usr));
 						tpl_addVar(vars, TPLADD, "READERNAME","");

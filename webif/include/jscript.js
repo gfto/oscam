@@ -667,7 +667,7 @@ function updateLogpage(data) {
 /*
  * Statuspage Functions: JQuery Extensions
  */
-jQuery.fn.toHtmlString = function () {
+$.fn.toHtmlString = function () {
 	return $('<td></td>').html($(this).clone()).html();
 };
 
@@ -815,23 +815,44 @@ function updateStatuspage(data){
 			// append new clientrow to table
 			if ('hms'.indexOf(item.type) > (-1)){
 				$('#tbodys').append(newrow);
+			} else if ('px'.indexOf(item.type) > (-1)){
+				$('#tbodyp').append(newrow);
 			} else {
 				$('#tbody' + item.type).append(newrow);	
 			}
-			$( uid + " > td.statuscol0").append('<a title="Hide this User" href="status.html?hide=' + item.thid + '"><img class="icon" alt="Hide User" src="image?i=ICHID"></img>');
-			$( uid + " > td.statuscol1").append('<a title="Kill this User ' + item.name + '" href="status.html?action=kill&threadid=' + item.thid + '"><img class="icon" alt="Kill this User ' + item.name + '" src="image?i=ICKIL"></img>');
+			switch (item.type) {
+			case 'c': case 'm':
+				var name1 = 'User';
+				var name2 = item.name_enc;
+				var kill1 = '" href="status.html?action=kill&threadid=' + item.thid.substring(3,item.thid.length);
+				var kill2 = 'Kill this '
+				var kill3 = 'ICKIL';
+				var edit1 = 'user_edit.html?user=';
+			break;
+			case 'r': case 'p': case 'x':
+				if(item.type == 'r') var name1 = 'Reader'; else var name1 = 'Proxy';
+				var name2 = item.rname_enc;
+				var kill1 = '" href="status.html?action=restart&label=' + item.name;
+				var kill2 = 'Restart ';
+				var kill3 = 'ICRES';
+				var edit1 = 'readerconfig.html?label=';
+			break;
+			}
+
+			$( uid + " > td.statuscol0").append('<a title="Hide this '+name1+'" href="status.html?hide='+item.thid.substring(3,item.thid.length)+'"><img class="icon" alt="Hide '+name1+'" src="image?i=ICHID"></img>');
+			$( uid + " > td.statuscol1").append('<a title="Kill this '+name1+' '+item.name+kill1+'"><img class="icon" alt="'+kill2+name1+' '+item.name+'" src="image?i='+kill3+'"></img>');
+			if (data.oscam.piconenabled == "1" && !item.upicmissing){
+				$( uid + " > td.statuscol4").append('<a href="'+edit1+name2+'"><img class="statususericon" title="Edit '+name1+': '+item.name+item.desc+'" src="image?i=IC_'+name2+'"></img></a>');
+			} else {
+					$( uid + " > td.statuscol4").append('<a href="'+edit1+name2+'" title="Edit '+name1+': '+item.name+item.desc+item.upicmissing+'">'+item.name+'</a>');
+			}
+			$( uid + " > td.statuscol13").append('<A HREF="files.html?file=oscam.srvid" TITLE="'+item.request+'"/>');
 
 			if(data.oscam.piconenabled == "1" && item.protoicon){
-				$( uid + " > td.statuscol9").append('<img class="protoicon" title="'+item.protocolext+'" alt="'+item.protocolext+'" src="image?i=IC_' + item.protoicon + '"></img>');
+				$( uid + " > td.statuscol9").append('<img class="protoicon" title="'+item.protocolext+'" alt="'+item.protocolext+'" src="image?i=IC_'+item.protoicon+'"></img>');
 			} else {
 				$( uid + " > td.statuscol9").text(item.protocol);
 			}
-			if (data.oscam.piconenabled == "1" && !item.upicmissing){
-				$( uid + " > td.statuscol4").append('<a href="user_edit.html?user=' + item.name_enc + '"><img class="statususericon" title="Edit User: ' + item.name + item.desc + '" src="image?i=IC_' + item.name_enc + '"></img></a>');
-			} else {
-				$( uid + " > td.statuscol4").append('<a href="user_edit.html?user=' + item.name_enc + '" title="Edit User: ' + item.name + item.desc + item.upicmissing + '">' + item.name + '</a>');
-			}
-			$( uid + " > td.statuscol13").append('<A HREF="files.html?file=oscam.srvid" TITLE="' + item.request + '"/>');
 		}
 
 		$( uid ).attr({	'class': item.type,
