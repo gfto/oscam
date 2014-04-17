@@ -157,7 +157,6 @@ function runden(value) {
 	return k.substring(0, k.indexOf('.') + 3);
 }
 
-
 /*
  * General: Eventhandler
  */
@@ -303,8 +302,9 @@ function updateFooter(data){
 /*
  *  identfy an element within string of elements
  */
-function is_nopoll( excludes, value) {
-	return (excludes.indexOf(value) > (-1))? true : false;
+var poll_excluded; 
+function is_nopoll(value) {
+	return (poll_excluded.indexOf(value) > (-1))? true : false;
 }
 
 /*
@@ -319,23 +319,23 @@ function updateUserpage(data) {
 	// update user lines
 	$.each(data.oscam.users, function(i, item) {
 		var uid = "#" + item.user.usermd5;
-		var excluded = ($( uid ).attr('nopoll') != 'undefined') ? $( uid ).attr('nopoll') : '';
+		poll_excluded = ($( uid ).attr('nopoll') != undefined) ? $( uid ).attr('nopoll') : '';
 
 		switch (item.user.classname) {
 			case 'online':
 			$( uid ).attr('class', item.user.classname);
 			
-			if(!is_nopoll(excluded, 'usercol2')){
+			if(!is_nopoll('usercol2')){
 				$( uid + " td.usercol2")
 					.attr( 'title', 'SLEEP: ' + item.user.stats.expectsleep )
 					.html( "<B>" + item.user.status + "</B><br>" + item.user.ip);
 			}
 			
-			if(!is_nopoll(excluded, 'usercol3')){
+			if(!is_nopoll('usercol3')){
 				$( uid + " td.usercol3").html( item.user.stats.idle + "<br>" + item.user.stats.timeonchannel.toHHMMSS());
 			}
 			
-			if(!is_nopoll(excluded, 'usercol4')){
+			if(!is_nopoll('usercol4')){
 				if(item.user.protoicon.length > 0){
 					if($( uid + " td.usercol4").html().length == 0 ) {
 						var protoimage = $('<img class="protoicon" src="image?i=IC_' + item.user.protoicon + '" />');
@@ -351,7 +351,7 @@ function updateUserpage(data) {
 			}
 
 			// channel icon
-			if(!is_nopoll(excluded, 'usercol6')){
+			if(!is_nopoll('usercol6')){
 				$( uid + " td.usercol6").attr( 'title', item.user.lastchanneltitle );
 
 				if(item.user.lca.length > 0){
@@ -390,22 +390,22 @@ function updateUserpage(data) {
 				}
 			}
 			
-			if(!is_nopoll(excluded, 'usercol7')) {$( uid + " td.usercol7").text( item.user.stats.cwlastresptime + 'ms');}
+			if(!is_nopoll('usercol7')) {$( uid + " td.usercol7").text( item.user.stats.cwlastresptime + 'ms');}
 			//usercol8 ???
-			if(!is_nopoll(excluded, 'usercol9')) {$( uid + " td.usercol9").text( item.user.stats.cwok );}
-			if(!is_nopoll(excluded, 'usercol10')) {$( uid + " td.usercol10").text( item.user.stats.cwnok );}
-			if(!is_nopoll(excluded, 'usercol11')) {$( uid + " td.usercol11").text( item.user.stats.cwignore );}
-			if(!is_nopoll(excluded, 'usercol12')) {$( uid + " td.usercol12").text( item.user.stats.cwtimeout );}
-			if(!is_nopoll(excluded, 'usercol13')) {$( uid + " td.usercol13").text( item.user.stats.cwccyclechecked + ' / ' + item.user.stats.cwcycleok + ' / ' + item.user.stats.cwcyclenok + ' / ' + item.user.stats.cwcycleign );}
-			if(!is_nopoll(excluded, 'usercol14')) {$( uid + " td.usercol14").text( item.user.stats.cwcache );}
-			if(!is_nopoll(excluded, 'usercol15')) {$( uid + " td.usercol15").text( item.user.stats.cwtun );}
-			if(!is_nopoll(excluded, 'usercol16')) {$( uid + " td.usercol16").text( item.user.stats.cwcache );}
-			if(!is_nopoll(excluded, 'usercol17')) {$( uid + " td.usercol17").text( item.user.stats.emmok );}
-			if(!is_nopoll(excluded, 'usercol18')) {$( uid + " td.usercol18").text( item.user.stats.emmnok );}
-			if(!is_nopoll(excluded, 'usercol19')) {$( uid + " td.usercol19").text( item.user.stats.cwrate + item.user.stats.cwrate2 );}
-			if(!is_nopoll(excluded, 'usercol22')) {$( uid + " td.usercol22").text( item.user.stats.cascusercomb );}
-			if(!is_nopoll(excluded, 'usercol21')) {$( uid + " td.usercol21").text( item.user.stats.n_requ_m );}
-			if(!is_nopoll(excluded, 'usercol20')) {
+			if(!is_nopoll('usercol9')) {$( uid + " td.usercol9").text( item.user.stats.cwok );}
+			if(!is_nopoll('usercol10')) {$( uid + " td.usercol10").text( item.user.stats.cwnok );}
+			if(!is_nopoll('usercol11')) {$( uid + " td.usercol11").text( item.user.stats.cwignore );}
+			if(!is_nopoll('usercol12')) {$( uid + " td.usercol12").text( item.user.stats.cwtimeout );}
+			if(!is_nopoll('usercol13')) {$( uid + " td.usercol13").text( item.user.stats.cwccyclechecked + ' / ' + item.user.stats.cwcycleok + ' / ' + item.user.stats.cwcyclenok + ' / ' + item.user.stats.cwcycleign );}
+			if(!is_nopoll('usercol14')) {$( uid + " td.usercol14").text( item.user.stats.cwcache );}
+			if(!is_nopoll('usercol15')) {$( uid + " td.usercol15").text( item.user.stats.cwtun );}
+			if(!is_nopoll('usercol16')) {$( uid + " td.usercol16").text( item.user.stats.cwcache );}
+			if(!is_nopoll('usercol17')) {$( uid + " td.usercol17").text( item.user.stats.emmok );}
+			if(!is_nopoll('usercol18')) {$( uid + " td.usercol18").text( item.user.stats.emmnok );}
+			if(!is_nopoll('usercol19')) {$( uid + " td.usercol19").text( item.user.stats.cwrate + item.user.stats.cwrate2 );}
+			if(!is_nopoll('usercol22')) {$( uid + " td.usercol22").text( item.user.stats.cascusercomb );}
+			if(!is_nopoll('usercol21')) {$( uid + " td.usercol21").text( item.user.stats.n_requ_m );}
+			if(!is_nopoll('usercol20')) {
 				$( uid + " td.usercol20")
 					.attr( 'title', item.user.expview )
 					.text( item.user.stats.expdate );
@@ -415,15 +415,15 @@ function updateUserpage(data) {
 			case 'connected':
 			$( uid ).attr('class', item.user.classname);
 			
-			if(!is_nopoll(excluded, 'usercol2')) {
+			if(!is_nopoll('usercol2')) {
 				$( uid + " td.usercol2")
 					.attr( 'title', 'SLEEP: ' )
 					.html( "<B>" + item.user.status + "</B><br>" + item.user.ip);
 			}	
 			
-			if(!is_nopoll(excluded, 'usercol3')) {$( uid + " td.usercol3").html( item.user.stats.idle + "<br>" + item.user.stats.timeonchannel.toHHMMSS());}
+			if(!is_nopoll('usercol3')) {$( uid + " td.usercol3").html( item.user.stats.idle + "<br>" + item.user.stats.timeonchannel.toHHMMSS());}
 
-			if(!is_nopoll(excluded, 'usercol4')) {
+			if(!is_nopoll('usercol4')) {
 				if(item.user.protoicon.length > 0){
 					if($( uid + " td.usercol4").html().length == 0 ) {
 						var protoimage = $('<img class="protoicon" src="image?i=IC_' + item.user.protoicon + '" />');
@@ -437,7 +437,7 @@ function updateUserpage(data) {
 				$( uid + " td.usercol4").attr( 'title', item.user.prototitle );
 			}
 			
-			if(!is_nopoll(excluded, 'usercol6')) {
+			if(!is_nopoll('usercol6')) {
 				// channel icon
 				$( uid + " td.usercol6").attr( 'title', item.user.lastchanneltitle );
 				if(item.user.lca.length > 0){
@@ -468,14 +468,14 @@ function updateUserpage(data) {
 			if($( uid ).attr('class') == 'online' || $( uid ).attr('class') == 'connected'){
 				// last status was online so cleanup offline
 				$( uid ).attr('class', item.user.classname);
-				if(!is_nopoll(excluded, 'usercol2')) {
+				if(!is_nopoll('usercol2')) {
 					$( uid + " td.usercol2")
 						.attr( 'title', 'SLEEP: ')
 						.html( item.user.status );
 				}
-				if(!is_nopoll(excluded, 'usercol3')) {$( uid + " td.usercol3").text( '' );}
-				if(!is_nopoll(excluded, 'usercol7')) {$( uid + " td.usercol7").text( '0' );}
-				if(!is_nopoll(excluded, 'usercol4')) {
+				if(!is_nopoll('usercol3')) {$( uid + " td.usercol3").text( '' );}
+				if(!is_nopoll('usercol7')) {$( uid + " td.usercol7").text( '0' );}
+				if(!is_nopoll('usercol4')) {
 					$( uid + " td.usercol4")
 						.text( '' )
 						.attr( 'title', '' );
@@ -487,7 +487,7 @@ function updateUserpage(data) {
 				}
 				
 				//channelicon
-				if(!is_nopoll(excluded, 'usercol6')) {
+				if(!is_nopoll('usercol6')) {
 					$( uid + " td.usercol6").text( '' );
 					var image = $( uid + " td.usercol6 img.usericon");
 					if(image){
@@ -547,18 +547,22 @@ function updateReaderpage(data) {
 	// update reader lines
 	$.each(data.oscam.readers, function(i, item) {
 		var uid = "#" + item.labelmd5;
+		poll_excluded = ($( uid ).attr('nopoll') != undefined) ? $( uid ).attr('nopoll') : '';
 
 		$( uid ).attr('class', item.classname);
 
-		$( uid + " td.readercol4").text(item.stats.ecmsok);
-		$( uid + " td.readercol5").text(item.stats.ecmsnok);
-		$( uid + " td.readercol6").text(item.stats.ecmsfiltered);
-		$( uid + " td.readercol7").text(item.stats.emmerror);
-		$( uid + " td.readercol8").text(item.stats.emmwritten);
-		$( uid + " td.readercol9").text(item.stats.emmskipped);
-		$( uid + " td.readercol10").text(item.stats.emmblocked);
-		$( uid + " td.readercol11").text(item.stats.lbweight);
+		if(!is_nopoll('readercol4')) {$( uid + " td.readercol4").text(item.stats.ecmsok);}
+		if(!is_nopoll('readercol5')) {$( uid + " td.readercol5").text(item.stats.ecmsnok);}
+		if(!is_nopoll('readercol6')) {$( uid + " td.readercol6").text(item.stats.ecmsfiltered);}
+		if(!is_nopoll('readercol7')) {$( uid + " td.readercol7").text(item.stats.emmerror);}
+		if(!is_nopoll('readercol8')) {$( uid + " td.readercol8").text(item.stats.emmwritten);}
+		if(!is_nopoll('readercol9')) {$( uid + " td.readercol9").text(item.stats.emmskipped);}
+		if(!is_nopoll('readercol10')) {$( uid + " td.readercol10").text(item.stats.emmblocked);}
+		if(!is_nopoll('readercol11')) {$( uid + " td.readercol11").text(item.stats.lbweight);}
 
+		if ( typeof custompoll == 'function' ) { 
+			custompoll(item);
+		}
 	});
 
 	// update footer
@@ -1194,6 +1198,8 @@ $(document).ready(function() {
 		$('#regex').remove();
 	}
 
+	poll_excluded = ''; 
+	
 	// Title
 	var pagename = (typeof page != 'undefined'? page : $(location).attr('pathname').replace(/.*\/|\.[^.]*$/g, ''));
 	$(document).attr('title', $(document).attr('title') + ' (' + pagename[0].toUpperCase() + pagename.slice(1) +')');
