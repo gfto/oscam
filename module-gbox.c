@@ -34,12 +34,14 @@
 #define FILE_ATTACK_INFO        "C:/tmp/gbx_attack.txt"
 #define FILE_GBOX_PEER_ONL  	"C:/tmp/gbx_peer.onl"
 #define FILE_STATS	  	"C:/tmp/gbx_stats.info"
+#define FILE_GSMS_MSG    	"C:/tmp/gsms.msg"
 #else
 #define FILE_GBOX_VERSION       "/tmp/gbx.ver"
 #define FILE_SHARED_CARDS_INFO  "/tmp/gbx_card.info"
 #define FILE_ATTACK_INFO        "/tmp/gbx_attack.txt"
 #define FILE_GBOX_PEER_ONL  	"/tmp/gbx_peer.onl"
 #define FILE_STATS	  	"/tmp/gbx_stats.info"
+#define FILE_GSMS_MSG		"/tmp/gsms.msg"
 #endif
 
 #define GBOX_STAT_HELLOL	0
@@ -60,17 +62,18 @@
 
 enum
 {
-	MSG_ECM = 0x445c,
+	MSG_ECM = 0x445C,
 	MSG_CW = 0x4844,
-	MSG_HELLO = 0xddab,
+	MSG_HELLO = 0xDDAB,
 	MSG_HELLO1 = 0x4849,
-	MSG_CHECKCODE = 0x41c0,
+	MSG_CHECKCODE = 0x41C0,
 	MSG_GOODBYE = 0x9091,
-	MSG_GSMS_ACK = 0x9098,
-	MSG_GSMS = 0xff0,
-	MSG_BOXINFO = 0xa0a1,
-	MSG_UNKNWN1 = 0x9099,
-	MSG_UNKNWN2 = 0x48F9,
+	MSG_GSMS_ACK_1 = 0x9098,
+	MSG_GSMS_ACK_2 = 0x9099, //added by felix: MSG_GSMS_ACK_2
+	MSG_GSMS_1 = 0x0FF0, //gsms via IP
+	MSG_GSMS_2 = 0x0FFF, //added by felix: gsms via BoxId
+	MSG_BOXINFO = 0xA0A1,
+	MSG_UNKNWN = 0x48F9,
 };
 
 struct gbox_srvid
@@ -138,6 +141,32 @@ static uint8_t gbox_compare_pw(uchar *my_pw, uchar *rec_pw);
 static uint16_t gbox_convert_password_to_id(uchar *password);
 uint32_t gbox_get_ecmchecksum(ECM_REQUEST *er);
 static void	init_local_gbox(void);
+static void gbox_send_gsms_ack_1(struct s_client *cli);
+static void gbox_send_gsms_ack_2(struct s_client *cli);
+
+static void write_gsms_msg (struct s_client *cli, uchar *gsms, uint16_t type, uint16_t UNUSED(msglen))
+{
+	time_t walltime = cs_time();
+	char buf[28];
+	cs_ctime_r(&walltime, buf);
+	struct gbox_peer *peer = cli->gbox;
+	FILE *fhandle = fopen(FILE_GSMS_MSG, "a+");
+	if(!fhandle)
+	{
+		cs_log("Couldn't open %s: %s", FILE_GSMS_MSG, strerror(errno));
+		return;
+	}
+	if(type == 0x30)
+		{fprintf(fhandle, "Normal message received from %04X %s on %s%s\n\n",peer->gbox.id, cs_inet_ntoa(cli->ip), buf, gsms);}
+	else if(type == 0x31)
+		{
+		fprintf(fhandle, "OSD message received from %04X %s on %s%s\n\n",peer->gbox.id, cs_inet_ntoa(cli->ip), buf, gsms);
+		// TODO create OSD msg
+		}
+	else {fprintf(fhandle, "Corrupted message received from %04X %s on %s%s\n\n",peer->gbox.id, cs_inet_ntoa(cli->ip), buf, gsms);}
+	fclose(fhandle);
+	return;
+}
 
 static uint8_t gbox_get_my_vers (void)
 {
@@ -151,7 +180,7 @@ void gbox_write_peer_onl(void)
 	FILE *fhandle = fopen(FILE_GBOX_PEER_ONL, "w");
 	if(!fhandle)
 	{
-		cs_log("Couldn't open %s: %s\n", FILE_GBOX_PEER_ONL, strerror(errno));
+		cs_log("Couldn't open %s: %s", FILE_GBOX_PEER_ONL, strerror(errno));
 		return;
 	}
 	struct s_client *cl;
@@ -175,7 +204,7 @@ void gbox_write_version(void)
 	FILE *fhandle = fopen(FILE_GBOX_VERSION, "w");
 	if(!fhandle)
 	{
-		cs_log("Couldn't open %s: %s\n", FILE_GBOX_VERSION, strerror(errno));
+		cs_log("Couldn't open %s: %s", FILE_GBOX_VERSION, strerror(errno));
 		return;
 	}
 	fprintf(fhandle, "%02X.%02X\n", LOCAL_GBOX_MAJOR_VERSION, gbox_get_my_vers());
@@ -191,7 +220,7 @@ void gbox_write_shared_cards_info(void)
 	fhandle = fopen(FILE_SHARED_CARDS_INFO, "w");
 	if(!fhandle)
 	{
-		cs_log("Couldn't open %s: %s\n", FILE_SHARED_CARDS_INFO, strerror(errno));
+		cs_log("Couldn't open %s: %s", FILE_SHARED_CARDS_INFO, strerror(errno));
 		return;
 	}
 
@@ -239,7 +268,7 @@ void gbox_write_stats(void)
 	fhandle = fopen(FILE_STATS, "w");
 	if(!fhandle)
 	{
-		cs_log("Couldn't open %s: %s\n", FILE_STATS, strerror(errno));
+		cs_log("Couldn't open %s: %s", FILE_STATS, strerror(errno));
 		return;
 	}
 
@@ -838,9 +867,28 @@ int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 		gbox_send_hello(cli);
 		break;
 	case MSG_GOODBYE:
+		cs_log("gbox: received goodbye message from %s",username(cli));	
 		//needfix what to do after Goodbye?
 		//suspect: we get goodbye as signal of SID not found
-		cs_debug_mask(D_READER, "gbox: received goodbye message from %s\n",username(cli));	
+		break;
+	case MSG_UNKNWN:
+		cs_log("->[gbx] received MSG_UNKNWN 48F9 from %s", username(cli));	  
+		break;
+	case MSG_GSMS_1:
+		cs_log("->[gbx] received MSG_GSMS_1 from %s", username(cli));
+		gbox_send_gsms_ack_1(cli);
+		write_gsms_msg(cli, data +4, data[3], data[2]);
+ 		break;
+	case MSG_GSMS_2:
+		cs_log("->[gbx] received MSG_GSMS_2 from %s", username(cli));
+  		gbox_send_gsms_ack_2(cli);
+		write_gsms_msg(cli, data +16, data[14], data[15]);
+		break;
+	case MSG_GSMS_ACK_1:
+		cs_log("->[gbx] received MSG_GSMS_ACK_1 from %s", username(cli));
+		break;
+	case MSG_GSMS_ACK_2:
+		cs_log("->[gbx] received MSG_GSMS_ACK_2 from %s", username(cli));  
 		break;
 	case MSG_HELLO1:
 	case MSG_HELLO:
@@ -946,6 +994,10 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 			}
 		}
 	}  // error my pass
+	else if (gbox_decode_cmd(data) == MSG_GSMS_1 || gbox_decode_cmd(data) == MSG_GSMS_ACK_1 ) 
+	{
+		// MSG_GSMS_1 dont have passw and would fail. Just let them pass through for processing later
+	}
 	else
 	{
 		cs_log("gbox: ATTACK ALERT from IP %s", cs_inet_ntoa(cli->ip));
@@ -1230,7 +1282,7 @@ static int32_t gbox_recv(struct s_client *cli, uchar *buf, int32_t l)
 	if(cli->udp_fd && cli->is_udp && cli->typ == 'c')
 	{
 		n = recv_from_udpipe(buf);		
-		if (n > MIN_GBOX_MESSAGE_LENGTH && n < RECEIVE_BUFFER_SIZE) //protect against too short or too long messages
+		if (n >= MIN_GBOX_MESSAGE_LENGTH && n < RECEIVE_BUFFER_SIZE) //protect against too short or too long messages
 		{
 			memcpy(&data[0], buf, n);
 			gbox_check_header(cli, &data[0], n);
@@ -1902,6 +1954,42 @@ static void gbox_s_idle(struct s_client *cl)
 	//prevent users from timing out
 	cs_debug_mask(D_READER, "gbox client idle prevented: %s", username(cl));
 	cl->last = time((time_t *)0);
+}
+
+static void gbox_send_gsms_ack_1(struct s_client *cli)
+{
+	uchar outbuf[15];
+	struct gbox_peer *peer = cli->gbox;
+	struct s_reader *rdr = cli->reader;
+		gbox_code_cmd(outbuf, MSG_GSMS_ACK_1);
+		outbuf[2] = 0x90;
+		outbuf[3] = 0x98; 
+		outbuf[4] = 0x90;
+		outbuf[5] = 0x98;
+		outbuf[6] = 0x90;
+		outbuf[7] = 0x98;
+		outbuf[8] = 0x90;
+		outbuf[9] = 0x98; 
+		gbox_send(cli, outbuf, 10);
+		cs_debug_mask(D_READER,"gbox send GSMS_ACK_1 to %s:%d id: %04X", rdr->device, rdr->r_port, peer->gbox.id);
+}
+
+static void gbox_send_gsms_ack_2(struct s_client *cli)
+{
+	uchar outbuf[20];
+	struct gbox_peer *peer = cli->gbox;
+	struct s_reader *rdr = cli->reader;
+		gbox_code_cmd(outbuf, MSG_GSMS_ACK_2);
+		memcpy(outbuf + 2, peer->gbox.password, 4);
+		memcpy(outbuf + 6, local_gbox.password, 4);
+		outbuf[10] = 0;
+		outbuf[11] = 0;
+		outbuf[12] = (local_gbox.id >> 8) & 0xff;
+		outbuf[13] = local_gbox.id & 0xff;									
+		outbuf[14] = 0x1;
+		outbuf[15] = 0;
+		gbox_send(cli, outbuf, 16);
+		cs_debug_mask(D_READER,"gbox send GSMS_ACK_2 to %s:%d id: %04X", rdr->device, rdr->r_port, peer->gbox.id);
 }
 
 void module_gbox(struct s_module *ph)
