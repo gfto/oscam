@@ -31,7 +31,7 @@
 	</DIV>
 	<DIV ID="searchTable">
 		<TABLE CLASS="readers">
-			<TR><TH>Search: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="initDoc()"></TH></TR>
+			<TR><TH>Search: <input type="text" id="searchTerm" class="search_box"></TH></TR>
 		</TABLE>
 	</DIV>
 	<TABLE ID="dataTable" CLASS="readers">
@@ -43,13 +43,13 @@
 ##TPLREADERLBWU##
 			<TH COLSPAN="6"></TH>
 		</TR>
-		<TR>
+		<TR id="headline">
 			<TH>On/Off</TH>
-			<TH>Reader</TH>
-			<TH>Protocol</TH>
+			<TH data-sort="string-ins" class="sortable">Reader</TH>
+			<TH data-sort="string-ins" class="sortable">Protocol</TH>
 			<TH>Groups</TH>
-			<TH>OK</TH>
-			<TH>NOK</TH>
+			<TH data-sort="int" class="sortable">OK</TH>
+			<TH data-sort="int" class="sortable">NOK</TH>
 			<TH>Filtered<BR><SPAN TITLE="filtered by ECM Header Whitelist"> Head </SPAN>/<SPAN TITLE="filtered by ECM Whitelist"> Len </SPAN></TH>
 			<TH>error<BR><SPAN TITLE="unknown EMM"> UK </SPAN>/<SPAN TITLE="global EMM"> G </SPAN>/<SPAN TITLE="shared EMM"> S </SPAN>/<SPAN TITLE="unique EMM"> UQ </SPAN></TH>
 			<TH>written<BR><SPAN TITLE="unknown EMM"> UK </SPAN>/<SPAN TITLE="global EMM"> G </SPAN>/<SPAN TITLE="shared EMM"> S </SPAN>/<SPAN TITLE="unique EMM"> UQ </SPAN></TH>

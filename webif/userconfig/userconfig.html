@@ -7,7 +7,7 @@
 	var stoppoll = 0;
 	var pollintervall = 0;
 	var httprefresh = '##REFRESHTIME##';
-	
+		
 	</script>
 	<script type="text/javascript">
 	// script customization for templates
@@ -55,7 +55,7 @@
 	</DIV>
 	<DIV ID="searchTable">
 		<TABLE CLASS="users">
-			<TR><TH>Search: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="initDoc()"></TH></TR>
+			<TR><TH>Search: <input type="text" id="searchTerm" class="search_box"></TH></TR>
 		</TABLE>
 	</DIV>
 	<TABLE ID="dataTable" CLASS="users">
@@ -71,24 +71,24 @@
 			<TH CLASS="##EXPIREVIEW##"></TH>
 			<TH COLSPAN="3">Action</TH>
 		</TR>
-		<TR onClick="cdpause()"> <!--  Resolve  -->
+		<TR id="headline" onClick="cdpause()"> <!--  Resolve  -->
 			<TH CLASS="nosort">On/Off</TH>
-			<TH>User</TH>
-			<TH CLASS="nosort">Status<BR>Address</TH>
-			<TH>Protocol</TH>
+			<TH data-sort="string-ins" data-sort-default ="asc" class="sortable">User</TH>
+			<TH data-sort="string-ins" data-sort-default ="asc" class="sortable">Status<BR>Address</TH>
+			<TH data-sort="string-ins" data-sort-default ="asc" class="sortable">Protocol</TH>
 			<TH CLASS="##GRPVIEW##">Groups</TH>
 			<TH CLASS="nosort">Idle Time<BR>On Channel</TH>
-			<TH>Last Channel</TH>
-			<TH TITLE="Last ECM Time">LTIME</TH>
-			<TH TITLE="Delivered ECM with status OK">OK</TH>
-			<TH TITLE="Delivered ECM with status not OK">NOK</TH>
-			<TH TITLE="Ignored ECM by filters, part of NOK">IGN</TH>
-			<TH TITLE="Timeout ECM, part of NOK">TOUT</TH>
-			<TH TITLE="Delivered ECM from cache, part of OK">CACHE</TH>
-			<TH TITLE="Delivered ECM from tunneled, part of OK">TUN</TH>
-			<TH CLASS="nosort" TITLE="Sum of ECM's in last 60s">last 60s</TH>
-			<TH TITLE="Valid EMM delivered">OK</TH>
-			<TH TITLE="Invalid EMM delivered">NOK</TH>
+			<TH data-sort="string" class="sortable">Last Channel</TH>
+			<TH data-sort="int" class="sortable" TITLE="Last ECM Time">LTIME</TH>
+			<TH data-sort="int" class="sortable" TITLE="Delivered ECM with status OK">OK</TH>
+			<TH data-sort="int" class="sortable" TITLE="Delivered ECM with status not OK">NOK</TH>
+			<TH data-sort="int" class="sortable" TITLE="Ignored ECM by filters, part of NOK">IGN</TH>
+			<TH data-sort="int" class="sortable" TITLE="Timeout ECM, part of NOK">TOUT</TH>
+			<TH data-sort="int" class="sortable" TITLE="Delivered ECM from cache, part of OK">CACHE</TH>
+			<TH data-sort="int" class="sortable" TITLE="Delivered ECM from tunneled, part of OK">TUN</TH>
+			<TH data-sort="int" class="sortable" TITLE="Sum of ECM's in last 60s">last 60s</TH>
+			<TH data-sort="int" class="sortable" TITLE="Valid EMM delivered">OK</TH>
+			<TH data-sort="int" class="sortable" TITLE="Invalid EMM delivered">NOK</TH>
 ##TPLCWCYCLETHV##
 ##TPLCWANTICASCTHV##
 			<TH CLASS="nosort ##EXPIREVIEW##" TITLE="Expiration date of account">Exp. Date</TH>
@@ -97,7 +97,7 @@
 			<TH CLASS="nosort"></TH>
 		</TR>
 	</THEAD>
-	<TBODY>
+	<TBODY class="content">
 ##USERCONFIGS##
 	</TBODY>
 	</TABLE>
@@ -152,14 +152,4 @@
 		</TR>
 	</TABLE>
 	<DIV id="picolor"></DIV>
-	<!-- To initialize a TABLE sorter -->
-	<script type="text/javascript">
-		var sorter = new TINY.table.sorter('sorter','dataTable',{
-			headclass: 'head', // Header Class //
-			ascclass: 'asc', // Ascending Class //
-			descclass: 'desc', // Descending Class //
-			sortdir: 1, // Sort Direction (1 or -1) //
-			init: true// Init Now? (true or false) //
-		});
-	</script>
 ##TPLFOOTER##

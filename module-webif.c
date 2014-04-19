@@ -1373,8 +1373,10 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 			tpl_printf(vars, TPLADD, "EMMBLOCKEDS", "%d", rdr->emmblocked[SHARED]);
 			tpl_printf(vars, TPLADD, "EMMBLOCKEDUQ", "%d", rdr->emmblocked[UNIQUE]);
 
-			tpl_printf(vars, TPLADD, "ECMSOK", "%u (%.2f%%)", rdr->ecmsok, rdr->ecmshealthok);
-			tpl_printf(vars, TPLADD, "ECMSNOK", "%u (%.2f%%)", rdr->ecmsnok, rdr->ecmshealthnok);
+			tpl_printf(vars, TPLADD, "ECMSOK", "%u", rdr->ecmsok);
+			tpl_printf(vars, TPLADD, "ECMSOKREL", " (%.2f%%)", rdr->ecmshealthok);
+			tpl_printf(vars, TPLADD, "ECMSNOK", "%u", rdr->ecmsnok);
+			tpl_printf(vars, TPLADD, "ECMSNOKREL", " (%.2f%%)",rdr->ecmshealthnok);
 			tpl_printf(vars, TPLADD, "ECMSFILTEREDHEAD", "%d", rdr->ecmsfilteredhead);
 			tpl_printf(vars, TPLADD, "ECMSFILTEREDLEN", "%d", rdr->ecmsfilteredlen);
 #ifdef WITH_LB

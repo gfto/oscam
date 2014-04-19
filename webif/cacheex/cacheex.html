@@ -1,4 +1,15 @@
-##TPLHEADER##
+##TPLHEADERSHORT##
+	<script type="text/javascript">
+	
+	var page = 'cacheex';
+	var jsonurl = '';
+	var parameters = '';
+	var stoppoll = 1;
+	var pollintervall = 0;
+	var httprefresh = '##REFRESHTIME##';
+
+	</script>
+##TPLBODY##
 ##TPLMENU##
 ##TPLMESSAGE##
 	<DIV ID="subnav">
@@ -14,19 +25,19 @@
 	<TABLE ID="dataTable" CLASS="stats">
 		<THEAD>
 			<TR><TH COLSPAN="12">CacheEX Stats for ##OWN_CACHEEX_NODEID##</TH></TR>
-			<TR>
+			<TR id="headline">
 				<TH>Direction</TH>
-				<TH>Type</TH>
-				<TH>Name</TH>
-				<TH>IP</TH>
-				<TH>NODE</TH>
-				<TH>Cache EX Mode</TH>
-				<TH>Push</TH>
-				<TH>Got</TH>
-				<TH>CWC Info</TH>
-				<TH>Hit</TH>
-				<TH>Err</TH>
-				<TH>CW Diff</TH>
+				<TH data-sort="string-ins" class="sortable">Type</TH>
+				<TH data-sort="string-ins" class="sortable">Name</TH>
+				<TH data-sort="string-ins" class="sortable">IP</TH>
+				<TH data-sort="string-ins" class="sortable">NODE</TH>
+				<TH data-sort="string-ins" class="sortable">Cache EX Mode</TH>
+				<TH data-sort="int" class="sortable">Push</TH>
+				<TH data-sort="int" class="sortable">Got</TH>
+				<TH data-sort="int" class="sortable">CWC Info</TH>
+				<TH data-sort="int" class="sortable">Hit</TH>
+				<TH data-sort="int" class="sortable">Err</TH>
+				<TH data-sort="int" class="sortable">CW Diff</TH>
 			</TR>
 		</THEAD>
 		<TBODY>
