@@ -1,12 +1,12 @@
 		<TR CLASS="##CLASSNAME##" id="##USERMD5##" nopoll="">
-			<TD CLASS="usercol0"><A HREF="userconfig.html?user=##USERNAMEENC##&amp;action=##SWITCH##" TITLE="##SWITCHTITLE##"><IMG CLASS="icon" SRC="##SWITCHICO##" ALT="##SWITCHTITLE##"></A></TD>
+			<TD CLASS="usercol0"><A class="switchuser" data-next-action="##SWITCH##" data-user-name="##USERNAMEENC##" data-md5="##USERMD5##" HREF="#" TITLE="##SWITCHTITLE##"><IMG CLASS="icon" SRC="##SWITCHICO##" ALT="##SWITCHTITLE##"></A></TD>
 			<TD CLASS="usercol1" data-sort-value="##USERNAME##" TITLE="##USERNAME####DESCRIPTION##">##USERBIT####CLIENTCOUNTNOTIFIER##</TD>
-			<TD CLASS="usercol2" TITLE="SLEEP: ##CLIENTTIMETOSLEEP##">##STATUS##<BR>##CLIENTIP##</TD>
+			<TD CLASS="usercol2" data-sort-value="##CLIENTIP##" TITLE="SLEEP: ##CLIENTTIMETOSLEEP##">##STATUS##<BR>##CLIENTIP##</TD>
 			<TD CLASS="usercol4" TITLE="##CLIENTPROTOTITLE##">##CLIENTPROTO##</TD>
 			<TD CLASS="usercol5 ##GRPVIEW##"><DIV CLASS="groups" TITLE="##GROUPS##">##GROUPS##</DIV></TD>
 			<TD CLASS="usercol3">##IDLESECS##<BR>##CLIENTTIMEONCHANNEL##</TD>
 			<TD CLASS="usercol6" TITLE="##LASTCHANNELTITLE##">##LASTCHANNEL##</TD>
-			<TD CLASS="usercol7">##CWLASTRESPONSET##</TD>
+			<TD CLASS="usercol7" data-sort-value="##CWLASTRESPONSET##">##CWLASTRESPONSET##</TD>
 			<TD CLASS="usercol9">##CWOK##</TD>
 			<TD CLASS="usercol10">##CWNOK##</TD>
 			<TD CLASS="usercol11">##CWIGN##</TD>
@@ -20,6 +20,6 @@
 ##TPLCWANTICASCTBV##
 			<TD CLASS="usercol20 ##EXPIREVIEW##">##EXPDATE##</TD>
 			<TD CLASS="usercol23"><A HREF="user_edit.html?user=##USERNAMEENC##" TITLE="Edit this user"><IMG CLASS="icon" SRC="image?i=ICEDI" ALT="Edit User"></A></TD>
-			<TD CLASS="usercol24"><A HREF="userconfig.html?user=##USERNAMEENC##&amp;action=resetstats" TITLE="Reset statistics for this user"><IMG CLASS="icon" SRC="image?i=ICRES" ALT="Reset Stats"></A></TD>
-			<TD CLASS="usercol25"><A HREF="userconfig.html?user=##USERNAMEENC##&amp;action=delete" TITLE="Delete this user"><IMG CLASS="icon" SRC="image?i=ICDEL" ALT="Delete User" onclick="return confirm('Delete ##USERNAMEENC## ?')"></A></TD>
+			<TD CLASS="usercol24"><A class="resetuser" data-next-action="resetstats" data-user-name="##USERNAMEENC##" HREF="#" TITLE="Reset statistics for this user"><IMG CLASS="icon" SRC="image?i=ICRES" ALT="Reset Stats"></A></TD>
+			<TD CLASS="usercol25"><A class="deleteuser" data-next-action="delete" data-user-name="##USERNAMEENC##" data-md5="##USERMD5##" HREF="#" TITLE="Delete this user"><IMG CLASS="icon" SRC="image?i=ICDEL" ALT="Delete User"></A></TD>
 		</TR>

@@ -181,6 +181,78 @@ $(function(){
 		if(!nostorage) localStorage.loi = $("#onlineidle").text();
 	});
 	
+	// switch reader ON/OFF
+	$("a.switchreader").click(function(){
+		var parameters_old = parameters;
+		parameters += '&label=' + $(this).data('reader-name') + '&action=' + $(this).data('next-action');
+		var rowid = '#' + $(this).data('md5');
+		var img = $(this).children("img");
+		waitForMsg();
+		if($(this).data('next-action') == 'enable'){
+			$(this).data('next-action', 'disable').attr('title','Disable this reader');
+			$(rowid).attr('class', 'enabledreader');
+			img.attr('src', 'image?i=ICDIS').attr('alt','Disable this reader');
+		} else {
+			$(this).data('next-action', 'enable').attr('title','Enable this reader');
+			$(rowid).attr('class', 'disabledreader');
+			img.attr('src', 'image?i=ICENA').attr('alt','Enable this reader');
+		}
+		parameters = parameters_old;
+	});
+	
+	// delete reader
+	$("a.deletereader").click(function(){
+		if (confirm("Delete Reader " + $(this).data('reader-name') + "?")) {
+			var parameters_old = parameters;
+			parameters += '&label=' + $(this).data('reader-name') + '&action=' + $(this).data('next-action');
+			waitForMsg();
+			parameters = parameters_old;
+			$('#' + $(this).data('md5')).fadeOut('slow');
+		}
+	});
+	
+	// switch user ON/OFF
+	$("a.switchuser").click(function(){
+		var parameters_old = parameters;
+		parameters += '&user=' + $(this).data('user-name') + '&action=' + $(this).data('next-action');
+		var rowid = '#' + $(this).data('md5');
+		var img = $(this).children("img");
+		waitForMsg();
+		if($(this).data('next-action') == 'enable'){
+			$(this).data('next-action', 'disable').attr('title', 'Disable this user');
+			$(rowid).attr('class', 'offline');
+			$(rowid + ' > td.usercol2').text('offline');
+			img.attr('src', 'image?i=ICDIS').attr('alt', 'Disable this user');
+		} else {
+			$(this).data('next-action', 'enable').attr('title', 'Enable this user');
+			$(rowid).attr('class', 'disabled');
+			$(rowid + ' > td.usercol2').text('offline (disabled)');
+			img.attr('src', 'image?i=ICENA').attr('alt', 'Enable this user');
+		}
+		parameters = parameters_old;
+	});
+	
+	// reset user stats
+	$("a.resetuser").click(function(){
+		if (confirm("Reset Stats for " + $(this).data('user-name') + "?")) {
+			var parameters_old = parameters;
+			parameters += '&user=' + $(this).data('user-name') + '&action=' + $(this).data('next-action');
+			waitForMsg();
+			parameters = parameters_old;
+		}
+	});
+	
+	// delete user
+	$("a.deleteuser").click(function(){
+		if (confirm("Delete User " + $(this).data('user-name') + "?")) {
+			var parameters_old = parameters;
+			parameters += '&user=' + $(this).data('user-name') + '&action=' + $(this).data('next-action');
+			waitForMsg();
+			parameters = parameters_old;
+			$('#' + $(this).data('md5')).fadeOut('slow');
+		}
+	});
+	
 	// search related events
 	$("#searchTerm").keyup(function () {
 		var value = $("#searchTerm").val().toLowerCase().trim();
@@ -202,15 +274,22 @@ $(function(){
 	$("#searchTerm").blur(function () {
 		initDoc();
 	});
+
+	var first_octet = function(str){
+		if(str.indexOf('.')){
+			return parseInt(str.substring(0,str.indexOf('.')));
+		} else {
+			return 0;
+		}
+	}
 	
-	// set sortable table
-	/* Examples:
-	 * <th data-sort="int">int</th>
-	 * <th data-sort="int">int</th>
-	 * <th data-sort="float" data-sort-default="desc">float</th>
-	 * <th data-sort="moveBlanks" data-sort-desc="moveBlanksDesc">string</th>
-	*/
-	var table = $('#dataTable').stupidtable();
+	var table = $('#dataTable').stupidtable({
+		"ip":function(a,b){
+			aIP = first_octet(a);
+			bIP = first_octet(b);
+			return aIP - bIP;
+		}
+	});
 	
 	table.bind('beforetablesort', function (event, data) {
 		lockpoll = 1;
@@ -224,6 +303,7 @@ $(function(){
 		table.removeClass("disabledtable");
 	});
 });
+
 /*
  * Genaral: Update page footer
  */
@@ -250,6 +330,8 @@ function updateUserpage(data) {
 		var uid = "#" + item.user.usermd5;
 		poll_excluded = ($( uid ).attr('nopoll') != undefined) ? $( uid ).attr('nopoll') : '';
 
+		if(!is_nopoll('usercol7')) {$( uid + " td.usercol7").data('sort-value', 0);}
+		
 		switch (item.user.classname) {
 			case 'online':
 			$( uid ).attr('class', item.user.classname);
@@ -319,7 +401,7 @@ function updateUserpage(data) {
 				}
 			}
 			
-			if(!is_nopoll('usercol7')) {$( uid + " td.usercol7").text( item.user.stats.cwlastresptime + 'ms');}
+			if(!is_nopoll('usercol7')) {$( uid + " td.usercol7").text( item.user.stats.cwlastresptime + 'ms').data('sort-value', item.user.stats.cwlastresptime);}
 			//usercol8 ???
 			if(!is_nopoll('usercol9')) {$( uid + " td.usercol9").text( item.user.stats.cwok );}
 			if(!is_nopoll('usercol10')) {$( uid + " td.usercol10").text( item.user.stats.cwnok );}
@@ -403,7 +485,7 @@ function updateUserpage(data) {
 						.html( item.user.status );
 				}
 				if(!is_nopoll('usercol3')) {$( uid + " td.usercol3").text( '' );}
-				if(!is_nopoll('usercol7')) {$( uid + " td.usercol7").text( '0' );}
+				if(!is_nopoll('usercol7')) {$( uid + " td.usercol7").text( '0' ).data('sort-value', 0);}
 				if(!is_nopoll('usercol4')) {
 					$( uid + " td.usercol4")
 						.text( '' )
@@ -1108,12 +1190,14 @@ function setPollerr(error){
  * General Polling
  */
 var lockpoll = 0;
+var timer_ID;
 function waitForMsg(){
 	
 	if(lockpoll > 0){
 		/* assumed that previous poll is not finnished yet we not
 		   call new data and just set the next intervall */
-		setTimeout("waitForMsg()", pollintervall);
+		clearTimeout(timer_ID);
+		timer_ID = setTimeout("waitForMsg()", pollintervall);
 		return;
 	}
 	
@@ -1127,11 +1211,13 @@ function waitForMsg(){
 			setPollerr(0);
 			updatePage(data);
 			if(!stoppoll) {
-				setTimeout("waitForMsg()", pollintervall);
+				clearTimeout(timer_ID);
+				timer_ID = setTimeout("waitForMsg()", pollintervall);
 			}
 		},
 		error: function(XMLHttpRequest, textStatus, errorThrown) {
-			setTimeout("waitForMsg()", 15000);
+			clearTimeout(timer_ID);
+			timer_ID = setTimeout("waitForMsg()", 15000);
 			setPollerr(1);
 		}
 	});
@@ -1178,6 +1264,11 @@ $(document).ready(function() {
 
 		switch(page){
 
+		case 'cacheex': 
+			//do nothing
+			
+			break;
+			
 		case 'livelog':
 
 			if(!nostorage){
