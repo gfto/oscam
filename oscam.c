@@ -570,6 +570,7 @@ static void cs_dumpstack(int32_t sig)
  *
  * reloads configs:
  *  - useraccounts (oscam.user)
+ *  - readers      (oscam.server)
  *  - services ids (oscam.srvid)
  *  - tier ids     (oscam.tiers)
  *  Also clears anticascading stats.
@@ -577,6 +578,7 @@ static void cs_dumpstack(int32_t sig)
 static void cs_reload_config(void)
 {
 	cs_accounts_chk();
+	reload_readerdb();
 	init_srvid();
 	init_tierid();
 	ac_init_stat();

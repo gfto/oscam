@@ -113,8 +113,8 @@ OPTIONS
 
 SIGNALS
        SIGHUP
-	  reinit  user	db, TIERs, services, clients and anti-cascading, for newcamd connections: after reloading the
-	  ident, please restart newcamd client
+	  reinit  user	db, readers, TIERs, services, clients and anti-cascading, for newcamd connections: after 
+          reloading the ident, please restart newcamd client
 
        SIGUSR1
 	  shift debug level to next level (see debug level mask above)

@@ -21,6 +21,7 @@ int32_t init_readerdb(void);
 void    free_reader(struct s_reader *rdr);
 int32_t free_readerdb(void);
 int32_t write_server(void);
+void    reload_readerdb(void);
 
 void    chk_sidtab(char *token, char *value, struct s_sidtab *sidtab);
 int32_t init_sidtab(void);

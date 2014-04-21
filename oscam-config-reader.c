@@ -1312,3 +1312,18 @@ int32_t write_server(void)
 	}
 	return flush_config_file(f, cs_srvr);
 }
+
+void reload_readerdb(void)
+{
+	struct s_reader *rdr;
+	LL_ITER itr = ll_iter_create(configured_readers);
+	while((rdr = ll_iter_next(&itr)))
+	{
+		// disable the current reader
+		rdr->enable = 0;
+		restart_cardreader(rdr,1);
+	}
+	free_readerdb(); // release the old readerdb
+	init_readerdb(); // reload the new readerdb
+	init_cardreader(); // start the readers
+}

@@ -51,7 +51,7 @@ CS_MUTEX_LOCK *lock_cs;
 
 static pthread_t httpthread;
 static int32_t sock;
-enum refreshtypes { REFR_ACCOUNTS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REFR_SERVICES };
+enum refreshtypes { REFR_ACCOUNTS, REFR_READERS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REFR_SERVICES };
 
 //initialize structs for calculating cpu-usage depending on time between refresh of status_page
 static struct pstat p_stat_cur;
@@ -152,6 +152,11 @@ static void refresh_oscam(enum refreshtypes refreshtype)
 	case REFR_ACCOUNTS:
 		cs_log("Refresh Accounts requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
 		cs_accounts_chk();
+		break;
+
+	case REFR_READERS:
+		cs_log("Refresh Readers requested by WebIF from %s", cs_inet_ntoa(GET_IP()));
+		reload_readerdb();
 		break;
 
 	case REFR_CLIENTS:
@@ -1230,6 +1235,11 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 		{
 			clear_all_rdr_stats();
 		}
+	}
+	if(strcmp(getParam(params, "action"), "reloadreaders") == 0)
+	{
+		if(!cfg.http_readonly)
+			{ refresh_oscam(REFR_READERS); }
 	}
 	if((strcmp(getParam(params, "action"), "disable") == 0) || (strcmp(getParam(params, "action"), "enable") == 0))
 	{
