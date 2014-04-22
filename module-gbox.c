@@ -27,6 +27,7 @@
 #include "oscam-time.h"
 #include "oscam-reader.h"
 #include "oscam-garbage.h"
+#include "oscam-files.h"
 
 #if defined(__CYGWIN__) 
 #define FILE_GBOX_VERSION       "C:/tmp/gbx.ver"
@@ -35,6 +36,7 @@
 #define FILE_GBOX_PEER_ONL  	"C:/tmp/gbx_peer.onl"
 #define FILE_STATS	  	"C:/tmp/gbx_stats.info"
 #define FILE_GSMS_MSG    	"C:/tmp/gsms.msg"
+#define FILE_OSD_MSG    	"C:/tmp/osd.msg"
 #else
 #define FILE_GBOX_VERSION       "/tmp/gbx.ver"
 #define FILE_SHARED_CARDS_INFO  "/tmp/gbx_card.info"
@@ -42,6 +44,7 @@
 #define FILE_GBOX_PEER_ONL  	"/tmp/gbx_peer.onl"
 #define FILE_STATS	  	"/tmp/gbx_stats.info"
 #define FILE_GSMS_MSG		"/tmp/gsms.msg"
+#define FILE_OSD_MSG    	"/tmp/osd.msg"
 #endif
 
 #define GBOX_STAT_HELLOL	0
@@ -69,9 +72,9 @@ enum
 	MSG_CHECKCODE = 0x41C0,
 	MSG_GOODBYE = 0x9091,
 	MSG_GSMS_ACK_1 = 0x9098,
-	MSG_GSMS_ACK_2 = 0x9099, //added by felix: MSG_GSMS_ACK_2
-	MSG_GSMS_1 = 0x0FF0, //gsms via IP
-	MSG_GSMS_2 = 0x0FFF, //added by felix: gsms via BoxId
+	MSG_GSMS_ACK_2 = 0x9099,
+	MSG_GSMS_1 = 0x0FF0, 
+	MSG_GSMS_2 = 0x0FFF,
 	MSG_BOXINFO = 0xA0A1,
 	MSG_UNKNWN = 0x48F9,
 };
@@ -144,12 +147,33 @@ static void	init_local_gbox(void);
 static void gbox_send_gsms_ack_1(struct s_client *cli);
 static void gbox_send_gsms_ack_2(struct s_client *cli);
 
+static void write_gsms_to_osd_file(struct s_client *cli, unsigned char *gsms)
+{
+	if (file_exists(FILE_OSD_MSG))
+	{
+	char gsms_buf[128];
+	snprintf(gsms_buf, sizeof(gsms_buf), "%s %s:%s %s", FILE_OSD_MSG, username(cli), cs_inet_ntoa(cli->ip), gsms);
+	char *cmd = gsms_buf;
+              FILE *p;
+              if ((p = popen(cmd, "w")) == NULL)
+		{	
+		cs_log("Error %s",FILE_OSD_MSG);
+		return;
+		}
+              pclose(p);
+	}
+	return;
+}
+
 static void write_gsms_msg (struct s_client *cli, uchar *gsms, uint16_t type, uint16_t UNUSED(msglen))
 {
+	char gsms_buf[128];
+	char tsbuf[28];
 	time_t walltime = cs_time();
-	char buf[28];
-	cs_ctime_r(&walltime, buf);
+	cs_ctime_r(&walltime, tsbuf);
 	struct gbox_peer *peer = cli->gbox;
+	struct s_reader *rdr = cli->reader;
+	snprintf(gsms_buf, sizeof(gsms_buf), "%s %s", gsms, tsbuf); //added for easy handling of gsms by webif
 	FILE *fhandle = fopen(FILE_GSMS_MSG, "a+");
 	if(!fhandle)
 	{
@@ -157,14 +181,19 @@ static void write_gsms_msg (struct s_client *cli, uchar *gsms, uint16_t type, ui
 		return;
 	}
 	if(type == 0x30)
-		{fprintf(fhandle, "Normal message received from %04X %s on %s%s\n\n",peer->gbox.id, cs_inet_ntoa(cli->ip), buf, gsms);}
+		{
+		fprintf(fhandle, "Normal message received from %04X %s on %s%s\n\n",peer->gbox.id, cs_inet_ntoa(cli->ip), tsbuf, gsms);
+		rdr->last_gsms = gsms_buf; //added for easy handling of gsms by webif
+		}
 	else if(type == 0x31)
 		{
-		fprintf(fhandle, "OSD message received from %04X %s on %s%s\n\n",peer->gbox.id, cs_inet_ntoa(cli->ip), buf, gsms);
-		// TODO create OSD msg
+		fprintf(fhandle, "OSD message received from %04X %s on %s%s\n\n",peer->gbox.id, cs_inet_ntoa(cli->ip), tsbuf, gsms);
+		rdr->last_gsms = gsms_buf; //added for easy handling of gsms by webif
+		write_gsms_to_osd_file(cli, gsms);
 		}
-	else {fprintf(fhandle, "Corrupted message received from %04X %s on %s%s\n\n",peer->gbox.id, cs_inet_ntoa(cli->ip), buf, gsms);}
-	fclose(fhandle);
+	else 
+		{fprintf(fhandle, "Corrupted message received from %04X %s on %s%s\n\n",peer->gbox.id, cs_inet_ntoa(cli->ip), tsbuf, gsms);}
+		fclose(fhandle);
 	return;
 }
 
