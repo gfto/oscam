@@ -1341,7 +1341,12 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 			for (z = 0; z < MD5_DIGEST_LENGTH; z++){
 			    tpl_printf(vars, TPLAPPEND, "LABELMD5", "%02x", md5tmp[z]);
 			}
-
+#ifdef MODULE_GBOX
+			if(apicall){
+				tpl_addVar(vars, TPLADD, "LASTGSMS", "");
+				tpl_addVar(vars, TPLADD, "LASTGSMS", rdr->last_gsms);
+			}
+#endif
 			tpl_addVar(vars, TPLADD, "READERNAMEENC", urlencode(vars, rdr->label));
 			tpl_addVar(vars, TPLADD, "CTYP", reader_get_type_desc(rdr, 0));
 

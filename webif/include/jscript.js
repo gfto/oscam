@@ -275,20 +275,42 @@ $(function(){
 		initDoc();
 	});
 
-	var first_octet = function(str){
-		if(str.indexOf('.')){
-			return parseInt(str.substring(0,str.indexOf('.')));
-		} else {
-			return 0;
+	var moveBlanks = function(a, b) {
+		if ( a < b ){
+			if (a == "") return 1;
+			else return -1;
 		}
+		if ( a > b ){
+			if (b == "") return -1;
+			else return 1;
+		}
+		return 0;
+	};
+	
+	var moveBlanksDesc = function(a, b) {
+		if ( a < b ) return 1;
+		if ( a > b ) return -1;
+		return 0;
+	};
+
+	var ip2int = function(value) {
+		if(value.indexOf('.') < 0) return 1;
+		var d = value.split('.');
+		var sum = 0;
+		for(var i = 0; i < 4; i++) {
+			sum = (sum << 8) + Number(d[i]);
+		}
+		return sum;
 	}
 	
 	var table = $('#dataTable').stupidtable({
 		"ip":function(a,b){
-			aIP = first_octet(a);
-			bIP = first_octet(b);
+			aIP = ip2int(a);
+			bIP = ip2int(b);
 			return aIP - bIP;
-		}
+		},
+		"moveBlanks": moveBlanks,
+		"moveBlanksDesc": moveBlanksDesc
 	});
 	
 	table.bind('beforetablesort', function (event, data) {
@@ -329,8 +351,7 @@ function updateUserpage(data) {
 	$.each(data.oscam.users, function(i, item) {
 		var uid = "#" + item.user.usermd5;
 		poll_excluded = ($( uid ).attr('nopoll') != undefined) ? $( uid ).attr('nopoll') : '';
-
-		if(!is_nopoll('usercol7')) {$( uid + " td.usercol7").data('sort-value', 0);}
+		if(!is_nopoll('usercol7')) {$( uid + " td.usercol7").text( '' ).data('sort-value', 0);}
 		
 		switch (item.user.classname) {
 			case 'online':
@@ -473,6 +494,7 @@ function updateUserpage(data) {
 					$( uid + " td.usercol6").html(item.user.lastchannel );
 				}
 			}
+			if(!is_nopoll('usercol7')) {$( uid + " td.usercol7").text( '' ).data('sort-value', 0);}
 			break;
 
 			default:
@@ -485,7 +507,6 @@ function updateUserpage(data) {
 						.html( item.user.status );
 				}
 				if(!is_nopoll('usercol3')) {$( uid + " td.usercol3").text( '' );}
-				if(!is_nopoll('usercol7')) {$( uid + " td.usercol7").text( '0' ).data('sort-value', 0);}
 				if(!is_nopoll('usercol4')) {
 					$( uid + " td.usercol4")
 						.text( '' )
