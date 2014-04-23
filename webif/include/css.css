@@ -241,11 +241,18 @@ table.subservicetable {
 
 /* OTHER TABLES */
 
-/* in emm.html, emm_running.html,
- * entitlements_bit.html, entitlements_cccambit.html
- * failban.html, 
- */
+/* entitlements_bit.html, entitlements_cccambit.html */
 table.stats {}
+
+/* in emm.html */
+table.writeemm {}
+
+/* in emm_running.html */
+table.emmrunning {}
+
+/* in failban.html */
+table.failban {}
+
 
 /* ******** 8. TABLE TR */
 
