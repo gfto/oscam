@@ -167,13 +167,12 @@ static void write_gsms_to_osd_file(struct s_client *cli, unsigned char *gsms)
 
 static void write_gsms_msg (struct s_client *cli, uchar *gsms, uint16_t type, uint16_t UNUSED(msglen))
 {
-	char gsms_buf[128];
 	char tsbuf[28];
 	time_t walltime = cs_time();
 	cs_ctime_r(&walltime, tsbuf);
 	struct gbox_peer *peer = cli->gbox;
 	struct s_reader *rdr = cli->reader;
-	snprintf(gsms_buf, sizeof(gsms_buf), "%s %s", gsms, tsbuf); //added for easy handling of gsms by webif
+	snprintf(rdr->last_gsms, sizeof(rdr->last_gsms), "%s %s", gsms, tsbuf); //added for easy handling of gsms by webif
 	FILE *fhandle = fopen(FILE_GSMS_MSG, "a+");
 	if(!fhandle)
 	{
@@ -183,12 +182,10 @@ static void write_gsms_msg (struct s_client *cli, uchar *gsms, uint16_t type, ui
 	if(type == 0x30)
 		{
 		fprintf(fhandle, "Normal message received from %04X %s on %s%s\n\n",peer->gbox.id, cs_inet_ntoa(cli->ip), tsbuf, gsms);
-		rdr->last_gsms = gsms_buf; //added for easy handling of gsms by webif
 		}
 	else if(type == 0x31)
 		{
 		fprintf(fhandle, "OSD message received from %04X %s on %s%s\n\n",peer->gbox.id, cs_inet_ntoa(cli->ip), tsbuf, gsms);
-		rdr->last_gsms = gsms_buf; //added for easy handling of gsms by webif
 		write_gsms_to_osd_file(cli, gsms);
 		}
 	else 
