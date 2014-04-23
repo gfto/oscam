@@ -5514,7 +5514,6 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 		else
 			config_files[10].file = cfg.http_css;
 		tpl_addVar(vars, TPLADD, "FILE_USER_CSS", xml_encode(vars, config_files[10].file));
-		tpl_addVar(vars, TPLADD, "FILEEDITCSS_SHOW", tpl_getTpl(vars, "FILEEDITCSS"));
 	}
 
 	if(!apicall) { setActiveMenu(vars, MNU_FILES); }
@@ -5576,6 +5575,11 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 			tpl_addVar(vars, TPLADD, "APIFILENAME", entry->file);
 			break;
 		}
+	}
+
+	if(cfg.http_css)
+	{
+		tpl_addVar(vars, TPLADD, "FILEEDITCSS_SHOW", tpl_getTpl(vars, "FILEEDITCSS"));
 	}
 
 	if(!strstr(targetfile, "/dev/"))
