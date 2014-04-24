@@ -3124,6 +3124,8 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "CLIENTSRVID", "");
 		tpl_addVar(vars, TPLADD, "LASTCHANNEL", "");
 		tpl_addVar(vars, TPLADD, "USERMD5", "");
+		tpl_addVar(vars, TPLADD, "CWLASTRESPONSET", "");
+		tpl_addVar(vars, TPLADD, "CLIENTIP", "");
 
 		if(account->expirationdate && account->expirationdate < now)
 		{
@@ -3246,7 +3248,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			}
 
 			lastresponsetm = latestclient->cwlastresptime;
-			tpl_addVar(vars, TPLADDONCE, "CLIENTIP", cs_inet_ntoa(latestclient->ip));
+			tpl_addVar(vars, TPLADD, "CLIENTIP", cs_inet_ntoa(latestclient->ip));
 			connected_users++;
 			casc_users = ll_count(latestclient->cascadeusers);
 			LL_ITER it = ll_iter_create(latestclient->cascadeusers);
@@ -3311,7 +3313,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		if(isactive > 0 || !cfg.http_hide_idle_clients)
 		{
 
-			tpl_printf(vars, TPLADDONCE, "CWLASTRESPONSET", "%d", lastresponsetm);
+			tpl_printf(vars, TPLADD, "CWLASTRESPONSET", "%d", lastresponsetm);
 			tpl_addVar(vars, TPLADDONCE, "IDLESECS", sec2timeformat(vars, isec));
 
 			if(isactive > 0)

@@ -351,184 +351,192 @@ function updateUserpage(data) {
 	$.each(data.oscam.users, function(i, item) {
 		var uid = "#" + item.user.usermd5;
 		poll_excluded = ($( uid ).attr('nopoll') != undefined) ? $( uid ).attr('nopoll') : '';
-		if(!is_nopoll('usercol7')) {$( uid + " td.usercol7").text( '' ).data('sort-value', 0);}
 		
 		switch (item.user.classname) {
 			case 'online':
-			$( uid ).attr('class', item.user.classname);
-			
-			if(!is_nopoll('usercol2')){
-				$( uid + " td.usercol2")
-					.attr( 'title', 'SLEEP: ' + item.user.stats.expectsleep )
-					.html( "<B>" + item.user.status + "</B><br>" + item.user.ip);
-			}
-			
-			if(!is_nopoll('usercol3')){
-				$( uid + " td.usercol3").html( item.user.stats.idle + "<br>" + item.user.stats.timeonchannel.toHHMMSS());
-			}
-			
-			if(!is_nopoll('usercol4')){
-				if(item.user.protoicon.length > 0){
-					if($( uid + " td.usercol4").html().length == 0 ) {
-						var protoimage = $('<img class="protoicon" src="image?i=IC_' + item.user.protoicon + '" />');
-						protoimage.hide();
-						$( uid + " td.usercol4" ).prepend(protoimage);
-						protoimage.fadeIn('slow');
-					}
-				} else {
-					$( uid + " td.usercol4").text( item.user.protocol );
-				}
-
-				$( uid + " td.usercol4").attr( 'title', item.user.prototitle );
-			}
-
-			// channel icon
-			if(!is_nopoll('usercol6')){
-				$( uid + " td.usercol6").attr( 'title', item.user.lastchanneltitle );
-
-				if(item.user.lca.length > 0){
-					// if we already have a picon within link
-					if($( uid + " > td.usercol6 > img.usericon" ).length){
-						// we compare the picon name and switch if different
-						var image = $( uid + " > td.usercol6 > img.usericon");
-						if( image.attr('src') != 'image?i=IC_' + item.user.lca){
-							// set title of link as tooltip
-							image.hide();
-							image.attr('src', 'image?i=IC_' + item.user.lca);
-							image.fadeIn('slow');
-							image.attr('alt', item.user.lastchanneltitle );
-							image.attr('title', item.user.lastchanneltitle );
-						}
-					} else {
-						// we have no image so we have to create one
-
-						// if we have picon clear text
-						$( uid + " > td.usercol6").text('');
-
-						// just to be sure that class of image is set
-						if($( uid + " > td.usercol6 > img" ).length){
-							$( uid + " > td.usercol6 > img" ).attr( 'class', 'usericon' );
-						}
-
-						newimage = $('<img class="usericon" src="image?i=IC_' + item.user.lca +'">');
-						newimage.hide();
-						$( uid + " > td.usercol6").append(newimage);
-						newimage.fadeIn('slow');
-						newimage.attr('alt', item.user.lastchanneltitle );
-						newimage.attr('title', item.user.lastchanneltitle );
-					}
-				} else {
-					$( uid + " td.usercol6").html(item.user.lastchannel );
-				}
-			}
-			
-			if(!is_nopoll('usercol7')) {$( uid + " td.usercol7").text( item.user.stats.cwlastresptime + 'ms').data('sort-value', item.user.stats.cwlastresptime);}
-			//usercol8 ???
-			if(!is_nopoll('usercol9')) {$( uid + " td.usercol9").text( item.user.stats.cwok );}
-			if(!is_nopoll('usercol10')) {$( uid + " td.usercol10").text( item.user.stats.cwnok );}
-			if(!is_nopoll('usercol11')) {$( uid + " td.usercol11").text( item.user.stats.cwignore );}
-			if(!is_nopoll('usercol12')) {$( uid + " td.usercol12").text( item.user.stats.cwtimeout );}
-			if(!is_nopoll('usercol13')) {$( uid + " td.usercol13").text( item.user.stats.cwccyclechecked + ' / ' + item.user.stats.cwcycleok + ' / ' + item.user.stats.cwcyclenok + ' / ' + item.user.stats.cwcycleign );}
-			if(!is_nopoll('usercol14')) {$( uid + " td.usercol14").text( item.user.stats.cwcache );}
-			if(!is_nopoll('usercol15')) {$( uid + " td.usercol15").text( item.user.stats.cwtun );}
-			if(!is_nopoll('usercol16')) {$( uid + " td.usercol16").text( item.user.stats.cwcache );}
-			if(!is_nopoll('usercol17')) {$( uid + " td.usercol17").text( item.user.stats.emmok );}
-			if(!is_nopoll('usercol18')) {$( uid + " td.usercol18").text( item.user.stats.emmnok );}
-			if(!is_nopoll('usercol19')) {$( uid + " td.usercol19").text( item.user.stats.cwrate + item.user.stats.cwrate2 );}
-			if(!is_nopoll('usercol22')) {$( uid + " td.usercol22").text( item.user.stats.cascusercomb );}
-			if(!is_nopoll('usercol21')) {$( uid + " td.usercol21").text( item.user.stats.n_requ_m );}
-			if(!is_nopoll('usercol20')) {
-				$( uid + " td.usercol20")
-					.attr( 'title', item.user.expview )
-					.text( item.user.stats.expdate );
-			}	
-			break;
-
-			case 'connected':
-			$( uid ).attr('class', item.user.classname);
-			
-			if(!is_nopoll('usercol2')) {
-				$( uid + " td.usercol2")
-					.attr( 'title', 'SLEEP: ' )
-					.html( "<B>" + item.user.status + "</B><br>" + item.user.ip);
-			}	
-			
-			if(!is_nopoll('usercol3')) {$( uid + " td.usercol3").html( item.user.stats.idle + "<br>" + item.user.stats.timeonchannel.toHHMMSS());}
-
-			if(!is_nopoll('usercol4')) {
-				if(item.user.protoicon.length > 0){
-					if($( uid + " td.usercol4").html().length == 0 ) {
-						var protoimage = $('<img class="protoicon" src="image?i=IC_' + item.user.protoicon + '" />');
-						protoimage.hide();
-						$( uid + " td.usercol4" ).prepend(protoimage);
-						protoimage.fadeIn('slow');
-					}
-				} else {
-					$( uid + " td.usercol4").text( item.user.protocol );
-				}
-				$( uid + " td.usercol4").attr( 'title', item.user.prototitle );
-			}
-			
-			if(!is_nopoll('usercol6')) {
-				// channel icon
-				$( uid + " td.usercol6").attr( 'title', item.user.lastchanneltitle );
-				if(item.user.lca.length > 0){
-					var image;
-					if($( uid + " td.usercol6").html().length == 0 ) {
-						image = $('<img class="usericon" src="image?i=IC_' + item.user.lca + '" />');
-						image.hide();
-						$( uid + " td.usercol6" ).prepend(image);
-						image.fadeIn('slow');
-					} else {
-						image = $( uid + " td.usercol6 img.usericon");
-						if(image.attr('src') != ('image?i=IC_' + item.user.lca)) {
-							image.fadeOut('fast', function () {
-								image.attr('src', 'image?i=IC_' + item.user.lca );
-								image.fadeIn('slow');
-							});
-							image.attr('alt', item.user.lcb );
-							image.attr('title', item.user.lastchanneltitle );
-						}
-					}
-				} else {
-					$( uid + " td.usercol6").html(item.user.lastchannel );
-				}
-			}
-			if(!is_nopoll('usercol7')) {$( uid + " td.usercol7").text( '' ).data('sort-value', 0);}
-			break;
-
-			default:
-			if($( uid ).attr('class') == 'online' || $( uid ).attr('class') == 'connected'){
-				// last status was online so cleanup offline
 				$( uid ).attr('class', item.user.classname);
-				if(!is_nopoll('usercol2')) {
+				
+				if(!is_nopoll('usercol2')){
 					$( uid + " td.usercol2")
-						.attr( 'title', 'SLEEP: ')
-						.html( item.user.status );
+						.attr( 'title', 'SLEEP: ' + item.user.stats.expectsleep )
+						.html( "<B>" + item.user.status + "</B><br>" + item.user.ip);
 				}
-				if(!is_nopoll('usercol3')) {$( uid + " td.usercol3").text( '' );}
-				if(!is_nopoll('usercol4')) {
-					$( uid + " td.usercol4")
-						.text( '' )
-						.attr( 'title', '' );
-					var protoimage = $( uid + " td.usercol4 img.protoicon");
-					if(image){
-						protoimage.fadeOut('slow');
-						protoimage.remove();
+				
+				if(!is_nopoll('usercol3')){
+					$( uid + " td.usercol3").html( item.user.stats.idle + "<br>" + item.user.stats.timeonchannel.toHHMMSS());
+				}
+				
+				if(!is_nopoll('usercol4')){
+					if(item.user.protoicon.length > 0){
+						if($( uid + " td.usercol4").html().length == 0 ) {
+							var protoimage = $('<img class="protoicon" src="image?i=IC_' + item.user.protoicon + '" />');
+							protoimage.hide();
+							$( uid + " td.usercol4" ).prepend(protoimage);
+							protoimage.fadeIn('slow');
+						}
+					} else {
+						$( uid + " td.usercol4").text( item.user.protocol );
+					}
+	
+					$( uid + " td.usercol4").attr( 'title', item.user.prototitle );
+				}
+	
+				// channel icon
+				if(!is_nopoll('usercol6')){
+					$( uid + " td.usercol6").attr( 'title', item.user.lastchanneltitle );
+	
+					if(item.user.lca.length > 0){
+						// if we already have a picon within link
+						if($( uid + " > td.usercol6 > img.usericon" ).length){
+							// we compare the picon name and switch if different
+							var image = $( uid + " > td.usercol6 > img.usericon");
+							if( image.attr('src') != 'image?i=IC_' + item.user.lca){
+								// set title of link as tooltip
+								image.hide();
+								image.attr('src', 'image?i=IC_' + item.user.lca);
+								image.fadeIn('slow');
+								image.attr('alt', item.user.lastchanneltitle );
+								image.attr('title', item.user.lastchanneltitle );
+							}
+						} else {
+							// we have no image so we have to create one
+	
+							// if we have picon clear text
+							$( uid + " > td.usercol6").text('');
+	
+							// just to be sure that class of image is set
+							if($( uid + " > td.usercol6 > img" ).length){
+								$( uid + " > td.usercol6 > img" ).attr( 'class', 'usericon' );
+							}
+	
+							newimage = $('<img class="usericon" src="image?i=IC_' + item.user.lca +'">');
+							newimage.hide();
+							$( uid + " > td.usercol6").append(newimage);
+							newimage.fadeIn('slow');
+							newimage.attr('alt', item.user.lastchanneltitle );
+							newimage.attr('title', item.user.lastchanneltitle );
+						}
+					} else {
+						$( uid + " td.usercol6").html(item.user.lastchannel );
 					}
 				}
 				
-				//channelicon
+				if(!is_nopoll('usercol7')) {$( uid + " td.usercol7")
+									.text( item.user.stats.cwlastresptime + 'ms')
+									.data('sort-value', item.user.stats.cwlastresptime);}
+				//usercol8 ???
+				if(!is_nopoll('usercol9')) {$( uid + " td.usercol9").text( item.user.stats.cwok );}
+				if(!is_nopoll('usercol10')) {$( uid + " td.usercol10").text( item.user.stats.cwnok );}
+				if(!is_nopoll('usercol11')) {$( uid + " td.usercol11").text( item.user.stats.cwignore );}
+				if(!is_nopoll('usercol12')) {$( uid + " td.usercol12").text( item.user.stats.cwtimeout );}
+				if(!is_nopoll('usercol13')) {$( uid + " td.usercol13").text( item.user.stats.cwccyclechecked + ' / ' + item.user.stats.cwcycleok + ' / ' + item.user.stats.cwcyclenok + ' / ' + item.user.stats.cwcycleign );}
+				if(!is_nopoll('usercol14')) {$( uid + " td.usercol14").text( item.user.stats.cwcache );}
+				if(!is_nopoll('usercol15')) {$( uid + " td.usercol15").text( item.user.stats.cwtun );}
+				if(!is_nopoll('usercol16')) {$( uid + " td.usercol16").text( item.user.stats.cwcache );}
+				if(!is_nopoll('usercol17')) {$( uid + " td.usercol17").text( item.user.stats.emmok );}
+				if(!is_nopoll('usercol18')) {$( uid + " td.usercol18").text( item.user.stats.emmnok );}
+				if(!is_nopoll('usercol19')) {$( uid + " td.usercol19").text( item.user.stats.cwrate + item.user.stats.cwrate2 );}
+				if(!is_nopoll('usercol22')) {$( uid + " td.usercol22").text( item.user.stats.cascusercomb );}
+				if(!is_nopoll('usercol21')) {$( uid + " td.usercol21").text( item.user.stats.n_requ_m );}
+				if(!is_nopoll('usercol20')) {
+					$( uid + " td.usercol20")
+						.attr( 'title', item.user.expview )
+						.text( item.user.stats.expdate );
+				}	
+				break;
+
+			case 'connected':
+				$( uid ).attr('class', item.user.classname);
+				
+				if(!is_nopoll('usercol2')) {
+					$( uid + " td.usercol2")
+						.attr( 'title', 'SLEEP: ' )
+						.html( "<B>" + item.user.status + "</B><br>" + item.user.ip);
+				}	
+				
+				if(!is_nopoll('usercol3')) {$( uid + " td.usercol3").html( item.user.stats.idle + "<br>" + item.user.stats.timeonchannel.toHHMMSS());}
+	
+				if(!is_nopoll('usercol4')) {
+					if(item.user.protoicon.length > 0){
+						if($( uid + " td.usercol4").html().length == 0 ) {
+							var protoimage = $('<img class="protoicon" src="image?i=IC_' + item.user.protoicon + '" />');
+							protoimage.hide();
+							$( uid + " td.usercol4" ).prepend(protoimage);
+							protoimage.fadeIn('slow');
+						}
+					} else {
+						$( uid + " td.usercol4").text( item.user.protocol );
+					}
+					$( uid + " td.usercol4").attr( 'title', item.user.prototitle );
+				}
+				
 				if(!is_nopoll('usercol6')) {
-					$( uid + " td.usercol6").text( '' );
-					var image = $( uid + " td.usercol6 img.usericon");
-					if(image){
-						image.fadeOut('slow');
-						image.remove();
+					// channel icon
+					$( uid + " td.usercol6").attr( 'title', item.user.lastchanneltitle );
+					if(item.user.lca.length > 0){
+						var image;
+						if($( uid + " td.usercol6").html().length == 0 ) {
+							image = $('<img class="usericon" src="image?i=IC_' + item.user.lca + '" />');
+							image.hide();
+							$( uid + " td.usercol6" ).prepend(image);
+							image.fadeIn('slow');
+						} else {
+							image = $( uid + " td.usercol6 img.usericon");
+							if(image.attr('src') != ('image?i=IC_' + item.user.lca)) {
+								image.fadeOut('fast', function () {
+									image.attr('src', 'image?i=IC_' + item.user.lca );
+									image.fadeIn('slow');
+								});
+								image.attr('alt', item.user.lcb );
+								image.attr('title', item.user.lastchanneltitle );
+							}
+						}
+					} else {
+						$( uid + " td.usercol6").html(item.user.lastchannel );
 					}
 				}
-			}
-			break;
+				
+				if(!is_nopoll('usercol7')) {$( uid + " td.usercol7")
+															.text( '' )
+															.data('sort-value',0);}
+				break;
+
+			default:
+				//check the last status
+				if('online,connected'.indexOf($( uid ).attr('class')) > (-1)){
+					// last status was online so cleanup offline
+					$( uid ).attr('class', item.user.classname);
+					if(!is_nopoll('usercol2')) {
+						$( uid + " td.usercol2")
+							.attr( 'title', 'SLEEP: ')
+							.html( item.user.status );
+					}
+					if(!is_nopoll('usercol3')) {$( uid + " td.usercol3").text( '' );}
+					if(!is_nopoll('usercol4')) {
+						$( uid + " td.usercol4")
+							.text( '' )
+							.attr( 'title', '' );
+						var protoimage = $( uid + " td.usercol4 img.protoicon");
+						if(image){
+							protoimage.fadeOut('slow');
+							protoimage.remove();
+						}
+					}
+					
+					//channelicon
+					if(!is_nopoll('usercol6')) {
+						$( uid + " td.usercol6").text( '' );
+						var image = $( uid + " td.usercol6 img.usericon");
+						if(image){
+							image.fadeOut('slow');
+							image.remove();
+						}
+					}
+					if(!is_nopoll('usercol7')) {$( uid + " td.usercol7")
+																	.text( '' )
+																	.data('sort-value',0);}
+				}
+				break;
 		}
 		
 		if ( typeof custompoll == 'function' ) { 
