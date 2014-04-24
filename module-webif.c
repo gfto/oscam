@@ -7101,7 +7101,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			}
 #ifdef WEBIF_JQUERY
-			tpl_printf(vars, TPLADD, "SRCJQUERY", "jquery.js/?v=%s", CS_SVN_VERSION);
+			tpl_printf(vars, TPLADD, "SRCJQUERY", "jquery.js?v=%s", CS_SVN_VERSION);
 #else
 			tpl_addVar(vars, TPLADD, "SRCJQUERY", cfg.http_extern_jquery);
 #endif
