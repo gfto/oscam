@@ -593,10 +593,15 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 		return ERROR;
 	}
 
+	int d37423_ok = 0;
 	static const unsigned char ins7403[5] = { 0xD0, 0x74, 0x03, 0x00, 0x00 };   //taken from v13 boot log
 	if(do_cmd(reader, ins7403, NULL, NULL, cta_res) < 0)
 	{
 		rdr_log(reader, "classD0 ins7403: failed");
+	}
+	else
+	{
+		d37423_ok = (cta_res[2] >> 5) & 1;
 	}
 
 	if(reader->ins7E11[0x01])                                                   //the position of the ins7E is taken from v13 log
@@ -746,10 +751,13 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 	}
 	/*new ins74 present at boot*/
 
-	static const unsigned char ins7423[5] = { 0xD3, 0x74, 0x23, 0x00, 0x00 };
-	if(do_cmd(reader, ins7423, NULL, NULL, cta_res) < 0)
+	if (d37423_ok) // from ins7403 answer
 	{
-		rdr_log(reader, "classD1 ins7423: failed");
+		static const unsigned char ins7423[5] = { 0xD3, 0x74, 0x23, 0x00, 0x00 };
+		if(do_cmd(reader, ins7423, NULL, NULL, cta_res) < 0)
+		{
+			rdr_log(reader, "classD1 ins7423: failed");
+		}
 	}
 
 	static const unsigned char ins742A[5] = { 0xD1, 0x74, 0x2A, 0x00, 0x00 };
