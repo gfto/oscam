@@ -3126,6 +3126,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "USERMD5", "");
 		tpl_addVar(vars, TPLADD, "CWLASTRESPONSET", "");
 		tpl_addVar(vars, TPLADD, "CLIENTIP", "");
+		tpl_addVar(vars, TPLADD, "LASTCHANNELTITLE", "");
 
 		if(account->expirationdate && account->expirationdate < now)
 		{
@@ -3225,7 +3226,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				{
 					tpl_addVar(vars, TPLADDONCE, "LCA", picon_name);
 					tpl_addVar(vars, TPLADDONCE, "LCB", lastchan);
-					tpl_addVar(vars, TPLADDONCE, "LASTCHANNELTITLE", lastchan);
+					tpl_addVar(vars, TPLADD, "LASTCHANNELTITLE", lastchan);
 					if(!apicall)
 					{
 						tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", tpl_getTpl(vars, "USERCONFIGLASTCHANEL"));
@@ -3238,13 +3239,13 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				else
 				{
 					tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
-					tpl_printf(vars, TPLADDONCE, "LASTCHANNELTITLE", "missing icon: IC_%s.tpl", picon_name);
+					tpl_printf(vars, TPLADD, "LASTCHANNELTITLE", "missing icon: IC_%s.tpl", picon_name);
 				}
 			}
 			else
 			{
 				tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
-				tpl_addVar(vars, TPLADDONCE, "LASTCHANNELTITLE", lastchan);
+				tpl_addVar(vars, TPLADD, "LASTCHANNELTITLE", lastchan);
 			}
 
 			lastresponsetm = latestclient->cwlastresptime;

@@ -352,6 +352,8 @@ function updateUserpage(data) {
 		var uid = "#" + item.user.usermd5;
 		poll_excluded = ($( uid ).attr('nopoll') != undefined) ? $( uid ).attr('nopoll') : '';
 		
+		if(!is_nopoll('usercol7')) {$( uid + " td.usercol7").data('sort-value',0);}
+		
 		switch (item.user.classname) {
 			case 'online':
 				$( uid ).attr('class', item.user.classname);
@@ -383,7 +385,9 @@ function updateUserpage(data) {
 	
 				// channel icon
 				if(!is_nopoll('usercol6')){
-					$( uid + " td.usercol6").attr( 'title', item.user.lastchanneltitle );
+					$( uid + " td.usercol6")
+								.attr( 'title', item.user.lastchanneltitle )
+								.data('sort-value', item.user.lastchanneltitle);
 	
 					if(item.user.lca.length > 0){
 						// if we already have a picon within link
@@ -472,7 +476,10 @@ function updateUserpage(data) {
 				
 				if(!is_nopoll('usercol6')) {
 					// channel icon
-					$( uid + " td.usercol6").attr( 'title', item.user.lastchanneltitle );
+					$( uid + " td.usercol6")
+							.attr( 'title', item.user.lastchanneltitle )
+							.data('sort-value', item.user.lastchanneltitle);
+					
 					if(item.user.lca.length > 0){
 						var image;
 						if($( uid + " td.usercol6").html().length == 0 ) {
@@ -525,7 +532,10 @@ function updateUserpage(data) {
 					
 					//channelicon
 					if(!is_nopoll('usercol6')) {
-						$( uid + " td.usercol6").text( '' );
+						$( uid + " td.usercol6")
+									.text( '' )
+									.data('sort-value', '');
+						
 						var image = $( uid + " td.usercol6 img.usericon");
 						if(image){
 							image.fadeOut('slow');
