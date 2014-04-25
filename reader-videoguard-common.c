@@ -844,6 +844,8 @@ int32_t do_cmd(struct s_reader *reader, const unsigned char *ins, const unsigned
 		memcpy(rxbuff + 5 + len, cta_res, 2);
 	}
 	cCamCryptVG_PostProcess_Decrypt(reader, rxbuff);
+	if(ins2[0] == 0xd3)
+		rdr_ddump_mask(reader, D_READER, rxbuff + 5, rxbuff[4], "Decrypted payload");
 
 	return len;
 }

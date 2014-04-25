@@ -746,7 +746,7 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 	}
 	/*new ins74 present at boot*/
 
-	static const unsigned char ins7423[5] = { 0xD1, 0x74, 0x23, 0x00, 0x00 };
+	static const unsigned char ins7423[5] = { 0xD3, 0x74, 0x23, 0x00, 0x00 };
 	if(do_cmd(reader, ins7423, NULL, NULL, cta_res) < 0)
 	{
 		rdr_log(reader, "classD1 ins7423: failed");
@@ -758,7 +758,7 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 		rdr_log(reader, "classD1 ins742A: failed");
 	}
 
-	static const unsigned char ins741B[5] = { 0xD1, 0x74, 0x1B, 0x00, 0x00 };
+	static const unsigned char ins741B[5] = { 0xD3, 0x74, 0x1B, 0x00, 0x00 };
 	if(do_cmd(reader, ins741B, NULL, NULL, cta_res) < 0)
 	{
 		rdr_log(reader, "classD1 ins741B: failed");
@@ -804,7 +804,7 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 		}
 	}
 	/* get PIN settings */
-	static const unsigned char ins7411[5] = { 0xD1, 0x74, 0x11, 0x00, 0x00 };
+	static const unsigned char ins7411[5] = { 0xD3, 0x74, 0x11, 0x00, 0x00 };
 	unsigned char payload2e4[4];
 	if(do_cmd(reader, ins7411, NULL, NULL, cta_res) < 0)
 	{
@@ -820,7 +820,7 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 	}
 
 	/* get PCB(content rating) settings */
-	static const unsigned char ins74e[5] = {0xD1, 0x74, 0x0E, 0x00, 0x00};
+	static const unsigned char ins74e[5] = {0xD3, 0x74, 0x0E, 0x00, 0x00};
 	if(do_cmd(reader, ins74e, NULL, NULL, cta_res) < 0)
 	{
 		rdr_log(reader, "classD1 ins74e: failed to get PCB settings");
@@ -952,11 +952,6 @@ static int32_t videoguard2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 		}
 		else
 		{
-
-			// Log decrypted INS54
-			rdr_ddump_mask(reader, D_READER, rbuff, 5, "INS54:");
-			rdr_ddump_mask(reader, D_READER, rbuff + 5, rbuff[4], "Decrypted payload");
-
 			if(!cw_is_valid(rbuff + 5))  //sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
 			{
 				rdr_log(reader, "classD3 ins54: status 90 00 = ok but cw=00 -> channel not subscribed ");
