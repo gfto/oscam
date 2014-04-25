@@ -773,26 +773,32 @@ function generateBar(value){
 }
 
 /*
- *  Statuspage Functions: Add/Remove Subhedline
+ *  Statuspage Functions: Add/Remove Subheadline
  */
-function addremoveSubheadline(remove, data, container) {
+function addremoveSubheadline(remove, data, container, subheadline, type) {
 
-	if(remove == 1 && $("#clientsubheadline").length) {
-		$("#clientsubheadline")
+	if(remove == 1 && $("#" + subheadline).length) {
+		$("#" + subheadline)
 			.fadeOut('slow')
 			.remove();
 	}
 
-	if(remove == 0 && ! $("#clientsubheadline").length){
-		var strheadline = '<TR id="clientsubheadline"><TD CLASS="subheadline" COLSPAN="11">';
-		if (data.oscam.status.ucac == '0') { //hide idle clients
-			strheadline += '<P>Clients <span id="ucs">' + data.oscam.status.ucs + '</span>/<span id="uca">' + data.oscam.status.uca + '</span></P></TD>'
-		} else {
-			strheadline += '<P>Clients <span id="ucs">' + data.oscam.status.ucs + '</span>/<span id="uca">' + data.oscam.status.uca + '</span> (<span id="ucac">' + data.oscam.status.ucac + '</span> with ECM within last <span id="cfgh">' + data.oscam.status.cfgh + '</span> seconds)</P></TD>'
+	if(remove == 0 && ! $("#" + subheadline).length){
+		var strheadline = '<TR id="'+ subheadline +'"><TD CLASS="subheadline" COLSPAN="11">';
+		if(type == 'c'){
+			if (data.oscam.status.ucac != '') { //hide idle clients
+				strheadline += '<P id="chead">Clients <span id="ucs">' + data.oscam.status.ucs + '</span>/<span id="uca">' + data.oscam.status.uca + '</span> (<span id="ucac">' + data.oscam.status.ucac + '</span> with ECM within last <span id="cfgh">' + data.oscam.status.cfgh + '</span> seconds)</P></TD>'
+			} else {
+				strheadline += '<P id="chead">Clients <span id="ucs">' + data.oscam.status.ucs + '</span>/<span id="uca">' + data.oscam.status.uca + '</span></P></TD>'
+			}
+			strheadline += '<TD CLASS="subheadline"><form name="gotoform" method="post" action=""><select size="1" onChange="gotosite(this.value)">';
+			strheadline += '<option value="">-- select Action --</option><option value="status.html?hideidle=5">Show Hidden User</option>';
+			strheadline += '<option value="status.html?hideidle=0">Show Idle User</option><option value="status.html?hideidle=1">Hide Idle User</option>';
+		} else if(type == 'm') {
+			strheadline += '<P id="shead">Server <span id="scs">' + data.oscam.status.scs + '</span>/<span id="sca">' + data.oscam.status.sca + '</span> & Monitors <span id="mcs">' + data.oscam.status.mcs + '</span>/<span id="mca">' + data.oscam.status.mca + '</span></P></TD>'
+			strheadline += '<TD CLASS="subheadline"><form name="gotoform" method="post" action=""><select size="1" onChange="gotosite(this.value)">';
+			strheadline += '<option value="">-- select Action --</option><option value="status.html?hideidle=2">Show Hidden Server & Monitors</option>';
 		}
-		strheadline += '<TD CLASS="subheadline"><form name="gotoform" method="post" action=""><select size="1" onChange="gotosite(this.value)">';
-		strheadline += '<option value="">-- select Action --</option><option value="status.html?hideidle=5">Show Hidden User</option>';
-		strheadline += '<option value="status.html?hideidle=0">Show Idle User</option><option value="status.html?hideidle=1">Hide Idle User</option>';
 		strheadline += '</select></form></TD></TR>';
 		var headline = $(strheadline);
 		headline.hide();
@@ -897,21 +903,25 @@ function updateStatuspage(data){
 			var container = '';
 			if ('hms'.indexOf(item.type) > (-1)){
 				container = '#tbodys';
+				if(item.type == 'm'){
+					if(!$("#Serverheadline").length){addremoveSubheadline(0, data, container, "Serverheadline", item.type);}
+					else if(!$("#mca").length)	{ $("#shead").append(' & Monitors <span id="mcs">' + data.oscam.status.mcs + '</span>/<span id="mca">' + data.oscam.status.mca + '</span>');}
+				}
 			} else if ('px'.indexOf(item.type) > (-1)){
 				container = '#tbodyp';
 			} else {
 				container = '#tbody' + item.type;
-				if($("tr.c").length == 0 && item.type == 'c'){addremoveSubheadline(0, data, container);}
+				if(!$("#Userheadline").length && item.type == 'c'){addremoveSubheadline(0, data, container, "Userheadline", item.type);}
 			}
 			$(container).append(newrow);
 			
-			var name1=''; var name2=''; var kill1 = ''; var kill2 = ''; var kill3 = ''; var edit1='';
+			var name1, name2, kill1, kill2, kill3, edit1;
 			switch (item.type) {
 			case 'c': case 'm':
 				name1 = 'User';
 				name2 = item.name_enc;
 				kill1 = '" href="status.html?action=kill&threadid=' + item.thid.substring(3,item.thid.length);
-				kill2 = 'Kill this '
+				kill2 = 'Kill the '
 				kill3 = 'ICKIL';
 				edit1 = 'user_edit.html?user=';
 			break;
@@ -919,22 +929,22 @@ function updateStatuspage(data){
 				name1 = (item.type == 'r') ? 'Reader' : 'Proxy';
 				name2 = item.rname_enc;
 				kill1 = '" href="status.html?action=restart&label=' + item.name;
-				kill2 = 'Restart ';
+				kill2 = 'Restart the ';
 				kill3 = 'ICRES';
 				edit1 = 'readerconfig.html?label=';
 			break;
 			}
 
 			if(!is_nopoll('statuscol0')) {
-				$( uid + " > td.statuscol0").append('<a title="Hide this ' + 
-														name1 + '" href="status.html?hide=' + 
+				$( uid + " > td.statuscol0").append('<a title="Hide the ' + 
+														name1  + ' ' + item.name+ '" href="status.html?hide=' + 
 														item.thid.substring(3,item.thid.length) +
-														'"><img class="icon" alt="Hide ' + 
-														name1 + '" src="image?i=ICHID"></img>');
+														'"><img class="icon" alt="Hide the' + 
+														name1 + ' ' + item.name+'" src="image?i=ICHID"></img>');
 			}
 			
 			if(!is_nopoll('statuscol1')) {
-				$( uid + " > td.statuscol1").append('<a title="Kill this ' + 
+				$( uid + " > td.statuscol1").append('<a title="' + kill2 + 
 														name1 + ' ' + item.name + kill1 + '"><img class="icon" alt="' + 
 														kill2 + name1 + ' ' + item.name+'" src="image?i='+kill3+'"></img>');
 			}
@@ -1158,16 +1168,34 @@ function updateStatuspage(data){
 	});
 
 	// if we have no clients left we remove the headline
-	if($("tr.c").length == 0 && data.oscam.status.uca == '0'){
-		addremoveSubheadline(1);
+	if(!$("tr.c").length && data.oscam.status.uca == '0'){
+		addremoveSubheadline(1,'','',"Userheadline",'c');
 	}
-
+	// if we have no servers/monitors left we remove the headline
+	if(!$("tr.m").length && data.oscam.status.mca == '0'){
+		if( $("#mca").length){
+			$("#shead").replaceWith('<P id="shead">Server <span id="scs">' + data.oscam.status.scs + '</span>/<span id="sca">' + data.oscam.status.sca + '</span></P>');
+		}
+		if(!$("tr.s").length && !$("tr.h").length && data.oscam.status.sch == '0'){
+			addremoveSubheadline(1,'','',"Serverheadline",'m');
+		}
+ 	}
+ 
 	//update client-headline
 	if(data.oscam.status.uca != '0'){
-		$( "#ucs" ).text( data.oscam.status.ucs );
-		$( "#uca" ).text( data.oscam.status.uca );
-		if (data.oscam.status.ucac != '0') $( "#ucac" ).text( data.oscam.status.ucac );
+	    if(!$("#Userheadline").length){addremoveSubheadline(0, data, "#tbodyc", "Userheadline", "c");}
+	    else{
+			$( "#ucs" ).text( data.oscam.status.ucs );
+			$( "#uca" ).text( data.oscam.status.uca );
+			if (data.oscam.status.ucac != '0') $( "#ucac" ).text( data.oscam.status.ucac );
+		}
 	}
+	//update server/monitor-headline
+	if(data.oscam.status.mca != '0' && $("#mcs")){
+		$( "#mcs" ).text( data.oscam.status.mcs );
+		$( "#mca" ).text( data.oscam.status.mca );
+	}
+
 	//update reader-headline
 	$( "#rcc" ).text( cardokreader );
 

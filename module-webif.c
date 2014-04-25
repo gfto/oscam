@@ -928,6 +928,7 @@ static char *send_oscam_config_webif(struct templatevars *vars, struct uriparams
 
 	tpl_addVar(vars, TPLADD, "HTTPHELPLANG", cfg.http_help_lang);
 	tpl_printf(vars, TPLADD, "HTTPREFRESH", "%d", cfg.http_refresh);
+	tpl_printf(vars, TPLADD, "HTTPPOLLREFRESH", "%d", cfg.poll_refresh);
 	tpl_addVar(vars, TPLADD, "HTTPTPL", cfg.http_tpl);
 	tpl_addVar(vars, TPLADD, "HTTPSCRIPT", cfg.http_script);
 	tpl_addVar(vars, TPLADD, "HTTPJSCRIPT", cfg.http_jscript);
@@ -1219,12 +1220,6 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 
 	if(!apicall) { setActiveMenu(vars, MNU_READERS); }
-	if(cfg.http_refresh > 0)
-	{
-		tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg.http_refresh);
-		tpl_addVar(vars, TPLADD, "REFRESHURL", "readers.html");
-		tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
-	}
 	if(!apicall)
 	{
 		if(cfg.http_picon_size > 0)
@@ -3058,15 +3053,6 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	{
 		tpl_addVar(vars, TPLAPPEND, "NEWUSERFORM", tpl_getTpl(vars, "ADDNEWUSER"));
 	}
-	else
-	{
-		if(cfg.http_refresh > 0)
-		{
-			tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg.http_refresh);
-			tpl_addVar(vars, TPLADD, "REFRESHURL", "userconfig.html");
-			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
-		}
-	}
 
 	/* List accounts*/
 	char *status, *expired, *classname, *lastchan;
@@ -4171,6 +4157,8 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	int32_t user_count_all = 0, user_count_shown = 0, user_count_active = 0;
 	int32_t reader_count_all = 0, reader_count_conn = 0;
 	int32_t proxy_count_all = 0, proxy_count_conn = 0;
+	int32_t server_count_all = 0, server_count_shown = 0, server_count_hidden = 0;
+	int32_t monitor_count_all = 0, monitor_count_shown = 0;
 	int32_t shown;
 
 	struct s_client *cl;
@@ -4202,6 +4190,10 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 				{ proxy_count_all++; }
 			else if(cl->typ == 'r')
 				{ reader_count_all++; }
+			else if(cl->typ == 's' || cl->typ == 'h')
+				{ server_count_all++; if(cl->wihidden) {server_count_hidden++;} }
+			else if(cl->typ == 'm')
+				{ monitor_count_all++; }
 
 			shown = 0;
 			if(cl->wihidden != 1)
@@ -4229,9 +4221,15 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						if(cfg.http_hide_idle_clients != 1 && cfg.hideclient_to > 0 && (now - cl->lastecm) <= cfg.hideclient_to)
 						{
 							user_count_active++;
-							tpl_addVar(vars, TPLADD, "CLIENTTYPE", "a");
 						}
-						else { tpl_addVar(vars, TPLADD, "CLIENTTYPE", "c"); }
+					}
+					else if(cl->typ == 's' || cl->typ == 'h')
+					{
+						server_count_shown++;
+					}
+					else if(cl->typ == 'm')
+					{
+						monitor_count_shown++;
 					}
 					else
 					{
@@ -4239,8 +4237,8 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							{ reader_count_conn++; }
 						else if(cl->typ == 'p' && (cl->reader->card_status == CARD_INSERTED || cl->reader->tcp_connected))
 							{ proxy_count_conn++; }
-						tpl_printf(vars, TPLADD, "CLIENTTYPE", "%c", cl->typ);
 					}
+
 					if(cl->typ == 'c' || cl->typ == 'r' || cl->typ == 'p')
 					{
 						if(cl->lastecm >= cl->login && cl->lastecm >= cl->logout) { isec = now - cl->lastecm; }
@@ -4303,40 +4301,31 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 
 					if(!apicall)
 					{
-						if(cl->typ == 'c')
+						tpl_addVar(vars, TPLADD, "LBL", xml_encode(vars, usr));
+						tpl_printf(vars, TPLADD, "CID", "%p", cl);
+						if(cl->typ == 'c' || cl->typ == 'm')
 						{
 							tpl_addVar(vars, TPLADD, "TARGET", "User");
-							tpl_addVar(vars, TPLADD, "LBL", xml_encode(vars, usr));
-							tpl_printf(vars, TPLADD, "CID", "%p", cl);
-							tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));
 							tpl_addVar(vars, TPLADD, "CSIDX", tpl_getTpl(vars, "STATUSKBUTTON"));
 						}
 						else if(cl->typ == 'p')
 						{
 							tpl_addVar(vars, TPLADD, "TARGET", "Proxy");
-							tpl_addVar(vars, TPLADD, "LBL", xml_encode(vars, usr));
 							tpl_addVar(vars, TPLADD, "LBLENC", urlencode(vars, usr));
-							tpl_printf(vars, TPLADD, "CID", "%p", cl);
-							tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));
 							tpl_addVar(vars, TPLADD, "CSIDX", tpl_getTpl(vars, "STATUSRBUTTON"));
 						}
 						else if(cl->typ == 'r')
 						{
 							tpl_addVar(vars, TPLADD, "TARGET", "Reader");
-							tpl_addVar(vars, TPLADD, "LBL", xml_encode(vars, usr));
 							tpl_addVar(vars, TPLADD, "LBLENC", urlencode(vars, usr));
-							tpl_printf(vars, TPLADD, "CID", "%p", cl);
-							tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));
 							tpl_addVar(vars, TPLADD, "CSIDX", tpl_getTpl(vars, "STATUSRBUTTON"));
 						}
-						else if (cl->typ == 'h' || cl->typ == 's' || cl->typ == 'm')
+						else if (cl->typ == 'h' || cl->typ == 's')
 						{
-							tpl_addVar(vars, TPLADD, "TARGET", "Reader");
-							tpl_addVar(vars, TPLADD, "LBL", xml_encode(vars, usr));
-							tpl_printf(vars, TPLADD, "CID", "%p", cl);
-							tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));
-							tpl_printf(vars, TPLADD, "CSIDX", "id_%p", cl);
+							tpl_addVar(vars, TPLADD, "TARGET", "Server");
+							tpl_addVar(vars, TPLADD, "CSIDX", "");
 						}
+						tpl_addVar(vars, TPLADD, "HIDEIDX", tpl_getTpl(vars, "STATUSHBUTTON"));
 						tpl_printf(vars, TPLADD, "CSIDXPLAIN", "id_%p", cl);
 					}
 					else
@@ -4347,7 +4336,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					tpl_printf(vars, TPLADD, "CLIENTTYPE", "%c", cl->typ);
 					tpl_printf(vars, TPLADD, "CLIENTCNR", "%d", get_threadnum(cl));
 					tpl_addVar(vars, TPLADD, "CLIENTUSER", xml_encode(vars, usr));
-					if(cl->typ == 'c')
+					if(cl->typ == 'c' || cl->typ == 'm')
 					{
 						if(cl->account && cl->account->description)
 							tpl_printf(vars, TPLADD, "CLIENTDESCRIPTION","%s(%s)",!apicall?"&#013;":"",xml_encode(vars, cl->account->description));
@@ -4382,6 +4371,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						if(picon_exists(xml_encode(vars, usr)))
 						{
 							switch (cl->typ) {
+							case 'm': // Fall through
 							case 'c': status_user_icon_tpl = "SUSERICON"; picon_shown = true; break;
 							case 'p': // Fall through
 							case 'r': status_user_icon_tpl = "SREADERICON"; picon_shown = true; break;
@@ -4393,6 +4383,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 
 					if (!picon_shown) {
 						switch (cl->typ) {
+						case 'm': // Fall through
 						case 'c': status_user_icon_tpl = "SUSER"; break;
 						case 'p': // Fall through
 						case 'r': status_user_icon_tpl = "SREADER"; break;
@@ -4710,50 +4701,66 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 				if(cl->typ == 'c')
 				{
 					if(shown) { tpl_addVar(vars, TPLAPPEND, "CLIENTSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT")); }
-					if(cfg.http_hide_idle_clients == 1 || cfg.hideclient_to < 1)
+					if(cfg.http_hide_idle_clients != 1 && cfg.hideclient_to > 0)
 					{
-						tpl_printf(vars, TPLADD, "UCS", "%d", user_count_shown);
-						tpl_printf(vars, TPLADD, "UCA", "%d", user_count_all);
-						tpl_addVar(vars, TPLADD, "CLIENTHEADLINE", tpl_getTpl(vars, "CLIENTHEADLINEBIT"));
-					}
-					else
-					{
-						tpl_printf(vars, TPLADD, "UCS", "%d", user_count_shown);
-						tpl_printf(vars, TPLADD, "UCA", "%d", user_count_all);
 						tpl_printf(vars, TPLADD, "UCAC", "%d", user_count_active);
 						tpl_printf(vars, TPLADD, "CFGH", "%d", cfg.hideclient_to);
-						tpl_addVar(vars, TPLADD, "CLIENTHEADLINE", tpl_getTpl(vars, "CLIENTHEADLINEWITH"));
+						tpl_addVar(vars, TPLADD, "CHEADADD", tpl_getTpl(vars, "CLIENTHEADLINEWITH"));
 					}
+						tpl_printf(vars, TPLADD, "UCS", "%d", user_count_shown);
+						tpl_printf(vars, TPLADD, "UCA", "%d", user_count_all);
+						tpl_addVar(vars, TPLADD, "HIDEIDLE", "5");
+						tpl_addVar(vars, TPLADD, "SHOWHIDDEN", "User");
+						tpl_addVar(vars, TPLADD, "XHEAD", tpl_getTpl(vars, "CLIENTHEADLINE"));
+						tpl_addVar(vars, TPLADD, "CLIENTOPTIONADD", tpl_getTpl(vars, "CLIENTHEADLINEBIT"));
+						tpl_addVar(vars, TPLADD, "CLIENTHEADLINE", tpl_getTpl(vars, "STATUSHEADLINE"));
+						tpl_addVar(vars, TPLADD, "CLIENTOPTIONADD", "");
 				}
 				else if(cl->typ == 'r')
 				{
-					if(shown)
-					{
-						tpl_addVar(vars, TPLAPPEND, "READERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
-					}
+					if(shown) { tpl_addVar(vars, TPLAPPEND, "READERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT")); }
 						tpl_printf(vars, TPLADD, "RCC", "%d", reader_count_conn);
 						tpl_printf(vars, TPLADD, "RCA", "%d", reader_count_all);
-						tpl_addVar(vars, TPLADD, "READERHEADLINE", tpl_getTpl(vars, "CLIENTRHEADLINE"));
+						tpl_addVar(vars, TPLADD, "HIDEIDLE", "3");
+						tpl_addVar(vars, TPLADD, "SHOWHIDDEN", "Reader");
+						tpl_addVar(vars, TPLADD, "XHEAD", tpl_getTpl(vars, "CLIENTRHEADLINE"));
+						tpl_addVar(vars, TPLADD, "READERHEADLINE", tpl_getTpl(vars, "STATUSHEADLINE"));
 				}
 				else if(cl->typ == 'p')
 				{
-					if(shown)
-					{
-						tpl_addVar(vars, TPLAPPEND, "PROXYSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
-					}
+					if(shown) { tpl_addVar(vars, TPLAPPEND, "PROXYSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT")); }
 						tpl_printf(vars, TPLADD, "PCC", "%d", proxy_count_conn);
 						tpl_printf(vars, TPLADD, "PCA", "%d", proxy_count_all);
-						tpl_addVar(vars, TPLADD, "PROXYHEADLINE", tpl_getTpl(vars, "CLIENTPHEADLINE"));
+						tpl_addVar(vars, TPLADD, "HIDEIDLE", "4");
+						tpl_addVar(vars, TPLADD, "SHOWHIDDEN", "Proxy");
+						tpl_addVar(vars, TPLADD, "XHEAD", tpl_getTpl(vars, "CLIENTPHEADLINE"));
+						tpl_addVar(vars, TPLADD, "PROXYHEADLINE", tpl_getTpl(vars, "STATUSHEADLINE"));
 				}
-				else if(shown)
+				else if(cl->typ == 'm' || cl->typ == 's' || cl->typ == 'h')
 				{
-					if(cl->typ == 'm')
+					if(shown) { tpl_addVar(vars, TPLAPPEND, "SERVERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT")); }
+						tpl_addVar(vars, TPLADD, "HIDEIDLE", "2");
+						tpl_addVar(vars, TPLADD, "SHOWHIDDEN", "Server");
+					if(cl->typ == 's' || cl->typ == 'h')
 					{
-						tpl_addVar(vars, TPLAPPEND, "SERVERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+						tpl_printf(vars, TPLADD, "SCS", "%d", server_count_shown);
+						tpl_printf(vars, TPLADD, "SCA", "%d", server_count_all);
+						tpl_addVar(vars, TPLADD, "XHEAD", tpl_getTpl(vars, "CLIENTSHEADLINE"));
+						if(shown || cl->wihidden)
+						{
+							tpl_addVar(vars, TPLADD, "SERVERHEADLINE", tpl_getTpl(vars, "STATUSHEADLINE"));
+							usr = username(cl);
+						}
 					}
-					if(cl->typ == 's')
+					else
 					{
-						usr = username(cl);
+						tpl_addVar(vars, TPLADD, "SHOWHIDDENADD", " & Monitors");
+						tpl_printf(vars, TPLADD, "MCS", "%d", monitor_count_shown);
+						tpl_printf(vars, TPLADD, "MCA", "%d", monitor_count_all);
+						tpl_addVar(vars, TPLADD, "MHEADADD", tpl_getTpl(vars, "CLIENTMHEADLINE"));
+						tpl_addVar(vars, TPLADD, "XHEAD", tpl_getTpl(vars, "CLIENTSHEADLINE"));
+						tpl_addVar(vars, TPLADD, "SERVERHEADLINE", tpl_getTpl(vars, "STATUSHEADLINE"));
+						tpl_addVar(vars, TPLADD, "SHOWHIDDENADD", "");
 					}
 				}
 			}
@@ -4780,7 +4787,11 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	cs_readunlock(&clientlist_lock);
 	cs_readunlock(&readerlist_lock);
 
-	if(cfg.http_status_log || (apicall == 1 && strcmp(getParam(params, "appendlog"), "1") == 0))
+	uint8_t is_touch = 0;
+	if(config_enabled(TOUCH) && streq(tpl_getVar(vars, "SUBDIR"), TOUCH_SUBDIR))
+	{is_touch=1;}	
+
+	if(cfg.http_status_log || (apicall == 1 && strcmp(getParam(params, "appendlog"), "1") == 0) || is_touch)
 	{
 		if(cfg.loghistorysize)
 		{
@@ -4931,7 +4942,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	tpl_addVar(vars, TPLADDONCE, "USER_INFO", tpl_getTpl(vars, "USERINFOBIT"));
 	
 #ifdef WITH_DEBUG 
-	if(cfg.http_status_log)
+	if(cfg.http_status_log || is_touch)
 	{
 		// Debuglevel Selector 
 		int32_t lvl; 
@@ -4964,7 +4975,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	}
 #endif 
 
-	if(cfg.http_status_log)	
+	if(cfg.http_status_log || is_touch)	
 		tpl_addVar(vars, TPLADDONCE, "LOG_HISTORY", tpl_getTpl(vars, "LOGHISTORYBIT"));
 
 	if(apicall)
@@ -4975,14 +4986,21 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 		{
 			tpl_printf(vars, TPLADD, "UCS", "%d", user_count_shown);
 			tpl_printf(vars, TPLADD, "UCA", "%d", user_count_all);
-			tpl_printf(vars, TPLADD, "UCAC", "%d", user_count_active);
+			if(cfg.http_hide_idle_clients != 1 && cfg.hideclient_to > 0){
+				tpl_printf(vars, TPLADD, "UCAC", "%d", user_count_active);
+			}
 			tpl_printf(vars, TPLADD, "CFGH", "%d", cfg.hideclient_to);
+			tpl_printf(vars, TPLADD, "MCS", "%d", monitor_count_shown);
+			tpl_printf(vars, TPLADD, "MCA", "%d", monitor_count_all);
+			tpl_printf(vars, TPLADD, "SCS", "%d", server_count_shown);
+			tpl_printf(vars, TPLADD, "SCH", "%d", server_count_hidden);
+			tpl_printf(vars, TPLADD, "SCA", "%d", server_count_all);
 			tpl_printf(vars, TPLADD, "PICONENABLED", "%d", cfg.http_showpicons?1:0);
 			return tpl_getTpl(vars, "JSONSTATUS");
 		}
 	}
 
-	if(config_enabled(TOUCH) && streq(tpl_getVar(vars, "SUBDIR"), TOUCH_SUBDIR))
+	if(is_touch)
 		{ return tpl_getTpl(vars, "TOUCH_STATUS"); }
 	else
 		{ return tpl_getTpl(vars, "STATUS"); }
@@ -7097,6 +7115,10 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			tpl_addVar(vars, TPLADD, "CS_TARGET", CS_TARGET);
 			tpl_addVar(vars, TPLADD, "HTTPOSCAMLABEL", cfg.http_oscam_label);
 			tpl_addVar(vars, TPLADD, "HTTP_CHARSET", cs_http_use_utf8 ? "UTF-8" : "ISO-8859-1");
+			if(cfg.poll_refresh > 0)
+			{
+				tpl_printf(vars, TPLADD, "POLLREFRESHTIME", "%d", cfg.poll_refresh);
+			}
 			if(cfg.http_refresh > 0 && (pgidx == 3 || pgidx == -1))
 			{
 				tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg.http_refresh);

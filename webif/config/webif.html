@@ -15,12 +15,11 @@
 			<TR><TD>##TPLHELPPREFIX##conf#httpuser##TPLHELPSUFFIX##Http user:</A></TD><TD><input name="httpuser" type="text" size="63" maxlength="64" value="##HTTPUSER##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httppwd##TPLHELPSUFFIX##Http pwd:</A></TD><TD><input name="httppwd" type="text" size="63" maxlength="64" value="##HTTPPASSWORD##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httposcamlabel##TPLHELPSUFFIX##OSCam Label:</A></TD><TD><input name="httposcamlabel" type="text" size="63" maxlength="64" value="##HTTPOSCAMLABEL##"></TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#httprefresh##TPLHELPSUFFIX##Http refresh:</A></TD><TD><input name="httprefresh" type="text" size="5" maxlength="5" value="##HTTPREFRESH##"> s</TD></TR>
+			<TR><TD>##TPLHELPPREFIX##conf#httprefresh##TPLHELPSUFFIX##Refresh:</A></TD><TD>Http: <input name="httprefresh" type="text" size="5" maxlength="5" value="##HTTPREFRESH##"> s &nbsp;&nbsp;Poll (initialrefresh): <input name="httppollrefresh" type="text" size="5" maxlength="5" value="##HTTPPOLLREFRESH##"> s</TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httpallowed##TPLHELPSUFFIX##Http allowed:</A></TD><TD><input name="httpallowed" type="text" size="63" maxlength="200" value="##HTTPALLOW##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httphelplang##TPLHELPSUFFIX##Http Help Language (en|de|fr|it):</A></TD><TD><input name="httphelplang" type="text" size="3" maxlength="2" value="##HTTPHELPLANG##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httpdyndns##TPLHELPSUFFIX##Http dyndns:</A></TD><TD><input name="httpdyndns" type="text" size="63" maxlength="200" value="##HTTPDYNDNS##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#aulow##TPLHELPSUFFIX##Au low:</A></TD><TD><input name="aulow" type="text" size="5" maxlength="5" value="##AULOW##"> min</TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#hideclient_to##TPLHELPSUFFIX##Hide client to:</A></TD><TD><input name="hideclient_to" type="text" size="5" maxlength="5" value="##HIDECLIENTTO##"> s</TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httpsavefullcfg##TPLHELPSUFFIX##Http save full config:</A></TD><TD><input name="httpsavefullcfg" value="0" type="hidden"><input name="httpsavefullcfg" type="checkbox" value="1" ##HTTPSAVEFULLSELECT##></TD></TR>
 			<TR><TH></TH><TH>Css style settings</TH></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#http_prepend_embedded_css##TPLHELPSUFFIX##Http prepend embedded css:</A></TD><TD><input name="http_prepend_embedded_css" value="0" type="hidden"><input name="http_prepend_embedded_css" type="checkbox" value="1" ##HTTPPREPENDEMBEDDEDCSS##></TD></TR>
@@ -44,8 +43,19 @@
 							<TD>Height: <input name="httppiconsize" type="text" size="5" maxlength="5" value="##HTTPPICONSIZE##"> px</TD>
 						</TR>
 					</TABLE>
+				</TD>
+			</TR>
 			<TR><TH></TH><TH>Show/Hide in Status</TH></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#httphideidleclients##TPLHELPSUFFIX##Http Hide Idle Clients:</A></TD><TD><input name="httphideidleclients" value="0" type="hidden"><input name="httphideidleclients" type="checkbox" value="1" ##CHECKED##></TD></TR>
+			<TR><TD>##TPLHELPPREFIX##conf#httphideidleclients##TPLHELPSUFFIX##Http Hide Idle Clients:</A></TD>
+				<TD>
+					<TABLE CLASS="invisible">
+						<TR>
+							<TD><input name="httphideidleclients" value="0" type="hidden"><input name="httphideidleclients" type="checkbox" value="1" ##CHECKED##></TD>
+							<TD>##TPLHELPPREFIX##conf#hideclient_to##TPLHELPSUFFIX##Hide client to:</A>&nbsp;&nbsp;<input name="hideclient_to" type="text" size="5" maxlength="5" value="##HIDECLIENTTO##"> s</TD>
+						</TR>
+					</TABLE>
+				</TD>
+			</TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httphidetype##TPLHELPSUFFIX##Http Hide Type:</A></TD><TD><input name="httphidetype" type="text" size="10" maxlength="10" value="##HTTPHIDETYPE##"></TD></TR>
 			<TR><TD>##TPLHELPPREFIX##conf#httpshowstats##TPLHELPSUFFIX##Show in STATUS:</A></TD>
 				<TD>

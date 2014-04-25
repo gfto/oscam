@@ -482,6 +482,7 @@ static const struct config_list webif_opts[] =
 	DEF_OPT_STR("httpcert"                  , OFS(http_cert),               NULL),
 	DEF_OPT_INT32("http_prepend_embedded_css"   , OFS(http_prepend_embedded_css), 0),
 	DEF_OPT_INT32("httprefresh"             , OFS(http_refresh),            0),
+	DEF_OPT_INT32("httppollrefresh"         , OFS(poll_refresh),            0),
 	DEF_OPT_INT8("httphideidleclients"      , OFS(http_hide_idle_clients),  0),
 	DEF_OPT_STR("httphidetype"              , OFS(http_hide_type),          NULL),
 	DEF_OPT_INT8("httpshowpicons"           , OFS(http_showpicons),         0),
@@ -499,7 +500,11 @@ static const struct config_list webif_opts[] =
 	DEF_OPT_INT32("aulow"                   , OFS(aulow),                   30),
 	DEF_OPT_INT32("hideclient_to"           , OFS(hideclient_to),           25),
 	DEF_OPT_STR("httposcamlabel"            , OFS(http_oscam_label),        "OSCam"),
-	DEF_OPT_INT8("http_status_log"          , OFS(http_status_log),         0),
+#ifdef WEBIF_LIVELOG
+ 	DEF_OPT_INT8("http_status_log"          , OFS(http_status_log),         0),
+#else
+	DEF_OPT_INT8("http_status_log"          , OFS(http_status_log),         1),
+#endif
 #ifndef WEBIF_JQUERY
 	DEF_OPT_STR("http_extern_jquery"        , OFS(http_extern_jquery),      "//code.jquery.com/jquery-1.11.0.min.js"),
 #endif

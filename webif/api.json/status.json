@@ -4,6 +4,11 @@
 	"uca":"##UCA##",
 	"ucac":"##UCAC##",
 	"cfgh":"##CFGH##",
+	"scs":"##SCS##",
+	"sch":"##SCH##",
+	"sca":"##SCA##",
+	"mcs":"##MCS##",
+	"mca":"##MCA##",
 	"totals":{
 		"total_users":"##TOTAL_USERS##",
 		"total_active":"##TOTAL_ACTIVE##",

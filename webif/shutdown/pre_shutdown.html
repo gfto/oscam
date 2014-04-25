@@ -7,7 +7,7 @@
 			<H4>Do you really want to shutdown/restart OSCam?</H4>
 		</DIV>
 		<form action="shutdown.html" method="get">
-			<input type="submit" name="action" value="Shutdown" title="Shutdown OSCam" ##BTNDISABLED##>
-			<input type="submit" name="action" value="Restart" title="Restart OSCam" ##BTNDISABLED##>
+			<input type="submit" name="action" value="Shutdown" onclick="return confirm('Shutdown OSCam ?')" title="Shutdown OSCam" ##BTNDISABLED##>
+			<input type="submit" name="action" value="Restart" onclick="return confirm('Restart OSCam ?')" title="Restart OSCam" ##BTNDISABLED##>
 		</form>
 ##TPLFOOTER##

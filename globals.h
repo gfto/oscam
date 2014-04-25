@@ -1632,6 +1632,7 @@ struct s_config
 	char            *http_extern_jquery;
 #endif
 	int32_t         http_refresh;
+	int32_t         poll_refresh;
 	int8_t          http_hide_idle_clients;
 	char            *http_hide_type;
 	int8_t          http_showpicons;

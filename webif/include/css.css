@@ -625,7 +625,7 @@ path.graph_grid {stroke-opacity:0.5;}
 .users th {
 	font-size:11px
 }
-.users .head, .sortable {
+.sortable {
 	background-image: url(data:image/png;base64,R0lGODlhBQAIAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAgAAAIL3GQnuJ2f2lLI1AIAOw==);
 	background-repeat:no-repeat;
 	background-position:4px center;
@@ -633,10 +633,10 @@ path.graph_grid {stroke-opacity:0.5;}
 	padding-left:12px;
 	padding-right:8px
 }
-.users .desc, .users .asc, .sorting-asc, .sorting-desc{
+.sorting-asc, .sorting-desc{
 	background-color:#999
 }
-.users .desc, .sorting-desc{
+.sorting-desc{
 	background-image: url(data:image/png;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIFlD03K1sAOw==);
 	background-repeat:no-repeat;
 	background-position:4px center;
@@ -644,7 +644,7 @@ path.graph_grid {stroke-opacity:0.5;}
 	padding-left:10px;
 	padding-right:8px
 }
-.users .asc, .sorting-asc{
+.sorting-asc{
 	background-image: url(data:image/png;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIF3GQnuF0AOw==);
 	background-repeat:no-repeat;
 	background-position:4px center;
