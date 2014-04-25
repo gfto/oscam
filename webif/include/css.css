@@ -1,4 +1,26 @@
-/* ================================= GENERALY CSS SETTINGS ================================= */
+/* Table of Content
+=====================================
+	# 1. RESET
+	# 2. BASIC DIVISION PAGES
+	# 3. BASIC SETTINGS
+	# 4. LINKS
+	# 5. MAIN MENU
+	# 6. SUBNAV
+	# 7. TABLE
+	# 8. TABLE TR
+	# 9. TABLE TH
+	# 10. TABLE TD
+	# 11. DIV
+	# 12. TEXTAREA,SELECT,INPUT
+	# 13. IMAGE
+	# 14. SPAN
+	# 15. GRAPH
+	# 16. SORTING IN TABLE
+	# 17. POLLING
+	# 18. ECM BAR HISTORY
+	# 19. OTHER SETTINGS
+===================================== */
+
 /* ******** 1. RESET  */
 * {margin:0;padding:0}
 
@@ -9,60 +31,68 @@ html,body,* html #wrapper {height:100%}
 #footer {position:absolute;bottom:0;width:100%}
 
 /* ******** 3. BASIC SETTINGS */
-
-/* Set default font and text align 
- * Color setting in COLOR section
- */
 body {
 	font-family:Arial;
 	font-size:11px;
-	text-align:center
+	text-align:center;
+	background-color:#FFF;
+	color:#000
 }
 
-/* Large red text in shutdown.html, autoconf.html 
- * Color setting in COLOR section
- */
+/* shutdown.html, autoconf.html */
 p.text-large-red {
 	font-weight:700;
-	font-size:large
+	font-size:large;
+	color:red
 }
-/* in file.html, script.html */
+
+/* file.html, script.html */
 #filename,#filesubmit {
 	font-weight:700;
 	font-size:14px;
 	margin: 10px 0
 }
 
-/* in readerstats.html for P */
+/* readerstats.html for P */
 #text_totalecm {}
 
-/* in footer.html */
+/* footer.html */
 p.styleauthor:after {content:"Streamboard Team"}
 
-/* in pre_shutdown.html */
+/* pre_shutdown.html */
 h4 {
 	font-size:18px;
 	line-height:9px;
 	margin-top:20px;
-	margin-bottom:20px
+	margin-bottom:20px;
+	color:#AAA
 }
 
 /* ******** 4. LINKS */
+a:link, a:visited, a:active {
+	color:#050840
+}
+a:hover {
+	color:#FF9E5F
+}
 
-/* in status_sdebug.html */
+/* logpage_debugmenu.html */
 a.debugl:link {
 	margin:0 1px
 }
 a.debugl:hover{
-	background-color:#A00;
-	color:#FFF
+	background-color:#A00;color:#FFF
 }
 
-/* in module-webif.c for debug selection in STATUS item and FILES item -> part logfile */
+/* module-webif.c  */
 a.debugls:link {
 	padding:1px 2px 2px
 }
-/* Tooltip in cccamentitletooltip.html, foundentitlements.html, noentitlements.html and module-webif.c */
+a.debugls:link, a.debugls:visited {
+	background-color:#A00;
+	color:#FFF
+}
+/* cccamentitletooltip.html, foundentitlements.html, noentitlements.html and module-webif.c */
 a.tooltip,
 a.tooltip1 {
 	position:relative;
@@ -81,18 +111,28 @@ a:hover span {
 	right:2em;
 	padding:4px;
 	font-weight:normal;
-	text-align:left
+	text-align:left;
+	background:#FFC;
+	border:1px solid #000;
+	color:#000
+}
+a:hover img.icon {
+	background:red
+}
+
+/* logpage.html */
+#savelog {
+	text-decoration:none
 }
 
 /* ******** 5. MAIN MENU */
-
-/* ID are for creating main menu in menu.html */
 #main {}
 #mainmenu {
 	height:30px;
 	padding-top:10px;
 	display:inline-block;
-	position:relative
+	position:relative;
+	background-color:#FFF
 }
 #mainmenu li {
 	display:inline;
@@ -102,19 +142,21 @@ a:hover span {
 	font-size:18px;
 	font-weight:700
 }
-li.menu a, li.menu_selected a {
-	text-decoration:none
+li.menu a,li.menu a:hover,
+li.menu_selected a,li.menu_selected a:hover {
+	text-decoration:none;
+	color:#050840
+}
+li.menu:hover, li.menu_selected, 
+li.configmenu:hover, li.configmenu_selected {
+	background-color:#DDD
 }
 
 /* ******** 6. SUBNAV */
-
-/* ID are for creating subnavigation menu in 
- * cacheex.html, config\menu.html, entitlements.html, failban.html,
- * files\menu.html, readerconfig.html, readers.html, readerstats.html, script.html, 
- * services.html, services_edit.html, status.html, user_edit.html, userconfig.html */
 #subnav {}
 #nav {
 	height:22px;
+	background-color:#FFF
 }
 #nav li {
 	display:inline;
@@ -125,43 +167,44 @@ li.menu a, li.menu_selected a {
 	padding-bottom:0;
 	font-size:14px
 }
-li.configmenu a, li.configmenu_selected a {
-	text-decoration:none
+li.configmenu a, li.configmenu a:hover,
+li.configmenu_selected a, li.configmenu_selected a:hover {
+	text-decoration:none;
+	color:#050840
 }
 
 /* ******** 7. TABLE */
-
-/* generaly definition for all tables */
 table {
 	border-spacing:1px;
 	margin-left:auto;
 	margin-right:auto
 }
 
-/* Table in status.html */
+/* status.html */
 table.status {
 	width:100%;
-	empty-cells:show
+	empty-cells:show;
+	background-color:#FFF
 }
 
-/* Tables for all part in CONFIGURATION item and in user_edit.html */
+/* for all part in CONFIGURATION item and in user_edit.html */
 table.config,
 table.configuser {
 	width:60%;
 	margin-bottom:20px
 }
 
-/* Tables in readers.html */
+/* readers.html */
 table.readers {
 	width:100%
 }
 
-/* Table in readerconfig.html */
+/* readerconfig.html */
 table.configreader {
 	width:850px
 }
 
-/* Table in readerstats.html */
+/* readerstats.html */
 table.statsbalance td:last-child {
 	line-height:20px;
 	width:125px
@@ -171,7 +214,7 @@ table.statsbalance td:last-child img.icon {
 	margin-left:10px
 }
 
-/* Table in USERS in userconfig.html */
+/* userconfig.html */
 table.users {
 	width:100%
 }
@@ -183,19 +226,17 @@ table.user_totals {
 	width:50%
 }
 
-/* Tables in CACHEEX in cacheex.html */
+/* cacheex.html */
 table.cacheex, table#dataTable.stats {
 	width:80%
 }
-
-/* Table in savetemplates.html 
- * OLD DESIGN FOR MENU IN savetemplates.html !!!
- */
-table.menu {
-	border-spacing:0
+table#cachexstats {
+	width:60%;
+	white-space:no-wrap;
+	margin-bottom:0px
 }
 
-/* Table for settings in configuration of readers and users */
+/* for settings in configuration of readers and users */
 table.invisible {
 	margin-left:0
 }
@@ -218,14 +259,7 @@ table.statuscacheexinfo {
 	margin-bottom:0px
 }
 
-/* Table cachexstats	- in cacheex.html */
-table#cachexstats {
-	width:60%;
-	white-space:no-wrap;
-	margin-bottom:0px
-}
-
-/* Table in services.html */
+/* services.html */
 #addnewservice,#servicesedit {
 	width:35%;
 	text-align:center
@@ -234,24 +268,22 @@ table#cachexstats {
 	text-align:center
 }
 
-/* Table in user_edit.html, readerconfig.html */
+/* user_edit.html, readerconfig.html */
 table.subservicetable {
 	width:100%;
 	background:#FFF
 }
 
-/* OTHER TABLES */
-
 /* entitlements_bit.html, entitlements_cccambit.html */
 table.stats {}
 
-/* in emm.html */
+/* emm.html */
 table.writeemm {}
 
-/* in emm_running.html */
+/* emm_running.html */
 table.emmrunning {}
 
-/* in failban.html */
+/* failban.html */
 table.failban {}
 
 
@@ -262,76 +294,98 @@ tr.e_valid td, tr.e_expired td, tr.e_header td {
 	font-family:"Courier New", monospace
 }
 
-/* OTHER TR */
-
-/* in readers_readerlist.html */
+/* readers_readerlist.html */
 tr.enabledreader, tr.disabledreader {}
 
-/* ******** 9. TABLE TH */
+/* userconfig.html*/
+tr.online td.usercol6 {background-color:#949494;color:#FFF}
+tr.online td {background-color:#BFA}
+tr.offline td {}
+tr.expired td {background-color:#FBA}
+tr.connected td {background-color:#FFA}
 
-/* generaly definition for all TD */
+tr.disabled td {}
+tr.disabled td:first-child img.icon,
+
+tr.disabledreader td:first-child img.icon {
+	background-color:#0A0
+}
+
+tr.a td {background-color:#3F0}
+tr.c td {background-color:#F1F5E6}
+tr.e_valid td {background-color:#E6FEBF}
+tr.e_expired td {background-color:#FFF3E7}
+
+tr.s td, 
+tr.l td,
+tr.n td,
+tr.h td {background-color:#E1E1EF}
+
+tr.r td, span.e_expired {background-color:#FFF3E7}
+tr.p td, tr.scanusbsubhead td {background-color:#FDFBE1}
+
+/* ******** 9. TABLE TH */
 th {
 	height:10px;
-	padding:5px
+	padding:5px;
+	background-color:#CCC
 }
 
-/* in status_cacheexinfo.html, status_systeminfo.html */
+/* status_cacheexinfo.html, status_systeminfo.html, status_userinfo.html */
 th.nameinfo {
 	text-transform:uppercase;
-	text-align:left
+	text-align:left;
+	background-color:#999
 }
 
-/* in STATUS item (FIND OUT MORE) */
+/* status.html 
+ * shorthand notation td[class*='statuscol'] for  td.statuscol0 -  td.statuscol16. 
+ */
 th.statuscol0 {
-	text-align:center;
 	width:0
 }
-th.statuscol1, th.statuscol2, 
-th.statuscol3, th.statuscol4, 
-th.statuscol5, th.statuscol6, 
-th.statuscol7, th.statuscol8, 
-th.statuscol9, th.statuscol10, 
-th.statuscol11, th.statuscol12, 
-th.statuscol13, th.statuscol14, 
-th.statuscol15, th.statuscol16 {
+td[class*='statuscol'] {
 	text-align:center
 }
 th.statuscol15 {
 	cursor:pointer
 }
 
-/* OTHER TABLEs TH */
-
-/* in readerconfig.html */
+/* readerconfig.html */
 th.withservices, th.notservices, th.lbservices {}
 
 /* ******** 10. TABLE TD */
-
-/* generaly definition for all TD */
 td {
 	height:10px;
 	text-align:left;
-	padding:5px
+	padding:5px;
+	background-color:#EEE
 }
 
-/* in readerstatsnotfound.html, readerstatstimeoutbit.html
+/* readerstatsnotfound.html, readerstatstimeoutbit.html
  * status_clientheadlinebit.html, status_clientheadlinewith.html
  * status_pheadline.html, status_rheadline.html
  */ 
 td.subheadline {
 	height:10px;
 	border:0;
-	padding:5px
+	padding:5px;
+	background-color:#CCC;
+	text-align:center
 }
 
-/* in status_clientheadlinebit.html, status_clientheadlinewith.html
+/* status_clientheadlinebit.html, status_clientheadlinewith.html
  * status_pheadline.html, status_rheadline.html
  */
-td.subheadline form select {
-	width:100px;
+td.subheadline select {
 	text-align:center;
-	font-size:10px;
-	padding:0
+	font-size:10px
+}
+td.subheadline option {
+    font-size:11px
+}
+td.subheadline option:first-child {
+	display: none
 }
 
 /* other settings for seubheadline */
@@ -344,50 +398,23 @@ td.subheadline p {
 	margin-left:5px
 }
 
-/* FIND OUT MORE ?!?! */
+
 td.statuscol0 {
-	text-align:center;
 	width:10px
 }
 td.statuscol1 {
 	width:0
 }
-td.statuscol4, td.statuscol4 a,
-td.statuscol9, td.statuscol9 a,
-td.statuscol13, td.statuscol13 a,
-td.usercol1, .span, span, span a {
+td.statuscol4 a,
+td.statuscol9 a,
+td.statuscol13 a,
+.span, span, span a {
 	text-align:center;
 	text-decoration:none
 }
-td.centered, td.statuscol1,
-td.statuscol2, td.statuscol3,
-td.statuscol5, td.statuscol6,
-td.statuscol7, td.statuscol8,
-td.statuscol10, td.statuscol11,
-td.statuscol12, td.statuscol14,
-td.statuscol15, td.statuscol16,
-td.usercol0, td.usercol2,
-td.usercol3, td.usercol4,
-td.usercol5, td.usercol6,
-td.usercol7, td.usercol8,
-td.usercol9, td.usercol10,
-td.usercol11, td.usercol12,
-td.usercol13, td.usercol14,
-td.usercol15, td.usercol16,
-td.usercol17, td.usercol18,
-td.usercol19, td.usercol20,
-td.usercol21, td.usercol22,
-td.usercol23, td.usercol24,
-td.usercol25, td.readercol0,
-td.readercol1,td.readercol2,
-td.readercol3,td.readercol4,
-td.readercol5,td.readercol6,
-td.readercol7,td.readercol8,
-td.readercol9,td.readercol10,
-td.readercol11,td.readercol12,
-td.readercol13,td.readercol14,
-td.readercol15,td.readercol16,
-td.readercol17 {
+td.centered,
+td[class*='usercol'], /* shorthand notation td[class*='usercol'] for  td.usercol0 -  td.usercol25 */
+td[class*='readercol'] { /* shorthand notation td[class*='readercol'] for  td.readercol0 -  td.readercol17 */
 	text-align:center
 }
 
@@ -395,7 +422,7 @@ td.statuscol14 a, td.statuscol16 a, td.subheadline a {
 	text-decoration:none
 }
 
-/* in readerconfig_sidokbit.html */
+/* readerconfig_sidokbit.html */
 td.servicescol1, td.servicescol2, td.servicescol3 {
 	width:30%;
 	border:0;
@@ -404,35 +431,43 @@ td.servicescol1, td.servicescol2, td.servicescol3 {
 
 /* ******** 11. DIV */
 
-/* in status.html, entitlements_genericbit.html */
+/* status.html, entitlements_genericbit.html */
 div.log {
 	font-family:"Courier New", monospace;
 	text-align:left;
 	margin:20px 0;
-	padding:10px
+	padding:10px;
+	border:1px dotted #AAA;
+	background-color:#FAFAFA;
+	color:#666
 }
 
-/* in module-webif.c class for services.html */
+/* module-webif.c class for services.html */
 div.sidlist {
 	font-family:"Courier New", monospace;
 	text-align:left;
-	padding:2px
+	padding:2px;
+	border:1px dotted #AAA;
+	background-color:#FFFDF5;
+	color:#666
 }
 div.sidlistclose {
-	float:right
+	float:right;
+	background-color:red;
+	color:#FFF
 }
 div.sidlistclose a {
 	text-decoration:none;
-	padding:0 3px
+	padding:0 3px;
+	color:#FFF
 }
 
-/* in message.html */
+/* message.html */
 div.message {
 	font-size:12px;
 	font-weight:700;
 	margin:5px 0
 }
-
 /* FIND OUT MORE */
 div.div_notifier {
 	height:14px;
@@ -442,17 +477,17 @@ div.div_notifier {
 	float:right
 }
 
-/* in file.html */
+/* file.html */
 div.filterform {
 	margin:10px
 }
 
-/* in pre_autoconf.html, pre_shutdown.html */
+/* pre_autoconf.html, pre_shutdown.html */
 div.warning {
 	margin:42px 0 14px
 }
 
-/* in logobit.html - Logo for Oscam */
+/* logobit.html - Logo for Oscam */
 div.logo {
 	position:absolute;
 	top:10px;
@@ -460,7 +495,7 @@ div.logo {
 	z-index:0
 }
 
-/* in READERS and USERS items */
+/* READERS and USERS items */
 div.groups {
 	cursor:default;
 	overflow:hidden;
@@ -471,18 +506,20 @@ div.groups {
 	width:40px
 }
 
-/* in footer.html */
+/* footer.html */
 div.footer {
 	padding-bottom:5px;
 	padding-top:5px;
 	margin-bottom:0;
-	margin-top:40px
+	margin-top:40px;
+	background-color:#EEE;
+	border-top:3px solid #CCC
 }
 div.footer p {
 	margin:5px
 }
 
-/* in status.html, main DIV for statistics info */
+/* status.html, main DIV for statistics info */
 div.info {
 	max-width:1300px;
 	margin:20px auto
@@ -496,12 +533,20 @@ div.debugmenu, div.logmenu {
 	margin-bottom:8px
 }
 
-/* in entitlements_cccambit.html */
+/* entitlements_cccambit.html */
 div.cccamentitlementtotals,
 div.cccamentitlementcontrols {
 	margin-top:14px
 }
-
+/* Statuspage Functions: Generate a Bar for Barchart */
+div.bar {
+	width: 5px;
+	margin: 2px;
+	display: inline-block;
+	position: relative;
+	background-color: #aeaeae;
+	vertical-align: baseline;
+}
 /* definition only for show or hide columns or DIV
  * #newuser		- in userconfig.html
  * #newreader	- in readers.html
@@ -522,17 +567,35 @@ textarea.editor {
 	height:508px;
 	font-family:"Courier New", monospace;
 	text-align:left;
-	padding:8px 10px
+	padding:8px 10px;
+	border:1px dotted #AAA;
+	background-color:#FAFAFA;
+	color:#000
 }
 
 /* class for textarea */
 textarea.bt {
 	font-size:12px
 }
-
 /* generaly settings for all select */
 select {
 	padding:2px
+}
+/* generaly settings for all input */
+input[type="text"] {
+	padding:2px
+}
+/* only for button in services.html */
+#addnewservice input[type="submit"] {
+	margin-left:10px
+}
+/* only for button in userconfig.html for addnewuser */
+.users input[type="submit"] {
+	margin-left:10px
+}
+/* only for button in readers.html for addnewreaders */
+.readers input[type="submit"] {
+	margin-left:10px
 }
 
 /* settings for first option in select 
@@ -562,7 +625,8 @@ img.icon {
 	border:0 solid;
 	width:22px;
 	height:22px;
-	max-height:22px
+	max-height:22px;
+	background-color:#A00
 }
 
 /* statususericon	- in STATUS item
@@ -575,7 +639,7 @@ img.usericon, img.readericon {
 	min-height:15px
 }
 
-/* logo IC_LOGO.tpl */
+/* logo IC_LOGO.tpL */
 div.logo img {
 	max-height:44px
 }
@@ -589,40 +653,42 @@ td#in.centered img {
 
 /* ******** 14. SPAN */
 
-/* in module-webif.c and userconfig_notify.html */
+/* module-webif.c and userconfig_notify.html */
 span.span_notifier {
 	margin-left:2px;
-	padding:1px 3px
+	padding:1px 3px;
+	color:#FFF;background:red
 }
 
-/* in module-webif.c value for STATUS item ( more info in Changeset 6668 by alno )
+/* module-webif.c value for STATUS item ( more info in Changeset 6668 by alno )
  * Class for formating values in statusview column "Idle" 
  * In new WebIf column Idle is not used. Info about Idle is in title */
 span.idlesec_normal, span.idlesec_alert {
-	font-size:9px
+	font-size:9px;
+	color:red
 }
 
-/* in readerconfig_cccambit.html, user_edit_anticasc.html and user_edit_cccam.html */
+/* readerconfig_cccambit.html, user_edit_anticasc.html and user_edit_cccam.html */
 span.global_conf {
 	font-size:12px;
 	cursor:default;
-	padding:4px
+	padding:4px;
+	color:blue
 }
 
-/* in entitlements.html, readerconfig.html and user_edit.html */
+/* entitlements.html, readerconfig.html and user_edit.html */
 span.text_entitle {
 	display:inline-block;
 	font-weight:700
 }
 
 /* ******** 15. GRAPH */
-text.graph_error {text-anchor:middle;}
-text.graph_grid_txt {text-anchor:end;font-size:12px;}
-path.graph_grid {stroke-opacity:0.5;}
+rect.graph_bg {fill:white;}
+text.graph_error {text-anchor:middle;fill:red;}
+text.graph_grid_txt {text-anchor:end;font-size:12px;fill:gray;}
+path.graph_grid {stroke-opacity:0.5;stroke:gray;}
 
-/* ******** 17. SORTING IN TABLE */
-
-/* Classes are for sorting  */
+/* ******** 16. SORTING IN TABLE */
 .users th {
 	font-size:11px
 }
@@ -654,15 +720,7 @@ path.graph_grid {stroke-opacity:0.5;}
 	padding-right:8px
 }
 
-/* ******** 18. OTHER SETTINGS */
-/* margin top from previous table */
-.margintop {
-	margin-top:30px
-}
-.smallmargintop {
-	margin-top:15px
-}
-
+/* ******** 17. POLLING */
 /*  for UL in logpoll.html */
 #livelog {
 	resize:vertical;
@@ -720,9 +778,9 @@ div.colorPicker-palette {
 	padding: 2px;
 	z-index: 9999;
 }
-	div.colorPicker_hexWrap {width: 100%; float:left }
-	div.colorPicker_hexWrap label {font-size: 95%; color: #2F2F2F; margin: 5px 2px; width: 25%}
-	div.colorPicker_hexWrap input {margin: 5px 2px; padding: 0; font-size: 95%; border: 1px solid #000; width: 65%; }
+div.colorPicker_hexWrap {width: 100%; float:left }
+div.colorPicker_hexWrap label {font-size: 95%; color: #2F2F2F; margin: 5px 2px; width: 25%}
+div.colorPicker_hexWrap input {margin: 5px 2px; padding: 0; font-size: 95%; border: 1px solid #000; width: 65%; }
 
 div.colorPicker-swatch {
 	height: 12px;
@@ -767,6 +825,7 @@ input.pintervall {
 	border-radius:4px;
 	text-align:right;
 	margin: 0 4px;
+	padding: 0;
 }
 
 /* polling heartbeat */
@@ -774,161 +833,7 @@ input.pintervall {
 	background-color:#A00; 
 }
 
-
-/* ================================= COLORS ================================= */
-/* BASIC SETTINGS */
-
-body {
-	background-color:#FFF;
-	color:#000
-}
-p.text-large-red {
-	color:red
-}
-h2, h4 {
-	color:#AAA
-}
-
-/* LINKS */
-a.debugls:link, a.debugls:visited {
-	background-color:#A00;
-	color:#FFF
-}
-a:hover {
-	color:#FF9E5F
-}
-a:hover img.icon {
-	background:red
-}
-a:hover span {
-	background:#FFC;
-	border:1px solid #000
-}
-a:link, a:visited, a:active {
-	color:#050840
-}
-#savelog {
-	text-decoration:none
-}
-/* MAIN MENU & SUBNAV*/
-#mainmenu, #nav {
-	background-color:#FFF
-}
-li.menu:hover, li.menu_selected, 
-li.configmenu:hover, li.configmenu_selected {
-	background-color:#DDD
-}
-
-/* TABLE */
-table.status {
-	background-color:#FFF
-}
-
-/* TABLE TR */
-tr.online td.usercol6 {background-color:#949494;color:#FFF}
-tr.online td {background-color:#BFA}
-tr.offline td {}
-tr.expired td {background-color:#FBA}
-tr.connected td {background-color:#FFA}
-tr.disabled td {}
-
-tr.disabled td:first-child img.icon,
-tr.disabledreader td:first-child img.icon {
-	background-color:#0A0
-}
-
-tr.enabledreader {}
-tr.disabledreader {}
-
-tr.a td {background-color:#3F0}
-tr.c td {background-color:#F1F5E6}
-tr.e_valid td {background-color:#E6FEBF}
-tr.e_expired td {background-color:#FFF3E7}
-
-tr.s td, 
-tr.l td,
-tr.n td,
-tr.h td {
-	background-color:#E1E1EF
-}
-
-tr.r td, span.e_expired {background-color:#FFF3E7}
-tr.p td, tr.scanusbsubhead td {background-color:#FDFBE1}
-
-/* TABLE TH */
-th {
-	background-color:#CCC
-}
-th.nameinfo {
-	background-color:#999
-}
-
-/* TABLE TD */
-td {
-	background-color:#EEE
-}
-td.subheadline {
-	background-color:#CCC
-}
-
-/* DIV */
-
-/* in entitlements_genericbit.html */
-div.log {
-	border:1px dotted #AAA;
-	background-color:#FAFAFA;
-	color:#666
-}
-div.sidlist {
-	border:1px dotted #AAA;
-	background-color:#FFFDF5;
-	color:#666
-}
-div.sidlistclose {
-	background-color:red;
-	color:#FFF
-}
-div.sidlistclose a {
-	color:#FFF
-}
-div.footer {
-	background-color:#EEE;
-	border-top:3px solid #CCC
-}
-
-/* TEXTAREA */
-textarea.editor {
-	border:1px dotted #AAA;
-	background-color:#FAFAFA;
-	color:#000
-}
-
-/* IMAGE */
-img.icon {
-	background-color:#A00
-}
-
-/* SPAN */
-span.e_valid {
-	background-color:#E6FEBF
-}
-span.span_notifier {
-	color:#FFF;background:red
-}
-span.idlesec_normal {}
-span.idlesec_alert {
-	color:red
-}
-span.global_conf {
-	color:blue
-}
-
-/* GRAPH */
-rect.graph_bg {fill:white;}
-text.graph_error {fill:red;}
-text.graph_grid_txt {fill:gray;}
-path.graph_grid {stroke:gray;}
-
+/* ******** 18. ECM BAR HISTORY */
 #chart {
 	position:absolute;
 	width: 150px;
@@ -948,14 +853,15 @@ path.graph_grid {stroke:gray;}
 	bottom:0;
 	position:absolute;
 }
-div.bar {
-	width: 5px;
-	margin: 2px;
-	display: inline-block;
-	position: relative;
-	background-color: #aeaeae;
-	vertical-align: baseline;
-}
 .disabledtable {
     opacity: 0.5;
+}
+
+/* ******** 19. OTHER SETTINGS */
+/* margin top from previous table */
+.margintop {
+	margin-top:30px
+}
+.smallmargintop {
+	margin-top:15px
 }
