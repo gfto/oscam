@@ -145,7 +145,8 @@ table.status {
 }
 
 /* Tables for all part in CONFIGURATION item and in user_edit.html */
-table.config {
+table.config,
+table.configuser {
 	width:60%;
 	margin-bottom:20px
 }
