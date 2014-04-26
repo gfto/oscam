@@ -24,8 +24,8 @@
 ##TPLUNLOCKPARENTAL##
 			<TR><TD>##TPLHELPPREFIX##conf#block_same_ip##TPLHELPSUFFIX##Simple block:</A></TD>
 				<TD>
-					<input name="block_same_ip" type="hidden" value="0"><input name="block_same_ip" type="checkbox" value="1" ##BLOCKSAMEIPCHECKED##>&nbsp;same IP&nbsp;&nbsp;&nbsp;
-					<input name="block_same_name" type="hidden" value="0"><input name="block_same_name" type="checkbox" value="1" ##BLOCKSAMENAMECHECKED##>&nbsp;same Name
+					<input name="block_same_ip" type="hidden" value="0"><input name="block_same_ip" type="checkbox" value="1" ##BLOCKSAMEIPCHECKED##><label>&nbsp;same IP&nbsp;&nbsp;&nbsp;</label>
+					<input name="block_same_name" type="hidden" value="0"><input name="block_same_name" type="checkbox" value="1" ##BLOCKSAMENAMECHECKED##><label>&nbsp;same Name</label>
 				</TD>
 			</TR>
 			<TR><TD>##TPLHELPPREFIX##conf#dropdups##TPLHELPSUFFIX##Drop duplicate users:</A></TD>
@@ -37,20 +37,20 @@
 			<TR><TD>##TPLHELPPREFIX##conf#disableuserfile##TPLHELPSUFFIX##Usr file:</A></TD>
 				<TD>
 					<input name="usrfile" type="text" size="55" maxlength="128" value="##USERFILE##">&nbsp;
-					<input name="disableuserfile" type="hidden" value="1"><input name="disableuserfile" type="checkbox" value="0" ##DISABLEUSERFILECHECKED##>&nbsp;enabled&nbsp;
+					<input name="disableuserfile" type="hidden" value="1"><input name="disableuserfile" type="checkbox" value="0" ##DISABLEUSERFILECHECKED##><label>&nbsp;enabled&nbsp;</label>
 					<select name="usrfileflag"><option VALUE="0">0 - just join/leave</option><option VALUE="1" ##USERFILEFLAGCHECKED##>1 - each zap</option></select>
 				</TD>
 			</TR>
 			<TR><TD>##TPLHELPPREFIX##conf#disablemail##TPLHELPSUFFIX##Mail file:</A></TD>
 				<TD>
 					<input name="mailfile" type="text" size="55" maxlength="128" value="##MAILFILE##">&nbsp;
-					<input name="disablemail" type="hidden" value="1"><input name="disablemail" type="checkbox" value="0" ##DISABLEMAILCHECKED##>&nbsp;enabled&nbsp;
+					<input name="disablemail" type="hidden" value="1"><input name="disablemail" type="checkbox" value="0" ##DISABLEMAILCHECKED##><label>&nbsp;enabled&nbsp;</label>
 				</TD>
 			</TR>
 			<TR><TD>##TPLHELPPREFIX##conf#logfile##TPLHELPSUFFIX##Log file / max size:</A></TD>
 				<TD>
 					<input name="logfile" type="text" size="55" maxlength="128" value="##LOGFILE##">&nbsp;
-					<input name="disablelog" type="hidden" value="1"><input name="disablelog" type="checkbox" value="0" ##DISABLELOGCHECKED##>&nbsp;enabled&nbsp;
+					<input name="disablelog" type="hidden" value="1"><input name="disablelog" type="checkbox" value="0" ##DISABLELOGCHECKED##><label>&nbsp;enabled&nbsp;</label>
 					<input name="maxlogsize" type="text" size="5" maxlength="5" value="##MAXLOGSIZE##">kB
 				</TD>
 			</TR>
