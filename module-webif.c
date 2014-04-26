@@ -510,30 +510,12 @@ static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct ur
 
 	tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNEL", (cfg.lb_auto_betatunnel == 1) ? "checked" : "");
 
-	if(cfg.lb_auto_betatunnel_mode == 1)
+	if(cfg.lb_auto_betatunnel_mode)
 	{
-		tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNELMODE1", "selected");
+		tpl_printf(vars, TPLADD, "TMP", "LBAUTOBETATUNNELMODE%d", cfg.lb_auto_betatunnel_mode);
+		tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 	}
-	else if(cfg.lb_auto_betatunnel_mode == 2)
-	{
-		tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNELMODE2", "selected");
-	}
-	else if(cfg.lb_auto_betatunnel_mode == 3)
-	{
-		tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNELMODE3", "selected");
-	}
-	else if(cfg.lb_auto_betatunnel_mode == 4)
-	{
-		tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNELMODE4", "selected");
-	}
-	else if(cfg.lb_auto_betatunnel_mode == 5)
-	{
-		tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNELMODE5", "selected");
-	}
-	else if(cfg.lb_auto_betatunnel_mode == 6)
-	{
-		tpl_addVar(vars, TPLADD, "LBAUTOBETATUNNELMODE6", "selected");
-	}
+
 	tpl_printf(vars, TPLADD, "LBPREFERBETA", "%d", cfg.lb_auto_betatunnel_prefer_beta);
 
 	tpl_addVar(vars, TPLADD, "LBAUTOTIMEOUT", (cfg.lb_auto_timeout == 1) ? "checked" : "");
@@ -669,29 +651,18 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 	tpl_printf(vars, TPLADD, "MAXCYCLELIST", "%d", cfg.maxcyclelist);
 	tpl_printf(vars, TPLADD, "KEEPCYCLETIME", "%d", cfg.keepcycletime);
 
-	switch(cfg.onbadcycle)
+	if(cfg.onbadcycle)
 	{
-	case 1:
-		tpl_addVar(vars, TPLADD, "ONBADCYCLE1", "selected");
-		break;
-	case 2:
-		tpl_addVar(vars, TPLADD, "ONBADCYCLE2", "selected");
-		break;
+		tpl_printf(vars, TPLADD, "TMP", "ONBADCYCLE%d", cfg.onbadcycle);
+		tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 	}
 
 	tpl_addVar(vars, TPLADD, "DROPOLD", (cfg.cwcycle_dropold == 1) ? "checked" : "");
 
-	switch(cfg.cwcycle_sensitive)
+	if(cfg.cwcycle_sensitive)
 	{
-	case 2:
-		tpl_addVar(vars, TPLADD, "CWCSEN2", "selected");
-		break;
-	case 3:
-		tpl_addVar(vars, TPLADD, "CWCSEN3", "selected");
-		break;
-	case 4:
-		tpl_addVar(vars, TPLADD, "CWCSEN4", "selected");
-		break;
+		tpl_printf(vars, TPLADD, "TMP", "CWCSEN%d", cfg.cwcycle_sensitive);
+		tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 	}
 
 	tpl_addVar(vars, TPLADD, "ALLOWBADFROMFFB", (cfg.cwcycle_allowbadfromffb == 1) ? "checked" : "");
