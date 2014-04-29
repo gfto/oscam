@@ -814,7 +814,8 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 	/* get PIN settings */
 	static const unsigned char ins7411[5] = { 0xD3, 0x74, 0x11, 0x00, 0x00 };
 	unsigned char payload2e4[4];
-	if(do_cmd(reader, ins7411, NULL, NULL, cta_res) < 0)
+	unsigned char rbuff[264];
+	if(do_cmd(reader, ins7411, NULL, rbuff, cta_res) < 0)
 	{
 		rdr_log(reader, "classD1 ins7411: unable to get PIN");
 		return ERROR;
@@ -822,20 +823,20 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 	else
 	{
 		memset(payload2e4, 0, 4);
-		memcpy(payload2e4, cta_res + 2, 4);
-		reader->VgPin = (cta_res[4] << 8) + cta_res[5];
+		memcpy(payload2e4, rbuff + 7, 4);
+		reader->VgPin = (rbuff[9] << 8) + rbuff[10];
 		rdr_log(reader, "Pincode read: %i", reader->VgPin);
 	}
 
 	/* get PCB(content rating) settings */
 	static const unsigned char ins74e[5] = {0xD3, 0x74, 0x0E, 0x00, 0x00};
-	if(do_cmd(reader, ins74e, NULL, NULL, cta_res) < 0)
+	if(do_cmd(reader, ins74e, NULL, rbuff, cta_res) < 0)
 	{
 		rdr_log(reader, "classD1 ins74e: failed to get PCB settings");
 	}
 	else
 	{
-		rdr_log(reader, "PCB settings: %X %X %X %X", cta_res[2], cta_res[3], cta_res[4], cta_res[5]);
+		rdr_log(reader, "PCB settings: %X %X %X %X", rbuff[7], rbuff[8], rbuff[9], rbuff[10]);
 	}
 
 	/* send PIN */
