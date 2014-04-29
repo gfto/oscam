@@ -331,7 +331,7 @@ $(function(){
  */
 function updateFooter(data){
 	$( "#curtime" ).text( ' ' + data.oscam.curdate + ' | ' + data.oscam.curtime + ' ' );
-	$( "#uptime" ).text( data.oscam.uptimefmt );
+	$( "#uptime" ).text( ' ' + data.oscam.uptimefmt );
 }
 
 /*
