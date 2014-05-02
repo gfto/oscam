@@ -825,7 +825,7 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 		memset(payload2e4, 0, 4);
 		memcpy(payload2e4, rbuff + 7, 4);
 		reader->VgPin = (rbuff[9] << 8) + rbuff[10];
-		rdr_log(reader, "Pincode read: %hu", reader->VgPin);
+		rdr_log(reader, "Pincode read: %04hu", reader->VgPin);
 	}
 
 	/* get PCB(content rating) settings */
