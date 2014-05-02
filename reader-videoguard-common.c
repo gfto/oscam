@@ -784,11 +784,8 @@ int32_t read_cmd_len(struct s_reader *reader, const unsigned char *cmd)
 	def_resp;
 	unsigned char cmd2[5];
 	memcpy(cmd2, cmd, 5);
-	if(cmd2[0] == 0xD3)
-	{
-		cmd2[0] = 0xD0;
-	}
-	cmd2[3] = 0x80;
+	cmd2[0] = 0xD0;
+	cmd2[3] |= 0x80;
 	cmd2[4] = 1;
 	// some card reply with L 91 00 (L being the command length).
 	if(!write_cmd_vg(cmd2, NULL) || !status_ok(cta_res + 1) || cta_res[0] == 0)
@@ -817,7 +814,11 @@ int32_t do_cmd(struct s_reader *reader, const unsigned char *ins, const unsigned
 	{
 		if(len == 0xFF && mode == 2)
 		{
-			if(ins2[4] == 0) { ins2[4] = len = read_cmd_len(reader, ins2); }
+			if(ins2[4] == 0)
+			{
+				ins2[4] = len = read_cmd_len(reader, ins2);
+				if (len == 0xFF) return -1;
+			}
 		}
 		else if(mode != 0) { ins2[4] = len; }
 	}

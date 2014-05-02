@@ -766,12 +766,6 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 		rdr_log(reader, "classD1 ins742A: failed");
 	}
 
-	static const unsigned char ins741B[5] = { 0xD3, 0x74, 0x1B, 0x00, 0x00 };
-	if(do_cmd(reader, ins741B, NULL, NULL, cta_res) < 0)
-	{
-		rdr_log(reader, "classD1 ins741B: failed");
-	}
-
 	static const unsigned char ins4Ca[5] = { 0xD1, 0x4C, 0x00, 0x00, 0x00 };
 	unsigned char ins741C[5] = { 0xD1, 0x74, 0x1C, 0x00, 0x00 };
 	if(len4c > 9)
@@ -812,10 +806,9 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 		}
 	}
 	/* get PIN settings */
-	static const unsigned char ins7411[5] = { 0xD3, 0x74, 0x11, 0x00, 0x00 };
+	static const unsigned char ins7411[5] = { 0xD1, 0x74, 0x11, 0x00, 0x00 };
 	unsigned char payload2e4[4];
-	unsigned char rbuff[264];
-	if(do_cmd(reader, ins7411, NULL, rbuff, cta_res) < 0)
+	if(do_cmd(reader, ins7411, NULL, NULL, cta_res) < 0)
 	{
 		rdr_log(reader, "classD1 ins7411: unable to get PIN");
 		return ERROR;
@@ -823,20 +816,20 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 	else
 	{
 		memset(payload2e4, 0, 4);
-		memcpy(payload2e4, rbuff + 7, 4);
-		reader->VgPin = (rbuff[9] << 8) + rbuff[10];
+		memcpy(payload2e4, cta_res + 2, 4);
+		reader->VgPin = (cta_res[4] << 8) + cta_res[5];
 		rdr_log(reader, "Pincode read: %04hu", reader->VgPin);
 	}
 
 	/* get PCB(content rating) settings */
-	static const unsigned char ins74e[5] = {0xD3, 0x74, 0x0E, 0x00, 0x00};
-	if(do_cmd(reader, ins74e, NULL, rbuff, cta_res) < 0)
+	static const unsigned char ins74e[5] = {0xD1, 0x74, 0x0E, 0x00, 0x00};
+	if(do_cmd(reader, ins74e, NULL, NULL, cta_res) < 0)
 	{
 		rdr_log(reader, "classD1 ins74e: failed to get PCB settings");
 	}
 	else
 	{
-		rdr_log(reader, "PCB settings: %X %X %X %X", rbuff[7], rbuff[8], rbuff[9], rbuff[10]);
+		rdr_log(reader, "PCB settings: %X %X %X %X", cta_res[2], cta_res[3], cta_res[4], cta_res[5]);
 	}
 
 	/* send PIN */
