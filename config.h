@@ -8,7 +8,7 @@
 //#define WITH_SSL 1
 #if defined(__linux__)
 #define HAVE_DVBAPI 1
-//#define DVBAPI_SAMYGO 1
+#define DVBAPI_SAMYGO 1
 #endif
 #define CLOCKFIX 1
 #define IRDETO_GUESSING 1
