@@ -2469,7 +2469,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	int32_t j = 0;
 	int32_t demux_id = -1;
 	uint16_t ca_mask, demux_index, adapter_index, pmtpid;
-	
+
 #define LIST_MORE 0x00    //*CA application should append a 'MORE' CAPMT object to the list and start receiving the next object
 #define LIST_FIRST 0x01   //*CA application should clear the list when a 'FIRST' CAPMT object is received, and start receiving the next object
 #define LIST_LAST 0x02   //*CA application should append a 'LAST' CAPMT object to the list and start working with the list
@@ -2533,12 +2533,17 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			openxcas_sid = program_number;
 #endif			
 			demux[i].stopdescramble = 0; // dont stop current demuxer!
-			if(demux[demux_id].ECMpidcount == 0) { running = 0; }  // fix for channel changes from fta to scrambled	
-                     else { return demux_id; } 	
+			if(demux[demux_id].ECMpidcount == 0)
+			{
+				running = 0; // fix for channel changes from fta to scrambled
+			} else {
+				return demux_id;
+			}
 			break; // no need to explore other demuxers since we have a found!
 		}
 	}
-// stop descramble old demuxers from this ca pmt connection that arent used anymore
+
+	// stop descramble old demuxers from this ca pmt connection that arent used anymore
 	if((ca_pmt_list_management == LIST_LAST) || (ca_pmt_list_management == LIST_ONLY))
 	{
 		for(j = 0; j < MAX_DEMUX; j++)
@@ -2547,7 +2552,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			if(demux[j].stopdescramble == 1) { dvbapi_stop_descrambling(j); }  // Stop descrambling and remove all demuxer entries not in new PMT.
 		}
 	}
-
 
 	if(demux_id == -1)
 	{
@@ -2568,41 +2572,51 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	demux[demux_id].pmtpid = pmtpid;
 
 	if(pmtfile)
-		{ cs_strncpy(demux[demux_id].pmt_file, pmtfile, sizeof(demux[demux_id].pmt_file)); }
+	{
+		cs_strncpy(demux[demux_id].pmt_file, pmtfile, sizeof(demux[demux_id].pmt_file));
+	}
 
 	program_info_samy_length=0;
-	for (j = 7; j < length; j+=buffer[j+1]+2)	
+	uint32_t b=0;
+	for (b = 7; b < length; b+=buffer[b+1]+2)
 	{
-	    if (buffer[j] == 0x09)
-		    program_info_samy_length+=buffer[j+1]+2;
-		else
+		if (buffer[b] == 0x09)
+		{
+			program_info_samy_length+=buffer[b+1]+2;
+		} else {
 			break;
+		}
 	}
-		
+
 	if (program_info_samy_length > program_info_length)
-	    program_info_length = program_info_samy_length;
+	{
+		program_info_length = program_info_samy_length;
+	}
 
 	if(program_info_length > 1 && program_info_length < length)
-		{ dvbapi_parse_descriptor(demux_id, program_info_length - 1, buffer + 7); }
+	{
+		dvbapi_parse_descriptor(demux_id, program_info_length - 1, buffer + 7);
+	}
 
 	uint32_t es_info_length = 0, vpid = 0;
 	struct s_dvbapi_priority *addentry;
-	
+
 	for(j = 0; j < demux[demux_id].ECMpidcount; j++){  // check for existing pid
 		demux[demux_id].ECMpids[j].streams = 0; // reset streams!
 	}
 	demux[demux_id].STREAMpidcount = 0; // reset numer of streams
-	
+
 	for(i = program_info_length + 6; i < length; i += es_info_length + 5)
 	{
 		int32_t stream_type = buffer[i];
 		uint16_t elementary_pid = ((buffer[i + 1] & 0x1F) << 8) | buffer[i + 2];
 		es_info_length = ((buffer[i + 3] & 0x0F) << 8) | buffer[i + 4];
-
 		cs_debug_mask(D_DVBAPI, "[pmt] stream_type: %02x pid: %04x length: %d", stream_type, elementary_pid, es_info_length);
 
 		if(demux[demux_id].STREAMpidcount >= ECM_PIDS)
-			{ break; }
+		{
+			break;
+		}
 
 		demux[demux_id].STREAMpids[demux[demux_id].STREAMpidcount++] = elementary_pid;
 		// find and register videopid
