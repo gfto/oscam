@@ -6,8 +6,8 @@
 #  FILENAME      - The file that contains the template
 #  DEPENDANCYx   - The config variable which is responsible for this template
 
-JSONCACHEEX                   api.json/cacheex.json                                      CS_CACHEEX
-JSONCACHEEXBIT                api.json/cacheexbit.json                                   CS_CACHEEX
+JSONCACHEEX                   api.json/cacheex.json                                       CS_CACHEEX
+JSONCACHEEXBIT                api.json/cacheexbit.json                                    CS_CACHEEX
 JSONFOOTER                    api.json/footer.json
 JSONHEADER                    api.json/header.json
 JSONREADER                    api.json/reader.json
@@ -50,6 +50,8 @@ CONFIGCAMD33                  config/camd33.html                                
 CONFIGCAMD35                  config/camd35.html                                          MODULE_CAMD35
 CONFIGCAMD35TCP               config/camd35tcp.html                                       MODULE_CAMD35_TCP
 CONFIGCCCAM                   config/cccam.html                                           MODULE_CCCSHARE
+CONFIGCCCAMCTRL               config/cccam_control.html                                   MODULE_CCCSHARE
+CONFIGCONTENT                 config/config.html
 CONFIGDVBAPI                  config/dvbapi.html                                          HAVE_DVBAPI
 CONFIGGBOX                    config/gbox.html                                            MODULE_GBOX
 CONFIGGLOBAL                  config/global.html
@@ -57,8 +59,9 @@ ENABLELEDBIT                  config/global_enableledbit.html                   
 LOCALCARDS                    config/global_localcards.html                               WITH_CARDREADER
 SUPPRESSCMD08                 config/global_suppresscmd08.html                            MODULE_CAMD35,MODULE_CAMD35_TCP
 UNLOCKPARENTAL                config/global_unlockparental.html                           READER_SECA,READER_VIACCESS
-CONFIGLCD                     config/lcd.html
+CONFIGLCD                     config/lcd.html                                             LCDSUPPORT
 CONFIGLOADBALANCER            config/loadbalancer.html                                    WITH_LB
+CONFIGLOADBALANCERCTRL        config/loadbalancer_control.html                            WITH_LB
 CONFIGMENU                    config/menu.html
 CONFIGMENUANTICASC            config/menu_anticasc.html                                   CS_ANTICASC
 CONFIGMENUCAMD33              config/menu_camd33.html                                     MODULE_CAMD33
@@ -75,11 +78,11 @@ CONFIGMENUNEWCAMD             config/menu_newcamd.html                          
 CONFIGMENURADEGAST            config/menu_radegast.html                                   MODULE_RADEGAST
 CONFIGMENUSERIAL              config/menu_serial.html                                     MODULE_SERIAL
 CONFIGMENUWEBIF               config/menu_webif.html
-CONFIGMONITOR                 config/monitor.html
+CONFIGMONITOR                 config/monitor.html                                         MODULE_MONITOR
 CONFIGNEWCAMD                 config/newcamd.html                                         MODULE_NEWCAMD
 CONFIGRADEGAST                config/radegast.html                                        MODULE_RADEGAST
 CONFIGSERIAL                  config/serial.html                                          MODULE_SERIAL
-CONFIGSERIALDEVICEBIT         config/serial_devices.html
+CONFIGSERIALDEVICEBIT         config/serial_devices.html                                  MODULE_SERIAL
 CONFIGWEBIF                   config/webif.html
 HTTPFORCESSLV3                config/webif_httpforcesslv3.html                            WITH_SSL
 SHOWCACHEEXINFO               config/webif_showcacheexinfo.html                           CS_CACHEEX
@@ -91,6 +94,7 @@ EMM_RUNNING                   emm_running/emm_running.html
 
 ENTITLEMENTS                  entitlements/entitlements.html                              WITH_CARDREADER,MODULE_CCCAM
 ENTITLEMENTBIT                entitlements/entitlements_bit.html                          WITH_CARDREADER
+ENTITLEMENTBITNDS             entitlements/entitlements_bit_nds.html                      READER_VIDEOGUARD
 ENTITLEMENTCCCAMBIT           entitlements/entitlements_cccambit.html                     MODULE_CCCAM
 ENTITLEMENTCCCAMENTRYBIT      entitlements/entitlements_cccambit_statsentry.html          MODULE_CCCAM
 ENTITLEMENTGENERICBIT         entitlements/entitlements_genericbit.html                   WITH_CARDREADER
@@ -131,15 +135,13 @@ ICSTA                         images/ICSTA.svg
 ICSPAC                        images/ICSPAC.gif
 
 BODY                          include/body.html
-CCENTITLEMENTS                include/cccamentitlements.html
-CCENTITLETOOLTIP              include/cccamentitletooltip.html
+CCENTITLEMENTS                include/cccamentitlements.html                              MODULE_CCCAM
+CCENTITLETOOLTIP              include/cccamentitletooltip.html                            MODULE_CCCAM
 CSS                           include/css.css
 FOOTER                        include/footer.html
 FOUNDENTITLEMENTS             include/foundentitlements.html
 HEADER                        include/header.html
 HEADERSHORT                   include/header_short.html
-HELPPREFIX                    include/help_prefix.html
-HELPSUFFIX                    include/help_suffix.html
 JQUERY                        include/jquery.js                                           WEBIF_JQUERY
 JSCRIPT                       include/jscript.js
 LOGOBIT                       include/logobit.html
@@ -149,8 +151,8 @@ MESSAGE                       include/message.html
 MESSAGEBIT                    include/message_bit.html
 NOENTITLEMENTS                include/noentitlements.html
 POLL                          include/poll.html
-PROTOCCCAMPIC                 include/protocccampic.html
-PROTONEWCAMDPIC               include/protonewcamdpic.html
+PROTOCCCAMPIC                 include/protocccampic.html                                  MODULE_CCCAM
+PROTONEWCAMDPIC               include/protonewcamdpic.html                                MODULE_NEWCAMD
 PROTOOTHERPIC                 include/protootherpic.html
 REFRESH                       include/refresh.html
 
@@ -170,8 +172,8 @@ READERCONFIGCAMD35BIT         readerconfig/readerconfig_camd35bit.html          
 READERCONFIGCCCAMBIT          readerconfig/readerconfig_cccambit.html                     MODULE_CCCAM
 READERCONFIGCS378XBIT         readerconfig/readerconfig_cs378xbit.html                    MODULE_CAMD35_TCP
 READERCONFIGGBOXBIT           readerconfig/readerconfig_gboxbit.html                      MODULE_GBOX
-READERCONFIGGHTTPBIT          readerconfig/readerconfig_ghttpbit.html
-READERCONFIGHOPBIT            readerconfig/readerconfig_hopbit.html
+READERCONFIGGHTTPBIT          readerconfig/readerconfig_ghttpbit.html                     MODULE_GHTTP
+READERCONFIGHOPBIT            readerconfig/readerconfig_hopbit.html                       MODULE_CCCAM
 READERCONFIGSTDHWREADERBIT    readerconfig/readerconfig_hwreader.html                     WITH_CARDREADER
 READERCONFIGBOXKEY            readerconfig/readerconfig_hwreader_boxkey.html              READER_NAGRA,READER_IRDETO
 READERCONFIGIRDETO            readerconfig/readerconfig_hwreader_irdeto.html              READER_IRDETO
@@ -187,6 +189,7 @@ READERCONFIGLBWEIGHT          readerconfig/readerconfig_lbweight.html           
 READERCONFIGNCD525BIT         readerconfig/readerconfig_ncd525bit.html                    MODULE_NEWCAMD
 READERCONFIGNCD524BIT         readerconfig/readerconfig_ncd524bit.html                    MODULE_NEWCAMD
 READERCONFIGRADEGASTBIT       readerconfig/readerconfig_radegastbit.html                  MODULE_RADEGAST
+READERCONFIGSID               readerconfig/readerconfig_sid.html
 READERCONFIGSIDLBOKBIT        readerconfig/readerconfig_sidlbokbit.html
 READERCONFIGSIDNOBIT          readerconfig/readerconfig_sidnobit.html
 READERCONFIGSIDOKBIT          readerconfig/readerconfig_sidokbit.html
@@ -197,20 +200,21 @@ READERCTYPNOICON              readers/readerctypnoicon.html
 READERLABEL                   readers/readerlabel.html
 READERNAMEBIT                 readers/readernamebit.html
 READERNOICON                  readers/readernoicon.html
-READERLBBIT                   readers/readers_lblweightbit.html                          WITH_LB
-READERLBWD                    readers/readers_lblweightd.html                            WITH_LB
-READERLBWU                    readers/readers_lblweightu.html                            WITH_LB
+READERLBBIT                   readers/readers_lblweightbit.html                           WITH_LB
+READERLBWD                    readers/readers_lblweightd.html                             WITH_LB
+READERLBWU                    readers/readers_lblweightu.html                             WITH_LB
 READERSBIT                    readers/readers_readerlist.html
 READERENTITLEBIT              readers/readers_readerlist_entitlement.html
+READERLBSTAT                  readers/readers_readerlist_lbstat.html                      WITH_LB
 READERREFRESHBIT              readers/readers_readerlist_refresh.html
 READERWRITEEMMBIT             readers/readers_readerlist_writeemm.html
 
-READERSTATS                   readerstats/readerstats.html
-READERSTATSNOSTATS            readerstats/readerstats_nostats.html
-READERSTATSBIT                readerstats/readerstats_statsbit.html
-READERSTATSROWNOTFOUNDBIT     readerstats/readerstatsnotfound.html
-READERSTATSROWBIT             readerstats/readerstatsrowbit.html
-READERSTATSROWTIMEOUTBIT      readerstats/readerstatstimeoutbit.html
+READERSTATS                   readerstats/readerstats.html                                WITH_LB
+READERSTATSNOSTATS            readerstats/readerstats_nostats.html                        WITH_LB
+READERSTATSBIT                readerstats/readerstats_statsbit.html                       WITH_LB
+READERSTATSROWNOTFOUNDBIT     readerstats/readerstatsnotfound.html                        WITH_LB
+READERSTATSROWBIT             readerstats/readerstatsrowbit.html                          WITH_LB
+READERSTATSROWTIMEOUTBIT      readerstats/readerstatstimeoutbit.html                      WITH_LB
 
 SAVETEMPLATES                 savetemplates/savetemplates.html
 
@@ -265,6 +269,7 @@ USEREDITANTICASC              user_edit/user_edit_anticasc.html                 
 USEREDITCACHEEXBIT            user_edit/user_edit_cacheexbit.html                         CS_CACHEEX
 USEREDITCCCAM                 user_edit/user_edit_cccam.html                              MODULE_CCCAM
 USEREDITMONLEVEL              user_edit/user_edit_monlevel.html                           MODULE_MONITOR
+USEREDITSID                   user_edit/user_edit_sid.html
 USEREDITSIDNOBIT              user_edit/user_edit_sidnobit.html
 USEREDITSIDOKBIT              user_edit/user_edit_sidokbit.html
 

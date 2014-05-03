@@ -35,7 +35,7 @@
 
 #include "../minilzo/minilzo.h"
 
-#define MAX_TEMPLATES 256
+#define MAX_TEMPLATES 512
 static char *index_filename = "pages_index.txt";
 static char *output_pages_c = "pages.c";
 static char *output_pages_h = "pages.h";

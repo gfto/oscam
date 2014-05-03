@@ -1,17 +1,7 @@
-##TPLHEADER##
-##TPLMENU##
-##TPLCONFIGMENU##
-##TPLMESSAGE##
-	<form action="config.html" method="get">
 		<input name="part" type="hidden" value="lcd">
-		<input name="action" type="hidden" value="execute">
 		<TABLE CLASS="config">
 			<TR><TH COLSPAN="2">LCD Config</TH></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#enablelcd##TPLHELPSUFFIX##Enable LCD:</A></TD><TD><input name="enablelcd" value="0" type="hidden"><input name="enablelcd" value="1" type="checkbox" ##ENABLELCDSELECTED##><label></label></TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#lcd_outputpath##TPLHELPSUFFIX##LCD Output Path:</A></TD><TD><input name="lcd_outputpath" type="text" size="63" maxlength="200" value="##LCDOUTPUTPATH##"></TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#lcd_writeintervall##TPLHELPSUFFIX##LCD Write Interval:</A></TD><TD><input name="lcd_writeintervall" type="text" size="3" maxlength="3" value="##LCDREFRESHINTERVAL##"></TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#lcd_hideidle##TPLHELPSUFFIX##LCD Hide idle Readers:</A></TD><TD><input name="lcd_hideidle" value="0" type="hidden"><input name="lcd_hideidle" value="1" type="checkbox" ##LCDHIDEIDLE##><label></label></TD></TR>
-			<TR><TD COLSPAN="2"><input type="submit" value="Save" title="Save settings" ##BTNDISABLED##></TD></TR>
-		</TABLE>
-	</form>
-##TPLFOOTER##
+			<TR><TD><A>Enable LCD:</A></TD><TD><input name="enablelcd" value="0" type="hidden"><input name="enablelcd" value="1" type="checkbox" ##ENABLELCDSELECTED##><label></label></TD></TR>
+			<TR><TD><A>LCD Output Path:</A></TD><TD><input name="lcd_outputpath" type="text" size="63" maxlength="200" value="##LCDOUTPUTPATH##"></TD></TR>
+			<TR><TD><A>LCD Write Interval:</A></TD><TD><input name="lcd_writeintervall" type="text" size="3" maxlength="3" value="##LCDREFRESHINTERVAL##"></TD></TR>
+			<TR><TD><A>LCD Hide idle Readers:</A></TD><TD><input name="lcd_hideidle" value="0" type="hidden"><input name="lcd_hideidle" value="1" type="checkbox" ##LCDHIDEIDLE##><label></label></TD></TR>

@@ -1,19 +1,13 @@
-##TPLHEADER##
-##TPLMENU##
-##TPLCONFIGMENU##
-##TPLMESSAGE##
-<form action="config.html" method="get">
 	<input name="part" type="hidden" value="dvbapi">
-	<input name="action" type="hidden" value="execute">
 	<input name="enabled" type="hidden" value="0">
 	<input name="au" type="hidden" value="0">
 	<TABLE CLASS="config">
 		<TR><TH COLSPAN="2">Edit DVB Api Config</TH></TR>
-		<TR><TD>##TPLHELPPREFIX##conf#enabled##TPLHELPSUFFIX##Enabled:</A></TD><TD><input name="enabled" type="checkbox" value="1" ##ENABLEDCHECKED##><label></label>
-		<TR><TD>##TPLHELPPREFIX##conf#au##TPLHELPSUFFIX##AU:</A></TD><TD><input name="au" type="checkbox" value="1" ##AUCHECKED##><label></label>
-		<TR><TD>##TPLHELPPREFIX##conf#boxtype##TPLHELPSUFFIX##Boxtype:</A></TD><TD><select name="boxtype">##BOXTYPE##</select></TD></TR>
-		<TR><TD>##TPLHELPPREFIX##conf#user_2##TPLHELPSUFFIX##User:</A></TD><TD><input name="user" type="text" size="63" maxlength="63" value="##USERNAME##"></TD></TR>
-		<TR><TD>##TPLHELPPREFIX##conf#pmt_mode##TPLHELPSUFFIX##PMT Mode:</A></TD>
+		<TR><TD><A>Enabled:</A></TD><TD><input name="enabled" type="checkbox" value="1" ##ENABLEDCHECKED##><label></label>
+		<TR><TD><A>AU:</A></TD><TD><input name="au" type="checkbox" value="1" ##AUCHECKED##><label></label>
+		<TR><TD><A>Boxtype:</A></TD><TD><select name="boxtype">##BOXTYPE##</select></TD></TR>
+		<TR><TD><A data-p="user_2">User:</A></TD><TD><input name="user" type="text" size="63" maxlength="63" value="##USERNAME##"></TD></TR>
+		<TR><TD><A>PMT Mode:</A></TD>
 			<TD>
 				<select name="pmt_mode">
 					<option value="0" ##PMTMODESELECTED0##>0 - use camd.socket and PMT file</option>
@@ -26,7 +20,7 @@
 				</select>
 			</TD>
 		</TR>
-		<TR><TD>##TPLHELPPREFIX##conf#request_mode##TPLHELPSUFFIX##Request Mode:</A></TD>
+		<TR><TD><A>Request Mode:</A></TD>
 			<TD>
 				<select name="request_mode">
 					<option value="0" ##REQMODESELECTED0##>0 - try all possible CAIDs one by one</option>
@@ -34,9 +28,5 @@
 				</select>
 			</TD>
 		</TR>
-		<TR><TD>##TPLHELPPREFIX##conf#listen_port##TPLHELPSUFFIX##Listen port:</A></TD><TD><input name="listen_port" type="text" size="5" maxlength="5" value="##LISTENPORT##"> TCP port to listen instead of camd.socket</TD></TR>
-		<TR><TD>##TPLHELPPREFIX##conf#delayer##TPLHELPSUFFIX##Delayer:</A></TD><TD><input name="delayer" type="text" size="5" maxlength="4" value="##DELAYER##"> ms</TD></TR>
-		<TR><TD COLSPAN="2"><input type="submit" value="Save" title="Save settings" ##BTNDISABLED##></TD></TR>
-	</TABLE>
-</form>
-##TPLFOOTER##
+		<TR><TD><A>Listen port:</A></TD><TD><input name="listen_port" type="text" size="5" maxlength="5" value="##LISTENPORT##"> TCP port to listen instead of camd.socket</TD></TR>
+		<TR><TD><A>Delayer:</A></TD><TD><input name="delayer" class="withunit" type="text" size="5" maxlength="4" value="##DELAYER##"> ms</TD></TR>

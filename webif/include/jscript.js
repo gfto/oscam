@@ -360,7 +360,7 @@ function updateUserpage(data) {
 				
 				if(!is_nopoll('usercol2')){
 					$( uid + " td.usercol2")
-						.attr( 'title', 'SLEEP: ' + item.user.stats.expectsleep )
+						.attr( 'title', item.user.stats.expectsleep!='undefined' ? (item.user.stats.expectsleep>0 ? 'Sleeping in ' + item.user.stats.expectsleep + ' minutes':'Sleeping'):'')
 						.html( "<B>" + item.user.status + "</B><br>" + item.user.ip);
 				}
 				
@@ -454,7 +454,7 @@ function updateUserpage(data) {
 				
 				if(!is_nopoll('usercol2')) {
 					$( uid + " td.usercol2")
-						.attr( 'title', 'SLEEP: ' )
+						.attr( 'title', '' )
 						.html( "<B>" + item.user.status + "</B><br>" + item.user.ip);
 				}	
 				
@@ -515,7 +515,7 @@ function updateUserpage(data) {
 					$( uid ).attr('class', item.user.classname);
 					if(!is_nopoll('usercol2')) {
 						$( uid + " td.usercol2")
-							.attr( 'title', 'SLEEP: ')
+							.attr( 'title', '')
 							.html( item.user.status );
 					}
 					if(!is_nopoll('usercol3')) {$( uid + " td.usercol3").text( '' );}
@@ -781,25 +781,26 @@ function addremoveSubheadline(remove, data, container, subheadline, type) {
 		$("#" + subheadline)
 			.fadeOut('slow')
 			.remove();
+		$( ".status tbody:empty" ).hide();
 	}
 
 	if(remove == 0 && ! $("#" + subheadline).length){
-		var strheadline = '<TR id="'+ subheadline +'"><TD CLASS="subheadline" COLSPAN="11">';
+		$(container).removeAttr('style');
+		var strheadline = '<TR id="'+ subheadline +'"><TD CLASS="subheadline" COLSPAN="12">';
 		if(type == 'c'){
 			if (data.oscam.status.ucac != '') { //hide idle clients
-				strheadline += '<P id="chead">Clients <span id="ucs">' + data.oscam.status.ucs + '</span>/<span id="uca">' + data.oscam.status.uca + '</span> (<span id="ucac">' + data.oscam.status.ucac + '</span> with ECM within last <span id="cfgh">' + data.oscam.status.cfgh + '</span> seconds)</P></TD>'
+				strheadline += '<P id="chead">Clients <span id="ucs">' + data.oscam.status.ucs + '</span>/<span id="uca">' + data.oscam.status.uca + '</span> (<span id="ucac">' + data.oscam.status.ucac + '</span> with ECM within last <span id="cfgh">' + data.oscam.status.cfgh + '</span> seconds)</P>'
 			} else {
-				strheadline += '<P id="chead">Clients <span id="ucs">' + data.oscam.status.ucs + '</span>/<span id="uca">' + data.oscam.status.uca + '</span></P></TD>'
+				strheadline += '<P id="chead">Clients <span id="ucs">' + data.oscam.status.ucs + '</span>/<span id="uca">' + data.oscam.status.uca + '</span></P>'
 			}
-			strheadline += '<TD CLASS="subheadline"><form name="gotoform" method="post" action=""><select size="1" onChange="gotosite(this.value)">';
-			strheadline += '<option value="">-- select Action --</option><option value="status.html?hideidle=5">Show Hidden User</option>';
-			strheadline += '<option value="status.html?hideidle=0">Show Idle User</option><option value="status.html?hideidle=1">Hide Idle User</option>';
+			strheadline += '<DIV><input type="button" onclick="window.location.href = \'status.html?hideidle=5\';" value="Show Hidden" title="Show Hidden User">';
+			strheadline += '<input type="button" onclick="window.location.href = \'status.html?hideidle=0\';" value="Show Idle" title="Show Idle User">';
+			strheadline += '<input type="button" onclick="window.location.href = \'status.html?hideidle=1\';" value="Hide Idle" title="Hide Idle User">';
 		} else if(type == 'm') {
-			strheadline += '<P id="shead">Server <span id="scs">' + data.oscam.status.scs + '</span>/<span id="sca">' + data.oscam.status.sca + '</span> & Monitors <span id="mcs">' + data.oscam.status.mcs + '</span>/<span id="mca">' + data.oscam.status.mca + '</span></P></TD>'
-			strheadline += '<TD CLASS="subheadline"><form name="gotoform" method="post" action=""><select size="1" onChange="gotosite(this.value)">';
-			strheadline += '<option value="">-- select Action --</option><option value="status.html?hideidle=2">Show Hidden Server & Monitors</option>';
+			strheadline += '<P id="shead">Server <span id="scs">' + data.oscam.status.scs + '</span>/<span id="sca">' + data.oscam.status.sca + '</span> & Monitors <span id="mcs">' + data.oscam.status.mcs + '</span>/<span id="mca">' + data.oscam.status.mca + '</span></P>'
+			strheadline += '<DIV><input type="button" onclick="window.location.href = \'status.html?hideidle=2\';" value="Show Hiddden" title="Show Hidden Server & Monitors">';
 		}
-		strheadline += '</select></form></TD></TR>';
+		strheadline += '</DIV></TD></TR>';
 		var headline = $(strheadline);
 		headline.hide();
 		$(container).append(headline);
@@ -1072,11 +1073,11 @@ function updateStatuspage(data){
 			if(item.type == 'c'){
 				$( uid + " > td.statuscol14").text(item.request.answered?item.request.answered + ' (' + item.request.msvalue + 'ms)':'');
 			} else {
-				if(item.request.lbvalue){
+				if(item.request.lbvalue && data.oscam.lbdefined){
 					if(!$( uid + " > td.statuscol14 > a").length){
 						$( uid + " > td.statuscol14")
 							.text('')
-							.append('<a href="readerstats.html?label="' + item.name + '"&amp;hide=4" TITLE="Show statistics for: ' + item.name + '">');
+							.append('<a href="readerstats.html?label=' + item.name + '&amp;hide=4" TITLE="Show statistics for: ' + item.name + '">');
 					}
 					$( uid + " > td.statuscol14 > a").text(item.request.lbvalue);
 				} else {
@@ -1313,6 +1314,9 @@ var nostorage = 0;
  */
 $(document).ready(function() {
 
+	// fix empty tbody status.html, this will not work with css :empty
+	$( ".status tbody:empty" ).hide();
+
 	if(!localStorage){ 
 		nostorage = 1;
 		// remove whole filter block - makes no sense
@@ -1323,6 +1327,19 @@ $(document).ready(function() {
 	// set default to nothing excluded
 	poll_excluded = ''; 
 	
+	// help wiki links
+	if(typeof oscamconf != "undefined"){
+		var language = $('meta[http-equiv="language"]').attr("content");
+		var wikihref ="http://www.streamboard.tv/wiki/OSCam/"+language+"/Config/oscam."+oscamconf+"#";
+		$("table.config a").click(function(){
+			if(!$( this ).attr("href")){
+			    if($(this).data('p')){ var parm = $(this).data('p');}
+				else				 { var parm = $(this).parent().next().find("input,select,textarea").attr('name');}
+				window.open(wikihref+parm);								
+			}
+		}); 
+	}
+
 	// Title
 	var pagename = (typeof page != 'undefined'? page : $(location).attr('pathname').replace(/.*\/|\.[^.]*$/g, ''));
 	$(document).attr('title', $(document).attr('title') + ' (' + pagename[0].toUpperCase() + pagename.slice(1) +')');

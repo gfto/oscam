@@ -9,6 +9,7 @@
     "curtime": "##CURTIME##",
     "readonly": "##APIREADONLY##",
     "piconenabled":"##PICONENABLED##",
+	"lbdefined":"##LBISDEFINED##",
     "sysinfo":{
     	"mem_cur_total":"##MEM_CUR_TOTAL##",
     	"mem_cur_free":"##MEM_CUR_FREE##",

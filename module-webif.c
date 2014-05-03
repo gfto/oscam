@@ -523,6 +523,8 @@ static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct ur
 	tpl_printf(vars, TPLADD, "LBAUTOTIMEOUTP", "%d", cfg.lb_auto_timeout_p);
 	tpl_printf(vars, TPLADD, "LBAUTOTIMEOUTT", "%d", cfg.lb_auto_timeout_t);
 
+	tpl_addVar(vars, TPLADDONCE, "CONFIG_CONTROL", tpl_getTpl(vars, "CONFIGLOADBALANCERCTRL"));
+
 	return tpl_getTpl(vars, "CONFIGLOADBALANCER");
 }
 #endif
@@ -830,6 +832,8 @@ static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams
 	tpl_addVar(vars, TPLADD, "FORWARDORIGINCARD", (cfg.cc_forward_origin_card == 1) ? "checked" : "");
 
 	tpl_addVar(vars, TPLADD, "KEEPCONNECTED", (cfg.cc_keep_connected == 1) ? "checked" : "");
+
+	tpl_addVar(vars, TPLADDONCE, "CONFIG_CONTROL", tpl_getTpl(vars, "CONFIGCCCAMCTRL"));
 
 	return tpl_getTpl(vars, "CONFIGCCCAM");
 }
@@ -1193,15 +1197,17 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 	if(!apicall) { setActiveMenu(vars, MNU_READERS); }
 	if(!apicall)
 	{
-		if(cfg.http_picon_size > 0)
-		{
-			tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.readericon,img.protoicon {height:%dpx !important;}", cfg.http_picon_size);
-		}
 		if(strcmp(getParam(params, "action"), "resetallrdrstats") == 0)
 		{
 			clear_all_rdr_stats();
 		}
 	}
+#ifdef WITH_LB
+				tpl_addVar(vars, TPLADD, "READERACTIONCOLS", "6");
+#else
+				tpl_addVar(vars, TPLADD, "READERACTIONCOLS", "5");
+#endif
+
 	if(strcmp(getParam(params, "action"), "reloadreaders") == 0)
 	{
 		if(!cfg.http_readonly)
@@ -1913,6 +1919,9 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 			sidtab = sidtab->next;
 			i++;
 		}
+		if(i){
+			tpl_addVar(vars, TPLADD, "READERCONFIGSIDINS", tpl_getTpl(vars, "READERCONFIGSID"));
+		}
 	}
 	else
 	{
@@ -2586,6 +2595,9 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 			sidtab = sidtab->next;
 			i++;
 		}
+		if(i){
+			tpl_addVar(vars, TPLADD, "USEREDITSIDINS", tpl_getTpl(vars, "USEREDITSID"));
+		}
 	}
 	else
 	{
@@ -2808,7 +2820,7 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 				else
 				{
 					tpl_printf(vars, TPLADD, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
-					tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "cccam extinfo: %s missing icon: IC_%s_%s_%s.tpl",
+					tpl_printf(vars, TPLADD, "CLIENTPROTOTITLE", "%s missing icon: IC_%s_%s_%s.tpl",
 					cc->extended_mode ? cc->remote_oscam : "", proto, cc->remote_version, cc->remote_build);
 				}
 			}
@@ -2940,10 +2952,6 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	if(!apicall)
 	{
 		setActiveMenu(vars, MNU_USERS);
-		if(cfg.http_picon_size > 0)
-		{
-			tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.readericon,img.protoicon,img.usericon {height:%dpx !important;}", cfg.http_picon_size);
-		}
 	}
 	if(strcmp(getParam(params, "action"), "reinit") == 0)
 	{
@@ -3082,6 +3090,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "LASTCHANNEL", "");
 		tpl_addVar(vars, TPLADD, "USERMD5", "");
 		tpl_addVar(vars, TPLADD, "CWLASTRESPONSET", "");
+		tpl_addVar(vars, TPLADD, "CWLASTRESPONSETMS", "");
 		tpl_addVar(vars, TPLADD, "CLIENTIP", "");
 		tpl_addVar(vars, TPLADD, "LASTCHANNELTITLE", "");
 
@@ -3272,6 +3281,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		{
 
 			tpl_printf(vars, TPLADD, "CWLASTRESPONSET", "%d", lastresponsetm);
+			tpl_printf(vars, TPLADD, "CWLASTRESPONSETMS", "%dms", lastresponsetm);
 			tpl_addVar(vars, TPLADDONCE, "IDLESECS", sec2timeformat(vars, isec));
 
 			if(isactive > 0)
@@ -3280,12 +3290,16 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 				tpl_addVar(vars, TPLADDONCE, "CLIENTTIMEONCHANNEL", sec2timeformat(vars, chsec));
 				if(account->tosleep)
 				{
-					tpl_printf(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "Sleeping in %d minutes", account->tosleep - (chsec / 60));
+					if(account->tosleep >0){
+						tpl_printf(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "Sleeping in %d minutes", account->tosleep - (chsec / 60));
+					}else{
+						tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "Sleeping");
+					}
 					tpl_printf(vars, TPLADDONCE, "CLIENTTIMETOSLEEPAPI", "%d", account->tosleep - (chsec / 60));
 				}
 				else
 				{
-					tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "No sleep defined");
+					tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEP", "");
 					tpl_addVar(vars, TPLADDONCE, "CLIENTTIMETOSLEEPAPI", "undefined");
 				}
 			}
@@ -3826,9 +3840,11 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				}
 
 				//regional code for Vg card
+				char add_nds_line = 0;
 				if(rdr->VgRegionC[0])
 				{
 					for(i = 0; i < 8; i++) { tpl_printf(vars, TPLAPPEND, "READER_RCODE", "%c", rdr->VgRegionC[i]); }
+					add_nds_line = 1;
 				}
 				else
 				{
@@ -3839,6 +3855,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				if(rdr->VgPin)
 				{
                     tpl_printf(vars, TPLAPPEND, "READERPIN", "%04i", rdr->VgPin);
+					add_nds_line = 1;
 				}
 				else
 				{
@@ -3849,6 +3866,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				if(rdr->VgCredit)
 				{
 					tpl_printf(vars, TPLAPPEND, "READERCREDIT", "%i", rdr->VgCredit);
+					add_nds_line = 1;
 				}
 				else
 				{
@@ -3882,8 +3900,11 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 
 				tpl_addVar(vars, TPLADD, "READERCSYSTEM", rdr->csystem.desc);
 
+				if(add_nds_line)
+				{
+					tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENTNDS", tpl_getTpl(vars, "ENTITLEMENTBITNDS"));
+				}
 				tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTBIT"));
-
 			}
 			else
 			{
@@ -4004,10 +4025,9 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	if(!apicall)
 	{
 		setActiveMenu(vars, MNU_STATUS);
-		if(cfg.http_picon_size > 0)
-		{
-			tpl_printf(vars, TPLADD, "HTTPPICONSIZE", "img.readericon,img.protoicon,img.statususericon {height:%dpx !important;}", cfg.http_picon_size);
-		}
+#ifdef WITH_LB
+		tpl_addVar(vars, TPLADD, "STATUSCOL14HEAD","LB Value/");
+#endif
 	}
 	if(strcmp(getParam(params, "action"), "kill") == 0)
 	{
@@ -7086,6 +7106,10 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			tpl_addVar(vars, TPLADD, "CS_TARGET", CS_TARGET);
 			tpl_addVar(vars, TPLADD, "HTTPOSCAMLABEL", cfg.http_oscam_label);
 			tpl_addVar(vars, TPLADD, "HTTP_CHARSET", cs_http_use_utf8 ? "UTF-8" : "ISO-8859-1");
+			if(cfg.http_picon_size > 0)
+			{
+				tpl_printf(vars, TPLADD, "HTTPPICONSIZEINS", "img.statususericon, img.protoicon,img.usericon, img.readericon {height:%dpx !important;max-height:%dpx !important;}", cfg.http_picon_size, cfg.http_picon_size);
+			}
 			if(cfg.poll_refresh > 0)
 			{
 				tpl_printf(vars, TPLADD, "POLLREFRESHTIME", "%d", cfg.poll_refresh);
@@ -7130,6 +7154,9 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 
 			}
 
+#ifdef WITH_LB
+			tpl_addVar(vars, TPLADD, "LBISDEFINED", "1");
+#endif
 			// language code in helplink
 			tpl_addVar(vars, TPLADD, "LANGUAGE", cfg.http_help_lang);
 			tpl_addVar(vars, TPLADD, "UPTIME", sec2timeformat(vars, (now - first_client->login)));
@@ -7147,7 +7174,8 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			switch(pgidx)
 			{
 			case 0:
-				result = send_oscam_config(vars, &params);
+				tpl_addVar(vars, TPLADD, "CONFIG_CONTENT", send_oscam_config(vars, &params));
+				result = tpl_getTpl(vars, "CONFIGCONTENT");
 				break;
 			case 1:
 				result = send_oscam_reader(vars, &params, 0);

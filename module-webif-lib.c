@@ -437,7 +437,6 @@ void send_file(FILE *f, char *filename, char *subdir, time_t modifiedheader, uin
 	}
 	else if(!strcmp(filename, "JQ"))
 	{
-		filename = cfg.http_jscript ? cfg.http_jscript : "";
 		if(subdir && strlen(subdir) > 0)
 		{
 			filename = tpl_getFilePathInSubdir(cfg.http_tpl ? cfg.http_tpl : "", subdir, "jquery", ".js", path, 255);

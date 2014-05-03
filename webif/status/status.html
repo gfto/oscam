@@ -20,8 +20,8 @@
 		<LI><B>##HTTPOSCAMLABEL## r##CS_SVN_VERSION##</B></LI>
 		<LI CLASS="configmenu"><A HREF="http://www.streamboard.tv/oscam/timeline" TARGET="_blank">Timeline</A></LI>
 		<LI CLASS="configmenu"><A HREF="#statusfooter">Status</A></LI>
-		<LI ID="poll" CLASS="pollselect" style="display: none;">Pollintervall:<input type="text" name="pintervall" class="pintervall" value="" readonly>sec.<button id="dec">&ndash;</button><button id="inc">+</button></LI>
 		<LI ID="nopoll" CLASS="pollselect" style="display: none;">Pollrefresh no set - Polling disabled</LI>
+		<LI ID="poll" CLASS="pollselect" style="display: none;">Pollintervall:<input type="text" name="pintervall" class="pintervall" value="" readonly>sec.<button id="dec">&ndash;</button><button id="inc">+</button></LI>
 	</UL>
 </DIV>
 ##TPLMESSAGE##
@@ -35,26 +35,14 @@
 		<TH CLASS="statuscol9">Protocol</TH>
 		<TH CLASS="statuscol12">CAID:SRVID</TH>
 		<TH CLASS="statuscol13">Current Channel</TH>
-		<TH CLASS="statuscol14">LB Value/Reader</TH>
+		<TH CLASS="statuscol14">##STATUSCOL14HEAD##Reader</TH>
 		<TH ID="onlineidle" TITLE="Online &amp; Idle Info" CLASS="statuscol15">Login*</TH>
 		<TH CLASS="statuscol16">Status</TH>
 	</TR>
-<tbody id = "tbodys">
-##SERVERHEADLINE##
-##SERVERSTATUS##
-</tbody>
-<tbody id = "tbodyr">
-##READERHEADLINE##
-##READERSTATUS##
-</tbody>
-<tbody id = "tbodyp">
-##PROXYHEADLINE##
-##PROXYSTATUS##
-</tbody>
-<tbody id = "tbodyc">
-##CLIENTHEADLINE##
-##CLIENTSTATUS##
-</tbody>
+<tbody id="tbodys">##SERVERHEADLINE####SERVERSTATUS##</tbody>
+<tbody id="tbodyr">##READERHEADLINE####READERSTATUS##</tbody>
+<tbody id="tbodyp">##PROXYHEADLINE####PROXYSTATUS##</tbody>
+<tbody id="tbodyc">##CLIENTHEADLINE####CLIENTSTATUS##</tbody>
 </TABLE>
 ##LOG_HISTORY##
 <DIV CLASS="info ##DISPLAYINFO##">

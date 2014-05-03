@@ -1,16 +1,10 @@
-##TPLHEADER##
-##TPLMENU##
-##TPLCONFIGMENU##
-##TPLMESSAGE##
-	<form action="config.html" method="get">
 		<input name="part" type="hidden" value="cccam">
-		<input name="action" type="hidden" value="execute">
 		<TABLE CLASS="config">
 			<TR><TH COLSPAN="2">Edit Cccam Config</TH></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#port_8##TPLHELPSUFFIX##Port:</A></TD><TD><input name="port" type="text" size="16" maxlength="128" value="##PORT##"></TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#serverip_10##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name="serverip" type="text" size="15" maxlength="15" value="##SERVERIP##"></TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#reshare##TPLHELPSUFFIX##Reshare:</A></TD><TD><input name="reshare" type="text" size="2" maxlength="2" value="##RESHARE##"> -1 no reshare or lowest value off cccreshare reader account</TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#ignorereshare##TPLHELPSUFFIX##Ignore reshare:</A></TD>
+			<TR><TD><A data-p="port_8">Port:</A></TD><TD><input name="port" type="text" size="16" maxlength="128" value="##PORT##"></TD></TR>
+			<TR><TD><A data-p="serverip_10">Serverip:</A></TD><TD><input name="serverip" type="text" size="15" maxlength="15" value="##SERVERIP##"></TD></TR>
+			<TR><TD><A>Reshare:</A></TD><TD><input name="reshare" type="text" size="2" maxlength="2" value="##RESHARE##"> -1 no reshare or lowest value off cccreshare reader account</TD></TR>
+			<TR><TD><A>Ignore reshare:</A></TD>
 				<TD>			
 					<select name="ignorereshare">
 						<option value="0" ##IGNRSHRSELECTED0##>0 - Use reshare level of Server</option>
@@ -18,23 +12,23 @@
 					</select>
 				</TD>
 			</TR>
-			<TR><TD>##TPLHELPPREFIX##conf#forward_origin_card##TPLHELPSUFFIX##Forward origin card:</A></TD>
+			<TR><TD><A>Forward origin card:</A></TD>
 				<TD>
 					<input name="forward_origin_card" value="0" type="hidden"><input name="forward_origin_card" value="1" type="checkbox" ##FORWARDORIGINCARD##><label></label>
 				</TD>
 			</TR>
-			<TR><TD>##TPLHELPPREFIX##conf#stealth##TPLHELPSUFFIX##Stealth mode:</A></TD>
+			<TR><TD><A>Stealth mode:</A></TD>
 				<TD>
 					<input name="stealth" value="0" type="hidden"><input name="stealth" value="1" type="checkbox" ##STEALTH##><label></label>
 				</TD>
 			</TR>
-			<TR><TD>##TPLHELPPREFIX##conf#nodeid##TPLHELPSUFFIX##Node Id:</A></TD><TD><input name="nodeid" type="text" size="18" maxlength="16" value="##NODEID##"></TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#keepconnected##TPLHELPSUFFIX##Keep clients connected:</A></TD>
+			<TR><TD><A>Node Id:</A></TD><TD><input name="nodeid" type="text" size="18" maxlength="16" value="##NODEID##"></TD></TR>
+			<TR><TD><A>Keep clients connected:</A></TD>
 				<TD>
 					<input name="keepconnected" value="0" type="hidden"><input name="keepconnected" value="1" type="checkbox" ##KEEPCONNECTED##><label></label>
 				</TD>
 			</TR>
-			<TR><TD>##TPLHELPPREFIX##conf#version##TPLHELPSUFFIX##Version:</A></TD>
+			<TR><TD><A>Version:</A></TD>
 				<TD>
 					<select name="version">
 						<option value="2.0.11" ##VERSIONSELECTED0##>2.0.11</option>
@@ -48,9 +42,9 @@
 					</select>
 				</TD>
 			</TR>
-			<TR><TD>##TPLHELPPREFIX##conf#updateinterval##TPLHELPSUFFIX##Update Interval:</A></TD><TD><input name="updateinterval" type="text" size="5" maxlength="4" value="##UPDATEINTERVAL##"> s</TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#recv_timeout##TPLHELPSUFFIX##Receive timeout:</A></TD><TD><input name="recv_timeout" type="text" size="5" maxlength="5" value="##RECV_TIMEOUT##"> ms</TD></TR>
-			<TR><TD>##TPLHELPPREFIX##conf#minimizecards##TPLHELPSUFFIX##Minimize cards:</A></TD>
+			<TR><TD><A>Update Interval:</A></TD><TD><input name="updateinterval" class="withunit" type="text" size="5" maxlength="4" value="##UPDATEINTERVAL##"> s</TD></TR>
+			<TR><TD><A>Receive timeout:</A></TD><TD><input name="recv_timeout" class="withunit" type="text" size="5" maxlength="5" value="##RECV_TIMEOUT##"> ms</TD></TR>
+			<TR><TD><A>Minimize cards:</A></TD>
 				<TD>
 					<select name="minimizecards">
 						<option value="0" ##MINIMIZECARDSELECTED0##>0 - legacy (default)</option>
@@ -59,7 +53,7 @@
 					</select>
 				</TD>
 			</TR>
-			<TR><TD>##TPLHELPPREFIX##conf#reshare_mode##TPLHELPSUFFIX##Reshare mode:</A></TD>
+			<TR><TD><A>Reshare mode:</A></TD>
 				<TD>
 					<select name="reshare_mode">
 						<option value="0" ##RESHAREMODE0##>0 - reshare cards only+def caid</option>
@@ -70,22 +64,3 @@
 					</select>
 				</TD>
 			</TR>
-			<TR><TD COLSPAN="2"><input type="submit" value="Save" ##BTNDISABLED##></TD></TR>
-		</TABLE>
-	</form>
-	<TABLE CLASS="config">
-		<TR><TH COLSPAN="2">Control</TH></TR>
-		<TR>
-			<TD CLASS="centered">				
-				<form action="config.html" method="get">
-					<input name="part" type="hidden" value="cccam">
-					<input type="submit" name="button" value="Refresh global list" ##BTNDISABLED##>
-				</form></TD>
-			<TD CLASS="centered">				
-				<form action="entitlements.html" method="get">
-					<input name="globallist" type="hidden" value="1">
-					<input type="submit" name="button" value="Show global list" ##BTNDISABLED##>
-				</form></TD>
-		</TR>
-	</TABLE>
-##TPLFOOTER##
