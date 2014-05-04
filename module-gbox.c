@@ -117,7 +117,6 @@ struct gbox_peer
 	uchar *hostname;
 	int32_t online;
 	int32_t hello_stat;
-	int32_t goodbye_cont;
 	uchar ecm_idx;
 	uchar gbox_count_ecm;
 	CS_MUTEX_LOCK lock;
@@ -1034,6 +1033,7 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 
 	if (!IP_EQUAL(cli->ip, cl->ip))
 	{ 
+		cs_log("gbox: Received IP %s did not match configured IP %s", cs_inet_ntoa(cli->ip), cs_inet_ntoa(cl->ip));
 		gbox_reconnect_client(cli->gbox_peer_id); 
 		return -1;	
 	}
