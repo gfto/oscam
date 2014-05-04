@@ -180,7 +180,7 @@ li.configmenu:hover, li.configmenu_selected {
 	background-color:#FFF
 }
 #nav li {
-	display:inline;
+	display:inline-block;
 	margin-left:2px;
 	margin-right:2px;
 	padding:5px 3px 3px;
@@ -821,7 +821,7 @@ input.pintervall {
 	background-color:transparent;
 	border:none;
 	border-radius:4px;
-	text-align:right;
+	text-align:center;
 	margin: 0 4px;
 	padding: 0;
 }
@@ -863,7 +863,7 @@ div.bar {
 	vertical-align: baseline;
 }
 
-/* **************** 19. File Menu */
+/* **************** 19. FILE MENU */
 /* For filemenu - change dropdown menu */
 .drop .subcaret {
 	margin-top:7px;
@@ -888,13 +888,13 @@ div.bar {
 #nav ul.dropdown_nav li {
 	list-style-type:none;
 	margin:0;
-	padding:0;
+	padding:1px 0;
 	width:100%
 }
 #nav li ul.dropdown_nav li a {
 	color:#000;
-	padding:1px;
-	display:inline-block
+	padding:0 5px;
+        display: block;
 }
 #nav li {
 	position:relative
@@ -904,7 +904,7 @@ div.bar {
 	position:absolute;
 	text-align:left;
 	top:16px;
-	right:4px;
+	right:0;
 	width:auto;
 	background-color:#FFF;
 	border:1px solid #DDD;
