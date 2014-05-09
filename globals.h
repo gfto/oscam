@@ -1710,6 +1710,7 @@ struct s_config
 	int32_t         gbox_reconnect;
 	char            gbox_my_password[9];
 	char            gbox_my_vers[3];
+	char		gbox_my_cpu_api[3];
 #endif
 #ifdef MODULE_SERIAL
 	char            *ser_device;

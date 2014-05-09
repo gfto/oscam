@@ -61,7 +61,6 @@
 #define STATS_WRITE_TIME	300 //write stats file every 5 min
 
 #define LOCAL_GBOX_MAJOR_VERSION	0x02
-#define LOCAL_GBOX_TYPE			0x40
 
 enum
 {
@@ -107,7 +106,7 @@ struct gbox_data
 	uchar password[4];
 	uchar checkcode[7];
 	uint8_t minor_version;
-	uint8_t type;
+	uint8_t cpu_api;
 	LLIST *cards;
 };
 
@@ -198,6 +197,45 @@ static uint8_t gbox_get_my_vers (void)
 	uint8_t gbx_vers = a2i(cfg.gbox_my_vers,1);
 
 	return gbx_vers;
+}
+
+static uint8_t gbox_get_my_cpu_api (void)
+{
+/* For configurable later adapt according to these functions:
+unsigned char *GboxAPI( unsigned char a ) {
+	a = a & 7 ;
+	switch ( a ) { 
+		case 0 : strcpy ( s_24,"No API");
+                	break;  
+		case 1 : strcpy ( s_24,"API 1");
+                        break;  
+                case 2 : strcpy ( s_24,"API 2");
+                        break;  
+                case 3 : strcpy ( s_24,"API 3");
+                        break;  
+                case 4 : strcpy ( s_24,"IBM API");
+                        break;  
+                default : strcpy ( s_24," ");
+	}
+        return s_24 ;
+}
+                                                                                        
+unsigned char *GboxCPU( unsigned char a ) {
+	a = a & 112 ;
+        a = a >> 4 ;
+        switch ( a ) { 
+	        case 1 : strcpy ( s_23,"80X86 compatible CPU");
+        		break;  
+        	case 2 : strcpy ( s_23,"Motorola PowerPC MPC823 CPU");
+        		break;  
+        	case 3 : strcpy ( s_23,"IBM PowerPC STB CPU");
+        		break;  
+		default : strcpy ( s_23," ");
+	}
+	return s_23:
+}
+*/
+	return a2i(cfg.gbox_my_cpu_api,1);
 }
 
 void gbox_write_peer_onl(void)
@@ -734,7 +772,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 
 		gbox_checkcode_recv(cli, data + payload_len - footer_len - checkcode_len - 1);
 		peer->gbox.minor_version = data[payload_len - footer_len - 1];
-		peer->gbox.type = data[payload_len - footer_len];
+		peer->gbox.cpu_api = data[payload_len - footer_len];
 	} // end if first hello packet
 
 	//This is a good night / reset packet (good night data[0xA] / reset !data[0xA] 
@@ -1183,7 +1221,7 @@ static void gbox_send_hello_packet(struct s_client *cli, int8_t number, uchar *o
 			{ memset(++ptr, 0, 7); }		
 		ptr += 7;
 		*ptr = local_gbox.minor_version;
-		*(++ptr) = local_gbox.type;
+		*(++ptr) = local_gbox.cpu_api;
 		memcpy(++ptr, cfg.gbox_hostname, hostname_len);
 		ptr += hostname_len;
 		*ptr = hostname_len;
@@ -1814,7 +1852,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 	send_buf_1[len2 + 1] = local_gbox.id & 0xff;
 	send_buf_1[len2 + 2] = gbox_get_my_vers();
 	send_buf_1[len2 + 3] = 0x00;
-	send_buf_1[len2 + 4] = LOCAL_GBOX_TYPE;
+	send_buf_1[len2 + 4] = gbox_get_my_cpu_api();
 
 	send_buf_1[len2 + 5] = ercaid >> 8;
 	send_buf_1[len2 + 6] = ercaid & 0xFF;
@@ -1936,7 +1974,7 @@ static void init_local_gbox(void)
 	memset(&local_gbox.password[0], 0, 4);
 	memset(&local_gbox.checkcode[0], 0, 7);
 	local_gbox.minor_version = gbox_get_my_vers();
-	local_gbox.type = LOCAL_GBOX_TYPE;
+	local_gbox.cpu_api = gbox_get_my_cpu_api();
 
 	if(!cfg.gbox_my_password || strlen(cfg.gbox_my_password) != 8) { return; }
 
