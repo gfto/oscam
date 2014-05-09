@@ -10,6 +10,14 @@
 #define DEFAULT_GBOX_RECONNECT		300
 #define CS_GBOX_MAX_LOCAL_CARDS		16
 
+#if defined(__CYGWIN__) 
+#define FILE_GSMS_TXT		"C:/tmp/gsms.txt"
+#else
+#define FILE_GSMS_TXT		"/tmp/gsms.txt"
+#endif
+
+void gbox_init_send_gsms(void);
+
 struct gbox_ecm_request_ext
 {
 //    uint32_t        gbox_crc;       // rcrc for gbox, used to identify ECM
