@@ -5,7 +5,7 @@
 #include "oscam-time.h"
 #ifdef MODULE_GBOX
 #include "oscam-files.h"
-#include "module-gbox.h"
+#include "module-gbox-sms.h"
 #endif
 
 #define HASH_BUCKETS 16
@@ -136,7 +136,7 @@ static void garbage_collector(void)
 #ifdef MODULE_GBOX 
 		if (file_exists(FILE_GSMS_TXT))
 		{
-		gbox_init_send_gsms();
+			gbox_init_send_gsms();
 		}
 #endif		
 		sleepms_on_cond(&sleep_cond_mutex, &sleep_cond, 1000);
