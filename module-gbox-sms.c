@@ -13,44 +13,44 @@ static uint32_t poll_gsms_data (uint16_t *boxid, uint8_t *num, char *text)
 {
 	FILE *fhandle = fopen(FILE_GSMS_TXT, "r");
 	if(!fhandle)
-	{
+		{
 		cs_log("Couldn't open %s: %s", FILE_GSMS_TXT, strerror(errno));
 		return -1;
-	}
+		}
 	uint32_t length1;
 	uint8_t length;
 	char buffer[140];
+	char *tail;
 	memset(buffer, 0, sizeof(buffer));
 	fseek (fhandle,0L,SEEK_END);
 	length1 = ftell(fhandle);
 	fseek (fhandle,0L,SEEK_SET);
-	if (length1 < 12)
-	{
-		cs_log("GSMS: min msg char in %s = 5, actual = %d",FILE_GSMS_TXT, length1-7);
+	if (length1 < 13)
+		{
+		cs_log("GSMS: min msg char in %s = 6, actual = %d",FILE_GSMS_TXT, length1-7);
 		fclose(fhandle);
 		unlink(FILE_GSMS_TXT);
 		return -1;
-	}
-	fgets(buffer,140,fhandle);
+		}
+	if(fgets(buffer,140,fhandle) != NULL)
+		{	
+		*boxid = strtol (buffer, &tail, 16);
+		*num = atoi (tail);
+		}
 	fclose(fhandle);
 	unlink(FILE_GSMS_TXT);
-	char *tail;
-	*boxid = strtol (buffer, &tail, 16);
-	*num = atoi (tail);
-	//*num = atoi ( &(buffer[5]));
 	if (length1 > (127+7))
-	{
+		{
 		length = 127+7;
-	}
+		}
 	else
-	{
-	length = length1;
-	}
+		{
+		length = length1;
+		}
 	cs_debug_mask(D_READER, "GSMS: total msg length taken from %s = %d, limitted to %d",FILE_GSMS_TXT,length1, length);
 	strncpy(text, &(buffer[7]),length-7);
 	return 0;
 }
-
 static void write_gsms_to_osd_file(struct s_client *cli, unsigned char *gsms)
 {
 	if (file_exists(FILE_OSD_MSG))
