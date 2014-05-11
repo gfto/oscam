@@ -673,11 +673,20 @@ status refresh in seconds, default:none
 
 <P>
 
-<B>httphidetype</B> = <B>character</B>[<B>character</B>]...
+<B>httphidetype</B> = <B>type</B>[<B>type</B>]...
 <DL COMPACT><DT><DD>
 characters defining columns to hide in web interface status page (see type 
-column), 'x' is a special character to match cacheex readers and proxies, 
-default:none
+column), default:none
+<P>
+<BR>&nbsp;types:
+<P>
+<BR>&nbsp;'c':&nbsp;client
+<BR>&nbsp;'h':&nbsp;http
+<BR>&nbsp;'m':&nbsp;monitor
+<BR>&nbsp;'p':&nbsp;proxy
+<BR>&nbsp;'r':&nbsp;reader
+<BR>&nbsp;'s':&nbsp;server
+<BR>&nbsp;'x':&nbsp;cache&nbsp;exchange
 </DL>
 
 <P>
@@ -1324,6 +1333,18 @@ set gbox CPU and API byte in hexadecimal, default:40
 <B>gbox_reconnect</B> = <B>time</B>
 <DL COMPACT><DT><DD>
 send message to peers in seconds, default:300
+</DL>
+
+<P>
+
+<B>gsms_disable</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = disable gbox short message service (GSMS),default:0
+<P>
+sending a messeage: /tmp/gsms.txt: &lt;box ID&gt; &lt;1=mormal message|2=OSD/TV message&gt; 
+&lt;message 6 to 127 characters&gt;, status will be stored in '/tmp/gsms.ack' 
+respective 'gsms.nack', receiving a message: The message will be stored in 
+/tmp/gsms.log 
 </DL>
 
 <A NAME="lbAR">&nbsp;</A>

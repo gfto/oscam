@@ -358,9 +358,18 @@ DESCRIPTIONS
        httphideidleclients = 0|1
 	  1 = enables hiding clients after idle time set in parameter hideclient_to, default:0
 
-       httphidetype = character[character]...
-	  characters defining columns to hide in web interface status page (see type column), 'x' is a special character to match
-	  cacheex readers and proxies, default:none
+       httphidetype = type[type]...
+	  characters defining columns to hide in web interface status page (see type column), default:none
+
+	   types:
+
+	   'c': client
+	   'h': http
+	   'm': monitor
+	   'p': proxy
+	   'r': reader
+	   's': server
+	   'x': cache exchange
 
        httpscript = path
 	  path to an executable script which you wish to start from web interface, default:none
@@ -522,7 +531,7 @@ DESCRIPTIONS
 	  bind service to specified IP address, default:all
 
        suppresscmd08 = 0|1
-	  0  = tell camd 3.5x / 3.57x clients not to request again for rejected CAID, service ID and provider ID combination, 1 =
+	  0 = tell camd 3.5x / 3.57x clients not to request again for rejected CAID, service ID and provider ID combination, 1	=
 	  disable, can be overwritten per user in oscam.user, default:0
 
    The [cs378x] section
@@ -539,7 +548,7 @@ DESCRIPTIONS
 	  0 = disable camd 3.78x keepalive modus, default:0
 
        suppresscmd08 = 0|1
-	  0 = tell camd 3.78x clients not to request again for rejected CAID, service ID and provider ID combination,  1  =  dis‐
+	  0  =	tell  camd 3.78x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = dis‐
 	  able, can be overwritten per user in oscam.user, default:0
 
    The [newcamd] section
@@ -644,7 +653,7 @@ DESCRIPTIONS
 	   1 = use reshare setting of reader or user
 
        stealth = 0|1
-	  1  =	behaviour like the original CCcam: no activate partner detection and extended OSCam-CCcam protocol, prevent other
+	  1 = behaviour like the original CCcam: no activate partner detection and extended OSCam-CCcam protocol,  prevent  other
 	  OSCam to detect the server as OSCam server, default:0
 
        minimizecards = mode
@@ -694,6 +703,13 @@ DESCRIPTIONS
 
        gbox_reconnect = time
 	  send message to peers in seconds, default:300
+
+       gsms_disable = 0|1
+	  1 = disable gbox short message service (GSMS),default:0
+
+	  sending  a  messeage: /tmp/gsms.txt: <box ID> <1=mormal message|2=OSD/TV message> <message 6 to 127 characters>, status
+	  will be stored in '/tmp/gsms.ack'  respective  'gsms.nack',  receiving  a  message:  The  message  will  be  stored  in
+	  /tmp/gsms.log
 
    The [dvbapi] section
        enabled = 0|1
@@ -916,8 +932,8 @@ CACHING
 	  ECM and checksum in cache already.
 
 SEE ALSO
-       list_smargo(1), oscam(1), oscam.ac(5), oscam.cacheex(5),  oscam.cert(5),  oscam.dvbapi(5),  oscam.guess(5),  oscam.ird(5),
-       oscam.provid(5),  oscam.ratelimit(5),  oscam.server(5),	oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5),
+       list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cacheex(5),  oscam.cert(5), oscam.dvbapi(5), oscam.guess(5), oscam.ird(5),
+       oscam.provid(5), oscam.ratelimit(5), oscam.server(5), oscam.services(5),  oscam.srvid(5),  oscam.tiers(5),  oscam.user(5),
        oscam.whitelist(5)
 
 
