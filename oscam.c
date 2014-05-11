@@ -283,13 +283,13 @@ static void parse_cmdline_params(int argc, char **argv)
 }
 
 #define write_conf(CONFIG_VAR, text) \
-    fprintf(fp, "%-30s %s\n", text ":", config_enabled(CONFIG_VAR) ? "yes" : "no")
+    fprintf(fp, "%-40s %s\n", text ":", config_enabled(CONFIG_VAR) ? "yes" : "no")
 
 #define write_readerconf(CONFIG_VAR, text) \
-    fprintf(fp, "%-30s %s\n", text ":", config_enabled(CONFIG_VAR) ? "yes" : "no - no EMM support!")
+    fprintf(fp, "%-40s %s\n", text ":", config_enabled(CONFIG_VAR) ? "yes" : "no - no EMM support!")
 
 #define write_cardreaderconf(CONFIG_VAR, text) \
-    fprintf(fp, "%s%-19s %s\n", "cardreader_", text ":", config_enabled(CONFIG_VAR) ? "yes" : "no")
+    fprintf(fp, "%s%-29s %s\n", "cardreader_", text ":", config_enabled(CONFIG_VAR) ? "yes" : "no")
 
 static void write_versionfile(bool use_stdout)
 {
@@ -330,21 +330,21 @@ static void write_versionfile(bool use_stdout)
 		write_conf(WITH_STAPI, "DVB API with STAPI support");
 		write_conf(DVBAPI_SAMYGO, "DVB API with Samsung TV support");
 	}
-	write_conf(CS_ANTICASC, "Anti-cascading support");
 	write_conf(IRDETO_GUESSING, "Irdeto guessing");
+	write_conf(CS_ANTICASC, "Anti-cascading support");
 	write_conf(WITH_DEBUG, "Debug mode");
 	write_conf(MODULE_MONITOR, "Monitor");
 	write_conf(WITH_LB, "Loadbalancing support");
+	write_conf(CS_CACHEEX, "Cache exchange support");
 	write_conf(CW_CYCLE_CHECK, "CW Cycle Check support");
 	write_conf(LCDSUPPORT, "LCD support");
 	write_conf(LEDSUPPORT, "LED support");
-	write_conf(IPV6SUPPORT, "IPv6 support");
 	switch (cs_getclocktype()) {
 		case CLOCK_TYPE_UNKNOWN  : write_conf(CLOCKFIX, "Clockfix with UNKNOWN clock"); break;
 		case CLOCK_TYPE_REALTIME : write_conf(CLOCKFIX, "Clockfix with realtime clock"); break;
 		case CLOCK_TYPE_MONOTONIC: write_conf(CLOCKFIX, "Clockfix with monotonic clock"); break;
 	}
-	write_conf(CS_CACHEEX, "Cache exchange support");
+	write_conf(IPV6SUPPORT, "IPv6 support");
 
 	fprintf(fp, "\n");
 	write_conf(MODULE_CAMD33, "camd 3.3x");
@@ -353,12 +353,12 @@ static void write_versionfile(bool use_stdout)
 	write_conf(MODULE_NEWCAMD, "newcamd");
 	write_conf(MODULE_CCCAM, "CCcam");
 	write_conf(MODULE_CCCSHARE, "CCcam share");
-	write_conf(MODULE_PANDORA, "Pandora");
-	write_conf(MODULE_GHTTP, "ghttp");
 	write_conf(MODULE_GBOX, "gbox");
 	write_conf(MODULE_RADEGAST, "radegast");
 	write_conf(MODULE_SERIAL, "serial");
 	write_conf(MODULE_CONSTCW, "constant CW");
+	write_conf(MODULE_PANDORA, "Pandora");
+	write_conf(MODULE_GHTTP, "ghttp");
 
 	fprintf(fp, "\n");
 	write_conf(WITH_CARDREADER, "Reader support");

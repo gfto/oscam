@@ -37,6 +37,7 @@
 
 #define MAX_TEMPLATES 512
 static char *index_filename = "pages_index.txt";
+static char *defined_file   = "is_defined.txt";
 static char *output_pages_c = "pages.c";
 static char *output_pages_h = "pages.h";
 
@@ -135,6 +136,19 @@ static uint8_t mime_type_from_filename(char *filename)
 
 static void parse_index_file(char *filename)
 {
+	unsigned long defined_file_exist=0,def_size=0;
+	struct stat sb;
+	if(stat(defined_file, &sb) == 0){
+		defined_file_exist=1;
+		def_size = sb.st_size;
+	}
+	char is_defined[def_size];
+	if(defined_file_exist){
+		FILE *def = xfopen(defined_file, "r");
+		if(!fread (is_defined, sizeof(is_defined), def_size, def))
+			{defined_file_exist=0;}
+		fclose(def);
+	}
 	FILE *f = xfopen(filename, "r");
 	int max_fields = 3;
 	char line[1024];
@@ -175,6 +189,24 @@ static void parse_index_file(char *filename)
 			pos++;
 		}
 		while(pos < len);
+
+		if(deps && strlen(deps) && defined_file_exist){
+			if(strstr(deps, ",")){
+				int i,def_found=0;
+				char *ptr, *saveptr1 = NULL;
+				char *deps_sep = strdup(deps);
+	 			for(i = 0, ptr = strtok_r(deps_sep, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1), i++)
+	 			{
+	 				if(strstr(is_defined, ptr))
+	 					{ def_found = 1; }
+	 			}
+				free(deps_sep);
+				if(!def_found)
+					{ continue; }
+			}
+			else if( !strstr(is_defined, deps))
+				{ continue; }
+		}
 		if(!strlen(ident) || !strlen(file))
 			{ continue; }
 
