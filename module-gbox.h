@@ -26,6 +26,7 @@ struct gbox_card
         uint8_t slot;
         uint8_t dist;
         uint8_t lvl;
+	uint8_t type;
         LLIST *badsids; // sids that have failed to decode (struct cc_srvid)
         LLIST *goodsids; //sids that could be decoded (struct cc_srvid)
         uint32_t no_cws_returned;

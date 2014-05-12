@@ -782,6 +782,34 @@ static const struct config_list serial_opts[] = { DEF_LAST_OPT };
 #endif
 
 #ifdef MODULE_GBOX
+static void gbox_proxy_card_fn(const char *token, char *value, void *UNUSED(setting), FILE *f) 
+{
+	if (value) 
+	{ 
+		char *ptr1, *saveptr1 = NULL; 
+	 	memset(cfg.gbox_proxy_card, 0, sizeof(cfg.gbox_proxy_card)); 
+		int n = 0, i; 
+		for (i = 0, ptr1 = strtok_r(value, ",", &saveptr1); (i < 8) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1)) 
+		{ 
+	 	     cfg.gbox_proxy_card[n++] = a2i(ptr1, 8); 
+		} 
+		cfg.gbox_proxy_cards_num = n; 
+		return; 
+	 } 
+	if (cfg.gbox_proxy_cards_num > 0) 
+	{ 
+		int i; 
+		char *dot = ""; 
+		fprintf_conf(f, token, " ");
+		for (i = 0; i < cfg.gbox_proxy_cards_num; i++) 
+		{ 
+			fprintf(f, "%s%08lX", dot, cfg.gbox_proxy_card[i]); 
+			dot = ","; 
+		} 
+		fprintf(f, "\n"); 
+	} 
+}
+
 static void gbox_port_fn(const char *token, char *value, void *UNUSED(setting), FILE *f)
 {
 	if(value)
@@ -811,12 +839,14 @@ static const struct config_list gbox_opts[] =
 {
 	DEF_OPT_SAVE_FUNC(gbox_should_save_fn),
 	DEF_OPT_FUNC("port"             , OFS(gbx_port),		gbox_port_fn),
-	DEF_OPT_STR("hostname"		,OFS(gbox_hostname),		NULL),
+	DEF_OPT_STR("hostname"		, OFS(gbox_hostname),		NULL),
 	DEF_OPT_INT32("gbox_reconnect"	, OFS(gbox_reconnect),		DEFAULT_GBOX_RECONNECT),
+	DEF_OPT_FUNC("proxy_card"	, OFS(gbox_proxy_card),		gbox_proxy_card_fn ), 	
 	DEF_OPT_SSTR("my_password"	, OFS(gbox_my_password),	"", SIZEOF(gbox_my_password)),
 	DEF_OPT_SSTR("my_vers"		, OFS(gbox_my_vers),		"25", SIZEOF(gbox_my_vers)),
 	DEF_OPT_SSTR("my_cpu_api"	, OFS(gbox_my_cpu_api),		"40", SIZEOF(gbox_my_cpu_api)),
-	DEF_OPT_INT8("gsms_disable"	, OFS(gsms_dis),		0),	
+	DEF_OPT_INT8("gsms_disable"	, OFS(gsms_dis),		0),
+	DEF_OPT_INT8("ccc_reshare"	, OFS(ccc_reshare),		0),			
 	DEF_LAST_OPT
 };
 #else

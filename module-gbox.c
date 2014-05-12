@@ -190,12 +190,21 @@ void gbox_write_shared_cards_info(void)
 
 	//write local cards
 	it = ll_iter_create(local_gbox.cards);
+	char *crdtype = NULL;
 	while((card = ll_iter_next(&it)))
 	{
-		fprintf(fhandle, "CardID %4d at oscam Card %08X Sl:%2d Lev:%2d dist:%2d id:%04X\n",
-				card_count, card->provid_1,
-				card->slot, card->lvl, card->dist, card->peer_id);
-		card_count++;
+		if(card->type == 1)
+		{crdtype = "Local_Card";}
+		if(card->type == 2)
+		{crdtype = "Betun_Card";}		
+		if(card->type == 3)
+		{crdtype = "CCcam_Card";}		
+		if(card->type == 4)
+		{crdtype = "Proxy_Card";}
+		fprintf(fhandle, "CardID %2d %s %08X Sl:%2d Lev:%1d dist:%1d id:%04X\n",
+				card_count, crdtype, card->provid_1,card->slot, card->lvl, card->dist, card->peer_id);
+		card_count++;		
+					
 	} // end of while ll_iter_next
 
 	struct s_client *cl;
@@ -208,7 +217,7 @@ void gbox_write_shared_cards_info(void)
 			it = ll_iter_create(peer->gbox.cards);
 			while((card = ll_iter_next(&it)))
 			{
-				fprintf(fhandle, "CardID %4d at %s Card %08X Sl:%2d Lev:%2d dist:%2d id:%04X\n",
+				fprintf(fhandle, "CardID %2d at %s Card %08X Sl:%2d Lev:%1d dist:%1d id:%04X\n",
 						card_count, cl->reader->device, card->provid_1,
 						card->slot, card->lvl, card->dist, card->peer_id);
 				card_count++;
@@ -1380,7 +1389,7 @@ static uint8_t gbox_next_free_slot(uint16_t id)
 	return ++lastslot;
 }
 
-static void gbox_add_local_card(uint16_t id, uint16_t caid, uint32_t prid, uint8_t slot, uint8_t card_reshare, uint8_t dist)
+static void gbox_add_local_card(uint16_t id, uint16_t caid, uint32_t prid, uint8_t slot, uint8_t card_reshare, uint8_t dist, uint8_t type)
 {
 	struct gbox_card *c;
 
@@ -1420,6 +1429,7 @@ static void gbox_add_local_card(uint16_t id, uint16_t caid, uint32_t prid, uint8
 	c->slot = slot;
 	c->lvl = card_reshare;
 	c->dist = dist;
+	c->type = type;
 	ll_append(local_gbox.cards, c);
 }
 
@@ -1465,26 +1475,25 @@ static void gbox_local_cards(struct s_client *cli)
 				{
 					prid = cl->reader->prid[i][1] << 16 |
 						   cl->reader->prid[i][2] << 8 | cl->reader->prid[i][3];
-					gbox_add_local_card(local_gbox.id, cl->reader->caid, prid, slot, card_reshare, 0);
+					gbox_add_local_card(local_gbox.id, cl->reader->caid, prid, slot, card_reshare, 0, 1);
 				}
 			}
 			else
-				{ 
-					gbox_add_local_card(local_gbox.id, cl->reader->caid, 0, slot, card_reshare, 0); 
-
-					//Check for Betatunnel on gbox account in oscam.user
-					if (chk_is_betatunnel_caid(cl->reader->caid) == 1 && cli->ttab.n && cl->reader->caid == cli->ttab.bt_caidto[0])
+			{ 
+				gbox_add_local_card(local_gbox.id, cl->reader->caid, 0, slot, card_reshare, 0, 1); 
+				
+				//Check for Betatunnel on gbox account in oscam.user
+				if (chk_is_betatunnel_caid(cl->reader->caid) == 1 && cli->ttab.n && cl->reader->caid == cli->ttab.bt_caidto[0])
 					{
 						//For now only first entry in tunnel tab. No sense in iteration?
 						//Add betatunnel card to transmitted list
-						gbox_add_local_card(local_gbox.id, cli->ttab.bt_caidfrom[0], 0, slot, card_reshare, 0);
+						gbox_add_local_card(local_gbox.id, cli->ttab.bt_caidfrom[0], 0, slot, card_reshare, 0, 2);
 						cs_debug_mask(D_READER, "gbox created betatunnel card for caid: %04X->%04X",cli->ttab.bt_caidfrom[0],cl->reader->caid);
 					}
-				}
+			}
 		}   //end local readers
 #ifdef MODULE_CCCAM
-		if(cl->typ == 'p' && cl->reader
-				&& cl->reader->typ == R_CCCAM && cl->cc)
+		if(cfg.ccc_reshare && cl->typ == 'p' && cl->reader && cl->reader->typ == R_CCCAM && cl->cc)
 		{
 			cc = cl->cc;
 			it = ll_iter_create(cc->cards);
@@ -1503,16 +1512,35 @@ static void gbox_local_cards(struct s_client *cli)
 					it2 = ll_iter_create(card->providers);
 					while((provider = ll_iter_next(&it2)))
 					{
-						gbox_add_local_card(cc_peer_id, card->caid, provider->prov, slot, card->reshare, card->hop);
+						gbox_add_local_card(cc_peer_id, card->caid, provider->prov, slot, card->reshare, card->hop, 3);
 					}
 				}
 				else
-					{ gbox_add_local_card(cc_peer_id, card->caid, 0, slot, card->reshare, card->hop); }
+					{ gbox_add_local_card(cc_peer_id, card->caid, 0, slot, card->reshare, card->hop, 3); }
 			}
 		}   //end cccam
 #endif
 	} //end for clients
-}
+
+	if (cfg.gbox_proxy_cards_num > 0) 
+	{ 
+		for (i = 0; i < cfg.gbox_proxy_cards_num; i++) 
+		{
+			if ((cfg.gbox_proxy_card[i] >> 24) == 0x05)
+			{ 
+				slot = gbox_next_free_slot(local_gbox.id);
+				gbox_add_local_card(local_gbox.id, (cfg.gbox_proxy_card[i] >> 16) & 0xFFF0, cfg.gbox_proxy_card[i] & 0xFFFFF, slot, card_reshare, 0, 4);
+				cs_debug_mask(D_READER,"gbox: add proxy card:  slot %d %04lX:%06lX",slot, (cfg.gbox_proxy_card[i] >> 16) & 0xFFF0, cfg.gbox_proxy_card[i] & 0xFFFFF);
+			}	
+			else 
+			{	
+				slot = gbox_next_free_slot(local_gbox.id);
+				gbox_add_local_card(local_gbox.id, cfg.gbox_proxy_card[i] >> 16, cfg.gbox_proxy_card[i] & 0xFFFF, slot, card_reshare, 0, 4);
+				cs_debug_mask(D_READER,"gbox: add proxy card:  slot %d %04lX:%06lX",slot, cfg.gbox_proxy_card[i] >> 16, cfg.gbox_proxy_card[i] & 0xFFFF);
+			}
+		}
+	}  // end add proxy reader cards 
+} //end add local gbox cards
 
 static int32_t gbox_client_init(struct s_client *cli)
 {
