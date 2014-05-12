@@ -238,7 +238,10 @@ table.readers {
 	border-spacing:1px 0px;
 }
 /* readerconfig.html */
-table.configreader {}
+table.configreader {
+	width:80%;
+	max-width:750px;
+}
 /* entitlements_bit.html, entitlements_cccambit.html */
 table.stats {}
 /* emm.html */
@@ -271,7 +274,10 @@ table.user_totals {
 	width:50%
 }
 /* user_edit.html */
-table.configuser {}
+table.configuser {
+	width:80%;
+	max-width:750px;
+}
 
 /* ------- SERVICES ------- */
 /* services.html */
