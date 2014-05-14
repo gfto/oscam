@@ -111,6 +111,9 @@ a.tooltip1 span {
 	display:none;
 	z-index:99
 }
+a.tooltip1 {
+	color: red;
+}
 a:hover span {
 	display:block;
 	position:absolute;
@@ -143,7 +146,10 @@ div.sidlistclose a {
 	color:#FFF
 }
 /* help link readers/useredit/config.html */
-table.config a {
+
+table.config a,
+table.configuser a,
+table.configreader a {
 	cursor:pointer
 }
 
