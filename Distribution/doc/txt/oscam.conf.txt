@@ -709,6 +709,9 @@ DESCRIPTIONS
        proxy_card = <CAID><provid>[,<CAID><provid>]...
 	  proxy reader SCs to be reshared into gbox network, default:none
 
+       ccc_reshare = 0|1
+	  1 = enable CCCam reshare, default:0
+
        my_vers = version
 	  set gbox version in hexadecimal low byte, default:25
 
