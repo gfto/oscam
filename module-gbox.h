@@ -93,6 +93,9 @@ uint16_t gbox_get_local_gbox_id(void);
 uint32_t gbox_get_local_gbox_password(void);
 void gbox_send(struct s_client *cli, uchar *buf, int32_t l);
 void gbox_code_cmd(uchar *buf, int16_t cmd);
+void gbox_send_good_night(void);
+#else
+static inline void gbox_send_good_night(void) { }
 
 #endif
 

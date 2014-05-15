@@ -37,12 +37,14 @@
 #define FILE_ATTACK_INFO        "C:/tmp/gbx_attack.txt"
 #define FILE_GBOX_PEER_ONL  	"C:/tmp/gbx_peer.onl"
 #define FILE_STATS	  	"C:/tmp/gbx_stats.info"
+#define FILE_GOODNIGHT_OSD	"C:/tmp/goodnight.osd"
 #else
 #define FILE_GBOX_VERSION       "/tmp/gbx.ver"
 #define FILE_SHARED_CARDS_INFO  "/tmp/gbx_card.info"
 #define FILE_ATTACK_INFO        "/tmp/gbx_attack.txt"
 #define FILE_GBOX_PEER_ONL  	"/tmp/gbx_peer.onl"
 #define FILE_STATS	  	"/tmp/gbx_stats.info"
+#define FILE_GOODNIGHT_OSD	"/tmp/goodnight.osd"
 #endif
 
 #define GBOX_STAT_HELLOL	0
@@ -134,6 +136,26 @@ unsigned char *GboxCPU( unsigned char a ) {
 }
 */
 	return a2i(cfg.gbox_my_cpu_api,1);
+}
+
+static void write_goodnight_to_osd_file(struct s_client *cli)
+{
+	if (file_exists(FILE_GOODNIGHT_OSD))
+	{
+	char buf[50];
+	memset(buf, 0, sizeof(buf));
+	snprintf(buf, sizeof(buf), "%s %s %s", FILE_GOODNIGHT_OSD, username(cli), cli->reader->device);
+	cs_debug_mask(D_READER, "found file %s - write goodnight info from %s %s to OSD", FILE_GOODNIGHT_OSD, username(cli),cli->reader->device);
+	char *cmd = buf;
+              FILE *p;
+              if ((p = popen(cmd, "w")) == NULL)
+		{	
+			cs_log("Error %s",FILE_GOODNIGHT_OSD);
+			return;
+		}
+              pclose(p);
+	}
+	return;
 }
 
 void gbox_write_peer_onl(void)
@@ -682,6 +704,13 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		peer->gbox.cpu_api = data[payload_len - footer_len];
 	} // end if first hello packet
 
+	uchar tmpbuf[8];
+	memset(&tmpbuf[0], 0xff, 7);		
+	if(data[10] == 0x01 && data[11] == 0x80 && !memcmp(data+12,tmpbuf,7)) //good night message
+	{
+		cs_log("->[gbx] received Good Night from %s %s",username(cli), cli->reader->device);
+		write_goodnight_to_osd_file(cli);   
+	}
 	//This is a good night / reset packet (good night data[0xA] / reset !data[0xA] 
 	if((data[0x0B] & 0x8F) == 0x80 && !ncards_in_msg) //first + last packet with no cards 
 	{
@@ -1975,6 +2004,86 @@ static void gbox_s_idle(struct s_client *cl)
 	cl->last = time((time_t *)0);
 }
 
+void gbox_send_good_night(void)
+{
+	uchar outbuf[64];
+	int32_t hostname_len = strlen(cfg.gbox_hostname);
+	int32_t len;
+	struct s_client *cli;
+	for(cli = first_client; cli; cli = cli->next)
+	{
+		if(cli->gbox && cli->typ == 'p')
+		{
+			struct gbox_peer *peer = cli->gbox;
+			struct s_reader *rdr = cli->reader;
+			if (peer->online)
+			{
+				gbox_code_cmd(outbuf, MSG_HELLO);
+				memcpy(outbuf + 2, peer->gbox.password, 4);
+				memcpy(outbuf + 6, local_gbox.password, 4);
+				outbuf[10] = 0x01;
+				outbuf[11] = 0x80;
+				memset(&outbuf[12], 0xff, 7);
+				outbuf[19] = gbox_get_my_vers();
+				outbuf[20] = gbox_get_my_cpu_api();
+				memcpy(&outbuf[21], cfg.gbox_hostname, hostname_len);
+				outbuf[21 + hostname_len] = hostname_len;
+				len = hostname_len +22;
+				cs_log("gbox send good night to %s:%d id: %04X", rdr->device, rdr->r_port, peer->gbox.id);
+				gbox_compress(outbuf, len, &len);
+				gbox_send(cli, outbuf, len);
+			}
+		}	
+	}
+}
+/*
+void gbox_send_goodbye(uint16_t boxid) //to implement later
+{
+	uchar outbuf[15];
+	struct s_client *cli;
+	for (cli = first_client; cli; cli = cli->next)
+	{
+		if(cli->gbox && cli->typ == 'p')
+		{
+			struct gbox_peer *peer = cli->gbox;
+			if (peer->online && boxid == peer->gbox.id)
+			{	
+				gbox_code_cmd(outbuf, MSG_GOODBYE);
+				memcpy(outbuf + 2, peer->gbox.password, 4);
+				memcpy(outbuf + 6, local_gbox.password, 4);
+				cs_log("gbox send goodbye to boxid: %04X", peer->gbox.id);
+				gbox_send(cli, outbuf, 0xA);
+			}
+		}
+	}
+}
+*/
+/*
+void gbox_send_HERE_query (uint16_t boxid)	//gbox.net send this cmd
+{
+	uchar outbuf[30];
+	int32_t hostname_len = strlen(cfg.gbox_hostname);
+	struct s_client *cli;
+	for (cli = first_client; cli; cli = cli->next)
+	{
+		if(cli->gbox && cli->typ == 'p')
+		{
+			struct gbox_peer *peer = cli->gbox;
+			if (peer->online && boxid == peer->gbox.id)
+			{	
+				gbox_code_cmd(outbuf, MSG_HERE);
+				memcpy(outbuf + 2, peer->gbox.password, 4);
+				memcpy(outbuf + 6, local_gbox.password, 4);
+				outbuf[0xA] = gbox_get_my_vers();
+				outbuf[0xB] = gbox_get_my_cpu_api();
+				memcpy(&outbuf[0xC], cfg.gbox_hostname, hostname_len);
+				cs_log("gbox send 'HERE?' to boxid: %04X", peer->gbox.id);
+				gbox_send(cli, outbuf, hostname_len + 0xC);
+			}
+		}
+	}
+}
+*/
 void module_gbox(struct s_module *ph)
 {
 	init_local_gbox();
