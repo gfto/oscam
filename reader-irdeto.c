@@ -187,6 +187,7 @@ static time_t chid_date(struct s_reader *reader, uint32_t date, char *buf, int32
 		{0x0604, 0x0005, "NLD", 1066089600L},   // 14.10.2003, 00:00    //Ziggo irdeto caid: 0604, acs: 0.05
 		{0x0602, 0x0606, "NLD", 946598400L},    // 31.12.1999, 08:00    //Ziggo irdeto caid: 0602, acs: 6.06
 		{0x0602, 0x0505, "NLD", 946598400L},    // 31.12.1999, 00:00    //Ziggo irdeto caid: 0602, acs: 5.05
+		{0x0606, 0x0005, "NLD", 946598400L},    // 31.12.1999, 00:00    //Caiway irdeto card caid: 0606, acs: 0.05
 		{0x0606, 0x0605, "NLD", 946598400L},    // 31.12.1999, 00:00    //Caiway irdeto card caid: 0606, acs: 6.05
 		{0x0606, 0x0606, "NLD", 946598400L},    // 31.12.1999, 00:00    //Caiway irdeto card caid: 0606, acs: 6.06
 		{0x0652, 0x0005, "MCR", 1206662400L},   // 28.03.2008, 00:00    //Raduga caid:0652, acs: 0.05
