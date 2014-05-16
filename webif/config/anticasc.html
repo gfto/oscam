@@ -1,6 +1,5 @@
 		<input name="part" type="hidden" value="anticasc">
 		<input name="enabled" type="hidden" value="0">
-		<input name="acosc_enabled" type="hidden" value="0">
 		<TABLE CLASS="config">
 			<TR><TH COLSPAN="2">Edit Anticascading Config</TH></TR>
 			<TR><TD><A data-p="enabled_2">Enabled:</A></TD><TD><input name="enabled" type="checkbox" value="1" ##CHECKED##><label></label></TD></TR>
@@ -8,27 +7,14 @@
 			<TR><TD><A>Sampletime:</A></TD><TD><input name="sampletime" type="text" size="5" maxlength="5" value="##SAMPLETIME##"></TD></TR>
 			<TR><TD><A>Samples:</A></TD><TD><input name="samples" type="text" size="5" maxlength="5" value="##SAMPLES##"></TD></TR>
 			<TR><TD><A>Penalty:</A></TD>
-				<TD><select name="penalty">
-					<option value="0" ##PENALTY0##>0 - Only write to log</option>
-					<option value="1" ##PENALTY1##>1 - Fake DW delayed</option>
-					<option value="2" ##PENALTY2##>2 - Ban</option>
-					<option value="3" ##PENALTY3##>3 - Real DW delayed</option>
-				</select></TD>
-			</TR>
+				<TD>
+					<select name="penalty">
+						<option value="0" ##PENALTY0##>0 - Only write to log</option>
+						<option value="1" ##PENALTY1##>1 - Fake DW delayed</option>
+						<option value="2" ##PENALTY2##>2 - Ban</option>
+						<option value="3" ##PENALTY3##>3 - Real DW delayed</option>
+					</select>
+				</TD></TR>
 			<TR><TD><A>AClogfile:</A></TD><TD><input name="aclogfile" type="text" size="63" maxlength="127" value="##ACLOGFILE##"></TD></TR>
 			<TR><TD><A>Fakedelay:</A></TD><TD><input name="fakedelay" type="text" size="5" maxlength="5" value="##FAKEDELAY##"></TD></TR>
-			<TR><TD><A>Denysamples:</A></TD><TD><input name="denysamples" type="text" size="5" maxlength="5" value="##DENYSAMPLES##"></TD></TR> 
-			<TR><TH COLSPAN="2">Edit Anticascading over Sid Count (ACoSC) Config</TH></TR> 
-			<TR><TD><A data-p="enabled_3">ACoSC Enabled:</A></TD><TD><input name="acosc_enabled" type="checkbox" value="1" ##ACOSC_CHECKED##><label></label></TD></TR>
-			<TR><TD><A>ACoSC max_active_sids:</A></TD><TD><input name="acosc_max_active_sids" type="text" size="3" maxlength="3" value="##ACOSC_MAX_ACTIVE_SIDS##"></TD></TR> 
-			<TR><TD><A>ACoSC zap_limit:</A></TD><TD><input name="acosc_zap_limit" type="text" size="3" maxlength="3" value="##ACOSC_ZAP_LIMIT##"></TD></TR> 
-			<TR><TD><A>ACoSC penalty:</A></TD>
-				<TD><select name="acosc_penalty">
-					<option value="0" ##ACOSC_PENALTY0##>0 - Only write to log</option>
-					<option value="1" ##ACOSC_PENALTY1##>1 - NULL CW</option>
-					<option value="2" ##ACOSC_PENALTY2##>2 - Ban</option>
-					<option value="3" ##ACOSC_PENALTY3##>3 - CW delayed</option>
-				</select></TD>
-			</TR>
-			<TR><TD><A>ACoSC penalty_duration:</A></TD><TD><input name="acosc_penalty_duration" type="text" size="5" maxlength="5" value="##ACOSC_PENALTY_DURATION##"></TD></TR>
-			<TR><TD><A>ACoSC delay:</A></TD><TD><input name="acosc_delay" type="text" size="5" maxlength="5" value="##ACOSC_DELAY##"></TD></TR>
+			<TR><TD><A>Denysamples:</A></TD><TD><input name="denysamples" type="text" size="5" maxlength="5" value="##DENYSAMPLES##"></TD></TR>

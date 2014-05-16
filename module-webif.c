@@ -1090,16 +1090,6 @@ static char *send_oscam_config_anticasc(struct templatevars *vars, struct uripar
 		{ tpl_addVar(vars, TPLADD, "ACLOGFILE", cfg.ac_logfile); }
 	tpl_printf(vars, TPLADD, "FAKEDELAY", "%d", cfg.ac_fakedelay);
 	tpl_printf(vars, TPLADD, "DENYSAMPLES", "%d", cfg.ac_denysamples);
-
-	if(cfg.acosc_enabled == 1)
-		{ tpl_addVar(vars, TPLADD, "ACOSC_CHECKED", "checked"); }
-	tpl_printf(vars, TPLADD, "ACOSC_MAX_ACTIVE_SIDS", "%d", cfg.acosc_max_active_sids);
-	tpl_printf(vars, TPLADD, "ACOSC_ZAP_LIMIT", "%d", cfg.acosc_zap_limit);
-	tpl_printf(vars, TPLADD, "TMP", "ACOSC_PENALTY%d", cfg.acosc_penalty);
-	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
-	tpl_printf(vars, TPLADD, "ACOSC_PENALTY_DURATION", "%d", cfg.acosc_penalty_duration);
-	tpl_printf(vars, TPLADD, "ACOSC_DELAY", "%d", cfg.acosc_delay);
-
 	return tpl_getTpl(vars, "CONFIGANTICASC");
 }
 #endif
@@ -2720,13 +2710,13 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 			tmp = "(0) Only write to log";
 			break;
 		case 1:
-			tmp = "(1) NULL CW";
+			tmp = "(1) Fake DW delayed";
 			break;
 		case 2:
 			tmp = "(2) Ban";
 			break;
 		case 3:
-			tmp = "(3) Real CW delayed";
+			tmp = "(3) Real DW delayed";
 			break;
 		}
 		tpl_addVar(vars, TPLADD, "CFGPENALTY", tmp);
@@ -2735,43 +2725,6 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	{
 		tpl_printf(vars, TPLADD, "PENALTYVALUE", "%d", account->ac_penalty);
 	}
-	tpl_printf(vars, TPLADD, "ACOSC_MAX_ACTIVE_SIDS", "%d", account->acosc_max_active_sids);
-	tpl_printf(vars, TPLADD, "CFG_ACOSC_MAX_ACTIVE_SIDS", "%d", cfg.acosc_max_active_sids);
-	tpl_printf(vars, TPLADD, "ACOSC_ZAP_LIMIT", "%d", account->acosc_zap_limit);
-	tpl_printf(vars, TPLADD, "CFG_ACOSC_ZAP_LIMIT", "%d", cfg.acosc_zap_limit);
-	if(!apicall)
-	{
-		tpl_printf(vars, TPLADD, "TMP", "ACOSC_PENALTY%d", account->acosc_penalty);
-		tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
-		char *tmp = NULL;
-		switch(cfg.acosc_penalty)
-		{
-			case -1: 
-				tmp = "(-1) Use Global Value";
-				break;
-			case 0:
-				tmp = "(0) Only write to log";
-				break;
-			case 1:
-				tmp = "(1) NULL CW";
-				break;
-			case 2:
-				tmp = "(2) Ban";
-				break;
-			case 3:
-				tmp = "(3) CW delayed";
-				break;
-		}
-		tpl_addVar(vars, TPLADD, "CFG_ACOSC_PENALTY", tmp);
-	} else
-	{
-		tpl_printf(vars, TPLADD, "ACOSC_PENALTYVALUE", "%d", account->acosc_penalty);
-	}
-	
-	tpl_printf(vars, TPLADD, "ACOSC_PENALTY_DURATION", "%d", account->acosc_penalty_duration);
-	tpl_printf(vars, TPLADD, "CFG_ACOSC_PENALTY_DURATION", "%d", cfg.acosc_penalty_duration);
-	tpl_printf(vars, TPLADD, "ACOSC_DELAY", "%d", account->acosc_delay);
-	tpl_printf(vars, TPLADD, "CFG_ACOSC_DELAY", "%d", cfg.acosc_delay);
 #endif
 
 #ifdef MODULE_CCCAM
@@ -5791,19 +5744,9 @@ static char *send_oscam_failban(struct templatevars * vars, struct uriparams * p
 
 		int32_t gone = comp_timeb(&now, &v_ban_entry->v_time);
 		if(!apicall)
-		{
-			if(!v_ban_entry->acosc_entry)
 			{ tpl_addVar(vars, TPLADD, "LEFTTIME", sec2timeformat(vars, (cfg.failbantime * 60) - (gone / 1000))); }
 		else
-				{ tpl_addVar(vars, TPLADD, "LEFTTIME", sec2timeformat(vars, v_ban_entry->acosc_penalty_dur - (gone / 1000))); }
-		}
-		else
-		{
-			if(!v_ban_entry->acosc_entry)
 			{ tpl_printf(vars, TPLADD, "LEFTTIME", "%d", (cfg.failbantime * 60) - (gone / 1000)); }
-			else
-				{ tpl_printf(vars, TPLADD, "LEFTTIME", "%ld", v_ban_entry->acosc_penalty_dur - (gone / 1000)); }
-		}
 
 		tpl_addVar(vars, TPLADD, "INTIP", cs_inet_ntoa(v_ban_entry->v_ip));
 
