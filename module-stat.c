@@ -475,6 +475,11 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 		{ return; }
 
 
+	//IGNORE stats for fallback reader with lb_force_fallback parameter
+	if(chk_is_fixed_fallback(rdr, er) && rdr->lb_force_fallback)
+	  { return; }
+
+
 	//IGNORE fails for ratelimit check
 	if(rc == E_NOTFOUND && rcEx == E2_RATELIMIT)
 	{
@@ -1374,6 +1379,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 		}
 	}
 
+	//check for local readers
 	if(nlocal_readers > nbest_readers)    //if we have local readers, we prefer them!
 	{
 		nlocal_readers = nbest_readers;
@@ -1382,11 +1388,12 @@ void stat_get_best_reader(ECM_REQUEST *er)
 	else
 		{ nbest_readers = nbest_readers - nlocal_readers; }
 
+
 	struct s_reader *best_rdr = NULL;
 	struct s_reader *best_rdri = NULL;
 	int32_t best_time = 0;
 
-	//Here choose nbest and nfb readers. We evaluate only readers with valid stats (they have ea->value>0, calculated above)
+	//Here choose nbest readers. We evaluate only readers with valid stats (they have ea->value>0, calculated above)
 	while(1)
 	{
 		struct s_ecm_answer *best = NULL;
@@ -1408,13 +1415,13 @@ void stat_get_best_reader(ECM_REQUEST *er)
 			best_rdr = best_rdri;
 			best_time = best->time;
 		}
-		best->value = 0;
 
 		if(nlocal_readers)   //primary readers, local
 		{
 			nlocal_readers--;
 			reader_active++;
 			best->status |= READER_ACTIVE;
+		    best->value = 0;
 			cs_debug_mask(D_LB, "loadbalancer: reader %s --> ACTIVE", best_rdri->label);
 		}
 		else if(nbest_readers)   //primary readers, other
@@ -1422,17 +1429,78 @@ void stat_get_best_reader(ECM_REQUEST *er)
 			nbest_readers--;
 			reader_active++;
 			best->status |= READER_ACTIVE;
+		    best->value = 0;
 			cs_debug_mask(D_LB, "loadbalancer: reader %s --> ACTIVE", best_rdri->label);
-		}
-		else if(nfb_readers)    //fallbacks:
-		{
-			nfb_readers--;
-			best->status |= (READER_ACTIVE | READER_FALLBACK);
-			cs_debug_mask(D_LB, "loadbalancer: reader %s --> FALLBACK", best_rdri->label);
 		}
 		else
 			{ break; }
 	}
+
+
+	/* Here choose nfb_readers
+	 * Select fallbacks reader until nfb_readers reached using this priority:
+	 * 1. forced (lb_force_fallback=1) fixed fallback
+	 * 2. "normal" fixed fallback
+	 * 3. best ea->value remaining reader;
+	 */
+	//check for fixed fallbacks
+	int32_t n_fixed_fb = chk_has_fixed_fallback(er);
+	if(n_fixed_fb)
+	{
+		//check before for lb_force_fallback=1 readers
+		for(ea = er->matching_rdr; ea && nfb_readers; ea = ea->next)
+		{
+			rdr = ea->reader;
+			if(chk_is_fixed_fallback(rdr, er) && rdr->lb_force_fallback && !(ea->status & READER_ACTIVE)){
+				nfb_readers--;
+				ea->status |= (READER_ACTIVE | READER_FALLBACK);
+				cs_debug_mask(D_LB, "loadbalancer: reader %s --> FALLBACK (FIXED with force)", rdr->label);
+			}
+		}
+
+		//check for "normal" fixed fallback with valid stats
+		for(ea = er->matching_rdr; ea && nfb_readers; ea = ea->next)
+		{
+			rdr = ea->reader;
+			if(chk_is_fixed_fallback(rdr, er) && !rdr->lb_force_fallback && !(ea->status & READER_ACTIVE)){
+
+				s = get_stat(rdr, &q);
+				if(s && s->rc == E_FOUND
+						&& s->ecm_count >= cfg.lb_min_ecmcount
+						&& (s->ecm_count <= cfg.lb_max_ecmcount || (retrylimit && s->time_avg <= retrylimit))
+				  )
+				{
+					nfb_readers--;
+					ea->status |= (READER_ACTIVE | READER_FALLBACK);
+					cs_debug_mask(D_LB, "loadbalancer: reader %s --> FALLBACK (FIXED)", rdr->label);
+				}
+			}
+		}
+	}
+
+	//check for remaining best ea->value readers as fallbacks
+	while(nfb_readers)
+	{
+		struct s_ecm_answer *best = NULL;
+
+		for(ea = er->matching_rdr; ea; ea = ea->next)
+		{
+			if((ea->status & READER_ACTIVE))
+				{ continue; }
+
+			if(ea->value && (!best || ea->value < best->value))
+				{ best = ea; }
+		}
+		if(!best)
+			{ break; }
+
+		nfb_readers--;
+		best->status |= (READER_ACTIVE | READER_FALLBACK);
+		best->value = 0;
+		cs_debug_mask(D_LB, "loadbalancer: reader %s --> FALLBACK", best->reader->label);
+	}
+	//end fallback readers
+
 
 
 	//ACTIVE readers with no stats, or with no lb_min_ecmcount, or lb_max_ecmcount reached --> NO use max_reopen for these readers, always open!
@@ -1450,6 +1518,10 @@ void stat_get_best_reader(ECM_REQUEST *er)
 			continue;
 		}
 #endif
+
+		//ignore fixed fallback with lb_force_fallback=1: no need stats, always used as fallaback!
+		if(chk_is_fixed_fallback(rdr, er) && rdr->lb_force_fallback)
+			continue;
 
 		//active readers with no stats
 		if(!s)
@@ -1504,8 +1576,6 @@ void stat_get_best_reader(ECM_REQUEST *er)
 	{
 		cs_debug_mask(D_LB, "loadbalancer: NO VALID MATCHING READER FOUND!");
 		force_reopen = 1;
-
-
 	}
 	else if(retrylimit)
 	{
@@ -1555,36 +1625,6 @@ void stat_get_best_reader(ECM_REQUEST *er)
 
 	//try to reopen max_reopen blocked readers (readers with last ecm not "e_found"); if force_reopen=1, force reopen valid blocked readers!
 	try_open_blocked_readers(er, &q, &max_reopen, &force_reopen);
-
-
-	//add fixed fallback readers
-	int32_t n_fixed_fb = chk_has_fixed_fallback(er);
-	if(n_fixed_fb)
-	{
-		for(ea = er->matching_rdr; ea; ea = ea->next)
-		{
-			rdr = ea->reader;
-			s = get_stat(rdr, &q);
-
-			//if it is a valid reader!
-			if(s && s->rc == E_FOUND
-					&& s->ecm_count >= cfg.lb_min_ecmcount
-					&& (s->ecm_count <= cfg.lb_max_ecmcount || (retrylimit && s->time_avg <= retrylimit))
-			  )
-			{
-				//if it is not activated (for lb_value), set it as fallback
-				if(!(ea->status & READER_ACTIVE))
-				{
-					if(chk_is_fixed_fallback(rdr, er))
-					{
-						ea->status |= (READER_ACTIVE | READER_FALLBACK);
-						cs_debug_mask(D_LB, "loadbalancer: reader %s --> FALLBACK (FIXED)", rdr->label);
-					}
-				}
-			}
-		}
-	}
-	//end add fixed fallback readers
 
 
 	cs_debug_mask(D_LB, "loadbalancer: --------------------------------------------");

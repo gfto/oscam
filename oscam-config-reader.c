@@ -1020,6 +1020,7 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC("blockemm-bylen"       , 0,                            blockemm_bylen_fn),
 #ifdef WITH_LB
 	DEF_OPT_INT32("lb_weight"           , OFS(lb_weight),               100),
+	DEF_OPT_INT32("lb_force_fallback"   , OFS(lb_force_fallback),       0),
 #endif
 	DEF_OPT_FUNC("savenano"             , OFS(s_nano),                  nano_fn),
 	DEF_OPT_FUNC("blocknano"            , OFS(b_nano),                  nano_fn),
