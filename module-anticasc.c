@@ -333,4 +333,143 @@ void ac_init(void)
 	ac_init_stat();
 }
 
+int8_t get_caid_weight(ECM_REQUEST *er)
+{
+	switch(er->caid)
+	{
+		case 0x0100:
+			switch (er->prid)
+			{
+				case 0x00003D:
+					return 20;
+				case 0x000065:
+					return 7;
+				default: 
+					return 10;
+			}
+		case 0x0500:
+			switch(er->prid)
+			{
+				case 0x020910:
+					return 30;
+				case 0x024400:
+				case 0x032830:
+					return 10;
+				case 0x043800:
+					return 25;
+				default:
+					return 15;
+			}
+		case 0x0604:
+			return 11;	
+		case 0x1702:
+		case 0x1722: 
+		case 0x1833:
+		case 0x09C4:
+			switch(er->srvid)
+			{
+				case 0x0022: // Disney Channel
+				case 0x0016: // Heimatkanal
+				case 0x0203: // MGM
+				case 0x0008: // Sky Comedy
+				case 0x002B: // Sky Cinema +24
+				case 0x000B: // Sky Cinema +1
+				case 0x0009: // Sky Action
+				case 0x000A: // Sky Cinema
+				case 0x0014: // Sky Emotion
+				case 0x0029: // Sky Hits
+				case 0x0204: // Sky Nostalgie
+				case 0x0011: // Sky Sport News
+				case 0x0024: // Syfy
+					return 10;
+				default:
+					return 7;
+			}
+		case 0x1830:
+		case 0x1843:
+		case 0x1834:
+		case 0x09C7:
+			return 7;
+		case 0x4A70: 
+			return 14;
+		case 0x183D:
+			return 13;
+		case 0x1810:
+		case 0x0D05:
+		case 0x0D95:
+		case 0x093B:
+		case 0x098C:
+		case 0x0B00:
+		default: 
+			return 10;
+		
+	}
+}
+
+void insert_zaplist(ECM_REQUEST *er, struct s_client *client)
+{
+	bool new_zaplist_entry = false;
+	int8_t zap_caid_weight;
+	zap_caid_weight = get_caid_weight(er);
+	int8_t k = 0;
+	bool found = false;
+	time_t zaptime = time(NULL);
+
+	for(k=0; k<15 ; k++)
+	{
+		if(er->caid == client->client_zap_list[k].caid && er->prid == client->client_zap_list[k].provid && er->chid == client->client_zap_list[k].chid && er->srvid == client->client_zap_list[k].sid) //found
+		{
+			if(zaptime-zap_caid_weight*2 < client->client_zap_list[k].lasttime)
+			{
+				cs_debug_mask(D_TRACE, "[zaplist] update Entry [%i] for Client: %s  %04X@%06X/%04X/%04X TIME: %ld Diff: %ld zcw: %i(%i)", k, username(client), er->caid, er->prid, er->chid, er->srvid, zaptime, zaptime-client->client_zap_list[k].lasttime, zap_caid_weight, zap_caid_weight*2);
+				client->client_zap_list[k].lasttime = zaptime;
+				if(client->client_zap_list[k].request_stage < 10)
+				{
+					client->client_zap_list[k].request_stage ++;
+				}
+				found = true;
+				break;
+			}	
+		}
+	}
+	
+	if(!found)
+	{
+		for(k=0; k<15 ; k++)
+		{
+			if(zaptime-30 > client->client_zap_list[k].lasttime) //make a new Entry and use a memoryplace of a old entry
+			{
+				client->client_zap_list[k].caid = er->caid;
+				client->client_zap_list[k].provid = er->prid;
+				client->client_zap_list[k].chid = er->chid;
+				client->client_zap_list[k].sid = er->srvid;
+				client->client_zap_list[k].request_stage = 1; //need for ACoSC
+				client->client_zap_list[k].lasttime = zaptime;
+				cs_debug_mask(D_TRACE, "[zaplist] new Entry [%i] for Client: %s  %04X@%06X/%04X/%04X TIME: %ld", k, username(client), er->caid, er->prid, er->chid, er->srvid, zaptime);				
+				new_zaplist_entry = true;
+				break;
+			}
+		}
+		if(!new_zaplist_entry)
+			{ cs_debug_mask(D_TRACE, "[zaplist] no free slot for client: %s", username(client)); }
+
+		if(client->account->acosc_user_zap_count_start_time+60 > zaptime)
+			{ client->account->acosc_user_zap_count ++; }
+		else 
+		{
+			client->account->acosc_user_zap_count_start_time = zaptime;
+			client->account->acosc_user_zap_count = 0;
+			cs_debug_mask(D_TRACE, "[zaplist] Client: %s reset acosc_user_zap_count_start_time", username(client));
+			for(k=0; k<15 ; k++)
+			{
+				if(client->client_zap_list[k].lasttime > zaptime-60) 
+				{
+					client->account->acosc_user_zap_count ++;
+				}
+			}
+			cs_debug_mask(D_TRACE, "[zaplist] Client: %s zap_count: %i", username(client), client->account->acosc_user_zap_count);
+		}
+	}
+}
+
 #endif

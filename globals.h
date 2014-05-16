@@ -645,6 +645,8 @@ typedef struct v_ban                    // Failban listmember
 	IN_ADDR_T       v_ip;
 	int32_t         v_port;
 	struct timeb    v_time;
+	bool			acosc_entry;
+	int32_t			acosc_penalty_dur;
 	char            *info;
 } V_BAN;
 
@@ -927,6 +929,16 @@ typedef struct sidtabs
 	SIDTABBITS      no;         // negative services
 } SIDTABS;
 
+struct s_zap_list
+{
+	uint16_t	caid;
+	uint32_t	provid;
+	uint16_t	chid;
+	uint16_t	sid;
+	int8_t		request_stage;
+	time_t		lasttime;
+};
+
 struct s_client
 {
 	uint32_t        tid;
@@ -1007,7 +1019,9 @@ struct s_client
 	int16_t         cwcacheexping;      // peer ping in ms, only used by csp
 	int32_t			cwc_info;			// count of in/out comming cacheex ecms with CWCinfo
 #endif
-
+#ifdef CS_ANTICASC
+	struct s_zap_list	client_zap_list[15]; //15 last zappings from client used for ACoSC
+#endif
 #ifdef WEBIF
 	struct s_cwresponse cwlastresptimes[CS_ECM_RINGBUFFER_MAX]; //ringbuffer for last 20 times
 	int32_t         cwlastresptimes_last; // ringbuffer pointer
@@ -1446,6 +1460,15 @@ struct s_auth
 	int32_t         ac_users;                       // 0 - unlimited
 	int8_t          ac_penalty;                     // 0 - log, >0 - fake dw
 	struct s_acasc  ac_stat;
+	int8_t			acosc_max_active_sids;			// user value 0 - unlimited
+	int8_t			acosc_zap_limit; 				// user value 0 -unlimited
+	int8_t			acosc_penalty;					//user value penalty
+	int32_t			acosc_penalty_duration;			// user value how long is penalty activ in sek.
+	time_t			acosc_penalty_until;
+	int8_t			acosc_penalty_active; 			// 0-deaktiv 1-max_active_sids 2-zap_limit 3-penaly_dur
+	int32_t			acosc_delay; 					//user value
+	int8_t			acosc_user_zap_count;
+	time_t			acosc_user_zap_count_start_time;
 #endif
 #ifdef WITH_LB
 	int32_t         lb_nbest_readers;               // When this is -1, the global lb_nbest_readers is used
@@ -1777,6 +1800,12 @@ struct s_config
 	int32_t     ac_denysamples;
 	char        *ac_logfile;
 	struct      s_cpmap *cpmap;
+	int8_t		acosc_enabled;
+	int8_t		acosc_max_active_sids;	// global value 0 - unlimited
+	int8_t		acosc_zap_limit;	// global value 0 - unlimited
+	int32_t		acosc_penalty_duration;	// global value how long is penalty activ in sek.
+	int8_t		acosc_penalty;	//global value
+	int32_t		acosc_delay;	//global value
 #endif
 
 #ifdef LEDSUPPORT

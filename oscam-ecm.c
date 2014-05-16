@@ -822,7 +822,6 @@ void distribute_ea(struct s_ecm_answer *ea)
 	}
 }
 
-
 int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
 	if(!check_client(client) || client->typ != 'c')
@@ -1044,6 +1043,138 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	}
 	}
 
+#ifdef CS_ANTICASC
+// [zaplist] ACoSC anticascading
+	if(cfg.acosc_enabled) 
+	{
+		int8_t max_active_sids = 0;
+		int8_t zap_limit = 0;
+		int8_t penalty = 0;
+		int32_t penalty_duration = 0;
+		int32_t delay = 0;
+		char *info1 = NULL;
+		char *info2 = NULL;
+		char *info3 = NULL;
+		char *info4 = NULL;
+		char *info5 = NULL;
+
+
+  	//**global or user value?
+		cs_writelock(&clientlist_lock);
+
+		max_active_sids = client->account->acosc_max_active_sids == -1 ? cfg.acosc_max_active_sids : client->account->acosc_max_active_sids;
+		info1 = client->account->acosc_max_active_sids == -1 ? "Globalvalue" : "Uservalue";
+		
+		zap_limit = client->account->acosc_zap_limit == -1 ? cfg.acosc_zap_limit : client->account->acosc_zap_limit;
+		info5 = client->account->acosc_zap_limit == -1 ? "Globalvalue" : "Uservalue";
+		
+		penalty = client->account->acosc_penalty == -1 ? cfg.acosc_penalty : client->account->acosc_penalty;
+		info2 = client->account->acosc_penalty == -1 ? "Globalvalue" : "Uservalue";
+		
+		penalty_duration = client->account->acosc_penalty_duration == -1 ? cfg.acosc_penalty_duration : client->account->acosc_penalty_duration;
+		info3 = client->account->acosc_penalty_duration == -1 ? "Globalvalue" : "Uservalue";
+		
+		delay = client->account->acosc_delay == -1 ? cfg.acosc_delay : client->account->acosc_delay;
+		info4 = client->account->acosc_delay == -1 ? "Globalvalue" : "Uservalue";
+		
+	  //**
+	
+		if((er->rc < E_NOTFOUND && max_active_sids > 0) || zap_limit > 0) 
+		{
+			int8_t k = 0;
+			int8_t active_sid_count = 0;
+			time_t zaptime = time(NULL);
+
+			if(client->account->acosc_penalty_active == 3 && client->account->acosc_penalty_until <= zaptime) // reset penalty_activ
+			{
+				client->account->acosc_penalty_active = 0;
+				client->account->acosc_penalty_until = 0;
+			}
+			
+			if(client->account->acosc_penalty_active == 0 && max_active_sids > 0)
+			{
+				for(k=0; k<15 ; k++)
+				{
+					if(zaptime-30 < client->client_zap_list[k].lasttime && client->client_zap_list[k].request_stage == 10)
+					{
+						cs_debug_mask(D_TRACE, "[zaplist] ACoSC for Client: %s  more then 10 ECM's for %04X@%06X/%04X/%04X", username(client),  client->client_zap_list[k].caid, client->client_zap_list[k].provid, client->client_zap_list[k].chid, client->client_zap_list[k].sid);
+						active_sid_count ++;
+					}
+				}
+				cs_debug_mask(D_TRACE, "[zaplist] ACoSC for Client: %s  active_sid_count= %i with more than 10 followed ECM's (mas:%i (%s))", username(client), active_sid_count, max_active_sids, info1);
+			}
+			if(client->account->acosc_penalty_active == 0 && max_active_sids > 0 && active_sid_count > max_active_sids) //max_active_sids reached
+			{	
+				client->account->acosc_penalty_active = 1;
+				client->account->acosc_penalty_until = zaptime + penalty_duration;
+			}
+			
+			if(client->account->acosc_penalty_active == 0 && zap_limit > 0 && client->account->acosc_user_zap_count > zap_limit) // zap_limit reached
+			{
+				client->account->acosc_penalty_active = 2;
+				client->account->acosc_penalty_until = zaptime + penalty_duration;
+			}
+			
+			if(client->account->acosc_penalty_active > 0)
+			{
+				if(client->account->acosc_penalty_active == 3)
+					{ cs_log("[zaplist] ACoSC for Client: %s  penalty_duration: %ld seconds left(%s)", username(client), client->account->acosc_penalty_until - zaptime, info3); }
+
+				int16_t lt = get_module(client)->listenertype;
+				switch(penalty)
+				{
+					case 1: // NULL CW
+						er->rc = E_FAKE; //E_FAKE give only a status fake not a NULL cw
+						er->rcEx = E2_WRONG_CHKSUM;
+						if(client->account->acosc_penalty_active == 1)
+							{ cs_log("[zaplist] ACoSC for Client: %s  max_activ_sids reached: %i:%i(%s) penalty: 1(%s) send null CW", username(client), active_sid_count, max_active_sids, info1, info2); }
+						if(client->account->acosc_penalty_active == 2)
+							{ cs_log("[zaplist] ACoSC for Client: %s  zap_limit reached: %i:%i(%s) penalty: 1(%s) send null CW", username(client), client->account->acosc_user_zap_count, zap_limit, info5, info2); }						
+						
+						break;
+					case 2: // ban
+						if(lt != LIS_DVBAPI) 
+						{
+							if(client->account->acosc_penalty_active == 1)
+								{ cs_log("[zaplist] ACoSC for Client: %s  max_activ_sids reached: %i:%i(%s) penalty: 2(%s) BAN Client - Kill and set Client to failban list for %i sec.", username(client), active_sid_count, max_active_sids, info1, info2, penalty_duration); }
+							if(client->account->acosc_penalty_active == 2)
+								{ cs_log("[zaplist] ACoSC for Client: %s  zap_limit reached: %i:%i(%s) penalty: 2(%s) BAN Client - Kill and set Client to failban list for %i sec.", username(client), client->account->acosc_user_zap_count, zap_limit, info5, info2, penalty_duration); }						
+													
+							cs_add_violation_acosc(client, client->account->usr, penalty_duration);
+							add_job(client, ACTION_CLIENT_KILL, NULL, 0);
+						} 
+						else
+						{
+							cs_log("[zaplist] ACoSC for Client: %s  %i:%i(%s) penalty: 2(%s) BAN Client - don't Ban dvbapi user only stop decoding", username(client), active_sid_count, max_active_sids, info1, info2);
+						}						
+						er->rc = E_DISABLED;
+						break;
+					case 3: // delay
+						if(client->account->acosc_penalty_active == 1)
+							{ cs_log("[zaplist] ACoSC for Client: %s  max_activ_sids reached: %i:%i(%s) penalty: 3(%s) delay CW: %ims(%s)", username(client), active_sid_count, max_active_sids, info1, info2, delay, info4); }
+						if(client->account->acosc_penalty_active == 2)
+							{ cs_log("[zaplist] ACoSC for Client: %s  zap_limit reached: %i:%i(%s) penalty: 3(%s) delay CW: %ims(%s)", username(client), client->account->acosc_user_zap_count, zap_limit, info5, info2, delay, info4);	}					
+						cs_writeunlock(&clientlist_lock);	
+						cs_sleepms(delay);
+						cs_writelock(&clientlist_lock);
+						client->cwlastresptime += delay;
+						snprintf(sreason, sizeof(sreason)-1, " (%d ms penalty delay)", delay);
+						break;
+					default: // logging
+						if(client->account->acosc_penalty_active == 1)
+							{ cs_log("[zaplist] ACoSC for Client: %s  max_activ_sids reached: %i:%i(%s) penalty: 0(%s) only logging", username(client), active_sid_count, max_active_sids, info1, info2); }
+						if(client->account->acosc_penalty_active == 2)
+							{ cs_log("[zaplist] ACoSC for Client: %s  zap_limit reached: %i:%i(%s) penalty: 0(%s) only logging", username(client), client->account->acosc_user_zap_count, zap_limit, info5, info2);	}					
+
+						break;
+				}
+				client->account->acosc_user_zap_count = 0; // we got already a penalty
+				client->account->acosc_penalty_active = 3;
+			}
+		}
+		cs_writeunlock(&clientlist_lock);
+	}		
+#endif
 
 	ac_chk(client, er, 1);
 	int32_t is_fake = 0;
@@ -2165,6 +2296,17 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 
 		return;
 	}
+
+
+// zaplist ACoSC
+#ifdef CS_ANTICASC
+	if(cfg.acosc_enabled)
+	{
+		cs_writelock(&clientlist_lock);
+		insert_zaplist(er, client);
+		cs_writeunlock(&clientlist_lock);
+	}
+#endif
 
 
 	er->reader_avail = 0;
