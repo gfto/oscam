@@ -18,7 +18,7 @@ static inline void ac_clear(void) { }
 static inline void ac_copy_vars(struct s_auth *UNUSED(src), struct s_auth *UNUSED(dst)) { }
 static inline void ac_init_client(struct s_client *UNUSED(cl), struct s_auth *UNUSED(account)) { }
 static inline void ac_chk(struct s_client *UNUSED(cl), ECM_REQUEST *UNUSED(er), int32_t UNUSED(level)) { }
-static inline void insert_zaplist(ECM_REQUEST *er, struct s_client *client) { }
+static inline void insert_zaplist(ECM_REQUEST *UNUSED(er), struct s_client *UNUSED(client)) { }
 #endif
 
 #endif
