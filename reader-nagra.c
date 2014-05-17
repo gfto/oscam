@@ -659,7 +659,7 @@ static int32_t GetDataType(struct s_reader *reader, unsigned char dt, int32_t le
 			break;
 		}
 
-		if(cta_res[2] == 0)
+		if(cta_res[2] == 0 && !(dt == 0x08 || dt == 0x88))
 		{
 			result = OK;
 			break;
@@ -671,7 +671,7 @@ static int32_t GetDataType(struct s_reader *reader, unsigned char dt, int32_t le
 			break;
 		}
 
-		if(cta_res[11] == 0x49)
+		if(cta_res[11] == 0x49 && !(dt == 0x08 || dt == 0x88))
 		{
 			result = OK;
 			break;
