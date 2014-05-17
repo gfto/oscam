@@ -336,6 +336,11 @@ static void account_fixups_fn(void *var)
 	struct s_auth *account = var;
 	if(account->ac_users < -1) { account->ac_users = DEFAULT_AC_USERS; }
 	if(account->ac_penalty < -1) { account->ac_penalty = DEFAULT_AC_PENALTY; }
+	if(account->acosc_max_active_sids < -1) { account->acosc_max_active_sids = -1; }
+	if(account->acosc_zap_limit < -1) { account->acosc_zap_limit = -1; }
+	if(account->acosc_penalty < -1) { account->acosc_penalty = -1; }
+	if(account->acosc_penalty_duration < -1) { account->acosc_penalty_duration = -1; }
+	if(account->acosc_delay < -1) { account->acosc_delay = -1; }
 }
 #endif
 
@@ -392,6 +397,11 @@ static const struct config_list account_opts[] =
 	DEF_OPT_INT32("fakedelay"           , OFS(ac_fakedelay),            -1),
 	DEF_OPT_INT32("numusers"            , OFS(ac_users),                DEFAULT_AC_USERS),
 	DEF_OPT_INT8("penalty"              , OFS(ac_penalty),              DEFAULT_AC_PENALTY),
+	DEF_OPT_INT8("acosc_max_active_sids"	, OFS(acosc_max_active_sids),	-1 ),
+	DEF_OPT_INT8("acosc_zap_limit"		, OFS(acosc_zap_limit),			-1 ),
+	DEF_OPT_INT8("acosc_penalty"		, OFS(acosc_penalty),			-1 ),
+	DEF_OPT_INT32("acosc_penalty_duration"	, OFS(acosc_penalty_duration),	-1 ),
+	DEF_OPT_INT32("acosc_delay"			, OFS(acosc_delay),				-1 ),
 #endif
 #ifdef WITH_LB
 	DEF_OPT_INT32("lb_nbest_readers"    , OFS(lb_nbest_readers),        -1),
