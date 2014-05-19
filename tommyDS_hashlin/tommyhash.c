@@ -37,7 +37,7 @@ tommy_inline tommy_uint32_t tommy_le_uint32_read(const void* ptr)
 	/* defines from http://predef.sourceforge.net/ */
 	return *(tommy_uint32_t*)ptr;
 #else
-	const unsigned char ptr8 = tommy_cast(const unsigned char*, ptr);
+	const unsigned char* ptr8 = tommy_cast(const unsigned char*, ptr);
 	return ptr8[0] + ((tommy_uint32_t)ptr8[1] << 8) + ((tommy_uint32_t)ptr8[2] << 16) + ((tommy_uint32_t)ptr8[3] << 24);
 #endif
 }
