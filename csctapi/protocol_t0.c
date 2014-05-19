@@ -438,7 +438,7 @@ static int32_t Protocol_T0_ExchangeTPDU(struct s_reader *reader, unsigned char *
 			}
 			else /* Case 3 command: receive data */
 			{
-				if(recved >= PROTOCOL_T0_MAX_SHORT_RESPONSE)
+				if(recved > PROTOCOL_T0_MAX_SHORT_RESPONSE)
 				{
 					rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Case 3 ACK - maximum short response exceeded: %d", __func__, recved);
 					return ERROR;
@@ -475,7 +475,7 @@ static int32_t Protocol_T0_ExchangeTPDU(struct s_reader *reader, unsigned char *
 			}
 			else  /* Case 3 command: receive data */
 			{
-				if(recved >= PROTOCOL_T0_MAX_SHORT_RESPONSE)
+				if(recved > PROTOCOL_T0_MAX_SHORT_RESPONSE)
 				{
 					rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Case 3 ~ACK - maximum short response exceeded: %d", __func__, recved);
 					return ERROR;
