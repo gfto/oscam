@@ -2037,9 +2037,6 @@ void gbox_send_good_night(void)
 		}	
 	}
 }
-else
-cs_log("gbox_hostname parameter is not set in the config");
-
 }
 /*
 void gbox_send_goodbye(uint16_t boxid) //to implement later

@@ -37,7 +37,7 @@ tommy_inline tommy_uint32_t tommy_le_uint32_read(const void* ptr)
 	/* defines from http://predef.sourceforge.net/ */
 	return *(tommy_uint32_t*)ptr;
 #else
-	const unsigned char* ptr8 = tommy_cast(const unsigned char*, ptr);
+	const unsigned char ptr8 = tommy_cast(const unsigned char*, ptr);
 	return ptr8[0] + ((tommy_uint32_t)ptr8[1] << 8) + ((tommy_uint32_t)ptr8[2] << 16) + ((tommy_uint32_t)ptr8[3] << 24);
 #endif
 }
@@ -68,7 +68,7 @@ tommy_inline tommy_uint32_t tommy_le_uint32_read(const void* ptr)
 
 tommy_uint32_t tommy_hash_u32(tommy_uint32_t init_val, const void* void_key, tommy_size_t key_len)
 {
-	const unsigned char* key = tommy_cast(const unsigned char*,void_key);
+	const unsigned char key = tommy_cast(const unsigned char*,void_key);
 	tommy_uint32_t a, b, c;
 
 	a = b = c = 0xdeadbeef + ((tommy_uint32_t)key_len) + init_val;
@@ -117,7 +117,7 @@ tommy_uint32_t tommy_hash_u32(tommy_uint32_t init_val, const void* void_key, tom
 
 tommy_uint64_t tommy_hash_u64(tommy_uint64_t init_val, const void* void_key, tommy_size_t key_len)
 {
-	const unsigned char* key = tommy_cast(const unsigned char*,void_key);
+	const unsigned char key = tommy_cast(const unsigned char*,void_key);
 	tommy_uint32_t a, b, c;
 
 	a = b = c = 0xdeadbeef + ((tommy_uint32_t)key_len) + (init_val & 0xffffffff);
