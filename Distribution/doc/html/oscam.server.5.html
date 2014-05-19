@@ -715,9 +715,16 @@ write file (usually a copy of a file saved by savenano) to your smartcard, if no
 
 <B>lb_weight</B> = <B>weight</B>
 <DL COMPACT><DT><DD>
-the higher the value the higher the probability for reader selection, default:100
+the higher the value the higher the probability for reader selection in load balacing mode, default:100
 <P>
 <BR>&nbsp;It's&nbsp;an&nbsp;divider&nbsp;for&nbsp;the&nbsp;average&nbsp;responstime.
+</DL>
+
+<P>
+
+<B>lb_force_fallback</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = set the reader always as fallaback for load balacing without considering the reader's statistics, default:0
 </DL>
 
 <P>
