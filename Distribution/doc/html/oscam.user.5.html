@@ -127,6 +127,47 @@ set fake delay time individually for user:
 
 <P>
 
+<B>acosc_max_active_sids</B> = <B>count</B>
+<DL COMPACT><DT><DD>
+maximum active SIDs with anti-cascading over SID, 0 = unlimited, -1 = use global setting, default:0
+</DL>
+
+<P>
+
+<B>acosc_zap_limit</B> = <B>count</B>
+<DL COMPACT><DT><DD>
+zap limit for anti-cascading over SID, 0 = unlimited, -1 = use global setting, default:0
+</DL>
+
+<P>
+
+<B>acosc_penalty</B> = <B>0</B>|<B>1</B>|<B>2</B>|<B>3</B>|<B>-1</B>
+<DL COMPACT><DT><DD>
+level of penalty with anti-cascading over SID count:
+<P>
+<BR>&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;only&nbsp;logging&nbsp;(default)
+<BR>&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;send&nbsp;fake&nbsp;CWs
+<BR>&nbsp;&nbsp;<B>2</B>&nbsp;=&nbsp;temporary&nbsp;user&nbsp;ban
+<BR>&nbsp;&nbsp;<B>3</B>&nbsp;=&nbsp;send&nbsp;delayed&nbsp;CWs
+<BR>&nbsp;<B>-1</B>&nbsp;=&nbsp;use&nbsp;global&nbsp;setting
+</DL>
+
+<P>
+
+<B>acosc_penalty_duration</B> = <B>seconds</B>
+<DL COMPACT><DT><DD>
+penalty duration for anti-cascading over SID count, -1 = use global setting, default:0
+</DL>
+
+<P>
+
+<B>acosc_delay</B> = <B>milli-seconds</B>
+<DL COMPACT><DT><DD>
+delay for anti-cascading over SID count, -1 = use global setting, default:0
+</DL>
+
+<P>
+
 <B>failban</B> = <B>0</B>|<B>2</B>|<B>4</B>|<B>8</B>
 <DL COMPACT><DT><DD>
 mask for IP address based blocking:

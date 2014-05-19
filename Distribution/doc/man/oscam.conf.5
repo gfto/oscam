@@ -430,7 +430,7 @@ monitor level:
  \fB3\fP = all procs, reload of \fBoscam.user\fR possible
  \fB4\fP = complete access
 
-monlevel can be overwritten per user in \fBoscam.user\fR
+monlevel can be overwritten per user in \fBoscam.user\fR.
 .RE
 .PP
 \fBhideclient_to\fP = \fBseconds\fP
@@ -1115,7 +1115,7 @@ minimum time to write CW, default:0
 .PP
 \fBenabled\fP = \fB0\fP|\fB1\fP
 .RS 3n
-1 = enabled anti-cascading, default:0
+1 = enable anti-cascading, default:0
 .RE
 .PP
 \fBnumusers\fP = \fBquantity\fP
@@ -1133,7 +1133,7 @@ duration of sample, default:2
 quantity of samples over limit, default:10
 .RE
 .PP
-\fBpenalty\fP = \fB0\fP|\fB1\fP|\fB2\fP
+\fBpenalty\fP = \fB0\fP|\fB1\fP|\fB2\fP|\fB3\fP
 .RS 3n
 level of penalty:
 
@@ -1142,7 +1142,7 @@ level of penalty:
  \fB2\fP = temporary user ban
  \fB3\fP = send delayed CWs
 
-penalty can be overwritten per user in \fBoscam.user\fR
+penalty can be overwritten per user in \fBoscam.user\fR.
 .RE
 .PP
 \fBaclogfile\fP = \fBfilename\fP
@@ -1158,6 +1158,51 @@ fake delay time, default:1000, minimum value is 100, maximum value is 3000
 \fBdenysamples\fP = \fBquantity\fP
 .RS 3n
 how many samples should be penalized, default:8
+.RE
+.PP
+\fBacosc_enabled\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = enable anti-cascading over SID count, default:0
+.RE
+.PP
+\fBacosc_max_active_sids\fP = \fBcount\fP
+.RS 3n
+maximum active SIDs with anti-cascading over SID, 0 = unlimited, default:0
+
+Can be overwritten per user in \fBoscam.user\fR.
+.RE
+.PP
+\fBacosc_zap_limit\fP = \fBcount\fP
+.RS 3n
+zap limit for anti-cascading over SID, 0 = unlimited, default:0
+
+Can be overwritten per user in \fBoscam.user\fR.
+.RE
+.PP
+\fBacosc_penalty\fP = \fB0\fP|\fB1\fP|\fB2\fP|\fB3\fP
+.RS 3n
+level of penalty with anti-cascading over SID count:
+
+ \fB0\fP = only logging (default)
+ \fB1\fP = send fake CWs
+ \fB2\fP = temporary user ban
+ \fB3\fP = send delayed CWs
+
+Can be overwritten per user in \fBoscam.user\fR.
+.RE
+.PP
+\fBacosc_penalty_duration\fP = \fBseconds\fP
+.RS 3n
+penalty duration for anti-cascading over SID count, default:0
+
+Can be overwritten per user in \fBoscam.user\fR.
+.RE
+.PP
+\fBacosc_delay\fP = \fBmilli-seconds\fP
+.RS 3n
+delay for anti-cascading over SID count, default:0
+
+Can be overwritten per user in \fBoscam.user\fR.
 .RE
 .SH LOGGING
 .TP 3n
