@@ -2007,6 +2007,7 @@ static void gbox_s_idle(struct s_client *cl)
 void gbox_send_good_night(void)
 {
 	uchar outbuf[64];
+	if (cfg.gbox_hostname){
 	int32_t hostname_len = strlen(cfg.gbox_hostname);
 	int32_t len;
 	struct s_client *cli;
@@ -2035,6 +2036,10 @@ void gbox_send_good_night(void)
 			}
 		}	
 	}
+}
+else
+cs_log("gbox_hostname parameter is not set in the config");
+
 }
 /*
 void gbox_send_goodbye(uint16_t boxid) //to implement later
