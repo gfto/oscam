@@ -220,10 +220,10 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 	return 0;
 }
 
-static char *get_emmlog_filename(char *dest, size_t destlen, const char *basefilename, const char *ext)
+static char *get_emmlog_filename(char *dest, size_t destlen, const char *basefilename, const char *type, const char *ext)
 {
 	char filename[64 + 16];
-	snprintf(filename, sizeof(filename), "%s_emm.%s", basefilename, ext);
+	snprintf(filename, sizeof(filename), "%s_%s_emm.%s", basefilename, type, ext);
 	if(!cfg.emmlogdir)
 	{
 		get_config_filename(dest, destlen, filename);
@@ -237,12 +237,14 @@ static char *get_emmlog_filename(char *dest, size_t destlen, const char *basefil
 	return dest;
 }
 
-static void saveemm(struct s_reader *aureader, EMM_PACKET *ep)
+static void saveemm(struct s_reader *aureader, EMM_PACKET *ep, const char *proceded)
 {
-	FILE *fp;
+	FILE *fp_log;
+	FILE *fp_bin;
 	char tmp[17];
 	char buf[80];
-	char token[256];
+	char token_log[256];
+	char token_bin[256];
 	char *tmp2;
 	time_t rawtime;
 	uint32_t emmtype;
@@ -258,38 +260,56 @@ static void saveemm(struct s_reader *aureader, EMM_PACKET *ep)
 		localtime_r(&rawtime, &timeinfo); // to access LOCAL date/time info
 		int32_t emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
 		strftime(buf, sizeof(buf), "%Y/%m/%d %H:%M:%S", &timeinfo);
-		fp = fopen(get_emmlog_filename(token, sizeof(token), aureader->label, "log"), "a");
-		if(!fp)
+		switch(ep->type)
 		{
-			rdr_log(aureader, "ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
+			case GLOBAL:
+				fp_log = fopen(get_emmlog_filename(token_log, sizeof(token_log), aureader->label, "global", "log"), "a");
+				fp_bin = fopen(get_emmlog_filename(token_bin, sizeof(token_bin), aureader->label, "global", "bin"), "ab");
+				break;
+			case SHARED:
+				fp_log = fopen(get_emmlog_filename(token_log, sizeof(token_log), aureader->label, "shared", "log"), "a");
+				fp_bin = fopen(get_emmlog_filename(token_bin, sizeof(token_bin), aureader->label, "shared", "bin"), "ab");
+				break;
+			case UNIQUE:
+				fp_log = fopen(get_emmlog_filename(token_log, sizeof(token_log), aureader->label, "unique", "log"), "a");
+				fp_bin = fopen(get_emmlog_filename(token_bin, sizeof(token_bin), aureader->label, "unique", "bin"), "ab");
+				break;
+			case UNKNOWN:
+			default:
+				fp_log = fopen(get_emmlog_filename(token_log, sizeof(token_log), aureader->label, "unknown", "log"), "a");
+				fp_bin = fopen(get_emmlog_filename(token_bin, sizeof(token_bin), aureader->label, "unknown", "bin"), "ab");
+		}			
+		
+		if(!fp_log)
+		{
+			rdr_log(aureader, "ERROR: Cannot open file '%s' (errno=%d: %s)\n", token_log, errno, strerror(errno));
 		}
 		else
 		{
 			if(cs_malloc(&tmp2, (emm_length + 3) * 2 + 1))
 			{
-				fprintf(fp, "%s   %s   ", buf, cs_hexdump(0, ep->hexserial, 8, tmp, sizeof(tmp)));
-				fprintf(fp, "%s\n", cs_hexdump(0, ep->emm, emm_length + 3, tmp2, (emm_length + 3) * 2 + 1));
+				fprintf(fp_log, "%s   %s   ", buf, cs_hexdump(0, ep->hexserial, 8, tmp, sizeof(tmp)));
+				fprintf(fp_log, "%s   %s\n", cs_hexdump(0, ep->emm, emm_length + 3, tmp2, (emm_length + 3) * 2 + 1), proceded);
 				NULLFREE(tmp2);
-				rdr_log(aureader, "Successfully added EMM to %s", token);
+				rdr_log(aureader, "Successfully added EMM to %s", token_log);
 			}
-			fclose(fp);
+			fclose(fp_log);
 		}
-		fp = fopen(get_emmlog_filename(token, sizeof(token), aureader->label, "bin"), "ab");
-		if(!fp)
+		if(!fp_bin)
 		{
-			rdr_log(aureader, "ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
+			rdr_log(aureader, "ERROR: Cannot open file '%s' (errno=%d: %s)\n", token_bin, errno, strerror(errno));
 		}
 		else
 		{
-			if((int)fwrite(ep->emm, 1, emm_length + 3, fp) == emm_length + 3)
+			if((int)fwrite(ep->emm, 1, emm_length + 3, fp_bin) == emm_length + 3)
 			{
-				rdr_log(aureader, "Successfully added binary EMM to %s", token);
+				rdr_log(aureader, "Successfully added binary EMM to %s", token_bin);
 			}
 			else
 			{
-				rdr_log(aureader, "ERROR: Cannot write binary EMM to %s (errno=%d: %s)\n", token, errno, strerror(errno));
+				rdr_log(aureader, "ERROR: Cannot write binary EMM to %s (errno=%d: %s)\n", token_bin, errno, strerror(errno));
 			}
-			fclose(fp);
+			fclose(fp_bin);
 		}
 	}
 }
@@ -407,7 +427,6 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 								 cs_hexdump(0, ep->hexserial, 8, tmp, sizeof(tmp)));
 
 		client->last = time(NULL);
-		saveemm(aureader, ep);
 
 		int32_t is_blocked = 0;
 		switch(ep->type)
@@ -446,6 +465,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 						ep->emm[2],
 						is_blocked);
 			}
+			saveemm(aureader, ep, "blocked");
 			continue;
 		}
 
@@ -477,6 +497,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 					au_cl->emmcache[i].count++;
 					reader_log_emm(aureader, ep, i, 2, NULL);
 					writeemm = 0; // dont write emm!
+					saveemm(aureader, ep, "emmcache");
 					break; // found emm match needs no further handling, stop searching and proceed with next reader!
 				}
 				writeemm = 1; // found emm match but rewrite counter not reached: write emm!
@@ -492,6 +513,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 				rdr_debug_mask(aureader, D_EMM, "emm is being sent to reader");
 				memcpy(emm_pack, ep, sizeof(EMM_PACKET));
 				add_job(aureader->client, ACTION_READER_EMM, emm_pack, sizeof(EMM_PACKET));
+				saveemm(aureader, ep, "written");
 			}
 		}
 
