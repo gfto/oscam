@@ -2808,7 +2808,7 @@ void dvbapi_handlesockmsg(unsigned char *buffer, uint32_t len, int32_t connfd)
 
 		dest[1] = buffer[3]; //channel srvid highbyte
 		dest[2] = buffer[4]; //channel srvid lowbyte
-		i2b_buf(2, samygo_program_info_length&0xFFF, dest + 4); // put program_info_length
+		i2b_buf(2, (samygo_program_info_length+1)&0xFFF, dest + 4); // put program_info_length
 		dvbapi_parse_capmt(dest, length, connfd, NULL);
     }
 	free(dest);
