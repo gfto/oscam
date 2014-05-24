@@ -537,10 +537,6 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 	else
 	{
 		cs_log("ERROR: Could not start demux filter (api: %d errno=%d %s)", selected_api, errno, strerror(errno));
-        
-		dvbapi_stop_descrambling(demux_id);
-        close(demux[demux_id].demux_fd[n].fd);
-        demux[demux_id].demux_fd[n].fd = -1;
 	}
 	return ret;
 }
@@ -551,7 +547,7 @@ static int32_t dvbapi_detect_api(void)
 	selected_api = DVBAPI_3;
 	selected_box = 0;
 	disable_pmt_files = 1;
-	cs_log("Using SamyGO dvbapi v0.1.1 (c) bugficks 2013, oscam patched by pehedima 2014");
+	cs_log("Using SamyGO dvbapi v0.1");
 	return 1;
 #endif
 
@@ -961,7 +957,7 @@ int32_t dvbapi_start_emm_filter(int32_t demux_index)
 			{
 				uint32_t seca_provid = 0;
 				if(emmtype == EMM_SHARED)
-					{ seca_provid = ((filter[1] << 8) | filter[2]); }
+					{ seca_provid = b2i(2, filter + 1); }
 				l = dvbapi_find_emmpid(demux_index, emmtype, 0x0100, seca_provid);
 			}
 			else
@@ -1238,13 +1234,13 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len)
 		}
 		cs_debug_mask(D_DVBAPI, "Reader %s au enabled -> parsing cat for emm pids!", testrdr->label);
 
-		for(i = 8; i < (((buf[1] & 0x0F) << 8) | buf[2]) - 1; i += buf[i + 1] + 2)
+		for(i = 8; i < (b2i(2, buf + 1)&0xFFF) - 1; i += buf[i + 1] + 2)
 		{
 			if(buf[i] != 0x09) { continue; }
 			if(demux[demux_id].EMMpidcount >= ECM_PIDS) { break; }
 
-			uint16_t caid = ((buf[i + 2] << 8) | buf[i + 3]);
-			uint16_t emm_pid = (((buf[i + 4] & 0x1F) << 8) | buf[i + 5]);
+			uint16_t caid = b2i(2, buf + i + 2);
+			uint16_t emm_pid = b2i(2, buf + i +4)&0x1FFF;
 			uint32_t emm_provider = 0;
 
 			switch(caid >> 8)
@@ -1253,8 +1249,8 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len)
 				dvbapi_add_emmpid(testrdr, demux_id, caid, emm_pid, 0, EMM_UNIQUE | EMM_GLOBAL);
 				for(k = i + 7; k < i + buf[i + 1] + 2; k += 4)
 				{
-					emm_provider = (buf[k + 2] << 8 | buf[k + 3]);
-					emm_pid = (buf[k] & 0x0F) << 8 | buf[k + 1];
+					emm_provider = b2i(2, buf + k + 2);
+					emm_pid = b2i(2, buf + k)&0xFFF;
 					dvbapi_add_emmpid(testrdr, demux_id, caid, emm_pid, emm_provider, EMM_SHARED);
 				}
 				break;
@@ -1263,13 +1259,13 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len)
 				{
 					if(buf[k] == 0x14)
 					{
-						emm_provider = buf[k + 2] << 16 | (buf[k + 3] << 8 | (buf[k + 4] & 0xF0));
+						emm_provider = b2i(3, buf + k + 2)&0xFFFFF0;
 						dvbapi_add_emmpid(testrdr, demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
 					}
 				}
 				break;
 			case 0x18:
-				emm_provider = (buf[i + 1] == 0x07) ? (buf[i + 6] << 16 | (buf[i + 7] << 8 | (buf[i + 8]))) : 0;
+				emm_provider = (buf[i + 1] == 0x07) ? b2i(3, buf + i + 6) : 0;
 				dvbapi_add_emmpid(testrdr, demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
 				break;
 			default:
@@ -1540,7 +1536,7 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 				er->ecmlen += 2;
 			}
 
-			cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d trying to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X PMTPID %04X ANY CHID VPID %04X", demux_id, pid,
+			cs_log("[DVBAPI] Demuxer #%d trying to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X ANY CHID PMTPID %04X VPID %04X", demux_id, pid,
 				   demux[demux_id].ECMpids[pid].CAID, demux[demux_id].ECMpids[pid].PROVID, demux[demux_id].ECMpids[pid].ECM_PID,
 				   demux[demux_id].pmtpid, demux[demux_id].ECMpids[pid].VPID);
 
@@ -1564,13 +1560,13 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 
 			if(p && p->chid < 0x10000)  // do we prio a certain chid?
 			{
-				cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d trying to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X CHID %04X PMTPID %04X VPID %04X", demux_id, pid,
+				cs_log("[DVBAPI] Demuxer #%d trying to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X CHID %04X PMTPID %04X VPID %04X", demux_id, pid,
 					   demux[demux_id].ECMpids[pid].CAID, demux[demux_id].ECMpids[pid].PROVID, demux[demux_id].ECMpids[pid].ECM_PID,
 					   demux[demux_id].ECMpids[pid].CHID, demux[demux_id].pmtpid, demux[demux_id].ECMpids[pid].VPID);
 			}
 			else
 			{
-				cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d trying to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X PMTPID %04X ANY CHID VPID %04X", demux_id, pid,
+				cs_log("[DVBAPI] Demuxer #%d trying to descramble PID #%d CAID %04X PROVID %06X ECMPID %04X ANY CHID PMTPID %04X VPID %04X", demux_id, pid,
 					   demux[demux_id].ECMpids[pid].CAID, demux[demux_id].ECMpids[pid].PROVID, demux[demux_id].ECMpids[pid].ECM_PID,
 					   demux[demux_id].pmtpid, demux[demux_id].ECMpids[pid].VPID);
 			}
@@ -2301,9 +2297,9 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 
 		if(buffer[j] == 0x81 && descriptor_length == 8)    // private descriptor of length 8, assume enigma/tvh
 		{
-			demux[demux_id].enigma_namespace = (buffer[j + 2] << 24 | buffer[j + 3] << 16 | buffer[j + 4] << 8 | buffer[j + 5]);
-			demux[demux_id].tsid = (buffer[j + 6] << 8 | buffer[j + 7]);
-			demux[demux_id].onid = (buffer[j + 8] << 8 | buffer[j + 9]);
+			demux[demux_id].enigma_namespace = b2i(4, buffer + j + 2);
+			demux[demux_id].tsid = b2i(2, buffer + j + 6);
+			demux[demux_id].onid = b2i(2, buffer + j + 8);
 			cs_debug_mask(D_DVBAPI, "[pmt] type: %02x length: %d (assuming enigma private descriptor: namespace %04x tsid %02x onid %02x)",
 						  buffer[j], descriptor_length, demux[demux_id].enigma_namespace, demux[demux_id].tsid, demux[demux_id].onid);
 		}
@@ -2315,26 +2311,26 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 		if(buffer[j] != 0x09) { continue; }
 		if(demux[demux_id].ECMpidcount >= ECM_PIDS) { break; }
 
-		int32_t descriptor_ca_system_id = (buffer[j + 2] << 8) | buffer[j + 3];
-		int32_t descriptor_ca_pid = ((buffer[j + 4] & 0x1F) << 8) | buffer[j + 5];
+		int32_t descriptor_ca_system_id = b2i(2, buffer + j + 2);
+		int32_t descriptor_ca_pid = b2i(2, buffer + j + 4)&0x1FFF;
 		int32_t descriptor_ca_provider = 0;
 
 		if(descriptor_ca_system_id >> 8 == 0x01)
 		{
 			for(u = 2; u < descriptor_length; u += 15)
 			{
-				descriptor_ca_pid = ((buffer[j + 2 + u] & 0x1F) << 8) | buffer[j + 2 + u + 1];
-				descriptor_ca_provider = (buffer[j + 2 + u + 2] << 8) | buffer[j + 2 + u + 3];
+				descriptor_ca_pid = b2i(2, buffer + j + u + 2)&0x1FFF;
+				descriptor_ca_provider = b2i(2, buffer + j + u + 4);
 				dvbapi_add_ecmpid(demux_id, descriptor_ca_system_id, descriptor_ca_pid, descriptor_ca_provider);
 			}
 		}
 		else
 		{
 			if(descriptor_ca_system_id >> 8 == 0x05 && descriptor_length == 0x0F && buffer[j + 12] == 0x14)
-				{ descriptor_ca_provider = buffer[j + 14] << 16 | (buffer[j + 15] << 8 | (buffer[j + 16] & 0xF0)); }
+				{ descriptor_ca_provider = b2i(3, buffer + j + 14) &0xFFFFF0; }
 
 			if(descriptor_ca_system_id >> 8 == 0x18 && descriptor_length == 0x07)
-				{ descriptor_ca_provider = (buffer[j + 7] << 8 | (buffer[j + 8])); }
+				{ descriptor_ca_provider = b2i(2, buffer + j + 7); }
 
 			if(descriptor_ca_system_id >> 8 == 0x4A && descriptor_length == 0x05)
 				{ descriptor_ca_provider = buffer[j + 6]; }
@@ -2437,7 +2433,7 @@ static void getDemuxOptions(int32_t demux_id, unsigned char *buffer, uint16_t *c
 		uint32_t demuxid = buffer[20];
 		if (demuxid == 0xff) demuxid = 0; // tryfix prismcube (0xff -> "demux-1" = error! )
 		*demux_index = demuxid;
-		if (buffer[21]==0x84 && buffer[22]==0x02) *pmtpid = (buffer[23] << 8) | buffer[24];
+		if (buffer[21]==0x84 && buffer[22]==0x02) *pmtpid = b2i(2, buffer+23);
 		if (buffer[25]==0x83 && buffer[26]==0x01) *adapter_index=buffer[27]; // from code cahandler.cpp 0x83 index of adapter
 	}
 
@@ -2477,14 +2473,13 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 #define LIST_ADD 0x04    //*CA application should append an 'ADD' CAPMT object to the current list and start working with the updated list
 #define LIST_UPDATE 0x05 //*CA application should replace an entry in the list with an 'UPDATE' CAPMT object, and start working with the updated list
 
-#ifdef WITH_COOLAPI
+#if defined WITH_COOLAPI || defined DVBAPI_SAMYGO
 	int32_t ca_pmt_list_management = LIST_ONLY;
 #else
 	int32_t ca_pmt_list_management = buffer[0];
 #endif
-	uint32_t program_number = (buffer[1] << 8) | buffer[2];
-	uint32_t program_info_length = ((buffer[4] & 0x0F) << 8) | buffer[5];
-	uint32_t program_info_samy_length = 0;
+	uint32_t program_number = b2i(2, buffer + 1);
+	uint32_t program_info_length = b2i(2, buffer + 4) &0xFFF;
 	
 	cs_ddump_mask(D_DVBAPI, buffer, length, "capmt:");
 	cs_debug_mask(D_DVBAPI, "[DVBAPI] Receiver sends PMT command %d for channel %04X", ca_pmt_list_management, program_number);
@@ -2500,14 +2495,15 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		}
 	}
 	getDemuxOptions(i, buffer, &ca_mask, &demux_index, &adapter_index, &pmtpid);
-	cs_debug_mask(D_DVBAPI, "[DVBAPI] Receiver wants to demux srvid %04X on adapter %04X camask %04X index %04X", program_number, adapter_index, ca_mask, demux_index);
+	cs_debug_mask(D_DVBAPI,"[DVBAPI] Receiver wants to demux srvid %04X on adapter %04X camask %04X index %04X pmtpid %04X",
+		program_number, adapter_index, ca_mask, demux_index, pmtpid);
 	
 	for(i = 0; i < MAX_DEMUX; i++)    // search current demuxers for running the same program as the one we received in this PMT object
 	{
 		if(demux[i].program_number == 0) { continue; }
 		if(cfg.dvbapi_boxtype == BOXTYPE_IPBOX_PMT) demux_index = i; // fixup for ipbox
 
-#ifdef WITH_COOLAPI
+#if defined WITH_COOLAPI || defined DVBAPI_SAMYGO
 		if(connfd > 0 && demux[i].program_number == program_number)
 		{
 #else
@@ -2518,27 +2514,22 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			if (demux[i].demux_index != demux_index) continue; // perhaps next demuxer matches?
 #endif	
 			if(ca_pmt_list_management == LIST_UPDATE){
-				cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d PMT update for decoding of SRVID %04X on additional demuxer! ", i, program_number);
+				cs_log("[DVBAPI] Demuxer #%d PMT update for decoding of SRVID %04X! ", i, program_number);
 			}
 
 			demux_id = i;
 
-#if defined WITH_STAPI || defined WITH_COOLAPI || defined WITH_MCA || defined WITH_AZBOX
+#if defined WITH_STAPI || defined WITH_COOLAPI || defined WITH_MCA || defined WITH_AZBOX || defined DVBAPI_SAMYGO
 			dvbapi_stop_descrambling(i); // stop descrambling for all boxes except dvbapi based boxes
 #else
-			cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d continue decoding of SRVID %04X", i, demux[i].program_number);
+			cs_log("[DVBAPI] Demuxer #%d continue decoding of SRVID %04X", i, demux[i].program_number);
 #endif
 
 #if defined WITH_AZBOX || defined WITH_MCA
 			openxcas_sid = program_number;
 #endif			
 			demux[i].stopdescramble = 0; // dont stop current demuxer!
-			if(demux[demux_id].ECMpidcount == 0)
-			{
-				running = 0; // fix for channel changes from fta to scrambled
-			} else {
-				return demux_id;
-			}
+			if(demux[demux_id].ECMpidcount != 0) { running = 1; }  // fix for channel changes from fta to scrambled		
 			break; // no need to explore other demuxers since we have a found!
 		}
 	}
@@ -2576,23 +2567,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		cs_strncpy(demux[demux_id].pmt_file, pmtfile, sizeof(demux[demux_id].pmt_file));
 	}
 
-	program_info_samy_length=0;
-	uint32_t b=0;
-	for (b = 7; b < length; b+=buffer[b+1]+2)
-	{
-		if (buffer[b] == 0x09)
-		{
-			program_info_samy_length+=buffer[b+1]+2;
-		} else {
-			break;
-		}
-	}
-
-	if (program_info_samy_length > program_info_length)
-	{
-		program_info_length = program_info_samy_length;
-	}
-
 	if(program_info_length > 1 && program_info_length < length)
 	{
 		dvbapi_parse_descriptor(demux_id, program_info_length - 1, buffer + 7);
@@ -2609,8 +2583,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	for(i = program_info_length + 6; i < length; i += es_info_length + 5)
 	{
 		int32_t stream_type = buffer[i];
-		uint16_t elementary_pid = ((buffer[i + 1] & 0x1F) << 8) | buffer[i + 2];
-		es_info_length = ((buffer[i + 3] & 0x0F) << 8) | buffer[i + 4];
+		uint16_t elementary_pid = b2i(2, buffer + i + 1)&0x1FFF;
+		es_info_length = b2i(2, buffer + i +3)&0x0FFF;
 		cs_debug_mask(D_DVBAPI, "[pmt] stream_type: %02x pid: %04x length: %d", stream_type, elementary_pid, es_info_length);
 
 		if(demux[demux_id].STREAMpidcount >= ECM_PIDS)
@@ -2793,7 +2767,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		return demux_id; 
 	}
 
-#if !defined WITH_STAPI && !defined WITH_COOLAPI && !defined WITH_MCA && !defined WITH_AZBOX
+#if !defined WITH_STAPI && !defined WITH_COOLAPI && !defined WITH_MCA && !defined WITH_AZBOX && !defined DVBAPI_SAMYGO
 	if (running) disable_unused_streampids(demux_id); // disable all streampids not in use anymore
 #endif
 	if(running == 0)   // only start demuxer if it wasnt running
@@ -2811,25 +2785,34 @@ void dvbapi_handlesockmsg(unsigned char *buffer, uint32_t len, int32_t connfd)
 
 #ifdef DVBAPI_SAMYGO
     uchar *dest;
-    if(!cs_malloc(&dest, len + 7 - 12 - 4))
-	    return;
-
-    memcpy(dest, "\x03\xFF\xFF\x00\x00\x13\x00", 7);
-
-    dest[1] = buffer[3];
-    dest[2] = buffer[4];
-    dest[5] = buffer[11] + 1;
-
-    memcpy(dest + 7, buffer + 12, len - 12 - 4);
-
     if(buffer && buffer[0] == 2)
-    {
+	{
+		uint32_t length = (7 + len - 12 - 4); // length of converted samygo pmt
+		
+		if(!cs_malloc(&dest, length))
+			return;
+		
+		memcpy(dest, "\x03\xFF\xFF\x00\x00\x13\x00", 7); // standard pmt header x03=list_only
+		memcpy(dest + 7, buffer + 12, length - 7); // copy samygo channel pmt info to right position
+		
+		uint32_t samygo_program_info_length = 0;
+		uint32_t j = 0;
+	
+		for (j = 7; j < length; j+=dest[j+1]+2)	// calculate program_info_length 
+		{
+			if (dest[j] == 0x09) // scan for ecmpid
+				samygo_program_info_length+=dest[j+1]+2; // add its specific length to the total info_program length
+			else
+				break; // no more ecmpids -> done!
+		}
 
-	    dvbapi_parse_capmt(dest, 7 + len - 12 - 4, connfd, NULL);
-	    free(dest);
-
-        return;
+		dest[1] = buffer[3]; //channel srvid highbyte
+		dest[2] = buffer[4]; //channel srvid lowbyte
+		i2b_buf(2, samygo_program_info_length&0xFFF, dest + 4); // put program_info_length
+		dvbapi_parse_capmt(dest, length, connfd, NULL);
     }
+	free(dest);
+	return;
 #endif
 
 	for(k = 0; k < len; k += 3 + size + val)
@@ -3149,8 +3132,8 @@ void event_handler(int32_t UNUSED(signal))
 		dest[0] = 0x03;
 		dest[1] = mbuf[3];
 		dest[2] = mbuf[4];
-
-		i2b_buf(2, (((mbuf[10] & 0x0F) << 8) | mbuf[11]) + 1, (uchar *)dest + 4);
+		uint32_t pmt_program_length = b2i(2, mbuf + 10)&0xFFF;
+		i2b_buf(2, pmt_program_length + 1, (uchar *) dest + 4);
 		dest[6] = 0;
 
 		memcpy(dest + 7, mbuf + 12, len - 12 - 4);
@@ -3197,7 +3180,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 	if(demux[demux_id].demux_fd[filter_num].type == TYPE_ECM)
 	{
 		cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d Filter #%d fetched ecm data", demux_id, filter_num + 1);
-		if(len != (((buffer[1] & 0xf) << 8) | buffer[2]) + 3)   // invalid CAT length
+		if((uint) len  != (b2i(2, buffer + 1)&0xFFF)+3)   // invalid CAT length
 		{
 			cs_debug_mask(D_DVBAPI, "[DVBAPI] Received an ECM with invalid CAT length!");
 			return;
@@ -3269,7 +3252,8 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 						  demux_id, er->ecm[0], er->caid, er->prid, er->pid, er->chid);
 		}
 
-		if((curpid->CHID < 0x10000) && chid != curpid->CHID)  // check for matching chid (unique ecm part in case of non-irdeto cas)
+		// check for matching chid (unique ecm part in case of non-irdeto cas) + added fix for seca2 monthly changing fakechid 
+		if((curpid->CHID < 0x10000) && !((chid == curpid->CHID) || ((curpid->CAID >> 8 == 0x01) && (chid&0xF0FF) == (curpid->CHID&0xF0FF)) ) )  
 		{
 			if(curpid->CAID >> 8 == 0x06)
 			{
@@ -3885,7 +3869,7 @@ static void *dvbapi_main_local(void *cli)
 								{
 									int32_t demux_index = mbuf[4];
 									int32_t filter_num = mbuf[5];
-									int32_t data_len = ((mbuf[7] << 8) + mbuf[8]) & 0x0FFF;
+									int32_t data_len = b2i(2, mbuf+7)&0x0FFF;
 									uint32_t chunksize = 6 + 3 + data_len;
 
 									chunks_processed++;
@@ -4489,7 +4473,7 @@ int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er)
 		cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d Filter #%d set ecmtable to ODD+EVEN (CAID %04X PROVID %06X FD %d)", demux_index, n + 1,
 					  curpid->CAID, curpid->PROVID, fd);
 	}
-	uint32_t offset = 0;
+	uint32_t offset = 0, extramask = 0xFF;
 	uint32_t pid = demux[demux_index].demux_fd[n].pidindex;
 
 	struct s_dvbapi_priority *forceentry = dvbapi_check_prio_match(demux_index, pid, 'p');
@@ -4502,6 +4486,7 @@ int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er)
 		{
 		case 0x01:
 			offset = 7;
+			extramask = 0xF0;
 			break; // seca
 		case 0x05:
 			offset = 8;
@@ -4529,7 +4514,7 @@ int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er)
 	if(offset && irdetomatch)  // we have a cas with chid or unique part in checked ecm
 	{
 		i2b_buf(2, curpid->CHID, filter + (offset - 2));
-		mask[(offset - 2)] = 0xFF;
+		mask[(offset - 2)] = 0xFF&extramask; // additional mask seca2 chid can be FC10 or FD10 varies each month so only apply F?10
 		mask[(offset - 1)] = 0xFF;
 		cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d Filter #%d set chid to %04X on fd %d", demux_index, n + 1, curpid->CHID, fd);
 	}
