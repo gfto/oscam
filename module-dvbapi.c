@@ -2473,7 +2473,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 #define LIST_ADD 0x04    //*CA application should append an 'ADD' CAPMT object to the current list and start working with the updated list
 #define LIST_UPDATE 0x05 //*CA application should replace an entry in the list with an 'UPDATE' CAPMT object, and start working with the updated list
 
-#if defined WITH_COOLAPI || defined DVBAPI_SAMYGO
+#ifdef WITH_COOLAPI
 	int32_t ca_pmt_list_management = LIST_ONLY;
 #else
 	int32_t ca_pmt_list_management = buffer[0];
@@ -2519,7 +2519,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 			demux_id = i;
 
-#if defined WITH_STAPI || defined WITH_COOLAPI || defined WITH_MCA || defined WITH_AZBOX || defined DVBAPI_SAMYGO
+#if defined WITH_STAPI || defined WITH_COOLAPI || defined WITH_MCA || defined WITH_AZBOX
 			dvbapi_stop_descrambling(i); // stop descrambling for all boxes except dvbapi based boxes
 #else
 			cs_log("[DVBAPI] Demuxer #%d continue decoding of SRVID %04X", i, demux[i].program_number);
@@ -2767,7 +2767,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		return demux_id; 
 	}
 
-#if !defined WITH_STAPI && !defined WITH_COOLAPI && !defined WITH_MCA && !defined WITH_AZBOX && !defined DVBAPI_SAMYGO
+#if !defined WITH_STAPI && !defined WITH_COOLAPI && !defined WITH_MCA && !defined WITH_AZBOX
 	if (running) disable_unused_streampids(demux_id); // disable all streampids not in use anymore
 #endif
 	if(running == 0)   // only start demuxer if it wasnt running
