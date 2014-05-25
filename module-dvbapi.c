@@ -2795,15 +2795,11 @@ void dvbapi_handlesockmsg(unsigned char *buffer, uint32_t len, int32_t connfd)
 		memcpy(dest, "\x03\xFF\xFF\x00\x00\x13\x00", 7); // standard pmt header x03=list_only
 		memcpy(dest + 7, buffer + 12, length - 7); // copy samygo channel pmt info to right position
 		
-		uint32_t samygo_program_info_length = b2i(2, buffer + 10)&0xFFF; // offset end of program_info in PMT
-		if (samygo_program_info_length > 12) // fta = 0, better not substract the header we never want negative lengths! 
-		{
-			samygo_program_info_length -=12; // substracting samygo old pmt header size gives us the total length of the program_info
-		}
-
+		uint32_t samygo_program_info_length = b2i(2, buffer + 10)&0xFFF; // length of program_info in PMT
+		samygo_program_info_length +=7; // add new pmt header size
 		dest[1] = buffer[3]; //channel srvid highbyte
 		dest[2] = buffer[4]; //channel srvid lowbyte
-		i2b_buf(2, (samygo_program_info_length)&0xFFF, dest + 4); // put program_info_length
+		i2b_buf(2, (samygo_program_info_length-6)&0xFFF, dest + 4); // put program_info_length + standard fixup of 6 (since first streampid searched at program_info_length+6)
 		dvbapi_parse_capmt(dest, length, connfd, NULL);
     }
 	free(dest);
