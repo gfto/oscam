@@ -29,6 +29,13 @@ endif
 ifdef USE_SSL
 	override USE_LIBCRYPTO=1
 endif
+# extra add off cardreaders to terminal compile log if libusb and or pcsclite is used
+ifdef USE_LIBUSB
+	SMART = "SMARTREADER"
+endif
+ifdef USE_PCSC
+	PCSC = "PCSCREADER"
+endif
 
 CONF_DIR = /usr/local/etc
 
@@ -325,7 +332,7 @@ all:
 |  Addons   : $(shell ./config.sh --show-enabled addons)\n\
 |  Protocols: $(shell ./config.sh --show-enabled protocols | sed -e 's|MODULE_||g')\n\
 |  Readers  : $(shell ./config.sh --show-enabled readers | sed -e 's|READER_||g')\n\
-|  CardRdrs : $(shell ./config.sh --show-enabled card_readers | sed -e 's|CARDREADER_||g')\n\
+|  CardRdrs : $(shell ./config.sh --show-enabled card_readers | sed -e 's|CARDREADER_||g') $(SMART) $(PCSC)\n\
 |  Compiler : $(shell $(CC) --version 2>/dev/null | head -n 1)\n\
 |  Binary   : $(OSCAM_BIN)\n\
 +-------------------------------------------------------------------------------\n"
