@@ -461,7 +461,7 @@ struct ecm_request_t *check_same_ecm(ECM_REQUEST *er)
 
 		if(ecm == er) { continue; }
 
-		if(er->caid != ecm->caid || memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
+		if(memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
 			{ continue; }
 
 		if(!er->readers || !ecm->readers || er->readers != ecm->readers)
@@ -701,7 +701,7 @@ ECM_REQUEST *get_ecmtask(void)
 
 void cleanup_ecmtasks(struct s_client *cl)
 {
-	if(cl && !cl->account->usr) { return; }  //not for anonymous users!
+	if(cl && cl->account && !cl->account->usr[0]) { return; }  //not for anonymous users!
 
 	ECM_REQUEST *ecm;
 

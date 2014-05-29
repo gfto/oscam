@@ -1005,7 +1005,7 @@ void reader_get_ecm(struct s_reader *reader, ECM_REQUEST *er)
 		if(!ecm->matching_rdr || ecm == er || ecm->rc == E_99) { continue; }
 
 		//match same ecm
-		if(er->caid == ecm->caid && !memcmp(er->ecmd5, ecm->ecmd5, CS_ECMSTORESIZE))
+		if(!memcmp(er->ecmd5, ecm->ecmd5, CS_ECMSTORESIZE))
 		{
 			//check if ask this reader
 			ea = get_ecm_answer(reader, ecm);
