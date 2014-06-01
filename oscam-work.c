@@ -454,7 +454,7 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 			{ NULLFREE(ptr); }
 		// Thread down???
 		pthread_mutex_lock(&cl->thread_lock);
-		if(cl->thread_active)
+		if(cl && !cl->kill && cl->thread && cl->thread_active)
 		{
 			// Just test for invalid thread id:
 			if(pthread_detach(cl->thread) == ESRCH)
@@ -485,7 +485,7 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 	cs_ftime(&data->time);
 
 	pthread_mutex_lock(&cl->thread_lock);
-	if(cl->thread_active)
+	if(cl && !cl->kill && cl->thread_active)
 	{
 		if(!cl->joblist)
 			{ cl->joblist = ll_create("joblist"); }
