@@ -4124,7 +4124,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			continue;
 		}
 
-		if(status == 0 || status == 3 || status == 4)   // 0=matching ecm hash, 2=no filter, 3=table reset, 4=cache-ex response
+		if((status == 0 || status == 3 || status == 4) && er->rc < E_NOTFOUND)   // 0=matching ecm hash, 2=no filter, 3=table reset, 4=cache-ex response
 		{
 			if(memcmp(er->cw, demux[i].lastcw[0], 8) == 0 && memcmp(er->cw + 8, demux[i].lastcw[1], 8) == 0)    // check for matching controlword
 			{
