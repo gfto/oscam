@@ -37,7 +37,8 @@
 #define BOXTYPE_COOLSTREAM  9
 #define BOXTYPE_NEUMO   10
 #define BOXTYPE_PC      11
-#define BOXTYPES        11
+#define BOXTYPE_PC_NODMX    12
+#define BOXTYPES        12
 #define DMXMD5HASHSIZE  16  // use MD5() 
 #define REMOVED_STREAMPID_LASTINDEX 2
 #define REMOVED_STREAMPID_INDEX 1

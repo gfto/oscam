@@ -87,7 +87,7 @@ DEMUXTYPE demux[MAX_DEMUX];
 struct s_dvbapi_priority *dvbapi_priority;
 struct s_client *dvbapi_client;
 
-const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "dm7000", "qboxhd", "coolstream", "neumo", "pc" };
+const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "dm7000", "qboxhd", "coolstream", "neumo", "pc", "pc-nodmx" };
 
 static const struct box_devices devices[BOX_COUNT] =
 {
@@ -448,7 +448,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 	switch(api)
 	{
 	case DVBAPI_3:
-		if (cfg.dvbapi_listenport)
+		if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
 			ret = demux[demux_id].demux_fd[n].fd = DUMMY_FD;
 		else
 			ret = demux[demux_id].demux_fd[n].fd = dvbapi_open_device(0, demux[demux_id].demux_index, demux[demux_id].adapter_index);
@@ -486,7 +486,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 		{
 			memcpy(sFP2.filter.filter, filt, 16);
 			memcpy(sFP2.filter.mask, mask, 16);
-			if (cfg.dvbapi_listenport)
+			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
 				ret = dvbapi_net_filter_request(demux_id, n, &sFP2);
 			else
 				ret = ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER, &sFP2);
@@ -565,6 +565,12 @@ static int32_t dvbapi_detect_api(void)
 		cs_log("[DVBAPI] Using TCP listen socket, API forced to DVBAPIv3 (%d), userconfig boxtype: %d", selected_api, cfg.dvbapi_boxtype);
 		return 1;
 	}
+	if (cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) {
+		selected_api = DVBAPI_3;
+		selected_box = 1;
+		cs_log("[DVBAPI] Using %s listen socket, API forced to DVBAPIv3 (%d), userconfig boxtype: %d", devices[selected_box].cam_socket_path, selected_api, cfg.dvbapi_boxtype);
+		return 1;
+	}
 	int32_t i = 0, n = 0, devnum = -1, dmx_fd = 0, boxnum = sizeof(devices) / sizeof(struct box_devices);
 	char device_path[128], device_path2[128];
 
@@ -634,6 +640,9 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter)
 	int32_t ca_offset = 0;
 	char device_path[128], device_path2[128];
 
+	if(cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
+		return DUMMY_FD;
+	
 	if(type == 0)
 	{
 		snprintf(device_path2, sizeof(device_path2), devices[selected_box].demux_device, num);
@@ -771,7 +780,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 		switch(selected_api)
 		{
 		case DVBAPI_3:
-			if (cfg.dvbapi_listenport)
+			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
 				retfilter = dvbapi_net_filter_request(demux_index, num, NULL);
 			else
 				retfilter = ioctl(fd, DMX_STOP); // for modern dvbapi boxes, they do give filter status back to us
@@ -809,7 +818,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 			cs_log("ERROR: Demuxer #%d could not stop Filter #%d (fd:%d api:%d errno=%d %s)", demux_index, num + 1, fd, selected_api, errno, strerror(errno));
 		}
 #ifndef WITH_COOLAPI // no fd close for coolapi and stapi, all others do close fd!
-		if (!cfg.dvbapi_listenport)
+		if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
 		{
 			retfd = close(fd);
 			if(errno == 9) { retfd = 0; }  // no error on bad file descriptor
@@ -1359,7 +1368,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 					if(action == REMOVED_STREAMPID_LASTINDEX) idx = -1; // removed last index of streampid -> disable pid with -1
 					ca_pid2.index = idx;
 
-					if(cfg.dvbapi_boxtype == BOXTYPE_PC)
+					if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
 					{
 						// preparing packet
 						int32_t request = CA_SET_PID;
@@ -1369,7 +1378,8 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 						memcpy(&packet[1+sizeof(request)], &ca_pid2, sizeof(ca_pid2));
 
 						// sending data to UDP (deprecated, will be removed in the future)
-						send(currentfd, &packet[1], sizeof(packet)-1, 0);
+						if (cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
+						  send(currentfd, &packet[1], sizeof(packet)-1, 0);
 						cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d %s stream #%d pid=0x%04x index=%d on ca%d", demux_id,
 							(enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i);
 						// sending data back to socket
@@ -2371,6 +2381,7 @@ void request_cw(struct s_client *client, ECM_REQUEST *er, int32_t demux_id, uint
 		return;
 	}
 #endif
+	cs_debug_mask(D_DVBAPI, "[DVBAPI] GET_CW");
 	get_cw(client, er);
 #if defined WITH_AZBOX || defined WITH_MCA
 	if(delayed_ecm_check) {}
@@ -2451,7 +2462,7 @@ static void getDemuxOptions(int32_t demux_id, unsigned char *buffer, uint16_t *c
 		*ca_mask = (1 << *adapter_index); // use adapter_index as ca_mask (used as index for ca_fd[] array)
 	}
 
-	if(cfg.dvbapi_boxtype == BOXTYPE_PC && buffer[7] == 0x82 && buffer[8] == 0x02)
+	if((cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) && buffer[7] == 0x82 && buffer[8] == 0x02)
 	{
 		*demux_index = buffer[9]; // it is always 0 but you never know
 		*adapter_index = buffer[10]; // adapter index can be 0,1,2
@@ -2951,7 +2962,7 @@ void event_handler(int32_t UNUSED(signal))
 
 	pthread_mutex_lock(&event_handler_lock);
 
-	if(cfg.dvbapi_boxtype == BOXTYPE_PC)
+	if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
 		{ pausecam = 0; }
 	else
 	{
@@ -3623,7 +3634,7 @@ static void *dvbapi_main_local(void *cli)
 			uint32_t ecmcounter = 0, emmcounter = 0;
 			for(g = 0; g < MAX_FILTER; g++)
 			{
-				if(!cfg.dvbapi_listenport && demux[i].demux_fd[g].fd > 0 && selected_api != STAPI && selected_api != COOLAPI)
+				if(!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX && demux[i].demux_fd[g].fd > 0 && selected_api != STAPI && selected_api != COOLAPI)
 				{
 					pfd2[pfdcount].fd = demux[i].demux_fd[g].fd;
 					pfd2[pfdcount].events = (POLLIN | POLLPRI);
@@ -3847,7 +3858,7 @@ static void *dvbapi_main_local(void *cli)
 							len = recv(connfd, mbuf + pmtlen, sizeof(mbuf) - pmtlen, MSG_DONTWAIT);
 							if (len > 0)
 								pmtlen += len;
-							if (cfg.dvbapi_listenport && len == 0) {
+							if ((cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) && len == 0) {
 								//client disconnects, stop all assigned decoding
 								for (j = 0; j < MAX_DEMUX; j++)
 									if (demux[j].socket_fd == connfd)
@@ -3869,6 +3880,7 @@ static void *dvbapi_main_local(void *cli)
 									// if we read more data then processed, move it to beginning
 									if (pmtlen > chunksize)
 										memmove(mbuf, mbuf + chunksize, pmtlen - chunksize);
+									
 									pmtlen -= chunksize;
 									continue;
 								}
@@ -4028,7 +4040,7 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid)
 							{ continue; } // proceed next stream
 					}
 
-					if(cfg.dvbapi_boxtype == BOXTYPE_PC)
+					if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
 					{
 						// preparing packet
 						int32_t request = CA_SET_DESCR;
@@ -4578,7 +4590,7 @@ int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t
 		{
 			memcpy(sFP2.filter.filter, filter, 16);
 			memcpy(sFP2.filter.mask, mask, 16);
-			if (cfg.dvbapi_listenport)
+			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
 				ret = dvbapi_net_filter_request(demux_index, num, &sFP2);
 			else
 				ret = ioctl(fd, DMX_SET_FILTER, &sFP2);
