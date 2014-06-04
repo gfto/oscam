@@ -18,6 +18,7 @@
 #include "oscam-garbage.h"
 #include "oscam-files.h"
 
+
 #define FILE_GBOX_VERSION       "gbox.ver"
 #define FILE_SHARED_CARDS_INFO  "share.info"
 #define FILE_ATTACK_INFO        "attack.txt"
