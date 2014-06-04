@@ -89,6 +89,7 @@ struct gbox_ecm_request_ext
     uchar           gbox_routing_info[GBOX_MAXHOPS];  //support max 10 hops
 };
 
+char *get_gbox_tmp_fname(char *fext);
 uint16_t gbox_get_local_gbox_id(void);
 uint32_t gbox_get_local_gbox_password(void);
 void gbox_send(struct s_client *cli, uchar *buf, int32_t l);

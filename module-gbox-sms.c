@@ -11,10 +11,12 @@
 
 static uint32_t poll_gsms_data (uint16_t *boxid, uint8_t *num, char *text)
 {
-	FILE *fhandle = fopen(FILE_GSMS_TXT, "r");
+	char *fext= FILE_GSMS_TXT; 
+	char *fname = get_gbox_tmp_fname(fext); 
+	FILE *fhandle = fopen(fname, "r");
 	if(!fhandle)
 		{
-		cs_log("Couldn't open %s: %s", FILE_GSMS_TXT, strerror(errno));
+		cs_log("Couldn't open %s: %s", fname, strerror(errno));
 		return -1;
 		}
 	uint32_t length1;
@@ -27,9 +29,9 @@ static uint32_t poll_gsms_data (uint16_t *boxid, uint8_t *num, char *text)
 	fseek (fhandle,0L,SEEK_SET);
 	if (length1 < 13)
 		{
-		cs_log("GSMS: min msg char in %s = 6, actual = %d",FILE_GSMS_TXT, length1-7);
+		cs_log("GSMS: min msg char in %s = 6, actual = %d",fname, length1-7);
 		fclose(fhandle);
-		unlink(FILE_GSMS_TXT);
+		unlink(fname);
 		return -1;
 		}
 	if(fgets(buffer,140,fhandle) != NULL)
@@ -38,7 +40,7 @@ static uint32_t poll_gsms_data (uint16_t *boxid, uint8_t *num, char *text)
 		*num = atoi (tail);
 		}
 	fclose(fhandle);
-	unlink(FILE_GSMS_TXT);
+	unlink(fname);
 	if (length1 > (127+7))
 		{
 		length = 127+7;
@@ -47,23 +49,25 @@ static uint32_t poll_gsms_data (uint16_t *boxid, uint8_t *num, char *text)
 		{
 		length = length1;
 		}
-	cs_debug_mask(D_READER, "GSMS: total msg length taken from %s = %d, limitted to %d",FILE_GSMS_TXT,length1, length);
+	cs_debug_mask(D_READER, "GSMS: total msg length taken from %s = %d, limitted to %d",fname, length1, length);
 	strncpy(text, &(buffer[7]),length-7);
 	return 0;
 }
 static void write_gsms_to_osd_file(struct s_client *cli, unsigned char *gsms)
 {
-	if (file_exists(FILE_OSD_MSG))
+	char *fext= FILE_OSD_MSG; 
+	char *fname = get_gbox_tmp_fname(fext); 
+	if (file_exists(fname))
 	{
 	char gsms_buf[150];
 	memset(gsms_buf, 0, sizeof(gsms_buf));
-	snprintf(gsms_buf, sizeof(gsms_buf), "%s %s:%s %s", FILE_OSD_MSG, username(cli), cli->reader->device, gsms);
-	cs_debug_mask(D_READER, "GSMS: found OSD 'driver' %s - write gsms to OSD", FILE_OSD_MSG);
+	snprintf(gsms_buf, sizeof(gsms_buf), "%s %s:%s %s", fname, username(cli), cli->reader->device, gsms);
+	cs_debug_mask(D_READER, "GSMS: found OSD 'driver' %s - write gsms to OSD", fname);
 	char *cmd = gsms_buf;
               FILE *p;
               if ((p = popen(cmd, "w")) == NULL)
 		{	
-		cs_log("Error %s",FILE_OSD_MSG);
+		cs_log("Error %s",fname);
 		return;
 		}
               pclose(p);
@@ -77,11 +81,12 @@ void write_gsms_ack (struct s_client *cli, uint8_t gsms_prot)
 	time_t walltime = cs_time();
 	cs_ctime_r(&walltime, tsbuf);
 	struct gbox_peer *peer = cli->gbox;
-
-	FILE *fhandle = fopen(FILE_GSMS_ACK, "a+");
+	char *fext= FILE_GSMS_ACK; 
+	char *fname = get_gbox_tmp_fname(fext); 
+	FILE *fhandle = fopen(fname, "a+");
 	if(!fhandle)
 	{
-		cs_log("Couldn't open %s: %s", FILE_GSMS_ACK, strerror(errno));
+		cs_log("Couldn't open %s: %s", fname, strerror(errno));
 		return;
 	}
 	fprintf(fhandle, "Peer %04X (%s) confirmed receipt of GSMS_%d on %s",peer->gbox.id, cli->reader->device, gsms_prot, tsbuf);
@@ -95,11 +100,12 @@ static void write_gsms_nack (struct s_client *cl, uint8_t gsms_prot, uint8_t inf
 	time_t walltime = cs_time();
 	cs_ctime_r(&walltime, tsbuf);
 	struct gbox_peer *peer = cl->gbox;
-
-	FILE *fhandle = fopen(FILE_GSMS_NACK, "a+");
+	char *fext= FILE_GSMS_NACK; 
+	char *fname = get_gbox_tmp_fname(fext); 
+	FILE *fhandle = fopen(fname, "a+");
 	if(!fhandle)
 	{
-		cs_log("Couldn't open %s: %s", FILE_GSMS_NACK, strerror(errno));
+		cs_log("Couldn't open %s: %s", fname, strerror(errno));
 		return;
 	}
 	if(inf)
@@ -121,11 +127,12 @@ void write_gsms_msg (struct s_client *cli, uchar *gsms, uint16_t type, uint16_t 
 	cs_ctime_r(&walltime, tsbuf);
 	struct gbox_peer *peer = cli->gbox;
 	struct s_reader *rdr = cli->reader;
-
-	FILE *fhandle = fopen(FILE_GSMS_MSG, "a+");
+	char *fext= FILE_GSMS_MSG; 
+	char *fname = get_gbox_tmp_fname(fext); 
+	FILE *fhandle = fopen(fname, "a+");
 	if(!fhandle)
 	{
-		cs_log("Couldn't open %s: %s", FILE_GSMS_MSG, strerror(errno));
+		cs_log("Couldn't open %s: %s", fname, strerror(errno));
 		return;
 	}
 	if(type == 0x30)
@@ -197,20 +204,21 @@ void gbox_init_send_gsms(void)
 	uint8_t msg_type = 0;
 	char text[150];
 	memset(text, 0, sizeof(text));
-
+	char *fext= FILE_GSMS_TXT; 
+	char *fname = get_gbox_tmp_fname(fext); 
 	if(cfg.gsms_dis)
 	{
-	unlink(FILE_GSMS_TXT);
+	unlink(fname);
 	gsms_unavail();
 	return;
 	}
 	if (poll_gsms_data( &boxid, &num, text))
 	{
-	cs_log("GSMS: ERROR polling file %s", FILE_GSMS_TXT);
+	cs_log("GSMS: ERROR polling file %s", fname);
 	return;
 	}
 	int8_t gsms_len = strlen(text);
-	cs_debug_mask(D_READER,"GSMS: got from %s: box_ID = %04X  num = %d  gsms_length = %d  txt = %s",FILE_GSMS_TXT, boxid, num, gsms_len, text);
+	cs_debug_mask(D_READER,"GSMS: got from %s: box_ID = %04X  num = %d  gsms_length = %d  txt = %s",fname, boxid, num, gsms_len, text);
 
 	switch(num)
 	{

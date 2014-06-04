@@ -1,19 +1,6 @@
 #include "globals.h"
 #ifdef MODULE_GBOX
-/*
-// The following headers are used in parsing mg-encrypted parameter
-#if defined(__APPLE__) || defined(__FreeBSD__)
-#include <net/if_dl.h>
-#include <ifaddrs.h>
-#elif defined(__SOLARIS__)
-#include <net/if.h>
-#include <net/if_arp.h>
-#include <sys/sockio.h>
-#else
-#include <net/if.h>
 
-#endif
-*/
 #include "module-gbox.h"
 #include "module-gbox-helper.h"
 #include "module-gbox-sms.h"
@@ -31,21 +18,12 @@
 #include "oscam-garbage.h"
 #include "oscam-files.h"
 
-#if defined(__CYGWIN__) 
-#define FILE_GBOX_VERSION       "C:/tmp/gbx.ver"
-#define FILE_SHARED_CARDS_INFO  "C:/tmp/gbx_card.info"
-#define FILE_ATTACK_INFO        "C:/tmp/gbx_attack.txt"
-#define FILE_GBOX_PEER_ONL  	"C:/tmp/gbx_peer.onl"
-#define FILE_STATS	  	"C:/tmp/gbx_stats.info"
-#define FILE_GOODNIGHT_OSD	"C:/tmp/goodnight.osd"
-#else
-#define FILE_GBOX_VERSION       "/tmp/gbx.ver"
-#define FILE_SHARED_CARDS_INFO  "/tmp/gbx_card.info"
-#define FILE_ATTACK_INFO        "/tmp/gbx_attack.txt"
-#define FILE_GBOX_PEER_ONL  	"/tmp/gbx_peer.onl"
-#define FILE_STATS	  	"/tmp/gbx_stats.info"
-#define FILE_GOODNIGHT_OSD	"/tmp/goodnight.osd"
-#endif
+#define FILE_GBOX_VERSION       "gbox.ver"
+#define FILE_SHARED_CARDS_INFO  "share.info"
+#define FILE_ATTACK_INFO        "attack.txt"
+#define FILE_GBOX_PEER_ONL  	"share.onl"
+#define FILE_STATS	  	"stats.info"
+#define FILE_GOODNIGHT_OSD	"goodnight.osd"
 
 #define GBOX_STAT_HELLOL	0
 #define GBOX_STAT_HELLOS	1
@@ -81,6 +59,22 @@ static uint8_t gbox_compare_pw(uchar *my_pw, uchar *rec_pw);
 static uint16_t gbox_convert_password_to_id(uchar *password);
 uint32_t gbox_get_ecmchecksum(ECM_REQUEST *er);
 static void	init_local_gbox(void);
+
+char *get_gbox_tmp_fname(char *fext)
+{
+	static char gbox_tmpfile_buf[64] = { 0 };	
+	const char *slash = "/";
+	if(!cfg.gbox_tmp_dir)
+	{
+		snprintf(gbox_tmpfile_buf, sizeof(gbox_tmpfile_buf), "%s%s%s",get_tmp_dir(), slash, fext);
+	}
+	else
+	{ 
+		if(cfg.gbox_tmp_dir[strlen(cfg.gbox_tmp_dir) - 1] == '/') { slash = ""; }
+		snprintf(gbox_tmpfile_buf, sizeof(gbox_tmpfile_buf), "%s%s%s", cfg.gbox_tmp_dir, slash, fext);
+	}
+	return gbox_tmpfile_buf; 
+}
 
 uint16_t gbox_get_local_gbox_id(void)
 {
@@ -140,17 +134,19 @@ unsigned char *GboxCPU( unsigned char a ) {
 
 static void write_goodnight_to_osd_file(struct s_client *cli)
 {
-	if (file_exists(FILE_GOODNIGHT_OSD))
+	char *fext= FILE_GOODNIGHT_OSD; 
+	char *fname = get_gbox_tmp_fname(fext); 
+	if (file_exists(fname))
 	{
 	char buf[50];
 	memset(buf, 0, sizeof(buf));
-	snprintf(buf, sizeof(buf), "%s %s %s", FILE_GOODNIGHT_OSD, username(cli), cli->reader->device);
-	cs_debug_mask(D_READER, "found file %s - write goodnight info from %s %s to OSD", FILE_GOODNIGHT_OSD, username(cli),cli->reader->device);
+	snprintf(buf, sizeof(buf), "%s %s %s", fname, username(cli), cli->reader->device);
+	cs_debug_mask(D_READER, "found file %s - write goodnight info from %s %s to OSD", fname, username(cli),cli->reader->device);
 	char *cmd = buf;
               FILE *p;
               if ((p = popen(cmd, "w")) == NULL)
 		{	
-			cs_log("Error %s",FILE_GOODNIGHT_OSD);
+			cs_log("Error %s",fname);
 			return;
 		}
               pclose(p);
@@ -160,10 +156,12 @@ static void write_goodnight_to_osd_file(struct s_client *cli)
 
 void gbox_write_peer_onl(void)
 {
-	FILE *fhandle = fopen(FILE_GBOX_PEER_ONL, "w");
+	char *fext= FILE_GBOX_PEER_ONL; 
+	char *fname = get_gbox_tmp_fname(fext); 
+	FILE *fhandle = fopen(fname, "w");
 	if(!fhandle)
 	{
-		cs_log("Couldn't open %s: %s", FILE_GBOX_PEER_ONL, strerror(errno));
+		cs_log("Couldn't open %s: %s", fname, strerror(errno));
 		return;
 	}
 	struct s_client *cl;
@@ -184,10 +182,13 @@ void gbox_write_peer_onl(void)
 
 void gbox_write_version(void)
 {
-	FILE *fhandle = fopen(FILE_GBOX_VERSION, "w");
+	char *fext= FILE_GBOX_VERSION; 
+	char *fname = get_gbox_tmp_fname(fext); 
+
+	FILE *fhandle = fopen(fname, "w");
 	if(!fhandle)
 	{
-		cs_log("Couldn't open %s: %s", FILE_GBOX_VERSION, strerror(errno));
+		cs_log("Couldn't open %s: %s", fname, strerror(errno));
 		return;
 	}
 	fprintf(fhandle, "%02X.%02X\n", LOCAL_GBOX_MAJOR_VERSION, gbox_get_my_vers());
@@ -198,12 +199,13 @@ void gbox_write_shared_cards_info(void)
 {
 	int32_t card_count = 0;
 	int32_t i = 0;
-
+	char *fext= FILE_SHARED_CARDS_INFO; 
+	char *fname = get_gbox_tmp_fname(fext); 
 	FILE *fhandle;
-	fhandle = fopen(FILE_SHARED_CARDS_INFO, "w");
+	fhandle = fopen(fname, "w");
 	if(!fhandle)
 	{
-		cs_log("Couldn't open %s: %s", FILE_SHARED_CARDS_INFO, strerror(errno));
+		cs_log("Couldn't open %s: %s", fname, strerror(errno));
 		return;
 	}
 
@@ -255,12 +257,13 @@ void gbox_write_stats(void)
 	int32_t card_count = 0;
 	int32_t i = 0;
 	struct gbox_srvid *srvid = NULL;
-
+	char *fext= FILE_STATS; 
+	char *fname = get_gbox_tmp_fname(fext); 
 	FILE *fhandle;
-	fhandle = fopen(FILE_STATS, "w");
+	fhandle = fopen(fname, "w");
 	if(!fhandle)
 	{
-		cs_log("Couldn't open %s: %s", FILE_STATS, strerror(errno));
+		cs_log("Couldn't open %s: %s", fname, strerror(errno));
 		return;
 	}
 

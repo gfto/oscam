@@ -857,7 +857,8 @@ static const struct config_list gbox_opts[] =
 	DEF_OPT_SSTR("my_vers"		, OFS(gbox_my_vers),		"25", SIZEOF(gbox_my_vers)),
 	DEF_OPT_SSTR("my_cpu_api"	, OFS(gbox_my_cpu_api),		"40", SIZEOF(gbox_my_cpu_api)),
 	DEF_OPT_INT8("gsms_disable"	, OFS(gsms_dis),		0),
-	DEF_OPT_INT8("ccc_reshare"	, OFS(ccc_reshare),		0),			
+	DEF_OPT_INT8("ccc_reshare"	, OFS(ccc_reshare),		0),
+	DEF_OPT_STR("tmp_dir"     	, OFS(gbox_tmp_dir), 	        NULL),			
 	DEF_LAST_OPT
 };
 #else
