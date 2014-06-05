@@ -3860,9 +3860,13 @@ static void *dvbapi_main_local(void *cli)
 								pmtlen += len;
 							if ((cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) && len == 0) {
 								//client disconnects, stop all assigned decoding
+								cs_debug_mask(D_DVBAPI, "Socket %d reported connection close", connfd);
 								for (j = 0; j < MAX_DEMUX; j++)
-									if (demux[j].socket_fd == connfd)
+									if (demux[j].socket_fd == connfd) {
 										dvbapi_stop_descrambling(j);
+										close(connfd);
+										connfd = -1;
+									}
 							}
 							if (pmtlen > 0) {
 								// check and try to process complete PMT objects and filter data
