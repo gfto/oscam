@@ -33,8 +33,9 @@
 #define NUM_TXFERS 2
 
 static CS_MUTEX_LOCK sr_lock;
-// to debug rdrtype in logs instead off the enumarated value
+// to debug rdrtype and ftdi chip type string value in logs instead off the enumarated value
 static const char *const rdrtype_str[6] = {"SR","Infinity", "SRv2", "TripleP1", "TripleP2", "TripleP3"};
+static const char *const type_str[7] = { "TYPE_AM", "TYPE_BM", "TYPE_2232C", "TYPE_R", "TYPE_2232H", "TYPE_4232H", "TYPE_232H"}; 
 
 struct sr_data
 {
@@ -1060,14 +1061,11 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 
 	// Try to guess chip type
 	// Bug in the BM type chips: bcdDevice is 0x200 for serial == 0
-	if(usbdesc.bcdDevice == 0x400 || (usbdesc.bcdDevice == 0x200
-									  && usbdesc.iSerialNumber == 0))
+	if(usbdesc.bcdDevice == 0x400 || (usbdesc.bcdDevice == 0x200 && usbdesc.iSerialNumber == 0))
 		{ crdr_data->type = TYPE_BM; }
 	else if(usbdesc.bcdDevice == 0x200)
 		{ crdr_data->type = TYPE_AM; }
-	else if((usbdesc.bcdDevice == 0x500) && (usbdesc.idProduct == 0x6011))
-		{ crdr_data->type = TYPE_4232H; }
-	else if((usbdesc.bcdDevice == 0x500) && (usbdesc.idProduct != 0x6011))
+	else if(usbdesc.bcdDevice == 0x500)
 		{ crdr_data->type = TYPE_2232C; }
 	else if(usbdesc.bcdDevice == 0x600)
 		{ crdr_data->type = TYPE_R; }
@@ -1078,8 +1076,8 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 
 	// Determine maximum packet size
 	crdr_data->max_packet_size = smartreader_determine_max_packet_size(reader);
-//	rdr_log(reader,"reader type is %u", crdr_data->type);
-//	rdr_log(reader,"maw packet size is %u", crdr_data->max_packet_size);
+	rdr_log(reader,"FTDI CHIP %s", type_str[crdr_data->type]);
+	rdr_log(reader,"max packet size is %u", crdr_data->max_packet_size);
 
 	if(smartreader_set_baudrate(reader, 9600) != 0)
 	{
@@ -1567,7 +1565,7 @@ static int32_t SR_Receive(struct s_reader *reader, unsigned char *buffer, uint32
 	return OK;
 }
 
-int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, unsigned char N, unsigned char T, uint16_t  convention)
+int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, uint32_t N, unsigned char T, uint16_t  convention)
 {
 	// smartreader supports 3.20, 3.43, 3.69, 4.00, 4.36, 4.80, 5.34, 6.00, 6.86, 8.00, 9.61, 12.0, 16.0 MHz
 	struct sr_data *crdr_data = reader->crdr_data;
@@ -1703,7 +1701,7 @@ int32_t sr_write_settings(struct s_reader *reader,
 						  unsigned char Di,
 						  unsigned char UNUSED(Ni))
 {
-	SR_WriteSettings(reader, Fi, Di, (unsigned char)EGT, (unsigned char)reader->protocol_type, reader->convention);
+	SR_WriteSettings(reader, Fi, Di, EGT, (unsigned char)reader->protocol_type, reader->convention);
 	return OK;
 }
 
