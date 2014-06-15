@@ -82,7 +82,7 @@ struct sr_data
 
 static int32_t init_count;
 
-static int32_t smart_read(struct s_reader *reader, unsigned char *buff, uint32_t  size, int32_t timeout_ms)
+static int32_t smart_read(struct s_reader *reader, unsigned char *buff, uint32_t  size, double timeout_ms)
 {
 	struct sr_data *crdr_data = reader->crdr_data;
 	int32_t ret = 0;
@@ -119,6 +119,7 @@ static int32_t smart_read(struct s_reader *reader, unsigned char *buff, uint32_t
 	} while(total_read < size && comp_timeb(&now, &start) < timeout_ms);
 
 	rdr_ddump_mask(reader, D_DEVICE, buff, total_read, "SR: Receive:");
+	rdr_debug_mask(reader, D_IFD, " used timeout by smartreader %4.2f ms ", timeout_ms);
 	return total_read;
 }
 
@@ -1438,7 +1439,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 
 
 		//Read the ATR
-		ret = smart_read(reader, data, ATR_MAX_SIZE, 1000);
+		ret = smart_read(reader, data, ATR_MAX_SIZE, (ATR_TIMEOUT/1000));
 		rdr_debug_mask(reader, D_DEVICE, "SR: get ATR ret = %d" , ret);
 		if(ret)
 			{ rdr_ddump_mask(reader, D_DEVICE, data, ATR_MAX_SIZE * 2, "SR:"); }
@@ -1547,16 +1548,13 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 	}
  }
 
-//static int32_t SR_Receive(struct s_reader *reader, unsigned char *buffer, uint32_t size, uint32_t delay, uint32_t timeout_us)   // temporary set back old way
-static int32_t SR_Receive(struct s_reader *reader, unsigned char *buffer, uint32_t size, uint32_t delay, uint32_t timeout)   // temporary set back old way
+static int32_t SR_Receive(struct s_reader *reader, unsigned char *buffer, uint32_t size, uint32_t delay, uint32_t timeout)
 {
 	(void) delay; // delay not used (yet)!
-	(void) timeout; // timeout not used (yet)! removing this did caused a regression temporarely back to old way
 	uint32_t  ret;
 
 	smart_fastpoll(reader, 1);
-//	ret = smart_read(reader, buffer, size, (timeout_us/1000)); // convert timeout to ms precize
-	ret = smart_read(reader, buffer, size, 3000); //keep for the moment deafult timeout new was a regression 
+	ret = smart_read(reader, buffer, size, ((double)timeout/1000)); // convert timeout to ms precize
 	smart_fastpoll(reader, 0);
 	if(ret != size)
 		{ return ERROR; }
@@ -1664,7 +1662,7 @@ static int32_t SR_FastReset_With_ATR(struct s_reader *reader, ATR *atr)
 	smartreader_setdtr_rts(reader, 1, 0);
 
 	//Read the ATR
-	ret = smart_read(reader, data, ATR_MAX_SIZE, 1000);
+	ret = smart_read(reader, data, ATR_MAX_SIZE, (ATR_TIMEOUT/1000));
 
 	// parse atr
 	if(ATR_InitFromArray(atr, data, ret) != ERROR)
