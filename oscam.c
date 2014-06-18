@@ -1480,7 +1480,6 @@ int32_t main(int32_t argc, char *argv[])
 	config_free();
 
 	cs_log("cardserver down");
-	cs_log("waiting two seconds before restart");
 	log_free();
 
 	stop_garbage_collector();
@@ -1490,9 +1489,6 @@ int32_t main(int32_t argc, char *argv[])
 
 	// This prevents the compiler from removing config_mak from the final binary
 	syslog_ident = config_mak;
-
-	// This should prevent the to fast restart off readers on slow hardware
-	cs_sleepms(2000);
 
 	return exit_oscam;
 }
