@@ -640,7 +640,7 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter)
 	int32_t ca_offset = 0;
 	char device_path[128], device_path2[128];
 
-	if(cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
+	if(cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
 		return DUMMY_FD;
 	
 	if(type == 0)
@@ -1437,7 +1437,8 @@ void dvbapi_stop_descrambling(int32_t demux_id)
 	memset(&demux[demux_id], 0 , sizeof(DEMUXTYPE));
 	demux[demux_id].pidindex = -1;
 	demux[demux_id].curindex = -1;
-	unlink(ECMINFO_FILE);
+	if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
+		unlink(ECMINFO_FILE);
 	return;
 }
 
@@ -3839,11 +3840,10 @@ static void *dvbapi_main_local(void *cli)
 								//client disconnects, stop all assigned decoding
 								cs_debug_mask(D_DVBAPI, "Socket %d reported connection close", connfd);
 								for (j = 0; j < MAX_DEMUX; j++)
-									if (demux[j].socket_fd == connfd) {
+									if (demux[j].socket_fd == connfd)
 										dvbapi_stop_descrambling(j);
-										close(connfd);
-										connfd = -1;
-									}
+								close(connfd);
+								connfd = -1;
 							}
 							if (pmtlen > 0) {
 								// check and try to process complete PMT objects and filter data
@@ -4328,8 +4328,9 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		// reset idle-Time
 		client->last = time((time_t *)0); // ********* TO BE FIXED LATER ON ******
 
-		FILE *ecmtxt;
-		ecmtxt = fopen(ECMINFO_FILE, "w");
+		FILE *ecmtxt = NULL;
+		if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
+			ecmtxt = fopen(ECMINFO_FILE, "w");
 		if(ecmtxt != NULL && er->rc < E_NOTFOUND)
 		{
 			char tmp[25];
@@ -4370,9 +4371,6 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			fprintf(ecmtxt, "ecm time: %.3f\n", (float) client->cwlastresptime / 1000);
 			fprintf(ecmtxt, "cw0: %s\n", cs_hexdump(1, demux[i].lastcw[0], 8, tmp, sizeof(tmp)));
 			fprintf(ecmtxt, "cw1: %s\n", cs_hexdump(1, demux[i].lastcw[1], 8, tmp, sizeof(tmp)));
-			int32_t ret = fclose(ecmtxt);
-			if(ret < 0) { cs_log("ERROR: Could not close ecmtxt fd (errno=%d %s)", errno, strerror(errno)); }
-			ecmtxt = NULL;
 		}
 		if(ecmtxt)
 		{
