@@ -1555,10 +1555,10 @@ static int32_t SR_Receive(struct s_reader *reader, unsigned char *buffer, uint32
 
 	smart_fastpoll(reader, 1);
 	// FIXME: The calculated timeout into icc_async.c must be reviewed
-	// Limit the max timeout to two seconds. The calculated timeout in icc_async.c is in many cases to big   
-	double timeout2 = MIN((double)timeout/1000, 2000); // convert timeout to ms precize
+	// Limit the max timeout to 15 seconds. The calculated timeout in icc_async.c is in some cases to big   
+	double timeout2 = MIN((double)timeout/1000, 15000); // convert timeout to ms precize
 	if (timeout2 < (double)timeout/1000)
-	rdr_debug_mask(reader, D_IFD, "the timeout has been limited two 2000 ms as the calculated %4.2f ms is to big", (double)timeout/1000);
+	rdr_debug_mask(reader, D_IFD, "the timeout has been limited two 15000 ms as the calculated %4.2f ms is to big", (double)timeout/1000);
 	ret = smart_read(reader, buffer, size, (double)timeout2);
 	smart_fastpoll(reader, 0);
 	if(ret != size)
