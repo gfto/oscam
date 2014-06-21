@@ -164,6 +164,7 @@ struct s_dvbapi_priority
 	uint16_t mapecmpid;
 	int16_t delay;
 	int8_t force;
+	int8_t pidx;
 #ifdef WITH_STAPI
 	char devname[30];
 	char pmtfile[30];

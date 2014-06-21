@@ -1458,7 +1458,8 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 				|| (p->caid && p->caid != demux[demux_id].ECMpids[pid].CAID)
 				|| (p->provid && p->provid != demux[demux_id].ECMpids[pid].PROVID)
 				|| (p->ecmpid && p->ecmpid != demux[demux_id].ECMpids[pid].ECM_PID)
-				|| (p->srvid && p->srvid != demux[demux_id].program_number))
+				|| (p->srvid && p->srvid != demux[demux_id].program_number)
+				|| (p->pidx && p->pidx-1 != pid))
 			{ continue; }
 		// if found chid and first run apply chid filter, on forced pids always apply!
 		if(p->type == 'p' && p->chid < 0x10000 && (demux[demux_id].ECMpids[pid].checked == 1 || (p && p->force)))
@@ -1620,13 +1621,14 @@ struct s_dvbapi_priority *dvbapi_check_prio_match_emmpid(int32_t demux_id, uint1
 	if(!ecm_pid)
 		{ return NULL; }
 
-	for(p = dvbapi_priority, i = 0; p != NULL; p = p->next, i++)
+	for(p = dvbapi_priority; p != NULL; p = p->next)
 	{
 		if(p->type != type
 				|| (p->caid && p->caid != caid)
 				|| (p->provid && p->provid != provid)
 				|| (p->ecmpid && p->ecmpid != ecm_pid)
 				|| (p->srvid && p->srvid != demux[demux_id].program_number)
+				|| (p->pidx && p->pidx-1 !=i)
 				|| (p->type == 'i' && (p->chid < 0x10000)))
 			{ continue; }
 		return p;
@@ -1638,9 +1640,8 @@ struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidi
 {
 	struct s_dvbapi_priority *p;
 	struct s_ecmpids *ecmpid = &demux[demux_id].ECMpids[pidindex];
-	int32_t i;
 
-	for(p = dvbapi_priority, i = 0; p != NULL; p = p->next, i++)
+	for(p = dvbapi_priority; p != NULL; p = p->next)
 	{
 		if(p->type != type
 				|| (p->caid && p->caid != ecmpid->CAID)
@@ -1648,6 +1649,7 @@ struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidi
 				|| (p->ecmpid && p->ecmpid != ecmpid->ECM_PID)
 				|| (p->srvid && p->srvid != demux[demux_id].program_number)
 				//|| (p->type == 'i' && (p->chid > -1)))  ///????
+				|| (p->pidx && p->pidx-1 != pidindex)
 				|| (p->chid < 0x10000 && p->chid != ecmpid->CHID))
 			{ continue; }
 		return p;
@@ -1840,9 +1842,14 @@ void dvbapi_read_priority(void)
 		entry->ecmpid = ecmpid;
 		entry->chid = chid;
 
-		uint32_t delay = 0, force = 0, mapcaid = 0, mapprovid = 0, mapecmpid = 0;
+		uint32_t delay = 0, force = 0, mapcaid = 0, mapprovid = 0, mapecmpid = 0, pidx = 0;
 		switch(type)
 		{
+		case 'i':
+			ret = sscanf(str1 + 64, "%1d", &pidx);
+			entry->pidx = pidx+1;
+			if(ret < 1) entry->pidx = 0;
+			break;
 		case 'd':
 			sscanf(str1 + 64, "%4d", &delay);
 			entry->delay = delay;
@@ -1852,8 +1859,10 @@ void dvbapi_read_priority(void)
 			if(entry->delay == -1) { entry->delay = 0; }
 			break;
 		case 'p':
-			sscanf(str1 + 64, "%1d", &force);
+			ret = sscanf(str1 + 64, "%1d %1d", &force, &pidx);
 			entry->force = force;
+			entry->pidx = pidx+1;
+			if(ret < 2) pidx = 0;
 			break;
 		case 'm':
 			sscanf(str1 + 64, "%4x:%6x", &mapcaid, &mapprovid);
@@ -2066,6 +2075,8 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 					{ continue; }
 				if(p->srvid && p->srvid != er->srvid)
 					{ continue; }
+				if (p->pidx && p->pidx-1 != n)
+					{ continue; }
 
 				if(p->type == 'i')    // check if ignored by dvbapi
 				{
@@ -2273,7 +2284,8 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 			if(match->provid && match->provid != demux[demux_index].ECMpids[n].PROVID) { continue; }
 			if(match->srvid && match->srvid != demux[demux_index].program_number) { continue; }
 			if(match->ecmpid && match->ecmpid != demux[demux_index].ECMpids[n].ECM_PID) { continue; }
-			if(match->chid && match->chid < 0x10000) { demux[demux_index].ECMpids[n].CHID = match->chid; }
+			if(match->pidx && match->pidx-1 != n) { continue; }
+			if(match->chid < 0x10000) { demux[demux_index].ECMpids[n].CHID = match->chid; }
 			demux[demux_index].ECMpids[n].status = ++highest_prio;
 			cs_debug_mask(D_DVBAPI, "[FORCED PID %d] %04X:%06X:%04X:%04X", n, demux[demux_index].ECMpids[n].CAID,
 						  demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) match->chid);
@@ -3319,28 +3331,42 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 				NULLFREE(er);
 				return;
 			}
-			// we have an ecm with the correct irdeto index
-			for(p = dvbapi_priority; p != NULL ; p = p->next)  // check for ignore!
-			{
-				if((p->type != 'i')
-						|| (p->caid && p->caid != curpid->CAID)
-						|| (p->provid && p->provid != curpid->PROVID)
-						|| (p->ecmpid && p->ecmpid != curpid->ECM_PID)
-						|| (p->srvid && p->srvid != demux[demux_id].program_number))
-					{ continue; }
+		}
+		// we have an ecm with the correct irdeto index (or fakechid)
+		for(p = dvbapi_priority; p != NULL ; p = p->next)  // check for ignore!
+		{
+			if((p->type != 'i')
+					|| (p->caid && p->caid != curpid->CAID)
+					|| (p->provid && p->provid != curpid->PROVID)
+					|| (p->ecmpid && p->ecmpid != curpid->ECM_PID)
+					|| (p->pidx && p->pidx-1 != pid) 
+					|| (p->srvid && p->srvid != demux[demux_id].program_number))
+				{ continue; }
 
-				if(p->type == 'i' && (p->chid < 0x10000 && p->chid == chid))    // found a ignore chid match with current ecm -> ignoring this irdeto index
+			if(p->type == 'i' && (p->chid < 0x10000 && p->chid == chid))    // found a ignore chid match with current ecm -> ignoring this irdeto index
+			{
+				curpid->irdeto_curindex++;
+				if(curpid->irdeto_curindex > curpid->irdeto_maxindex)    // check if curindex is over the max
 				{
-					curpid->irdeto_curindex++;
-					if(curpid->irdeto_curindex > curpid->irdeto_maxindex)    // check if curindex is over the max
-					{
-						curpid->irdeto_curindex = 0;
-					}
-					curpid->table = 0;
-					dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this chid has to be ignored!
-					NULLFREE(er);
-					return;
+					curpid->irdeto_curindex = 0;
 				}
+				curpid->table = 0;
+				if((curpid->CAID >> 8) == 0x06)   // irdeto: wait for the correct index
+				{
+					dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this chid has to be ignored!
+				}
+				else // this fakechid has to be ignored, kill this filter!
+				{
+					if(curpid->checked == 2) { curpid->checked = 3; }
+					if(curpid->checked == 1)
+					{
+						curpid->checked = 2;
+						curpid->CHID = 0x10000;
+					}
+					dvbapi_stop_filternum(demux_id, filter_num); // stop this ecm filter!
+				}
+				NULLFREE(er);
+				return;
 			}
 		}
 		if (er){
