@@ -1859,10 +1859,10 @@ void dvbapi_read_priority(void)
 			if(entry->delay == -1) { entry->delay = 0; }
 			break;
 		case 'p':
-			ret = sscanf(str1 + 64, "%1d %1d", &force, &pidx);
+			ret = sscanf(str1 + 64, "%1d:%1d", &force, &pidx);
 			entry->force = force;
 			entry->pidx = pidx+1;
-			if(ret < 2) pidx = 0;
+			if(ret < 2) entry->pidx = 0;
 			break;
 		case 'm':
 			sscanf(str1 + 64, "%4x:%6x", &mapcaid, &mapprovid);
