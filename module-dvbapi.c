@@ -3499,7 +3499,7 @@ static void *dvbapi_main_local(void *cli)
 
 	int32_t rc, pfdcount, g, connfd, clilen;
 	int32_t ids[maxpfdsize], fdn[maxpfdsize], type[maxpfdsize];
-	struct sockaddr_un servaddr;
+	struct SOCKADDR servaddr;
 	ssize_t len = 0;
 	uchar mbuf[1024];
 
@@ -3839,6 +3839,12 @@ static void *dvbapi_main_local(void *cli)
 							clilen = sizeof(servaddr);
 							connfd = accept(listenfd, (struct sockaddr *)&servaddr, (socklen_t *)&clilen);
 							cs_debug_mask(D_DVBAPI, "new socket connection fd: %d", connfd);
+							if (cfg.dvbapi_listenport)
+							{
+								//update webif data
+								client->ip = SIN_GET_ADDR(servaddr);
+								client->port = ntohs(SIN_GET_PORT(servaddr));
+							}
 							new = 1;
 
 							if(cfg.dvbapi_pmtmode == 3 || cfg.dvbapi_pmtmode == 0) { disable_pmt_files = 1; }
@@ -3870,6 +3876,12 @@ static void *dvbapi_main_local(void *cli)
 										dvbapi_stop_descrambling(j);
 								close(connfd);
 								connfd = -1;
+								if (cfg.dvbapi_listenport)
+								{
+									//update webif data
+									client->ip = get_null_ip();
+									client->port = 0;
+								}
 							}
 							if (pmtlen > 0) {
 								// check and try to process complete PMT objects and filter data
