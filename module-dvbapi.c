@@ -2914,17 +2914,23 @@ int32_t dvbapi_init_listenfd(void)
 int32_t dvbapi_net_init_listenfd(void)
 {
 	int32_t listenfd;
-	struct sockaddr_in servaddr;
+	struct SOCKADDR servaddr;
 
-	memset(&servaddr, 0, sizeof(struct sockaddr_in));
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_addr.s_addr = INADDR_ANY;
-	servaddr.sin_port = htons((uint16_t)cfg.dvbapi_listenport);
+	memset(&servaddr, 0, sizeof(servaddr));
+	SIN_GET_FAMILY(servaddr) = DEFAULT_AF;
+	SIN_GET_ADDR(servaddr) = ADDR_ANY;
+	SIN_GET_PORT(servaddr) = htons((uint16_t)cfg.dvbapi_listenport);
 
-	if((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	if((listenfd = socket(DEFAULT_AF, SOCK_STREAM, 0)) < 0)
 		{ return 0; }
 
-	int32_t opt = 1;
+	int32_t opt = 0;
+#ifdef IPV6SUPPORT
+	// set the server socket option to listen on IPv4 and IPv6 simultaneously
+	setsockopt(listenfd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&opt, sizeof(opt));
+#endif
+
+	opt = 1;
 	setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(opt));
 #ifdef SO_REUSEPORT
 	setsockopt(listenfd, SOL_SOCKET, SO_REUSEPORT, (void *)&opt, sizeof(opt));
