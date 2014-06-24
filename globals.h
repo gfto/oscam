@@ -105,10 +105,12 @@ typedef unsigned char uchar;
 #define IN_ADDR_T struct in6_addr
 #define SOCKADDR sockaddr_storage
 #define ADDR_ANY in6addr_any
+#define DEFAULT_AF AF_INET6
 #else
 #define IN_ADDR_T in_addr_t
 #define SOCKADDR sockaddr_in
 #define ADDR_ANY INADDR_ANY
+#define DEFAULT_AF AF_INET
 #endif
 
 #ifndef NO_ENDIAN_H

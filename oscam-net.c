@@ -555,20 +555,15 @@ int32_t start_listener(struct s_module *module, struct s_port *port)
 		return 0;
 	}
 
-	int s_domain = PF_INET;
-#ifdef IPV6SUPPORT
-	s_domain = PF_INET6;
-#endif
 	int s_type  = (is_udp ? SOCK_DGRAM : SOCK_STREAM);
 	int s_proto = (is_udp ? IPPROTO_UDP : IPPROTO_TCP);
 
-	if((port->fd = socket(s_domain, s_type, s_proto)) < 0)
+	if((port->fd = socket(DEFAULT_AF, s_type, s_proto)) < 0)
 	{
 		cs_log("%s: Cannot create socket (errno=%d: %s)", module->desc, errno, strerror(errno));
 #ifdef IPV6SUPPORT
 		cs_log("%s: Trying fallback to IPv4", module->desc);
-		s_domain = PF_INET;
-		if((port->fd = socket(s_domain, s_type, s_proto)) < 0)
+		if((port->fd = socket(AF_INET, s_type, s_proto)) < 0)
 		{
 			cs_log("%s: Cannot create socket (errno=%d: %s)", module->desc, errno, strerror(errno));
 			return 0;
