@@ -1971,12 +1971,9 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 	cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [get_cw] NEW REQUEST!", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
 	increment_n_request(client);
 
-	int32_t i, j, m, k, Len;
+	int32_t i, j, m;
 	time_t now = time((time_t *)0);
-	uint32_t line = 0, pos = 0;
-	
-	uint8_t *SubECMp; 
-	uint8_t *via_ecm_mod;
+	uint32_t line = 0;
 
 	er->client = client;
 	er->rc = E_UNHANDLED; // set default rc status to unhandled
@@ -2031,63 +2028,6 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 	// Quickfix for 0500:D20200
 	if(er->caid == 0x500 && er->prid == 0xD20200)
 		{ er->prid = 0x030600; }
-		
-	// Quickfix to suppress SubECMs with CWsSwap set to 01
-	// apply it for TNTSAT card 0500:030B00 only so far.
-	// t;his reduce the size of the ECM from long to short
-	// 40 07 03 0B 00 08 07 01 00 ... -> to keep
-	// 40 07 03 0B 00 08 07 01 01 ... -> to delete 
-	// Thanks to luffy for the tip and the code.
-	if(er->caid == 0x500 && er->prid == 0x030B00)
-	{	
-		// please let this debug in the code otherwhise we no longer saw "raw" ecm but only modified one!
-		cs_ddump_mask(D_ATR, er->ecm, er->ecmlen, "oscam-ecm: ecm dump before suppressing SubECMs with CWsSwap set to 01");
-		Len = er->ecmlen;
-		if(cs_malloc (&via_ecm_mod, Len))
-		{
-			if( er->ecm[4]==0x80 )
-			{
-				memcpy(via_ecm_mod, er->ecm, 4);
-				via_ecm_mod[1] = 0x70;
-				via_ecm_mod[2] = 0x01;
-				pos    = 0x04;
-				k = 4;
-				while(k<Len)
-				{
-					SubECMp = (uint8_t *)&er->ecm[k];
-					if( (pos+SubECMp[1]+2)>0xE0 )
-					{
-						break;
-					}
-
-					if (SubECMp[2]==0xD2)
-					{
-						if( SubECMp[0x0E] == 0x00 )
-						{
-							memcpy(via_ecm_mod+pos, SubECMp, SubECMp[1]+2);
-							via_ecm_mod[2]  += SubECMp[1]+2;
-							pos    += SubECMp[1]+2;
-						}
-					}
-					else if ( (SubECMp[2]==0x90 || SubECMp[2]==0x40) && SubECMp[3]==0x07 )
-					{
-						if( SubECMp[0x0A] == 0x00 )
-						{
-			;				memcpy(via_ecm_mod+pos, SubECMp, SubECMp[1]+2);
-							via_ecm_mod[2] += SubECMp[1]+2;
-							pos    += SubECMp[1]+2;
-						}
-					}
-					k += SubECMp[1] + 2;
-				}
-				Len = via_ecm_mod[2]+3;
-				er->ecmlen = Len;
-				memcpy(er->ecm, via_ecm_mod, Len);
-			}
-			NULLFREE(via_ecm_mod);
-		}
-		
-	}
 
 	//betacrypt ecm with nagra header
 	if(chk_is_betatunnel_caid(er->caid) == 1 && (er->ecmlen == 0x89 || er->ecmlen == 0x4A) && er->ecm[3] == 0x07 && (er->ecm[4] == 0x84 || er->ecm[4] == 0x45))

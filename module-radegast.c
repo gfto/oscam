@@ -170,16 +170,79 @@ static void *radegast_server(struct s_client *client, uchar *mbuf, int32_t n)
 
 static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *UNUSED(buf))
 {
-	int32_t n;
+	int32_t n, k, Len;
+	
 	uchar provid_buf[8];
 	uchar header[22] = "\x02\x01\x00\x06\x08\x30\x30\x30\x30\x30\x30\x30\x30\x07\x04\x30\x30\x30\x38\x08\x01\x02";
 	uchar *ecmbuf;
+	
+	uint8_t *SubECMp; 
+	uint8_t *via_ecm_mod;
+	uint32_t pos = 0;
 
 	if(!radegast_connect())
 		{ return (-1); }
 
 	if(!cs_malloc(&ecmbuf, er->ecmlen + 30))
 		{ return -1; }
+		
+	// Quickfix to suppress SubECMs with CWsSwap set to 01
+	// apply it for TNTSAT card 0500:030B00 only so far.
+	// t;his reduce the size of the ECM from long to short
+	// 40 07 03 0B 00 08 07 01 00 ... -> to keep
+	// 40 07 03 0B 00 08 07 01 01 ... -> to delete 
+	// Thanks to luffy for the tip and the code.
+	
+	if(er->caid == 0x500)
+	{	
+		cs_ddump_mask(D_ATR, er->ecm, er->ecmlen, "oscam-ecm: ecm dump BEFORE suppressing SubECMs with CWsSwap set to 01");
+		Len = er->ecmlen;
+		if(cs_malloc (&via_ecm_mod, Len))
+		{
+			if( er->ecm[4]==0x80 )
+			{
+				memcpy(via_ecm_mod, er->ecm, 4);
+				via_ecm_mod[1] = 0x70;
+				via_ecm_mod[2] = 0x01;
+				pos    = 0x04;
+				k = 4;
+				while(k<Len)
+				{
+					SubECMp = (uint8_t *)&er->ecm[k];
+					if( (pos+SubECMp[1]+2)>0xE0 )
+					{
+						break;
+					}
+
+					if (SubECMp[2]==0xD2)
+					{
+						if( SubECMp[0x0E] == 0x00 )
+						{
+							memcpy(via_ecm_mod+pos, SubECMp, SubECMp[1]+2);
+							via_ecm_mod[2]  += SubECMp[1]+2;
+							pos    += SubECMp[1]+2;
+						}
+					}
+					else if ( (SubECMp[2]==0x90 || SubECMp[2]==0x40) && SubECMp[3]==0x07 )
+					{
+						if( SubECMp[0x0A] == 0x00 )
+						{
+			;				memcpy(via_ecm_mod+pos, SubECMp, SubECMp[1]+2);
+							via_ecm_mod[2] += SubECMp[1]+2;
+							pos    += SubECMp[1]+2;
+						}
+					}
+					k += SubECMp[1] + 2;
+				}
+				Len = via_ecm_mod[2]+3;
+				er->ecmlen = Len;
+				memcpy(er->ecm, via_ecm_mod, Len);
+				cs_ddump_mask(D_ATR, er->ecm, er->ecmlen, "oscam-ecm: ecm dump AFTER suppressing SubECMs with CWsSwap set to 01");
+			}
+			NULLFREE(via_ecm_mod);
+		}
+		
+	}	
 
 	ecmbuf[0] = 1;
 	ecmbuf[1] = (er->ecmlen + 30 - 2) & 0xff;
