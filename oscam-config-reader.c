@@ -1291,6 +1291,7 @@ int32_t free_readerdb(void)
 	}
 	cs_log("readerdb %d readers freed", count);
 	ll_destroy(configured_readers);
+	configured_readers = NULL;
 	return count;
 }
 
