@@ -25,6 +25,7 @@
 #define FILE_GBOX_PEER_ONL  	"share.onl"
 #define FILE_STATS	  	"stats.info"
 #define FILE_GOODNIGHT_OSD	"goodnight.osd"
+#define FILE_Local_CARDS_INFO	"sc.info"
 
 #define GBOX_STAT_HELLOL	0
 #define GBOX_STAT_HELLOS	1
@@ -196,11 +197,10 @@ void gbox_write_version(void)
 	fclose(fhandle);
 }
 
-void gbox_write_shared_cards_info(void)
+void gbox_write_local_cards_info(void)
 {
 	int32_t card_count = 0;
-	int32_t i = 0;
-	char *fext= FILE_SHARED_CARDS_INFO; 
+	char *fext= FILE_Local_CARDS_INFO; 
 	char *fname = get_gbox_tmp_fname(fext); 
 	FILE *fhandle;
 	fhandle = fopen(fname, "w");
@@ -209,11 +209,8 @@ void gbox_write_shared_cards_info(void)
 		cs_log("Couldn't open %s: %s", fname, strerror(errno));
 		return;
 	}
-
 	LL_ITER it;
 	struct gbox_card *card;
-
-	//write local cards
 	it = ll_iter_create(local_gbox.cards);
 	char *crdtype = NULL;
 	while((card = ll_iter_next(&it)))
@@ -226,14 +223,33 @@ void gbox_write_shared_cards_info(void)
 		{crdtype = "CCcam_Card";}		
 		if(card->type == 4)
 		{crdtype = "Proxy_Card";}
-		fprintf(fhandle, "CardID %2d %s %08X Sl:%2d Lev:%1d dist:%1d id:%04X\n",
-				card_count, crdtype, card->provid_1,card->slot, card->lvl, card->dist, card->peer_id);
+		fprintf(fhandle, "CardID:%2d %s %08X Sl:%2d id:%04X\n",
+				card_count, crdtype, card->provid_1,card->slot, card->peer_id);
 		card_count++;		
 					
-	} // end of while ll_iter_next
+	}
+	fclose(fhandle);
+	return;
+}
 
+void gbox_write_shared_cards_info(void)
+{
+	int32_t card_count = 0;
+	//int32_t i = 0;
+	char *fext= FILE_SHARED_CARDS_INFO; 
+	char *fname = get_gbox_tmp_fname(fext); 
+	FILE *fhandle;
+	fhandle = fopen(fname, "w");
+	if(!fhandle)
+	{
+		cs_log("Couldn't open %s: %s", fname, strerror(errno));
+		return;
+	}
+	LL_ITER it;
+	struct gbox_card *card;
 	struct s_client *cl;
-	for(i = 0, cl = first_client; cl; cl = cl->next, i++)
+	for(cl = first_client; cl; cl = cl->next)
+	//for(i = 0, cl = first_client; cl; cl = cl->next, i++)
 	{
 		if(cl->gbox && cl->reader->card_status == CARD_INSERTED && cl->typ == 'p')
 		{
@@ -242,13 +258,13 @@ void gbox_write_shared_cards_info(void)
 			it = ll_iter_create(peer->gbox.cards);
 			while((card = ll_iter_next(&it)))
 			{
-				fprintf(fhandle, "CardID %2d at %s Card %08X Sl:%2d Lev:%1d dist:%1d id:%04X\n",
+				fprintf(fhandle, "CardID:%2d at %s Card %08X Sl:%2d Lev:%1d dist:%1d id:%04X\n",
 						card_count, cl->reader->device, card->provid_1,
 						card->slot, card->lvl, card->dist, card->peer_id);
 				card_count++;
-			} // end of while ll_iter_next
-		} // end of if cl->gbox INSERTED && 'p'
-	} // end of for cl->next
+			}
+		}
+	}
 	fclose(fhandle);
 	return;
 }
@@ -758,7 +774,8 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		cli->reader->card_status = CARD_INSERTED;
 		if(ll_count(peer->gbox.cards) == 0)
 			{ cli->reader->card_status = NO_CARD; }
-
+			
+		gbox_write_local_cards_info();
 		gbox_write_shared_cards_info();
 		gbox_write_peer_onl();
 	}
