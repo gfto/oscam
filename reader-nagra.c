@@ -1093,7 +1093,7 @@ static int32_t nagra2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, str
 					int32_t t = 0;
 					int32_t matchfound = 0;
 					reader->ecmcommand++; // No more caching of ecm commands, next ecms will be compared!
-					while(t < 4)
+					while(t < 5)
 					{
 						if(reader->ecmcommandcache[t] == er->ecm[3]) { matchfound++; }
 						t++;

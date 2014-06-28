@@ -1271,7 +1271,7 @@ struct s_reader                                     //contains device info, read
 	uint16_t        b_nano;
 	uint16_t        s_nano;
 	int8_t          ecmcommand;                     // used for filtering nagra bad ecm commands
-	uchar           ecmcommandcache[4];             // cachebuff for ecm commands
+	uchar           ecmcommandcache[5];             // cachebuff for ecm commands
 	int32_t         blockemm;
 	int32_t         saveemm;
 	LLIST           *blockemmbylen;
