@@ -5,45 +5,6 @@
 #include "reader-common.h"
 #include "reader-videoguard-common.h"
 
-static void dimeno_PostProcess_Decrypt(struct s_reader *reader, unsigned char *rxbuff, unsigned char *cw)
-{
-	struct videoguard_data *csystem_data = reader->csystem_data;
-	unsigned char tag, len, len2;
-	bool valid_0x55 = 0;
-	unsigned char *body;
-	unsigned char buffer[0x10];
-	int32_t a = 0x13;
-	len2 = rxbuff[4];
-	while(a < len2 + 5 - 9)  //  +5 for 5 ins bytes, -9 (body=8 len=1) to prevent memcpy(buffer+8,body,8) from reading past rxbuff
-	{
-		tag = rxbuff[a];
-		len = rxbuff[a + 1];
-		body = rxbuff + a + 2;
-		switch(tag)
-		{
-		case 0x55:
-		{
-			if(body[0] == 0x84)     //Tag 0x56 has valid data...
-			{
-				valid_0x55 = 1;
-			}
-		}
-		break;
-		case 0x56:
-		{
-			memcpy(buffer + 8, body, 8);
-		}
-		break;
-		}
-		a += len + 2;
-	}
-	if(valid_0x55)
-	{
-		memcpy(buffer, rxbuff + 5, 8);
-		AES_decrypt(buffer, buffer, &(csystem_data->astrokey));
-		memcpy(cw + 0, buffer, 8);  // copy calculated CW in right place
-	}
-}
 
 static void do_post_dw_hash(struct s_reader *reader, unsigned char *cw, const unsigned char *ecm_header_data)
 {
@@ -697,6 +658,8 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 	memcpy(reader->hexserial + 2, cta_res + 3, 4);
 	memcpy(reader->sa, cta_res + 3, 3);
 	reader->caid = cta_res[24] * 0x100 + cta_res[25];
+	reader->VgFuse = cta_res[2];
+	rdr_log(reader, "FuseByte: %02X", reader->VgFuse);	
 	memset(reader->VgRegionC, 0, 8);
 	memcpy(reader->VgRegionC, cta_res + 60, 8);
 	rdr_log(reader, "Region Code: %c%c%c%c%c%c%c%c", reader->VgRegionC[0], reader->VgRegionC[1], reader->VgRegionC[2], reader->VgRegionC[3], reader->VgRegionC[4], reader->VgRegionC[5], reader->VgRegionC[6], reader->VgRegionC[7]);
@@ -954,44 +917,87 @@ static int32_t videoguard2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 		}
 		else
 		{
-			if(!cw_is_valid(rbuff + 5))  //sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
+			
+		struct videoguard_data *csystem_data = reader->csystem_data;
+		unsigned char *payload = rbuff + 5;
+		unsigned char buff_0F[6]={ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };	
+		unsigned char buff_56[8]={ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+		unsigned char buff_55[1]={ 0x00 };	
+		unsigned char tag, t_len;
+		unsigned char  *t_body;
+		int32_t payloadLen = rbuff[4];
+		int32_t ind = 8 + 6; // +8 (CW1), +2 (cw checksum) + 2 (tier used) +2 (result byte)
+		while(ind < payloadLen)
+		{
+			tag = payload[ind];
+			t_len = payload[ind + 1];	//len of the tag
+			t_body = payload + ind + 2;	//body of the tag
+			switch(tag)
+				{
+				case 0x0F:	// Debug ecm info
+					memcpy(buff_0F, t_body, t_len);
+					break;
+				case 0x25:  // CW2 tag
+					memcpy(ea->cw + 8, t_body +1, 8);
+					break;
+				case 0x55:	// cw crypt info tag
+					memcpy(buff_55, t_body, 1 );
+					break;
+				case 0x56:	// tag data for astro
+					memcpy(buff_56, t_body, 8);
+					break;
+				default:
+					break;
+				}
+		ind += t_len + 2;
+		}
+
+		int32_t test_0F = 1;
+		if(!cw_is_valid(rbuff + 5))  //sky cards report 90 00 = ok but send cw = 00 when something goes wrong :(
 			{
-				rdr_log(reader, "classD3 ins54: status 90 00 = ok but cw=00 -> channel not subscribed ");
+				if ((buff_0F[0]>>1)&1){ 	//case 0f_0x 02 xx xx xx xx
+          			rdr_log(reader, "classD3 ins54: no cw --> Card isn't active");
+					test_0F = 0;
+				}
+				if (buff_0F[1]&1){ 			//case 0f_0x xx 01 xx xx xx
+					rdr_log(reader, "classD3 ins54: no cw --> Card appears in error");
+					test_0F = 0;
+				}
+				if ((buff_0F[1]>>4)&1){ 	//case 0f_0x xx 10 xx xx xx
+					rdr_log(reader, "classD3 ins54: no cw --> Card is paired");	//other discovered values can be added in the same way
+					test_0F = 0;
+				}
+				if ((buff_0F[1]>>6)&1){ 	//case 0f_0x xx 40 xx xx xx
+					rdr_log(reader, "classD3 ins54: no cw --> Card needs pin");	//check this
+					test_0F = 0;
+				}
+				if (test_0F)		
+				{
+					rdr_log(reader, "classD3 ins54: status 90 00 = ok but cw=00 tag 0F: %02X %02X %02X %02X %02X %02X, please report to the developers with decrypted ins54",buff_0F[0],buff_0F[1],buff_0F[2],buff_0F[3],buff_0F[4],buff_0F[5]);
+				}				
+
 				return ERROR;
 			}
 
 			// copy cw1 in place
 			memcpy(ea->cw + 0, rbuff + 5, 8);
 
-			// process cw2
-			unsigned char *payload = rbuff + 5;
-			int32_t payloadLen = rbuff[4];
-			int32_t ind = 8 + 6; // +8 for CW1, +6 for counter(?)
-
-			while(ind < payloadLen)
-			{
-				switch(payload[ind])
-				{
-				case 0x25:  // CW2
-					//cs_dump (payload + ind, payload[ind+1]+2, "INS54 - CW2");
-					memcpy(ea->cw + 8, &payload[ind + 3], 8);
-					ind += payload[ind + 1] + 2;
-					break;
-
-				default:
-					//cs_dump (payload + ind, payload[ind+1]+2, "INS54");
-					ind += payload[ind + 1] + 2;
-					break;
+			if (buff_55[0]&1){ 	//case 55_01 xx where bit0==1
+          		rdr_log(reader, "classD3 ins54: CW is crypted, pairing active, bad cw");
+				return ERROR;
 				}
-			}
+			if ((buff_55[0]>>2)&1){ 	//case 55_01 xx where bit2==1, old dimeno_PostProcess_Decrypt(reader, rbuff, ea->cw);
+				unsigned char buffer[0x10];
+				memcpy(buffer + 8, buff_56, 8);
+				AES_decrypt(buffer, buffer, &(csystem_data->astrokey));
+				memcpy(ea->cw + 0, buffer, 8);  // copy calculated CW in right place
+          		}
 
 			if(new_len != lenECMpart2)
 			{
 				memcpy(ea->cw, ea->cw + 8, 8);
 				memset(ea->cw + 8, 0, 8);
 			}
-			// fix for 09ac cards
-			dimeno_PostProcess_Decrypt(reader, rbuff, ea->cw);
 
 			//test for postprocessing marker
 			int32_t posB0 = -1;

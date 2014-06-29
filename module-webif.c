@@ -3909,6 +3909,13 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					tpl_addVar(vars, TPLADD, "READERPIN", "n/a");
 				}
 
+				//Fuse Vg card
+				if(rdr->VgFuse)
+				{
+                    tpl_printf(vars, TPLAPPEND, "READERFUSE", "%02X", rdr->VgFuse);
+					add_nds_line = 1;
+				}
+
 				//credit on Vg card
 				if(rdr->VgCredit)
 				{

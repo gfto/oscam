@@ -1366,6 +1366,7 @@ struct s_reader                                     //contains device info, read
 	unsigned char   irdId[4];
 	uint16_t		VgCredit;
 	uint16_t        VgPin;
+	unsigned char   VgFuse;
 	unsigned char   VgRegionC[8];
 #ifdef WITH_LB
 	int32_t         lb_weight;                      //loadbalance weight factor, if unset, weight=100. The higher the value, the higher the usage-possibility
