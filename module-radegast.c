@@ -169,16 +169,14 @@ static void *radegast_server(struct s_client *client, uchar *mbuf, int32_t n)
 }
 
 static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *UNUSED(buf))
-{
-	int32_t n, k, Len;
-	
+{	
 	uchar provid_buf[8];
 	uchar header[22] = "\x02\x01\x00\x06\x08\x30\x30\x30\x30\x30\x30\x30\x30\x07\x04\x30\x30\x30\x38\x08\x01\x02";
 	uchar *ecmbuf;
 	
 	uint8_t *SubECMp; 
 	uint8_t *via_ecm_mod;
-	uint32_t pos = 0;
+	uint32_t n, k, Len, pos = 0;
 
 	if(!radegast_connect())
 		{ return (-1); }
@@ -187,17 +185,17 @@ static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar
 		{ return -1; }
 		
 	// Quickfix to suppress SubECMs with CWsSwap set to 01
-	// apply it for TNTSAT card 0500:030B00 only so far.
-	// t;his reduce the size of the ECM from long to short
+	// Applied only on Viaccess (CAID: 0x0500)
+	// this reduce the size of the ECM from long to short
 	// 40 07 03 0B 00 08 07 01 00 ... -> to keep
 	// 40 07 03 0B 00 08 07 01 01 ... -> to delete 
 	// Thanks to luffy for the tip and the code.
 	
 	if(er->caid == 0x500)
 	{	
-		cs_ddump_mask(D_ATR, er->ecm, er->ecmlen, "oscam-ecm: ecm dump BEFORE suppressing SubECMs with CWsSwap set to 01");
+		cs_ddump_mask(D_ATR, er->ecm, er->ecmlen, "%s: ecm dump BEFORE suppressing SubECMs with CWsSwap set to 01", __func__);
 		Len = er->ecmlen;
-		if(cs_malloc (&via_ecm_mod, Len))
+		if(cs_malloc (&via_ecm_mod, Len+4))
 		{
 			if( er->ecm[4]==0x80 )
 			{
@@ -209,7 +207,7 @@ static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar
 				while(k<Len)
 				{
 					SubECMp = (uint8_t *)&er->ecm[k];
-					if( (pos+SubECMp[1]+2)>0xE0 )
+					if( ((pos+SubECMp[1]+2)>0xE0)||(pos+SubECMp[1]+2)>Len )
 					{
 						break;
 					}
@@ -227,7 +225,7 @@ static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar
 					{
 						if( SubECMp[0x0A] == 0x00 )
 						{
-			;				memcpy(via_ecm_mod+pos, SubECMp, SubECMp[1]+2);
+							memcpy(via_ecm_mod+pos, SubECMp, SubECMp[1]+2);
 							via_ecm_mod[2] += SubECMp[1]+2;
 							pos    += SubECMp[1]+2;
 						}
@@ -237,7 +235,7 @@ static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar
 				Len = via_ecm_mod[2]+3;
 				er->ecmlen = Len;
 				memcpy(er->ecm, via_ecm_mod, Len);
-				cs_ddump_mask(D_ATR, er->ecm, er->ecmlen, "oscam-ecm: ecm dump AFTER suppressing SubECMs with CWsSwap set to 01");
+				cs_ddump_mask(D_ATR, er->ecm, er->ecmlen, "%s: ecm dump AFTER suppressing SubECMs with CWsSwap set to 01", __func__);
 			}
 			NULLFREE(via_ecm_mod);
 		}
