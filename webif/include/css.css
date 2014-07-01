@@ -36,10 +36,10 @@
 /* **************** 2. BASIC DIVISION PAGES */
 html,body,* html #wrapper {height:100%}
 #wrapper {position:relative;min-height:100%}
-#content {margin-bottom:0;padding:0 8px 120px}
+#content {margin-bottom:0;padding:0 8px 115px}
 #footer {position:absolute;bottom:0;width:100%}
 
-/* **************** 3. BASIC SETTINGS - BODY,P,H4 */
+/* **************** 3. BASIC SETTINGS - BODY,P,H4,LI */
 body {
 	font-family:Arial;
 	font-size:11px;
@@ -52,9 +52,8 @@ body {
 h4 {
 	font-size:18px;
 	line-height:9px;
-	margin-top:20px;
-	margin-bottom:20px;
-	color:#AAA
+	margin:20px 0;
+	color:#F00
 }
 /* shutdown.html, autoconf.html */
 p.text-large-red {
@@ -66,7 +65,12 @@ p.text-large-red {
 #filename,#filesubmit {
 	font-weight:700;
 	font-size:14px;
-	margin: 10px 0
+}
+#filesubmit {
+	height:20px
+}
+li {
+	list-style:none
 }
 /* readerstats.html for P */
 #text_totalecm {}
@@ -89,7 +93,7 @@ a:hover {
 a.debugl:link {
 	margin:0 1px
 }
-a.debugl:hover{
+a.debugl:hover, a.debugs:hover {
 	background-color:#A00;color:#FFF
 }
 /* module-webif.c  */
@@ -145,28 +149,25 @@ div.sidlistclose a {
 	padding:0 3px;
 	color:#FFF
 }
-/* help link readers/useredit/config.html */
-
-table.config a,
-table.configuser a,
-table.configreader a {
+/* help link readers/servicesedit/useredit/config.html */
+form table a {
 	cursor:pointer
 }
 
 /* **************** 5. MAIN MENU */
 #main {}
 #mainmenu {
-	height:30px;
-	padding-top:10px;
+	height:27px;
+	padding-top:6px;
+	white-space:nowrap;
 	display:inline-block;
 	position:relative;
 	background-color:#FFF
 }
 #mainmenu li {
 	display:inline;
-	margin-left:2px;
-	margin-right:2px;
-	padding:5px 3px 3px;
+	margin:0 2px;
+	padding:4px 3px 3px;
 	font-size:18px;
 	font-weight:700
 }
@@ -183,15 +184,13 @@ li.configmenu:hover, li.configmenu_selected {
 #subnav {}
 #nav {
 	height:22px;
-	background-color:#FFF
+	white-space:nowrap
 }
 #nav li {
 	display:inline-block;
-	margin-left:2px;
-	margin-right:2px;
-	padding:5px 3px 3px;
-	padding-top:0;
-	padding-bottom:0;
+	position:relative;
+	margin:0 2px;
+	padding:0 3px;
 	font-size:14px
 }
 li.configmenu a, li.configmenu a:hover,
@@ -203,8 +202,7 @@ li.configmenu_selected a, li.configmenu_selected a:hover {
 table {
 	border-spacing:1px;
 	border:0;
-	margin-left:auto;
-	margin-right:auto
+	margin:0 auto
 }
 
 /* ------- STATUS ------- */
@@ -218,21 +216,19 @@ table.status {
  * Table statususerinfo	- in status_userinfo.html
  * Table statuscacheexinfo	- in status_cacheexinfo.html
  */
-table.statusmeminfo, table.statususerinfo, 
-table.statuscacheexinfo {
+table.infotable {
 	width:60%;
-	white-space:nowrap;
-	margin-top:0px;
-	margin-bottom:0px
+	white-space:nowrap
 }
 
 /* ------- CONFIG ------- */
 /* for all part in CONFIGURATION item */
 /* include readerconfig.html & user_edit.html */
-table.config {
+table.config, table.configreader,table.configuser {
 	width:80%;
-	max-width:750px;
- 	margin-bottom:20px
+ 	margin-bottom:-1px;
+	max-width:610px;
+	white-space:nowrap
 }
 
 /* ------- READERS ------- */
@@ -242,11 +238,7 @@ table.readers {
 }
 #newreader table, #searchTable table.readers {
 	border-spacing:1px 0px;
-}
-/* readerconfig.html */
-table.configreader {
-	width:80%;
-	max-width:750px;
+	margin-top:1px
 }
 /* entitlements_bit.html, entitlements_cccambit.html */
 table.stats {}
@@ -271,31 +263,25 @@ table.users {
 }
 #newuser table, #searchTable table.users {
 	border-spacing:1px 0px;
-}
-table.ECM_totals {
-	margin-bottom:20px
-}
-table.ECM_totals,
-table.user_totals {
-	width:50%
-}
-/* user_edit.html */
-table.configuser {
-	width:80%;
-	max-width:750px;
+	margin-top:1px
 }
 
 /* ------- SERVICES ------- */
 /* services.html */
-#addnewservice,#servicesedit {
-	width:35%;
+#addnewservice,#servicesedit,table.configservices {
+	width:40%;
+	max-width:510px;
 	text-align:center
 }
 #addnewservice {
 	border-spacing:1px 0px;
+	margin-top:1px
 }
 /* services_edit.html */
-table.configservices {}
+table.configservices {
+ 	margin-bottom:-1px;
+	text-align:left
+}
 
 /* ------- FAILBAN ------- */
 /* failban.html */
@@ -307,20 +293,21 @@ table.cacheex, table#dataTable.stats {
 	width:80%
 }
 table#cachexstats {
-	width:60%;
+	width:50%;
+	max-width:1300px;
 	white-space:nowrap;
-	margin-bottom:0px
+	margin:20px auto 0
 }
 
 /* ------- OTHER TABLES ------- */
 /* for settings in configuration of readers and users */
-table.invisible {
+/* inline table in config, readerconfig.html & user_edit.html */
+.invisible table {
+	border-spacing:0; 
 	margin-left:0
 }
 /* user_edit.html, readerconfig.html */
-td.subservice {
-	padding:0px;
-}
+td.subservice {}
 table.subservicetable {
 	width:100%;
 	background-color:#FFF
@@ -330,6 +317,13 @@ table.subservicetable {
 /* for entitlement of readers */
 tr.e_valid td, tr.e_expired td, tr.e_header td {
 	font-family:"Courier New", monospace
+}
+/* hiding formatline for width of firstrow in config, readers and users / width in info */
+tr.configfirstrow, tr.configfirstrow td,
+tr.infocolswidth, tr.infocolswidth td, tr.infocolswidth th {
+	border:0;
+	height:0;
+	padding:0
 }
 /* rowcolors for cacheex rows in cachex depend on status */
 tr.e_valid td {background-color:#E6FEBF}
@@ -365,6 +359,9 @@ th.nameinfo {
 	text-align:left;
 	background-color:#999
 }
+table.infotable th:first-child {
+	width:100px
+}
 /* status.html */
 th.statuscol0 {
 	width:0
@@ -382,12 +379,17 @@ td {
 	padding:5px;
 	background-color:#EEE
 }
-/* for settings in configuration of readers and users */
-table.invisible td { 
-	font-size:12px
+/* width of firstrow in config, readers and users */
+.configfirstrow td:first-child {
+	width:140px
 }
-table.invisible td:first-child {
-	padding-left:0
+/* height config, readers and users */
+.config td, .configreader td, .configuser td {
+	height:22px
+}
+/* for inline table in config, user_edit.html, readerconfig.html */
+td.subservice, td.invisible {
+	padding:0px
 }
 /* services.html */
 #servicesedit td {
@@ -420,6 +422,9 @@ td.statuscol0 {
 td.statuscol1 {
 	width:0
 }
+.usercol1 img{
+	vertical-align:middle
+}
 /* readerconfig_sidokbit.html */
 td.servicescol1, td.servicescol2, td.servicescol3 {
 	width:30%;
@@ -429,26 +434,28 @@ td.readercol13,td.readercol14,
 td.readercol15 {
 	min-width:22px
 }
+/* cols width info status and users.html */
+.infocolswidth td {
+	width:7.5%
+}
 
 /* **************** 11. DIV */
-/* status.html, entitlements_genericbit.html */
-div.log {
+/* Log status.html, livelog.html, file.html */
+div.log, div#livelog, textarea.editor, div.sidlist {
 	font-family:"Courier New", monospace;
 	text-align:left;
-	margin:20px 0;
-	padding:10px;
 	border:1px dotted #AAA;
 	background-color:#FAFAFA;
 	color:#666
 }
+div.log {
+	margin:20px 0 0;
+	padding:4px;
+}
 /* module-webif.c class for services.html */
 div.sidlist {
-	font-family:"Courier New", monospace;
-	text-align:left;
 	padding:2px;
-	border:1px dotted #AAA;
 	background-color:#FFFDF5;
-	color:#666
 }
 div.sidlistclose {
 	float:right;
@@ -463,7 +470,7 @@ div.message {
 }
 /* file.html */
 div.filterform {
-	margin:10px
+	margin:5px 0
 }
 /* pre_autoconf.html, pre_shutdown.html */
 div.warning {
@@ -472,8 +479,8 @@ div.warning {
 /* logobit.html - Logo for Oscam */
 div.logo {
 	position:absolute;
-	top:10px;
-	left:10px;
+	top:6px;
+	left:8px;
 	z-index:0
 }
 /* READERS and USERS items */
@@ -488,21 +495,17 @@ div.groups {
 }
 /* footer.html */
 div.footer {
-	padding-bottom:5px;
-	padding-top:5px;
-	margin-bottom:0;
-	margin-top:40px;
 	background-color:#EEE;
 	border-top:3px solid #CCC
 }
 div.footer li {
 	margin:5px;
-	list-style-type:none
 }
 /* status.html, main DIV for statistics info */
 div.info {
 	max-width:1300px;
-	margin:20px auto
+	white-space:nowrap;
+	margin:14px auto 0
 }
 /* debugmenu	- status_sdebug.html 
  * logmenu		- file.html
@@ -510,7 +513,10 @@ div.info {
 div.debugmenu, div.logmenu {
 	font-size:12px;
 	line-height:16px;
-	margin-bottom:8px
+	margin-top:10px
+}
+#regexdatainput {
+	margin-top:10px
 }
 /* entitlements_cccambit.html */
 div.cccamentitlementtotals,
@@ -532,17 +538,15 @@ div.cccamentitlementcontrols {
 /* texteditor in file.html */
 textarea.editor {
 	font-size:11px;
-	width:98%;
-	height:508px;
-	font-family:"Courier New", monospace;
-	text-align:left;
-	padding:8px 10px;
-	border:1px dotted #AAA;
-	background-color:#FAFAFA;
-	color:#000
+	width:100%;
+	max-width:1500px;
+	height:556px;
+	margin:0 auto 10px;
+	padding:4px;
 }
 /* class for textarea */
 textarea.bt {
+	width:380px; 
 	font-size:12px
 }
 /* generaly settings for all select */
@@ -550,13 +554,35 @@ select {
 	padding:2px
 }
 /* generaly settings for all input */
+input,textarea {
+	-moz-box-sizing:border-box;
+	box-sizing:border-box
+}
+/* generaly settings for all checkbox input */
+input[type="checkbox"] {
+	cursor:pointer
+}
+/* generaly settings for all text input */
 input[type="text"] {
-	padding:2px
+	padding:2px;
+	width:380px
+}
+input.short[type="text"] {
+	width:52px
+}
+input.medium[type="text"] {
+	width:125px
+}
+input.longer[type="text"] {
+	width:220px
 }
 .readers input[type="text"],
-.users input[type="text"]{
+#addnewservice input[type="text"],
+.users input[type="text"],
+.cacheex input[type="text"] {
 	text-align:center;
 	background-color:#F8F8F8;
+	width:180px
 }
 /* all config input they are with units e.g. sec or min in config.html */
 input.withunit{
@@ -573,6 +599,7 @@ input[type="button"], input[type="submit"]{
 	-webkit-appearance:none;
 	border-radius:3px;
 	border:1px solid #AAA;
+	cursor:pointer;
 	text-align:center;
 	padding:0 2px;
 	margin:0 3px;
@@ -607,11 +634,7 @@ td.subheadline input[type="button"] {
 }
 /* only for diasabled button in file.html*/
 #filesubmit input[type="submit"]:disabled {
-	box-shadow: 10px 0px transparent;
-	padding:0px 2px;
-	background-color:transparent;
-	text-decoration:line-through;
-	font-weight:normal
+	display:none
 }
 /* only save button in config.html/readerconfig.html/services.html */
 td.configcolsave {
@@ -649,6 +672,10 @@ img.usericon, img.readericon {
 	max-height:22px;
 	max-width:150px
 }
+/* ECM Restarticon */
+.statusecminfo img{
+	vertical-align:middle
+}
 /* logo IC_LOGO.tpL */
 div.logo img {
 	max-height:44px
@@ -656,9 +683,7 @@ div.logo img {
 
 td#out.centered img,
 td#in.centered img {
-	margin-bottom:-2px;
-	margin-right:10px;
-	margin-left: 10px
+	margin:0 10px -2px
 }
 
 /* **************** 14. SPAN */
@@ -736,22 +761,14 @@ path.graph_grid {stroke-opacity:0.5;stroke:gray;}
 /*  for UL in logpoll.html */
 #livelog {
 	resize:vertical;
-	height:580px;
+	height:574px;
 	max-width:1500px;
 	overflow-y:auto;
-	list-style:none;
-	text-align:left;
-	margin:5px auto 15px;
-	border:1px dotted #AAA;
-	background-color:#FAFAFA;
-	color:#666;
-	font-family: "Courier New",monospace
+	margin:1px auto 15px;
+	padding:0px 4px;
 }
-#livelogdata {
-	list-style:none;
-}
+#livelogdata {}
 li.regex, li.regexdata_nav, li.regexdata_save{
-	list-style-type:none;
 	white-space:nowrap
 }
 input.regexinput {
@@ -762,7 +779,6 @@ input.regexinput {
 }
 .regexdata_nav input {
 	width:100px;
-	margin-bottom:8px
 }
 .regexdata_save input {
 	width:90px;
@@ -809,6 +825,7 @@ div.colorPicker-swatch {
 	border:none;
 	background-color:#A00;
 	color:#FFF;
+	cursor:pointer;
 	border-radius:4px;
 	font-size:14px;
 	font-weight:700;
@@ -820,7 +837,6 @@ div.colorPicker-swatch {
 }
 #nav li.pollselect {
 	display:inline;
-	list-style:none;
 	position: absolute;
 	right: 10px;
 }
@@ -893,12 +909,7 @@ div.bar {
 	opacity:1;
 	filter:alpha(opacity=100)
 }
-#nav ul.dropdown_nav {
-	padding:0;
-	margin:0
-}
 #nav ul.dropdown_nav li {
-	list-style-type:none;
 	margin:0;
 	padding:1px 0;
 	width:100%
@@ -908,11 +919,9 @@ div.bar {
 	padding:0 5px;
         display: block;
 }
-#nav li {
-	position:relative
-}
 #nav li ul.dropdown_nav {
 	display:none;
+	white-space:normal;
 	position:absolute;
 	text-align:left;
 	top:16px;
@@ -926,10 +935,31 @@ div.bar {
 }
 
 /* **************** 20. OTHER SETTINGS */
-/* margin top from previous table */
-.margintop {
-	margin-top:30px
+/* iPhone */
+@media
+only screen and (min-device-width : 320px) and (max-device-width : 480px),
+only screen and (min-device-width : 320px) and (max-device-width : 568px){
+	div.footer {
+		height:92px
+	}
 }
-.smallmargintop {
-	margin-top:15px
+/* iPhone Landscape */
+@media
+only screen and (min-device-width : 320px) and (max-device-width : 480px) and (orientation : landscape),
+only screen and (min-device-width : 320px) and (max-device-width : 568px) and (orientation : landscape) {
+	#livelog {
+		height:382px
+	}
+	textarea.editor {
+		height:400px
+	}
+}
+/* iPad Landscape */
+@media only screen and (min-device-width : 768px) and (max-device-width : 1024px) and (orientation : landscape) {
+	#livelog {
+		height:494px
+	}
+	textarea.editor {
+		height:508px
+ 	}
 }

@@ -2,6 +2,6 @@
 		<TABLE CLASS="config">
 			<TR><TH COLSPAN="2">LCD Config</TH></TR>
 			<TR><TD><A>Enable LCD:</A></TD><TD><input name="enablelcd" value="0" type="hidden"><input name="enablelcd" value="1" type="checkbox" ##ENABLELCDSELECTED##><label></label></TD></TR>
-			<TR><TD><A>LCD Output Path:</A></TD><TD><input name="lcd_outputpath" type="text" size="63" maxlength="200" value="##LCDOUTPUTPATH##"></TD></TR>
-			<TR><TD><A>LCD Write Interval:</A></TD><TD><input name="lcd_writeintervall" type="text" size="3" maxlength="3" value="##LCDREFRESHINTERVAL##"></TD></TR>
+			<TR><TD><A>LCD Output Path:</A></TD><TD><input name="lcd_outputpath" type="text" maxlength="200" value="##LCDOUTPUTPATH##"></TD></TR>
+			<TR><TD><A>LCD Write Interval:</A></TD><TD><input name="lcd_writeintervall" class="short" type="text" maxlength="3" value="##LCDREFRESHINTERVAL##"></TD></TR>
 			<TR><TD><A>LCD Hide idle Readers:</A></TD><TD><input name="lcd_hideidle" value="0" type="hidden"><input name="lcd_hideidle" value="1" type="checkbox" ##LCDHIDEIDLE##><label></label></TD></TR>

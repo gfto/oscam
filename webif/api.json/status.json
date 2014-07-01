@@ -1,14 +1,4 @@
 ##TPLJSONHEADER##
-	"status": { 
-	"ucs":"##UCS##",
-	"uca":"##UCA##",
-	"ucac":"##UCAC##",
-	"cfgh":"##CFGH##",
-	"scs":"##SCS##",
-	"sch":"##SCH##",
-	"sca":"##SCA##",
-	"mcs":"##MCS##",
-	"mca":"##MCA##",
 	"totals":{
 		"total_users":"##TOTAL_USERS##",
 		"total_active":"##TOTAL_ACTIVE##",
@@ -38,6 +28,16 @@
 		"rel_cachexhit":"##REL_CACHEXHIT##",
 		"total_cachesize":"##TOTAL_CACHESIZE##"
 	},
+	"status": { 
+	"ucs":"##UCS##",
+	"uca":"##UCA##",
+	"ucac":"##UCAC##",
+	"cfgh":"##CFGH##",
+	"scs":"##SCS##",
+	"sch":"##SCH##",
+	"sca":"##SCA##",
+	"mcs":"##MCS##",
+	"mca":"##MCA##",
 	"client":[
 	                          ##JSONSTATUSBITS##
 								]}

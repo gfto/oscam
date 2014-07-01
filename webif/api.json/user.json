@@ -1,1 +1,27 @@
-##TPLJSONHEADER##"users":[##APIUSERCONFIGS##],"totals":{"cwok":"##TOTAL_CWOK##","cwok_rel":"##REL_CWOK##","cwnok":"##TOTAL_CWNOK##","cwnok_rel":"##REL_CWNOK##","cwignore":"##TOTAL_CWIGN##","cwignore_rel":"##REL_CWIGN##","cwtimeout":"##TOTAL_CWTOUT##","cwtimeout_rel":"##REL_CWTOUT##","cwcache":"##TOTAL_CWCACHE##","cwcache_rel":"##REL_CWCACHE##","cwtun":"##TOTAL_CWTUN##","ecm_min":"##TOTAL_ECM_MIN##","tot_cw":"##TOTAL_CW##","usertotal":"##TOTAL_USERS##","userdisabled":"##TOTAL_DISABLED##","userexpired":"##TOTAL_EXPIRED##","useractive":"##TOTAL_ACTIVE##","userconnected":"##TOTAL_CONNECTED##","useronline":"##TOTAL_ONLINE##"}##TPLJSONFOOTER##
+##TPLJSONHEADER##"users":[##APIUSERCONFIGS##],
+	"totals":{
+		"cwtun":"##TOTAL_CWTUN##",
+		"total_users":"##TOTAL_USERS##",
+		"total_active":"##TOTAL_ACTIVE##",
+		"total_connected":"##TOTAL_CONNECTED##",
+		"total_online":"##TOTAL_ONLINE##",
+		"total_disabled":"##TOTAL_DISABLED##",
+		"total_expired":"##TOTAL_EXPIRED##",
+		"total_cwok":"##TOTAL_CWOK##",
+		"rel_cwok":"##REL_CWOK##",
+		"total_cwcache":"##TOTAL_CWCACHE##",
+		"rel_cwcache":"##REL_CWCACHE##",
+		"total_cwnok":"##TOTAL_CWNOK##",
+		"rel_cwnok":"##REL_CWNOK##",
+		"total_cwtout":"##TOTAL_CWTOUT##",
+		"rel_cwtout":"##REL_CWTOUT##",
+		"total_cwign":"##TOTAL_CWIGN##",
+		"rel_cwign":"##REL_CWIGN##",
+		"total_ecm_min":"##TOTAL_ECM_MIN##",
+		"total_cw":"##TOTAL_CW##",
+		"total_cwpos":"##TOTAL_CWPOS##",
+		"rel_cwpos":"##REL_CWPOS##",
+		"total_cwneg":"##TOTAL_CWNEG##",
+		"rel_cwneg":"##REL_CWNEG##"
+	}
+##TPLJSONFOOTER##

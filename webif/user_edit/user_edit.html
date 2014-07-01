@@ -12,15 +12,15 @@
 		<input name="user" type="hidden" value="##USERNAME##">
 		<TABLE CLASS="configuser">
 			<TR><TH COLSPAN="2">User general settings</TH></TR>
-			<TR><TD><A>Password:</A></TD><TD><input name="pwd" type="text" size="63" maxlength="63" value="##PASSWORD##"></TD></TR>
-			<TR><TD><A>Description:</A></TD><TD><input name="description" type="text" size="63" maxlength="256" value="##DESCRIPTION##"></TD></TR>
+			<TR><TD><A>Password:</A></TD><TD><input name="pwd" class="longer" type="text" maxlength="63" value="##PASSWORD##"></TD></TR>
+			<TR><TD><A>Description:</A></TD><TD><input name="description" type="text" maxlength="256" value="##DESCRIPTION##"></TD></TR>
 			<TR><TD><A>Disabled:</A></TD><TD><input name="disabled" type="hidden" value="0"><input name="disabled" type="checkbox" value="1" ##DISABLEDCHECKED##><label></label></TD></TR>
-			<TR><TD><A>Exp. Date:</A></TD><TD><input name="expdate" type="text" size="30" maxlength="30" value="##EXPDATE##"></TD></TR>
-			<TR><TD><A>Failban:</A></TD><TD><input name="failban" type="text" size="2" maxlength="1" value="##FAILBAN##"></TD></TR>
-			<TR><TD><A>Allowed Timeframe:</A></TD><TD><input name="allowedtimeframe" type="text" size="15" maxlength="11" value="##ALLOWEDTIMEFRAME##">&nbsp;(hh:mm-hh:mm)</TD></TR>
-			<TR><TD><A>Allowed Protocols:</A></TD><TD><input name="allowedprotocols" type="text" size="63" maxlength="60" value="##ALLOWEDPROTOCOLS##"></TD></TR>
-			<TR><TD><A>Group:</A></TD><TD><input name="group" type="text" size="30" maxlength="155" value="##GROUPS##"> Valid values 1-64</TD></TR>
-			<TR><TD><A>Hostname:</A></TD><TD><input name="hostname" type="text" size="63" maxlength="63" value="##DYNDNS##"></TD></TR>
+			<TR><TD><A>Exp. Date:</A></TD><TD><input name="expdate" class="medium" type="text" maxlength="30" value="##EXPDATE##"></TD></TR>
+			<TR><TD><A>Failban:</A></TD><TD><input name="failban" class="short" type="text" maxlength="1" value="##FAILBAN##"></TD></TR>
+			<TR><TD><A>Allowed Timeframe:</A></TD><TD><input name="allowedtimeframe" class="medium" type="text" maxlength="11" value="##ALLOWEDTIMEFRAME##">&nbsp;(hh:mm-hh:mm)</TD></TR>
+			<TR><TD><A>Allowed Protocols:</A></TD><TD><input name="allowedprotocols" type="text" maxlength="60" value="##ALLOWEDPROTOCOLS##"></TD></TR>
+			<TR><TD><A>Group:</A></TD><TD><input name="group" class="longer" type="text" maxlength="155" value="##GROUPS##"> Valid values 1-64</TD></TR>
+			<TR><TD><A>Hostname:</A></TD><TD><input name="hostname" type="text" maxlength="63" value="##DYNDNS##"></TD></TR>
 			<TR><TD><A>Uniq:</A></TD>
 				<TD>
 					<select name="uniq">
@@ -32,17 +32,17 @@
 					</select>
 				</TD>
 			</TR>
-			<TR><TD><A>Sleep:</A></TD><TD><input name="sleep" type="text" size="4" maxlength="4" value="##SLEEP##"></TD></TR>
+			<TR><TD><A>Sleep:</A></TD><TD><input name="sleep" class="short" type="text" maxlength="4" value="##SLEEP##"></TD></TR>
 ##TPLUSEREDITMONLEVEL##
-			<TR><TD><A>AU:</A></TD><TD><input name="au" type="text" size="63" maxlength="63" value="##AUREADER##"></TD></TR>
-			<TR><TD><A>CAID:</A></TD><TD><input name="caid" type="text" size="63" maxlength="160" value="##CAIDS##"></TD></TR>
-			<TR><TD><A>Ident:</A></TD><TD><textarea name="ident" cols="58" rows="3" class="bt">##IDENTS##</textarea></TD></TR>
-			<TR><TD><A>CHID:</A></TD><TD><textarea name="chid" cols="58" rows="3" class="bt">##CHIDS##</textarea></TD></TR>
-			<TR><TD><A>Class:</A></TD><TD><input name="class" type="text" size="63" maxlength="150" value="##CLASS##"></TD></TR>
-			<TR><TD><A>Betatunnel:</A></TD><TD><textarea name="betatunnel" cols="58" rows="3" class="bt">##BETATUNNELS##</textarea></TD></TR>
+			<TR><TD><A>AU:</A></TD><TD><input name="au" type="text" maxlength="63" value="##AUREADER##"></TD></TR>
+			<TR><TD><A>CAID:</A></TD><TD><input name="caid" type="text" maxlength="160" value="##CAIDS##"></TD></TR>
+			<TR><TD><A>Ident:</A></TD><TD><textarea name="ident" rows="3" class="bt">##IDENTS##</textarea></TD></TR>
+			<TR><TD><A>CHID:</A></TD><TD><textarea name="chid" rows="3" class="bt">##CHIDS##</textarea></TD></TR>
+			<TR><TD><A>Class:</A></TD><TD><input name="class" type="text" maxlength="150" value="##CLASS##"></TD></TR>
+			<TR><TD><A>Betatunnel:</A></TD><TD><textarea name="betatunnel" rows="3" class="bt">##BETATUNNELS##</textarea></TD></TR>
 			<TR><TD><A>Suppresscmd08:</A></TD><TD><select name="suppresscmd08"><option value="0">CMD08 active</option><option value="1" ##SUPPRESSCMD08##>CMD08 suppressed</option></select></TD></TR>
-			<TR><TD><A>Sleepsend:</A></TD><TD><input name="sleepsend" type="text" size="3" maxlength="3" value="##SLEEPSEND##"> 0 or 255</TD></TR>
-			<TR><TD><A>User Max Idle:</A></TD><TD><input name="umaxidle" type="text" size="3" maxlength="3" value="##UMAXIDLE##"> s to disconnect idle users</TD></TR>
+			<TR><TD><A>Sleepsend:</A></TD><TD><input name="sleepsend" class="short" type="text" maxlength="3" value="##SLEEPSEND##"> 0 or 255</TD></TR>
+			<TR><TD><A>User Max Idle:</A></TD><TD><input name="umaxidle" class="withunit short" type="text" maxlength="3" value="##UMAXIDLE##"> s to disconnect idle users</TD></TR>
 			<TR><TD><A>EMM Reassembly:</A></TD>
 				<TD>
 					<select name="emmreassembly">
@@ -59,8 +59,9 @@
 ##TPLUSEREDITCACHEEXBIT##
 			<TR>
 				<TD CLASS="centered"><input type="submit" name="action" value="Save" title="Save settings and reload users" ##BTNDISABLED##></TD>
-				<TD CLASS="centered"><input name="newuser" type="text" size="20" maxlength="20" title="Enter new username if you want to clone this user">&nbsp;&nbsp;&nbsp;<input type="submit" name="action" value="Save As" title="Save as new user and reload users" ##BTNDISABLED##></TD>
+				<TD CLASS="centered"><input name="newuser" class="longer" type="text" maxlength="20" title="Enter new username if you want to clone this user">&nbsp;&nbsp;&nbsp;<input type="submit" name="action" value="Save As" title="Save as new user and reload users" ##BTNDISABLED##></TD>
 			</TR>
+			<TR CLASS="configfirstrow"><TD></TD><TD></TD></TR>
 		</TABLE>
 	</form>
 ##TPLFOOTER##

@@ -127,7 +127,6 @@ ICENA                         images/ICENA.svg
 ICENT                         images/ICENT.svg
 ICHID                         images/ICHID.svg
 ICKIL                         images/ICKIL.svg
-# with parm IC_LOGO oscam can compile with integrated logo e.g.
 IC_LOGO                       images/ICMLOGO.svg
 ICREF                         images/ICREF.svg
 ICRES                         images/ICRES.svg
@@ -244,8 +243,8 @@ CLIENTCURRENTCHANNELPIC       status/status_currentchannelpic.html
 STATUSHEADLINE                status/status_headline.html
 STATUSHBUTTON                 status/status_hidebutton.html
 STATUSKBUTTON                 status/status_killbutton.html
-CLIENTLBLVALUEBIT             status/status_lblvaluereaderbit.html
-CLIENTLBLVALUERP              status/status_lbvaluereaderproxy.html
+CLIENTLBLVALUEBIT             status/status_lblvaluereaderbit.html                        WITH_LB
+CLIENTLBLVALUERP              status/status_lbvaluereaderproxy.html                       WITH_LB
 LOGHISTORYBIT                 status/status_loghistory.html
 CLIENTMHEADLINE               status/status_mheadline.html                                MODULE_MONITOR
 CLIENTPHEADLINE               status/status_pheadline.html

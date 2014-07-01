@@ -6,7 +6,7 @@
 		<TR><TD><A>Enabled:</A></TD><TD><input name="enabled" type="checkbox" value="1" ##ENABLEDCHECKED##><label></label>
 		<TR><TD><A>AU:</A></TD><TD><input name="au" type="checkbox" value="1" ##AUCHECKED##><label></label>
 		<TR><TD><A>Boxtype:</A></TD><TD><select name="boxtype">##BOXTYPE##</select></TD></TR>
-		<TR><TD><A data-p="user_2">User:</A></TD><TD><input name="user" type="text" size="63" maxlength="63" value="##USERNAME##"></TD></TR>
+		<TR><TD><A data-p="user_2">User:</A></TD><TD><input name="user" class="longer" type="text" maxlength="63" value="##USERNAME##"></TD></TR>
 		<TR><TD><A>PMT Mode:</A></TD>
 			<TD>
 				<select name="pmt_mode">
@@ -28,5 +28,5 @@
 				</select>
 			</TD>
 		</TR>
-		<TR><TD><A>Listen port:</A></TD><TD><input name="listen_port" type="text" size="5" maxlength="5" value="##LISTENPORT##"> TCP port to listen instead of camd.socket</TD></TR>
-		<TR><TD><A>Delayer:</A></TD><TD><input name="delayer" class="withunit" type="text" size="5" maxlength="4" value="##DELAYER##"> ms</TD></TR>
+		<TR><TD><A>Listen port:</A></TD><TD><input name="listen_port" class="short" type="text" maxlength="5" value="##LISTENPORT##"> TCP port to listen instead of camd.socket</TD></TR>
+		<TR><TD><A>Delayer:</A></TD><TD><input name="delayer" class="withunit short" type="text" maxlength="4" value="##DELAYER##"> ms</TD></TR>

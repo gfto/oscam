@@ -19,7 +19,7 @@
 	</DIV>
 	<DIV ID="searchTable">
 		<TABLE CLASS="cacheex">
-			<TR><TH>Filter: <input type="text" id="searchTerm" class="search_box" onkeyup="doSearch()" onClick="cdpause()" onBlur="initDoc()"></TH></TR>
+			<TR><TH><input type="text" id="searchTerm" class="search_box" placeholder="Enter Searchterm"></TH></TR>
 		</TABLE>
 	</DIV>
 	<TABLE ID="dataTable" CLASS="stats">
@@ -45,16 +45,9 @@
 ##TABLEREADERROWS##
 		</TBODY>
 	</TABLE>
-	<TABLE ID="cachexstats" CLASS="margintop">
-		<TR>
-			<TH COLSPAN="5">Cache Statistics</TH>
-		</TR>
-		<TR>
-			<TH>Total</TH>
-			<TD ID="out" CLASS="centered"><B>push  </B>##TOTAL_CACHEXPUSH_IMG## ##TOTAL_CACHEXPUSH##</TD>
-			<TD ID="in" CLASS="centered"><B>got   </B>##TOTAL_CACHEXGOT_IMG## ##TOTAL_CACHEXGOT##</TD>
-			<TD CLASS="centered"><B>hit: </B>##TOTAL_CACHEXHIT## (##REL_CACHEXHIT##%)</TD>
-			<TD CLASS="centered"><B>size: </B>##TOTAL_CACHESIZE##</TD>
-		</TR>
-	</TABLE>
+<DIV CLASS="info">
+<TABLE CLASS="infotable">
+##TPLCACHEEXINFOBIT##
+</TABLE>
+</DIV>
 ##TPLFOOTER##

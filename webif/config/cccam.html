@@ -1,9 +1,9 @@
 		<input name="part" type="hidden" value="cccam">
 		<TABLE CLASS="config">
 			<TR><TH COLSPAN="2">Edit Cccam Config</TH></TR>
-			<TR><TD><A data-p="port_8">Port:</A></TD><TD><input name="port" type="text" size="16" maxlength="128" value="##PORT##"></TD></TR>
-			<TR><TD><A data-p="serverip_10">Serverip:</A></TD><TD><input name="serverip" type="text" size="15" maxlength="15" value="##SERVERIP##"></TD></TR>
-			<TR><TD><A>Reshare:</A></TD><TD><input name="reshare" type="text" size="2" maxlength="2" value="##RESHARE##"> -1 no reshare or lowest value off cccreshare reader account</TD></TR>
+			<TR><TD><A data-p="port_8">Port:</A></TD><TD><input name="port" class="medium" type="text" maxlength="128" value="##PORT##"></TD></TR>
+			<TR><TD><A data-p="serverip_10">Serverip:</A></TD><TD><input name="serverip" class="medium" type="text" maxlength="15" value="##SERVERIP##"></TD></TR>
+			<TR><TD><A>Reshare:</A></TD><TD><input name="reshare" class="short" type="text" maxlength="2" value="##RESHARE##"> -1 no reshare or lowest value off cccreshare reader account</TD></TR>
 			<TR><TD><A>Ignore reshare:</A></TD>
 				<TD>			
 					<select name="ignorereshare">
@@ -22,7 +22,7 @@
 					<input name="stealth" value="0" type="hidden"><input name="stealth" value="1" type="checkbox" ##STEALTH##><label></label>
 				</TD>
 			</TR>
-			<TR><TD><A>Node Id:</A></TD><TD><input name="nodeid" type="text" size="18" maxlength="16" value="##NODEID##"></TD></TR>
+			<TR><TD><A>Node Id:</A></TD><TD><input name="nodeid" class="medium" type="text" maxlength="16" value="##NODEID##"></TD></TR>
 			<TR><TD><A>Keep clients connected:</A></TD>
 				<TD>
 					<input name="keepconnected" value="0" type="hidden"><input name="keepconnected" value="1" type="checkbox" ##KEEPCONNECTED##><label></label>
@@ -42,8 +42,8 @@
 					</select>
 				</TD>
 			</TR>
-			<TR><TD><A>Update Interval:</A></TD><TD><input name="updateinterval" class="withunit" type="text" size="5" maxlength="4" value="##UPDATEINTERVAL##"> s</TD></TR>
-			<TR><TD><A>Receive timeout:</A></TD><TD><input name="recv_timeout" class="withunit" type="text" size="5" maxlength="5" value="##RECV_TIMEOUT##"> ms</TD></TR>
+			<TR><TD><A>Update Interval:</A></TD><TD><input name="updateinterval" class="withunit short" type="text" maxlength="4" value="##UPDATEINTERVAL##"> s</TD></TR>
+			<TR><TD><A>Receive timeout:</A></TD><TD><input name="recv_timeout" class="withunit short" type="text" maxlength="5" value="##RECV_TIMEOUT##"> ms</TD></TR>
 			<TR><TD><A>Minimize cards:</A></TD>
 				<TD>
 					<select name="minimizecards">
