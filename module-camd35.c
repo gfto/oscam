@@ -558,8 +558,8 @@ static int32_t tcp_connect(struct s_client *cl)
 		cl->pfd = cl->udp_fd = handle;
 	}
 	if(!cl->udp_fd) { return (0); }  // Check if client has no handle -> error
-	// check if client reached timeout, if so and keepalive is not set disconnect client
-	if(cl->reader->tcp_rto && (cl->reader->last_s - cl->reader->last_g > cl->reader->tcp_rto) && (cl->reader->keepalive != 1))
+	// check if client reached timeout, if reached and reader is not udp type disconnect reader
+	if(cl->reader->tcp_rto && (cl->reader->last_s - cl->reader->last_g > cl->reader->tcp_rto) && (cl->reader->typ != R_CAMD35))
 	{
 		network_tcp_connection_close(cl->reader, "rto");
 		return 0;
