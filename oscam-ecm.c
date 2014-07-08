@@ -1668,7 +1668,8 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 		return 0;
 	}
 
-
+	if (er->caid != 0x5601) // CAID 0x5601 uses AES keys, skip rc check (or key will become corrupted)
+	{
 	//SPECIAL CHECKs for rc
 	if(rc < E_NOTFOUND && cw && chk_is_null_CW(cw))    //if cw=0 by anticascading
 	{
@@ -1717,7 +1718,7 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 	else { cs_debug_mask(D_CACHEEX | D_CWC | D_LB, "{client %s, caid %04X, srvid %04X} [write_ecm_answer] cyclecheck passed! Reader: %s rc: %i", (er->client ? er->client->account->usr : "-"), er->caid, er->srvid, reader ? reader->label : "-", rc); }
 #endif
 	//END -- SPECIAL CHECKs for rc
-
+	} // Back to normal operation (CAID 0x5601)
 
 	ea->status |= REQUEST_ANSWERED;
 	ea->rc = rc;
