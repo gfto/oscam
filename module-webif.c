@@ -3872,12 +3872,12 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				char add_nds_line = 0;
 				if(rdr->VgCountryC[0])
 				{
-					for(i = 0; i < 3; i++) { tpl_printf(vars, TPLAPPEND, "READERCOCO", "%c", rdr->VgCountryC[i]); }
+					for(i = 0; i < 3; i++) { tpl_printf(vars, TPLAPPEND, "READERCOUNTRYC", "%c", rdr->VgCountryC[i]); }
 					add_nds_line = 1;
 				}
 				else
 				{
-					tpl_addVar(vars, TPLADD, "READERCOCO", "n/a");
+					tpl_addVar(vars, TPLADD, "READERCOUNTRYC", "n/a");
 				}
 
 				//regional code for Vg card
