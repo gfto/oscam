@@ -1083,6 +1083,17 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 		"deprecated", "ndsversion",
 		0
 	};
+	// These are written only when the reader is tcp camd
+	static const char *camd_tcp_only_settings[] =
+	{
+		"keepalive", "reconnecttimeout",
+		0
+	};
+	if(reader->typ == R_CAMD35)
+	{
+		if(in_list(setting, camd_tcp_only_settings))
+			{return false;}
+	}
 	// These are written only when the reader is network reader
 	static const char *network_only_settings[] =
 	{
