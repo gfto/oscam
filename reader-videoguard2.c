@@ -663,6 +663,9 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 	memset(reader->VgRegionC, 0, 8);
 	memcpy(reader->VgRegionC, cta_res + 60, 8);
 	rdr_log(reader, "Region Code: %c%c%c%c%c%c%c%c", reader->VgRegionC[0], reader->VgRegionC[1], reader->VgRegionC[2], reader->VgRegionC[3], reader->VgRegionC[4], reader->VgRegionC[5], reader->VgRegionC[6], reader->VgRegionC[7]);
+	memset(reader->VgCountryC, 0, 3);
+	memcpy(reader->VgCountryC, cta_res + 55, 3);
+	rdr_log(reader, "Country Code: %c%c%c", reader->VgCountryC[0], reader->VgCountryC[1], reader->VgCountryC[2]);
 
 	/* we have one provider, 0x0000 */
 	reader->nprov = 1;

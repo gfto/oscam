@@ -3868,8 +3868,19 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					tpl_addVar(vars, TPLAPPEND, "READERPROVIDS", i == 0 ? "(sysid)<BR>\n" : "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<BR>\n");
 				}
 
-				//regional code for Vg card
+				//CountryCode Vg card
 				char add_nds_line = 0;
+				if(rdr->VgCountryC[0])
+				{
+					for(i = 0; i < 3; i++) { tpl_printf(vars, TPLAPPEND, "READERCOCO", "%c", rdr->VgCountryC[i]); }
+					add_nds_line = 1;
+				}
+				else
+				{
+					tpl_addVar(vars, TPLADD, "READERCOCO", "n/a");
+				}
+
+				//regional code for Vg card
 				if(rdr->VgRegionC[0])
 				{
 					for(i = 0; i < 8; i++) { tpl_printf(vars, TPLAPPEND, "READER_RCODE", "%c", rdr->VgRegionC[i]); }
