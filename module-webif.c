@@ -1601,10 +1601,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	// Receive timeout
 	tpl_printf(vars, TPLADD, "RECEIVETIMEOUT", "%d", rdr->tcp_rto);
 	
-	// keepalive
-	tpl_addVar(vars, TPLADD, "RDRKEEPALIVE", (rdr->keepalive == 1) ? "checked" : "");
-
-	// Connect on init (newcamd only)
+	// Connect on init (newcamd and camd35)
 	if(!apicall)
 	{
 		tpl_addVar(vars, TPLADD, "CONNECTONINITCHECKED", (rdr->ncd_connect_on_init == 1) ? "checked" : "");

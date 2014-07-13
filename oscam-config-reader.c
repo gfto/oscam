@@ -926,14 +926,17 @@ static void reader_fixups_fn(void *var)
 		{ rdr->lb_weight = 100; }
 #endif
 
-	if(is_cascading_reader(rdr) && (rdr->typ == R_CAMD35 || rdr->typ == R_CS378X))
+	if(is_cascading_reader(rdr) && (rdr->typ == R_CAMD35 || rdr->typ == R_CS378X || rdr->typ == R_NEWCAMD))
 	{
 #ifdef CS_CACHEEX
 		if(rdr && rdr->cacheex.mode>1)
-			{ rdr->keepalive = 1; }   //with cacheex, it is required!
+			rdr->ncd_connect_on_init = 1;   //with cacheex, it is required!
 #endif
+		if(rdr->ncd_connect_on_init && rdr->typ != R_CAMD35) // camd35_tcp needs keep alive. camd35_udp not.
+			rdr->keepalive = 1;
+
 		if(rdr->keepalive)
-			{ rdr->tcp_rto = 60; }	  //we cannot check on rto before send keepalive (each 30s), so set rto > 30
+			rdr->tcp_rto = 60; 	  //we cannot check on rto before send keepalive (each 30s), so set rto > 30
 	}
 }
 
@@ -969,7 +972,6 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_INT32("resetcycle"          , OFS(resetcycle),              0),
 	DEF_OPT_INT8("disableserverfilter"  , OFS(ncd_disable_server_filt), 0),
 	DEF_OPT_INT8("connectoninit"        , OFS(ncd_connect_on_init),     0),
-	DEF_OPT_INT8("keepalive"			, OFS(keepalive),				0),
 	DEF_OPT_INT8("smargopatch"          , OFS(smargopatch),             0),
 	DEF_OPT_INT8("autospeed"            , OFS(autospeed),               1),
 	DEF_OPT_UINT8("sc8in1_dtrrts_patch" , OFS(sc8in1_dtrrts_patch),     0),
@@ -1086,10 +1088,10 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	// These are written only when the reader is tcp camd
 	static const char *camd_tcp_only_settings[] =
 	{
-		"keepalive", "reconnecttimeout",
+		"reconnecttimeout",
 		0
 	};
-	if(reader->typ == R_CAMD35)
+	if(reader->typ == R_CAMD35) // no reconecttimeout for udp reader
 	{
 		if(in_list(setting, camd_tcp_only_settings))
 			{return false;}
@@ -1126,7 +1128,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 		"disableserverfilter", "connectoninit",
 		0
 	};
-	if(reader->typ != R_NEWCAMD && in_list(setting, newcamd_settings))
+	if(in_list(setting, newcamd_settings) && !(reader->typ == R_CS378X || reader->typ == R_NEWCAMD || reader->typ == R_CAMD35))
 		{ return false; }
 
 #ifdef MODULE_CCCAM
