@@ -938,7 +938,7 @@ static void reader_fixups_fn(void *var)
 		if(rdr->ncd_connect_on_init && rdr->typ != R_CAMD35) // camd35_tcp needs keep alive. camd35_udp not.
 			rdr->keepalive = 1;
 
-		if(rdr->keepalive || rdr->cacheex_keepalive)
+		if((rdr->keepalive || rdr->cacheex_keepalive) && rdr->tcp_rto < 60)
 			rdr->tcp_rto = 60; 	  //we cannot check on rto before send keepalive (each 30s), so set rto > 30
 	}
 }

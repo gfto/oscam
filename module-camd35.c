@@ -1019,7 +1019,7 @@ void camd35_idle(void)
 	if(!cl->reader)
 		{ return; }
 
-	if(cl->reader->keepalive)
+	if(cl->reader->keepalive || cl->reader->cacheex_keepalive)
 	{
 		send_keepalive(cl);
 	}
