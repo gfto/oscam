@@ -957,7 +957,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 void send_keepalive(struct s_client *cl)
 {
 
-	if((cl->reader && !cl->reader->tcp_connected) && (cl->reader->keepalive || cl->reader->ncd_connect_on_init))
+	if(((cl->reader && !cl->reader->tcp_connected) && (cl->reader->keepalive || cl->reader->ncd_connect_on_init)) || (cl->reader && cl->reader->cacheex_keepalive))
 	{
 		if(tcp_connect(cl))
 		{

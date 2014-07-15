@@ -1213,7 +1213,8 @@ struct s_emmlen_range
 struct s_reader                                     //contains device info, reader info and card info
 {
 	uint8_t         keepalive;
-	uint8_t     changes_since_shareupdate;
+	uint8_t			cacheex_keepalive; // for cache ex to continuousely kp send,also activalble in configs keepalive = 1
+	uint8_t 		changes_since_shareupdate;
 	int32_t         resetcycle;                     // ECM until reset
 	int32_t         resetcounter;                   // actual count
 	uint32_t        auprovid;                       // AU only for this provid

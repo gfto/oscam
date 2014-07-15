@@ -1611,6 +1611,27 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "CONNECTONINITCHECKED", (rdr->ncd_connect_on_init == 1) ? "1" : "0");
 	}
 
+	// Connect on init (camd35_tcp)
+	if(!apicall)
+	{
+		tpl_addVar(vars, TPLADD, "CS378XKEEPALIVE", (rdr->cacheex_keepalive == 1) ? "checked" : "");
+	}
+	else
+	{
+		tpl_addVar(vars, TPLADD, "CS378XKEEPALIVE", (rdr->cacheex_keepalive == 1) ? "1" : "0");
+	}
+
+	// Connect on init (camd35_udp)
+	if(!apicall)
+	{
+		tpl_addVar(vars, TPLADD, "CS357XKEEPALIVE", (rdr->cacheex_keepalive == 1) ? "checked" : "");
+	}
+	else
+	{
+		tpl_addVar(vars, TPLADD, "CS357XKEEPALIVE", (rdr->cacheex_keepalive == 1) ? "1" : "0");
+	}
+
+ 
 	// Reset Cycle
 	tpl_printf(vars, TPLADD, "RESETCYCLE", "%d", rdr->resetcycle);
 
