@@ -938,6 +938,9 @@ static void reader_fixups_fn(void *var)
 		if(rdr->ncd_connect_on_init && rdr->typ != R_CAMD35) // camd35_tcp needs keep alive. camd35_udp not.
 			rdr->keepalive = 1;
 
+		if(rdr->ncd_connect_on_init == 0) // reset after setting to 0.
+			rdr->keepalive = 0;
+
 		if((rdr->keepalive || rdr->cacheex_keepalive) && rdr->tcp_rto < 60)
 			rdr->tcp_rto = 60; 	  //we cannot check on rto before send keepalive (each 30s), so set rto > 30
 	}
@@ -1089,17 +1092,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 		"deprecated", "ndsversion",
 		0
 	};
-	// These are written only when the reader is tcp camd
-	static const char *camd_tcp_only_settings[] =
-	{
-		"reconnecttimeout",
-		0
-	};
-	if(reader->typ == R_CAMD35) // no reconecttimeout for udp reader
-	{
-		if(in_list(setting, camd_tcp_only_settings))
-			{return false;}
-	}
+
 	// These are written only when the reader is network reader
 	static const char *network_only_settings[] =
 	{
