@@ -2728,7 +2728,10 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 #ifdef CS_CACHEEX
 	case MSG_CACHE_PUSH:
 	{
-		cc_cache_push_in(cl, data);
+		if((l - 4) >= 18)
+		{
+			cc_cache_push_in(cl, data);
+		}
 		break;
 	}
 #endif
