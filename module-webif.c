@@ -570,6 +570,8 @@ static char *send_oscam_config_camd35(struct templatevars *vars, struct uriparam
 		if(cfg.c35_udp_suppresscmd08)
 			{ tpl_addVar(vars, TPLADD, "SUPPRESSCMD08UDP", "checked"); }
 
+		if(cfg.c35_udp_keepalive)
+			{ tpl_addVar(vars, TPLADD, "C35UDPKEEPALIVE", "checked"); }
 	}
 	return tpl_getTpl(vars, "CONFIGCAMD35");
 }
@@ -594,6 +596,9 @@ static char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uripa
 
 		if(cfg.c35_tcp_suppresscmd08)
 			{ tpl_addVar(vars, TPLADD, "SUPPRESSCMD08TCP", "checked"); }
+
+		if(cfg.c35_tcp_keepalive)
+			{ tpl_addVar(vars, TPLADD, "C35TCPKEEPALIVE", "checked"); }
 	}
 	return tpl_getTpl(vars, "CONFIGCAMD35TCP");
 }
@@ -2713,7 +2718,7 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	
 #endif
 
-	//Keepalive
+	//Keepalive newcamd
 	if(!apicall)
 	{
 		if(account->ncd_keepalive)
@@ -2722,6 +2727,26 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	else
 	{
 		tpl_printf(vars, TPLADD, "KEEPALIVEVALUE", "%d", account->ncd_keepalive);
+	}
+	//Keepalive camd35udp
+	if(!apicall)
+	{
+		if(account->c35_udp_keepalive)
+			{ tpl_addVar(vars, TPLADD, "KEEPALIVE", "checked"); }
+	}
+	else
+	{
+		tpl_printf(vars, TPLADD, "KEEPALIVEVALUE", "%d", account->c35_udp_keepalive);
+	}
+	//Keepalive camd35tcp
+	if(!apicall)
+	{
+		if(account->c35_tcp_keepalive)
+			{ tpl_addVar(vars, TPLADD, "KEEPALIVE", "checked"); }
+	}
+	else
+	{
+		tpl_printf(vars, TPLADD, "KEEPALIVEVALUE", "%d", account->c35_tcp_keepalive);
 	}
 
 #ifdef CS_ANTICASC

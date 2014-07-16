@@ -926,7 +926,7 @@ static void reader_fixups_fn(void *var)
 		{ rdr->lb_weight = 100; }
 #endif
 
-	if(is_cascading_reader(rdr) && (rdr->typ == R_CAMD35 || rdr->typ == R_CS378X || rdr->typ == R_NEWCAMD))
+	if(is_cascading_reader(rdr) && (rdr->typ == R_CAMD35 || rdr->typ == R_CS378X))
 	{
 #ifdef CS_CACHEEX
 		if(rdr && rdr->cacheex.mode>1)
@@ -938,8 +938,8 @@ static void reader_fixups_fn(void *var)
 		if(rdr->ncd_connect_on_init && rdr->typ != R_CAMD35) // camd35_tcp needs keep alive. camd35_udp not.
 			rdr->keepalive = 1;
 
-		if(rdr->ncd_connect_on_init == 0) // reset after setting to 0.
-			rdr->keepalive = 0;
+		if(rdr->ncd_connect_on_init == 0)
+			rdr->keepalive = 0; // if user decided to set connectoninit back to 0 keepalive must be reset as well.
 
 		if((rdr->keepalive || rdr->cacheex_keepalive) && rdr->tcp_rto < 60)
 			rdr->tcp_rto = 60; 	  //we cannot check on rto before send keepalive (each 30s), so set rto > 30

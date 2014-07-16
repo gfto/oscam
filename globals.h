@@ -464,6 +464,8 @@ enum {E2_GLOBAL = 0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE, E
 #define DEFAULT_INACTIVITYTIMEOUT 0
 #define DEFAULT_TCP_RECONNECT_TIMEOUT 30
 #define DEFAULT_NCD_KEEPALIVE 0
+#define DEFAULT_C35_TCP_KEEPALIVE 0
+#define DEFAULT_C35_UDP_KEEPALIVE 0
 
 #define DEFAULT_CC_MAXHOPS  10
 #define DEFAULT_CC_RESHARE  -1 // Use global cfg
@@ -965,6 +967,8 @@ struct s_client
 	int8_t          c35_suppresscmd08;
 	uint8_t         c35_sleepsend;
 	int8_t          ncd_keepalive;
+	int8_t			c35_tcp_keepalive;
+	int8_t			c35_udp_keepalive;
 	int8_t          disabled;
 	uint64_t        grp;
 	int8_t          crypted;
@@ -1490,6 +1494,8 @@ struct s_auth
 	int8_t          c35_suppresscmd08;
 	uint8_t         c35_sleepsend;
 	int8_t          ncd_keepalive;
+	int8_t			c35_tcp_keepalive;
+	int8_t			c35_udp_keepalive;
 #ifdef MODULE_CCCAM
 	int32_t         cccmaxhops;
 	int8_t          cccreshare;
@@ -1701,6 +1707,8 @@ struct s_config
 	IN_ADDR_T       c35_srvip;
 	int8_t          c35_tcp_suppresscmd08;
 	int8_t          c35_udp_suppresscmd08;
+	int8_t			c35_tcp_keepalive;
+	int8_t			c35_udp_keepalive;
 	PTAB            c35_tcp_ptab;
 	IN_ADDR_T       c35_tcp_srvip;
 #endif

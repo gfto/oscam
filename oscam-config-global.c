@@ -613,6 +613,7 @@ static const struct config_list camd35_opts[] =
 	DEF_OPT_INT32("port"                        , OFS(c35_port),                0),
 	DEF_OPT_FUNC("serverip"                     , OFS(c35_srvip),               serverip_fn),
 	DEF_OPT_INT8("suppresscmd08"                , OFS(c35_udp_suppresscmd08),   0),
+	DEF_OPT_INT8("keepalive"                    , OFS(c35_udp_keepalive),       DEFAULT_C35_UDP_KEEPALIVE),
 	DEF_LAST_OPT
 };
 #else
@@ -660,6 +661,7 @@ static const struct config_list cs378x_opts[] =
 	DEF_OPT_FUNC_X("port"                   , OFS(c35_tcp_ptab),            porttab_fn, PORTTAB_CS378X, .free_value = porttab_free_fn),
 	DEF_OPT_FUNC("serverip"                 , OFS(c35_tcp_srvip),           serverip_fn),
 	DEF_OPT_INT8("suppresscmd08"            , OFS(c35_tcp_suppresscmd08),   0),
+	DEF_OPT_INT8("keepalive"                , OFS(c35_tcp_keepalive),       DEFAULT_C35_TCP_KEEPALIVE),
 	DEF_LAST_OPT
 };
 #else

@@ -413,6 +413,8 @@ int32_t cs_auth_client(struct s_client *client, struct s_auth *account, const ch
 				client->failban = account->failban;
 				client->c35_suppresscmd08 = account->c35_suppresscmd08;
 				client->ncd_keepalive = account->ncd_keepalive;
+				client->c35_udp_keepalive = account->c35_udp_keepalive;
+				client->c35_tcp_keepalive = account->c35_tcp_keepalive;
 				client->grp = account->grp;
 				client->aureader_list = account->aureader_list;
 				client->autoau = account->autoau;
@@ -525,6 +527,8 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 					cl->allowedtimeframe[0] = account->allowedtimeframe[0];
 					cl->allowedtimeframe[1] = account->allowedtimeframe[1];
 					cl->ncd_keepalive = account->ncd_keepalive;
+					cl->c35_udp_keepalive = account->c35_udp_keepalive;
+					cl->c35_tcp_keepalive = account->c35_tcp_keepalive;
 					cl->c35_suppresscmd08 = account->c35_suppresscmd08;
 					cl->tosleep = (60 * account->tosleep);
 					cl->c35_sleepsend = account->c35_sleepsend;
@@ -585,7 +589,19 @@ void client_check_status(struct s_client *cl)
 		}
 
 		// Check clients for exceeding cmaxidle by checking cl->last
-		if(!(cl->ncd_keepalive && (get_module(cl)->listenertype & LIS_NEWCAMD)) &&
+		if((!cl->ncd_keepalive && (get_module(cl)->listenertype & LIS_NEWCAMD)) &&
+				cl->last && !cl->account->umaxidle && cfg.cmaxidle && (time(NULL) - cl->last) > (time_t)cfg.cmaxidle)
+		{
+			add_job(cl, ACTION_CLIENT_IDLE, NULL, 0);
+		} else if((!cl->c35_tcp_keepalive && (get_module(cl)->listenertype & LIS_CAMD35TCP)) &&
+				cl->last && !cl->account->umaxidle && cfg.cmaxidle && (time(NULL) - cl->last) > (time_t)cfg.cmaxidle)
+		{
+			add_job(cl, ACTION_CLIENT_IDLE, NULL, 0);
+		} else if((!cl->c35_udp_keepalive && (get_module(cl)->listenertype & LIS_CAMD35UDP)) &&
+				cl->last && !cl->account->umaxidle && cfg.cmaxidle && (time(NULL) - cl->last) > (time_t)cfg.cmaxidle)
+		{
+			add_job(cl, ACTION_CLIENT_IDLE, NULL, 0);
+		} else if(!(get_module(cl)->listenertype & (LIS_NEWCAMD | LIS_CAMD35TCP | LIS_CAMD35UDP)) &&
 				cl->last && !cl->account->umaxidle && cfg.cmaxidle && (time(NULL) - cl->last) > (time_t)cfg.cmaxidle)
 		{
 			add_job(cl, ACTION_CLIENT_IDLE, NULL, 0);
