@@ -258,7 +258,8 @@ DESCRIPTIONS
 	  set maximum TCP connection block delay, default:60000
 
        connectoninit = 0|1
-	  1 = allow newcamd connections to be established on startup although there isn't a request yet, default:0
+	  1 = allow newcamd,camd35 and cs378x connections to be established on startup although there isn't a request yet
+      reconnects cs378x on network failure, default:0
 
        fallback = 0|1
 	  1 = define reader as fallback, standard and fallback reader must have the same group, default:0
