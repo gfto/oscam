@@ -930,19 +930,14 @@ static void reader_fixups_fn(void *var)
 	{
 #ifdef CS_CACHEEX
 		if(rdr && rdr->cacheex.mode>1)
-		{
-			rdr->ncd_connect_on_init = 1;
-			rdr->cacheex_keepalive = 1; //with cacheex, it is required!
-		}
+			{ rdr->keepalive = 1; }   //with cacheex, it is required!
+		else
 #endif
-		if(rdr->ncd_connect_on_init && rdr->typ != R_CAMD35) // camd35_tcp needs keep alive. camd35_udp not.
-			rdr->keepalive = 1;
+		if(rdr->typ == R_CAMD35)
+			{ rdr->keepalive = 0; }   //with NO-cacheex, and UDP, keepalive is not required!
 
-		if(rdr->ncd_connect_on_init == 0)
-			rdr->keepalive = 0; // if user decided to set connectoninit back to 0 keepalive must be reset as well.
-
-		if((rdr->keepalive || rdr->cacheex_keepalive) && rdr->tcp_rto < 60)
-			rdr->tcp_rto = 60; 	  //we cannot check on rto before send keepalive (each 30s), so set rto > 30
+		if(rdr->keepalive)
+			{ rdr->tcp_rto = 60; }	  //we cannot check on rto before send keepalive (each 30s), so set rto > 30
 	}
 }
 
@@ -971,14 +966,14 @@ static const struct config_list reader_opts[] =
 #endif
 	DEF_OPT_STR("readnano"              , OFS(emmfile),                 NULL),
 	DEF_OPT_FUNC("services"             , OFS(sidtabs),                 reader_services_fn),
-	DEF_OPT_FUNC("lb_whitelist_services" , OFS(lb_sidtabs),             reader_lb_services_fn),
+	DEF_OPT_FUNC("lb_whitelist_services"    , OFS(lb_sidtabs),              reader_lb_services_fn),
 	DEF_OPT_INT32("inactivitytimeout"   , OFS(tcp_ito),                 DEFAULT_INACTIVITYTIMEOUT),
 	DEF_OPT_INT32("reconnecttimeout"    , OFS(tcp_rto),                 DEFAULT_TCP_RECONNECT_TIMEOUT),
 	DEF_OPT_INT32("reconnectdelay"		, OFS(tcp_reconnect_delay),		60000),
 	DEF_OPT_INT32("resetcycle"          , OFS(resetcycle),              0),
 	DEF_OPT_INT8("disableserverfilter"  , OFS(ncd_disable_server_filt), 0),
 	DEF_OPT_INT8("connectoninit"        , OFS(ncd_connect_on_init),     0),
-	DEF_OPT_INT8("keepalive"            , OFS(cacheex_keepalive),       0), 
+	DEF_OPT_INT8("keepalive"			, OFS(keepalive),				0),
 	DEF_OPT_INT8("smargopatch"          , OFS(smargopatch),             0),
 	DEF_OPT_INT8("autospeed"            , OFS(autospeed),               1),
 	DEF_OPT_UINT8("sc8in1_dtrrts_patch" , OFS(sc8in1_dtrrts_patch),     0),
@@ -1092,7 +1087,6 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 		"deprecated", "ndsversion",
 		0
 	};
-
 	// These are written only when the reader is network reader
 	static const char *network_only_settings[] =
 	{
@@ -1125,7 +1119,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 		"disableserverfilter", "connectoninit",
 		0
 	};
-	if(in_list(setting, newcamd_settings) && !(reader->typ == R_CS378X || reader->typ == R_NEWCAMD || reader->typ == R_CAMD35))
+	if(reader->typ != R_NEWCAMD && in_list(setting, newcamd_settings))
 		{ return false; }
 
 #ifdef MODULE_CCCAM

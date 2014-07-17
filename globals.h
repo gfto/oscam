@@ -464,8 +464,6 @@ enum {E2_GLOBAL = 0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE, E
 #define DEFAULT_INACTIVITYTIMEOUT 0
 #define DEFAULT_TCP_RECONNECT_TIMEOUT 30
 #define DEFAULT_NCD_KEEPALIVE 0
-#define DEFAULT_C35_TCP_KEEPALIVE 0
-#define DEFAULT_C35_UDP_KEEPALIVE 0
 
 #define DEFAULT_CC_MAXHOPS  10
 #define DEFAULT_CC_RESHARE  -1 // Use global cfg
@@ -967,8 +965,6 @@ struct s_client
 	int8_t          c35_suppresscmd08;
 	uint8_t         c35_sleepsend;
 	int8_t          ncd_keepalive;
-	int8_t			c35_tcp_keepalive;
-	int8_t			c35_udp_keepalive;
 	int8_t          disabled;
 	uint64_t        grp;
 	int8_t          crypted;
@@ -1217,8 +1213,7 @@ struct s_emmlen_range
 struct s_reader                                     //contains device info, reader info and card info
 {
 	uint8_t         keepalive;
-	uint8_t			cacheex_keepalive; // for cache ex to continuousely kp send,also activalble in configs keepalive = 1
-	uint8_t 		changes_since_shareupdate;
+	uint8_t     changes_since_shareupdate;
 	int32_t         resetcycle;                     // ECM until reset
 	int32_t         resetcounter;                   // actual count
 	uint32_t        auprovid;                       // AU only for this provid
@@ -1459,7 +1454,7 @@ struct s_auth
 	int8_t          monlvl;
 	uint64_t        grp;
 	int32_t         tosleep;
-	uint32_t      umaxidle;
+	int32_t      umaxidle;
 	CAIDTAB         ctab;
 	SIDTABS         sidtabs;
 	FTAB            fchid;
@@ -1494,8 +1489,6 @@ struct s_auth
 	int8_t          c35_suppresscmd08;
 	uint8_t         c35_sleepsend;
 	int8_t          ncd_keepalive;
-	int8_t			c35_tcp_keepalive;
-	int8_t			c35_udp_keepalive;
 #ifdef MODULE_CCCAM
 	int32_t         cccmaxhops;
 	int8_t          cccreshare;
@@ -1707,13 +1700,11 @@ struct s_config
 	IN_ADDR_T       c35_srvip;
 	int8_t          c35_tcp_suppresscmd08;
 	int8_t          c35_udp_suppresscmd08;
-	int8_t			c35_tcp_keepalive;
-	int8_t			c35_udp_keepalive;
 	PTAB            c35_tcp_ptab;
 	IN_ADDR_T       c35_tcp_srvip;
 #endif
 	int8_t          c35_suppresscmd08; // used in cccam module
-	uint32_t    umaxidle; //User max Idle
+	int32_t    umaxidle; //User max Idle
 #ifdef MODULE_NEWCAMD
 	PTAB            ncd_ptab;
 	IN_ADDR_T       ncd_srvip;

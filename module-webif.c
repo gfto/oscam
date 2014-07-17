@@ -570,8 +570,6 @@ static char *send_oscam_config_camd35(struct templatevars *vars, struct uriparam
 		if(cfg.c35_udp_suppresscmd08)
 			{ tpl_addVar(vars, TPLADD, "SUPPRESSCMD08UDP", "checked"); }
 
-		if(cfg.c35_udp_keepalive)
-			{ tpl_addVar(vars, TPLADD, "C35UDPKEEPALIVE", "checked"); }
 	}
 	return tpl_getTpl(vars, "CONFIGCAMD35");
 }
@@ -596,9 +594,6 @@ static char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uripa
 
 		if(cfg.c35_tcp_suppresscmd08)
 			{ tpl_addVar(vars, TPLADD, "SUPPRESSCMD08TCP", "checked"); }
-
-		if(cfg.c35_tcp_keepalive)
-			{ tpl_addVar(vars, TPLADD, "C35TCPKEEPALIVE", "checked"); }
 	}
 	return tpl_getTpl(vars, "CONFIGCAMD35TCP");
 }
@@ -1606,7 +1601,10 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	// Receive timeout
 	tpl_printf(vars, TPLADD, "RECEIVETIMEOUT", "%d", rdr->tcp_rto);
 	
-	// Connect on init (newcamd and camd35)
+	// keepalive
+	tpl_addVar(vars, TPLADD, "RDRKEEPALIVE", (rdr->keepalive == 1) ? "checked" : "");
+
+	// Connect on init (newcamd only)
 	if(!apicall)
 	{
 		tpl_addVar(vars, TPLADD, "CONNECTONINITCHECKED", (rdr->ncd_connect_on_init == 1) ? "checked" : "");
@@ -1616,27 +1614,6 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "CONNECTONINITCHECKED", (rdr->ncd_connect_on_init == 1) ? "1" : "0");
 	}
 
-	// Connect on init (camd35_tcp)
-	if(!apicall)
-	{
-		tpl_addVar(vars, TPLADD, "CS378XKEEPALIVE", (rdr->cacheex_keepalive == 1) ? "checked" : "");
-	}
-	else
-	{
-		tpl_addVar(vars, TPLADD, "CS378XKEEPALIVE", (rdr->cacheex_keepalive == 1) ? "1" : "0");
-	}
-
-	// Connect on init (camd35_udp)
-	if(!apicall)
-	{
-		tpl_addVar(vars, TPLADD, "CS357XKEEPALIVE", (rdr->cacheex_keepalive == 1) ? "checked" : "");
-	}
-	else
-	{
-		tpl_addVar(vars, TPLADD, "CS357XKEEPALIVE", (rdr->cacheex_keepalive == 1) ? "1" : "0");
-	}
-
- 
 	// Reset Cycle
 	tpl_printf(vars, TPLADD, "RESETCYCLE", "%d", rdr->resetcycle);
 
@@ -2680,7 +2657,7 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	tpl_printf(vars, TPLADD, "SLEEPSEND", "%u", account->c35_sleepsend);
 
 	//User Max Idle
-	tpl_printf(vars, TPLADD, "UMAXIDLE", "%u", account->umaxidle);
+	tpl_printf(vars, TPLADD, "UMAXIDLE", "%d", account->umaxidle);
 
 	//EMM Reassembly selector
 	if(!apicall)
@@ -2718,7 +2695,7 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	
 #endif
 
-	//Keepalive newcamd
+	//Keepalive
 	if(!apicall)
 	{
 		if(account->ncd_keepalive)
@@ -2727,26 +2704,6 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	else
 	{
 		tpl_printf(vars, TPLADD, "KEEPALIVEVALUE", "%d", account->ncd_keepalive);
-	}
-	//Keepalive camd35udp
-	if(!apicall)
-	{
-		if(account->c35_udp_keepalive)
-			{ tpl_addVar(vars, TPLADD, "KEEPALIVE", "checked"); }
-	}
-	else
-	{
-		tpl_printf(vars, TPLADD, "KEEPALIVEVALUE", "%d", account->c35_udp_keepalive);
-	}
-	//Keepalive camd35tcp
-	if(!apicall)
-	{
-		if(account->c35_tcp_keepalive)
-			{ tpl_addVar(vars, TPLADD, "KEEPALIVE", "checked"); }
-	}
-	else
-	{
-		tpl_printf(vars, TPLADD, "KEEPALIVEVALUE", "%d", account->c35_tcp_keepalive);
 	}
 
 #ifdef CS_ANTICASC

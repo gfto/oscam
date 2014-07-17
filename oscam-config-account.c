@@ -38,20 +38,18 @@ static void account_c35_suppresscmd08_fn(const char *token, char *value, void *s
 		{ fprintf_conf(f, token, "%d\n", *c35_suppresscmd08); }
 }
 
-static void account_umaxidle_fn(const char *token, char *value, void *setting, FILE *f)
+/*static void account_umaxidle_fn(const char *token, char *value, void *setting, FILE *f)
 {
-	uint32_t *umaxidle = setting;
+	int32_t *umaxidle = setting;
 	if(value)
 	{
-		*umaxidle = (uint32_t)strToIntVal(value, cfg.umaxidle);
+		*umaxidle = (int32_t)strToIntVal(value, cfg.umaxidle);
 		return;
 	}
 	if(*umaxidle != cfg.umaxidle || cfg.http_full_cfg)
 		{ fprintf_conf(f, token, "%u\n", *umaxidle); }
 }
-
-
-
+*/
 
 static void account_ncd_keepalive_fn(const char *token, char *value, void *setting, FILE *f)
 {
@@ -67,38 +65,6 @@ static void account_ncd_keepalive_fn(const char *token, char *value, void *setti
 	}
 	if(*ncd_keepalive != def_value || cfg.http_full_cfg)
 		{ fprintf_conf(f, token, "%d\n", *ncd_keepalive); }
-}
-
-static void account_c35_udp_keepalive_fn(const char *token, char *value, void *setting, FILE *f)
-{
-	int8_t *c35_udp_keepalive = setting;
-	int8_t def_value = 0;
-#ifdef MODULE_NEWCAMD
-	def_value = cfg.c35_udp_keepalive;
-#endif
-	if(value)
-	{
-		*c35_udp_keepalive = (int8_t)strToIntVal(value, def_value);
-		return;
-	}
-	if(*c35_udp_keepalive != def_value || cfg.http_full_cfg)
-		{ fprintf_conf(f, token, "%d\n", *c35_udp_keepalive); }
-}
-
-static void account_c35_tcp_keepalive_fn(const char *token, char *value, void *setting, FILE *f)
-{
-	int8_t *c35_tcp_keepalive = setting;
-	int8_t def_value = 0;
-#ifdef MODULE_NEWCAMD
-	def_value = cfg.c35_tcp_keepalive;
-#endif
-	if(value)
-	{
-		*c35_tcp_keepalive = (int8_t)strToIntVal(value, def_value);
-		return;
-	}
-	if(*c35_tcp_keepalive != def_value || cfg.http_full_cfg)
-		{ fprintf_conf(f, token, "%d\n", *c35_tcp_keepalive); }
 }
 
 static void account_allowedprotocols_fn(const char *token, char *value, void *setting, FILE *f)
@@ -398,10 +364,8 @@ static const struct config_list account_opts[] =
 	DEF_OPT_INT8("monlevel"             , OFS(monlvl),                  0),
 	DEF_OPT_FUNC("sleep"                , OFS(tosleep),                 account_tosleep_fn),
 	DEF_OPT_FUNC("suppresscmd08"        , OFS(c35_suppresscmd08),       account_c35_suppresscmd08_fn),
-	DEF_OPT_FUNC("umaxidle"                   , OFS(umaxidle),                          account_umaxidle_fn),
+	DEF_OPT_INT32("umaxidle"            , OFS(umaxidle),                -1),
 	DEF_OPT_FUNC("keepalive"            , OFS(ncd_keepalive),           account_ncd_keepalive_fn),
-	DEF_OPT_FUNC("keepalivec35udp"      , OFS(c35_udp_keepalive),       account_c35_udp_keepalive_fn),
-	DEF_OPT_FUNC("keepalivec35tcp"      , OFS(c35_tcp_keepalive),       account_c35_tcp_keepalive_fn),
 	DEF_OPT_FUNC("au"                   , 0,                            account_au_fn),
 	DEF_OPT_UINT8("emmreassembly"       , OFS(emm_reassembly),          2),
 	DEF_OPT_FUNC("expdate"              , 0,                            account_expdate_fn),
