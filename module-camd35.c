@@ -1019,11 +1019,11 @@ void camd35_idle(void)
 	if(!cl->reader)
 		{ return; }
 
-	if(cl->reader->keepalive || (!cl->reader->tcp_connected && cl->reader->ncd_connect_on_init && cl->reader->typ == R_CS378X))
+	if(cl->reader->keepalive || (!cl->reader->tcp_connected && cl->reader->ncd_connect_on_init && cl->reader->typ == R_CS378X && cl->reader->tcp_ito == -1))
 	{
 		send_keepalive(cl);
 	}
-	else if(cl->reader->tcp_ito)
+	else if(cl->reader->tcp_ito && !cl->reader->tcp_ito == -1)
 	{
 		//inactivity timeout check
 		time_t now;

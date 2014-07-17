@@ -321,7 +321,7 @@ example: auprovid = 123456
 .PP
 \fBinactivitytimeout\fP = \fBseconds\fP
 .RS 3n
-inactivity timeout for all TCP based remote readers, -1 = reconnect on network failure for newcamd based readers, even in idle, default:0
+inactivity timeout for all TCP based remote readers, -1 = reconnect on network failure for newcamd and cs378x based readers, even in idle, default:0
 .RE
 .PP
 \fBreconnecttimeout\fP = \fBseconds\fP
@@ -336,7 +336,7 @@ set maximum TCP connection block delay, default:60000
 .PP
 \fBconnectoninit\fP = \fB0\fP|\fB1\fP
 .RS 3n
-1 = allow newcamd,camd35 and cs378x connections to be established on startup although there isn't a request yet, cs378x reconnect on network failure default:0
+1 = allow newcamd,camd35 and cs378x connections to be established on startup although there isn't a request yet, default:0
 .RE
 .PP
 \fBfallback\fP = \fB0\fP|\fB1\fP
