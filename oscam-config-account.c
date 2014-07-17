@@ -51,6 +51,7 @@ static void account_c35_suppresscmd08_fn(const char *token, char *value, void *s
 }
 */
 
+
 static void account_ncd_keepalive_fn(const char *token, char *value, void *setting, FILE *f)
 {
 	int8_t *ncd_keepalive = setting;

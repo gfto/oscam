@@ -935,9 +935,6 @@ static void reader_fixups_fn(void *var)
 #endif
 		if(rdr->typ == R_CAMD35)
 			{ rdr->keepalive = 0; }   //with NO-cacheex, and UDP, keepalive is not required!
-
-		if(rdr->keepalive)
-			{ rdr->tcp_rto = 60; }	  //we cannot check on rto before send keepalive (each 30s), so set rto > 30
 	}
 }
 
@@ -1116,7 +1113,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	// Special settings for NEWCAMD
 	static const char *newcamd_settings[] =
 	{
-		"disableserverfilter", "connectoninit",
+		"disableserverfilter",
 		0
 	};
 	if(reader->typ != R_NEWCAMD && in_list(setting, newcamd_settings))
