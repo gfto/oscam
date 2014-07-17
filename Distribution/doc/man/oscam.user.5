@@ -214,7 +214,7 @@ CAID, service ID and provider ID combination, 1 =  disable, default:0
 .PP
 \fBumaxidle\fP = \fBseconds\fP
 .RS 3n
-value for user being idle before disconnect, 0 = idle disconnect disabled, default:0
+value for user being idle before disconnect, 0 = idle disconnect disabled, -1 use clientmaxidle in global section, default:-1
 .RE
 .PP
 \fBcaid\fP = \fB<CAID>[&<mask>][:<target CAID>][,<CAID>[&<mask>][:<target CAID>]]...\fP

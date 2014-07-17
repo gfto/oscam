@@ -158,7 +158,7 @@ DESCRIPTIONS
 	  0 = disable keepalive between server and client for newcamd or CCcam protocol, default:1
 
        umaxidle = seconds
-	  value for user being idle before disconnect, 0 = idle disconnect disabled, default:0
+	  value for user being idle before disconnect, 0 = idle disconnect disabled, -1 use clientmaxidle in global section, default:-1
 
        caid = <CAID>[&<mask>][:<target CAID>][,<CAID>[&<mask>][:<target CAID>]]...
 	  limit and mapping of CAIDs, default:all CAIDs with mask FFFF
