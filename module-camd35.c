@@ -974,7 +974,6 @@ void send_keepalive(struct s_client *cl)
 			rbuf[1] = 1;
 			rbuf[2] = 0;
 			camd35_send(cl, rbuf, 1); //send adds +20
-			cs_debug_mask(D_READER, "%s: sending keepalive", cl->reader->ph.desc);
 		}
 	}
 }
@@ -1019,12 +1018,10 @@ void camd35_idle(void)
 	if(!cl->reader)
 		{ return; }
 
-//	if(cl->reader->keepalive || (!cl->reader->tcp_connected && cl->reader->ncd_connect_on_init && cl->reader->typ == R_CS378X && cl->reader->tcp_ito == -1))
 	if(cl->reader->keepalive) 
 	{
 		send_keepalive(cl);
 	}
-//	else if(cl->reader->tcp_ito > 0)
 	else if(cl->reader->tcp_ito)
 	{
 		//inactivity timeout check

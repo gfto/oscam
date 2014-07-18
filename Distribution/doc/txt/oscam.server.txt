@@ -248,7 +248,7 @@ DESCRIPTIONS
 	  1 = ignore caid and provid settings of reader due faulty clients, default:0
 
        inactivitytimeout = seconds
-	  inactivity  timeout  for  all TCP based remote readers, -1 = reconnect on network failure for newcamd and cs378x based
+	  inactivity  timeout  for  all TCP based remote readers, -1 = reconnect on network failure for newcamd based
 	  readers, even in idle, default:0
 
        reconnecttimeout = seconds
