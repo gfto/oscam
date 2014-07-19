@@ -1076,13 +1076,13 @@ void reader_do_idle(struct s_reader *reader)
 {
 	if(reader->ph.c_idle)
 		{ reader->ph.c_idle(); }
-	else
+	else if (reader->tcp_ito > 0)
 	{
 		time_t now;
 		int32_t time_diff;
 		time(&now);
 		time_diff = abs(now - reader->last_s);
-		if(time_diff > (reader->tcp_ito * 60))
+		if(time_diff > reader->tcp_ito)
 		{
 			struct s_client *cl = reader->client;
 			if(check_client(cl) && reader->tcp_connected && reader->ph.type == MOD_CONN_TCP)

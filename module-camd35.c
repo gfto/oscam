@@ -1022,14 +1022,14 @@ void camd35_idle(void)
 	{
 		send_keepalive(cl);
 	}
-	else if(cl->reader->tcp_ito)
+	else if(cl->reader->tcp_ito>0) // only check if user added an inactivity timeout
 	{
 		//inactivity timeout check
 		time_t now;
 		int32_t time_diff;
 		time(&now);
 		time_diff = abs(now - cl->reader->last_s);
-		if(time_diff>(cl->reader->tcp_ito*60))
+		if(time_diff>cl->reader->tcp_ito)
 		{
 			if(check_client(cl) && cl->reader->tcp_connected && cl->reader->ph.type==MOD_CONN_TCP)
 			{
