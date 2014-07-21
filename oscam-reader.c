@@ -1299,7 +1299,7 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart)
 	{
 		remove_reader_from_active(rdr); // remove from list
 		kill_thread(cl); // kill old thread
-		cs_sleepms(500);
+		cs_sleepms(1500);  //we have to wait a bit so free_client is ended and socket closed too!
 	}
 
 	while(restart && is_valid_client(cl))

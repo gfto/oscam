@@ -1604,7 +1604,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	// keepalive
 	tpl_addVar(vars, TPLADD, "RDRKEEPALIVE", (rdr->keepalive == 1) ? "checked" : "");
 
-	// Connect on init (newcamd and camd35)
+	// Connect on init (newcamd)
 	if(!apicall)
 	{
 		tpl_addVar(vars, TPLADD, "CONNECTONINITCHECKED", (rdr->ncd_connect_on_init == 1) ? "checked" : "");

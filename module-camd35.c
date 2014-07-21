@@ -1004,7 +1004,7 @@ int32_t camd35_client_init(struct s_client *cl)
 
 	cs_log("%s proxy %s:%d", cl->reader->ph.desc, cl->reader->device, cl->reader->r_port);
 
-	if(cl->reader->keepalive || cl->reader->ncd_connect_on_init)
+	if(cl->reader->keepalive)
 		send_keepalive(cl);
 
 	return(0);

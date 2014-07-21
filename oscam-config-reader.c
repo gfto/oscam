@@ -1113,7 +1113,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	// Special settings for NEWCAMD
 	static const char *newcamd_settings[] =
 	{
-		"disableserverfilter",
+		"disableserverfilter", "connectoninit",
 		0
 	};
 	if(reader->typ != R_NEWCAMD && in_list(setting, newcamd_settings))
