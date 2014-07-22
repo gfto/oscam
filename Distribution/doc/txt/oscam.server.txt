@@ -258,7 +258,10 @@ DESCRIPTIONS
 	  set maximum TCP connection block delay, default:60000
 
        connectoninit = 0|1
-	  1 = allow newcamd,camd35 and cs378x connections to be established on startup although there isn't a request, default:0
+	  1 = allow newcamd connections to be established on startup although there isn't a request, default:0
+
+       keepalive = 0|1
+	  1 = allow cs378x TCP socket to be always connected, default:0. Always on if cacheex reader type.
 
        fallback = 0|1
 	  1 = define reader as fallback, standard and fallback reader must have the same group, default:0
