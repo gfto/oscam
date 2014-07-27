@@ -3176,13 +3176,14 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 	struct s_ecmpids *curpid = &demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex];
 	int32_t pid = demux[demux_id].demux_fd[filter_num].pidindex; //DeepThought: pid could be -1
 	uint32_t chid = 0x10000;
+	uint32_t ecmlen = (b2i(2, buffer + 1)&0xFFF)+3;
 
 	if(demux[demux_id].demux_fd[filter_num].type == TYPE_ECM)
 	{
-		cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d Filter #%d fetched ecm data", demux_id, filter_num + 1);
-		if((uint) len  != (b2i(2, buffer + 1)&0xFFF)+3)   // invalid CAT length
+		cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d Filter #%d fetched ECM data (ecmlength = %03X)", demux_id, filter_num + 1, ecmlen);
+		if((uint) len  < ecmlen) // invalid CAT length
 		{
-			cs_debug_mask(D_DVBAPI, "[DVBAPI] Received an ECM with invalid CAT length!");
+			cs_debug_mask(D_DVBAPI, "[DVBAPI] Received data with total length %03X but ECM length is %03X -> invalid CAT length!", len, ecmlen);
 			return;
 		}
 
@@ -3221,7 +3222,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		er->pid   = curpid->ECM_PID;
 		er->prid  = curpid->PROVID;
 		er->vpid  = curpid->VPID;
-		er->ecmlen = len;
+		er->ecmlen = ecmlen;
 		memcpy(er->ecm, buffer, er->ecmlen);
 
 		chid = get_subid(er); // fetch chid or fake chid
@@ -3317,7 +3318,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 					|| (p->srvid && p->srvid != demux[demux_id].program_number))
 				{ continue; }
 
-			if(p->delay == len && p->force < 6)
+			if((uint)p->delay == ecmlen && p->force < 6)
 			{
 				p->force++;
 				NULLFREE(er);
