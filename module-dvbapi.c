@@ -3230,7 +3230,6 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 
 		if(curpid->CAID >> 8 == 0x06)  //irdeto cas
 		{
-			cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d ECMTYPE %02X CAID %04X PROVID %06X ECMPID %04X IRDETO INDEX %02X MAX INDEX %02X CHID %04X CYCLE %02X VPID %04X", demux_id, er->ecm[0], er->caid, er->prid, er->pid, er->ecm[4], er->ecm[5], er->chid, curpid->irdeto_cycle, er->vpid);
 
 			if(curpid->irdeto_curindex != buffer[4])   // old style wrong irdeto index
 			{
@@ -3240,7 +3239,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 				}
 				else   // we are already running and not interested in this ecm
 				{
-					curpid->table = 0;
+					if(curpid->table != buffer[0]) curpid->table = 0; // fix for receivers not supporting section filtering
 					dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this ecm doesnt match with current irdeto index
 					NULLFREE(er);
 					return;
@@ -3253,6 +3252,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 					return;
 				}
 			}
+			cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d ECMTYPE %02X CAID %04X PROVID %06X ECMPID %04X IRDETO INDEX %02X MAX INDEX %02X CHID %04X CYCLE %02X VPID %04X", demux_id, er->ecm[0], er->caid, er->prid, er->pid, er->ecm[4], er->ecm[5], er->chid, curpid->irdeto_cycle, er->vpid);
 		}
 		else
 		{
