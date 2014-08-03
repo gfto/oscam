@@ -874,7 +874,7 @@ static int32_t dvbapi_find_emmpid(int32_t demux_id, uint8_t type, uint16_t caid,
 	for(k = 0; k < demux[demux_id].EMMpidcount; k++)
 	{
 		if(demux[demux_id].EMMpids[k].CAID == caid
-				&& demux[demux_id].EMMpids[k].PROVID == provid
+				&& demux[demux_id].EMMpids[k].PROVID == provid && provid != 0
 				&& (demux[demux_id].EMMpids[k].type & type))
 			{ return k; }
 		else if(demux[demux_id].EMMpids[k].CAID == caid
@@ -3242,6 +3242,13 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 				{
 					curpid->table = 0;
 					dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this ecm doesnt match with current irdeto index
+					NULLFREE(er);
+					return;
+				}
+			}
+			else //fix for receivers not supporting section filtering
+			{
+				if(curpid->table == buffer[0]){
 					NULLFREE(er);
 					return;
 				}
