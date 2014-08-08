@@ -105,11 +105,10 @@ DEFAULT_LIBUSB_LIB = -lusb-1.0
 endif
 ifeq ($(uname_S),Darwin)
 DEFAULT_PCSC_FLAGS = -isysroot $(OSX_SDK) -I/usr/local/include
-DEFAULT_PCSC_LIB = -syslibroot,$(OSX_SDK) -framework IOKit -framework CoreFoundation -framework PCSC -L/usr/local/lib
+DEFAULT_PCSC_LIB = -isysroot $(OSX_SDK) -framework IOKit -framework CoreFoundation -framework PCSC -L/usr/local/lib
 else
 DEFAULT_PCSC_FLAGS = -I/usr/include/PCSC
-DEFAULT_PCSC_LIB = -lpcsclite
-endif
+DEFAULT_PCSC_LIB = -lpcscliteendif
 
 # Function to initialize USE related variables
 #   Usage: $(eval $(call prepare_use_flags,FLAG_NAME,PLUS_TARGET_TEXT))
