@@ -46,7 +46,7 @@ body {
 	text-align:center;
 	background-color:#FFF;
 	color:#000;
-	text-decoration:none;
+	text-decoration:none
 }
 /* pre_shutdown.html */
 h4 {
@@ -64,7 +64,7 @@ p.text-large-red {
 /* file.html, script.html */
 #filename,#filesubmit {
 	font-weight:700;
-	font-size:14px;
+	font-size:14px
 }
 #filesubmit {
 	height:20px
@@ -94,7 +94,8 @@ a.debugl:link {
 	margin:0 1px
 }
 a.debugl:hover, a.debugs:hover {
-	background-color:#A00;color:#FFF
+	background-color:#A00;
+	color:#FFF
 }
 /* module-webif.c  */
 a.debugls:link {
@@ -116,7 +117,7 @@ a.tooltip1 span {
 	z-index:99
 }
 a.tooltip1 {
-	color: red;
+	color:red
 }
 a:hover span {
 	display:block;
@@ -137,12 +138,12 @@ a:hover img.icon {
 	background-color:red
 }
 span a {
-	text-align:center;
+	text-align:center
 }
 td.statuscol4 a,
 td.statuscol9 a,
 td.statuscol13 a {
-	text-align:center;
+	text-align:center
 }
 /* module-webif.c class for services.html */
 div.sidlistclose a {
@@ -336,9 +337,7 @@ tr.expired td {background-color:#FBA}
 tr.connected td {background-color:#FFA}
 tr.disabled td {}
 tr.disabled td:first-child img.icon,
-tr.disabledreader td:first-child img.icon {
-	background-color:#0A0
-}
+tr.disabledreader td:first-child img.icon {background-color:#0A0}
 /* colors for status rows in status.html depend on status */
 tr.a td {background-color:#3F0}
 tr.c td {background-color:#F1F5E6}
@@ -393,7 +392,7 @@ td.subservice, td.invisible {
 	text-align:center
 }
 /* readerstatsnotfound.html, readerstatstimeoutbit.html
- * status_*headline.html */ 
+ * status_*headline.html */
 td.subheadline {
 	height:10px;
 	padding:5px;
@@ -424,7 +423,7 @@ td.statuscol1 {
 }
 /* readerconfig_sidokbit.html */
 td.servicescol1, td.servicescol2, td.servicescol3 {
-	width:30%;
+	width:30%
 }
 /* Actionbutton readers.html */
 td.readercol13,td.readercol14,
@@ -447,12 +446,12 @@ div.log, div#livelog, textarea.editor, div.sidlist {
 }
 div.log {
 	margin:20px 0 0;
-	padding:4px;
+	padding:4px
 }
 /* module-webif.c class for services.html */
 div.sidlist {
 	padding:2px;
-	background-color:#FFFDF5;
+	background-color:#FFFDF5
 }
 div.sidlistclose {
 	float:right;
@@ -496,7 +495,7 @@ div.footer {
 	border-top:3px solid #CCC
 }
 div.footer li {
-	margin:5px;
+	margin:5px
 }
 /* status.html, main DIV for statistics info */
 div.info {
@@ -504,7 +503,7 @@ div.info {
 	white-space:nowrap;
 	margin:14px auto 0
 }
-/* debugmenu	- status_sdebug.html 
+/* debugmenu	- status_sdebug.html
  * logmenu		- file.html
 */
 div.debugmenu, div.logmenu {
@@ -526,8 +525,7 @@ div.cccamentitlementcontrols {
  * #exp, #cwc, #acasc - only in module-webif.c for show/hide columns in userconfig.html
  */
 #newuser, #newreader,
-.exp, .cwc, .acas, .grp,
-.hidden {
+.exp, .cwc, .acas, .grp, .hidden {
 	display:none
 }
 
@@ -539,9 +537,9 @@ textarea.editor {
 	max-width:1500px;
 	height:556px;
 	margin:0 auto 10px;
-	padding:4px;
+	padding:4px
 }
-/* class for textarea */
+/* textarea for config */
 textarea.bt {
 	width:380px; 
 	font-size:12px
@@ -556,37 +554,37 @@ input,textarea {
 	box-sizing:border-box
 }
 /* generaly settings for all checkbox input */
-input[type="checkbox"] {
+input[type=checkbox] {
 	cursor:pointer
 }
 /* generaly settings for all text input */
-input[type="text"] {
+input[type=text] {
 	padding:2px;
 	width:380px
 }
-input.short[type="text"] {
+input.short[type=text] {
 	width:52px
 }
-input.colorinput[type="text"] {
+input.colorinput[type=text] {
     width:60px
 }
-input.medium[type="text"] {
+input.medium[type=text] {
 	width:125px
 }
-input.longer[type="text"] {
+input.longer[type=text] {
 	width:220px
 }
-.readers input[type="text"],
-#addnewservice input[type="text"],
-.users input[type="text"],
-.cacheex input[type="text"] {
+.readers input[type=text],
+#addnewservice input[type=text],
+.users input[type=text],
+.cacheex input[type=text] {
 	text-align:center;
 	background-color:#F8F8F8;
 	width:180px
 }
 /* all config input they are with units e.g. sec or min in config.html */
-input.withunit{
-	text-align:left;
+input.withunit {
+	text-align:left
 }
 /* solution for align vertical checkbox with text */
 input[type=checkbox] {
@@ -595,7 +593,7 @@ input[type=checkbox] {
 	margin-right:5px
 }
 /* generaly settings for all buttons/submits */
-input[type="button"], input[type="submit"]{
+input[type=button], input[type=submit] {
 	-webkit-appearance:none;
 	border-radius:3px;
 	border:1px solid #AAA;
@@ -607,40 +605,39 @@ input[type="button"], input[type="submit"]{
 	width:70px;
 	height:20px;
 	color:#333;
-	background-color:#F8F8F8;
+	background-color:#F8F8F8
 }
 
 /* generaly hover settings for all buttons/submits */
-input[type="button"]:hover, input[type="submit"]:hover{
+input[type=button]:hover, input[type=submit]:hover {
 	background-color:#F2F2F2;
-	box-shadow: inset 1px 1px #555;
-	padding:0px 1px 0px 3px;
-	
+	box-shadow:inset 1px 1px #555;
+	padding:0px 1px 0px 3px
 }
 /* only for statusheadline button in status.html */
-td.subheadline input[type="button"] {
+td.subheadline input[type=button] {
 	float:right;
 	margin:0 0 0 2px;
 	width:95px;
 	font-weight:normal
 }
 /* only for save button lb/cccam control in config.html */
-.configcontrol input[type="submit"] {
-	width:115px;
+.configcontrol input[type=submit] {
+	width:115px
 }
 /* only for button in readers.html/userconfig.html/services.html for addnew */
-.users input[type="submit"], .readers input[type="submit"], #addnewservice input[type="submit"] {
-	margin-left:10px;
+.users input[type=submit], .readers input[type=submit], #addnewservice input[type=submit] {
+	margin-left:10px
 }
 /* only for diasabled button in file.html*/
-#filesubmit input[type="submit"]:disabled {
+#filesubmit input[type=submit]:disabled {
 	display:none
 }
 /* only save button in config.html/readerconfig.html/services.html */
 td.configcolsave {
 	text-align:center
 }
-/* settings for first option in select 
+/* settings for first option in select
  * otherdropdown	- in script.html, menu.html
  */
 #otherdropdown {
@@ -698,7 +695,7 @@ span.span_notifier {
 	background-color:red
 }
 /* module-webif.c value for STATUS item ( more info in Changeset 6668 by alno )
- * Class for formating values in statusview column "Idle" 
+ * Class for formating values in statusview column "Idle"
  * In new WebIf column Idle is not used. Info about Idle is in title */
 span.idlesec_normal, span.idlesec_alert {
 	font-size:9px;
@@ -719,14 +716,14 @@ span.text_entitle {
 /* cachex status */
 span.e_expired {background-color:#FFF3E7}
 .span, span {
-	text-align:center;
+	text-align:center
 }
 
 /* **************** 15. GRAPH */
-rect.graph_bg {fill:white;}
-text.graph_error {text-anchor:middle;fill:red;}
-text.graph_grid_txt {text-anchor:end;font-size:12px;fill:gray;}
-path.graph_grid {stroke-opacity:0.5;stroke:gray;}
+rect.graph_bg {fill:white}
+text.graph_error {text-anchor:middle;fill:red}
+text.graph_grid_txt {text-anchor:end;font-size:12px;fill:gray}
+path.graph_grid {stroke-opacity:0.5;stroke:gray}
 
 /* **************** 16. SORTING IN TABLE */
 .users th {
@@ -740,10 +737,10 @@ path.graph_grid {stroke-opacity:0.5;stroke:gray;}
 	padding-left:12px;
 	padding-right:8px
 }
-.sorting-asc, .sorting-desc{
+.sorting-asc, .sorting-desc {
 	background-color:#999
 }
-.sorting-desc{
+.sorting-desc {
 	background-image: url(data:image/png;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIFlD03K1sAOw==);
 	background-repeat:no-repeat;
 	background-position:4px center;
@@ -751,7 +748,7 @@ path.graph_grid {stroke-opacity:0.5;stroke:gray;}
 	padding-left:10px;
 	padding-right:8px
 }
-.sorting-asc{
+.sorting-asc {
 	background-image: url(data:image/png;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIF3GQnuF0AOw==);
 	background-repeat:no-repeat;
 	background-position:4px center;
@@ -768,7 +765,7 @@ path.graph_grid {stroke-opacity:0.5;stroke:gray;}
 	max-width:1500px;
 	overflow-y:auto;
 	margin:1px auto 15px;
-	padding:0px 4px;
+	padding:0px 4px
 }
 #livelogdata {}
 li.regex, li.regexdata_nav, li.regexdata_save{
@@ -777,54 +774,54 @@ li.regex, li.regexdata_nav, li.regexdata_save{
 input.regexinput {
 	cursor:text;
 	padding:2px;
-	margin: 3px 15px 1px 3px;
-	width:400px;
+	margin:3px 15px 1px 3px;
+	width:400px
 }
 .regexdata_nav input {
-	width:100px;
+	width:100px
 }
 .regexdata_save input {
 	width:90px;
 	margin-top:10px
 }
 div.colorPicker-picker {
-	height: 16px;
-	width: 16px;
-	display: inline;
-	margin: 3px;
-	padding: 4px 8px;
-	border: 1px solid #ccc;
-	cursor: pointer;
-	line-height: 16px;
+	height:16px;
+	width:16px;
+	display:inline;
+	margin:3px;
+	padding:4px 8px;
+	border:1px solid #ccc;
+	cursor:pointer;
+	line-height:16px;
 	font-size:0.75em;
 	font-weight:bold;
-	text-align: center;
+	text-align:center
 }
 div.colorPicker-palette {
-	width: 110px;
-	position: absolute;
-	border: 1px solid #598FEF;
-	background-color: #EFEFEF;
-	padding: 2px;
-	z-index: 9999;
+	width:110px;
+	position:absolute;
+	border:1px solid #598FEF;
+	background-color:#EFEFEF;
+	padding:2px;
+	z-index:9999
 }
-div.colorPicker_hexWrap {width: 100%; float:left }
-div.colorPicker_hexWrap label {font-size: 95%; color: #2F2F2F; margin: 5px 2px; width: 25%}
-div.colorPicker_hexWrap input {margin: 5px 2px; padding: 0; font-size: 95%; border: 1px solid #000; width: 65%; }
+div.colorPicker_hexWrap {width:100%;float:left}
+div.colorPicker_hexWrap label {font-size:95%;color:#2F2F2F;margin:5px 2px;width:25%}
+div.colorPicker_hexWrap input {margin:5px 2px;padding:0;font-size:95%;border:1px solid #000;width:65%}
 
 div.colorPicker-swatch {
-	height: 12px;
-	width: 12px;
-	border: 1px solid #000;
-	margin: 2px;
-	float: left;
-	cursor: pointer;
-	line-height: 12px;
+	height:12px;
+	width:12px;
+	border:1px solid #000;
+	margin:2px;
+	float:left;
+	cursor:pointer;
+	line-height:12px
 }
 /* User-Page polling */
 #inc,#dec {
 	padding:0 3px;
-	margin: -3px 3px;
+	margin:-3px 3px;
 	border:none;
 	background-color:#A00;
 	color:#FFF;
@@ -832,16 +829,16 @@ div.colorPicker-swatch {
 	border-radius:4px;
 	font-size:14px;
 	font-weight:700;
-	width: 22px;
-	height: 22px;
+	width:22px;
+	height:22px
 }
 #inc:hover,#dec:hover {
-	background-color:red;
+	background-color:red
 }
 #nav li.pollselect {
 	display:inline;
-	position: absolute;
-	right: 10px;
+	position:absolute;
+	right:10px
 }
 input.pintervall {
 	font-size:14px;
@@ -853,12 +850,12 @@ input.pintervall {
 	border:none;
 	border-radius:4px;
 	text-align:center;
-	margin: 0 4px;
-	padding: 0;
+	margin:0 4px;
+	padding:0
 }
 /* polling heartbeat */
 #picolor {
-	background-color:#A00; 
+	background-color:#A00
 }
 
 /* **************** 18. ECM BAR HISTORY */
@@ -868,30 +865,30 @@ input.pintervall {
 	height: 90px;
 	border: 1px dotted #F00;
 	background-color: #EAEAEA;
-	padding:3px;	
-	z-index:1000;
+	padding:3px;
+	z-index:1000
 }
 #charthead {
 	background-color:transparent;
 	width:100%;
-	height:5px;
+	height:5px
 }
 #graph {
 	width:98%;
 	bottom:0;
-	position:absolute;
+	position:absolute
 }
 .disabledtable {
-    opacity: 0.5;
+    opacity:0.5
 }
 /* Statuspage Functions: Generate a Bar for Barchart */
 div.bar {
-	width: 5px;
-	margin: 2px;
-	display: inline-block;
-	position: relative;
-	background-color: #aeaeae;
-	vertical-align: baseline;
+	width:5px;
+	margin:2px;
+	display:inline-block;
+	position:relative;
+	background-color:#AEAEAE;
+	vertical-align:baseline
 }
 
 /* **************** 19. FILE MENU */
@@ -920,7 +917,7 @@ div.bar {
 #nav li ul.dropdown_nav li a {
 	color:#000;
 	padding:0 5px;
-        display: block;
+	display:block
 }
 #nav li ul.dropdown_nav {
 	display:none;
@@ -931,7 +928,7 @@ div.bar {
 	right:0;
 	width:auto;
 	background-color:#FFF;
-	border:1px solid #DDD;
+	border:1px solid #DDD
 }
 #nav li:hover ul.dropdown_nav {
 	display:block
