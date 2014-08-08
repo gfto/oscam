@@ -109,6 +109,7 @@ DEFAULT_PCSC_LIB = -isysroot $(OSX_SDK) -framework IOKit -framework CoreFoundati
 else
 DEFAULT_PCSC_FLAGS = -I/usr/include/PCSC
 DEFAULT_PCSC_LIB = -lpcscliteendif
+endif
 
 # Function to initialize USE related variables
 #   Usage: $(eval $(call prepare_use_flags,FLAG_NAME,PLUS_TARGET_TEXT))
