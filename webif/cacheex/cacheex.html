@@ -1,22 +1,25 @@
-##TPLHEADER##
+##TPLHEADERSHORT##
+##REFRESH##
 	<script type="text/javascript">
 	
-	var page = 'cacheex';
-	var jsonurl = '';
-	var parameters = '';
-	var stoppoll = 1;
-	var pollintervall = 0;
-	var httprefresh = '##POLLREFRESHTIME##';
+// 	var page = 'cacheex';
+// 	var jsonurl = 'oscamapi.json';
+// 	var parameters = '?part=cacheex';
+// 	var stoppoll = 0;
+// 	var pollintervall = 0;
+// 	var pollrefresh = '##POLLREFRESHTIME##';
 
 	</script>
-
+##TPLBODY##
 ##TPLMENU##
-##TPLMESSAGE##
 	<DIV ID="subnav">
 		<UL ID="nav">
 			<LI CLASS="configmenu"><A HREF="cacheex.html?action=resetallcacheexstats">Reset CacheEX-Stats</A></LI>
+			<LI ID="nopoll" CLASS="pollselect" style="display: none;">Pollrefresh no set - Polling disabled</LI>
+			<LI ID="poll" CLASS="pollselect" style="display: none;">Pollintervall:<input type="text" name="pintervall" class="pintervall" value="" readonly>sec.<button id="dec">&ndash;</button><button id="inc">+</button></LI>
 		</UL>
 	</DIV>
+##TPLMESSAGE##
 	<DIV ID="searchTable">
 		<TABLE CLASS="cacheex">
 			<TR><TH><input type="text" id="searchTerm" class="search_box" placeholder="Enter Searchterm"></TH></TR>

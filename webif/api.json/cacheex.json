@@ -1,12 +1,5 @@
 ##TPLJSONHEADER##
 "rows":[
     ##JSONCACHEEXBITS##
-],
-"totals":{
-    "total_cachexpush":"##TOTAL_CACHEXPUSH##",
-    "total_cachexgot":"##TOTAL_CACHEXGOT##",
-    "total_cachexhit":"##TOTAL_CACHEXHIT##",
-    "rel_cachexhit":"##REL_CACHEXHIT##",
-    "total_cachesize":"##TOTAL_CACHESIZE##"
-}
+]
 ##TPLJSONFOOTER##

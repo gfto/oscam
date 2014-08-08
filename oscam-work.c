@@ -219,7 +219,7 @@ void *work_thread(void *ptr)
 			int32_t gone = comp_timeb(&actualtime, &data->time);
 			if(data != &tmp_data && gone > (int) cfg.ctimeout+1000)
 			{
-				cs_debug_mask(D_TRACE, "dropping client data for %s time %dms", username(cl), gone);
+				cs_debug_mask(D_TRACE, "dropping client data for %s time %d ms", username(cl), gone);
 				__free_job_data(cl, data);
 				continue;
 			}

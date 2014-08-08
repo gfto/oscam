@@ -366,9 +366,6 @@ table.infotable th:first-child {
 th.statuscol0 {
 	width:0
 }
-th.statuscol15 {
-	cursor:pointer
-}
 /* readerconfig.html */
 th.withservices, th.notservices, th.lbservices {}
 
@@ -570,6 +567,9 @@ input[type="text"] {
 input.short[type="text"] {
 	width:52px
 }
+input.colorinput[type="text"] {
+    width:60px
+}
 input.medium[type="text"] {
 	width:125px
 }
@@ -643,6 +643,9 @@ td.configcolsave {
 /* settings for first option in select 
  * otherdropdown	- in script.html, menu.html
  */
+#otherdropdown {
+	margin:5px
+}
 #otherdropdown option:first-child {
     display:none
 }

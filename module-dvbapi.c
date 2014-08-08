@@ -4131,7 +4131,7 @@ void delayer(ECM_REQUEST *er)
 	int32_t gone = comp_timeb(&tpe, &er->tps);
 	if( gone < cfg.dvbapi_delayer)
 	{
-		cs_debug_mask(D_DVBAPI, "delayer: gone=%dms, cfg=%dms -> delay=%dms", gone, cfg.dvbapi_delayer, cfg.dvbapi_delayer - gone);
+		cs_debug_mask(D_DVBAPI, "delayer: gone=%d ms, cfg=%d ms -> delay=%d ms", gone, cfg.dvbapi_delayer, cfg.dvbapi_delayer - gone);
 		cs_sleepms(cfg.dvbapi_delayer - gone);
 	}
 }

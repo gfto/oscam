@@ -194,7 +194,7 @@ void ac_chk(struct s_client *cl, ECM_REQUEST *er, int32_t level)
 			if(cl->ac_penalty == 3)
 			{
 				if(cl->ac_fakedelay > 0)
-					{ cs_debug_mask(D_CLIENT, "acasc: fake delay %dms", cl->ac_fakedelay); }
+					{ cs_debug_mask(D_CLIENT, "acasc: fake delay %d ms", cl->ac_fakedelay); }
 			}
 			else
 			{

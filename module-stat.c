@@ -161,7 +161,7 @@ void load_stat_from_file(void)
 		}
 		else     //Old format - keep for compatibility:
 		{
-			i = sscanf(line, "%255s rc %04d caid %04hX prid %06X srvid %04hX time avg %dms ecms %d last %ld fail %d len %02hX\n",
+			i = sscanf(line, "%255s rc %04d caid %04hX prid %06X srvid %04hX time avg %d ms ecms %d last %ld fail %d len %02hX\n",
 					   buf, &s->rc, &s->caid, &s->prid, &s->srvid,
 					   &s->time_avg, &s->ecm_count, &s->last_received.time, &s->fail_factor, &s->ecmlen);
 			valid = i > 5;
@@ -212,7 +212,7 @@ void load_stat_from_file(void)
 #ifdef WITH_DEBUG
 	int32_t load_time = comp_timeb(&te, &ts);
 
-	cs_debug_mask(D_LB, "loadbalancer: statistics loaded %d records in %dms", count, load_time);
+	cs_debug_mask(D_LB, "loadbalancer: statistics loaded %d records in %d ms", count, load_time);
 #endif
 }
 
@@ -343,7 +343,7 @@ static void save_stat_to_file_thread(void)
 				}
 
 				//Old version, too slow to parse:
-				//fprintf(file, "%s rc %d caid %04hX prid %06X srvid %04hX time avg %dms ecms %d last %ld fail %d len %02hX\n",
+				//fprintf(file, "%s rc %d caid %04hX prid %06X srvid %04hX time avg %d ms ecms %d last %ld fail %d len %02hX\n",
 				//  rdr->label, s->rc, s->caid, s->prid,
 				//  s->srvid, s->time_avg, s->ecm_count, s->last_received, s->fail_factor, s->ecmlen);
 
@@ -369,7 +369,7 @@ static void save_stat_to_file_thread(void)
 	int32_t load_time = comp_timeb(&te, &ts);
 
 
-	cs_log("loadbalancer: statistic saved %d records to %s in %dms", count, fname, load_time);
+	cs_log("loadbalancer: statistic saved %d records to %s in %d ms", count, fname, load_time);
 }
 
 void save_stat_to_file(int32_t thread)
@@ -503,7 +503,7 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 		{
 			char buf[ECM_FMT_LEN];
 			format_ecm(er, buf, ECM_FMT_LEN);
-			cs_debug_mask(D_LB, "loadbalancer: NOT adding stat (blocking) for reader %s because has positive srvid: rc %d %s time %dms",
+			cs_debug_mask(D_LB, "loadbalancer: NOT adding stat (blocking) for reader %s because has positive srvid: rc %d %s time %d ms",
 						  rdr->label, rc, buf, ecm_time);
 		}
 #endif
@@ -572,7 +572,7 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 		{
 			char buf[ECM_FMT_LEN];
 			format_ecm(er, buf, ECM_FMT_LEN);
-			cs_debug_mask(D_LB, "loadbalancer: not handled stat for reader %s: rc %d %s time %dms",
+			cs_debug_mask(D_LB, "loadbalancer: not handled stat for reader %s: rc %d %s time %d ms",
 						  rdr->label, rc, buf, ecm_time);
 		}
 #endif
@@ -586,7 +586,7 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 	{
 		char buf[ECM_FMT_LEN];
 		format_ecm(er, buf, ECM_FMT_LEN);
-		cs_debug_mask(D_LB, "loadbalancer: adding stat for reader %s: rc %d %s time %dms fail %d",
+		cs_debug_mask(D_LB, "loadbalancer: adding stat for reader %s: rc %d %s time %d ms fail %d",
 					  rdr->label, rc, buf, ecm_time, s->fail_factor);
 	}
 #endif
@@ -1041,13 +1041,13 @@ void stat_get_best_reader(ECM_REQUEST *er)
 			}
 			else if(time_beta && (!time_nagra || time_beta <= time_nagra))
 			{
-				cs_debug_mask(D_LB, "loadbalancer-betatunnel %04X:%04X selected beta: n%dms > b%dms", er->caid, caid_to, time_nagra, time_beta);
+				cs_debug_mask(D_LB, "loadbalancer-betatunnel %04X:%04X selected beta: n%d ms > b%d ms", er->caid, caid_to, time_nagra, time_beta);
 				convert_to_beta_int(er, caid_to);
 				get_stat_query(er, &q);
 			}
 			else
 			{
-				cs_debug_mask(D_LB, "loadbalancer-betatunnel %04X:%04X selected nagra: n%dms < b%dms", er->caid, caid_to, time_nagra, time_beta);
+				cs_debug_mask(D_LB, "loadbalancer-betatunnel %04X:%04X selected nagra: n%d ms < b%d ms", er->caid, caid_to, time_nagra, time_beta);
 			}
 			// else nagra is faster or no beta, so continue unmodified
 		}
@@ -1172,13 +1172,13 @@ void stat_get_best_reader(ECM_REQUEST *er)
 				}
 				else if(time_nagra && (!time_beta || time_nagra <= time_beta))
 				{
-					cs_debug_mask(D_LB, "loadbalancer-betatunnel %04X:%04X selected nagra: b%dms > n%dms", er->caid, caid_to, time_beta, time_nagra);
+					cs_debug_mask(D_LB, "loadbalancer-betatunnel %04X:%04X selected nagra: b%d ms > n%d ms", er->caid, caid_to, time_beta, time_nagra);
 					convert_to_nagra_int(er, caid_to);
 					get_stat_query(er, &q);
 				}
 				else
 				{
-					cs_debug_mask(D_LB, "loadbalancer-betatunnel %04X:%04X selected beta: b%dms < n%dms", er->caid, caid_to, time_beta, time_nagra);
+					cs_debug_mask(D_LB, "loadbalancer-betatunnel %04X:%04X selected beta: b%d ms < n%d ms", er->caid, caid_to, time_beta, time_nagra);
 				}
 
 			}
@@ -1285,8 +1285,8 @@ void stat_get_best_reader(ECM_REQUEST *er)
 	}
 
 	cs_debug_mask(D_LB, "loadbalancer: --------------------------------------------");
-	if(max_reopen < 1) { cs_debug_mask(D_LB, "loadbalancer: mode %d, nbest %d, nfb %d, max_reopen ALL, retrylimit %dms", cfg.lb_mode, nbest_readers, nfb_readers, retrylimit); }
-	else { cs_debug_mask(D_LB, "loadbalancer: mode %d, nbest %d, nfb %d, max_reopen %d, retrylimit %dms", cfg.lb_mode, nbest_readers, nfb_readers, max_reopen, retrylimit); }
+	if(max_reopen < 1) { cs_debug_mask(D_LB, "loadbalancer: mode %d, nbest %d, nfb %d, max_reopen ALL, retrylimit %d ms", cfg.lb_mode, nbest_readers, nfb_readers, retrylimit); }
+	else { cs_debug_mask(D_LB, "loadbalancer: mode %d, nbest %d, nfb %d, max_reopen %d, retrylimit %d ms", cfg.lb_mode, nbest_readers, nfb_readers, max_reopen, retrylimit); }
 
 
 	//Here evaluate lbvalue for readers with valid statistics
@@ -1589,7 +1589,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 		int32_t retrylimit_reached = best_time && best_time > retrylimit;
 		if(retrylimit_reached)
 		{
-			cs_debug_mask(D_LB, "loadbalancer: best reader %s (avg_time %dms) reaches RETRYLIMIT (%dms), resetting avg times and ACTIVE all (valid and blocked) matching readers!", best_rdr->label, best_time, retrylimit);
+			cs_debug_mask(D_LB, "loadbalancer: best reader %s (avg_time %d ms) reaches RETRYLIMIT (%d ms), resetting avg times and ACTIVE all (valid and blocked) matching readers!", best_rdr->label, best_time, retrylimit);
 			for(ea = er->matching_rdr; ea; ea = ea->next)
 			{
 				rdr = ea->reader;

@@ -496,7 +496,7 @@ int32_t init_srvid(void)
 	fclose(fp);
 	if(nr > 0)
 	{
-		cs_log("%d service-id's loaded in %dms", nr, load_time);
+		cs_log("%d service-id's loaded in %d ms", nr, load_time);
 		if(nr > 2000)
 		{
 			cs_log("WARNING: You risk high CPU load and high ECM times with more than 2000 service-id's!");

@@ -490,6 +490,7 @@ static const struct config_list webif_opts[] =
 	DEF_OPT_STR("httpscript"                , OFS(http_script),             NULL),
 	DEF_OPT_STR("httptpl"                   , OFS(http_tpl),                NULL),
 	DEF_OPT_STR("httphelplang"              , OFS(http_help_lang),          "en"),
+	DEF_OPT_STR("httplocale"                , OFS(http_locale),             NULL),
 	DEF_OPT_STR("httpcert"                  , OFS(http_cert),               NULL),
 	DEF_OPT_INT32("http_prepend_embedded_css"   , OFS(http_prepend_embedded_css), 0),
 	DEF_OPT_INT32("httprefresh"             , OFS(http_refresh),            0),

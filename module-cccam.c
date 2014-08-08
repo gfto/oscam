@@ -559,7 +559,7 @@ static int8_t cc_cycle_connection(struct s_client *cl)
 	if(!cl || cl->kill)
 		{ return 0; }
 
-	cs_debug_mask(D_TRACE, "%s unlocked-cycleconnection! timeout %dms",
+	cs_debug_mask(D_TRACE, "%s unlocked-cycleconnection! timeout %d ms",
 				  getprefix(), cl->reader->cc_reconnect);
 
 	cc_cli_close(cl, 0);

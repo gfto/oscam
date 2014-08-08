@@ -13,7 +13,7 @@
 				<TD CLASS="invisible">
 					<TABLE>
 						<TR>
-							<TD><A>Http:</A>&nbsp;<input name="httprefresh" class="withunit short" type="text" maxlength="5" value="##HTTPREFRESH##"> s
+							<TD><A data-p="httprefresh">Http:</A>&nbsp;<input name="httprefresh" class="withunit short" type="text" maxlength="5" value="##HTTPREFRESH##"> s
 							<TD><A data-p="httppollrefresh">Poll (initial refresh):</A>&nbsp;<input name="httppollrefresh" class="withunit short" type="text" maxlength="2" value="##HTTPPOLLREFRESH##"> s</TD>
 						</TR>
 					</TABLE>
@@ -21,6 +21,7 @@
 			</TR>
 			<TR><TD><A>Http allowed:</A></TD><TD><input name="httpallowed" type="text" maxlength="200" value="##HTTPALLOW##"></TD></TR>
 			<TR><TD><A>Http Help Language:</A></TD><TD><input name="httphelplang" class="short" type="text" maxlength="2" value="##HTTPHELPLANG##"> (en|de|fr|it)</TD></TR>
+			<TR><TD><A>Http Locale:</A></TD><TD><input name="httplocale" class="medium" type="text" maxlength="12" value="##HTTPLOCALE##"> e.g. en_US, de_DE.utf8 (if available and works on the server)</TD></TR>
 			<TR><TD><A>Http dyndns:</A></TD><TD><input name="httpdyndns" type="text" maxlength="200" value="##HTTPDYNDNS##"></TD></TR>
 			<TR><TD><A>Au low:</A></TD><TD><input name="aulow" class="withunit short" type="text" maxlength="5" value="##AULOW##"> min</TD></TR>
 			<TR><TD><A>Http save full config:</A></TD><TD><input name="httpsavefullcfg" value="0" type="hidden"><input name="httpsavefullcfg" type="checkbox" value="1" ##HTTPSAVEFULLSELECT##><label></label></TD></TR>
