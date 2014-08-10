@@ -2019,6 +2019,10 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 	// quickfix for 0100:000065
 	if(er->caid == 0x100 && er->prid == 0x65 && er->srvid == 0)
 		{ er->srvid = 0x0642; }
+	
+	if(er->caid == 0x100 && er->ecm[5] > 0x00){
+		cs_log("WARNING: NANO%02d additional protection in use!", er->ecm[5]);
+	}
 
 	// Quickfixes for Opticum/Globo HD9500
 	// Quickfix for 0500:030300
