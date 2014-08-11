@@ -1685,7 +1685,12 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 				c = ((cw[i] + cw[i + 1] + cw[i + 2]) & 0xff);
 				if(cw[i + 3] != c)
 				{
-					if(reader->dropbadcws)
+					bool nano = false;
+					if(er->caid == 0x100 && er->ecm[5] > 0x00){
+						cs_debug_mask(D_TRACE,"NANO%02d: this cw needs additional decryption!", er->ecm[5]);
+						nano = true;
+					}
+					if(reader->dropbadcws && !nano)
 					{
 						rc = E_NOTFOUND;
 						rcEx = E2_WRONG_CHKSUM;
@@ -1693,8 +1698,15 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 					}
 					else
 					{
-						cs_debug_mask(D_TRACE, "notice: changed dcw checksum byte cw[%i] from %02x to %02x", i + 3, cw[i + 3], c);
-						cw[i + 3] = c;
+						if(!nano)
+						{
+							cs_debug_mask(D_TRACE, "notice: changed dcw checksum byte cw[%i] from %02x to %02x", i + 3, cw[i + 3], c);
+							cw[i + 3] = c;
+						}
+						else
+						{
+							cs_debug_mask(D_TRACE,"NANO%02d: not fixing the crc of this cw since its still encrypted!", er->ecm[5]);
+						}
 					}
 				}
 			}
@@ -2019,10 +2031,6 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 	// quickfix for 0100:000065
 	if(er->caid == 0x100 && er->prid == 0x65 && er->srvid == 0)
 		{ er->srvid = 0x0642; }
-	
-	if(er->caid == 0x100 && er->ecm[5] > 0x00){
-		cs_log("WARNING: NANO%02d additional protection in use!", er->ecm[5]);
-	}
 
 	// Quickfixes for Opticum/Globo HD9500
 	// Quickfix for 0500:030300

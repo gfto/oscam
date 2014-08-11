@@ -276,9 +276,7 @@ static int32_t seca_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, struc
 			return ERROR;
 		}
 	}
-	if(er->ecm[5] == 0x01){
-		rdr_log(reader, "WARNING: NANO01 used and card is giving encoded controlword instead of plain controlword!");
-	}
+
 	def_resp;
 	unsigned char ins3c[] = { 0xc1, 0x3c, 0x00, 0x00, 0x00 }; // coding cw
 	unsigned char ins3a[] = { 0xc1, 0x3a, 0x00, 0x00, 0x10 }; // decoding cw
