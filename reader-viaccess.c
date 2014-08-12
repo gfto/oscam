@@ -938,39 +938,6 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 	memset(DE04, 0, sizeof(DE04)); //fix dorcel de04 bug
 
 	nextEcm = ecm88Data;
- 
- //looking for nano E0 
- 	 	    while (ecm88Len) 
- 	 	    { 
- 	 	        // 80 33 nano 80 (ecm) + len (33) 
- 	 	        if(ecm88Data[0]==0x80) { // nano 80, give ecm len 
- 	 	            curEcm88len=ecm88Data[1]; 
- 	 	            nextEcm=ecm88Data+curEcm88len+2; 
- 	 	            ecm88Data += 2; 
- 	 	            ecm88Len -= 2; 
- 	 	 
- 	 	            if (ecm88Data[0]==0x90  && ecm88Data[1]==0x07) 
- 	 	            { 
- 	 	                curnumber_ecm =(ecm88Data[6]<<8) | (ecm88Data[7]); 
- 	 	                //if number_ecm & nano E0 ecm  not suported 
- 	 	                if ((ecm88Data[9] == 0xE0) && (ecm88Data[10] == 0x02)) 
- 	 	                { 
- 	 	                    cs_log("[viaccess-reader] ECM: Invalid ECM nano E0 Rejecting"); 
- 	 	                    return ERROR; 
- 	 	                } 
- 	 	            } 
- 	 	            ecm88Data=nextEcm; 
- 	 	            ecm88Len-=curEcm88len; 
- 	 	            continue; //loop to next ecm 
- 	 	        } else  ecm88Len = 0; //exit while 
- 	 	    } 
- 	 	 
- 	 	    //reset to beginning of ECM 
- 	 	    ecm88Data=&ecmData[0]; //XXX what is the 4th byte for ?? 
- 	 	    ecm88Len=SCT_LEN(er->ecm)-4; 
-    	    curEcm88len=0; 
-	 	    nextEcm=ecm88Data; 
-
 
 	while(ecm88Len > 0 && !rc)
 	{
@@ -1119,7 +1086,16 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 				memcpy(DE04, &ecm88Data[0], 6);
 				ecm88Data += 6;
 			}
-			//
+			
+			// E0
+			if(ecm88Data[0] == 0xE0 && ecm88Data[1] == 0x02 && ecm88Data[2] == 0x00 && ecm88Data[3] == 0x02)
+			{
+				cs_log("[viaccess-reader] ECM: This ECM is using nano E0 -> skip since preprocessing / postprocessing is unknown!");
+				ecm88Data = nextEcm;
+				ecm88Len -= curEcm88len;
+				continue;
+			}
+			
 
 			if(csystem_data->last_geo.provid != provid)
 			{
@@ -1244,7 +1220,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 			default :
 				ecm88Data = nextEcm;
 				ecm88Len -= curEcm88len;
-				rdr_debug_mask(reader, D_READER, "ECM: key to use is not the current one, trying next ECM");
+				rdr_debug_mask(reader, D_READER, "Error: card respondend %02X %02X, trying next ECM", cta_res[0], cta_res[1]);
 				snprintf(ea->msglog, MSGLOGSIZE, "key to use is not the current one, trying next ECM");
 			}
 		}

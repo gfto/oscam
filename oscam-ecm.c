@@ -1685,12 +1685,22 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 				c = ((cw[i] + cw[i + 1] + cw[i + 2]) & 0xff);
 				if(cw[i + 3] != c)
 				{
-					bool nano = false;
-					if(er->caid == 0x100 && er->ecm[5] > 0x00){
-						cs_debug_mask(D_TRACE,"NANO%02d: this cw needs additional decryption!", er->ecm[5]);
-						nano = true;
+					unsigned char nano = 0x00;
+					if(er->caid == 0x100 && er->ecm[5] > 0x00)
+					{
+						nano = er->ecm[5]; // seca nano protection
 					}
-					if(reader->dropbadcws && !nano)
+					if(er->caid == 0x500)
+					{
+						//search for nano E0
+						int16_t s;
+						for (s = 0; s < er->ecmlen-3 && (er->ecm[s] != 0xE0 && er->ecm[s+1] != 0x02 && er->ecm[s+2] != 0x00 && er->ecm[s+3] != 0x02) ; s++)
+						{
+							nano = er->ecm[s]; // viaccess nano protection
+						}
+					}	
+						
+					if(reader->dropbadcws && !nano) // only drop controlword if no cw encryption is applied
 					{
 						rc = E_NOTFOUND;
 						rcEx = E2_WRONG_CHKSUM;
@@ -1698,14 +1708,14 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 					}
 					else
 					{
-						if(!nano)
+						if(!nano) // only fix checksum if no cw encryption is applied
 						{
 							cs_debug_mask(D_TRACE, "notice: changed dcw checksum byte cw[%i] from %02x to %02x", i + 3, cw[i + 3], c);
 							cw[i + 3] = c;
 						}
 						else
 						{
-							cs_debug_mask(D_TRACE,"NANO%02d: not fixing the crc of this cw since its still encrypted!", er->ecm[5]);
+							cs_debug_mask(D_TRACE,"NANO%02d: not fixing the crc of this cw since its still encrypted!", nano);
 						}
 					}
 				}
