@@ -40,7 +40,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 	{
 		if(reader->rlecmh[h].last.time == -1) { continue; }
 		int32_t gone = comp_timeb(&actualtime, &reader->rlecmh[h].last);
-		if( gone >= (reader->rlecmh[h].ratelimittime + reader->rlecmh[h].srvidholdtime))
+		if( gone >= (reader->rlecmh[h].ratelimittime + reader->rlecmh[h].srvidholdtime) || gone < 0) // gone <0 fixup for bad systemtime on dvb receivers while changing transponders
 		{
 			cs_debug_mask(D_CLIENT, "ratelimiter srvid %04X released from slot #%d/%d of reader %s (%d>=%d ratelimit ms + %d ms srvidhold!)",
 						  reader->rlecmh[h].srvid, h + 1, MAXECMRATELIMIT, reader->label, gone,
