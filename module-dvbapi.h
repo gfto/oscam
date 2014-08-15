@@ -136,7 +136,8 @@ typedef struct demux_s
 	time_t pmt_time;
 	uint8_t stopdescramble;
 	uint8_t old_ecmfiltercount; // previous ecm filtercount
-	uint8_t old_emmfiltercount; // previous emm filtercount 
+	uint8_t old_emmfiltercount; // previous emm filtercount
+	pthread_mutex_t answerlock; // requestmode 1 avoid race	
 #ifdef WITH_STAPI
 	uint32_t DescramblerHandle[PTINUM];
 	int32_t desc_pidcount;
