@@ -1692,9 +1692,9 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 					}
 					if(er->caid == 0x500)
 					{
-						//search for nano E0
+						//search for nano E0 E0 (seen so far in logs: E0020002 or E0022002)
 						int16_t s;
-						for (s = 0; s < er->ecmlen-3 && (er->ecm[s] != 0xE0 && er->ecm[s+1] != 0x02 && er->ecm[s+2] != 0x00 && er->ecm[s+3] != 0x02) ; s++)
+						for (s = 0; s < er->ecmlen-3 && (er->ecm[s] != 0xE0 && er->ecm[s+1] != 0x02 && (er->ecm[s+2] != 0x00 || er->ecm[s+2] != 0x20) && er->ecm[s+3] != 0x02) ; s++)
 						{
 							nano = er->ecm[s]; // viaccess nano protection
 						}

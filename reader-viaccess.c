@@ -1087,8 +1087,8 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 				ecm88Data += 6;
 			}
 			
-			// E0
-			if(ecm88Data[0] == 0xE0 && ecm88Data[1] == 0x02 && ecm88Data[2] == 0x00 && ecm88Data[3] == 0x02)
+			// E0 (seen so far in logs: E0020002 or E0022002)
+			if(ecm88Data[0] == 0xE0 && ecm88Data[1] == 0x02 && (ecm88Data[2] == 0x00 || ecm88Data[2] == 0x20) && ecm88Data[3] == 0x02)
 			{
 				cs_log("[viaccess-reader] ECM: This ECM is using nano E0 -> skip since preprocessing / postprocessing is unknown!");
 				ecm88Data = nextEcm;
