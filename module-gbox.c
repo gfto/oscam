@@ -258,7 +258,7 @@ void gbox_write_shared_cards_info(void)
 			it = ll_iter_create(peer->gbox.cards);
 			while((card = ll_iter_next(&it)))
 			{
-				fprintf(fhandle, "CardID:%2d at %s Card %08X Sl:%2d Lev:%1d dist:%1d id:%04X\n",
+				fprintf(fhandle, "CardID %2d at %s Card %08X Sl:%2d Lev:%1d dist:%1d id:%04X\n",
 						card_count, cl->reader->device, card->provid_1,
 						card->slot, card->lvl, card->dist, card->peer_id);
 				card_count++;
