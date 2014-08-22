@@ -1136,7 +1136,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 				// use AES from list to decrypt CW
 				rdr_debug_mask(reader, D_READER, "Decoding CW : using AES key id %d for provider %06x", D2KeyID, (provid & 0xFFFFF0));
 				if(aes_decrypt_from_list(reader->aes_list, 0x500, (uint32_t)(provid & 0xFFFFF0), D2KeyID, &ecm88DataCW[0], 16) == 0)
-					{ snprintf(ea->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06x", D2KeyID, 0x500, (provid & 0xFFFFF0)); }
+					{ snprintf(ea->msglog, MSGLOGSIZE, "Missing AES key(%d)[aka E%X]",D2KeyID, D2KeyID); }
 				if(nanoD2 == 0x0f)
 				{
 					hdSurEncPhase1_D2_0F_11(ecm88DataCW);
@@ -1250,7 +1250,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 		rdr_debug_mask(reader, D_READER, "Decoding CW : using AES key id %d for provider %06x", D2KeyID, (provid & 0xFFFFF0));
 		rc = aes_decrypt_from_list(reader->aes_list, 0x500, (uint32_t)(provid & 0xFFFFF0), D2KeyID, ea->cw, 16);
 		if(rc == 0)
-			{ snprintf(ea->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06x", D2KeyID, 0x500, (provid & 0xFFFFF0)); }
+			{ snprintf(ea->msglog, MSGLOGSIZE, "Missing AES key(%d)[aka E%X]",D2KeyID, D2KeyID); }
 		if(nanoD2 == 0x11)
 		{
 			hdSurEncPhase1_D2_0F_11(ea->cw);

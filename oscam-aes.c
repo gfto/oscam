@@ -195,7 +195,7 @@ static AES_ENTRY *aes_list_find(AES_ENTRY *list, uint16_t caid, uint32_t provid,
 	}
 	if(!current)
 	{
-		cs_log("AES Decrypt : key id %d not found for CAID %04X , provider %06x", keyid, caid, provid);
+		cs_log("AES Decrypt key %d not found for %04X:%06X (aka V %06X E%X ...) ", keyid, caid, provid, provid, keyid);
 		return NULL;
 	}
 	return current;
