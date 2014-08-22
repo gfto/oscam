@@ -1266,7 +1266,7 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len)
 			case 0x05:
 				for(k = i + 6; k < i + buf[i + 1] + 2; k += buf[k + 1] + 2)
 				{
-					if(buf[k] == 0x13 && buf[k+1] == 1 && buf[k+2] == 0x20)
+					if(buf[k] == 0x13 && buf[k+1] == 1 && buf[k+2] == 0x20 && buf[k+3] != 0x14) 
 						dvbapi_add_emmpid(testrdr, demux_id, caid, emm_pid, 0, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
 					else if(buf[k] == 0x14)
 					{
