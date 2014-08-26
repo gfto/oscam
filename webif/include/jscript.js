@@ -363,10 +363,6 @@ function updateUserpage(data) {
 		var uid = "#" + item.user.usermd5;
 		poll_excluded = ($(uid).attr('nopoll') != undefined) ? $(uid).attr('nopoll') : '';
 
-		if (!is_nopoll('usercol7')) {
-			$(uid + " td.usercol7").data('sort-value', 0);
-		}
-
 		switch (item.user.classname) {
 		case 'online':
 			$(uid).attr('class', item.user.classname);
@@ -390,6 +386,7 @@ function updateUserpage(data) {
 			if (!is_nopoll('usercol2')) {
 				$(uid + " td.usercol2")
 					.attr('title', item.user.stats.expectsleep != 'undefined' ? (item.user.stats.expectsleep > 0 ? 'Sleeping in ' + item.user.stats.expectsleep + ' minutes' : 'Sleeping') : '')
+					.data('sort-value', item.user.ip)
 					.html("<B>" + item.user.status + "</B><br>" + item.user.ip);
 			}
 
@@ -411,14 +408,14 @@ function updateUserpage(data) {
 
 				$(uid + " td.usercol4")
 					.attr('title', item.user.prototitle)
-					.data('sort-value', item.user.protocol);
+					.data('sort-value', item.user.protosort);
 			}
 
 			// channel icon
 			if (!is_nopoll('usercol6')) {
 				$(uid + " td.usercol6")
 					.attr('title', item.user.lastchanneltitle)
-					.data('sort-value', item.user.lastchannel);
+					.data('sort-value', item.user.lastchannelsort);
 
 				if (item.user.lca.length > 0) {
 					// if we already have a picon within link
@@ -458,8 +455,7 @@ function updateUserpage(data) {
 
 			if (!is_nopoll('usercol7')) {
 				$(uid + " td.usercol7")
-					.text(item.user.stats.cwlastresptimems)
-					.data('sort-value', item.user.stats.cwlastresptime);
+					.text(item.user.stats.cwlastresptimems);
 			}
 			//usercol8 ???
 			if (!is_nopoll('usercol9')) {
@@ -530,6 +526,7 @@ function updateUserpage(data) {
 			if (!is_nopoll('usercol2')) {
 				$(uid + " td.usercol2")
 					.attr('title', '')
+					.data('sort-value', item.user.ip)
 					.html("<B>" + item.user.status + "</B><br>" + item.user.ip);
 			}
 
@@ -550,14 +547,14 @@ function updateUserpage(data) {
 				}
 				$(uid + " td.usercol4")
 					.attr('title', item.user.prototitle)
-					.data('sort-value', item.user.protocol);
+					.data('sort-value', item.user.protosort);
 			}
 
 			if (!is_nopoll('usercol6')) {
 				// channel icon
 				$(uid + " td.usercol6")
 					.attr('title', item.user.lastchanneltitle)
-					.data('sort-value', item.user.lastchannel);
+					.data('sort-value', item.user.lastchannelsort);
 
 				if (item.user.lca.length > 0) {
 					var image;
@@ -584,8 +581,7 @@ function updateUserpage(data) {
 
 			if (!is_nopoll('usercol7')) {
 				$(uid + " td.usercol7")
-					.text(item.user.stats.cwlastresptimems)
-					.data('sort-value', item.user.stats.cwlastresptime ? item.user.stats.cwlastresptime : 0);
+					.text(item.user.stats.cwlastresptimems);
 			}
 			if (!is_nopoll('usercol19')) {
 				$(uid + " td.usercol19").text(item.user.stats.cwrate);
@@ -635,8 +631,7 @@ function updateUserpage(data) {
 				}
 				if (!is_nopoll('usercol7')) {
 					$(uid + " td.usercol7")
-						.text('')
-						.data('sort-value', 0);
+						.text('');
 				}
 			}
 			break;
@@ -1808,8 +1803,8 @@ $(document).ready(function () {
 						var o = typeof s !== "undefined" ? s : r.text();
 						a.push([o, n])
 					});
-					a.sort(function (e, t) {
-						return f(e[0], t[0])
+					a.sort(function (e, t, s) {
+						return f(e[0], t[0], o)
 					});
 					if (o != s.ASC) a.reverse();
 					l = e.map(a, function (e) {
@@ -1840,31 +1835,36 @@ $(document).ready(function () {
 		}
 		return(c);
 	}
-	var ip2int = function dot2num(dot) {
-		if (dot == "") return 1;
+	var ip2int = function dot2num(dot, s) {
+		if (dot == ""  && s == "asc")  return 4300000000;
+		if (dot == ""  && s == "desc") return 1;
 		var d = dot.split('.');
 			return ((((((+d[0])*256)+(+d[1]))*256)+(+d[2]))*256)+(+d[3]);
 	}
 	e.fn.stupidtable.default_sort_fns = {
-		"int": function (e, t) {
+		"int": function (e, t, s) {
 			return parseInt(convert_locale(e), 10) - parseInt(convert_locale(t), 10)
 		},
-		"float": function (e, t) {
+		"float": function (e, t, s) {
 			return parseFloat(convert_locale(e)) - parseFloat(convert_locale(t))
 		},
-		"ip": function (a, b) {
-			aIP = ip2int(a);
-			bIP = ip2int(b);
+		"ip": function (a, b, s) {
+			aIP = ip2int(a, s);
+			bIP = ip2int(b, s);
 			return aIP - bIP;
 		},
-		"string": function (e, t) {
+		"string": function (e, t, s) {
+			if (e == "" && s == "asc") return +1;
+			if (t == "" && s == "asc") return -1;
 			if (e < t) return -1;
 			if (e > t) return +1;
 			return 0
 		},
-		"string-ins": function (e, t) {
+		"string-ins": function (e, t, s) {
 			e = e.toLowerCase();
 			t = t.toLowerCase();
+			if (e == "" && s == "asc") return +1;
+			if (t == "" && s == "asc") return -1;
 			if (e < t) return -1;
 			if (e > t) return +1;
 			return 0

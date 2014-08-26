@@ -74,24 +74,24 @@
 		<TR id="headline" onClick="cdpause()"> <!--  Resolve  -->
 			<TH>On/Off</TH>
 			<TH data-sort="string-ins" data-sort-default="asc" class="sortable">User</TH>
-			<TH data-sort="ip" data-sort-default="asc" class="sortable">Status<BR>Address</TH>
+			<TH data-sort="ip" class="sortable">Status<BR>Address</TH>
 			<TH data-sort="string-ins" data-sort-default="asc" class="sortable">Protocol</TH>
 			<TH CLASS="##GRPVIEW##">Groups</TH>
 			<TH>Idle Time<BR>On Channel</TH>
 			<TH data-sort="string-ins" class="sortable">Last Channel</TH>
-			<TH data-sort="int" class="sortable" TITLE="Last ECM Time">LTIME</TH>
-			<TH data-sort="int" class="sortable" TITLE="Delivered ECM with status OK">OK</TH>
-			<TH data-sort="int" class="sortable" TITLE="Delivered ECM with status not OK">NOK</TH>
-			<TH data-sort="int" class="sortable" TITLE="Ignored ECM by filters">IGN</TH>
-			<TH data-sort="int" class="sortable" TITLE="Timeout ECM, part of NOK">TOUT</TH>
-			<TH data-sort="int" class="sortable" TITLE="Delivered ECM from cache, part of OK">CACHE</TH>
-			<TH data-sort="int" class="sortable" TITLE="Delivered ECM from tunneled, part of OK">TUN</TH>
-			<TH data-sort="int" class="sortable" TITLE="Sum of ECM's in last 60 seconds">last 60 s</TH>
-			<TH data-sort="int" class="sortable" TITLE="Valid EMM delivered">OK</TH>
-			<TH data-sort="int" class="sortable" TITLE="Invalid EMM delivered">NOK</TH>
+			<TH data-sort="int" data-sort-default="desc" class="sortable" TITLE="Last ECM Time">LTIME</TH>
+			<TH data-sort="int" data-sort-default="desc" class="sortable" TITLE="Delivered ECM with status OK">OK</TH>
+			<TH data-sort="int" data-sort-default="desc" class="sortable" TITLE="Delivered ECM with status not OK">NOK</TH>
+			<TH data-sort="int" data-sort-default="desc" class="sortable" TITLE="Ignored ECM by filters">IGN</TH>
+			<TH data-sort="int" data-sort-default="desc" class="sortable" TITLE="Timeout ECM, part of NOK">TOUT</TH>
+			<TH data-sort="int" data-sort-default="desc" class="sortable" TITLE="Delivered ECM from cache, part of OK">CACHE</TH>
+			<TH data-sort="int" data-sort-default="desc" class="sortable" TITLE="Delivered ECM from tunneled, part of OK">TUN</TH>
+			<TH data-sort="int" data-sort-default="desc" class="sortable" TITLE="Sum of ECM's in last 60 seconds">last 60 s</TH>
+			<TH data-sort="int" data-sort-default="desc" class="sortable" TITLE="Valid EMM delivered">OK</TH>
+			<TH data-sort="int" data-sort-default="desc" class="sortable" TITLE="Invalid EMM delivered">NOK</TH>
 ##TPLCWCYCLETHV##
 ##TPLCWANTICASCTHV##
-			<TH CLASS="##EXPIREVIEW##" TITLE="Expiration date of account">Exp. Date</TH>
+			<TH data-sort="string" class="sortable ##EXPIREVIEW##" TITLE="Expiration date of account">Exp. Date</TH>
 			<TH COLSPAN="3">Action</TH>
 		</TR>
 	</THEAD>

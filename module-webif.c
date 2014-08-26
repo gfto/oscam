@@ -3161,7 +3161,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	int32_t casc_users = 0;
 	int32_t casc_users2 = 0;
 	int32_t n_request = 0;
-	
+
 	for(account = cfg.account; (account); account = account->next)
 	{
 		if(account->expirationdate){
@@ -3176,7 +3176,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		if(expdate_set && grp_set)
 		break;
 	}
-	
+
 	for(account = cfg.account; (account); account = account->next)
 	{
 		//clear for next client
@@ -3199,6 +3199,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_addVar(vars, TPLADD, "CWLASTRESPONSETMS", "");
 		tpl_addVar(vars, TPLADD, "CLIENTIP", "");
 		tpl_addVar(vars, TPLADD, "LASTCHANNELTITLE", "");
+		tpl_addVar(vars, TPLADD, "LASTCHANNELSORT", "");
 		tpl_addVar(vars, TPLADD, "CLIENTTIMEONCHANNELAPI", "");
 		tpl_addVar(vars, TPLADD, "CLIENTTIMEONCHANNEL", "");
 		tpl_addVar(vars, TPLADD, "CLIENTTIMETOSLEEP", "");
@@ -3281,14 +3282,15 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			if(clientsrvid != NO_SRVID_VALUE || clientcaid != NO_CAID_VALUE)
 			{
 				lastchan = xml_encode(vars, get_servicename(latestclient, clientsrvid, clientcaid, channame));
+				tpl_addVar(vars, TPLADD, "LASTCHANNELSORT", lastchan);
 			}
 			else
 			{
 				lastchan = "";
+				tpl_addVar(vars, TPLADD, "LASTCHANNELSORT", "~~~~~");
 			}
 
 			tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
-			tpl_addVar(vars, TPLADD, "LASTCHANNELSORT", lastchan);
 			tpl_addVar(vars, TPLADD, "LASTCHANNELTITLE", lastchan);
 
 			if(cfg.http_showpicons )
