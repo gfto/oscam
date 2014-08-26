@@ -3505,7 +3505,7 @@ static char *get_cardsystem_desc_by_caid(uint16_t caid)
 	if(caid >= 0x1700 && caid <= 0x17FF) { return "betacrypt"; }
 	if(caid >= 0x1800 && caid <= 0x18FF) { return "nagra"; }
 	if(caid >= 0x4B00 && caid <= 0x4BFF) { return "tongfang"; }
-	if(caid >= 0x5501 && caid <= 0x5511) { return "griffin"; }
+	if(caid >= 0x5501 && caid <= 0x551A) { return "griffin"; }
 	if(caid == 0x4AE0 || caid == 0x4AE1) { return "drecrypt"; }
 	if(caid == 0x5581 || caid == 0x4AEE) { return "bulcrypt"; }
 	if(caid == 0x2600) { return "biss"; }
