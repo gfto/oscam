@@ -938,6 +938,8 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 	memset(DE04, 0, sizeof(DE04)); //fix dorcel de04 bug
 
 	nextEcm = ecm88Data;
+	
+	int8_t nanoE0 = 0;
 
 	while(ecm88Len > 0 && !rc)
 	{
@@ -1087,13 +1089,10 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 				ecm88Data += 6;
 			}
 			
-			// E0 (seen so far in logs: E0020002 or E0022002)
+			// E0 (seen so far in logs: E0020002 or E0022002, but not in all cases delivers invalid cw so just detect!)
 			if(ecm88Data[0] == 0xE0 && ecm88Data[1] == 0x02 && (ecm88Data[2] == 0x00 || ecm88Data[2] == 0x20) && ecm88Data[3] == 0x02)
 			{
-				cs_log("[viaccess-reader] ECM: This ECM is using nano E0 -> skip since preprocessing / postprocessing is unknown!");
-				ecm88Data = nextEcm;
-				ecm88Len -= curEcm88len;
-				continue;
+				nanoE0 = 1; // flag possible nanoe0 in use
 			}
 			
 
@@ -1217,6 +1216,18 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 					rc = 1;
 				}
 				break;
+				
+			case 0xff: // nanoe0 responds FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+				if(cta_res[1] == 0xff && nanoE0)
+				{
+					cs_log("[viaccess-reader] This ECM is using nano E0 and the controlword we received was invalid!");
+					ecm88Data = nextEcm;
+					ecm88Len -= curEcm88len;
+					nanoE0 = 0; // reset detection for next ecm
+				}
+				break;
+					
+					
 			default :
 				ecm88Data = nextEcm;
 				ecm88Len -= curEcm88len;
