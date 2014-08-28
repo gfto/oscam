@@ -861,7 +861,7 @@ static const struct config_list gbox_opts[] =
 	DEF_OPT_INT8("ccc_reshare"	, OFS(ccc_reshare),		0),
 	DEF_OPT_STR("tmp_dir"		, OFS(gbox_tmp_dir),		NULL),
 	DEF_LAST_OPT
-}
+};
 #else
 static const struct config_list gbox_opts[] = { DEF_LAST_OPT };
 #endif
