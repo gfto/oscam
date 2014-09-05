@@ -1335,7 +1335,11 @@ static int32_t viaccess_get_emm_filter(struct s_reader *rdr, struct s_csystem_em
 {
 	if(*emm_filters == NULL)
 	{
-		const unsigned int max_filter_count = 4;
+		int8_t max_filter_count = 4;
+#ifdef MODULE_CAMD35
+		if(rdr->typ == R_CAMD35 && rdr->via_emm_global == 1)
+			{max_filter_count = 6;}
+#endif
 		if(!cs_malloc(emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
 			{ return ERROR; }
 
@@ -1343,6 +1347,22 @@ static int32_t viaccess_get_emm_filter(struct s_reader *rdr, struct s_csystem_em
 		*filter_count = 0;
 
 		int32_t idx = 0;
+#ifdef MODULE_CAMD35
+		if(rdr->typ == R_CAMD35 && rdr->via_emm_global == 1)
+		{ 
+			filters[idx].type = EMM_GLOBAL;
+			filters[idx].enabled   = 1;
+			filters[idx].filter[0] = 0x8A;
+			filters[idx].mask[0]   = 0xFF;
+			idx++;
+
+			filters[idx].type = EMM_GLOBAL;
+			filters[idx].enabled   = 1;
+			filters[idx].filter[0] = 0x8B;
+			filters[idx].mask[0]   = 0xFF;
+			idx++;
+		}
+#endif
 
 		filters[idx].type = EMM_SHARED;
 		filters[idx].enabled   = 1;
