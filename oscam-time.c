@@ -2,8 +2,9 @@
 #include "oscam-time.h"
 
 static enum clock_type clock_type = CLOCK_TYPE_UNKNOWN;
+#if defined(CLOCKFIX)
 struct timeval lasttime; // holds previous time to detect systemtime adjustments due to eg transponder change on dvb receivers
-
+#endif
 int64_t comp_timeb(struct timeb *tpa, struct timeb *tpb)
 {
 	return (uint64_t)(((uint64_t)(tpa->time - tpb->time) * 1000ull) + (tpa->millitm - tpb->millitm));
@@ -105,6 +106,7 @@ void cs_ftime(struct timeb *tp)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
+#if defined(CLOCKFIX)
 	if (tv.tv_sec > lasttime.tv_sec || (tv.tv_sec == lasttime.tv_sec && tv.tv_usec >= lasttime.tv_usec)){ // check for time issues!
 		lasttime = tv; // register this valid time 
 	}
@@ -114,7 +116,7 @@ void cs_ftime(struct timeb *tp)
 		settimeofday(&tv, NULL); // set time back to last known valid time
 		//fprintf(stderr, "*** WARNING: BAD TIME AFFECTING WHOLE OSCAM ECM HANDLING, SYSTEMTIME SET TO LAST KNOWN VALID TIME **** \n");
 	}
-	
+#endif	
 	tp->time    = tv.tv_sec;
 	tp->millitm = tv.tv_usec / 1000;
 }
@@ -306,6 +308,7 @@ void cs_gettime(struct timespec *ts)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
+#if defined(CLOCKFIX)
 	if (tv.tv_sec > lasttime.tv_sec || (tv.tv_sec == lasttime.tv_sec && tv.tv_usec >= lasttime.tv_usec)){ // check for time issues!
 		lasttime = tv; // register this valid time 
 	}
@@ -315,6 +318,7 @@ void cs_gettime(struct timespec *ts)
 		settimeofday(&tv, NULL); // set time back to last known valid time
 		//fprintf(stderr, "*** WARNING: BAD TIME AFFECTING WHOLE OSCAM ECM HANDLING, SYSTEMTIME SET TO LAST KNOWN VALID TIME **** \n");
 	}
+#endif
 	ts->tv_sec = tv.tv_sec;
 	ts->tv_nsec = tv.tv_usec * 1000;
 	clock_type = CLOCK_TYPE_REALTIME;
