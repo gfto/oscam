@@ -414,7 +414,7 @@ example: auprovid = 123456
 
 <B>inactivitytimeout</B> = <B>seconds</B>
 <DL COMPACT><DT><DD>
-inactivity timeout for all TCP based remote readers, -1 = reconnect on network failure for newcamd based readers, even in idle, default:0
+inactivity timeout for all TCP based remote readers, -1 = reconnect on network failure for newcamd, even in idle, default:0
 </DL>
 
 <P>
@@ -658,7 +658,7 @@ block all types of EMMs by length, default:none
 
 <B>via_emm_global</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
-enables global emm filter for viaccess. ONLY FOR camd35(cs357x) protocol default:0
+1 = enable global EMM filter for Viaccess SCs, default:0, <I>for camd35/cs357x  protocol only</I>
 </DL>
 
 <P>
