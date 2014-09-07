@@ -2631,7 +2631,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			for(addentry = dvbapi_priority; addentry != NULL; addentry = addentry->next)
 			{
 				if(addentry->type != 'a'
-						|| (addentry->ecmpid && addentry->ecmpid != elementary_pid)
+						|| (addentry->ecmpid && pmtpid && addentry->ecmpid != pmtpid) // ecmpid is misused to hold pmtpid in case of A: rule
+						|| (addentry->ecmpid && !pmtpid && addentry->ecmpid != vpid) // some receivers dont forward pmtpid, use vpid instead
 						|| (addentry->srvid != demux[demux_id].program_number))
 					{ continue; }
 				cs_debug_mask(D_DVBAPI, "[pmt] Add Fake FFFF:%06x:%04x for unencrypted stream on srvid %04X", addentry->mapprovid, addentry->mapecmpid, demux[demux_id].program_number);
