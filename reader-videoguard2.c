@@ -1013,7 +1013,7 @@ static int32_t videoguard2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 					break;
 				}
 			}
-			if(posB0 != -1)
+			if(posB0 != -1 && (reader->caid == 0x919 || reader->caid == 0x93B || reader->caid == 0x9CD))
 			{
 				do_post_dw_hash(reader, ea->cw + 0, &er->ecm[posB0 - 2]);
 				do_post_dw_hash(reader, ea->cw + 8, &er->ecm[posB0 - 2]);
