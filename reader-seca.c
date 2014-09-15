@@ -1,6 +1,7 @@
 #include "globals.h"
 #ifdef READER_SECA
 #include "reader-common.h"
+#include "csctapi/icc_async.h"
 
 struct seca_data
 {
@@ -181,6 +182,8 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 	uchar buf[256];
 	static const uchar ins0e[] = { 0xc1, 0x0e, 0x00, 0x00, 0x08 }; // get serial number (UA)
 	static const uchar ins16[] = { 0xc1, 0x16, 0x00, 0x00, 0x06 }; // get nr. of providers
+	static unsigned char ins80[] = { 0x80, 0xCA, 0x00, 0x00, 0x11 }; // switch to nagra layer
+	static unsigned char insEE[] = { 0xEE, 0x51, 0xDC, 0xB8, 0x4A, 0x1C, 0x15, 0x05, 0xB5, 0xA6, 0x9B, 0x91, 0xBA, 0x33, 0x19, 0xC4, 0x10 }; // some more nagra magic
 	int32_t i;
 
 	cs_clear_entitlement(reader);
@@ -238,6 +241,44 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 		}
 
 	rdr_log(reader, "providers: %d (%s)", reader->nprov, buf + 1);
+	
+	if (((atr[7] << 8 | atr[8]) == 0x7070) && ((atr[9] &0x0F) >= 10)) // is this possibly a nagra card tunneling seca commands?
+	{
+		rdr_log(reader, "Trying to switch to nagra layer of this card!");
+		ICC_Async_Transmit(reader, sizeof(ins80), sizeof(ins80), ins80, 0, 10*1000*1000); // try to init nagra layer
+		ICC_Async_Receive(reader, 1, cta_res, 0, 10*1000*1000); // fetch response 
+		if(cta_res[0] ==  0xCA)
+		{
+			rdr_log(reader, "Sending nagra handshake!");
+			ICC_Async_Transmit(reader, sizeof(insEE), sizeof(insEE), insEE, 0, 10*1000*1000); // nagra handshake (?)
+			ICC_Async_Receive(reader, 2, cta_res, 0, 10*1000*1000); // fetch response
+			{
+				if(cta_res[0] == 0x61 && cta_res[1] == 0x10)
+				{
+					rdr_log(reader, "Fetching nagra ATR!");
+					struct s_ATR nagra_atr;
+					call(reader->crdr.activate(reader, &nagra_atr)); // get nagra atr 
+					unsigned char table_hist[ATR_MAX_HISTORICAL];
+					uint32_t table_hist_size; 
+					ATR_GetHistoricalBytes(&nagra_atr, table_hist, &table_hist_size); // get historical bytes from nagra atr 
+					memset(reader->rom, 0, sizeof(reader->rom));
+					memcpy(reader->rom, table_hist, (table_hist_size <= sizeof(reader->rom) ? table_hist_size : sizeof(reader->rom))); // save historical bytes into reader romrev
+					rdr_log(reader, "This is a nagra card %s tunnelling seca", table_hist);
+					rdr_log(reader, "Switching back to seca mode!");
+					call(reader->crdr.activate(reader, &nagra_atr)); // to switch back to seca layer
+				}
+				else
+				{
+					rdr_log(reader, "Nagra handshake failed!");
+				}
+			}
+		}
+		else
+		{
+			rdr_log(reader, "Switching to nagra layer of this card failed!");
+		}
+	}
+	
 	// Unlock parental control
 	if(cfg.ulparent != 0)
 	{
@@ -248,6 +289,7 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 		rdr_log(reader, "parental locked");
 	}
 	rdr_log(reader, "ready for requests");
+	
 	return OK;
 }
 
