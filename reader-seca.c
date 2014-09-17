@@ -245,27 +245,34 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 	if (((atr[7] << 8 | atr[8]) == 0x7070) && ((atr[9] &0x0F) >= 10)) // is this possibly a nagra card tunneling seca commands?
 	{
 		rdr_log(reader, "Trying to switch to nagra layer of this card!");
-		ICC_Async_Transmit(reader, sizeof(ins80), sizeof(ins80), ins80, 0, 10*1000*1000); // try to init nagra layer
-		ICC_Async_Receive(reader, 1, cta_res, 0, 10*1000*1000); // fetch response 
+		int32_t timeout = ICC_Async_GetTimings(reader, reader->char_delay); // going to send so char delay
+		ICC_Async_Transmit(reader, sizeof(ins80), 1, ins80, 0, timeout); // try to init nagra layer
+		timeout = ICC_Async_GetTimings(reader, reader->read_timeout);  // we are going to receive: WWT timeout 
+		ICC_Async_Receive(reader, 1, cta_res, 0, timeout); // fetch response 
 		if(cta_res[0] ==  0xCA)
 		{
 			rdr_log(reader, "Sending nagra handshake!");
-			ICC_Async_Transmit(reader, sizeof(insEE), sizeof(insEE), insEE, 0, 10*1000*1000); // nagra handshake (?)
-			ICC_Async_Receive(reader, 2, cta_res, 0, 10*1000*1000); // fetch response
+			timeout = ICC_Async_GetTimings(reader, reader->char_delay); // going to send so char delay
+			ICC_Async_Transmit(reader, sizeof(insEE), 2, insEE, 0, timeout); // nagra handshake (?)
+			timeout = ICC_Async_GetTimings(reader, reader->read_timeout);  // we are going to receive: WWT timeout 
+			ICC_Async_Receive(reader, 2, cta_res, 0, timeout); // fetch response
 			{
 				if(cta_res[0] == 0x61 && cta_res[1] == 0x10)
 				{
 					rdr_log(reader, "Fetching nagra ATR!");
-					struct s_ATR nagra_atr;
-					call(reader->crdr.activate(reader, &nagra_atr)); // get nagra atr 
+					ATR nagra_atr;
+					ICC_Async_Activate(reader, &nagra_atr, reader->deprecated); // get nagra atr
+					if(reader->crdr.unlock) { reader->crdr.unlock(reader); }
+					
 					unsigned char table_hist[ATR_MAX_HISTORICAL];
 					uint32_t table_hist_size; 
-					ATR_GetHistoricalBytes(&nagra_atr, table_hist, &table_hist_size); // get historical bytes from nagra atr 
+					ATR_GetHistoricalBytes(&nagra_atr, table_hist, &table_hist_size); // get historical bytes containing romrev from nagra atr 
 					memset(reader->rom, 0, sizeof(reader->rom));
 					memcpy(reader->rom, table_hist, (table_hist_size <= sizeof(reader->rom) ? table_hist_size : sizeof(reader->rom))); // save historical bytes into reader romrev
 					rdr_log(reader, "This is a nagra card %s tunnelling seca", table_hist);
 					rdr_log(reader, "Switching back to seca mode!");
-					call(reader->crdr.activate(reader, &nagra_atr)); // to switch back to seca layer
+					ICC_Async_Activate(reader, &nagra_atr, reader->deprecated); // switch back to seca layer
+					if(reader->crdr.unlock) { reader->crdr.unlock(reader); } 
 				}
 				else
 				{
