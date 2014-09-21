@@ -13,8 +13,6 @@
 #define STAPI       2
 #define COOLAPI     3
 
-#define PORT        9000
-
 #define TMPDIR  "/tmp/"
 #define STANDBY_FILE    "/tmp/.pauseoscam"
 #define ECMINFO_FILE    "/tmp/ecm.info"

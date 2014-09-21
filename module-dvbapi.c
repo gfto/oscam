@@ -694,37 +694,6 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter)
 	return dmx_fd;
 }
 
-int32_t dvbapi_open_netdevice(int32_t UNUSED(type), int32_t UNUSED(num), int32_t adapter)
-{
-	int32_t socket_fd;
-
-	socket_fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if(socket_fd == -1)
-	{
-		cs_log("ERROR: Failed create socket (%d %s)", errno, strerror(errno));
-	}
-	else
-	{
-		struct sockaddr_in saddr;
-		set_nonblock(socket_fd, true);
-		bzero(&saddr, sizeof(saddr));
-		saddr.sin_family = AF_INET;
-		saddr.sin_port = htons(PORT + adapter); // port = PORT + adapter number
-		saddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-		int32_t r = connect(socket_fd, (struct sockaddr *) &saddr, sizeof(saddr));
-		if(r < 0)
-		{
-			cs_log("ERROR: Failed to connect socket (%d %s), at localhost, port=%d", errno, strerror(errno), PORT + adapter);
-			int32_t ret = close(socket_fd);
-			if(ret < 0) { cs_log("ERROR: Could not close socket fd (errno=%d %s)", errno, strerror(errno)); }
-			socket_fd = -1;
-		}
-	}
-
-	cs_debug_mask(D_DVBAPI, "NET DEVICE open (port = %d) fd %d", PORT + adapter, socket_fd);
-	return socket_fd;
-}
-
 uint16_t tunemm_caid_map(uint8_t direct, uint16_t caid, uint16_t srvid)
 {
 	int32_t i;
@@ -1350,19 +1319,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 				if(!enable){
 					action = remove_streampid_from_list(i, demux[demux_id].STREAMpids[num], idx);
 				}
-				
-				
-				if(currentfd <= 0 && (action == ADDED_STREAMPID_INDEX || action != NO_STREAMPID_LISTED))
-				{
-					if(cfg.dvbapi_boxtype == BOXTYPE_PC)
-						{ currentfd = dvbapi_open_netdevice(1, i, demux[demux_id].adapter_index); }
-					else
-						{ currentfd = dvbapi_open_device(1, i, demux[demux_id].adapter_index); }
-						
-					ca_fd[i] = currentfd; // save fd of this ca
-				}
-				
-				if(currentfd > 0 && (action == ADDED_STREAMPID_INDEX || action != NO_STREAMPID_LISTED))
+				if(action == ADDED_STREAMPID_INDEX || action != NO_STREAMPID_LISTED)
 				{
 					ca_pid_t ca_pid2;
 					memset(&ca_pid2, 0, sizeof(ca_pid2));
@@ -1379,9 +1336,6 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 						memcpy(&packet[1], &request, sizeof(request));
 						memcpy(&packet[1+sizeof(request)], &ca_pid2, sizeof(ca_pid2));
 
-						// sending data to UDP (deprecated, will be removed in the future)
-						if (cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
-						  send(currentfd, &packet[1], sizeof(packet)-1, 0);
 						cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d %s stream #%d pid=0x%04x index=%d on ca%d", demux_id,
 							(enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i);
 						// sending data back to socket
@@ -1390,20 +1344,28 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 					}
 					else
 					{
-						// This ioctl fails on dm500 but that is OK.
-						if(ioctl(currentfd, CA_SET_PID, &ca_pid2) == -1)
-							cs_debug_mask(D_TRACE | D_DVBAPI,"[DVBAPI] Demuxer #%d %s stream #%d ERROR: pid=0x%04x index=%d on ca%d (errno=%d %s)",
-								demux_id, (enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i, errno, strerror(errno));
-						else{
-							cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d %s stream #%d pid=0x%04x index=%d on ca%d", demux_id,
-								(enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i);
+						if(currentfd <= 0)
+						{
+							currentfd = dvbapi_open_device(1, i, demux[demux_id].adapter_index);
+							ca_fd[i] = currentfd; // save fd of this ca
 						}
-						int8_t result = is_ca_used(i);
-						if(!enable && result == CA_IS_CLEAR){
-							cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d close now unused CA%d device", demux_id, i);
-							int32_t ret = close(currentfd);
-							if(ret < 0) { cs_log("ERROR: Could not close demuxer fd (errno=%d %s)", errno, strerror(errno)); }
-							currentfd = ca_fd[i] = 0;
+						if(currentfd > 0)
+						{
+							// This ioctl fails on dm500 but that is OK.
+							if(ioctl(currentfd, CA_SET_PID, &ca_pid2) == -1)
+								cs_debug_mask(D_TRACE | D_DVBAPI,"[DVBAPI] Demuxer #%d %s stream #%d ERROR: pid=0x%04x index=%d on ca%d (errno=%d %s)",
+									demux_id, (enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i, errno, strerror(errno));
+							else{
+								cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d %s stream #%d pid=0x%04x index=%d on ca%d", demux_id,
+									(enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i);
+							}
+							int8_t result = is_ca_used(i);
+							if(!enable && result == CA_IS_CLEAR){
+								cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d close now unused CA%d device", demux_id, i);
+								int32_t ret = close(currentfd);
+								if(ret < 0) { cs_log("ERROR: Could not close demuxer fd (errno=%d %s)", errno, strerror(errno)); }
+								currentfd = ca_fd[i] = 0;
+							}
 						}
 					}
 				}
@@ -4080,15 +4042,6 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid)
 				if(demux[demux_id].ca_mask & (1 << i))
 				{
 					cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d write cw%d index: %d (ca%d)", demux_id, n, ca_descr.index, i);
-					if(ca_fd[i] <= 0)
-					{
-						if(cfg.dvbapi_boxtype == BOXTYPE_PC)
-							{ ca_fd[i] = dvbapi_open_netdevice(1, i, demux[demux_id].adapter_index); }
-						else
-							{ ca_fd[i] = dvbapi_open_device(1, i, demux[demux_id].adapter_index); }
-						if(ca_fd[i] <= 0)
-							{ continue; } // proceed next stream
-					}
 
 					if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
 					{
@@ -4099,14 +4052,18 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid)
 						memcpy(&packet[1], &request, sizeof(request));
 						memcpy(&packet[1+sizeof(request)], &ca_descr, sizeof(ca_descr));
 
-						// sending data to UDP (deprecated, will be removed in the future)
-						send(ca_fd[i], &packet[1], sizeof(packet)-1, 0);
 						// sending data back to socket
 						if (demux[demux_id].socket_fd > 0)
 							send(demux[demux_id].socket_fd, &packet, sizeof(packet), MSG_DONTWAIT);
 					}
 					else
 					{
+						if(ca_fd[i] <= 0)
+						{
+							ca_fd[i] = dvbapi_open_device(1, i, demux[demux_id].adapter_index);
+							if(ca_fd[i] <= 0)
+								{ continue; } // proceed next stream
+						}
 #if defined(__powerpc__)
 						ioctl(ca_fd[i], CA_SET_DESCR, &ca_descr); // ppcold return value never given!
 #else
