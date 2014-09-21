@@ -376,44 +376,68 @@ void remove_emmfilter_from_list(int32_t demux_id, uint16_t caid, uint32_t provid
 		{ return; }
 }
 
-int32_t dvbapi_net_filter_request(int32_t demux_index, uint32_t filter_number, struct dmx_sct_filter_params *sFP2)
+int32_t dvbapi_net_send(int32_t request, int32_t demux_index, uint32_t filter_number, unsigned char *data)
 {
-	int32_t request;
 	int32_t sct_filter_size = sizeof(struct dmx_sct_filter_params);
-	unsigned char packet[3 + 4 + sct_filter_size];
+	unsigned char packet[1 + 4 + 2 + sct_filter_size];          //maximum possible packet size
 	int32_t size = 0;
+
+	// not connected?
+	if (demux[demux_index].socket_fd <= 0)
+	  return 0;
 
 	// preparing packet - header
 	packet[size++] = demux[demux_index].adapter_index;          //adapter index - 1 byte
-
 	// type of request
-	if (sFP2)
-		request = DMX_SET_FILTER;
-	else
-		request = DMX_STOP;
 	memcpy(&packet[size], &request, 4);                         //request - 4 bytes
 	size += 4;
-
-	packet[size++] = demux_index;                               //demux index - 1 byte
-	packet[size++] = filter_number;                             //filter number - 1 byte
-
-	// filter data when starting
-	if (sFP2)
+	// struct with data
+	switch (request)
 	{
-		memcpy(&packet[size], sFP2, sct_filter_size);   //dmx_sct_filter_params struct
-		size += sct_filter_size;
-	}
-	else    // pid when stopping
-	{
-		int16_t pid = demux[demux_index].demux_fd[filter_number].pid;
-		packet[size++] = pid >> 8;
-		packet[size++] = pid & 0xff;
+		case CA_SET_PID:
+		{
+			int sct_capid_size = sizeof(ca_pid_t);
+			memcpy(&packet[size], data, sct_capid_size);
+			size += sct_capid_size;
+			break;
+		}
+		case CA_SET_DESCR:
+		{
+			int sct_cadescr_size = sizeof(ca_descr_t);
+			memcpy(&packet[size], data, sct_cadescr_size);
+			size += sct_cadescr_size;
+			break;
+		}
+		case DMX_SET_FILTER:
+		case DMX_STOP:
+		{
+			packet[size++] = demux_index;                               //demux index - 1 byte
+			packet[size++] = filter_number;                             //filter number - 1 byte
+
+			if (data)       // filter data when starting
+			{
+				memcpy(&packet[size], data, sct_filter_size);       //dmx_sct_filter_params struct
+				size += sct_filter_size;
+			}
+			else            // pid when stopping
+			{
+				int16_t pid = demux[demux_index].demux_fd[filter_number].pid;
+				packet[size++] = pid >> 8;
+				packet[size++] = pid & 0xff;
+			}
+			cs_ddump_mask(D_DVBAPI, packet, size, "[DVBAPI] Sending filter request packet (fd=%d):", demux[demux_index].socket_fd);
+			break;
+		}
+		default:  //unknown request
+		{
+			cs_log("ERROR: dvbapi_net_send: invalid request");
+			return 0;
+		}
 	}
 
 	// sending
-	cs_ddump_mask(D_DVBAPI, packet, size, "[DVBAPI] Sending filter request packet (fd=%d):", demux[demux_index].socket_fd);
-	if (demux[demux_index].socket_fd > 0)
-		send(demux[demux_index].socket_fd, &packet, size, MSG_DONTWAIT);
+	send(demux[demux_index].socket_fd, &packet, size, MSG_DONTWAIT);
+
 	// always returning success as the client could close socket
 	return 0;
 }
@@ -487,7 +511,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 			memcpy(sFP2.filter.filter, filt, 16);
 			memcpy(sFP2.filter.mask, mask, 16);
 			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-				ret = dvbapi_net_filter_request(demux_id, n, &sFP2);
+				ret = dvbapi_net_send(DMX_SET_FILTER, demux_id, n, (unsigned char *) &sFP2);
 			else
 				ret = ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER, &sFP2);
 		}
@@ -750,7 +774,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 		{
 		case DVBAPI_3:
 			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-				retfilter = dvbapi_net_filter_request(demux_index, num, NULL);
+				retfilter = dvbapi_net_send(DMX_STOP, demux_index, num, NULL);
 			else
 				retfilter = ioctl(fd, DMX_STOP); // for modern dvbapi boxes, they do give filter status back to us
 			break;
@@ -1327,21 +1351,11 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 					if(action == REMOVED_STREAMPID_LASTINDEX) idx = -1; // removed last index of streampid -> disable pid with -1
 					ca_pid2.index = idx;
 
-					if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-					{
-						// preparing packet
-						int32_t request = CA_SET_PID;
-						unsigned char packet[1 + sizeof(request) + sizeof(ca_pid2)];
-						packet[0] = demux[demux_id].adapter_index;
-						memcpy(&packet[1], &request, sizeof(request));
-						memcpy(&packet[1+sizeof(request)], &ca_pid2, sizeof(ca_pid2));
+					cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d %s stream #%d pid=0x%04x index=%d on ca%d", demux_id,
+						(enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i);
 
-						cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d %s stream #%d pid=0x%04x index=%d on ca%d", demux_id,
-							(enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i);
-						// sending data back to socket
-						if (demux[demux_id].socket_fd > 0)
-							send(demux[demux_id].socket_fd, &packet, sizeof(packet), MSG_DONTWAIT);
-					}
+					if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
+						dvbapi_net_send(CA_SET_PID, demux_id, -1 /*unused*/, (unsigned char *) &ca_pid2);
 					else
 					{
 						if(currentfd <= 0)
@@ -1353,12 +1367,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 						{
 							// This ioctl fails on dm500 but that is OK.
 							if(ioctl(currentfd, CA_SET_PID, &ca_pid2) == -1)
-								cs_debug_mask(D_TRACE | D_DVBAPI,"[DVBAPI] Demuxer #%d %s stream #%d ERROR: pid=0x%04x index=%d on ca%d (errno=%d %s)",
-									demux_id, (enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i, errno, strerror(errno));
-							else{
-								cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d %s stream #%d pid=0x%04x index=%d on ca%d", demux_id,
-									(enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i);
-							}
+								cs_debug_mask(D_TRACE | D_DVBAPI,"[DVBAPI] CA_SET_PID ioctl error (errno=%d %s)", errno, strerror(errno));
 							int8_t result = is_ca_used(i);
 							if(!enable && result == CA_IS_CLEAR){
 								cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d close now unused CA%d device", demux_id, i);
@@ -4044,18 +4053,7 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid)
 					cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d write cw%d index: %d (ca%d)", demux_id, n, ca_descr.index, i);
 
 					if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-					{
-						// preparing packet
-						int32_t request = CA_SET_DESCR;
-						unsigned char packet[1 + sizeof(request) + sizeof(ca_descr)];
-						packet[0] = demux[demux_id].adapter_index;
-						memcpy(&packet[1], &request, sizeof(request));
-						memcpy(&packet[1+sizeof(request)], &ca_descr, sizeof(ca_descr));
-
-						// sending data back to socket
-						if (demux[demux_id].socket_fd > 0)
-							send(demux[demux_id].socket_fd, &packet, sizeof(packet), MSG_DONTWAIT);
-					}
+						dvbapi_net_send(CA_SET_DESCR, demux_id, -1 /*unused*/, (unsigned char *) &ca_descr);
 					else
 					{
 						if(ca_fd[i] <= 0)
@@ -4628,7 +4626,7 @@ int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t
 			memcpy(sFP2.filter.filter, filter, 16);
 			memcpy(sFP2.filter.mask, mask, 16);
 			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-				ret = dvbapi_net_filter_request(demux_index, num, &sFP2);
+				ret = dvbapi_net_send(DMX_SET_FILTER, demux_index, num, (unsigned char *) &sFP2);
 			else
 				ret = ioctl(fd, DMX_SET_FILTER, &sFP2);
 		}
