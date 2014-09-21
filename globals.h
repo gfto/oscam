@@ -1688,6 +1688,7 @@ struct s_config
 	char            *http_oscam_label;
 #endif
 	int8_t          http_full_cfg;
+	int8_t          http_overwrite_bak_file;
 	int32_t         failbantime;
 	int32_t         failbancount;
 	LLIST           *v_list;                        // Failban list

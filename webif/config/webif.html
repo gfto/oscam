@@ -24,7 +24,16 @@
 			<TR><TD><A>Http Locale:</A></TD><TD><input name="httplocale" class="medium" type="text" maxlength="12" value="##HTTPLOCALE##"> e.g. en_US, de_DE.utf8 (if available and works on the server)</TD></TR>
 			<TR><TD><A>Http dyndns:</A></TD><TD><input name="httpdyndns" type="text" maxlength="200" value="##HTTPDYNDNS##"></TD></TR>
 			<TR><TD><A>Au low:</A></TD><TD><input name="aulow" class="withunit short" type="text" maxlength="5" value="##AULOW##"> min</TD></TR>
-			<TR><TD><A>Http save full config:</A></TD><TD><input name="httpsavefullcfg" value="0" type="hidden"><input name="httpsavefullcfg" type="checkbox" value="1" ##HTTPSAVEFULLSELECT##><label></label></TD></TR>
+			<TR><TD><A>Http save full config:</A></TD>
+				<TD CLASS="invisible">
+					<TABLE>
+						<TR>
+							<TD><input name="httpsavefullcfg" value="0" type="hidden"><input name="httpsavefullcfg" type="checkbox" value="1" ##HTTPSAVEFULLSELECT##><label></label></TD>
+							<TD><A data-p="httpoverwritebakfile">Http overwrite bak file:</A></TD><TD><input name="httpoverwritebakfile" value="0" type="hidden"><input name="httpoverwritebakfile" type="checkbox" value="1" ##HTTPOVERWRITEBAKFILE##><label></label></TD>
+						</TR>
+					</TABLE>
+				</TD>
+			</TR>
 			<TR><TH COLSPAN="2">Css style settings</TH></TR>
 			<TR><TD><A>Http prepend embedded css:</A></TD><TD><input name="http_prepend_embedded_css" value="0" type="hidden"><input name="http_prepend_embedded_css" type="checkbox" value="1" ##HTTPPREPENDEMBEDDEDCSS##><label></label></TD></TR>
 			<TR><TD><A>Http css:</A></TD>

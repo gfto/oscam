@@ -507,6 +507,7 @@ static const struct config_list webif_opts[] =
 	DEF_OPT_FUNC("httpallowed"              , OFS(http_allowed),            iprange_fn, .free_value = iprange_free_fn),
 	DEF_OPT_INT8("httpreadonly"             , OFS(http_readonly),           0),
 	DEF_OPT_INT8("httpsavefullcfg"          , OFS(http_full_cfg),           0),
+	DEF_OPT_INT8("httpoverwritebakfile"     , OFS(http_overwrite_bak_file), 0),
 	DEF_OPT_INT8("httpforcesslv3"           , OFS(http_force_sslv3),        0),
 	DEF_OPT_FUNC("httpdyndns"               , OFS(http_dyndns),             http_dyndns_fn),
 	DEF_OPT_INT32("aulow"                   , OFS(aulow),                   30),

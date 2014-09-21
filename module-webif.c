@@ -1062,6 +1062,7 @@ static char *send_oscam_config_webif(struct templatevars *vars, struct uriparams
 	}
 
 	tpl_addVar(vars, TPLADD, "HTTPSAVEFULLSELECT", (cfg.http_full_cfg == 1) ? "checked" : "");
+	tpl_addVar(vars, TPLADD, "HTTPOVERWRITEBAKFILE", (cfg.http_overwrite_bak_file == 1) ? "checked" : "");
 
 
 #ifdef WITH_SSL
