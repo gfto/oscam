@@ -4306,6 +4306,10 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			}
 
 			edit_channel_cache(i, j, 0); // remove this pid from channelcache
+			if(demux[i].pidindex == j)
+			{
+				demux[i].pidindex = -1; // current pid delivered a notfound so this pid isnt being used to descramble any longer-> clear pidindex
+			}
 			demux[i].ECMpids[j].irdeto_maxindex = 0;
 			demux[i].ECMpids[j].irdeto_curindex = 0xFE;
 			demux[i].ECMpids[j].tries = 0xFE; // reset timeout retry flag
