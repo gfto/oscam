@@ -226,21 +226,6 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 	serial = b2ll(5, cta_res + 3) ;
 	rdr_log_sensitive(reader, "type: SECA, caid: %04X, serial: {%llu}, card: %s v%d.%d",
 					  reader->caid, (unsigned long long) serial, card, atr[9] & 0x0F, atr[9] >> 4);
-	write_cmd(ins16, NULL); // read nr of providers
-	pmap = cta_res[2] << 8 | cta_res[3];
-	for(reader->nprov = 0, i = pmap; i; i >>= 1)
-		{ reader->nprov += i & 1; }
-
-	for(i = 0; i < 16; i++)
-		if(pmap & (1 << i))
-		{
-			if(set_provider_info(reader, i) == ERROR)
-				{ return ERROR; }
-			else
-				{ snprintf((char *) buf + strlen((char *)buf), sizeof(buf) - strlen((char *)buf), ",%04X", b2i(2, &reader->prid[i][2])); }
-		}
-
-	rdr_log(reader, "providers: %d (%s)", reader->nprov, buf + 1);
 	
 	if (((atr[7] << 8 | atr[8]) == 0x7070) && ((atr[9] &0x0F) >= 10)) // is this possibly a nagra card tunneling seca commands?
 	{
@@ -250,20 +235,53 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 		{
 			rdr_log(reader, "Fetching nagra ATR!");
 			ATR nagra_atr;
-			ICC_Async_Activate(reader, &nagra_atr, reader->deprecated); // get nagra atr		
+			call(reader->crdr.activate(reader, &nagra_atr)); // get nagra atr		
 			uint32_t hist_size; 
 			memset(reader->rom, 0, sizeof(reader->rom));
 			
 			ATR_GetHistoricalBytes(&nagra_atr, reader->rom, &hist_size); // get historical bytes containing romrev from nagra atr
 			
 			rdr_log(reader, "Switching back to seca mode!");
-			ICC_Async_Activate(reader, &nagra_atr, reader->deprecated); // switch back to seca layer
+			call(reader->crdr.activate(reader, &nagra_atr)); // switch back to seca layer
 		}
 		else
 		{
 			rdr_log(reader, "Nagra handshake failed!");
 		}
 	}
+	
+	int16_t tries = 0;
+	while(reader->nprov == 0 && tries < 254)
+	{
+		write_cmd(ins16, NULL); // read nr of providers
+		pmap = cta_res[2] << 8 | cta_res[3];
+		for(reader->nprov = 0, i = pmap; i; i >>= 1)
+			{ reader->nprov += i & 1; }
+		
+		if(reader->nprov == 0)
+		{
+			tries++;
+			continue;
+		}
+		for(i = 0; i < 16; i++)
+			if(pmap & (1 << i))
+			{
+				if(set_provider_info(reader, i) == ERROR)
+				{ 
+					continue; // on error just continue! 
+				}
+				else
+				{ 
+					snprintf((char *) buf + strlen((char *)buf), sizeof(buf) - strlen((char *)buf), ",%04X", b2i(2, &reader->prid[i][2]));
+				}
+			}
+
+		tries++;
+		rdr_log(reader, "Card returned %d providers(%s) after %d requests", reader->nprov, buf + 1, tries);
+		
+	}
+	if (reader->nprov == 0) return ERROR; // makes no sense to continue without any providers entitled
+	
 	
 	// Unlock parental control
 	if(cfg.ulparent != 0)
