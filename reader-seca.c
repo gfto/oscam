@@ -250,14 +250,14 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 		{
 			rdr_log(reader, "Fetching nagra ATR!");
 			ATR nagra_atr;
-			call(reader->crdr.activate(reader, &nagra_atr)); // get nagra atr		
+			ICC_Async_Activate(reader, &nagra_atr, reader->deprecated); // get nagra atr		
 			uint32_t hist_size; 
 			memset(reader->rom, 0, sizeof(reader->rom));
 			
 			ATR_GetHistoricalBytes(&nagra_atr, reader->rom, &hist_size); // get historical bytes containing romrev from nagra atr
 			
 			rdr_log(reader, "Switching back to seca mode!");
-			call(reader->crdr.activate(reader, &nagra_atr)); // switch back to seca layer
+			ICC_Async_Activate(reader, &nagra_atr, reader->deprecated); // switch back to seca layer
 		}
 		else
 		{
