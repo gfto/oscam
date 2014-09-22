@@ -859,7 +859,7 @@ static int32_t videoguard2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 
 	memset(ea->cw + 0, 0, 16); //set cw to 0 so client will know it is invalid unless it is overwritten with a valid cw
 
-	if(memcmp(&(er->ecm[3]), valid_ecm, sizeof(valid_ecm) != 0))
+	if(memcmp(&(er->ecm[3]), valid_ecm, sizeof(valid_ecm)) != 0)
 	{
 		rdr_log(reader, "Not a valid ecm");
 		return ERROR;
