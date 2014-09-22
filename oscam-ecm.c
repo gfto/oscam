@@ -93,7 +93,7 @@ void cacheex_timeout(ECM_REQUEST *er)
 			er->selected_reader = NULL;
 			er->rcEx = 0;
 
-			cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} NO \"normal\" readers... not_found! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
+			cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} cacheex timeout: NO \"normal\" readers... not_found! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
 			send_dcw(er->client, er);
 			return;
 		}
@@ -127,41 +127,25 @@ void ecm_timeout(ECM_REQUEST *er)
 
 		if(check_client(er->client) && er->rc >= E_UNHANDLED)
 		{
-			cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} client timeout! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
 			debug_ecm(D_TRACE, "timeout for %s %s", username(er->client), buf);
-		}
 
-#ifdef CS_CACHEEX
-		bool send_timeout = false;
-#endif
 
-		struct s_ecm_answer *ea_list;
-		for(ea_list = er->matching_rdr; ea_list; ea_list = ea_list->next)
-		{
-			if((ea_list->status & (REQUEST_SENT | REQUEST_ANSWERED)) == REQUEST_SENT)  //Request sent, but no answer!
+			//set timeout for readers not answering
+			struct s_ecm_answer *ea_list;
+			for(ea_list = er->matching_rdr; ea_list; ea_list = ea_list->next)
 			{
-				write_ecm_answer(ea_list->reader, er, E_TIMEOUT, 0, NULL, NULL); //set timeout for readers not answered!
-#ifdef CS_CACHEEX
-				send_timeout = true;
-#endif
+				if((ea_list->status & (REQUEST_SENT | REQUEST_ANSWERED)) == REQUEST_SENT)  //Request sent, but no answer!
+				{
+					write_ecm_answer(ea_list->reader, er, E_TIMEOUT, 0, NULL, NULL); //set timeout for readers not answered!
+				}
 			}
-		}
 
-#ifdef CS_CACHEEX
-		if(er->from_cacheex1_client && !send_timeout && er->rc == E_UNHANDLED)  //cacheex 1 clients waiting for INT cache by "normal" readers
-		{
-			er->rc = E_NOTFOUND;
-			er->selected_reader = NULL;
-			if(er->reader_requested > 0)
-				{ er->rcEx = 0; }  //not found by reader
-			else
-				{ er->rcEx = E2_GROUP; }  //no matching reader
-
-			cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} NO cw found in cache for cacheex-1 client... send not found! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
+			//send timeout to client!
+			cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} client timeout! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
+			er->rc = E_TIMEOUT;
+			er->rcEx = 0;
 			send_dcw(er->client, er);
 		}
-#endif
-
 	}
 }
 
@@ -876,8 +860,12 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 		er->rc = E_CACHEEX;
 	}
 
+
 	if(er->rc == E_TIMEOUT)
 	{
+#ifdef CS_CACHEEX
+		if(!er->from_cacheex1_client){  //cosmetic: show "by" readers only for "normal" clients
+#endif
 		struct s_ecm_answer *ea_list;
 		int32_t ofs = 0;
 		for(ea_list = er->matching_rdr; ea_list; ea_list = ea_list->next)
@@ -889,6 +877,10 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 		}
 		if(er->ocaid && ofs < (int32_t)sizeof(sby))
 			{ ofs += snprintf(sby + ofs, sizeof(sby) - ofs - 1, "(btun %04X)", er->ocaid); }
+
+#ifdef CS_CACHEEX
+		}
+#endif
 	}
 	else if(er_reader)
 	{
@@ -1483,10 +1475,6 @@ void chk_dcw(struct s_ecm_answer *ea)
 		}
 #endif
 		break;
-	case E_TIMEOUT:   // if timeout, no one reader answered in ctimeout, so send timeout to client!
-		ert->rc = E_TIMEOUT;
-		ert->rcEx = 0;
-		break;
 	case E_NOTFOUND:
 	{
 
@@ -1556,6 +1544,9 @@ void chk_dcw(struct s_ecm_answer *ea)
 
 		break;
 	}
+	case E_TIMEOUT:   // if timeout, we have to send timeout to client: this is done by ecm_timeout callback
+		return;
+		break;
 	default:
 		cs_log("unexpected ecm answer rc=%d.", ea->rc);
 		return;
@@ -2639,4 +2630,3 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 #endif
 		return ecmfmt(ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, result, size, 0, 0);
 }
-
