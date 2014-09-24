@@ -242,8 +242,7 @@ int32_t smargo_activate(struct s_reader *reader, struct s_ATR *atr)
 	}
 	else
 	{
-//		rdr_debug_mask(reader, D_DEVICE, "Fast card reset with atr");
-		rdr_log(reader, "Fast card reset with atr");
+		rdr_debug_mask(reader, D_DEVICE, "Fast card reset with atr");
 		call(smargo_fast_reset_by_atr(reader, atr));
 	}
 	return OK;
