@@ -234,7 +234,7 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 		write_cmd(ins80, handshake); // try to init nagra layer
 		if(cta_res[0] == 0x61 && cta_res[1] == 0x10)
 		{
-			if (reader->typ == R_SMART && !reader->ins7e11_fast_reset)
+			if ((reader->typ == R_SMART || !strcasecmp(reader->crdr.desc, "smargo")) && !reader->ins7e11_fast_reset)
 			{
 				ins7e11_state = 1;
 				reader->ins7e11_fast_reset = 1;
@@ -249,7 +249,7 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 			
 			rdr_log(reader, "Switching back to seca mode!");
 			call(reader->crdr.activate(reader, &nagra_atr)); // switch back to seca layer
-			if (reader->typ == R_SMART && ins7e11_state == 1)
+			if ((reader->typ == R_SMART || !strcasecmp(reader->crdr.desc, "smargo")) && ins7e11_state == 1)
 			{
 				ins7e11_state = 0;
 				reader->ins7e11_fast_reset = 0;

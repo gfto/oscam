@@ -140,6 +140,30 @@ static int32_t smargo_Serial_Read(struct s_reader *reader, uint32_t timeout, uin
 	return OK;
 }
 
+static int32_t smargo_fast_reset_by_atr(struct s_reader *reader, ATR *atr)
+{
+	int32_t ret = ERROR;
+	unsigned char buf[ATR_MAX_SIZE];
+
+	IO_Serial_Read(reader, 0, 500000, ATR_MAX_SIZE, buf);
+
+	IO_Serial_RTS_Set(reader);
+	cs_sleepms(150);
+	IO_Serial_RTS_Clr(reader);
+
+	int32_t n = 0;
+
+	smargo_Serial_Read(reader, ATR_TIMEOUT, ATR_MAX_SIZE, buf, &n);
+
+	if(ATR_InitFromArray(atr, buf, n) != ERROR)
+	{
+		rdr_debug_mask(reader, D_DEVICE, "SR: ATR parsing OK");
+		ret = OK;
+	}
+
+	return ret;
+}
+
 static int32_t smargo_reset(struct s_reader *reader, ATR *atr)
 {
 	rdr_debug_mask(reader, D_IFD, "Smargo: Resetting card");
@@ -210,12 +234,26 @@ static int32_t smargo_reset(struct s_reader *reader, ATR *atr)
 	return ret;
 }
 
+int32_t smargo_activate(struct s_reader *reader, struct s_ATR *atr)
+{
+	if(!reader->ins7e11_fast_reset)
+	{
+		call(smargo_reset(reader, atr));
+	}
+	else
+	{
+		rdr_debug_mask(reader, D_DEVICE, "Fast card reset with atr");
+		call(smargo_fast_reset_by_atr(reader, atr));
+	}
+	return OK;
+}
+
 void cardreader_smargo(struct s_cardreader *crdr)
 {
 	crdr->desc      = "smargo";
 	crdr->reader_init   = smargo_init;
 	crdr->get_status    = IO_Serial_GetStatus;
-	crdr->activate  = smargo_reset;
+	crdr->activate  = smargo_activate;
 	crdr->transmit  = IO_Serial_Transmit;
 	crdr->receive       = IO_Serial_Receive;
 	crdr->close     = IO_Serial_Close;
