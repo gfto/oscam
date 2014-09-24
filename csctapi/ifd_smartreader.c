@@ -1386,7 +1386,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 	static const char *const parity_str[5] = {"NONE", "ODD", "EVEN", "MARK", "SPACE"};
 
 //	seems to be ok after all
-	if (reader->autospeed == 0 && reader->cardmhz == reader->mhz && reader->cardmhz > 369)
+	if (reader->cardmhz == reader->mhz && reader->cardmhz > 369)
 	crdr_data->fs = reader->cardmhz * 10000; else 
 	crdr_data->fs = 3690000;
 
