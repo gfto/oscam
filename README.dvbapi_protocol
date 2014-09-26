@@ -1,0 +1,173 @@
+DVBAPI
+======
+DVB API stands for Linux DVB Application Programming Interface, so in short it is a set of API calls which is used on
+linux to handle DVB hardware. From the OSCam point of view the most interesting part is to be able to provide all data
+necessary for channel decryption. The OSCam DVBAPI module was written to handle this work.
+
+Architecture
+============
+Basically to be able to decrypt a channel a DVBAPI module needs the following information:
+- PMT table (information from TV receiver software about the requested channel for livetv/recording and the ECM PIDs)
+- CAT table (needed to get information about EMM type and PIDs)
+- Filtered ECM/EMM data
+
+As a result if OSCam is able to decrypt a service, an information with the decrypted PIDs (audio, video, etc)
+and CW (keys) are sent back to the TV receiver software or a CAM device.
+
+History
+=======
+The first and "standard" use case is probably the Enigma. OSCam is creating a /tmp/camd.socket. Enigma is sending the
+PMT data to this socket and as a result OSCam is opening the necessary DVB demux devices (eg /dev/dvb/adapter0/demux0)
+and is filtering for ECM, CAT and EMM data. It is then parsed by the OSCam dvbapi module and as a result the CA_SET_PID
+and CA_SET_DESCR ioctl calls was done leading to proper decryption. It was all working on same hardware and the same DVB
+devices was used. This kind of usage was mainly for linux STB.
+
+Next step was the generic PC support. It was extending the dvbapi module to be able to send PIDs and keys back to
+TV software (firstly via specially created UDP socket, later via the same /tmp/camd.socket).
+The TV software was able to use this information in software decrypting (DeCSA).
+
+After some time the OpenPLi team created a new CaPMT interface, which was then implemented in OSCam (as pmt_mode=6).
+It is described here: http://wiki.openpli.org/caPMT
+The main feature was reverting the roles: the OSCam act as a client and connects to /tmp/.listen.camd.socket created by
+Enigma. This way multiple Software CAMs could be running and connecting to Enigma's .listen.camd.socket.
+The other important improvement in this mode (also implemented in OSCam) was the ability to handle extra CA_PMT list
+managements. This allows to use one socket connection to handle more then one channel at a time (before a client
+has to manage single connection to /tmp/camd.socket per subscribed channel).
+
+As the .listen.camd.socket mode makes less sense on generic PC platform (the OSCam is still server, while the client
+could be any PC software used), the second feature which allows handling multiple channels on single socket connection
+was extended to cover other modes (not only pmt_mode=6) in OSCam.
+
+Network mode
+============
+The last feature that was added was a network mode. The change was made to be able to connect to an OSCam which
+is not running on the same machine where the TV receiver software (and a DVB hardware) is running.
+
+Why not use a dedicated protocols like newcamd/camd in such cases?
+- to have ECM/EMM handling in OSCam, where it belongs. It is better maintained and fixes comes in quicker.
+- OSCam known what readers it has so it could do a load balance/filtering/priorities etc.
+
+As a result, instead of /tmp/camd.socket (which could be used only on the same machine) a listening_socket parameter
+was added. So the unix domain socket switched to a full-featured TCP socket which can be connected from any network
+client.
+
+As a result besides CA_SET_PID and CA_SET_DESCR a new calls was passed to socket: DMX_SET_FILTER and DMX_STOP.
+The TV receiver software has to filter the demux itself (according to the above new calls) and send the results like
+ECM/EMM/CAT data back to OSCam using the same connection.
+Because the OSCam was only aware of PMT data on the socket, a new DVBAPI_FILTER_DATA command (0xffff0000) was added,
+to be able to handle client data from filters.
+
+This way all the communication between the TV receiver software and the OSCam could be finally done using one single
+TCP connection.
+Moreover: the demux is only accessed by single TV receiver software process, which, from the architecture point of view
+is definitely a better solution.
+
+New protocol description (sockets commands)
+===========================================
+As there are more and more dvbapi clients, some problems starts to appear. First of all there was some kind of
+mess because the OSCam network mode doesn't take into account the endianness in first form of network protocol.
+Secondly it was not consistant (eg PID was always send as little endian in DMX_STOP, while the rest depend on OSCam
+host architecture). Finally the standard API ioctl codes for: CA_SET_PID, CA_SET_DESCR, DMX_SET_FILTER and DMX_STOP
+differences. These codes are composed by a macro which takes into account the length of the associated structures and
+on some hardware the first bits of the MSB was different. So the clients had to do some strange workarounds with
+the MSB byte:
+  fix 0x80 -> 0x40 and 0x20 -> 0x00 when needed
+
+Finally, the first byte sent to client was an adapter index, which was not always needed in all commands.
+Now the first 4-byte integer is unique operation code, so a client will know what is the request type and could read
+the rest of data according to the following description (and field sizes).
+
+To address all above problems and additionally makes smooth transitions when updating the protocol in the future
+there was added some kind of "handshake" for clients. All new implementations should use it.
+Currently the old and new implementations should work fine, but in the future a network client which will not
+introduce itself (thus not providing it's supported protocol version) may be dropped/ignored by OSCam.
+
+All multibyte integers (if not specified otherwise) should be send using network byte order, so your client
+should use ntoh() functions when receiving - oscam is doing hton() before send) and vice versa.
+
+Just right after a client connects to an OSCam network socket, it should send a greeting in format:
+
+-= DVBAPI_CLIENT_INFO =-
+-----------------------------------------------------------------------
+type/size                description
+-----------------------------------------------------------------------
+uint32_t                 operation code -> DVBAPI_CLIENT_INFO
+uint16_t                 protocol version supported by client
+uint8_t                  size of followed string (255 bytes max)
+string                   name and version of the client (string length should be max 255 bytes)
+
+The server will respond with similar reply:
+
+-= DVBAPI_SERVER_INFO =-
+-----------------------------------------------------------------------
+type/size                description
+-----------------------------------------------------------------------
+uint32_t                 operation code -> DVBAPI_SERVER_INFO
+uint16_t                 protocol version supported by OSCam
+uint8_t                  size of followed string (255 bytes max)
+string                   OSCam version and build (string length should be max 255 bytes)
+
+Next, when a client want to start a channel it should send the PMT data (program map table).
+The PMT data structure starts with constant AOT_CA_PMT (0x9F8032).
+The data format of the CA_PMT is described in chapter 8.4.3.4 (page 30) of the EN 50221 PDF (european standard).
+
+Please note that OSCam is expecting the own descriptor injected in the data.
+Look into getDemuxOptions() OSCam function for the reference.
+
+
+After OSCam parses the PMT data, it is starting to filtering ECM PIDs, so it send the following request to the client:
+
+-= DVBAPI_DMX_SET_FILTER =-
+-----------------------------------------------------------------------
+type/size                description
+-----------------------------------------------------------------------
+uint32_t                 operation code -> DVBAPI_DMX_SET_FILTER
+uint8_t                  adapter index
+uint8_t                  demux index
+uint8_t                  filter number
+dmx_sct_filter_params    60-byte dmx_sct_filter_params structure with filter data (pid, timeout and flags fields are in network byte order)
+
+The client should then filter the data and pass it back to the OSCam using the following frame:
+
+-= DVBAPI_FILTER_DATA =-
+-----------------------------------------------------------------------
+type/size                description
+-----------------------------------------------------------------------
+uint32_t                 operation code -> DVBAPI_FILTER_DATA
+uint8_t                  demux index
+uint8_t                  filter number
+uchar[]                  filtered data from demux
+
+When OSCam is able to decrypt a channel it firstly send the list of PIDs associated with the descrambler index using this packet:
+
+-= DVBAPI_CA_SET_PID =-
+-----------------------------------------------------------------------
+type/size                description
+-----------------------------------------------------------------------
+uint32_t                 operation code -> DVBAPI_CA_SET_PID
+uint8_t                  adapter index
+ca_pid_t                 8-byte ca_pid_t structure (the pid and index fields are in network byte order)
+
+And also send the CW for decryption:
+
+-= DVBAPI_CA_SET_DESCR =-
+-----------------------------------------------------------------------
+type/size                description
+-----------------------------------------------------------------------
+uint32_t                 operation code -> DVBAPI_CA_SET_DESCR
+uint8_t                  adapter index
+ca_descr_t               16-byte ca_descr_t structure (the index and parity fields are in network byte order)
+
+When OSCam want to inform client about stopping a filter it send the following packet:
+
+-= DVBAPI_DMX_STOP =-
+-----------------------------------------------------------------------
+type/size                description
+-----------------------------------------------------------------------
+uint32_t                 operation code -> DVBAPI_DMX_STOP
+uint8_t                  adapter index
+uint8_t                  demux index
+uint8_t                  filter number
+uint16_t                 PID to stop filtering
+
+When the client closes connection, all associated channels are stopped in the OSCam.

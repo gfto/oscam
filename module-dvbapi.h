@@ -47,6 +47,19 @@
 #define CA_IS_CLEAR 0
 #define DUMMY_FD    0xFFFF
 
+//constants used int socket communication:
+#define DVBAPI_PROTOCOL_VERSION         1
+
+#define DVBAPI_CA_SET_PID      0x40086f87
+#define DVBAPI_CA_SET_DESCR    0x40106f86
+#define DVBAPI_DMX_SET_FILTER  0x403c6f2b
+#define DVBAPI_DMX_STOP        0x00006f2a
+
+#define DVBAPI_AOT_CA_PMT      0x9F803200  //least significant byte is length (ignored)
+#define DVBAPI_FILTER_DATA     0xFFFF0000
+#define DVBAPI_CLIENT_INFO     0xFFFF0001
+#define DVBAPI_SERVER_INFO     0xFFFF0002
+
 struct box_devices
 {
 	char *path;

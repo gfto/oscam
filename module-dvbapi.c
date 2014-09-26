@@ -102,6 +102,7 @@ static const struct box_devices devices[BOX_COUNT] =
 static int32_t selected_box = -1;
 static int32_t selected_api = -1;
 static int32_t dir_fd = -1;
+static uint16_t client_proto_version = 0;
 
 static int32_t ca_fd[8]; // holds fd handle of each ca device 0 = not in use
 static LLIST * ll_activestreampids; // list of all enabled streampids on ca devices
@@ -376,56 +377,114 @@ void remove_emmfilter_from_list(int32_t demux_id, uint16_t caid, uint32_t provid
 		{ return; }
 }
 
-int32_t dvbapi_net_send(int32_t request, int32_t demux_index, uint32_t filter_number, unsigned char *data)
+int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, int32_t demux_index, uint32_t filter_number, unsigned char *data)
 {
-	int32_t sct_filter_size = sizeof(struct dmx_sct_filter_params);
-	unsigned char packet[1 + 4 + 2 + sct_filter_size];          //maximum possible packet size
+	unsigned char packet[262];                                          //maximum possible packet size
 	int32_t size = 0;
 
 	// not connected?
-	if (demux[demux_index].socket_fd <= 0)
-	  return 0;
+	if (socket_fd <= 0)
+		return 0;
 
 	// preparing packet - header
-	packet[size++] = demux[demux_index].adapter_index;          //adapter index - 1 byte
+	// in old protocol client expect this first byte as adapter index, changed in the new protocol
+	// to be always after request type (opcode)
+	if (client_proto_version <= 0)
+		packet[size++] = demux[demux_index].adapter_index;          //adapter index - 1 byte
+
 	// type of request
-	memcpy(&packet[size], &request, 4);                         //request - 4 bytes
+	uint32_t req = request;
+	if (client_proto_version >= 1)
+		req = htonl(req);
+	memcpy(&packet[size], &req, 4);                                     //request - 4 bytes
 	size += 4;
+
+	// preparing packet - adapter index for proto >= 1
+	if ((request != DVBAPI_SERVER_INFO) && client_proto_version >= 1)
+		packet[size++] = demux[demux_index].adapter_index;          //adapter index - 1 byte
+
 	// struct with data
 	switch (request)
 	{
-		case CA_SET_PID:
+		case DVBAPI_SERVER_INFO:
+		{
+			int16_t proto_version = htons(DVBAPI_PROTOCOL_VERSION);           //our protocol version
+			memcpy(&packet[size], &proto_version, 2);
+			size += 2;
+
+			unsigned char *info_len = &packet[size];   //info string length
+			size += 1;
+
+			*info_len = snprintf((char *) &packet[size], sizeof(packet) - size, "OSCam v%s, build r%s (%s)", CS_VERSION, CS_SVN_VERSION, CS_TARGET);
+			size += *info_len;
+			break;
+		}
+		case DVBAPI_CA_SET_PID:
 		{
 			int sct_capid_size = sizeof(ca_pid_t);
 			memcpy(&packet[size], data, sct_capid_size);
+
+			if (client_proto_version >= 1)
+			{
+				ca_pid_t *capid = (ca_pid_t *) &packet[size];
+				capid->pid = htonl(capid->pid);
+				capid->index = htonl(capid->index);
+			}
+
 			size += sct_capid_size;
 			break;
 		}
-		case CA_SET_DESCR:
+		case DVBAPI_CA_SET_DESCR:
 		{
 			int sct_cadescr_size = sizeof(ca_descr_t);
 			memcpy(&packet[size], data, sct_cadescr_size);
+
+			if (client_proto_version >= 1)
+			{
+				ca_descr_t *cadesc = (ca_descr_t *) &packet[size];
+				cadesc->index = htonl(cadesc->index);
+				cadesc->parity = htonl(cadesc->parity);
+			}
+
 			size += sct_cadescr_size;
 			break;
 		}
-		case DMX_SET_FILTER:
-		case DMX_STOP:
+		case DVBAPI_DMX_SET_FILTER:
+		case DVBAPI_DMX_STOP:
 		{
+			int32_t sct_filter_size = sizeof(struct dmx_sct_filter_params);
 			packet[size++] = demux_index;                               //demux index - 1 byte
 			packet[size++] = filter_number;                             //filter number - 1 byte
 
 			if (data)       // filter data when starting
 			{
 				memcpy(&packet[size], data, sct_filter_size);       //dmx_sct_filter_params struct
+
+				if (client_proto_version >= 1)
+				{
+					struct dmx_sct_filter_params *fp = (struct dmx_sct_filter_params *) &packet[size];
+					fp->pid = htons(fp->pid);
+					fp->timeout = htonl(fp->timeout);
+					fp->flags = htonl(fp->flags);
+				}
+
 				size += sct_filter_size;
 			}
 			else            // pid when stopping
 			{
-				int16_t pid = demux[demux_index].demux_fd[filter_number].pid;
-				packet[size++] = pid >> 8;
-				packet[size++] = pid & 0xff;
+				if (client_proto_version >= 1)
+				{
+					int16_t pid = htons(demux[demux_index].demux_fd[filter_number].pid);
+					memcpy(&packet[size], &pid, 2);
+					size += 2;
+				}
+				else
+				{
+					int16_t pid = demux[demux_index].demux_fd[filter_number].pid;
+					packet[size++] = pid >> 8;
+					packet[size++] = pid & 0xff;
+				}
 			}
-			cs_ddump_mask(D_DVBAPI, packet, size, "[DVBAPI] Sending filter request packet (fd=%d):", demux[demux_index].socket_fd);
 			break;
 		}
 		default:  //unknown request
@@ -436,7 +495,8 @@ int32_t dvbapi_net_send(int32_t request, int32_t demux_index, uint32_t filter_nu
 	}
 
 	// sending
-	send(demux[demux_index].socket_fd, &packet, size, MSG_DONTWAIT);
+	cs_ddump_mask(D_DVBAPI, packet, size, "[DVBAPI] Sending packet to dvbapi client (fd=%d):", socket_fd);
+	send(socket_fd, &packet, size, MSG_DONTWAIT);
 
 	// always returning success as the client could close socket
 	return 0;
@@ -511,7 +571,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 			memcpy(sFP2.filter.filter, filt, 16);
 			memcpy(sFP2.filter.mask, mask, 16);
 			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-				ret = dvbapi_net_send(DMX_SET_FILTER, demux_id, n, (unsigned char *) &sFP2);
+				ret = dvbapi_net_send(DVBAPI_DMX_SET_FILTER, demux[demux_id].socket_fd, demux_id, n, (unsigned char *) &sFP2);
 			else
 				ret = ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER, &sFP2);
 		}
@@ -774,7 +834,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 		{
 		case DVBAPI_3:
 			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-				retfilter = dvbapi_net_send(DMX_STOP, demux_index, num, NULL);
+				retfilter = dvbapi_net_send(DVBAPI_DMX_STOP, demux[demux_index].socket_fd, demux_index, num, NULL);
 			else
 				retfilter = ioctl(fd, DMX_STOP); // for modern dvbapi boxes, they do give filter status back to us
 			break;
@@ -1355,7 +1415,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 						(enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i);
 
 					if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-						dvbapi_net_send(CA_SET_PID, demux_id, -1 /*unused*/, (unsigned char *) &ca_pid2);
+						dvbapi_net_send(DVBAPI_CA_SET_PID, demux[demux_id].socket_fd, demux_id, -1 /*unused*/, (unsigned char *) &ca_pid2);
 					else
 					{
 						if(currentfd <= 0)
@@ -3856,7 +3916,8 @@ static void *dvbapi_main_local(void *cli)
 							len = recv(connfd, mbuf + pmtlen, sizeof(mbuf) - pmtlen, MSG_DONTWAIT);
 							if (len > 0)
 								pmtlen += len;
-							if ((cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) && len == 0) {
+							if ((cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) && len == 0)
+							{
 								//client disconnects, stop all assigned decoding
 								cs_debug_mask(D_DVBAPI, "Socket %d reported connection close", connfd);
 								for (j = 0; j < MAX_DEMUX; j++)
@@ -3864,6 +3925,7 @@ static void *dvbapi_main_local(void *cli)
 										dvbapi_stop_descrambling(j);
 								close(connfd);
 								connfd = -1;
+								client_proto_version = 0;
 								if (cfg.dvbapi_listenport)
 								{
 									//update webif data
@@ -3871,26 +3933,92 @@ static void *dvbapi_main_local(void *cli)
 									client->port = 0;
 								}
 							}
-							if (pmtlen > 0) {
-								// check and try to process complete PMT objects and filter data
-								// by chunks to avoid PMT buffer overflows
-								if (pmtlen > 8 && mbuf[0] == 0xff && mbuf[1] == 0xff) //no pmt data but filter data
-								{
-									int32_t demux_index = mbuf[4];
-									int32_t filter_num = mbuf[5];
-									int32_t data_len = b2i(2, mbuf+7)&0x0FFF;
-									uint32_t chunksize = 6 + 3 + data_len;
+							if (pmtlen > 8) //if we received less then 8 bytes, than it's not complete for sure
+							{
+								// check and try to process complete PMT objects and filter data by chunks to avoid PMT buffer overflows
+								uint32_t *opcode_ptr = (uint32_t *) &mbuf[0];         //used only to silent compiler warning about dereferencing type-punned pointer
+								uint32_t opcode = ntohl(*opcode_ptr);                 //get the client opcode (4 bytes)
+								uint32_t chunksize = 0;                               //size of complete chunk in the buffer (an opcode with the data)
+								uint32_t data_len = 0;                                //variable for internal data length (eg. for the filter data size, PMT len)
 
-									if (pmtlen >= chunksize) // only process filterdata if all complete in buffer
+								//detect the opcode, its size (chunksize) and its internal data size (data_len)
+								if ((opcode & 0xFFFFFF00) == DVBAPI_AOT_CA_PMT)
+								{
+									// parse packet size (ASN.1)
+									uint32_t size = 0;
+									if (mbuf[3] & 0x80)
 									{
-										chunks_processed++;
-										dvbapi_process_input(demux_index, filter_num, mbuf + 6, data_len + 3);
-										if (pmtlen == chunksize) // if we fetched and handled the exact chucksize reset buffer counter! 
+										data_len = 0;
+										size = mbuf[3] & 0x7F;
+										if (pmtlen > 4 + size)
 										{
-											pmtlen = 0;
+											uint32_t k;
+											for (k = 0; k < size; k++)
+												data_len = (data_len << 8) | mbuf[3 + 1 + k];
+											size++;
 										}
-											
 									}
+									else
+									{
+										data_len = mbuf[3] & 0x7F;
+										size = 1;
+									}
+									chunksize = 3 + size + data_len;
+								}
+								else switch (opcode)
+								{
+									case DVBAPI_FILTER_DATA:
+									{
+										data_len = b2i(2, mbuf + 7) & 0x0FFF;
+										chunksize = 6 + 3 + data_len;
+										break;
+									}
+									case DVBAPI_CLIENT_INFO:
+									{
+										data_len = mbuf[6];
+										chunksize = 6 + 1 + data_len;
+										break;
+									}
+									default:
+										cs_log("[DVBAPI] Unknown socket command received: 0x%08X", opcode);
+								}
+
+								//processing the complete data according to type
+								if (chunksize < sizeof(mbuf) && chunksize <= pmtlen) // only handle if we fetched a complete chunksize!
+								{
+									chunks_processed++;
+									if ((opcode & 0xFFFFFF00) == DVBAPI_AOT_CA_PMT)
+									{
+										cs_ddump_mask(D_DVBAPI, mbuf, chunksize, "[DVBAPI] Parsing #%d PMT object(s):", chunks_processed);
+										dvbapi_handlesockmsg(mbuf, chunksize, connfd);
+									}
+									else switch (opcode)
+									{
+										case DVBAPI_FILTER_DATA:
+										{
+											int32_t demux_index = mbuf[4];
+											int32_t filter_num = mbuf[5];
+											dvbapi_process_input(demux_index, filter_num, mbuf + 6, data_len + 3);
+											break;
+										}
+										case DVBAPI_CLIENT_INFO:
+										{
+											uint16_t *client_proto_ptr = (uint16_t *) &mbuf[4];
+											uint16_t client_proto = ntohs(*client_proto_ptr);
+											char client_name[data_len + 1];
+											memcpy(&client_name, &mbuf[7], data_len);
+											client_name[data_len] = 0;
+											cs_log("[DVBAPI] Client connected: '%s' (protocol version = %d)", client_name, client_proto);
+											client_proto_version = client_proto; //setting the global var according to the client
+
+											// as a response we are sending our info to the client:
+											dvbapi_net_send(DVBAPI_SERVER_INFO, connfd, -1, -1, NULL);
+											break;
+										}
+									}
+
+									if (pmtlen == chunksize) // if we fetched and handled the exact chunksize reset buffer counter! 
+										pmtlen = 0;
 
 									// if we read more data then processed, move it to beginning
 									if (pmtlen > chunksize)
@@ -3899,49 +4027,6 @@ static void *dvbapi_main_local(void *cli)
 										pmtlen -= chunksize;
 									}
 									continue;
-								}
-								else if (pmtlen > 4 && mbuf[0] == 0x9f && mbuf[1] == 0x80 && mbuf[2] == 0x32)
-								{
-									// parse packet size (ASN.1)
-									uint32_t val = 0, size = 0, chunksize = 0;
-									if (mbuf[3] & 0x80)
-									{
-										val = 0;
-										size = mbuf[3] & 0x7F;
-										if (pmtlen > 4 + size)
-										{
-											uint32_t k;
-											for (k = 0; k < size; k++)
-												val = (val << 8) | mbuf[3 + 1 + k];
-											size++;
-										}
-									}
-									else
-									{
-										val = mbuf[3] & 0x7F;
-										size = 1;
-									}
-
-									// handle if we have a complete PMT object
-									chunksize = 3 + size + val;
-									if (chunksize < sizeof(mbuf) && chunksize <= pmtlen) // only handle if we fetched a complete chunksize!
-									{
-										chunks_processed++;
-										cs_ddump_mask(D_DVBAPI, mbuf, chunksize, "[DVBAPI] Parsing #%d PMT object(s):", chunks_processed);
-										dvbapi_handlesockmsg(mbuf, chunksize, connfd);
-										if (chunksize == pmtlen) // if we fetched and handled the exact chucksize reset buffer counter!
-										{
-											pmtlen = 0;
-										}
-
-										// if we read more data then processed, move it to beginning
-										if (pmtlen > chunksize)
-										{
-											memmove(mbuf, mbuf + chunksize, pmtlen - chunksize);
-											pmtlen -= chunksize;
-										}
-										continue;
-									}
 								}
 							}
 							if (len <= 0) {
@@ -4053,7 +4138,7 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid)
 					cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d write cw%d index: %d (ca%d)", demux_id, n, ca_descr.index, i);
 
 					if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-						dvbapi_net_send(CA_SET_DESCR, demux_id, -1 /*unused*/, (unsigned char *) &ca_descr);
+						dvbapi_net_send(DVBAPI_CA_SET_DESCR, demux[demux_id].socket_fd, demux_id, -1 /*unused*/, (unsigned char *) &ca_descr);
 					else
 					{
 						if(ca_fd[i] <= 0)
@@ -4630,7 +4715,7 @@ int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t
 			memcpy(sFP2.filter.filter, filter, 16);
 			memcpy(sFP2.filter.mask, mask, 16);
 			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-				ret = dvbapi_net_send(DMX_SET_FILTER, demux_index, num, (unsigned char *) &sFP2);
+				ret = dvbapi_net_send(DVBAPI_DMX_SET_FILTER, demux[demux_index].socket_fd, demux_index, num, (unsigned char *) &sFP2);
 			else
 				ret = ioctl(fd, DMX_SET_FILTER, &sFP2);
 		}
