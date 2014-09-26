@@ -4895,7 +4895,7 @@ int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, int32_t idx)
 				if (listitem->activeindexers == 0){ // all indexers disabled? -> remove pid from list!
 					ll_iter_remove_data(&itr);
 					cs_debug_mask(D_DVBAPI, "[DVBAPI] removed last indexer of streampid %04X from ca%d", pid, cadevice);
-					return REMOVED_STREAMPID_LASTINDEX;
+					return REMOVED_STREAMPID_INDEX;
 				}
 				return REMOVED_STREAMPID_INDEX;
 			}
