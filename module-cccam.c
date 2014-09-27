@@ -2830,10 +2830,18 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 			{
 				if(buf[1] == MSG_CW_NOK1)   //MSG_CW_NOK1: share no more available
 				{
-					cs_debug_mask(D_TRACE, "NOK1: share no more available %d %04X ecm %d %d!", card->id, card->caid, eei->send_idx, eei->ecm_idx);
-					//cc_card_removed(cl, card->id);
-					move_card_to_end(cl, card);
-					add_sid_block(cl, card, &srvid);
+					cs_debug_mask(D_TRACE, "NOK1: share temporarily not available %d %04X ecm %d %d!", card->id, card->caid, eei->send_idx, eei->ecm_idx);
+					int j;
+					for(j = 0; j < cfg.max_pending; j++)
+					{
+						if(cl->ecmtask[j].idx == ecm_idx && cl->ecmtask[j].rc == E_ALREADY_SENT) {
+							ECM_REQUEST *er = &cl->ecmtask[j];
+							cl->pending--;
+
+							write_ecm_answer(rdr, er, E_NOTFOUND, 0, NULL, NULL);
+							break;
+						}
+					}
 				}
 				//else MSG_CW_NOK2: can't decode
 				else if(cc->cmd05NOK)
