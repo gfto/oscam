@@ -325,6 +325,7 @@ static void protocol_fn(const char *token, char *value, void *setting, FILE *f)
 			{ "cccam_ext",  R_CCCAM },
 			{ "constcw",    R_CONSTCW },
 			{ "radegast",   R_RADEGAST },
+			{ "scam",       R_SCAM },
 			{ "ghttp",      R_GHTTP },
 			{ "newcamd",    R_NEWCAMD },
 			{ "newcamd525", R_NEWCAMD },

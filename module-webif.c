@@ -87,6 +87,7 @@ static struct pstat p_stat_old;
 #define MNU_CFG_WEBIF 12
 #define MNU_CFG_LCD 13
 #define MNU_CFG_GBOX 14
+#define MNU_CFG_SCAM 15
 
 #define MNU_CFG_FVERSION 12
 #define MNU_CFG_FCONF 13
@@ -871,6 +872,25 @@ static char *send_oscam_config_radegast(struct templatevars *vars, struct uripar
 }
 #endif
 
+#ifdef MODULE_SCAM
+static char *send_oscam_config_scam(struct templatevars *vars, struct uriparams *params)
+{
+	setActiveSubMenu(vars, MNU_CFG_SCAM);
+
+	webif_save_config("scam", vars, params);
+
+	tpl_printf(vars, TPLADD, "PORT", "%d", cfg.scam_port);
+	if(IP_ISSET(cfg.scam_srvip))
+		{ tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.scam_srvip)); }
+
+	char *value = mk_t_iprange(cfg.scam_allowed);
+	tpl_addVar(vars, TPLADD, "ALLOWED", value);
+	free_mk_t(value);
+
+	return tpl_getTpl(vars, "CONFIGSCAM");
+}
+#endif
+
 #ifdef MODULE_CCCAM
 static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *params)
 {
@@ -1260,6 +1280,9 @@ static char *send_oscam_config(struct templatevars *vars, struct uriparams *para
 #ifdef MODULE_RADEGAST
 	else if(!strcmp(part, "radegast")) { return send_oscam_config_radegast(vars, params); }
 #endif
+#ifdef MODULE_SCAM
+	else if(!strcmp(part, "scam")) { return send_oscam_config_scam(vars, params); }
+#endif
 #ifdef MODULE_CCCAM
 	else if(!strcmp(part, "cccam")) { return send_oscam_config_cccam(vars, params); }
 #endif
@@ -1611,6 +1634,9 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 #endif
 #ifdef MODULE_CONSTCW
 		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>constcw</option>\n");
+#endif
+#ifdef MODULE_SCAM
+		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>scam</option>\n");
 #endif
 
 		for(i = 0; i < CS_MAX_MOD; i++)
@@ -2246,6 +2272,9 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		break;
 	case R_RADEGAST:
 		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGRADEGASTBIT"));
+		break;
+	case R_SCAM:
+		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSCAMBIT"));
 		break;
 	case R_GHTTP:
 		tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGGHTTPBIT"));

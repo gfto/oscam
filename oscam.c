@@ -356,6 +356,7 @@ static void write_versionfile(bool use_stdout)
 	write_conf(MODULE_CCCSHARE, "CCcam share");
 	write_conf(MODULE_GBOX, "gbox");
 	write_conf(MODULE_RADEGAST, "radegast");
+	write_conf(MODULE_SCAM, "scam");
 	write_conf(MODULE_SERIAL, "serial");
 	write_conf(MODULE_CONSTCW, "constant CW");
 	write_conf(MODULE_PANDORA, "Pandora");
@@ -1198,6 +1199,9 @@ int32_t main(int32_t argc, char *argv[])
 #endif
 #ifdef MODULE_RADEGAST
 		module_radegast,
+#endif
+#ifdef MODULE_SCAM
+		module_scam,
 #endif
 #ifdef MODULE_SERIAL
 		module_serial,

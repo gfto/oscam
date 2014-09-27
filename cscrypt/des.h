@@ -20,6 +20,8 @@ extern "C" {
 	extern unsigned char *des_login_key_get(unsigned char *key1, unsigned char *key2, int len, unsigned char *des16);
 	extern void doPC1(unsigned char data[]);
 	extern void des(unsigned char key[], unsigned char mode, unsigned char data[]);
+	extern void des_cbc_encrypt(unsigned char *data, const unsigned char *iv, const unsigned char *okey, int len);
+	extern void des_cbc_decrypt(unsigned char *data, unsigned char *iv, const unsigned char *okey, int len);
 
 #ifdef  __cplusplus
 }

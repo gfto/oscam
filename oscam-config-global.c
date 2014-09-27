@@ -759,6 +759,24 @@ static const struct config_list pandora_opts[] =
 static const struct config_list pandora_opts[] = { DEF_LAST_OPT };
 #endif
 
+#ifdef MODULE_SCAM
+static bool scam_should_save_fn(void *UNUSED(var))
+{
+	return cfg.scam_port;
+}
+
+static const struct config_list scam_opts[] =
+{
+	DEF_OPT_SAVE_FUNC(scam_should_save_fn),
+	DEF_OPT_INT32("port"    , OFS(scam_port),    0),
+	DEF_OPT_FUNC("serverip" , OFS(scam_srvip),   serverip_fn),
+	DEF_OPT_FUNC("allowed"  , OFS(scam_allowed), iprange_fn, .free_value = iprange_free_fn),	
+	DEF_LAST_OPT
+};
+#else
+static const struct config_list scam_opts[] = { DEF_LAST_OPT };
+#endif
+
 #ifdef MODULE_RADEGAST
 static bool radegast_should_save_fn(void *UNUSED(var))
 {
@@ -1014,6 +1032,7 @@ static const struct config_sections oscam_conf[] =
 	{ "gbox",	gbox_opts },
 	{ "cccam",	cccam_opts },
 	{ "pandora",	pandora_opts },
+	{ "scam",	scam_opts },
 	{ "dvbapi",	dvbapi_opts },
 	{ "monitor",	monitor_opts },
 	{ "webif",	webif_opts },

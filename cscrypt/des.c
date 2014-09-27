@@ -606,3 +606,55 @@ unsigned char *des_login_key_get(unsigned char *key1, unsigned char *key2, int l
 	doPC1(des16 + 8);
 	return des16;
 }
+
+static inline void xxor(uint8_t *data, int32_t len, const uint8_t *v1, const uint8_t *v2)
+{
+	switch(len) {
+		case 16:
+			*((uint32_t *)data+3) = *((uint32_t *)v1+3) ^ *((uint32_t *)v2+3);
+			*((uint32_t *)data+2) = *((uint32_t *)v1+2) ^ *((uint32_t *)v2+2);
+		case 8:
+			*((uint32_t *)data+1) = *((uint32_t *)v1+1) ^ *((uint32_t *)v2+1);
+		case 4:
+			*((uint32_t *)data+0) = *((uint32_t *)v1+0) ^ *((uint32_t *)v2+0);
+		break;
+		default:
+			while(len--) *data++ = *v1++ ^ *v2++;
+		break;
+	}
+}
+
+void des_cbc_encrypt(unsigned char *data, const unsigned char *iv, const unsigned char *okey, int len)
+{
+	const uint8_t *civ = iv; 
+	uint8_t key[8];
+	int32_t i; 
+
+	memcpy(key, okey, 8);
+	doPC1(key);
+	len&=~7;
+
+	for(i=0; i<len; i+=8) {
+		xxor(&data[i],8,&data[i],civ);
+		civ=&data[i];
+		des(key,DES_ECS2_CRYPT,&data[i]);
+	}
+}
+
+void des_cbc_decrypt(unsigned char *data, unsigned char *iv, const unsigned char *okey, int len)
+{
+	uint8_t civ[2][8];
+	uint8_t key[8];
+	int32_t i, n=0;
+
+	memcpy(key, okey, 8);
+	doPC1(key);
+	len&=~7;
+
+	memcpy(civ[n],iv,8);
+	for(i=0; i<len; i+=8,data+=8,n^=1) {
+		memcpy(civ[1-n],data,8);
+		des(key,DES_ECS2_DECRYPT,data);
+		xxor(data,8,data,civ[n]);
+	}
+}

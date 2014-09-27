@@ -34,6 +34,7 @@
 #define MODULE_CONSTCW 1
 #define MODULE_PANDORA 1
 #define MODULE_GHTTP 1
+#define MODULE_SCAM 1
 
 #define WITH_CARDREADER 1
 

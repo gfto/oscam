@@ -296,6 +296,7 @@ typedef unsigned char uchar;
 #define R_CONSTCW   0x25  // Reader for Constant CW
 #define R_CSP       0x26  // Cache CSP
 #define R_GHTTP     0x27  // Reader ghttp
+#define R_SCAM      0x28  // Reader cascading scam
 /////////////////// peer to peer proxy readers after R_CCCAM
 #define R_GBOX      0x30  // Reader cascading gbox
 #define R_CCCAM     0x35  // Reader cascading cccam
@@ -356,6 +357,7 @@ typedef unsigned char uchar;
 #define LIS_CONSTCW     256
 #define LIS_SERIAL      1024
 #define LIS_CSPUDP      2048
+#define LIS_SCAM        4096
 
 //EMM types:
 #define UNKNOWN 0
@@ -1113,6 +1115,10 @@ struct s_client
 	uchar           pand_md5_key[16];
 #endif
 
+#ifdef MODULE_SCAM
+	void            *scam;
+#endif
+
 	void            *module_data;       // private module data
 
 	struct s_client *next;                          //make client a linked list
@@ -1839,6 +1845,12 @@ struct s_config
 	int8_t      pand_ecm;
 	int32_t     pand_port;
 	IN_ADDR_T   pand_srvip;
+#endif
+
+#ifdef MODULE_SCAM
+	int32_t     scam_port;
+	IN_ADDR_T   scam_srvip;
+	struct s_ip *scam_allowed;
 #endif
 
 	int32_t    max_cache_time;  //seconds ecms are stored in ecmcwcache

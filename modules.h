@@ -10,6 +10,7 @@ void module_radegast(struct s_module *);
 void module_serial(struct s_module *);
 void module_cccam(struct s_module *);
 void module_pandora(struct s_module *);
+void module_scam(struct s_module *);
 void module_ghttp(struct s_module *);
 void module_gbox(struct s_module *);
 void module_constcw(struct s_module *);

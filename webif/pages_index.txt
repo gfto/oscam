@@ -76,11 +76,13 @@ CONFIGMENULB                  config/menu_loadbalancer.html                     
 CONFIGMENUMONITOR             config/menu_monitor.html                                    MODULE_MONITOR
 CONFIGMENUNEWCAMD             config/menu_newcamd.html                                    MODULE_NEWCAMD
 CONFIGMENURADEGAST            config/menu_radegast.html                                   MODULE_RADEGAST
+CONFIGMENUSCAM                config/menu_scam.html                                       MODULE_SCAM
 CONFIGMENUSERIAL              config/menu_serial.html                                     MODULE_SERIAL
 CONFIGMENUWEBIF               config/menu_webif.html
 CONFIGMONITOR                 config/monitor.html                                         MODULE_MONITOR
 CONFIGNEWCAMD                 config/newcamd.html                                         MODULE_NEWCAMD
 CONFIGRADEGAST                config/radegast.html                                        MODULE_RADEGAST
+CONFIGSCAM                    config/scam.html                                            MODULE_SCAM
 CONFIGSERIAL                  config/serial.html                                          MODULE_SERIAL
 CONFIGSERIALDEVICEBIT         config/serial_devices.html                                  MODULE_SERIAL
 CONFIGWEBIF                   config/webif.html
@@ -188,6 +190,7 @@ READERCONFIGLBWEIGHT          readerconfig/readerconfig_lbweight.html           
 READERCONFIGNCD525BIT         readerconfig/readerconfig_ncd525bit.html                    MODULE_NEWCAMD
 READERCONFIGNCD524BIT         readerconfig/readerconfig_ncd524bit.html                    MODULE_NEWCAMD
 READERCONFIGRADEGASTBIT       readerconfig/readerconfig_radegastbit.html                  MODULE_RADEGAST
+READERCONFIGSCAMBIT           readerconfig/readerconfig_scambit.html                      MODULE_SCAM
 READERCONFIGSID               readerconfig/readerconfig_sid.html
 READERCONFIGSIDLBOKBIT        readerconfig/readerconfig_sidlbokbit.html
 READERCONFIGSIDNOBIT          readerconfig/readerconfig_sidnobit.html
