@@ -89,6 +89,7 @@ static void account_allowedprotocols_fn(const char *token, char *value, void *se
 				else if(streq(ptr, "csp"))      { account->allowedprotocols |= LIS_CSPUDP; }
 				else if(streq(ptr, "gbox"))     { account->allowedprotocols |= LIS_GBOX; }
 				else if(streq(ptr, "radegast")) { account->allowedprotocols |= LIS_RADEGAST; }
+				else if(streq(ptr, "scam"))     { account->allowedprotocols |= LIS_SCAM; }
 				// these have no listener ports so it doesn't make sense
 				else if(streq(ptr, "dvbapi"))   { account->allowedprotocols |= LIS_DVBAPI; }
 				else if(streq(ptr, "constcw"))  { account->allowedprotocols |= LIS_CONSTCW; }
