@@ -3046,6 +3046,14 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 		return;
 	}
 #endif
+#ifdef HAVE_DVBAPI
+	if(streq(proto, "dvbapi") && cl->typ == 'c' && dvbapi_get_client_name())
+	{
+		tpl_printf(vars, TPLADD, "CLIENTPROTO", "%s (%s)", proto, dvbapi_get_client_name());
+		tpl_printf(vars, TPLADD, "CLIENTPROTOSORT", "%s (%s)", proto, dvbapi_get_client_name());
+		return;
+	}
+#endif
 	tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", (char *)proto);
 	tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOSORT", (char *)proto);
 	if(cfg.http_showpicons)

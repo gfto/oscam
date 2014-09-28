@@ -102,6 +102,7 @@ static const struct box_devices devices[BOX_COUNT] =
 static int32_t selected_box = -1;
 static int32_t selected_api = -1;
 static int32_t dir_fd = -1;
+char *client_name = NULL;
 static uint16_t client_proto_version = 0;
 
 static int32_t ca_fd[8]; // holds fd handle of each ca device 0 = not in use
@@ -3926,6 +3927,11 @@ static void *dvbapi_main_local(void *cli)
 								close(connfd);
 								connfd = -1;
 								client_proto_version = 0;
+								if (client_name)
+								{
+									free(client_name);
+									client_name = NULL;
+								}
 								if (cfg.dvbapi_listenport)
 								{
 									//update webif data
@@ -4005,10 +4011,14 @@ static void *dvbapi_main_local(void *cli)
 										{
 											uint16_t *client_proto_ptr = (uint16_t *) &mbuf[4];
 											uint16_t client_proto = ntohs(*client_proto_ptr);
-											char client_name[data_len + 1];
-											memcpy(&client_name, &mbuf[7], data_len);
-											client_name[data_len] = 0;
-											cs_log("[DVBAPI] Client connected: '%s' (protocol version = %d)", client_name, client_proto);
+											if (client_name)
+												free(client_name);
+											if (cs_malloc(&client_name, data_len + 1))
+											{
+												memcpy(client_name, &mbuf[7], data_len);
+												client_name[data_len] = 0;
+												cs_log("[DVBAPI] Client connected: '%s' (protocol version = %d)", client_name, client_proto);
+											}
 											client_proto_version = client_proto; //setting the global var according to the client
 
 											// as a response we are sending our info to the client:
@@ -4957,6 +4967,11 @@ int8_t is_ca_used(uint8_t cadevice)
 		}
 	}
 	return CA_IS_CLEAR;
+}
+
+const char *dvbapi_get_client_name()
+{
+	return client_name;
 }
 
 /*
