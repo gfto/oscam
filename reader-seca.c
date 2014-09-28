@@ -227,8 +227,8 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 	serial = b2ll(5, cta_res + 3) ;
 	rdr_log_sensitive(reader, "type: SECA, caid: %04X, serial: {%llu}, card: %s v%d.%d",
 					  reader->caid, (unsigned long long) serial, card, atr[9] & 0x0F, atr[9] >> 4);
-	
-	if (((atr[7] << 8 | atr[8]) == 0x7070) && ((atr[9] &0x0F) >= 10)) // is this possibly a nagra card tunneling seca commands?
+	// The && ins7e11_fast_reset != 2 is a very dirty hack for Golden interstar receivers when driver for that box is fixed remove this hack.
+	if ((((atr[7] << 8 | atr[8]) == 0x7070) && ((atr[9] &0x0F) >= 10)) && reader->ins7e11_fast_reset != 2) // is this possibly a nagra card tunneling seca commands?
 	{
 		rdr_log(reader, "Trying to switch to nagra layer of this card!");
 		write_cmd(ins80, handshake); // try to init nagra layer
