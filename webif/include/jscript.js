@@ -160,15 +160,16 @@ $(function () {
 				$('#regex' + i).val('');
 				$('#whitelisted' + i).prop('checked', false);
 				$('#hidden' + i).prop('checked', false);
-				$('#color' + i).val('');
-				$('#fcolor' + i).val('');
+				$('#color' + i).val($('.colorPicker_def_color').css('color'));
+				$('#color' + i).change();
+				$('#fcolor' + i).val($('.colorPicker_def_fcolor').css('color'));   
+    			$('#fcolor' + i).change();
 				localStorage['regex' + i] = '';
 				localStorage['color' + i] = '';
 				localStorage['fcolor' + i] = '';
 				localStorage['whitelisted' + i] = '0';
 				localStorage['hidden' + i] = '0';
 			}
-			$('li.regex > div.colorPicker-picker').css('background-color', '#FFFFFF');
 		}
 
 	});
@@ -1502,8 +1503,8 @@ $(document).ready(function () {
 					var color = localStorage['color' + i];
 					var fcolor = localStorage['fcolor' + i];
 					$('#regex' + i).val(pattern ? pattern : '');
-					$('#color' + i).val(color ? color : '');
-					$('#fcolor' + i).val(fcolor ? fcolor : '');
+					$('#color' + i).val(color ? color : $('.colorPicker_def_color').css('color'));
+					$('#fcolor' + i).val(fcolor ? fcolor : $('.colorPicker_def_fcolor').css('color'));
 					$('#color' + i).colorPicker();
 					$('#fcolor' + i).colorPicker();
 					$('#whitelisted' + i).prop('checked', localStorage['whitelisted' + i] == '1' ? true : false);

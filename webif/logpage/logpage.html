@@ -11,6 +11,7 @@
 	var parameters = "?lastid=0";
 	var lastdebuglevel = 0;
 	var stoppoll = 0;
+	var pollrefresh = 0;
 
 	</script>
 ##TPLBODY##
@@ -27,6 +28,7 @@
 		<DIV ID="regexdata" style="display:none;">
 ##LOG_DEBUGMENU##
 			<UL ID="regexdatainput">
+				<LI style="display:none;"><span class="colorPicker_def_color"></span><span class="colorPicker_def_fcolor"></span></LI>
 				<LI class="regex">Search1: <input type="text" name="regex1" class="regexinput" ID="regex1" value=""> Found only: <input type="checkbox" id="whitelisted1"><label></label> Hide: <input type="checkbox" id="hidden1"><label></label> Back Color: <input size="7" maxlength="7" type="text" name="color1" class="colorinput" ID="color1" value=""> Color: <input size="7" maxlength="7" type="text" name="fcolor1" class="colorinput" ID="fcolor1" value=""></LI>
 				<LI class="regex">Search2: <input type="text" name="regex2" class="regexinput" ID="regex2" value=""> Found only: <input type="checkbox" id="whitelisted2"><label></label> Hide: <input type="checkbox" id="hidden2"><label></label> Back Color: <input size="7" maxlength="7" type="text" name="color2" class="colorinput" ID="color2" value=""> Color: <input size="7" maxlength="7" type="text" name="fcolor2" class="colorinput" ID="fcolor2" value=""></LI>
 				<LI class="regex">Search3: <input type="text" name="regex3" class="regexinput" ID="regex3" value=""> Found only: <input type="checkbox" id="whitelisted3"><label></label> Hide: <input type="checkbox" id="hidden3"><label></label> Back Color: <input size="7" maxlength="7" type="text" name="color3" class="colorinput" ID="color3" value=""> Color: <input size="7" maxlength="7" type="text" name="fcolor3" class="colorinput" ID="fcolor3" value=""></LI>
