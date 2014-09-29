@@ -3635,9 +3635,9 @@ static void *dvbapi_main_local(void *cli)
 		type[0] = 1;
 	}
 
-#ifdef WITH_COOLAPI
+//#ifdef WITH_COOLAPI // rezap fix for neutrino
 	system("pzapit -rz");
-#endif
+//#endif
 	cs_ftime(&start); // register start time
 	while(1)
 	{
