@@ -1840,6 +1840,17 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	if(rdr->boxid)
 		{ tpl_printf(vars, TPLADD, "BOXID", "%08X", rdr->boxid); }
 
+	// Filt 07
+	if(!apicall)
+	{
+		tpl_addVar(vars, TPLADD, "FIX07CHECKED", (rdr->fix_07 == 1) ? "checked" : "");
+	}
+	else
+	{
+		tpl_addVar(vars, TPLADD, "FIX07VALUE", (rdr->fix_07 == 1) ? "1" : "0");
+	}
+
+
 	// Fix 9993
 	if(!apicall)
 	{
