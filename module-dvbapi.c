@@ -4969,7 +4969,7 @@ int8_t is_ca_used(uint8_t cadevice)
 	return CA_IS_CLEAR;
 }
 
-const char *dvbapi_get_client_name()
+const char *dvbapi_get_client_name(void)
 {
 	return client_name;
 }
