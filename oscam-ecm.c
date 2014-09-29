@@ -1475,6 +1475,7 @@ void chk_dcw(struct s_ecm_answer *ea)
 		}
 #endif
 		break;
+	case E_INVALID:
 	case E_NOTFOUND:
 	{
 
@@ -2166,7 +2167,7 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 			}
 			if(client->c35_sleepsend != 0)
 			{
-				er->rc = E_STOPPED; // send stop command CMD08 {00 xx}
+				er->rc = E_STOPPED; // send sleep command CMD08 {00 255}
 			}
 			else
 			{
@@ -2630,3 +2631,4 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 #endif
 		return ecmfmt(ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, result, size, 0, 0);
 }
+

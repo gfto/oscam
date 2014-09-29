@@ -1118,7 +1118,6 @@ struct s_client
 #ifdef MODULE_SCAM
 	void            *scam;
 #endif
-
 	void            *module_data;       // private module data
 
 	struct s_client *next;                          //make client a linked list
@@ -1778,6 +1777,8 @@ struct s_config
 	int32_t         lb_min_ecmcount;                // minimal ecm count to evaluate lbvalues
 	int32_t         lb_max_ecmcount;                // maximum ecm count before reseting lbvalues
 	int32_t         lb_reopen_seconds;              // time between retrying failed readers/caids/prov/srv
+	int8_t          lb_reopen_invalid;        		// deafult=1; if 0, rc=E_INVALID will be blocked until stats cleaned
+	int8_t          lb_force_reopen_always;         // force reopening immediately all failing readers if no matching reader found
 	int32_t         lb_retrylimit;                  // reopen only happens if reader response time > retrylimit
 	CAIDVALUETAB    lb_retrylimittab;
 	CAIDVALUETAB    lb_nbest_readers_tab;           // like nbest_readers, but for special caids
@@ -1852,7 +1853,6 @@ struct s_config
 	IN_ADDR_T   scam_srvip;
 	struct s_ip *scam_allowed;
 #endif
-
 	int32_t    max_cache_time;  //seconds ecms are stored in ecmcwcache
 	int32_t    max_hitcache_time;  //seconds hits are stored in cspec_hitcache (to detect dyn wait_time)
 
@@ -1924,8 +1924,6 @@ typedef struct reader_stat_t
 	int32_t         time_avg;
 	int32_t         time_stat[LB_MAX_STAT_TIME];
 	int32_t         time_idx;
-
-	int8_t          knocked;
 
 	int32_t         fail_factor;
 } READER_STAT;

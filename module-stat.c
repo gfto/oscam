@@ -417,7 +417,6 @@ static READER_STAT *get_add_stat(struct s_reader *rdr, STAT_QUERY *q)
 			cs_ftime(&s->last_received);
 			s->fail_factor = 0;
 			s->ecm_count = 0;
-			s->knocked = 0;
 			ll_append(rdr->lb_stat, s);
 		}
 	}
@@ -510,6 +509,23 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 		return;
 	}
 
+
+	//IGNORE fails for sleep CMD08
+	if(rc == E_NOTFOUND && rdr->client->stopped==2)
+	{
+#ifdef WITH_DEBUG
+		if((D_LB & cs_dblevel))
+		{
+			char buf[ECM_FMT_LEN];
+			format_ecm(er, buf, ECM_FMT_LEN);
+			cs_debug_mask(D_LB, "loadbalancer: NOT adding stat (no block) for reader %s because CMD08 sleep command!", rdr->label);
+		}
+#endif
+		return;
+	}
+
+
+
 	//ignore too old ecms
 	if((uint32_t)ecm_time >= 3 * cfg.ctimeout)
 		{ return; }
@@ -527,7 +543,6 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 
 		s->rc = E_FOUND;
 		s->ecm_count++;
-		s->knocked = 0;
 		s->fail_factor = 0;
 
 		//FASTEST READER:
@@ -557,13 +572,14 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 		}
 
 	}
-	else if(rc == E_NOTFOUND || rc == E_INVALID || rc == E_TIMEOUT || rc == E_FAKE)  //not found / invalid / timeout /fake
+	else if(rc == E_NOTFOUND || rc == E_TIMEOUT || rc == E_FAKE)  //not found / timeout /fake
 	{
-
 		inc_fail(s);
 		s->rc = rc;
-
-		//No more special handler for timeout, because in stat_get_best_reader we are sure to reopen readers at least on more time if "NO MATCHING READER FOUND"
+	}
+	else if(rc == E_INVALID)  //invalid
+	{
+		s->rc = rc;
 	}
 	else
 	{
@@ -856,12 +872,16 @@ static void try_open_blocked_readers(ECM_REQUEST *er, STAT_QUERY *q, int32_t *ma
 		s = get_stat(rdr, q);
 		if(!s) { continue; }
 
+		if(!cfg.lb_reopen_invalid && s->rc == E_INVALID){
+			cs_debug_mask(D_LB, "loadbalancer: reader %s blocked because INVALID sent! It will be blocked until stats cleaned!", rdr->label);
+			continue;
+		}
+
 		//if force_reopen we must active the "valid" reader
-		if(s->rc != E_FOUND && (*force_reopen) && s->ecm_count >= cfg.lb_min_ecmcount && !s->knocked)
+		if(s->rc != E_FOUND && (*force_reopen) && cfg.lb_force_reopen_always)
 		{
-			cs_debug_mask(D_LB, "loadbalancer: knock reader %s and reset fail_factor! --> ACTIVE", rdr->label);
+			cs_debug_mask(D_LB, "loadbalancer: force opening reader %s and reset fail_factor! --> ACTIVE", rdr->label);
 			ea->status |= READER_ACTIVE;
-			s->knocked = 1;
 			s->fail_factor = 0;
 			continue;
 		}
@@ -1611,8 +1631,8 @@ void stat_get_best_reader(ECM_REQUEST *er)
 					reset_avgtime_reader(s, rdr);
 				}
 
-				//reset avg time all blocked "valid" readers, if they are not already "knocked". We active them by force_reopen=1
-				if(s && s->rc != E_FOUND && s->ecm_count >= cfg.lb_min_ecmcount && !s->knocked)
+				//reset avg time all blocked "valid" readers. We active them by force_reopen=1
+				if(s && s->rc != E_FOUND)
 				{
 					reset_avgtime_reader(s, rdr);
 				}

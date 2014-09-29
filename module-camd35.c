@@ -428,24 +428,19 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		return;
 	}
 
-	if(((er->rcEx > 0) || (er->rc == E_INVALID)) && !client->c35_suppresscmd08)
+	if(er->rc == E_INVALID && !client->c35_suppresscmd08)  //send normal CMD08
 	{
 		buf[0] = 0x08;
 		buf[1] = 2;
 		memset(buf + 20, 0, buf[1]);
 		buf[22] = er->rc; //put rc in byte 22 - hopefully don't break legacy camd3
 	}
-	else if(er->rc == E_STOPPED)
+	else if(er->rc == E_STOPPED)  //send sleep CMD08
 	{
 		buf[0] = 0x08;
 		buf[1] = 2;
 		buf[20] = 0;
-		/*
-		 * the second Databyte should be forseen for a sleeptime in minutes
-		 * whoever knows the camd3 protocol related to CMD08 - please help!
-		 * on tests this don't work with native camd3
-		 */
-		buf[21] = client->c35_sleepsend;
+		buf[21] = 0xFF;
 		cs_log("%s stop request send", client->account->usr);
 	}
 	else
@@ -1100,7 +1095,7 @@ static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *
 
 	if(client->stopped)
 	{
-		if(er->srvid == client->lastsrvid && er->caid == client->lastcaid && er->pid == client->lastpid)
+		if(er->srvid == client->lastsrvid && er->caid == client->lastcaid)
 		{
 			cs_log("%s is stopped - requested by server (%s)",
 				   client->reader->label, typtext[client->stopped]);
@@ -1115,7 +1110,6 @@ static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *
 	client->lastsrvid = er->srvid;
 	client->lastcaid = er->caid;
 	client->lastpid = er->pid;
-
 
 
 	if(!tcp_connect(client)) { return -1; }
@@ -1203,6 +1197,7 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 			   rdr->auprovid);
 	}
 
+	bool rc_invalid = 0;
 	if(buf[0] == 0x08
 			&& ((rdr->ph.type == MOD_CONN_TCP && !cfg.c35_tcp_suppresscmd08)
 				|| (rdr->ph.type == MOD_CONN_UDP
@@ -1216,8 +1211,10 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 		else
 		{
 #ifdef WITH_LB
-			if(!cfg.lb_mode)
+			if(cfg.lb_mode)
 			{
+				rc_invalid = 1;
+			}else{
 #endif
 				client->stopped = 1; // server says invalid
 				rdr->card_status = CARD_FAILURE;
@@ -1226,8 +1223,7 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 #endif
 		}
 
-		cs_log(
-			"%s CMD08 (%02X - %d) stop request by server (%s)", rdr->label, buf[21], buf[21], typtext[client->stopped]);
+		cs_log("%s CMD08 (%02X - %d) stop request by server (%s)", rdr->label, buf[21], buf[21], typtext[client->stopped]);
 	}
 
 #ifdef CS_CACHEEX
@@ -1267,6 +1263,9 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 #endif
 
 	*rc = ((buf[0] != 0x44) && (buf[0] != 0x08));
+	if(rc_invalid){
+		*rc = 2;  // INVALID sent by CMD08
+	}
 
 	memcpy(dcw, buf + 20, 16);
 	return (idx);

@@ -324,6 +324,8 @@ static const struct config_list global_opts[] =
 	DEF_OPT_INT32("lb_min_ecmcount"         , OFS(lb_min_ecmcount),     DEFAULT_MIN_ECM_COUNT),
 	DEF_OPT_INT32("lb_max_ecmcount"         , OFS(lb_max_ecmcount),     DEFAULT_MAX_ECM_COUNT),
 	DEF_OPT_INT32("lb_reopen_seconds"       , OFS(lb_reopen_seconds),   DEFAULT_REOPEN_SECONDS),
+	DEF_OPT_INT8("lb_reopen_invalid"  		, OFS(lb_reopen_invalid),   1),
+	DEF_OPT_INT8("lb_force_reopen_always"   , OFS(lb_force_reopen_always),   0),
 	DEF_OPT_INT32("lb_retrylimit"           , OFS(lb_retrylimit),       DEFAULT_RETRYLIMIT),
 	DEF_OPT_INT32("lb_stat_cleanup"         , OFS(lb_stat_cleanup),     DEFAULT_LB_STAT_CLEANUP),
 	DEF_OPT_INT32("lb_max_readers"          , OFS(lb_max_readers),      0),
@@ -764,19 +766,17 @@ static bool scam_should_save_fn(void *UNUSED(var))
 {
 	return cfg.scam_port;
 }
-
 static const struct config_list scam_opts[] =
 {
 	DEF_OPT_SAVE_FUNC(scam_should_save_fn),
 	DEF_OPT_INT32("port"    , OFS(scam_port),    0),
 	DEF_OPT_FUNC("serverip" , OFS(scam_srvip),   serverip_fn),
-	DEF_OPT_FUNC("allowed"  , OFS(scam_allowed), iprange_fn, .free_value = iprange_free_fn),	
+	DEF_OPT_FUNC("allowed"  , OFS(scam_allowed), iprange_fn, .free_value = iprange_free_fn),
 	DEF_LAST_OPT
 };
 #else
 static const struct config_list scam_opts[] = { DEF_LAST_OPT };
 #endif
-
 #ifdef MODULE_RADEGAST
 static bool radegast_should_save_fn(void *UNUSED(var))
 {
