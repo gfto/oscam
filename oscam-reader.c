@@ -614,13 +614,13 @@ void casc_check_dcw(struct s_reader *reader, int32_t idx, int32_t rc, uchar *cw)
 		ecm = &cl->ecmtask[i];
 		if((ecm->rc >= E_NOCARD) && ecm->caid == cl->ecmtask[idx].caid && (!memcmp(ecm->ecmd5, cl->ecmtask[idx].ecmd5, CS_ECMSTORESIZE)))
 		{
-			if(rc==1)
-			{
-				write_ecm_answer(reader, ecm, E_FOUND, 0, cw, NULL);
-			}
-			else if(rc==2)  //E_INVALID from camd35 CMD08
+			if(rc==2)  //E_INVALID from camd35 CMD08
 			{
 				write_ecm_answer(reader, ecm, E_INVALID, 0, cw, NULL);
+			}
+			else if(rc)
+			{
+				write_ecm_answer(reader, ecm, E_FOUND, 0, cw, NULL);
 			}
 			else
 			{
