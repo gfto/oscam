@@ -360,7 +360,7 @@ static const struct config_list account_opts[] =
 #endif
 	DEF_OPT_STR("hostname"              , OFS(dyndns),                  NULL),
 	DEF_OPT_FUNC("caid"                 , OFS(ctab),                    check_caidtab_fn),
-	DEF_OPT_INT8("uniq"                 , OFS(uniq),                    0),
+	DEF_OPT_INT8("uniq"                 , OFS(uniq),                    4),
 	DEF_OPT_UINT8("sleepsend"           , OFS(c35_sleepsend),           0),
 	DEF_OPT_INT32("failban"             , OFS(failban),                 0),
 	DEF_OPT_INT8("monlevel"             , OFS(monlvl),                  0),
