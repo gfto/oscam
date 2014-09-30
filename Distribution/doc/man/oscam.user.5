@@ -54,14 +54,14 @@ account enabled from hh:mm to hh:mm, default:none
 .RS 3n
 unique level:
 
- \fB0\fP = disabled
+ \fB0\fP = disabled (default)
  \fB1\fP = only one connection per user is allowed
  \fB2\fP = set user to fake if source ip is different 
      (e.g. for newcamd clients with different CAIDs and ports)
  \fB3\fP = only one connection per user, but only the last login 
      will survive (old MpCS behavior)
  \fB4\fP = set user only to fake if source ip is different, 
-     but only the last login will survive (default)
+     but only the last login will survive 
 .RE
 .PP
 \fBnumusers\fP = \fBquantity\fP
