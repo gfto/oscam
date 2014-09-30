@@ -314,6 +314,16 @@ maximum ECM count before resetting load balancing values, default:500
 time between retrying failed load balanced readers/CAIDs/providers/services, default:900
 .RE
 .PP
+\fBlb_reopen_invalid\fP = \fB0\fP|\fBfB1\fP
+.RS 3n
+0 = E_INVALID will be blocked until statistics has been cleaned, default:1
+.RE
+.PP
+\fBlb_force_reopen_always\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = force reopening immediately all failing readers if no matching reader was found, default:0
+.RE
+.PP
 \fBlb_retrylimit\fP = \fBmilli-seconds\fP
 .RS 3n
 retry next load balanced reader only if response time is higher then lb_retrylimit, default:0

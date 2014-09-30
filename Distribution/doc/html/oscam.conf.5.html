@@ -421,6 +421,20 @@ time between retrying failed load balanced readers/CAIDs/providers/services, def
 
 <P>
 
+<B>lb_reopen_invalid</B> = <B>0</B>|<B>fB1</B>
+<DL COMPACT><DT><DD>
+0 = E_INVALID will be blocked until statistics has been cleaned, default:1
+</DL>
+
+<P>
+
+<B>lb_force_reopen_always</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = force reopening immediately all failing readers if no matching reader was found, default:0
+</DL>
+
+<P>
+
 <B>lb_retrylimit</B> = <B>milli-seconds</B>
 <DL COMPACT><DT><DD>
 retry next load balanced reader only if response time is higher then lb_retrylimit, default:0
