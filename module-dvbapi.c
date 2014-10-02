@@ -3877,7 +3877,7 @@ static void *dvbapi_main_local(void *cli)
 					pmthandling = 1;     // pmthandling in progress!
 					pmt_stopmarking = 0; // to stop_descrambling marking in PMT 6 mode
 					connfd = -1;         // initially no socket to read from
-					int new = 0;
+					int add_to_poll = 0; // we may need to additionally poll this socket when no PMT data comes in
 
 					if (pfd2[i].fd == listenfd)
 					{
@@ -3894,7 +3894,7 @@ static void *dvbapi_main_local(void *cli)
 								client->ip = SIN_GET_ADDR(servaddr);
 								client->port = ntohs(SIN_GET_PORT(servaddr));
 							}
-							new = 1;
+							add_to_poll = 1;
 
 							if(cfg.dvbapi_pmtmode == 3 || cfg.dvbapi_pmtmode == 0) { disable_pmt_files = 1; }
 
@@ -3997,6 +3997,7 @@ static void *dvbapi_main_local(void *cli)
 									{
 										cs_ddump_mask(D_DVBAPI, mbuf, chunksize, "[DVBAPI] Parsing #%d PMT object(s):", chunks_processed);
 										dvbapi_handlesockmsg(mbuf, chunksize, connfd);
+										add_to_poll = 0;
 									}
 									else switch (opcode)
 									{
@@ -4055,10 +4056,10 @@ static void *dvbapi_main_local(void *cli)
 							}
 						} while (pmtlen < sizeof(mbuf) && tries--);
 
-						// if the connection is new and we read no data, then add it to the poll,
+						// if the connection is new and we read no PMT data, then add it to the poll,
 						// otherwise this socket will not be checked with poll when data arives
 						// because fd it is not yet assigned with the demux
-						if (new && !pmtlen && !chunks_processed) {
+						if (add_to_poll) {
 							for (j = 0; j < MAX_DEMUX; j++) {
 								if (!unassoc_fd[j]) {
 									unassoc_fd[j] = connfd;
