@@ -130,7 +130,7 @@ int32_t ICC_Async_Activate(struct s_reader *reader, ATR *atr, uint16_t deprecate
 	rdr_debug_mask(reader, D_IFD, "Activating card");
 
 	reader->current_baudrate = DEFAULT_BAUDRATE;
-	if(reader->atr[0] != 0 && !reader->ins7e11_fast_reset)
+	if(reader->atr[0] != 0 && reader->ins7e11_fast_reset != 1)
 	{
 		rdr_log(reader, "Using ATR from reader config");
 		ATR_InitFromArray(atr, reader->atr, ATR_MAX_SIZE);
