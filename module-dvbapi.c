@@ -459,29 +459,48 @@ int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, int32_t demux_index
 
 			if (data)       // filter data when starting
 			{
-				memcpy(&packet[size], data, sct_filter_size);       //dmx_sct_filter_params struct
-
 				if (client_proto_version >= 1)
 				{
-					struct dmx_sct_filter_params *fp = (struct dmx_sct_filter_params *) &packet[size];
-					fp->pid = htons(fp->pid);
-					fp->timeout = htonl(fp->timeout);
-					fp->flags = htonl(fp->flags);
-				}
+					struct dmx_sct_filter_params *fp = (struct dmx_sct_filter_params *) data;
 
-				size += sct_filter_size;
+					// adding all dmx_sct_filter_params structure fields
+					// one by one to avoid padding problems
+					uint16_t pid = htons(fp->pid);
+					memcpy(&packet[size], &pid, 2);
+					size += 2;
+
+					memcpy(&packet[size], fp->filter.filter, 16);
+					size += 16;
+					memcpy(&packet[size], fp->filter.mask, 16);
+					size += 16;
+					memcpy(&packet[size], fp->filter.mode, 16);
+					size += 16;
+
+					uint32_t timeout = htonl(fp->timeout);
+					memcpy(&packet[size], &timeout, 4);
+					size += 4;
+
+					uint32_t flags = htonl(fp->flags);
+					memcpy(&packet[size], &flags, 4);
+					size += 4;
+				}
+				else
+				{
+					memcpy(&packet[size], data, sct_filter_size);       //dmx_sct_filter_params struct
+					size += sct_filter_size;
+				}
 			}
 			else            // pid when stopping
 			{
 				if (client_proto_version >= 1)
 				{
-					int16_t pid = htons(demux[demux_index].demux_fd[filter_number].pid);
+					uint16_t pid = htons(demux[demux_index].demux_fd[filter_number].pid);
 					memcpy(&packet[size], &pid, 2);
 					size += 2;
 				}
 				else
 				{
-					int16_t pid = demux[demux_index].demux_fd[filter_number].pid;
+					uint16_t pid = demux[demux_index].demux_fd[filter_number].pid;
 					packet[size++] = pid >> 8;
 					packet[size++] = pid & 0xff;
 				}

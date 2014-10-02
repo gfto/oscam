@@ -125,7 +125,13 @@ uint32_t                 operation code -> DVBAPI_DMX_SET_FILTER
 uint8_t                  adapter index
 uint8_t                  demux index
 uint8_t                  filter number
-dmx_sct_filter_params    60-byte dmx_sct_filter_params structure with filter data (pid, timeout and flags fields are in network byte order)
+*** The following data are the fields from the dmx_sct_filter_params structure (added separately to avoid padding problems)
+uint16_t                 pid
+uchar[16]                filter data (filter.filter)
+uchar[16]                filter mask (filter.mask)
+uchar[16]                filter mode (filter.mode)
+uint32_t                 timeout
+uint32_t                 flags
 
 The client should then filter the data and pass it back to the OSCam using the following frame:
 
