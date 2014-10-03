@@ -41,6 +41,7 @@ struct sr_data
 {
 	int32_t F;
 	float D;
+	int8_t closing;
 	int32_t fs;
 	int32_t N;
 	int32_t T;
@@ -944,8 +945,12 @@ static void read_callback(struct libusb_transfer *transfer)
 			{ rdr_log(reader, "SR: submit async transfer failed with error %d", ret); }
 
 	}
-	else
-		{ rdr_log(reader, "SR: USB bulk read failed with error %d", transfer->status); }
+	else 
+	{
+		if (!crdr_data->closing && init_count) {
+			rdr_log(reader, "SR: USB bulk read failed with error %d", transfer->status);
+		}
+	}
 }
 
 static int32_t smartreader_usb_open_dev(struct s_reader *reader)
@@ -1605,25 +1610,31 @@ static int32_t SR_Close(struct s_reader *reader)
 {
 	struct sr_data *crdr_data = reader->crdr_data;
 	if(!crdr_data) { return OK; }
-	rdr_debug_mask(reader, D_DEVICE, "SR: Closing smartreader");
+	rdr_log(reader,"SR: Closing smartreader");
 	cs_writelock(&sr_lock);
 	crdr_data->running = 0;
+	crdr_data->closing = 1;
 	if(crdr_data->usb_dev_handle)
 	{
-
-		smart_fastpoll(reader, 1);
+		/*smart_fastpoll(reader, 1);
 		pthread_join(crdr_data->rt, NULL);
-		smart_fastpoll(reader, 0);
+		smart_fastpoll(reader, 0);*/
+		init_count--;
 		libusb_release_interface(crdr_data->usb_dev_handle, crdr_data->interface);
 #if defined(__linux__)
 //		libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); // attaching ftdio kernel driver may cause segfault on web if reader restart
 #endif
 		libusb_close(crdr_data->usb_dev_handle);
-		init_count--;
 		if(!init_count)
-			{ libusb_exit(NULL); }
+		{
+			libusb_exit(NULL);
+		}
 	}
+
 	cs_writeunlock(&sr_lock);
+	rdr_log(reader,"SR: smartreader closed");
+	crdr_data->closing = 0;
+
 	return OK;
 }
 
@@ -1711,7 +1722,7 @@ static pthread_mutex_t init_lock_mutex;
 static int32_t sr_init_locks(struct s_reader *UNUSED(reader))
 {
 	if (pthread_mutex_trylock(&init_lock_mutex)) {
-		cs_lock_create(&sr_lock, "sr_lock", 5000);
+		cs_lock_create(&sr_lock, "sr_lock", 4000);
 	}
 
 	return 0;
