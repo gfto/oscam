@@ -4,6 +4,7 @@
 #include "cscrypt/idea.h"
 #include "oscam-time.h"
 #include "reader-common.h"
+#include "oscam-work.h"
 
 struct nagra_data
 {
@@ -784,6 +785,7 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 		rdr_debug_mask(reader, D_READER, "NegotiateSessionKey failed");
 		return ERROR;
 	}
+	rdr_log(reader, "ready for requests");
 	return OK;
 }
 
@@ -1041,7 +1043,6 @@ static int32_t nagra2_card_info(struct s_reader *reader)
 			CamStateRequest(reader);
 		}
 	}
-	rdr_log(reader, "ready for requests");
 	return OK;
 }
 
@@ -1298,6 +1299,10 @@ static int32_t nagra2_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 			return ERROR;
 		}
 		cs_sleepms(300);
+	}
+	if(ep->type != GLOBAL)
+	{
+		add_job(reader->client, ACTION_READER_CARDINFO, NULL, 0); // refresh entitlement since it might have been changed!
 	}
 	return OK;
 }
