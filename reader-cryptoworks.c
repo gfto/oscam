@@ -4,6 +4,7 @@
 #include "oscam-config.h"
 #include "oscam-emm.h"
 #include "reader-common.h"
+#include "oscam-work.h"
 
 struct cryptoworks_data
 {
@@ -327,6 +328,7 @@ static int32_t cryptoworks_card_init(struct s_reader *reader, ATR *newatr)
 
 	cryptoworks_disable_pin(reader);
 
+	rdr_log(reader, "ready for requests");
 	return OK;
 }
 
@@ -666,6 +668,11 @@ static int32_t cryptoworks_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	if(!rc)
 		{ rdr_debug_mask(reader, D_EMM, "%s(): type %d - %02X %02X", __func__, ep->type, cta_res[0], cta_res[1]); }
 
+	if(rc && ep->type != GLOBAL)
+	{
+		add_job(reader->client, ACTION_READER_CARDINFO, NULL, 0); // refresh entitlement since it might have been changed!
+	}
+	
 	return (rc);
 }
 
@@ -739,7 +746,6 @@ static int32_t cryptoworks_card_info(struct s_reader *reader)
 			}
 		}
 	}
-	rdr_log(reader, "ready for requests");
 	return OK;
 }
 
