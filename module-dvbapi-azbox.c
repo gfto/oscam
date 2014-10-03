@@ -234,6 +234,8 @@ void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
 	cs_debug_mask(D_DVBAPI, LOG_PREFIX "send_dcw");
 
+	delayer(er);
+
 	FILE *ecmtxt;
 	if((ecmtxt = fopen(ECMINFO_FILE, "w")))
 	{
