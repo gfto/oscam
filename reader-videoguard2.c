@@ -958,6 +958,10 @@ static int32_t videoguard2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 		int32_t test_0F = 1;
 		if(!cw_is_valid(rbuff + 5))  //sky cards report 90 00 = ok but send cw = 00 when something goes wrong :(
 			{
+				if (buff_0F[0]&1){ 			//case 0f_0x 01 xx xx xx xx
+          			rdr_log(reader, "classD3 ins54: no cw --> Bad/wrong ECM");
+					test_0F = 0;
+				}
 				if ((buff_0F[0]>>1)&1){ 	//case 0f_0x 02 xx xx xx xx
           			rdr_log(reader, "classD3 ins54: no cw --> Card isn't active");
 					test_0F = 0;
@@ -967,11 +971,19 @@ static int32_t videoguard2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 					test_0F = 0;
 				}
 				if ((buff_0F[1]>>4)&1){ 	//case 0f_0x xx 10 xx xx xx
-					rdr_log(reader, "classD3 ins54: no cw --> Card is paired");	//other discovered values can be added in the same way
+					rdr_log(reader, "classD3 ins54: no cw --> Card needs pairing/extra data");	
+					test_0F = 0;
+				}
+				if ((buff_0F[1]>>5)&1){ 	//case 0f_0x xx 20 xx xx xx
+					rdr_log(reader, "classD3 ins54: no cw --> No tier found");	//check this
 					test_0F = 0;
 				}
 				if ((buff_0F[1]>>6)&1){ 	//case 0f_0x xx 40 xx xx xx
-					rdr_log(reader, "classD3 ins54: no cw --> Card needs pin");	//check this
+					rdr_log(reader, "classD3 ins54: no cw --> Card needs pin");
+					test_0F = 0;
+				}
+				if ((buff_0F[2]>>5)&1){ 	//case 0f_0x xx xx 20 xx xx
+					rdr_log(reader, "classD3 ins54: no cw --> Tier expired");	//other discovered values can be added in the same way
 					test_0F = 0;
 				}
 				if (test_0F)		
@@ -991,6 +1003,7 @@ static int32_t videoguard2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 				}
 			if ((buff_55[0]>>2)&1){ 	//case 55_01 xx where bit2==1, old dimeno_PostProcess_Decrypt(reader, rbuff, ea->cw);
 				unsigned char buffer[0x10];
+				memcpy(buffer, rbuff + 5, 8); 
 				memcpy(buffer + 8, buff_56, 8);
 				AES_decrypt(buffer, buffer, &(csystem_data->astrokey));
 				memcpy(ea->cw + 0, buffer, 8);  // copy calculated CW in right place
