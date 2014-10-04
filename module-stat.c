@@ -523,8 +523,18 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 #endif
 		return;
 	}
-
-
+	
+	//IGNORE timeouts on local readers (they could be busy handling an emm or entitlement refresh)
+	if(rc == E_TIMEOUT && !is_network_reader(rdr))
+	{
+#ifdef WITH_DEBUG
+		if((D_LB & cs_dblevel))
+		{
+			cs_debug_mask(D_LB, "loadbalancer: NOT adding stat (no block) for reader %s because timeout on local reader", rdr->label);
+		}
+#endif
+		return;
+	}
 
 	//ignore too old ecms
 	if((uint32_t)ecm_time >= 3 * cfg.ctimeout)
