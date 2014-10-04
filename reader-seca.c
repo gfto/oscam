@@ -66,11 +66,11 @@ static int32_t set_provider_info(struct s_reader *reader, int32_t i)
 
 	provid = b2ll(4, reader->prid[i]);
 	int seca_version = reader->card_atr[9] & 0X0F; //Get seca cardversion from cardatr
-	if(seca_version == 10 && provid == 0x006a){ // check for cds nagra smartcard (seca3) 
+	if(seca_version == 10){ // check for nagra smartcard (seca3) 
 		reader->secatype = 3;
-		rdr_log(reader, "Detected seca3 card");
+		rdr_log(reader, "Detected seca/nagra (seca3) card");
 	}
-	if(seca_version == 7 && provid == 0x006a){ // check for cds seca smartcard (seca2)
+	if(seca_version == 7){ // check for seca smartcard (seca2)
 		reader->secatype = 2;
 		rdr_log(reader, "Detected seca2 card");
 	}
