@@ -1269,8 +1269,6 @@ static int32_t SR_Init(struct s_reader *reader)
 		return ERROR;
 	}
 
-
-	cs_writelock(&sr_lock);
 	if(!reader->crdr_data && !cs_malloc(&reader->crdr_data, sizeof(struct sr_data)))
 		{ return ERROR; }
 	struct sr_data *crdr_data = reader->crdr_data;
@@ -1291,15 +1289,16 @@ static int32_t SR_Init(struct s_reader *reader)
 			crdr_data->rdrtype = TripleP1;
 	}
 	if (!strcasecmp(rdrtype, "TripleP2")) {
-			crdr_data->tripledelay = 100;
+			crdr_data->tripledelay = 0;
 			crdr_data->rdrtype = TripleP2;
 	}
 	if (!strcasecmp(rdrtype, "TripleP3")) {
-			crdr_data->tripledelay = 150;
+			crdr_data->tripledelay = 0;
 			crdr_data->rdrtype = TripleP3;
 	}
 	
 	rdr_debug_mask(reader, D_DEVICE, "SR: Looking for device %s on bus %s", dev, busname);
+	cs_writelock(&sr_lock);
 	smartreader_init(reader);
 
 	if(!init_count)
@@ -1501,40 +1500,60 @@ static int32_t SR_Transmit(struct s_reader *reader, unsigned char *buffer, uint3
 static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 {
 	struct sr_data *crdr_data = reader->crdr_data;
-	if (crdr_data->rdrtype >= 3) {
-	char usb_val[2];
-	uint32_t state2;
+	if (crdr_data->rdrtype >= 3)
+	{
+		char usb_val[2];
+		uint32_t state2;
 
-    if (crdr_data->usb_dev == NULL) {
-	rdr_log(reader,"usb device unavailable");
-	return ERROR;
+    	if (crdr_data->usb_dev == NULL) 
+		{
+			rdr_log(reader,"usb device unavailable");
+			return ERROR;
+		}
+		if (crdr_data->detectstart == 0)
+		{
+			*in = 1;
+			return OK;
+		}
+		else
+		{
+			if (((crdr_data->detectstart == 1) && (reader->card_status != 1)) && ((crdr_data->detectstart == 1) && (reader->card_status != 0)))
+			{
+				cs_writelock(&sr_lock);
+				if (libusb_control_transfer(crdr_data->usb_dev_handle,
+								FTDI_DEVICE_IN_REQTYPE,
+								SIO_POLL_MODEM_STATUS_REQUEST,
+								2, crdr_data->index,
+								(unsigned char *)usb_val,
+								2, crdr_data->usb_read_timeout) != 1)
+				{
+					rdr_log(reader, "getting modem status failed ");
+					cs_writeunlock(&sr_lock);
+					return ERROR;
+				}
+				cs_writeunlock(&sr_lock);
+				state2 = (usb_val[0] & 0xFF);
+				rdr_debug_mask(reader, D_IFD, "the status of card in or out %u  ( 64 means card IN)", state2);
+    			if (state2 == 64)
+				{
+        			*in = 1; //Card is activated
+				}
+				else
+				{
+        			*in = 0; //NOCARD reader will be set to off
+				}
+				return OK;
+			}
+			else
+			{
+				*in = 1;
+				rdr_log(reader,"CARD STILL IN AKTIVATION PROCESS NO DETECTION");
+				return OK;
+			}
+		}
 	}
-	if (crdr_data->detectstart == 0) { *in = 1; return OK;} else
-	if (((crdr_data->detectstart == 1) && (reader->card_status != 1)) && ((crdr_data->detectstart == 1) && (reader->card_status != 0))) {
-	cs_writelock(&sr_lock);
-	if (libusb_control_transfer(crdr_data->usb_dev_handle, 
-								FTDI_DEVICE_IN_REQTYPE, 
-								SIO_POLL_MODEM_STATUS_REQUEST, 
-								2, crdr_data->index, 
-								(unsigned char *)usb_val, 
-								2, crdr_data->usb_read_timeout) != 1){
-	rdr_log(reader, "getting modem status failed ");
-	cs_writeunlock(&sr_lock);
-	return ERROR;
-	}
-	cs_writeunlock(&sr_lock);
-	state2 = (usb_val[0] & 0xFF);
-	rdr_debug_mask(reader, D_IFD, "the status of card in or out %u  ( 64 means card IN)", state2);
-	
-    if (state2 == 64) {
-        *in = 1; //Card is in Aktivation should be ok if card is activated
-	}
-    else {
-        *in = 0; //NOCARD reader will be set to off
-	}
-	return OK;
-	} else {*in = 1;rdr_log(reader,"CARD STILL IN AKTIVATION PROCESS NO DETECTION"); return OK;}
-	} else {
+	else
+	{
 	int32_t state;
 
 	smart_fastpoll(reader, 1);
@@ -1610,15 +1629,18 @@ static int32_t SR_Close(struct s_reader *reader)
 {
 	struct sr_data *crdr_data = reader->crdr_data;
 	if(!crdr_data) { return OK; }
-	rdr_log(reader,"SR: Closing smartreader");
 	cs_writelock(&sr_lock);
 	crdr_data->running = 0;
 	crdr_data->closing = 1;
 	if(crdr_data->usb_dev_handle)
 	{
-		/*smart_fastpoll(reader, 1);
-		pthread_join(crdr_data->rt, NULL);
-		smart_fastpoll(reader, 0);*/
+		if (init_count >= 2)
+		{
+			smart_fastpoll(reader, 1);
+			cs_writeunlock(&sr_lock);
+			pthread_join(crdr_data->rt, NULL);
+			smart_fastpoll(reader, 0);
+		}
 		init_count--;
 		libusb_release_interface(crdr_data->usb_dev_handle, crdr_data->interface);
 #if defined(__linux__)
@@ -1722,7 +1744,7 @@ static pthread_mutex_t init_lock_mutex;
 static int32_t sr_init_locks(struct s_reader *UNUSED(reader))
 {
 	if (pthread_mutex_trylock(&init_lock_mutex)) {
-		cs_lock_create(&sr_lock, "sr_lock", 4000);
+		cs_lock_create(&sr_lock, "sr_lock", 2000);
 	}
 
 	return 0;
