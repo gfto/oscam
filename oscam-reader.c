@@ -561,32 +561,14 @@ void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid)
 }
 
 /**
- * add or replace one entitlement item to entitlements of reader.
+ * add one entitlement item to entitlements of reader.
  **/
 void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, uint64_t id, uint32_t class, time_t start, time_t end, uint8_t type)
 {
-	S_ENTITLEMENT *item;
-	LL_ITER it;
-	int8_t replaced = 0;
-	if(!rdr->ll_entitlements)
-	{ 
-		rdr->ll_entitlements = ll_create("ll_entitlements");
-	}
-	else
-	{
-		it = ll_iter_create(rdr->ll_entitlements);
-		while((item = ll_iter_next(&it)))
-		{
-			if(item->caid == caid && item->provid == provid && item->id == id && item->class == class && item->type == type)
-			{
-				item->start = start;
-				item->end = end;
-				replaced = 1;
-			}
-		}
-	}
+	if(!rdr->ll_entitlements) { rdr->ll_entitlements = ll_create("ll_entitlements"); }
 
-	if(!replaced && cs_malloc(&item, sizeof(S_ENTITLEMENT)))
+	S_ENTITLEMENT *item;
+	if(cs_malloc(&item, sizeof(S_ENTITLEMENT)))
 	{
 
 		// fill item
@@ -597,6 +579,7 @@ void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, ui
 		item->start = start;
 		item->end = end;
 		item->type = type;
+
 		//add item
 		ll_append(rdr->ll_entitlements, item);
 
@@ -613,10 +596,7 @@ void cs_clear_entitlement(struct s_reader *rdr)
 	if(!rdr->ll_entitlements)
 		{ return; }
 
-	if(rdr->card_status == CARD_NEED_INIT)
-	{
-		ll_clear_data(rdr->ll_entitlements);
-	}
+	ll_clear_data(rdr->ll_entitlements);
 }
 
 

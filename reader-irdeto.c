@@ -3,7 +3,6 @@
 #include "oscam-time.h"
 #include "reader-common.h"
 #include "reader-irdeto.h"
-#include "oscam-work.h"
 
 static const uchar CryptTable[256] =
 {
@@ -571,8 +570,6 @@ static int32_t irdeto_card_init(struct s_reader *reader, ATR *newatr)
 	if((reader->cardmhz != 600 && reader->typ != R_INTERNAL) || (reader->typ == R_INTERNAL && (reader->cardmhz<510 || reader->cardmhz>690)))
 		{ rdr_log(reader, "WARNING: For Irdeto cards you will have to set 'cardmhz = 600' in oscam.server"); }
 
-	rdr_log(reader, "ready for requests");
-	
 	return irdeto_card_init_provider(reader);
 }
 
@@ -1038,14 +1035,7 @@ static int32_t irdeto_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 				sc_Acs57_Cmd[4] = acslength;
 				reader_chk_cmd(sc_Acs57_Cmd, acslength + 2);
 				if(cta_res[2] != 0)
-				{ 
-					rdr_log(reader, "EMM write error %02X", cta_res[2]);
-					return ERROR;
-				}
-				if(ep->type != GLOBAL)
-				{
-					add_job(reader->client, ACTION_READER_CARDINFO, NULL, 0); // refresh entitlement since it might have been changed!
-				}
+					{ rdr_log(reader, "EMM write error %02X", cta_res[2]); }
 				return OK;
 			}
 			else
@@ -1066,15 +1056,7 @@ static int32_t irdeto_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 				ptr += ADDRLEN;
 				emm += l;
 				memcpy(ptr, &emm[2], dataLen);                  // copy emm bytes
-				if(!irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr))
-				{
-					if(ep->type != GLOBAL)
-					{
-						add_job(reader->client, ACTION_READER_CARDINFO, NULL, 0); // refresh entitlement since it might have been changed!
-					}
-					return OK;
-				}
-				else return ERROR;
+				return (irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr) ? 0 : 1); // TODO: this always returns success cause return code cant be 0
 			}
 		}
 		else
@@ -1193,6 +1175,7 @@ static int32_t irdeto_card_info(struct s_reader *reader)
 			}
 		}
 	}
+	rdr_log(reader, "ready for requests");
 	return OK;
 }
 

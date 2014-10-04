@@ -2,7 +2,6 @@
 #ifdef READER_CONAX
 #include "cscrypt/bn.h"
 #include "reader-common.h"
-#include "oscam-work.h"
 
 static int32_t RSA_CNX(struct s_reader *reader, unsigned char *msg, unsigned char *mod, unsigned char *exp, uint32_t cta_lr, uint32_t modbytes, uint32_t expbytes)
 {
@@ -202,7 +201,6 @@ static int32_t conax_card_init(struct s_reader *reader, ATR *newatr)
 		rdr_log_sensitive(reader, "Provider: %d  SharedAddress: {%08X}", j + 1, b2i(4, reader->sa[j]));
 	}
 
-	rdr_log(reader, "ready for requests");
 	return OK;
 }
 
@@ -449,10 +447,7 @@ static int32_t conax_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	rc = ((cta_res[0] == 0x90) && (cta_res[1] == 0x00));
 
 	if(rc)
-	{ 
-		add_job(reader->client, ACTION_READER_CARDINFO, NULL, 0); // refresh entitlement since it might have been changed! 
-		return OK;
-	}
+		{ return OK; }
 	else
 		{ return ERROR; }
 }
@@ -526,7 +521,7 @@ static int32_t conax_card_info(struct s_reader *reader)
 			}
 		}
 	}
-	
+	rdr_log(reader, "ready for requests");
 	return OK;
 }
 

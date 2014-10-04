@@ -4,7 +4,6 @@
 #include "oscam-time.h"
 #include "oscam-emm.h"
 #include "reader-common.h"
-#include "oscam-work.h"
 
 struct geo_cache
 {
@@ -1676,10 +1675,6 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 
 	End Sub
 	*/
-	if(rc && ep->type != GLOBAL)
-	{
-		add_job(reader->client, ACTION_READER_CARDINFO, NULL, 0); // refresh entitlement since it might have been changed!
-	}
 	return rc;
 }
 
