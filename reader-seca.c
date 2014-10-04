@@ -185,6 +185,7 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 	static const uchar ins80[] = { 0x80, 0xCA, 0x00, 0x00, 0x11 }; // switch to nagra layer
 	static const uchar handshake[] = { 0xEE, 0x51, 0xDC, 0xB8, 0x4A, 0x1C, 0x15, 0x05, 0xB5, 0xA6, 0x9B, 0x91, 0xBA, 0x33, 0x19, 0xC4, 0x10 }; // nagra handshake
 	int32_t i;
+	uint8_t ins7e11_state = 0;
 
 	cs_clear_entitlement(reader);
 
@@ -233,16 +234,26 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 		write_cmd(ins80, handshake); // try to init nagra layer
 		if(cta_res[0] == 0x61 && cta_res[1] == 0x10)
 		{
+			if ((reader->typ == R_SMART || reader->typ == R_INTERNAL || !strcasecmp(reader->crdr.desc, "smargo")) && !reader->ins7e11_fast_reset)
+			{
+				ins7e11_state = 1;
+				reader->ins7e11_fast_reset = 1;
+			}
 			rdr_log(reader, "Fetching nagra ATR!");
 			ATR nagra_atr;
-			ICC_Async_Activate(reader, &nagra_atr, reader->deprecated); // get nagra atr
-			uint32_t hist_size;
+			call(reader->crdr.activate(reader, &nagra_atr)); // get nagra atr		
+			uint32_t hist_size; 
 			memset(reader->rom, 0, sizeof(reader->rom));
-
+			
 			ATR_GetHistoricalBytes(&nagra_atr, reader->rom, &hist_size); // get historical bytes containing romrev from nagra atr
-
+			
 			rdr_log(reader, "Switching back to seca mode!");
-			ICC_Async_Activate(reader, &nagra_atr, reader->deprecated); // switch back to seca layer
+			call(reader->crdr.activate(reader, &nagra_atr)); // switch back to seca layer
+			if ((reader->typ == R_SMART || reader->typ == R_INTERNAL || !strcasecmp(reader->crdr.desc, "smargo")) && ins7e11_state == 1)
+			{
+				ins7e11_state = 0;
+				reader->ins7e11_fast_reset = 0;
+			}
 		}
 		else
 		{
