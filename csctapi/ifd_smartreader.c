@@ -1720,7 +1720,7 @@ int32_t SR_Activate(struct s_reader *reader, struct s_ATR *atr)
 	}
 	else
 	{
-		rdr_debug_mask(reader, D_DEVICE, "Fast card reset with atr");
+		rdr_log(reader, "Fast card reset with atr");
 		call(SR_FastReset_With_ATR(reader, atr));
 	}
 	return OK;

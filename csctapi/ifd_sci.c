@@ -339,7 +339,7 @@ static int32_t sci_activate(struct s_reader *reader, ATR *atr)
 	}
 	else
 	{
-		rdr_debug_mask(reader, D_DEVICE, "Fast card reset with atr");
+		rdr_log(reader, "Fast card reset with atr");
 		call(Sci_FastReset(reader, atr));
 	}
 	return OK;
