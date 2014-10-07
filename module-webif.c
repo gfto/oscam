@@ -6246,6 +6246,7 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 		}
 		else if(get_module(cl)->listenertype == LIS_CSPUDP)
 		{
+			cacheex_name_link_tpl = "SREADER";
 			tpl_addVar(vars, TPLADD, "TYPE", "csp");
 			tpl_addVar(vars, TPLADD, "NAME", "csp");
 			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
