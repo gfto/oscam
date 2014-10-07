@@ -320,6 +320,7 @@ static int32_t Sci_Init(struct s_reader *reader)
 	int flags = O_RDWR | O_NOCTTY;
 #if defined(__SH4__) || defined(STB04SCI)
 	flags |= O_NONBLOCK;
+	reader->sh4_stb = 1;
 #endif
 	reader->handle = open(reader->device, flags);
 	if(reader->handle < 0)

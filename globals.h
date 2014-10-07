@@ -1301,6 +1301,7 @@ struct s_reader                                     //contains device info, read
 	int8_t          ncd_disable_server_filt;
 	int8_t          ncd_proto;
 	int8_t          currenthops;                    // number of hops (cccam & gbox)
+	int8_t          sh4_stb;                        // to set sh4 type box used to identify sci type.
 #ifdef MODULE_CCCAM
 	char            cc_version[7];                  // cccam version
 	char            cc_build[7];                    // cccam build number
