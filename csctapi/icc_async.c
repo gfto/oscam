@@ -146,15 +146,6 @@ int32_t ICC_Async_Activate(struct s_reader *reader, ATR *atr, uint16_t deprecate
 	uint32_t atr_size;
 	ATR_GetRaw(atr, atrarr, &atr_size);
 	char tmp[atr_size * 3 + 1];
-	// dirty hack for seca cards on Golden Interstar Xspeed internal reader 
-	char *hack_golden_interstar = cs_hexdump(1, atrarr, atr_size, tmp, sizeof(tmp));
-	int result = strncmp(hack_golden_interstar, "18 40 D8 ", sizeof(tmp));
-	if (!result)
-	{
-		rdr_log(reader, "Disabling rom rev detection. Golden Star internal reader dirty hack");
-		reader->ins7e11_fast_reset = 2;
-	}
-	// end dirty hack If a solution to the stb's sci driver is found remove this hack
 	rdr_log(reader, "ATR: %s", cs_hexdump(1, atrarr, atr_size, tmp, sizeof(tmp)));
 	memcpy(reader->card_atr, atrarr, atr_size);
 	reader->card_atr_length = atr_size;

@@ -1289,11 +1289,11 @@ static int32_t SR_Init(struct s_reader *reader)
 			crdr_data->rdrtype = TripleP1;
 	}
 	if (!strcasecmp(rdrtype, "TripleP2")) {
-			crdr_data->tripledelay = 0;
+			crdr_data->tripledelay = 100;
 			crdr_data->rdrtype = TripleP2;
 	}
 	if (!strcasecmp(rdrtype, "TripleP3")) {
-			crdr_data->tripledelay = 0;
+			crdr_data->tripledelay = 150;
 			crdr_data->rdrtype = TripleP3;
 	}
 	
@@ -1744,7 +1744,7 @@ static pthread_mutex_t init_lock_mutex;
 static int32_t sr_init_locks(struct s_reader *UNUSED(reader))
 {
 	if (pthread_mutex_trylock(&init_lock_mutex)) {
-		cs_lock_create(&sr_lock, "sr_lock", 2000);
+		cs_lock_create(&sr_lock, "sr_lock", 5000);
 	}
 
 	return 0;
