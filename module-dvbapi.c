@@ -3958,7 +3958,7 @@ static void *dvbapi_main_local(void *cli)
 									client->port = 0;
 								}
 							}
-							if (pmtlen > 8) //if we received less then 8 bytes, than it's not complete for sure
+							if (pmtlen >= 8) //if we received less then 8 bytes, than it's not complete for sure
 							{
 								// check and try to process complete PMT objects and filter data by chunks to avoid PMT buffer overflows
 								uint32_t *opcode_ptr = (uint32_t *) &mbuf[0];         //used only to silent compiler warning about dereferencing type-punned pointer
