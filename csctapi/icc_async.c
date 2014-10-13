@@ -716,7 +716,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 		}
 	}	
 	F = reader->mhz; } // all other readers
-        reader->worketu = ((double)((double)(1 / (double)D) * ((double)Fi / (double)((double)F / 100))) * 1.3);
+        reader->worketu = (double)((double)(1 / (double)D) * ((double)Fi / (double)((double)F / 100)));
 	rdr_log(reader, "Calculated work ETU is %.2f us reader mhz = %u", reader->worketu, reader->mhz);
 
 	//set timings according to ATR
