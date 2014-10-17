@@ -3936,15 +3936,22 @@ static void *dvbapi_main_local(void *cli)
 							len = recv(connfd, mbuf + pmtlen, sizeof(mbuf) - pmtlen, MSG_DONTWAIT);
 							if (len > 0)
 								pmtlen += len;
-							if ((cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) && len == 0)
+							if ((cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) &&
+								(len == 0 || (len == -1 && (errno != EINTR && errno != EAGAIN))))
 							{
 								//client disconnects, stop all assigned decoding
 								cs_debug_mask(D_DVBAPI, "Socket %d reported connection close", connfd);
 								for (j = 0; j < MAX_DEMUX; j++)
+								{
 									if (demux[j].socket_fd == connfd)
 										dvbapi_stop_descrambling(j);
+									// remove from unassoc_fd when necessary
+									if (unassoc_fd[j] == connfd)
+										unassoc_fd[j] = 0;
+								}
 								close(connfd);
 								connfd = -1;
+								add_to_poll = 0;
 								client_proto_version = 0;
 								if (client_name)
 								{
@@ -3957,6 +3964,7 @@ static void *dvbapi_main_local(void *cli)
 									client->ip = get_null_ip();
 									client->port = 0;
 								}
+								break;
 							}
 							if (pmtlen >= 8) //if we received less then 8 bytes, than it's not complete for sure
 							{
