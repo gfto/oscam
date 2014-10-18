@@ -39,6 +39,7 @@ static const char *const type_str[7] = { "TYPE_AM", "TYPE_BM", "TYPE_2232C", "TY
 
 struct sr_data
 {
+	CS_MUTEX_LOCK sr_lock2;
 	int32_t F;
 	float D;
 	int8_t closing;
@@ -1195,7 +1196,6 @@ static void *ReaderThread(void *p)
 
 	reader = (struct s_reader *)p;
 	struct sr_data *crdr_data = reader->crdr_data;
-	if (reader->smart_type == 3) crdr_data->out_ep = 0x81;
 	crdr_data->running = 1;
 
 	set_thread_name(__func__);
@@ -1343,12 +1343,12 @@ static int32_t SR_Init(struct s_reader *reader)
 	if (crdr_data->rdrtype >= 2) {
 
 
-		rdr_debug_mask(reader, D_DEVICE, "SR: Setting smartreader latency timer to 2 ms");
-		//Set the FTDI latency timer to 2 ms is ftdi default latency.
-		ret = smartreader_set_latency_timer(reader, 2);
+		rdr_debug_mask(reader, D_DEVICE, "SR: Setting smartreader latency timer to 16 ms");
+		//Set the FTDI latency timer to 16 ms is ftdi default latency.
+		ret = smartreader_set_latency_timer(reader, 16);
 	} else {
 		rdr_debug_mask(reader, D_DEVICE, "SR: Setting smartreader latency timer to 1 ms");
-		//Set the FTDI latency timer to 1 ms is ftdi default latency.
+		//Set the FTDI latency timer to 1 ms .
 		ret = smartreader_set_latency_timer(reader, 1);
 	}
 		//Set databits to 8o2
@@ -1443,7 +1443,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 
 
 		//Read the ATR
-		ret = smart_read(reader, data, ATR_MAX_SIZE, (ATR_TIMEOUT/1000));
+		ret = smart_read(reader, data, ATR_MAX_SIZE, (1500));
 		rdr_debug_mask(reader, D_DEVICE, "SR: get ATR ret = %d" , ret);
 		if(ret)
 			{ rdr_ddump_mask(reader, D_DEVICE, data, ATR_MAX_SIZE * 2, "SR:"); }
@@ -1519,7 +1519,7 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 		{
 			if (((crdr_data->detectstart == 1) && (reader->card_status != 1)) && ((crdr_data->detectstart == 1) && (reader->card_status != 0)))
 			{
-				cs_writelock(&sr_lock);
+				cs_writelock(&crdr_data->sr_lock2);
 				if (libusb_control_transfer(crdr_data->usb_dev_handle,
 								FTDI_DEVICE_IN_REQTYPE,
 								SIO_POLL_MODEM_STATUS_REQUEST,
@@ -1528,10 +1528,10 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 								2, crdr_data->usb_read_timeout) != 1)
 				{
 					rdr_log(reader, "getting modem status failed ");
-					cs_writeunlock(&sr_lock);
+					cs_writeunlock(&crdr_data->sr_lock2);
 					return ERROR;
 				}
-				cs_writeunlock(&sr_lock);
+				cs_writeunlock(&crdr_data->sr_lock2);
 				state2 = (usb_val[0] & 0xFF);
 				rdr_debug_mask(reader, D_IFD, "the status of card in or out %u  ( 64 means card IN)", state2);
     			if (state2 == 64)
@@ -1576,12 +1576,23 @@ static int32_t SR_Receive(struct s_reader *reader, unsigned char *buffer, uint32
 {
 	(void) delay; // delay not used (yet)!
 	uint32_t  ret;
-
+	double timeout2;
 	smart_fastpoll(reader, 1);
+	if(reader->smart_type >= 2)
+	{
+		timeout2 = ((double)timeout/1000) * 1.09;
+//		rdr_log(reader," TEMPO test read timeout adapted for triple to %4.2f", timeout2);
+	}
+	else
+	{
+		timeout2 = (double)timeout/1000;
+	}
 	// Limit the max timeout to 14 seconds to avoid a device read timeout.  
-	double timeout2 = MIN((double)timeout/1000, 14000); // convert timeout to ms precize
+	timeout2 = MIN(timeout2, 14000); // convert timeout to ms precize
 	if (timeout2 < (double)timeout/1000)
-	rdr_debug_mask(reader, D_IFD, "the max timeout has been limited to 14000 ms the calculated is %4.2f", (double)timeout/1000);
+	{
+		rdr_debug_mask(reader, D_IFD, "the max timeout has been limited to 14000 ms the calculated is %4.2f", (double)timeout/1000);
+	}
 	ret = smart_read(reader, buffer, size, (double)timeout2);
 	smart_fastpoll(reader, 0);
 	if(ret != size)
@@ -1629,7 +1640,6 @@ static int32_t SR_Close(struct s_reader *reader)
 {
 	struct sr_data *crdr_data = reader->crdr_data;
 	if(!crdr_data) { return OK; }
-	cs_writelock(&sr_lock);
 	crdr_data->running = 0;
 	crdr_data->closing = 1;
 	if(crdr_data->usb_dev_handle)
@@ -1637,11 +1647,11 @@ static int32_t SR_Close(struct s_reader *reader)
 		if (init_count >= 2)
 		{
 			smart_fastpoll(reader, 1);
-			cs_writeunlock(&sr_lock);
 			pthread_join(crdr_data->rt, NULL);
 			smart_fastpoll(reader, 0);
 		}
 		init_count--;
+		cs_writelock(&crdr_data->sr_lock2);
 		libusb_release_interface(crdr_data->usb_dev_handle, crdr_data->interface);
 #if defined(__linux__)
 //		libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); // attaching ftdio kernel driver may cause segfault on web if reader restart
@@ -1653,7 +1663,7 @@ static int32_t SR_Close(struct s_reader *reader)
 		}
 	}
 
-	cs_writeunlock(&sr_lock);
+	cs_writeunlock(&crdr_data->sr_lock2);
 	rdr_log(reader,"SR: smartreader closed");
 	crdr_data->closing = 0;
 
@@ -1699,7 +1709,7 @@ static int32_t SR_FastReset_With_ATR(struct s_reader *reader, ATR *atr)
 	smartreader_setdtr_rts(reader, 1, 0);
 
 	//Read the ATR
-	ret = smart_read(reader, data, ATR_MAX_SIZE, (ATR_TIMEOUT/1000));
+	ret = smart_read(reader, data, ATR_MAX_SIZE, (1500));
 
 	// parse atr
 	if(ATR_InitFromArray(atr, data, ret) != ERROR)
@@ -1743,6 +1753,7 @@ static pthread_mutex_t init_lock_mutex;
 
 static int32_t sr_init_locks(struct s_reader *UNUSED(reader))
 {
+	
 	if (pthread_mutex_trylock(&init_lock_mutex)) {
 		cs_lock_create(&sr_lock, "sr_lock", 5000);
 	}
