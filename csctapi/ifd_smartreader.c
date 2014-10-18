@@ -39,7 +39,6 @@ static const char *const type_str[7] = { "TYPE_AM", "TYPE_BM", "TYPE_2232C", "TY
 
 struct sr_data
 {
-	CS_MUTEX_LOCK sr_lock2;
 	int32_t F;
 	float D;
 	int8_t closing;
@@ -1519,7 +1518,7 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 		{
 			if (((crdr_data->detectstart == 1) && (reader->card_status != 1)) && ((crdr_data->detectstart == 1) && (reader->card_status != 0)))
 			{
-				cs_writelock(&crdr_data->sr_lock2);
+				cs_writelock(&sr_lock);
 				if (libusb_control_transfer(crdr_data->usb_dev_handle,
 								FTDI_DEVICE_IN_REQTYPE,
 								SIO_POLL_MODEM_STATUS_REQUEST,
@@ -1528,10 +1527,10 @@ static int32_t SR_GetStatus(struct s_reader *reader, int32_t *in)
 								2, crdr_data->usb_read_timeout) != 1)
 				{
 					rdr_log(reader, "getting modem status failed ");
-					cs_writeunlock(&crdr_data->sr_lock2);
+					cs_writeunlock(&sr_lock);
 					return ERROR;
 				}
-				cs_writeunlock(&crdr_data->sr_lock2);
+				cs_writeunlock(&sr_lock);
 				state2 = (usb_val[0] & 0xFF);
 				rdr_debug_mask(reader, D_IFD, "the status of card in or out %u  ( 64 means card IN)", state2);
     			if (state2 == 64)
@@ -1651,7 +1650,7 @@ static int32_t SR_Close(struct s_reader *reader)
 			smart_fastpoll(reader, 0);
 		}
 		init_count--;
-		cs_writelock(&crdr_data->sr_lock2);
+		cs_writelock(&sr_lock);
 		libusb_release_interface(crdr_data->usb_dev_handle, crdr_data->interface);
 #if defined(__linux__)
 //		libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); // attaching ftdio kernel driver may cause segfault on web if reader restart
@@ -1663,7 +1662,7 @@ static int32_t SR_Close(struct s_reader *reader)
 		}
 	}
 
-	cs_writeunlock(&crdr_data->sr_lock2);
+	cs_writeunlock(&sr_lock);
 	rdr_log(reader,"SR: smartreader closed");
 	crdr_data->closing = 0;
 
