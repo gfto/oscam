@@ -2905,20 +2905,23 @@ void dvbapi_handlesockmsg(unsigned char *buffer, uint32_t len, int32_t connfd)
 						break;
 					}
 				}
-				// check do we have any demux running on this fd
-				int16_t execlose = 1;
-				for(i = 0; i < MAX_DEMUX; i++)
+				if (cfg.dvbapi_boxtype == BOXTYPE_IPBOX)
 				{
-					if(demux[i].socket_fd == connfd)
+					// check do we have any demux running on this fd
+					int16_t execlose = 1;
+					for(i = 0; i < MAX_DEMUX; i++)
 					{
-						execlose = 0;
-						break;
+						if(demux[i].socket_fd == connfd)
+						{
+							execlose = 0;
+							break;
+						}
 					}
-				}
-				if(execlose)
-				{
-					int32_t ret = close(connfd);
-					if(ret < 0) { cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno)); }
+					if(execlose)
+					{
+						int32_t ret = close(connfd);
+						if(ret < 0) { cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno)); }
+					}
 				}
 			}
 			else
