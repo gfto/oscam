@@ -82,6 +82,7 @@ struct sr_data
 };
 
 static int32_t init_count;
+static int32_t current_count;
 
 static int32_t smart_read(struct s_reader *reader, unsigned char *buff, uint32_t  size, double timeout_ms)
 {
@@ -345,7 +346,9 @@ static uint32_t  smartreader_determine_max_packet_size(struct s_reader *reader)
 	// but could be connected to a normal speed USB hub -> 64 bytes packet size.
 //	rdr_log(reader,"DE PACKET SIZE DETERMINATION USES READER TYPE %u", crdr_data->type);
 	if(crdr_data->type == TYPE_2232H || crdr_data->type == TYPE_4232H)
-		{ packet_size = 512; }
+		{
+			packet_size = 512;
+		}
 	else
 		{ packet_size = 64; }
 
@@ -377,7 +380,6 @@ static uint32_t  smartreader_determine_max_packet_size(struct s_reader *reader)
 			}
 		}
 	}
-
 	return packet_size;
 }
 
@@ -1019,7 +1021,7 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 				errno != EBUSY)
 		{
 #if defined(__linux__)
-//			if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
+			if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
 #endif
 			smartreader_usb_close_internal(reader);
 			if(detach_errno == EPERM)
@@ -1040,7 +1042,7 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 	if(ret != 0)
 	{
 #if defined(__linux__)
-//		if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
+		if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
 #endif
 		smartreader_usb_close_internal(reader);
 		if(detach_errno == EPERM)
@@ -1058,7 +1060,7 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 	{
 		libusb_release_interface(crdr_data->usb_dev_handle, crdr_data->interface);
 #if defined(__linux__)
-//		if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
+		if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
 #endif
 		smartreader_usb_close_internal(reader);
 		rdr_log(reader, "smartreader_usb_reset failed");
@@ -1072,7 +1074,16 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 	else if(usbdesc.bcdDevice == 0x200)
 		{ crdr_data->type = TYPE_AM; }
 	else if(usbdesc.bcdDevice == 0x500)
-		{ crdr_data->type = TYPE_2232C; }
+	{ 
+		if(usbdesc.idProduct == 0x6011)
+		{
+			crdr_data->type = TYPE_4232H;
+		}
+		else
+		{
+			crdr_data->type = TYPE_2232C;
+		}
+	}
 	else if(usbdesc.bcdDevice == 0x600)
 		{ crdr_data->type = TYPE_R; }
 	else if(usbdesc.bcdDevice == 0x700)
@@ -1089,7 +1100,7 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 	{
 		libusb_release_interface(crdr_data->usb_dev_handle, crdr_data->interface);
 #if defined(__linux__)
-//		if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
+		if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
 #endif
 		smartreader_usb_close_internal(reader);
 		rdr_log(reader, "set baudrate failed");
@@ -1225,7 +1236,7 @@ static void *ReaderThread(void *p)
 		if(!crdr_data->poll)
 		{
 			struct timespec timeout;
-			add_ms_to_timespec(&timeout, 1000);
+			add_ms_to_timespec(&timeout, 2000);
 			pthread_cond_timedwait(&crdr_data->g_usb_cond, &crdr_data->g_usb_mutex, &timeout);
 		}
 		pthread_mutex_unlock(&crdr_data->g_usb_mutex);
@@ -1246,6 +1257,12 @@ static void smart_fastpoll(struct s_reader *reader, int32_t on)
 
 static int32_t SR_Init(struct s_reader *reader)
 {
+	while (init_count < current_count) // Restarting the reader while it was not closed does cause segfault.
+	{
+		cs_sleepms(1000);
+		rdr_log(reader,"Waiting on closing reader before restarting");
+	}
+
 	int32_t ret;
 	char device[strlen(reader->device) + 1];
 	char *rdrtype, *busname, *dev, *search = ":", *saveptr1 = NULL;
@@ -1311,6 +1328,7 @@ static int32_t SR_Init(struct s_reader *reader)
 		}
 	}
 	init_count++;
+	current_count++;
 
 	rdr_debug_mask(reader, D_IFD, "Using 0x%02X/0x%02X as endpoint for smartreader hardware detection", crdr_data->in_ep, crdr_data->out_ep);
 	if (crdr_data->tripledelay > 0) {
@@ -1645,24 +1663,30 @@ static int32_t SR_Close(struct s_reader *reader)
 	{
 		if (init_count >= 2)
 		{
+			init_count--;
 			smart_fastpoll(reader, 1);
+			cs_writeunlock(&sr_lock);
 			pthread_join(crdr_data->rt, NULL);
 			smart_fastpoll(reader, 0);
 		}
-		init_count--;
+		else
+		{
+			init_count--;
+		}
 		cs_writelock(&sr_lock);
 		libusb_release_interface(crdr_data->usb_dev_handle, crdr_data->interface);
 #if defined(__linux__)
-//		libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); // attaching ftdio kernel driver may cause segfault on web if reader restart
+		libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); // attaching kernel drive
 #endif
 		libusb_close(crdr_data->usb_dev_handle);
-		if(!init_count)
+		cs_writeunlock(&sr_lock);
+		current_count--; // this reader may be restarted now
+		if(!current_count)
 		{
 			libusb_exit(NULL);
 		}
 	}
 
-	cs_writeunlock(&sr_lock);
 	rdr_log(reader,"SR: smartreader closed");
 	crdr_data->closing = 0;
 
