@@ -1257,10 +1257,10 @@ static void smart_fastpoll(struct s_reader *reader, int32_t on)
 
 static int32_t SR_Init(struct s_reader *reader)
 {
+	if(init_count < current_count) {rdr_log(reader,"Waiting on reader_closed before restarting");}
 	while (init_count < current_count) // Restarting the reader while it was not closed does cause segfault.
 	{
 		cs_sleepms(1000);
-		rdr_log(reader,"Waiting on closing reader before restarting");
 	}
 
 	int32_t ret;
