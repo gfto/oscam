@@ -3978,7 +3978,7 @@ static void *dvbapi_main_local(void *cli)
 								uint32_t data_len = 0;                                //variable for internal data length (eg. for the filter data size, PMT len)
 
 								//detect the opcode, its size (chunksize) and its internal data size (data_len)
-								if ((opcode & 0xFFFFF000) == DVBAPI_AOT_CA_PMT)
+								if ((opcode & 0xFFFFF000) == DVBAPI_AOT_CA)
 								{
 									// parse packet size (ASN.1)
 									uint32_t size = 0;
@@ -4023,11 +4023,14 @@ static void *dvbapi_main_local(void *cli)
 								if (chunksize < sizeof(mbuf) && chunksize <= pmtlen) // only handle if we fetched a complete chunksize!
 								{
 									chunks_processed++;
-									if ((opcode & 0xFFFFF000) == DVBAPI_AOT_CA_PMT)
+									if ((opcode & 0xFFFFF000) == DVBAPI_AOT_CA)
 									{
 										cs_ddump_mask(D_DVBAPI, mbuf, chunksize, "[DVBAPI] Parsing #%d PMT object(s):", chunks_processed);
 										dvbapi_handlesockmsg(mbuf, chunksize, connfd);
-										add_to_poll = 0;
+										if ((opcode & 0xFFFFFF00) == DVBAPI_AOT_CA_PMT)
+											add_to_poll = 0;
+										else if (opcode == DVBAPI_AOT_CA_STOP)
+											add_to_poll = 1;
 									}
 									else switch (opcode)
 									{
