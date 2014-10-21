@@ -470,7 +470,7 @@ void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar 
 			va_end(params);
 			if(cfg.logduplicatelines)
 			{
-				memcpy(last_log_txt, log_txt + len, LOG_BUF_SIZE);
+				memcpy(last_log_txt, log_txt + len, LOG_BUF_SIZE - len);
 				write_to_log_int(log_txt, len);
 			}
 			else
@@ -494,7 +494,7 @@ void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar 
 				}
 				if(!repeated_line)
 				{
-					memcpy(last_log_txt, log_txt + len, LOG_BUF_SIZE);
+					memcpy(last_log_txt, log_txt + len, LOG_BUF_SIZE - len);
 					write_to_log_int(log_txt, len);
 				}
 				else
