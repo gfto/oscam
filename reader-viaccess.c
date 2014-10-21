@@ -701,7 +701,8 @@ void CommonMain_D2_13_15(const uint8_t *datain, uint8_t *dataout, int loopval)
 	unsigned short buff8[8];
 	uint8_t buff11[11+1]; // +1 to avoid func2 bug
 	int i1, i2;
-
+	buff11[11] = 0;
+	
 	CommonMain_1_D2_13_15(datain, buff11);
 	for (i1 = 0; i1 < 11; i1++)
 		{ buff11[i1] ^= Tab1_Comp[(loopval * 11) + i1]; }
