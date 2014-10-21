@@ -5008,6 +5008,11 @@ const char *dvbapi_get_client_name(void)
 	return client_name;
 }
 
+uint16_t dvbapi_get_client_proto_version(void)
+{
+	return client_proto_version;
+}
+
 /*
  *  protocol structure
  */

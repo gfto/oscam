@@ -114,7 +114,8 @@ a.tooltip1 {
 a.tooltip span,
 a.tooltip1 span {
 	display:none;
-	z-index:99
+	z-index:99;
+	white-space:nowrap
 }
 a.tooltip1 {
 	color:red

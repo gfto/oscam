@@ -282,6 +282,7 @@ int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, int32_t idx);
 void disable_unused_streampids(int16_t demux_id);
 int8_t is_ca_used(uint8_t cadevice);
 const char *dvbapi_get_client_name(void);
+uint16_t dvbapi_get_client_proto_version(void);
 void delayer(ECM_REQUEST *er);
 
 #ifdef DVBAPI_LOG_PREFIX

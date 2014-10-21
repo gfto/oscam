@@ -3060,8 +3060,8 @@ static void webif_add_client_proto(struct templatevars *vars, struct s_client *c
 #ifdef HAVE_DVBAPI
 	if(streq(proto, "dvbapi") && cl->typ == 'c' && dvbapi_get_client_name())
 	{
-		tpl_printf(vars, TPLADD, "CLIENTPROTO", "%s (%s)", proto, dvbapi_get_client_name());
-		tpl_printf(vars, TPLADD, "CLIENTPROTOSORT", "%s (%s)", proto, dvbapi_get_client_name());
+		tpl_printf(vars, TPLADD, "CLIENTPROTO", "<A HREF=\"#\" CLASS=\"tooltip\">%s<SPAN>client: %s<BR>protocol version: %d</SPAN></A>", proto, dvbapi_get_client_name(), dvbapi_get_client_proto_version());
+		tpl_printf(vars, TPLADD, "CLIENTPROTOSORT", "%s", proto);
 		return;
 	}
 #endif
