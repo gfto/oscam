@@ -662,7 +662,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 	//set clock speed to max if internal reader
 	if(reader->crdr.max_clock_speed == 1)
 	{
-		if(reader->mhz == 357 || reader->mhz == 358)  //no overclocking
+		if((reader->mhz == 357 || reader->mhz == 358) && reader->autospeed == 1)  //no overclocking
 			{ reader->mhz = atr_fs_table[FI] / 10000; } //we are going to clock the card to this nominal frequency
 
 		if(reader->cardmhz > 2000 && reader->autospeed == 1)  // -1 replaced by autospeed parameter is magic number pll internal reader set cardmhz according to optimal atr speed
@@ -716,7 +716,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 		}
 	}	
 	F = reader->mhz; } // all other readers
-        reader->worketu = (double)((double)(1 / (double)D) * ((double)Fi / (double)((double)F / 100)));
+        reader->worketu = ((double)((double)(1 / (double)D) * ((double)Fi / (double)((double)F / 100))) * 1.2);
 	rdr_log(reader, "Calculated work ETU is %.2f us reader mhz = %u", reader->worketu, reader->mhz);
 
 	//set timings according to ATR
