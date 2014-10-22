@@ -609,17 +609,27 @@ unsigned char *des_login_key_get(unsigned char *key1, unsigned char *key2, int l
 
 static inline void xxor(uint8_t *data, int32_t len, const uint8_t *v1, const uint8_t *v2)
 {
-	switch(len) {
-		case 16:
-			*((uint32_t *)data+3) = *((uint32_t *)v1+3) ^ *((uint32_t *)v2+3);
-			*((uint32_t *)data+2) = *((uint32_t *)v1+2) ^ *((uint32_t *)v2+2);
-		case 8:
-			*((uint32_t *)data+1) = *((uint32_t *)v1+1) ^ *((uint32_t *)v2+1);
-		case 4:
-			*((uint32_t *)data+0) = *((uint32_t *)v1+0) ^ *((uint32_t *)v2+0);
+	uint32_t i;
+	switch(len)
+	{
+	case 16:
+		for(i = 8; i < 16; ++i)
+		{
+			data[i] = v1[i] ^ v2[i];
+		}
+	case 8:
+		for(i = 4; i < 8; ++i)
+		{
+			data[i] = v1[i] ^ v2[i];
+		}
+	case 4:
+		for(i = 0; i < 4; ++i)
+		{
+			data[i] = v1[i] ^ v2[i];
+		}
 		break;
-		default:
-			while(len--) *data++ = *v1++ ^ *v2++;
+	default:
+		while(len--) { *data++ = *v1++ ^ *v2++; }
 		break;
 	}
 }
