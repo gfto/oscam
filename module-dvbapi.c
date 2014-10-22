@@ -4027,9 +4027,8 @@ static void *dvbapi_main_local(void *cli)
 									{
 										cs_ddump_mask(D_DVBAPI, mbuf, chunksize, "[DVBAPI] Parsing #%d PMT object(s):", chunks_processed);
 										dvbapi_handlesockmsg(mbuf, chunksize, connfd);
-										if ((opcode & 0xFFFFFF00) == DVBAPI_AOT_CA_PMT)
-											add_to_poll = 0;
-										else if (opcode == DVBAPI_AOT_CA_STOP)
+										add_to_poll = 0;
+										if (cfg.dvbapi_listenport && opcode == DVBAPI_AOT_CA_STOP)
 											add_to_poll = 1;
 									}
 									else switch (opcode)
