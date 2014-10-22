@@ -245,17 +245,10 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 			memset(reader->rom, 0, sizeof(reader->rom));
 			
 			ATR_GetHistoricalBytes(&nagra_atr, reader->rom, &hist_size); // get historical bytes containing romrev from nagra atr
-			
-			if (reader->sh4_stb)
-			{
-				rdr_log(reader, "Switching back to seca mode! sh4 internal reader");
-				call(reader->crdr.activate(reader, &nagra_atr));
-			}
-			else
-			{
-				rdr_log(reader, "Switching back to seca mode! ");
-				ICC_Async_Activate(reader, &nagra_atr, reader->deprecated); // switch back to seca layer
-			}
+
+			rdr_log(reader, "Switching back to seca mode! ");
+			call(reader->crdr.activate(reader, &nagra_atr)); // switch back to seca layer
+
 			if ((reader->typ == R_SMART || reader->typ == R_INTERNAL || !strcasecmp(reader->crdr.desc, "smargo")) && ins7e11_state == 1)
 			{
 				ins7e11_state = 0;

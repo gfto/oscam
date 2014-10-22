@@ -13,12 +13,27 @@
 #include "ifd_sci_global.h"
 #include "ifd_sci_ioctl.h"
 #include "io_serial.h"
+#include "../oscam-string.h"
 
 #undef ATR_TIMEOUT
 #define ATR_TIMEOUT   800000
 
 #define OK      0
 #define ERROR 1
+
+struct sr_data
+{
+	int8_t srdataok;
+	unsigned char T;
+	uint32_t fs; 
+	uint32_t ETU;
+	uint32_t WWT; 
+	uint32_t CWT; 
+	uint32_t BWT; 
+	uint32_t EGT; 	
+	unsigned char P; 
+	unsigned char I;
+};
 
 static int32_t Sci_GetStatus(struct s_reader *reader, int32_t *status)
 {
@@ -253,6 +268,16 @@ static int32_t Sci_Reset(struct s_reader *reader, ATR *atr)
 
 static int32_t Sci_WriteSettings(struct s_reader *reader, unsigned char T, uint32_t fs, uint32_t ETU, uint32_t WWT, uint32_t CWT, uint32_t BWT, uint32_t EGT, unsigned char P, unsigned char I)
 {
+	struct sr_data *crdr_data = reader->crdr_data;
+	crdr_data->T = T;
+	crdr_data->fs = fs;
+	crdr_data->ETU = ETU;
+	crdr_data->WWT = WWT;
+	crdr_data->CWT = CWT;
+	crdr_data->BWT = BWT;
+	crdr_data->EGT = EGT;
+	crdr_data->P = P;
+	crdr_data->I = I;
 	//int32_t n;
 	SCI_PARAMETERS params;
 	//memset(&params,0,sizeof(SCI_PARAMETERS));
@@ -307,10 +332,13 @@ static int32_t Sci_Deactivate(struct s_reader *reader)
 
 static int32_t Sci_FastReset(struct s_reader *reader, ATR *atr)
 {
+	struct sr_data *crdr_data = reader->crdr_data;
 	int32_t ret;
 	ioctl(reader->handle, IOCTL_SET_RESET, 1);
 	ret = Sci_Read_ATR(reader, atr);
 	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
+
+	Sci_WriteSettings(reader, crdr_data->T,crdr_data->fs,crdr_data->ETU, crdr_data->WWT,crdr_data->CWT,crdr_data->BWT,crdr_data->EGT,crdr_data->P,crdr_data->I);
 
 	return ret;
 }
@@ -328,6 +356,12 @@ static int32_t Sci_Init(struct s_reader *reader)
 		rdr_log(reader, "ERROR: Opening device %s (errno=%d %s)", reader->device, errno, strerror(errno));
 		return ERROR;
 	}
+
+	if(!reader->crdr_data && !cs_malloc(&reader->crdr_data, sizeof(struct sr_data)))
+		{ return ERROR; }
+	struct sr_data *crdr_data = reader->crdr_data;
+	crdr_data->srdataok = 1; // just to avoid non used parameter warning. reader->crdr_date is used later on.
+
 	return OK;
 }
 
