@@ -58,7 +58,7 @@ extern void __xxor(unsigned char *data, int32_t len, const unsigned char *v1, co
 #define val_by2on3(x)  ((0xaaab*(x))>>16) //fixed point *2/3
 
 extern void cCamCryptVG_SetSeed(struct s_reader *reader);
-extern void cCamCryptVG_GetCamKey(struct s_reader *reader, unsigned char *buff);
+extern void cCamCryptVG_GetCamKey(struct s_reader *reader, uint16_t *tb2);
 extern int32_t status_ok(const unsigned char *status);
 extern void memorize_cmd_table(struct s_reader *reader, const unsigned char *mem, int32_t size);
 extern int32_t cmd_table_get_info(struct s_reader *reader, const unsigned char *cmd, unsigned char *rlen, unsigned char *rmode);

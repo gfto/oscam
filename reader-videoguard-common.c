@@ -380,7 +380,7 @@ static void cCamCryptVG_Process_D1(struct s_reader *reader, const unsigned char 
 static void cCamCryptVG_Decrypt_D3(struct s_reader *reader, unsigned char *ins, unsigned char *data, const unsigned char *status);
 static void cCamCryptVG_PostProcess_Decrypt(struct s_reader *reader, unsigned char *rxbuff);
 static int32_t cAES_Encrypt(struct s_reader *reader, const unsigned char *data, int32_t len, unsigned char *crypted);
-static void swap_lb(const unsigned char *buff, int32_t len);
+static void swap_lb(unsigned char *buff, int32_t len);
 
 int32_t cw_is_valid(unsigned char *cw) // returns 1 if cw_is_valid, returns 0 if cw is all zeros
 {
@@ -408,7 +408,7 @@ int32_t cAES_Encrypt(struct s_reader *reader, const unsigned char *data, int32_t
 	return len;
 }
 
-static void swap_lb(const unsigned char *buff, int32_t len)
+static void swap_lb(unsigned char *buff, int32_t len)
 {
 
 #if __BYTE_ORDER != __BIG_ENDIAN
@@ -416,11 +416,12 @@ static void swap_lb(const unsigned char *buff, int32_t len)
 
 #endif /*  */
 	int32_t i;
-	uint16_t *tmp;
+	uint16_t tmp;
 	for(i = 0; i < len / 2; i++)
 	{
-		tmp = (uint16_t *) buff + i;
-		*tmp = ((*tmp << 8) & 0xff00) | ((*tmp >> 8) & 0x00ff);
+		memcpy(&tmp, buff + i, sizeof(uint16_t));
+		tmp = ((tmp << 8) & 0xff00) | ((tmp >> 8) & 0x00ff);
+		memcpy(buff + i, &tmp, sizeof(uint16_t));
 	}
 }
 
@@ -490,15 +491,15 @@ void cCamCryptVG_SetSeed(struct s_reader *reader)
 	memcpy(csystem_data->cardkeys[2], key2, sizeof(csystem_data->cardkeys[2]));
 }
 
-void cCamCryptVG_GetCamKey(struct s_reader *reader, unsigned char *buff)
+void cCamCryptVG_GetCamKey(struct s_reader *reader, uint16_t *tb2)
 {
 	struct videoguard_data *csystem_data = reader->csystem_data;
-	uint16_t *tb2 = (uint16_t *)buff, c = 1;
+	uint16_t c = 1;
 	memset(tb2, 0, 64);
 	tb2[0] = 1;
 	int32_t i;
 	for(i = 0; i < 32; i++) { cCamCryptVG_LongMult(tb2, &c, csystem_data->cardkeys[1][i], 0); }
-	swap_lb(buff, 64);
+	swap_lb((unsigned char *)tb2, 64);
 }
 
 static void cCamCryptVG_PostProcess_Decrypt(struct s_reader *reader, unsigned char *rxbuff)

@@ -681,9 +681,9 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 	cCamCryptVG_SetSeed(reader);
 
 	static const unsigned char insB4[5] = { 0xD0, 0xB4, 0x00, 0x00, 0x40 };
-	unsigned char tbuff[64];
+	uint16_t tbuff[32];
 	cCamCryptVG_GetCamKey(reader, tbuff);
-	l = do_cmd(reader, insB4, tbuff, NULL, cta_res);
+	l = do_cmd(reader, insB4, (unsigned char*)tbuff, NULL, cta_res);
 	if(l < 0 || !status_ok(cta_res))
 	{
 		rdr_log(reader, "classD0 insB4: failed");
