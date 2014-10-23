@@ -496,7 +496,7 @@ void cCamCryptVG_GetCamKey(struct s_reader *reader, uint16_t *tb2)
 	struct videoguard_data *csystem_data = reader->csystem_data;
 	uint16_t c = 1;
 	memset(tb2, 0, 64);
-	tb2[0] = 1;
+	memset(tb2, 1, 1);
 	int32_t i;
 	for(i = 0; i < 32; i++) { cCamCryptVG_LongMult(tb2, &c, csystem_data->cardkeys[1][i], 0); }
 	swap_lb((unsigned char *)tb2, 64);
