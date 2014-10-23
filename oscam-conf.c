@@ -79,12 +79,14 @@ int config_list_parse(const struct config_list *clist, const char *token, char *
 		}
 		case OPT_INT32:
 		{
-			*(int32_t *)var = strToIntVal(value, c->def.d_int32);
+			int32_t tmp = strToIntVal(value, c->def.d_int32);
+			memcpy(var, &tmp, sizeof(int32_t));
 			return 1;
 		}
 		case OPT_UINT32:
 		{
-			*(uint32_t *)var = strToUIntVal(value, c->def.d_uint32);
+			uint32_t tmp = strToUIntVal(value, c->def.d_uint32);
+			memcpy(var, &tmp, sizeof(uint32_t));
 			return 1;
 		}
 		case OPT_STRING:
@@ -181,14 +183,16 @@ void config_list_save_ex(FILE *f, const struct config_list *clist, void *config_
 		}
 		case OPT_INT32:
 		{
-			int32_t val = *(int32_t *)var;
+			int32_t val;
+			memcpy(&val, var, sizeof(int32_t));
 			if(save_all || val != c->def.d_int32)
 				{ fprintf_conf(f, c->config_name, "%d\n", val); }
 			continue;
 		}
 		case OPT_UINT32:
 		{
-			uint32_t val = *(uint32_t *)var;
+			uint32_t val;
+			memcpy(&val, var, sizeof(uint32_t));
 			if(save_all || val != c->def.d_uint32)
 				{ fprintf_conf(f, c->config_name, "%u\n", val); }
 			continue;
@@ -294,12 +298,12 @@ void config_list_set_defaults(const struct config_list *clist, void *config_data
 		}
 		case OPT_INT32:
 		{
-			*(int32_t *)var = c->def.d_int32;
+			memcpy(var, &c->def.d_int32, sizeof(int32_t));
 			break;
 		}
 		case OPT_UINT32:
 		{
-			*(uint32_t *)var = c->def.d_uint32;
+			memcpy(var, &c->def.d_uint32, sizeof(uint32_t));
 			break;
 		}
 		case OPT_STRING:
