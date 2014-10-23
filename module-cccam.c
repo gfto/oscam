@@ -175,11 +175,20 @@ void cc_crypt_cmd0c(struct s_client *cl, uint8_t *buf, int32_t len)
 	}
 	case MODE_CMD_0x0C_RC6 :   //RC6
 	{
-		int32_t i;
+		// buf may be unaligned, 
+		// so we use malloc() memory for the uint32_t* cast
+		uint8_t *tmp;
+		int32_t i;	
+		
+		if(!cs_malloc(&tmp, len))
+			{ return; }
+		memcpy(tmp, buf, len);
+		
 		SwapLBi(buf, len);
 		for(i = 0; i < len / 16; i++)
-			{ rc6_block_decrypt((uint32_t *)(buf + i * 16), (uint32_t *)(out + i * 16), 1, cc->cmd0c_RC6_cryptkey); }
+			{ rc6_block_decrypt((uint32_t *)(tmp + i * 16), (uint32_t *)(out + i * 16), 1, cc->cmd0c_RC6_cryptkey); }
 		SwapLBi(out, len);
+		NULLFREE(tmp);
 		break;
 	}
 	case MODE_CMD_0x0C_RC4:   // RC4
