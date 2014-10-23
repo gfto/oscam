@@ -29,7 +29,7 @@ typedef struct MD5Context
 {
 	uint32_t buf[4];
 	uint32_t bits[2];
-	unsigned char in[64];
+	uint32_t in[16];
 } MD5_CTX;
 
 #ifdef __i386__
@@ -46,7 +46,7 @@ static void byteReverse(unsigned char *buf, unsigned int longs)
 	{
 		t = (uint32_t)((unsigned int)buf[3] << 8 | buf[2]) << 16 |
 			((unsigned int)buf[1] << 8 | buf[0]);
-		*(uint32_t *) buf = t;
+		memcpy(buf, &t, 4);
 		buf += 4;
 	}
 	while(--longs);
@@ -187,7 +187,7 @@ static void MD5_Update(MD5_CTX *ctx, const unsigned char *buf, unsigned int len)
 
 	if(t)
 	{
-		unsigned char *p = (unsigned char *)ctx->in + t;
+		unsigned char *p = ((unsigned char *)ctx->in) + t;
 		t = 64 - t;
 		if(len < t)
 		{
@@ -195,8 +195,8 @@ static void MD5_Update(MD5_CTX *ctx, const unsigned char *buf, unsigned int len)
 			return;
 		}
 		memcpy(p, buf, t);
-		byteReverse(ctx->in, 16);
-		MD5_Transform(ctx->buf, (uint32_t *) ctx->in);
+		byteReverse((unsigned char *)ctx->in, 16);
+		MD5_Transform(ctx->buf, ctx->in);
 		buf += t;
 		len -= t;
 	}
@@ -205,8 +205,8 @@ static void MD5_Update(MD5_CTX *ctx, const unsigned char *buf, unsigned int len)
 	while(len >= 64)
 	{
 		memcpy(ctx->in, buf, 64);
-		byteReverse(ctx->in, 16);
-		MD5_Transform(ctx->buf, (uint32_t *) ctx->in);
+		byteReverse((unsigned char *)ctx->in, 16);
+		MD5_Transform(ctx->buf, ctx->in);
 		buf += 64;
 		len -= 64;
 	}
@@ -229,7 +229,7 @@ static void MD5_Final(unsigned char digest[MD5_DIGEST_LENGTH], MD5_CTX *ctx)
 
 	/* Set the first char of padding to 0x80.  This is safe since there is
 	   always at least one byte free */
-	p = ctx->in + count;
+	p = ((unsigned char *)ctx->in) + count;
 	*p++ = 0x80;
 
 	/* Bytes of padding needed to make 64 bytes */
@@ -240,8 +240,8 @@ static void MD5_Final(unsigned char digest[MD5_DIGEST_LENGTH], MD5_CTX *ctx)
 	{
 		/* Two lots of padding:  Pad the first block to 64 bytes */
 		memset(p, 0, count);
-		byteReverse(ctx->in, 16);
-		MD5_Transform(ctx->buf, (uint32_t *) ctx->in);
+		byteReverse((unsigned char *)ctx->in, 16);
+		MD5_Transform(ctx->buf, ctx->in);
 
 		/* Now fill the next block with 56 bytes */
 		memset(ctx->in, 0, 56);
@@ -251,14 +251,14 @@ static void MD5_Final(unsigned char digest[MD5_DIGEST_LENGTH], MD5_CTX *ctx)
 		/* Pad block to 56 bytes */
 		memset(p, 0, count - 8);
 	}
-	byteReverse(ctx->in, 14);
+	byteReverse((unsigned char *)ctx->in, 14);
 
 	/* Append length in bits and transform */
-	uint32_t *c = (uint32_t *)ctx->in;
+	uint32_t *c = ctx->in;
 	c[14] = ctx->bits[0];
 	c[15] = ctx->bits[1];
 
-	MD5_Transform(ctx->buf, (uint32_t *) ctx->in);
+	MD5_Transform(ctx->buf, ctx->in);
 	byteReverse((unsigned char *) ctx->buf, 4);
 
 	memcpy(digest, ctx->buf, 16);
