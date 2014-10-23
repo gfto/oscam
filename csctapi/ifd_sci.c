@@ -337,9 +337,9 @@ static int32_t Sci_FastReset(struct s_reader *reader, ATR *atr)
 	ioctl(reader->handle, IOCTL_SET_RESET, 1);
 	ret = Sci_Read_ATR(reader, atr);
 	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
-
+	if(!reader->sh4_stb) {
 	Sci_WriteSettings(reader, crdr_data->T,crdr_data->fs,crdr_data->ETU, crdr_data->WWT,crdr_data->CWT,crdr_data->BWT,crdr_data->EGT,crdr_data->P,crdr_data->I);
-
+	}
 	return ret;
 }
 
