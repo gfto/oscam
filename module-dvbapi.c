@@ -427,7 +427,7 @@ int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, int32_t demux_index
 
 			if (client_proto_version >= 1)
 			{
-				ca_pid_t capid; // packet[size] may be unaligned
+				ca_pid_t *capid; // packet[size] may be unaligned
 				memcpy(&capid, &packet[size], sizeof(ca_pid_t));
 				capid->pid = htonl(capid->pid);
 				capid->index = htonl(capid->index);
@@ -444,7 +444,7 @@ int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, int32_t demux_index
 
 			if (client_proto_version >= 1)
 			{
-				ca_descr_t cadesc; // packet[size] may be unaligned
+				ca_descr_t *cadesc; // packet[size] may be unaligned
 				memcpy(&cadesc, &packet[size], sizeof(ca_descr_t));
 				cadesc->index = htonl(cadesc->index);
 				cadesc->parity = htonl(cadesc->parity);
