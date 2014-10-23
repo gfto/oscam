@@ -116,7 +116,8 @@ CW *get_first_cw(ECMHASH *ecmhash){
 }
 
 int compare_csp_hash(const void *arg, const void *obj){
-	return *(const int32_t*)arg != ((const ECMHASH*)obj)->csp_hash;
+	int32_t h = ((const ECMHASH*)obj)->csp_hash;
+	return memcmp(arg, &h, 4);
 }
 
 int compare_cw(const void *arg, const void *obj){
