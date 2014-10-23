@@ -4053,7 +4053,7 @@ static void *dvbapi_main_local(void *cli)
 										case DVBAPI_CLIENT_INFO:
 										{
 											uint16_t client_proto_ptr;
-											memcpy(&client_proto_ptr, &mbuf[4], 4);
+											memcpy(&client_proto_ptr, &mbuf[4], 2);
 											uint16_t client_proto = ntohs(client_proto_ptr);
 											if (client_name)
 												free(client_name);
