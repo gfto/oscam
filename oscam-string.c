@@ -387,8 +387,8 @@ void get_random_bytes_init(void)
 	}
 	if(read(fd, rand_pool, RAND_POOL_SIZE + sizeof(uint32_t)) > -1)
 	{
-		uint32_t *pool_seed = (uint32_t *)(rand_pool + RAND_POOL_SIZE);
-		srand(*pool_seed);
+		uint32_t pool_seed = b2i(4, rand_pool + RAND_POOL_SIZE);
+		srand(pool_seed);
 	}
 	close(fd);
 }
