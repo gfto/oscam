@@ -427,9 +427,11 @@ int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, int32_t demux_index
 
 			if (client_proto_version >= 1)
 			{
-				ca_pid_t *capid = (ca_pid_t *) &packet[size];
+				ca_pid_t capid; // packet[size] may be unaligned
+				memcpy(&capid, &packet[size], sizeof(ca_pid_t));
 				capid->pid = htonl(capid->pid);
 				capid->index = htonl(capid->index);
+				memcpy(&packet[size], &capid, sizeof(ca_pid_t));
 			}
 
 			size += sct_capid_size;
@@ -442,9 +444,11 @@ int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, int32_t demux_index
 
 			if (client_proto_version >= 1)
 			{
-				ca_descr_t *cadesc = (ca_descr_t *) &packet[size];
+				ca_descr_t cadesc; // packet[size] may be unaligned
+				memcpy(&cadesc, &packet[size], sizeof(ca_descr_t));
 				cadesc->index = htonl(cadesc->index);
 				cadesc->parity = htonl(cadesc->parity);
+				memcpy(&packet[size], &cadesc, sizeof(ca_descr_t));
 			}
 
 			size += sct_cadescr_size;
@@ -3161,11 +3165,16 @@ void event_handler(int32_t UNUSED(signal))
 
 		for(j2 = 0, j1 = 0; j2 < len; j2 += 2, j1++)
 		{
-			if(sscanf((char *)mbuf + j2, "%02X", (unsigned int *)dest + j1) != 1)
+			unsigned int tmp;
+			if(sscanf((char *)mbuf + j2, "%02X", &tmp) != 1)
 			{
 				cs_debug_mask(D_DVBAPI, "error parsing QboxHD pmt.tmp, data not valid in position %d", j2);
 				pthread_mutex_unlock(&event_handler_lock);
 				return;
+			}
+			else
+			{
+				memcpy(dest + j1, &tmp, 4);
 			}
 		}
 
@@ -3972,8 +3981,9 @@ static void *dvbapi_main_local(void *cli)
 							if (pmtlen >= 8) //if we received less then 8 bytes, than it's not complete for sure
 							{
 								// check and try to process complete PMT objects and filter data by chunks to avoid PMT buffer overflows
-								uint32_t *opcode_ptr = (uint32_t *) &mbuf[0];         //used only to silent compiler warning about dereferencing type-punned pointer
-								uint32_t opcode = ntohl(*opcode_ptr);                 //get the client opcode (4 bytes)
+								uint32_t opcode_ptr;
+								memcpy(&opcode_ptr, &mbuf[0], 4);                     //used only to silent compiler warning about dereferencing type-punned pointer
+								uint32_t opcode = ntohl(opcode_ptr);                  //get the client opcode (4 bytes)
 								uint32_t chunksize = 0;                               //size of complete chunk in the buffer (an opcode with the data)
 								uint32_t data_len = 0;                                //variable for internal data length (eg. for the filter data size, PMT len)
 
@@ -4042,8 +4052,9 @@ static void *dvbapi_main_local(void *cli)
 										}
 										case DVBAPI_CLIENT_INFO:
 										{
-											uint16_t *client_proto_ptr = (uint16_t *) &mbuf[4];
-											uint16_t client_proto = ntohs(*client_proto_ptr);
+											uint16_t client_proto_ptr;
+											memcpy(&client_proto_ptr, &mbuf[4], 4);
+											uint16_t client_proto = ntohs(client_proto_ptr);
 											if (client_name)
 												free(client_name);
 											if (cs_malloc(&client_name, data_len + 1))

@@ -210,7 +210,9 @@ void *azbox_main_thread(void *cli)
 				break;
 			case OPENXCAS_PID_FILTER_CALLBACK:
 				cs_debug_mask(D_DVBAPI, LOG_PREFIX_MSG "OPENXCAS_PID_FILTER_CALLBACK");
-				openxcas_filter_callback_ex(msg.stream_id, msg.sequence, (struct stOpenXCAS_Data *)msg.buf);
+				struct stOpenXCAS_Data data;
+				memcpy(&data, msg.buf, msg.buf_len);
+				openxcas_filter_callback_ex(msg.stream_id, msg.sequence, &data);
 				break;
 			case OPENXCAS_QUIT:
 				cs_debug_mask(D_DVBAPI, LOG_PREFIX_MSG "OPENXCAS_QUIT");
