@@ -1425,6 +1425,7 @@ function waitForMsg() {
 		success: function (data) {
 			setPollerr(0);
 			updatePage(data);
+			if (!pollrefresh && page != 'livelog') return;
 			if (!stoppoll) {
 				clearTimeout(timer_ID);
 				timer_ID = setTimeout("waitForMsg()", pollintervall);
