@@ -184,7 +184,7 @@ void cc_crypt_cmd0c(struct s_client *cl, uint8_t *buf, int32_t len)
 			{ return; }
 		memcpy(tmp, buf, len);
 		
-		SwapLBi(buf, len);
+		SwapLBi(tmp, len);
 		for(i = 0; i < len / 16; i++)
 			{ rc6_block_decrypt((uint32_t *)(tmp + i * 16), (uint32_t *)(out + i * 16), 1, cc->cmd0c_RC6_cryptkey); }
 		SwapLBi(out, len);
