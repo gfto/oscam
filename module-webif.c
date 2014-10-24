@@ -50,6 +50,9 @@ pthread_key_t getssl;
 static CS_MUTEX_LOCK http_lock;
 CS_MUTEX_LOCK *lock_cs;
 
+static uint8_t useLocalD = 1;
+#define PRINTF_LOCAL_D useLocalD ? "%'d" : "%d"
+
 static pthread_t httpthread;
 static int32_t sock;
 enum refreshtypes { REFR_ACCOUNTS, REFR_READERS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REFR_SERVICES };
@@ -239,18 +242,18 @@ static void set_ecm_info(struct templatevars * vars)
 	if(emmsum < 1) {emmsum = 1; emm = 1;}
 
 	tpl_printf(vars, TPLADD, "TOTAL_ECM_MIN", "%d", first_client->n_request[0]);
-	tpl_printf(vars, TPLADD, "TOTAL_CW", "%'d", !ecm ? (int)ecmsum : 0);
-	tpl_printf(vars, TPLADD, "TOTAL_CWOK", "%'d", first_client->cwfound);
-	tpl_printf(vars, TPLADD, "TOTAL_CWNOK", "%'d", first_client->cwnot);
-	tpl_printf(vars, TPLADD, "TOTAL_CWIGN", "%'d", first_client->cwignored);
-	tpl_printf(vars, TPLADD, "TOTAL_CWTOUT", "%'d", first_client->cwtout);
-	tpl_printf(vars, TPLADD, "TOTAL_CWCACHE", "%'d", first_client->cwcache);
-	tpl_printf(vars, TPLADD, "TOTAL_CWTUN", "%'d", first_client->cwtun);
-	tpl_printf(vars, TPLADD, "TOTAL_CWPOS", "%'d", first_client->cwfound + first_client->cwcache);
-	tpl_printf(vars, TPLADD, "TOTAL_CWNEG", "%'d", first_client->cwnot + first_client->cwtout);
-	tpl_printf(vars, TPLADD, "TOTAL_EM", "%'d", !emm ? (int)emmsum : 0);
-	tpl_printf(vars, TPLADD, "TOTAL_EMOK", "%'d", first_client->emmok);
-	tpl_printf(vars, TPLADD, "TOTAL_EMNOK", "%'d", first_client->emmnok);
+	tpl_printf(vars, TPLADD, "TOTAL_CW", PRINTF_LOCAL_D, !ecm ? (int)ecmsum : 0);
+	tpl_printf(vars, TPLADD, "TOTAL_CWOK", PRINTF_LOCAL_D, first_client->cwfound);
+	tpl_printf(vars, TPLADD, "TOTAL_CWNOK", PRINTF_LOCAL_D, first_client->cwnot);
+	tpl_printf(vars, TPLADD, "TOTAL_CWIGN", PRINTF_LOCAL_D, first_client->cwignored);
+	tpl_printf(vars, TPLADD, "TOTAL_CWTOUT", PRINTF_LOCAL_D, first_client->cwtout);
+	tpl_printf(vars, TPLADD, "TOTAL_CWCACHE", PRINTF_LOCAL_D, first_client->cwcache);
+	tpl_printf(vars, TPLADD, "TOTAL_CWTUN", PRINTF_LOCAL_D, first_client->cwtun);
+	tpl_printf(vars, TPLADD, "TOTAL_CWPOS", PRINTF_LOCAL_D, first_client->cwfound + first_client->cwcache);
+	tpl_printf(vars, TPLADD, "TOTAL_CWNEG", PRINTF_LOCAL_D, first_client->cwnot + first_client->cwtout);
+	tpl_printf(vars, TPLADD, "TOTAL_EM", PRINTF_LOCAL_D, !emm ? (int)emmsum : 0);
+	tpl_printf(vars, TPLADD, "TOTAL_EMOK", PRINTF_LOCAL_D, first_client->emmok);
+	tpl_printf(vars, TPLADD, "TOTAL_EMNOK", PRINTF_LOCAL_D, first_client->emmnok);
 	tpl_printf(vars, TPLADD, "REL_CWOK", "%.2f", (double)first_client->cwfound * 100 / ecmsum);
 	tpl_printf(vars, TPLADD, "REL_CWNOK", "%.2f", (double)first_client->cwnot * 100 / ecmsum);
 	//tpl_printf(vars, TPLADD, "REL_CWIGN", "%.2f", (double)first_client->cwignored * 100 / ecmsum);
@@ -1504,32 +1507,32 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 			char *value = mk_t_group(rdr->grp);
 			tpl_addVar(vars, TPLADD, "GROUPS", value);
 			free_mk_t(value);
-			tpl_printf(vars, TPLADD, "EMMERRORUK", "%'d", rdr->emmerror[UNKNOWN]);
-			tpl_printf(vars, TPLADD, "EMMERRORG", "%'d", rdr->emmerror[GLOBAL]);
-			tpl_printf(vars, TPLADD, "EMMERRORS", "%'d", rdr->emmerror[SHARED]);
-			tpl_printf(vars, TPLADD, "EMMERRORUQ", "%'d", rdr->emmerror[UNIQUE]);
+			tpl_printf(vars, TPLADD, "EMMERRORUK", PRINTF_LOCAL_D, rdr->emmerror[UNKNOWN]);
+			tpl_printf(vars, TPLADD, "EMMERRORG", PRINTF_LOCAL_D, rdr->emmerror[GLOBAL]);
+			tpl_printf(vars, TPLADD, "EMMERRORS", PRINTF_LOCAL_D, rdr->emmerror[SHARED]);
+			tpl_printf(vars, TPLADD, "EMMERRORUQ", PRINTF_LOCAL_D, rdr->emmerror[UNIQUE]);
 
-			tpl_printf(vars, TPLADD, "EMMWRITTENUK", "%'d", rdr->emmwritten[UNKNOWN]);
-			tpl_printf(vars, TPLADD, "EMMWRITTENG", "%'d", rdr->emmwritten[GLOBAL]);
-			tpl_printf(vars, TPLADD, "EMMWRITTENS", "%'d", rdr->emmwritten[SHARED]);
-			tpl_printf(vars, TPLADD, "EMMWRITTENUQ", "%'d", rdr->emmwritten[UNIQUE]);
+			tpl_printf(vars, TPLADD, "EMMWRITTENUK", PRINTF_LOCAL_D, rdr->emmwritten[UNKNOWN]);
+			tpl_printf(vars, TPLADD, "EMMWRITTENG", PRINTF_LOCAL_D, rdr->emmwritten[GLOBAL]);
+			tpl_printf(vars, TPLADD, "EMMWRITTENS", PRINTF_LOCAL_D, rdr->emmwritten[SHARED]);
+			tpl_printf(vars, TPLADD, "EMMWRITTENUQ", PRINTF_LOCAL_D, rdr->emmwritten[UNIQUE]);
 
-			tpl_printf(vars, TPLADD, "EMMSKIPPEDUK", "%'d", rdr->emmskipped[UNKNOWN]);
-			tpl_printf(vars, TPLADD, "EMMSKIPPEDG", "%'d", rdr->emmskipped[GLOBAL]);
-			tpl_printf(vars, TPLADD, "EMMSKIPPEDS", "%'d", rdr->emmskipped[SHARED]);
-			tpl_printf(vars, TPLADD, "EMMSKIPPEDUQ", "%'d", rdr->emmskipped[UNIQUE]);
+			tpl_printf(vars, TPLADD, "EMMSKIPPEDUK", PRINTF_LOCAL_D, rdr->emmskipped[UNKNOWN]);
+			tpl_printf(vars, TPLADD, "EMMSKIPPEDG", PRINTF_LOCAL_D, rdr->emmskipped[GLOBAL]);
+			tpl_printf(vars, TPLADD, "EMMSKIPPEDS", PRINTF_LOCAL_D, rdr->emmskipped[SHARED]);
+			tpl_printf(vars, TPLADD, "EMMSKIPPEDUQ", PRINTF_LOCAL_D, rdr->emmskipped[UNIQUE]);
 
-			tpl_printf(vars, TPLADD, "EMMBLOCKEDUK", "%'d", rdr->emmblocked[UNKNOWN]);
-			tpl_printf(vars, TPLADD, "EMMBLOCKEDG", "%'d", rdr->emmblocked[GLOBAL]);
-			tpl_printf(vars, TPLADD, "EMMBLOCKEDS", "%'d", rdr->emmblocked[SHARED]);
-			tpl_printf(vars, TPLADD, "EMMBLOCKEDUQ", "%'d", rdr->emmblocked[UNIQUE]);
+			tpl_printf(vars, TPLADD, "EMMBLOCKEDUK", PRINTF_LOCAL_D, rdr->emmblocked[UNKNOWN]);
+			tpl_printf(vars, TPLADD, "EMMBLOCKEDG", PRINTF_LOCAL_D, rdr->emmblocked[GLOBAL]);
+			tpl_printf(vars, TPLADD, "EMMBLOCKEDS", PRINTF_LOCAL_D, rdr->emmblocked[SHARED]);
+			tpl_printf(vars, TPLADD, "EMMBLOCKEDUQ", PRINTF_LOCAL_D, rdr->emmblocked[UNIQUE]);
 
-			tpl_printf(vars, TPLADD, "ECMSOK", "%'d", rdr->ecmsok);
+			tpl_printf(vars, TPLADD, "ECMSOK", PRINTF_LOCAL_D, rdr->ecmsok);
 			tpl_printf(vars, TPLADD, "ECMSOKREL", " (%.2f %%)", rdr->ecmshealthok);
-			tpl_printf(vars, TPLADD, "ECMSNOK", "%'d", rdr->ecmsnok);
+			tpl_printf(vars, TPLADD, "ECMSNOK", PRINTF_LOCAL_D, rdr->ecmsnok);
 			tpl_printf(vars, TPLADD, "ECMSNOKREL", " (%.2f %%)",rdr->ecmshealthnok);
-			tpl_printf(vars, TPLADD, "ECMSFILTEREDHEAD", "%'d", rdr->ecmsfilteredhead);
-			tpl_printf(vars, TPLADD, "ECMSFILTEREDLEN", "%'d", rdr->ecmsfilteredlen);
+			tpl_printf(vars, TPLADD, "ECMSFILTEREDHEAD", PRINTF_LOCAL_D, rdr->ecmsfilteredhead);
+			tpl_printf(vars, TPLADD, "ECMSFILTEREDLEN", PRINTF_LOCAL_D, rdr->ecmsfilteredlen);
 #ifdef WITH_LB
 			tpl_printf(vars, TPLADD, "LBWEIGHT", "%d", rdr->lb_weight);
 #endif
@@ -2515,12 +2518,12 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 					tpl_addVar(vars, TPLADD, "CHANNELNAME", xml_encode(vars, get_servicename(cur_client(), s->srvid, s->caid, channame)));
 					tpl_printf(vars, TPLADD, "ECMLEN", "%04hX", s->ecmlen);
 					tpl_addVar(vars, TPLADD, "RC", stxt[s->rc]);
-					tpl_printf(vars, TPLADD, "TIME", "%'d ms", s->time_avg);
+					tpl_printf(vars, TPLADD, "TIME", PRINTF_LOCAL_D " ms", s->time_avg);
 					if(s->time_stat[s->time_idx])
-						{ tpl_printf(vars, TPLADD, "TIMELAST", "%'d ms", s->time_stat[s->time_idx]); }
+						{ tpl_printf(vars, TPLADD, "TIMELAST", PRINTF_LOCAL_D " ms", s->time_stat[s->time_idx]); }
 					else
 						{ tpl_addVar(vars, TPLADD, "TIMELAST", ""); }
-					tpl_printf(vars, TPLADD, "COUNT", "%'d", s->ecm_count);
+					tpl_printf(vars, TPLADD, "COUNT", PRINTF_LOCAL_D, s->ecm_count);
 
 					if(s->last_received.time)
 					{
@@ -2539,8 +2542,8 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 					tpl_printf(vars, TPLADD, "ECMSRVID", "%04X", s->srvid);
 					tpl_printf(vars, TPLADD, "ECMLEN", "%04hX", s->ecmlen);
 					tpl_addVar(vars, TPLADD, "ECMCHANNELNAME", xml_encode(vars, get_servicename(cur_client(), s->srvid, s->caid, channame)));
-					tpl_printf(vars, TPLADD, "ECMTIME", "%'d", s->time_avg);
-					tpl_printf(vars, TPLADD, "ECMTIMELAST", "%'d", s->time_stat[s->time_idx]);
+					tpl_printf(vars, TPLADD, "ECMTIME", PRINTF_LOCAL_D, s->time_avg);
+					tpl_printf(vars, TPLADD, "ECMTIMELAST", PRINTF_LOCAL_D, s->time_stat[s->time_idx]);
 					tpl_printf(vars, TPLADD, "ECMRC", "%d", s->rc);
 					tpl_addVar(vars, TPLADD, "ECMRCS", stxt[s->rc]);
 					if(s->last_received.time)
@@ -2553,7 +2556,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 					{
 						tpl_addVar(vars, TPLADD, "ECMLAST", "");
 					}
-					tpl_printf(vars, TPLADD, "ECMCOUNT", "%'d", s->ecm_count);
+					tpl_printf(vars, TPLADD, "ECMCOUNT", PRINTF_LOCAL_D, s->ecm_count);
 
 					if(s->last_received.time > lastaccess)
 						{ lastaccess = s->last_received.time; }
@@ -3419,10 +3422,10 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 #ifdef CS_ANTICASC
 		tpl_addVar(vars, TPLADD, "ANTICASCVIEW", cfg.ac_enabled ? "" : "acas");
 #endif
-		tpl_printf(vars, TPLADD, "CWOK", "%'d", account->cwfound);
-		tpl_printf(vars, TPLADD, "CWNOK", "%'d", account->cwnot);
-		tpl_printf(vars, TPLADD, "CWIGN", "%'d", account->cwignored);
-		tpl_printf(vars, TPLADD, "CWTOUT", "%'d", account->cwtout);
+		tpl_printf(vars, TPLADD, "CWOK", PRINTF_LOCAL_D, account->cwfound);
+		tpl_printf(vars, TPLADD, "CWNOK", PRINTF_LOCAL_D, account->cwnot);
+		tpl_printf(vars, TPLADD, "CWIGN", PRINTF_LOCAL_D, account->cwignored);
+		tpl_printf(vars, TPLADD, "CWTOUT", PRINTF_LOCAL_D, account->cwtout);
 #ifdef CW_CYCLE_CHECK
 		tpl_addVar(vars, TPLADD, "CWCCYCVIEW", cfg.cwcycle_check_enable ? "" : "cwc");
 		tpl_printf(vars, TPLADD, "CWCYCLECHECKED", "%d", account->cwcycledchecked);
@@ -3430,10 +3433,10 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		tpl_printf(vars, TPLADD, "CWCYCLENOK", "%d", account->cwcyclednok);
 		tpl_printf(vars, TPLADD, "CWCYCLEIGN", "%d", account->cwcycledign);
 #endif
-		tpl_printf(vars, TPLADD, "CWCACHE", "%'d", account->cwcache);
-		tpl_printf(vars, TPLADD, "CWTUN", "%'d", account->cwtun);
-		tpl_printf(vars, TPLADD, "EMMOK", "%'d", account->emmok);
-		tpl_printf(vars, TPLADD, "EMMNOK", "%'d", account->emmnok);
+		tpl_printf(vars, TPLADD, "CWCACHE", PRINTF_LOCAL_D, account->cwcache);
+		tpl_printf(vars, TPLADD, "CWTUN", PRINTF_LOCAL_D, account->cwtun);
+		tpl_printf(vars, TPLADD, "EMMOK", PRINTF_LOCAL_D, account->emmok);
+		tpl_printf(vars, TPLADD, "EMMNOK", PRINTF_LOCAL_D, account->emmnok);
 		tpl_printf(vars, TPLADD, "CWRATE", "%.2f", cwrate);
 		tpl_printf(vars, TPLADD, "CASCUSERS", "%d", casc_users);
 		tpl_printf(vars, TPLADD, "CASCUSERS2", "%d", casc_users2);
@@ -3445,7 +3448,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			if(casc_users+casc_users2>0)
 			{
 				tpl_printf(vars, TPLADD, "CWLASTRESPONSET", "%d", lastresponsetm);
-				tpl_printf(vars, TPLADD, "CWLASTRESPONSETMS", "%'d ms", lastresponsetm);
+				tpl_printf(vars, TPLADD, "CWLASTRESPONSETMS", PRINTF_LOCAL_D " ms", lastresponsetm);
 			}
 			tpl_addVar(vars, TPLADD, "IDLESECS", sec2timeformat(vars, isec));
 		}
@@ -4523,7 +4526,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					{
 						if(((cl->typ == 'c')) && (cl->lastreader[0]))
 						{
-							tpl_printf(vars, TPLADD, "MSVALUE", "%'d", cl->cwlastresptime);
+							tpl_printf(vars, TPLADD, "MSVALUE", PRINTF_LOCAL_D, cl->cwlastresptime);
 							if(apicall)
 							{
 								tpl_addVar(vars, TPLADD, "LASTREADER", cl->lastreader);
@@ -6326,11 +6329,11 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 	{
 		cachesum = 1;
 	}
-	tpl_printf(vars, TPLADD, "TOTAL_CACHEXPUSH", "%'d", first_client ? first_client->cwcacheexpush : 0);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHEXPUSH", PRINTF_LOCAL_D, first_client ? first_client->cwcacheexpush : 0);
 	tpl_addVar(vars, TPLADD, "TOTAL_CACHEXPUSH_IMG", pushing);
-	tpl_printf(vars, TPLADD, "TOTAL_CACHEXGOT", "%'d", first_client ? first_client->cwcacheexgot : 0);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHEXGOT", PRINTF_LOCAL_D, first_client ? first_client->cwcacheexgot : 0);
 	tpl_addVar(vars, TPLADD, "TOTAL_CACHEXGOT_IMG", getting);
-	tpl_printf(vars, TPLADD, "TOTAL_CACHEXHIT", "%'d", first_client ? first_client->cwcacheexhit : 0);
+	tpl_printf(vars, TPLADD, "TOTAL_CACHEXHIT", PRINTF_LOCAL_D, first_client ? first_client->cwcacheexhit : 0);
 	tpl_printf(vars, TPLADD, "TOTAL_CACHESIZE", "%d", cache_size());
 
 	tpl_printf(vars, TPLADD, "REL_CACHEXHIT", "%.2f", (first_client ? first_client->cwcacheexhit : 0) * 100 / cachesum);
@@ -7834,6 +7837,13 @@ void webif_client_init_lastreader(struct s_client * client, ECM_REQUEST * er, st
 
 void webif_init(void)
 {
+	char buf[8];
+	snprintf(buf, 8, "%'d", 7);
+	if(strcmp(buf, "7"))
+	{
+		useLocalD = 0;
+	}
+
 	if(cfg.http_port == 0)
 	{
 		cs_log("http disabled");
