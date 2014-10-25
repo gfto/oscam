@@ -535,6 +535,18 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 #endif
 		return;
 	}
+	
+	//IGNORE unhandled ecmresponses
+	if(rc == E_UNHANDLED)
+	{
+#ifdef WITH_DEBUG
+		if((D_LB & cs_dblevel))
+		{
+			cs_debug_mask(D_LB, "loadbalancer: NOT adding stat (no block) for reader %s because unhandled reponse", rdr->label);
+		}
+#endif
+		return;
+	}
 
 	//ignore too old ecms
 	if((uint32_t)ecm_time >= 3 * cfg.ctimeout)
