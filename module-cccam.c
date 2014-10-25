@@ -322,6 +322,20 @@ struct cc_srvid_block *is_sid_blocked(struct cc_card *card, struct cc_srvid *srv
 	return srvid;
 }
 
+uint32_t has_perm_blocked_sid(struct cc_card *card)
+{
+	LL_ITER it = ll_iter_create(card->badsids);
+	struct cc_srvid_block *srvid;
+	while((srvid = ll_iter_next(&it)))
+	{
+		if(srvid->blocked_till == 0)
+		{
+			break;
+		}
+	}
+	return srvid != NULL;
+}
+
 struct cc_srvid   *is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good)
 {
 	LL_ITER it = ll_iter_create(card->goodsids);
@@ -1267,9 +1281,10 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 		{
 			int32_t goodSidCount = ll_count(ncard->goodsids);
 			int32_t badSidCount = ll_count(ncard->badsids);
+			int32_t hasPermBadSid = has_perm_blocked_sid(ncard);
 			
-			// only bad sids -> reject all
-			if(!goodSidCount && badSidCount)
+			// only permanent bad sids -> reject all
+			if(!goodSidCount && hasPermBadSid)
 			{
 				continue;
 			}
