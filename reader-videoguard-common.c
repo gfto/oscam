@@ -413,15 +413,15 @@ static void swap_lb(unsigned char *buff, int32_t len)
 
 #if __BYTE_ORDER != __BIG_ENDIAN
 	return;
-
+	
 #endif /*  */
 	int32_t i;
-	uint16_t tmp;
+	unsigned char tmp;
 	for(i = 0; i < len / 2; i++)
 	{
-		memcpy(&tmp, buff + i, sizeof(uint16_t));
-		tmp = ((tmp << 8) & 0xff00) | ((tmp >> 8) & 0x00ff);
-		memcpy(buff + i, &tmp, sizeof(uint16_t));
+		tmp = buff[i*2];
+		buff[i*2] = buff[(i*2)+1];
+		buff[(i*2)+1] = tmp;
 	}
 }
 
