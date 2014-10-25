@@ -214,7 +214,6 @@ $(function () {
 	});
 
 	$("#onlineidle").click(function () {
-		if (!pollrefresh) return;
 		if ($("#onlineidle").text() == 'Login*') {
 			$("#onlineidle")
 				.text('Online & Idle*')
@@ -1408,6 +1407,8 @@ var timer_ID;
 
 function waitForMsg() {
 
+	if (typeof pollrefresh == 'undefined') return;
+
 	if (lockpoll > 0) {
 		/* assumed that previous poll is not finnished yet we not
 	   call new data and just set the next intervall */
@@ -1520,7 +1521,7 @@ $(document).ready(function () {
 
 			$(".status tbody:empty").hide();
 			$("#chart").hide();
-			if (!nostorage && pollrefresh) {
+			if (!nostorage) {
 				if (localStorage.loi == 'Login*') {
 					$("#onlineidle")
 						.text('Login*')

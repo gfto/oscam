@@ -1488,6 +1488,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 #endif
 			tpl_addVar(vars, TPLADD, "READERNAMEENC", urlencode(vars, rdr->label));
 			tpl_addVar(vars, TPLADD, "CTYP", reader_get_type_desc(rdr, 0));
+			tpl_addVar(vars, TPLADD, "CTYPSORT", reader_get_type_desc(rdr, 0));
 
 			tpl_addVar(vars, TPLADD, "READERCLASS", rdr->enable ? "enabledreader" : "disabledreader");
 
@@ -5470,8 +5471,7 @@ static char *send_oscam_scanusb(struct templatevars * vars)
 	}
 	else
 	{
-		while(fgets(path, sizeof(path) - 1, fp) != NULL)
-		{
+		do{
 			tpl_addVar(vars, TPLADD, "USBENTRYCLASS", "");
 			if(strstr(path, "Bus "))
 			{
@@ -5484,6 +5484,7 @@ static char *send_oscam_scanusb(struct templatevars * vars)
 			}
 			tpl_addVar(vars, TPLAPPEND, "USBBIT", tpl_getTpl(vars, "SCANUSBBIT"));
 		}
+		while(fgets(path, sizeof(path) - 1, fp) != NULL);
 	}
 	pclose(fp);
 #else
