@@ -25,6 +25,7 @@
 //CMD44 - MPCS/OScam internal error notification
 //CMD55 - connect_on_init/keepalive
 
+//CMD0x3c - CACHEEX Cache-push filter request
 //CMD0x3d - CACHEEX Cache-push id request
 //CMD0x3e - CACHEEX Cache-push id answer
 //CMD0x3f - CACHEEX cache-push
@@ -209,7 +210,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 			//Fix for ECM request size > 255 (use ecm length field)
 			if(buf[0] == 0)
 				{ buflen = (((buf[21] & 0x0f) << 8) | buf[22]) + 3; }
-			else if(buf[0] == 0x3d || buf[0] == 0x3e || buf[0] == 0x3f)  //cacheex-push
+			else if(buf[0] == 0x3c || buf[0] == 0x3d || buf[0] == 0x3e || buf[0] == 0x3f)  //cacheex-push
 				{ buflen = buf[1] | (buf[2] << 8); }
 			else
 				{ buflen = buf[1]; }
@@ -601,6 +602,155 @@ void camd35_cache_push_request_remote_id(struct s_client *cl)
 	memcpy(rbuf + 20, camd35_node_id, 8);
 	cs_debug_mask(D_CACHEEX, "cacheex: sending id request to %s", username(cl));
 	camd35_send(cl, rbuf, 12); //send adds +20
+}
+
+/**
+ * send push filter
+ */
+void camd35_cache_send_push_filter(struct s_client *cl, uint8_t mode)
+{	
+	struct s_reader *rdr = cl->reader;
+	int i = 20, j;
+	CECSPVALUETAB *filter;
+	//minimal size, keep it <= 512 for max UDP packet size without fragmentation
+	uint8_t buf[20+482];
+	memset(buf, 0, sizeof(buf));	
+	buf[0] = 0x3c;
+	buf[1] = 0xe2;
+	buf[2] = 0x01;	
+
+	//mode==2 send filters from rdr
+	if(mode == 2 && rdr) 
+	{
+		filter = &rdr->cacheex.filter_caidtab;
+	}
+	//mode==3 send filters from acc
+	else if(mode == 3 && cl->typ == 'c' && cl->account) 
+	{
+		filter = &cl->account->cacheex.filter_caidtab;
+	}
+	else {
+		return;	
+	}
+	
+	i2b_buf(2, filter->n, buf + i);
+	i += 2;
+	
+	for(j=0; j<30; j++) 
+	{
+		if(j<CS_MAXCAIDTAB)
+		{
+			i2b_buf(4, filter->caid[j], buf + i);
+		}
+		i += 4;
+	}
+
+	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++) 
+	{
+		if(j<CS_MAXCAIDTAB)
+		{
+			i2b_buf(4, filter->cmask[j], buf + i);
+		}
+		i += 4;
+	}
+	
+	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++) 
+	{
+		if(j<CS_MAXCAIDTAB)
+		{			
+			i2b_buf(4, filter->prid[j], buf + i);
+		}
+		i += 4;
+	}
+	
+	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++) 
+	{
+		if(j<CS_MAXCAIDTAB)
+		{			
+			i2b_buf(4, filter->srvid[j], buf + i);
+		}
+		i += 4;
+	}
+
+	cs_debug_mask(D_CACHEEX, "cacheex: sending push filter request to %s", username(cl));
+	camd35_send(cl, buf, 482); //send adds +20  		
+}
+
+/**
+ * store received push filter
+ */
+void camd35_cache_push_filter(struct s_client *cl, uint8_t *buf, uint8_t mode)
+{
+	struct s_reader *rdr = cl->reader;
+	int i = 20, j;
+	CECSPVALUETAB *filter;	
+	
+	//mode==2 write filters to acc
+	if(mode == 2 && cl->typ == 'c' && cl->account && cl->account->cacheex.mode == 2
+		&& cl->account->cacheex.allow_filter == 1) 
+	{
+		filter = &cl->account->cacheex.filter_caidtab;
+	}
+	//mode==3 write filters to rdr
+	else if(mode == 3 && rdr && rdr->cacheex.allow_filter == 1) 
+	{
+		filter = &rdr->cacheex.filter_caidtab;
+	}
+	else {
+		return;	
+	}
+	  
+	filter->n = b2i(2, buf + i);
+	i += 2;
+	
+	for(j=0; j<30; j++) 
+	{
+		if(j<CS_MAXCAIDTAB)
+		{
+			filter->caid[j] = b2i(4, buf + i);
+		}
+		i += 4;
+	}
+
+	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++) 
+	{
+		if(j<CS_MAXCAIDTAB)
+		{
+			filter->cmask[j] = b2i(4, buf + i);
+		}
+		i += 4;
+	}
+	
+	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++) 
+	{
+		if(j<CS_MAXCAIDTAB)
+		{
+			filter->prid[j] = b2i(4, buf + i);
+		}
+		i += 4;
+	}
+	
+	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++) 
+	{
+		if(j<CS_MAXCAIDTAB)
+		{
+			filter->srvid[j] = b2i(4, buf + i);
+		}
+		i += 4;
+	}
+	
+	cs_debug_mask(D_CACHEEX, "cacheex: received push filter request from %s", username(cl));
+}
+
+/**
+ * when a server client connects
+ */
+static void camd35_server_client_init(struct s_client *cl)
+{
+	if(!cl->init_done)
+	{
+		cl->cacheex_needfilter = 1;		
+	}
 }
 
 /**
@@ -1002,6 +1152,11 @@ int32_t camd35_client_init(struct s_client *cl)
 	if(cl->reader->keepalive)
 		send_keepalive(cl);
 
+#ifdef CS_CACHEEX
+	if(cl->reader->cacheex.mode==2)
+		camd35_cache_send_push_filter(cl, 2);
+#endif
+
 	return(0);
 }
 
@@ -1062,9 +1217,19 @@ static void *camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 		camd35_process_ecm(mbuf, n);
 		break;
 #ifdef CS_CACHEEX
+	case 0x3c:  // Cache-push filter request
+		if(client->account && client->account->cacheex.mode==2){
+			camd35_cache_push_filter(client, mbuf, 2);
+		}
+		break;	
 	case 0x3d:  // Cache-push id request
 		camd35_cache_push_receive_remote_id(client, mbuf); //reader send request id with its nodeid, so we save it!
 		camd35_cache_push_send_own_id(client, mbuf);
+		
+		if(client->cacheex_needfilter && client->account && client->account->cacheex.mode==3){
+			camd35_cache_send_push_filter(client, 3);
+			client->cacheex_needfilter = 0;
+		}
 		break;
 	case 0x3e:  // Cache-push id answer
 		camd35_cache_push_receive_remote_id(client, mbuf);
@@ -1227,6 +1392,13 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 	}
 
 #ifdef CS_CACHEEX
+	if(buf[0] == 0x3c)    // Cache-push filter request
+	{
+		if(rdr->cacheex.mode==3){
+			camd35_cache_push_filter(client, buf, 3);
+		}
+		return -1;
+	}
 	if(buf[0] == 0x3d)    // Cache-push id request
 	{
 		camd35_cache_push_receive_remote_id(client, buf); //client send request id with its nodeid, so we save it!
@@ -1296,6 +1468,7 @@ void module_camd35(struct s_module *ph)
 #ifdef CS_CACHEEX
 	ph->c_cache_push = camd35_cache_push_out;
 	ph->c_cache_push_chk = camd35_cache_push_chk;
+	ph->s_init = camd35_server_client_init;	
 #endif
 	ph->num = R_CAMD35;
 }
@@ -1321,6 +1494,7 @@ void module_camd35_tcp(struct s_module *ph)
 #ifdef CS_CACHEEX
 	ph->c_cache_push = camd35_cache_push_out;
 	ph->c_cache_push_chk = camd35_cache_push_chk;
+	ph->s_init = camd35_server_client_init;
 #endif
 	ph->num = R_CS378X;
 }

@@ -2300,6 +2300,136 @@ int32_t cc_cache_push_chk(struct s_client *cl, struct ecm_request_t *er)
 	return 1;
 }
 
+void cc_cache_filter_out(struct s_client *cl)
+{
+	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
+	int i = 0, j;
+	CECSPVALUETAB *filter;
+	//minimal size, keep it <= 512 for max UDP packet size without fragmentation
+	int32_t size = 482;
+	uint8_t buf[482];
+	memset(buf, 0, sizeof(buf));		
+
+	//mode==2 send filters from rdr
+	if(rdr && rdr->cacheex.mode == 2) 
+	{
+		filter = &rdr->cacheex.filter_caidtab;
+	}
+	//mode==3 send filters from acc
+	else if(cl->typ == 'c' && cl->account && cl->account->cacheex.mode == 3) 
+	{
+		filter = &cl->account->cacheex.filter_caidtab;
+	}
+	else {
+		return;	
+	}
+	
+	i2b_buf(2, filter->n, buf + i);
+	i += 2;
+	
+	for(j=0; j<30; j++) 
+	{
+		if(j<CS_MAXCAIDTAB)
+		{
+			i2b_buf(4, filter->caid[j], buf + i);
+		}
+		i += 4;
+	}
+
+	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++) 
+	{
+		if(j<CS_MAXCAIDTAB)
+		{
+			i2b_buf(4, filter->cmask[j], buf + i);
+		}
+		i += 4;
+	}
+	
+	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++) 
+	{
+		if(j<CS_MAXCAIDTAB)
+		{			
+			i2b_buf(4, filter->prid[j], buf + i);
+		}
+		i += 4;
+	}
+	
+	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++) 
+	{
+		if(j<CS_MAXCAIDTAB)
+		{			
+			i2b_buf(4, filter->srvid[j], buf + i);
+		}
+		i += 4;
+	}
+
+	cs_debug_mask(D_CACHEEX, "cacheex: sending push filter request to %s", username(cl));
+	cc_cmd_send(cl, buf, size, MSG_CACHE_FILTER);
+}
+
+void cc_cache_filter_in(struct s_client *cl, uchar *buf)
+{
+	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
+	int i = 0, j;
+	CECSPVALUETAB *filter;	
+	
+	//mode==2 write filters to acc
+	if(cl->typ == 'c' && cl->account && cl->account->cacheex.mode == 2
+		&& cl->account->cacheex.allow_filter == 1) 
+	{
+		filter = &cl->account->cacheex.filter_caidtab;
+	}
+	//mode==3 write filters to rdr
+	else if(rdr && rdr->cacheex.mode == 3 && rdr->cacheex.allow_filter == 1) 
+	{
+		filter = &rdr->cacheex.filter_caidtab;
+	}
+	else {
+		return;	
+	}
+	  
+	filter->n = b2i(2, buf + i);
+	i += 2;
+	
+	for(j=0; j<30; j++) 
+	{
+		if(j<CS_MAXCAIDTAB)
+		{
+			filter->caid[j] = b2i(4, buf + i);
+		}
+		i += 4;
+	}
+
+	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++) 
+	{
+		if(j<CS_MAXCAIDTAB)
+		{
+			filter->cmask[j] = b2i(4, buf + i);
+		}
+		i += 4;
+	}
+	
+	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++) 
+	{
+		if(j<CS_MAXCAIDTAB)
+		{
+			filter->prid[j] = b2i(4, buf + i);
+		}
+		i += 4;
+	}
+	
+	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++) 
+	{
+		if(j<CS_MAXCAIDTAB)
+		{
+			filter->srvid[j] = b2i(4, buf + i);
+		}
+		i += 4;
+	}
+	
+	cs_debug_mask(D_CACHEEX, "cacheex: received push filter request from %s", username(cl));	
+}
+
 int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 {
 	int8_t rc = (er->rc < E_NOTFOUND) ? E_FOUND : er->rc;
@@ -2796,6 +2926,15 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 		}
 		break;
 	}
+	
+	case MSG_CACHE_FILTER:
+	{
+		if((l - 4) >= 482)
+		{
+			cc_cache_filter_in(cl, data);
+		}
+		break;
+	}	
 #endif
 
 	case MSG_CW_NOK1:
@@ -3930,7 +4069,12 @@ void cc_srv_init2(struct s_client *cl)
 			cs_disconnect_client(cl);
 		}
 		else
-			{ cl->init_done = 1; }
+		{
+			cl->init_done = 1;
+#ifdef CS_CACHEEX
+			cc_cache_filter_out(cl);
+#endif
+		}
 	}
 	return;
 }
@@ -4129,6 +4273,10 @@ int32_t cc_cli_connect(struct s_client *cl)
 	cc->just_logged_in = 1;
 	cl->crypted = 1;
 	cc->ecm_busy = 0;
+
+#ifdef CS_CACHEEX
+	cc_cache_filter_out(cl);
+#endif
 
 	return 0;
 }

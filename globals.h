@@ -1024,6 +1024,7 @@ struct s_client
 	int32_t         cwcacheexerrcw;     // same Hex, different CW
 	int16_t         cwcacheexping;      // peer ping in ms, only used by csp
 	int32_t			cwc_info;			// count of in/out comming cacheex ecms with CWCinfo
+	uint8_t         cacheex_needfilter; // flag for cachex mode 3 used with camd35
 #endif
 #ifdef CS_ANTICASC
 	struct s_zap_list	client_zap_list[15]; //15 last zappings from client used for ACoSC
@@ -1206,6 +1207,7 @@ typedef struct ce_csp_t
 	uint8_t         allow_request;
 	uint8_t         allow_reforward;
 	uint8_t         drop_csp;
+	uint8_t         allow_filter;
 } CECSP;
 #endif
 
