@@ -257,17 +257,13 @@ static int32_t Sci_Reset(struct s_reader *reader, ATR *atr)
 	{
 		ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params);
 		cs_sleepms(150); // give the reader some time to process the params
-		
-		if(ioctl(reader->handle, IOCTL_SET_RESET) == 0){
-			ioctl(reader->handle, IOCTL_SET_ATR_READY);
-			ret = Sci_Read_ATR(reader, atr);
-		}
-		else {
-			params.fs = 0; // fs 0 heals unresponsive readers due to incorrect previous parameters before box needed powercycle (tested working on XP1000 box)
-			tries++;
-		}
+		ioctl(reader->handle, IOCTL_SET_RESET, 1);
+		ret = Sci_Read_ATR(reader, atr);
+		params.fs = 0; // fs 0 heals unresponsive readers due to incorrect previous parameters before box needed powercycle (tested working on XP1000 box)
+		tries++; // increase fs
 		if(ret == ERROR) { rdr_debug_mask(reader, D_IFD, "Read ATR fail, attempt %d/5 now trying fs = %d to recover", tries, params.fs); }
 	}
+	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
 	return ret;
 }
 
@@ -322,8 +318,10 @@ static int32_t Sci_WriteSettings(struct s_reader *reader, unsigned char T, uint3
 static int32_t Sci_Activate(struct s_reader *reader)
 {
 	rdr_debug_mask(reader, D_IFD, "Activating card");
-	ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT);
-	ioctl(reader->handle, __IOCTL_CARD_ACTIVATED);
+	uint32_t in = 1;
+	rdr_debug_mask(reader, D_IFD, "Is card activated?");
+	ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in);
+	ioctl(reader->handle, __IOCTL_CARD_ACTIVATED, &in);
 	return OK;
 }
 
@@ -337,23 +335,13 @@ static int32_t Sci_Deactivate(struct s_reader *reader)
 static int32_t Sci_FastReset(struct s_reader *reader, ATR *atr)
 {
 	struct sr_data *crdr_data = reader->crdr_data;
-	int32_t ret = ERROR;
-	
-	int32_t tries = 0;
-	while(ret == ERROR && tries < 5)
-	{
-		if(ioctl(reader->handle, IOCTL_SET_RESET) == 0){
-			ioctl(reader->handle, IOCTL_SET_ATR_READY);
-			ret = Sci_Read_ATR(reader, atr);
-		}
-		else {
-			tries++;
-		}
-		if(ret == ERROR) { rdr_debug_mask(reader, D_IFD, "Read ATR fail, attempt %d/5", tries); }
-	}
-	
+	int32_t ret;
+	ioctl(reader->handle, IOCTL_SET_RESET, 1);
+	ret = Sci_Read_ATR(reader, atr);
+	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
+	if(!reader->sh4_stb) {
 	Sci_WriteSettings(reader, crdr_data->T,crdr_data->fs,crdr_data->ETU, crdr_data->WWT,crdr_data->CWT,crdr_data->BWT,crdr_data->EGT,crdr_data->P,crdr_data->I);
-	
+	}
 	return ret;
 }
 
@@ -370,7 +358,7 @@ static int32_t Sci_Init(struct s_reader *reader)
 		rdr_log(reader, "ERROR: Opening device %s (errno=%d %s)", reader->device, errno, strerror(errno));
 		return ERROR;
 	}
-	
+
 	if(!reader->crdr_data && !cs_malloc(&reader->crdr_data, sizeof(struct sr_data)))
 		{ return ERROR; }
 	struct sr_data *crdr_data = reader->crdr_data;
