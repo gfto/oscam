@@ -1548,8 +1548,6 @@ $(document).ready(function () {
 			$(":text[name='pintervall']").val(pollintervall / 1000);
 			$("#poll").show();
 			waitForMsg();
-		} else {
-			$("#nopoll").show();
 		}
 	}
 });
