@@ -111,7 +111,7 @@ struct cc_card
 	uint8_t reshare;
 	uint8_t hexserial[8]; // card serial (for au)
 	LLIST *providers; // providers (struct cc_provider)
-	LLIST *badsids; // sids that have failed to decode (struct cc_srvid)
+	LLIST *badsids; // sids that have failed to decode (struct cc_srvid_block)
 	LLIST *goodsids; //sids that could decoded (struct cc_srvid)
 	LLIST *remote_nodes; //remote note id, 8 bytes
 	struct s_reader  *origin_reader;

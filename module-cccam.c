@@ -297,13 +297,24 @@ int32_t sid_eq(struct cc_srvid *srvid1, struct cc_srvid *srvid2)
 	return (srvid1->sid == srvid2->sid && (srvid1->chid == srvid2->chid || !srvid1->chid || !srvid2->chid) && (srvid1->ecmlen == srvid2->ecmlen || !srvid1->ecmlen || !srvid2->ecmlen));
 }
 
-struct cc_srvid *is_sid_blocked(struct cc_card *card, struct cc_srvid *srvid_blocked)
+int32_t sid_eq_nb(struct cc_srvid *srvid1, struct cc_srvid_block *srvid2)
+{
+	return sid_eq(srvid1, (struct cc_srvid *)srvid2);
+}
+
+int32_t sid_eq_bb(struct cc_srvid_block *srvid1, struct cc_srvid_block *srvid2)
+{
+	return (srvid1->sid == srvid2->sid && (srvid1->chid == srvid2->chid || !srvid1->chid || !srvid2->chid) && (srvid1->ecmlen == srvid2->ecmlen || !srvid1->ecmlen || !srvid2->ecmlen)
+				&& (srvid1->blocked_till == srvid2->blocked_till || !srvid1->blocked_till || !srvid2->blocked_till));
+}
+
+struct cc_srvid_block *is_sid_blocked(struct cc_card *card, struct cc_srvid *srvid_blocked)
 {
 	LL_ITER it = ll_iter_create(card->badsids);
-	struct cc_srvid *srvid;
+	struct cc_srvid_block *srvid;
 	while((srvid = ll_iter_next(&it)))
 	{
-		if(sid_eq(srvid, srvid_blocked))
+		if(sid_eq_nb(srvid_blocked, srvid))
 		{
 			break;
 		}
@@ -347,9 +358,9 @@ void add_sid_block(struct s_client *cl __attribute__((unused)), struct cc_card *
 void remove_sid_block(struct cc_card *card, struct cc_srvid *srvid_blocked)
 {
 	LL_ITER it = ll_iter_create(card->badsids);
-	struct cc_srvid *srvid;
+	struct cc_srvid_block *srvid;
 	while((srvid = ll_iter_next(&it)))
-		if(sid_eq(srvid, srvid_blocked))
+		if(sid_eq_nb(srvid_blocked, srvid))
 			{ ll_iter_remove_data(&it); }
 }
 
@@ -1254,9 +1265,36 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 #endif
 		  )
 		{
-			struct cc_srvid *blocked_sid = is_sid_blocked(ncard, &cur_srvid);
-			if(blocked_sid && (!chk_only || blocked_sid->ecmlen == 0))
-				{ continue; }
+			int32_t goodSidCount = ll_count(ncard->goodsids);
+			int32_t badSidCount = ll_count(ncard->badsids);
+			
+			// only bad sids -> reject all
+			if(!goodSidCount && badSidCount)
+			{
+				continue;
+			}
+			else
+			{
+				struct cc_srvid *good_sid = is_good_sid(ncard, &cur_srvid);
+				
+				// only good sids -> check if sid is good
+				if(goodSidCount && !badSidCount)
+				{			
+					if(!good_sid)
+						{ continue; }
+				}
+				// bad and good sids -> check not blocked and good
+				else if (goodSidCount && badSidCount)
+				{
+					struct cc_srvid_block *blocked_sid = is_sid_blocked(ncard, &cur_srvid);
+					
+					if(blocked_sid && (!chk_only || blocked_sid->blocked_till == 0))
+						{ continue; }
+					if(!good_sid)
+						{ continue; }
+				}				
+			}
+
 
 			if(!(rdr->cc_want_emu) && (ncard->caid >> 8 == 0x18) && (!xcard || ncard->hop < xcard->hop))
 				{ xcard = ncard; } //remember card (D+ / 1810 fix) if request has no provider, but card has
@@ -1315,7 +1353,7 @@ static void reopen_sids(struct cc_data *cc, int8_t ignore_time, ECM_REQUEST *cur
 			LL_ITER it2 = ll_iter_create(card->badsids);
 			struct cc_srvid_block *srvid;
 			while((srvid = ll_iter_next(&it2)))
-				if(srvid->ecmlen > 0 && sid_eq((struct cc_srvid *)srvid, cur_srvid))   //ecmlen==0: From remote peer, so do not remove
+				if(srvid->blocked_till > 0 && sid_eq((struct cc_srvid *)srvid, cur_srvid))
 				{
 					if(ignore_time || srvid->blocked_till <= utime)
 						{ ll_iter_remove_data(&it2); }

@@ -17,6 +17,8 @@ void cc_free_card(struct cc_card *card);
 void cc_free_cardlist(LLIST *card_list, int32_t destroy_list);
 int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_t cmd);
 int32_t sid_eq(struct cc_srvid *srvid1, struct cc_srvid *srvid2);
+int32_t sid_eq_nb(struct cc_srvid *srvid1, struct cc_srvid_block *srvid2);
+int32_t sid_eq_bb(struct cc_srvid_block *srvid1, struct cc_srvid_block *srvid2);
 int32_t same_card(struct cc_card *card1, struct cc_card *card2);
 int32_t same_card2(struct cc_card *card1, struct cc_card *card2, int8_t compare_grp);
 void cc_UA_oscam2cccam(uint8_t *in, uint8_t *out, uint16_t caid);

@@ -46,9 +46,8 @@ void unlock_sharelist(void)
 	cs_readunlock(&cc_shares_lock);
 }
 
-void add_good_bad_sids(struct s_sidtab *ptr, SIDTABBITS sidtabno, struct cc_card *card)
+void add_good_sids(struct s_sidtab *ptr, struct cc_card *card)
 {
-	//good sids:
 	int32_t l;
 	for(l = 0; l < ptr->num_srvid; l++)
 	{
@@ -58,53 +57,34 @@ void add_good_bad_sids(struct s_sidtab *ptr, SIDTABBITS sidtabno, struct cc_card
 		srvid->sid = ptr->srvid[l];
 		srvid->chid = 0;
 		srvid->ecmlen = 0; //0=undefined, also not used with "O" CCcam
+		
 		if(!ll_contains_data(card->goodsids, srvid, sizeof(struct cc_srvid)))
-			{ ll_append(card->goodsids, srvid); }
+			{ ll_append(card->goodsids, srvid); }	
+		else { NULLFREE(srvid);}
 	}
+}
 
-	//bad sids:
-	if(!sidtabno) { return; }
-
-	struct s_sidtab *ptr_no;
-	int32_t n;
-
-	for(n = 0, ptr_no = cfg.sidtab; ptr_no; ptr_no = ptr_no->next, n++)
+void add_bad_sids(struct s_sidtab *ptr, struct cc_card *card)
+{
+	int32_t l;
+	for(l = 0; l < ptr->num_srvid; l++)
 	{
-		if(sidtabno & ((SIDTABBITS)1 << n))
-		{
-			int32_t m;
-			int32_t ok_caid = 0;
-			for(m = 0; m < ptr_no->num_caid; m++)  //search bad sids for this caid:
-			{
-				if(ptr_no->caid[m] == card->caid)
-				{
-					ok_caid = 1;
-					break;
-				}
-			}
-			if(ok_caid)
-			{
-				for(l = 0; l < ptr_no->num_srvid; l++)
-				{
-					struct cc_srvid *srvid;
-					if(!cs_malloc(&srvid, sizeof(struct cc_srvid)))
-						{ return; }
-					srvid->sid = ptr_no->srvid[l];
-					srvid->chid = 0;
-					srvid->ecmlen = 0; //0=undefined, also not used with "O" CCcam
-					if(!ll_contains_data(card->badsids, srvid, sizeof(struct cc_srvid)))
-						{ ll_append(card->badsids, srvid); }
-				}
-			}
-		}
+		struct cc_srvid_block *srvid;
+		if(!cs_malloc(&srvid, sizeof(struct cc_srvid_block)))
+			{ return; }
+		srvid->sid = ptr->srvid[l];
+		srvid->chid = 0;
+		srvid->ecmlen = 0; //0=undefined, also not used with "O" CCcam
+		srvid->blocked_till = 0;
+		
+		if(!ll_contains_data(card->badsids, srvid, sizeof(struct cc_srvid_block)))
+			{ ll_append(card->badsids, srvid); }
+		else { NULLFREE(srvid); }
 	}
 }
 
 void add_good_bad_sids_by_rdr(struct s_reader *rdr, struct cc_card *card)
 {
-
-	if(!rdr->sidtabs.ok) { return; }
-
 	struct s_sidtab *ptr;
 	int32_t n, i;
 	for(n = 0, ptr = cfg.sidtab; ptr; ptr = ptr->next, n++)
@@ -114,7 +94,15 @@ void add_good_bad_sids_by_rdr(struct s_reader *rdr, struct cc_card *card)
 			for(i = 0; i < ptr->num_caid; i++)
 			{
 				if(ptr->caid[i] == card->caid)
-					{ add_good_bad_sids(ptr, rdr->sidtabs.no, card); }
+					{ add_good_sids(ptr, card); }
+			}
+		}
+		else if(rdr->sidtabs.no & ((SIDTABBITS)1 << n))
+		{
+			for(i = 0; i < ptr->num_caid; i++)
+			{
+				if(ptr->caid[i] == card->caid)
+					{ add_bad_sids(ptr, card); }
 			}
 		}
 	}
@@ -129,7 +117,7 @@ int32_t can_use_ext(struct cc_card *card)
 	if(card->sidtab)
 		{ return (card->sidtab->num_srvid > 0); }
 	else
-		{ return ll_count(card->goodsids) && ll_count(card->badsids); }
+		{ return ll_count(card->goodsids) || ll_count(card->badsids); }
 	return 0;
 }
 
@@ -597,7 +585,7 @@ uint32_t get_reader_prid(struct s_reader *rdr, int32_t j)
 //  return prid;
 //}
 
-void copy_sids(LLIST *dst, LLIST *src)
+void copy_good_sids(LLIST *dst, LLIST *src)
 {
 	LL_ITER it_src = ll_iter_create(src);
 	LL_ITER it_dst = ll_iter_create(dst);
@@ -621,6 +609,29 @@ void copy_sids(LLIST *dst, LLIST *src)
 	}
 }
 
+void copy_bad_sids(LLIST *dst, LLIST *src)
+{
+	LL_ITER it_src = ll_iter_create(src);
+	LL_ITER it_dst = ll_iter_create(dst);
+	struct cc_srvid_block *srvid_src;
+	struct cc_srvid_block *srvid_dst;
+	while((srvid_src = ll_iter_next(&it_src)))
+	{
+		ll_iter_reset(&it_dst);
+		while((srvid_dst = ll_iter_next(&it_dst)))
+		{
+			if(sid_eq_bb(srvid_src, srvid_dst))
+				{ break; }
+		}
+		if(!srvid_dst)
+		{
+			if(!cs_malloc(&srvid_dst, sizeof(struct cc_srvid_block)))
+				{ break; }
+			memcpy(srvid_dst, srvid_src, sizeof(struct cc_srvid_block));
+			ll_iter_insert(&it_dst, srvid_dst);
+		}
+	}
+}
 
 int32_t add_card_providers(struct cc_card *dest_card, struct cc_card *card,
 						   int32_t copy_remote_nodes)
@@ -704,8 +715,8 @@ struct cc_card *create_card(struct cc_card *card)
 
 	if(card)
 	{
-		copy_sids(card2->goodsids, card->goodsids);
-		copy_sids(card2->badsids, card->badsids);
+		copy_good_sids(card2->goodsids, card->goodsids);
+		copy_bad_sids(card2->badsids, card->badsids);
 		card2->id = 0;
 	}
 	else
