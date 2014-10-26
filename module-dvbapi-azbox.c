@@ -135,6 +135,7 @@ void *azbox_main_thread(void *cli)
 		{
 			openxcas_stream_id = msg.stream_id;
 			openxcas_seq = msg.sequence;
+			struct stOpenXCAS_Data data;
 
 			switch(msg.cmd)
 			{
@@ -203,14 +204,12 @@ void *azbox_main_thread(void *cli)
 				break;
 			case OPENXCAS_ECM_CALLBACK:
 				cs_debug_mask(D_DVBAPI, LOG_PREFIX_MSG "OPENXCAS_ECM_CALLBACK");
-				struct stOpenXCAS_Data data;
 				memcpy(&data, msg.buf, msg.buf_len);
 				if(!openxcas_busy)
 					{ openxcas_filter_callback(msg.stream_id, msg.sequence, OPENXCAS_FILTER_ECM, &data); }
 				break;
 			case OPENXCAS_PID_FILTER_CALLBACK:
 				cs_debug_mask(D_DVBAPI, LOG_PREFIX_MSG "OPENXCAS_PID_FILTER_CALLBACK");
-				struct stOpenXCAS_Data data;
 				memcpy(&data, msg.buf, msg.buf_len);
 				openxcas_filter_callback_ex(msg.stream_id, msg.sequence, &data);
 				break;
