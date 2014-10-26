@@ -1540,7 +1540,10 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf)
 		}
 
 		if(!card)
-			{ card = get_matching_card(cl, cur_er, 0); }
+		{
+			reopen_sids(cc, 0, cur_er, &cur_srvid);
+			card = get_matching_card(cl, cur_er, 0);
+		}
 
 		if(!card && has_srvid(rdr->client, cur_er))
 		{
@@ -3071,7 +3074,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 					else
 					{
 						move_card_to_end(cl, card);
-						remove_good_sid(card, &srvid);
+						add_sid_block(cl, card, &srvid);
 					}
 
 					if(card->rating < MIN_RATING)
