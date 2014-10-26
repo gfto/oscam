@@ -1278,36 +1278,36 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 				|| (chk_only && cfg.lb_mode && cfg.lb_auto_betatunnel && ((cur_er->caid >> 8 == 0x18 && ncard->caid >> 8 == 0x17 && cfg.lb_auto_betatunnel_mode <= 3) || (cur_er->caid >> 8 == 0x17 && ncard->caid >> 8 == 0x18 && cfg.lb_auto_betatunnel_mode >= 1))) //accept beta card when beta-tunnel is on
 #endif
 		  )
-		{
+		{		
 			int32_t goodSidCount = ll_count(ncard->goodsids);
 			int32_t badSidCount = ll_count(ncard->badsids);
-			int32_t hasPermBadSid = has_perm_blocked_sid(ncard);
+			struct cc_srvid *good_sid;
+			struct cc_srvid_block *blocked_sid;
 			
-			// only permanent bad sids -> reject all
-			if(!goodSidCount && hasPermBadSid)
-			{
-				continue;
+			// only good sids -> check if sid is good
+			if(goodSidCount && !badSidCount)
+			{			
+				good_sid = is_good_sid(ncard, &cur_srvid);
+				if(!good_sid)
+					{ continue; }
 			}
-			else
+			// only bad sids -> check if sid is bad
+			else if(!goodSidCount && badSidCount)
 			{
-				struct cc_srvid *good_sid = is_good_sid(ncard, &cur_srvid);
+				blocked_sid = is_sid_blocked(ncard, &cur_srvid);
+				if(blocked_sid && (!chk_only || blocked_sid->blocked_till == 0))
+					{ continue; }
+			}			
+			// bad and good sids -> check not blocked and good
+			else if (goodSidCount && badSidCount)
+			{
+				blocked_sid = is_sid_blocked(ncard, &cur_srvid);				
+				good_sid = is_good_sid(ncard, &cur_srvid);
 				
-				// only good sids -> check if sid is good
-				if(goodSidCount && !badSidCount)
-				{			
-					if(!good_sid)
-						{ continue; }
-				}
-				// bad and good sids -> check not blocked and good
-				else if (goodSidCount && badSidCount)
-				{
-					struct cc_srvid_block *blocked_sid = is_sid_blocked(ncard, &cur_srvid);
-					
-					if(blocked_sid && (!chk_only || blocked_sid->blocked_till == 0))
-						{ continue; }
-					if(!good_sid)
-						{ continue; }
-				}				
+				if(blocked_sid && (!chk_only || blocked_sid->blocked_till == 0))
+					{ continue; }
+				if(!good_sid)
+					{ continue; }
 			}
 
 
@@ -3295,7 +3295,6 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 					{
 						cs_debug_mask(D_READER, "%s cws: %d %s", getprefix(),
 									  ecm_idx, cs_hexdump(0, cc->dcw, 16, tmp_dbg, sizeof(tmp_dbg)));
-						add_good_sid(cl, card, &srvid);
 
 						//check response time, if > fallbacktime, switch cards!
 						struct timeb tpe;
