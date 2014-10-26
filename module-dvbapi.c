@@ -423,16 +423,14 @@ int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, int32_t demux_index
 		case DVBAPI_CA_SET_PID:
 		{
 			int sct_capid_size = sizeof(ca_pid_t);
-			memcpy(&packet[size], data, sct_capid_size);
 
 			if (client_proto_version >= 1)
 			{
-				ca_pid_t capid; // packet[size] may be unaligned
-				memcpy(&capid, &packet[size], sizeof(ca_pid_t));
-				capid.pid = htonl(capid.pid);
-				capid.index = htonl(capid.index);
-				memcpy(&packet[size], &capid, sizeof(ca_pid_t));
+				ca_pid_t *capid = (ca_pid_t *) data;
+				capid->pid = htonl(capid->pid);
+				capid->index = htonl(capid->index);
 			}
+			memcpy(&packet[size], data, sct_capid_size);
 
 			size += sct_capid_size;
 			break;
@@ -440,16 +438,14 @@ int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, int32_t demux_index
 		case DVBAPI_CA_SET_DESCR:
 		{
 			int sct_cadescr_size = sizeof(ca_descr_t);
-			memcpy(&packet[size], data, sct_cadescr_size);
 
 			if (client_proto_version >= 1)
 			{
-				ca_descr_t cadesc; // packet[size] may be unaligned
-				memcpy(&cadesc, &packet[size], sizeof(ca_descr_t));
-				cadesc.index = htonl(cadesc.index);
-				cadesc.parity = htonl(cadesc.parity);
-				memcpy(&packet[size], &cadesc, sizeof(ca_descr_t));
+				ca_descr_t *cadesc = (ca_descr_t *) data;
+				cadesc->index = htonl(cadesc->index);
+				cadesc->parity = htonl(cadesc->parity);
 			}
+			memcpy(&packet[size], data, sct_cadescr_size);
 
 			size += sct_cadescr_size;
 			break;
