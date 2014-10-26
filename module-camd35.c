@@ -210,7 +210,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 			//Fix for ECM request size > 255 (use ecm length field)
 			if(buf[0] == 0)
 				{ buflen = (((buf[21] & 0x0f) << 8) | buf[22]) + 3; }
-			else if(buf[0] == 0x3c || buf[0] == 0x3d || buf[0] == 0x3e || buf[0] == 0x3f)  //cacheex-push
+			else if(buf[0] == 0x3d || buf[0] == 0x3e || buf[0] == 0x3f)  //cacheex-push
 				{ buflen = buf[1] | (buf[2] << 8); }
 			else
 				{ buflen = buf[1]; }
@@ -612,12 +612,11 @@ void camd35_cache_send_push_filter(struct s_client *cl, uint8_t mode)
 	struct s_reader *rdr = cl->reader;
 	int i = 20, j;
 	CECSPVALUETAB *filter;
-	//minimal size, keep it <= 512 for max UDP packet size without fragmentation
-	uint8_t buf[20+482];
+	//maximum size: 20+255
+	uint8_t buf[20+242];
 	memset(buf, 0, sizeof(buf));	
 	buf[0] = 0x3c;
-	buf[1] = 0xe2;
-	buf[2] = 0x01;	
+	buf[1] = 0xf2;	
 
 	//mode==2 send filters from rdr
 	if(mode == 2 && rdr) 
@@ -636,7 +635,7 @@ void camd35_cache_send_push_filter(struct s_client *cl, uint8_t mode)
 	i2b_buf(2, filter->n, buf + i);
 	i += 2;
 	
-	for(j=0; j<30; j++) 
+	for(j=0; j<15; j++) 
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -645,7 +644,7 @@ void camd35_cache_send_push_filter(struct s_client *cl, uint8_t mode)
 		i += 4;
 	}
 
-	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++) 
+	for(j=0; j<15 && j<CS_MAXCAIDTAB; j++) 
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -654,7 +653,7 @@ void camd35_cache_send_push_filter(struct s_client *cl, uint8_t mode)
 		i += 4;
 	}
 	
-	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++) 
+	for(j=0; j<15 && j<CS_MAXCAIDTAB; j++) 
 	{
 		if(j<CS_MAXCAIDTAB)
 		{			
@@ -663,7 +662,7 @@ void camd35_cache_send_push_filter(struct s_client *cl, uint8_t mode)
 		i += 4;
 	}
 	
-	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++) 
+	for(j=0; j<15 && j<CS_MAXCAIDTAB; j++) 
 	{
 		if(j<CS_MAXCAIDTAB)
 		{			
@@ -673,7 +672,7 @@ void camd35_cache_send_push_filter(struct s_client *cl, uint8_t mode)
 	}
 
 	cs_debug_mask(D_CACHEEX, "cacheex: sending push filter request to %s", username(cl));
-	camd35_send(cl, buf, 482); //send adds +20  		
+	camd35_send_without_timeout(cl, buf, 242); //send adds +20  		
 }
 
 /**
@@ -702,8 +701,12 @@ void camd35_cache_push_filter(struct s_client *cl, uint8_t *buf, uint8_t mode)
 	  
 	filter->n = b2i(2, buf + i);
 	i += 2;
+	if(filter->n > CS_MAXCAIDTAB)
+	{
+		filter->n = CS_MAXCAIDTAB;
+	}
 	
-	for(j=0; j<30; j++) 
+	for(j=0; j<15; j++) 
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -712,7 +715,7 @@ void camd35_cache_push_filter(struct s_client *cl, uint8_t *buf, uint8_t mode)
 		i += 4;
 	}
 
-	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++) 
+	for(j=0; j<15 && j<CS_MAXCAIDTAB; j++) 
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -721,7 +724,7 @@ void camd35_cache_push_filter(struct s_client *cl, uint8_t *buf, uint8_t mode)
 		i += 4;
 	}
 	
-	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++) 
+	for(j=0; j<15 && j<CS_MAXCAIDTAB; j++) 
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -730,7 +733,7 @@ void camd35_cache_push_filter(struct s_client *cl, uint8_t *buf, uint8_t mode)
 		i += 4;
 	}
 	
-	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++) 
+	for(j=0; j<15 && j<CS_MAXCAIDTAB; j++) 
 	{
 		if(j<CS_MAXCAIDTAB)
 		{

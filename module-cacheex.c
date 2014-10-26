@@ -324,7 +324,6 @@ uint8_t check_cacheex_filter(struct s_client *cl, ECM_REQUEST *er)
 			&& chk_ctab(er->caid, &cl->reader->ctab)  			                              //Caid-check
 			&& (!checkECMD5(er) || chk_ident_filter(er->caid, er->prid, &cl->reader->ftab))	  //Ident-check (not for csp: prid=0 always!)
 			&& chk_srvid(cl, er) 								                              //Service-check
-			&& chk_csp_ctab(er, &cl->reader->cacheex.filter_caidtab)	                      //cacheex_ecm_filter -> for compatibility with old oscam
 	  )
 		{ return 1; }
 
@@ -333,7 +332,6 @@ uint8_t check_cacheex_filter(struct s_client *cl, ECM_REQUEST *er)
 			&& chk_ctab(er->caid, &cl->ctab)                                         //Caid-check
 			&& (!checkECMD5(er) || chk_ident_filter(er->caid, er->prid, &cl->ftab))	 //Ident-check (not for csp: prid=0 always!)
 			&& chk_srvid(cl, er)                                                     //Service-check
-			&& chk_csp_ctab(er, &cl->account->cacheex.filter_caidtab)                //cacheex_ecm_filter -> for compatibility with old oscam
 	  )
 		{ return 1; }
 
