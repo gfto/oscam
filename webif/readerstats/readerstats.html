@@ -4,24 +4,28 @@
 	<DIV ID="subnav">
 		<UL ID="nav">
 			<LI CLASS="configmenu"><A HREF="readerstats.html?label=##ENCODEDLABEL##&amp;hide=-1">Show all</A></LI>
-			<LI CLASS="configmenu"><A HREF="readerstats.html?label=##ENCODEDLABEL##&amp;hide=4">Hide 'not found'</A></LI>
+			<LI CLASS="configmenu"><A HREF="readerstats.html?label=##ENCODEDLABEL##&amp;show=0">Show 'found' only</A></LI>
 			<LI CLASS="configmenu"><A HREF="readerstats.html?label=##ENCODEDLABEL##&amp;action=resetstat" onclick="return confirm('Reset \'##LABEL##\' statistics ?')">Reset '##LABEL##' statistics</A></LI>
 			<LI CLASS="configmenu"><A HREF="readerstats.html?label=##ENCODEDLABEL##&amp;action=updateecmlen">Add ecm len to reader whitelist</A></LI>
 		</UL>
 	</DIV>
 	<TABLE ID="dataTable" CLASS="statsbalance">
-	<THEAD>
-	<TR><TH COLSPAN="8"> Loadbalance statistics for reader ##LABEL##</TH></TR>
-	<TR id="headline" onClick="cdpause()"><TH data-sort="string-ins" class="sortable">Channel</TH><TH data-sort="string-ins" class="sortable">Channelname</TH><TH>ECM Length</TH><TH>Result</TH><TH data-sort="int" data-sort-default="desc" class="sortable">Avg-Time</TH><TH data-sort="int" data-sort-default="desc" class="sortable">Last-Time</TH><TH data-sort="int" data-sort-default="desc" class="sortable">Count</TH><TH>Last checked/ found</TH></TR>
-	</THEAD>
-	<TBODY>
-##READERSTATSROW##
-##READERSTATSROWFOUND##
+		<THEAD>
+			<TR><TH COLSPAN="8"> Loadbalance statistics for reader ##LABEL##</TH></TR>
+			<TR id="headline" onClick="cdpause()"><TH data-sort="string-ins" class="sortable">Channel</TH><TH data-sort="string-ins" class="sortable">Channelname</TH><TH>ECM Length</TH><TH>Result</TH><TH data-sort="int" data-sort-default="desc" class="sortable">Avg-Time</TH><TH data-sort="int" data-sort-default="desc" class="sortable">Last-Time</TH><TH data-sort="int" data-sort-default="desc" class="sortable">Count</TH><TH>Last checked/ found</TH></TR>
+		</THEAD>
+		<TFOOT>
 ##READERSTATSTOHEADLINE##
 ##READERSTATSROWTIMEOUT##
 ##READERSTATSNFHEADLINE##
 ##READERSTATSROWNOTFOUND##
-	</TBODY>
+##READERSTATSIVHEADLINE##
+##READERSTATSROWINVALID##
+		</TFOOT>
+		<TBODY>
+##READERSTATSROW##
+##READERSTATSROWFOUND##
+		</TBODY>
 	</TABLE>
 	<P ID="text_totalecm">Total ECM count: ##TOTALECM##</P>
 ##TPLFOOTER##

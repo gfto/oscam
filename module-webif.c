@@ -595,13 +595,19 @@ static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct ur
 			if(strcmp(getParam(params, "button"), "Clear Timeouts") == 0)
 			{
 				clean_all_stats_by_rc(E_TIMEOUT, 0);
-				tpl_addMsg(vars, "Stats cleared Timeouts");
+				tpl_addMsg(vars, "Timeout cleared from Stats");
 			}
 
 			if(strcmp(getParam(params, "button"), "Clear Not Founds") == 0)
 			{
 				clean_all_stats_by_rc(E_NOTFOUND, 0);
-				tpl_addMsg(vars, "Stats cleared Not Founds");
+				tpl_addMsg(vars, "Not Found cleared from Stats");
+			}
+
+			if(strcmp(getParam(params, "button"), "Clear Invalid") == 0)
+			{
+				clean_all_stats_by_rc(E_INVALID, 0);
+				tpl_addMsg(vars, "Invalid cleared from Stats");
 			}
 		}
 	}
@@ -630,6 +636,9 @@ static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct ur
 
 	tpl_printf(vars, TPLADD, "LBREOPENSECONDS", "%d", cfg.lb_reopen_seconds);
 	tpl_printf(vars, TPLADD, "LBCLEANUP", "%d", cfg.lb_stat_cleanup);
+
+	tpl_addVar(vars, TPLADD, "LBREOPENINVALID", (cfg.lb_reopen_invalid == 1) ? "checked" : "");
+	tpl_addVar(vars, TPLADD, "LBFORCEALWAYS", (cfg.lb_force_reopen_always == 1) ? "checked" : "");
 
 	value = mk_t_caidtab(&cfg.lb_noproviderforcaid);
 	tpl_addVar(vars, TPLADD, "LBNOPROVIDERFORCAID", value);
@@ -2499,6 +2508,10 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 	int32_t rc2hide = (-1);
 	if(strlen(getParam(params, "hide")) > 0)
 		{ rc2hide = atoi(getParam(params, "hide")); }
+	
+	int32_t rc2show = (-1);
+	if(strlen(getParam(params, "show")) > 0)
+		{ rc2show = atoi(getParam(params, "show")); }
 
 	if(rdr->lb_stat)
 	{
@@ -2509,7 +2522,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 		for(; rowcount < statsize; ++rowcount)
 		{
 			READER_STAT *s = statarray[rowcount];
-			if(!(s->rc == rc2hide))
+			if(!(s->rc == rc2hide) && ((rc2show == -1) || (s->rc == rc2show)))
 			{
 				struct tm lt;
 				localtime_r(&s->last_received.time, &lt); // fixme we need walltime!
@@ -2577,6 +2590,12 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 						tpl_addVar(vars, TPLAPPEND, "READERSTATSROWTIMEOUT", tpl_getTpl(vars, "READERSTATSBIT"));
 						tpl_addVar(vars, TPLADD, "RESETB", urlencode(vars, rdr->label));
 						tpl_addVar(vars, TPLADD, "READERSTATSTOHEADLINE", tpl_getTpl(vars, "READERSTATSROWTIMEOUTBIT"));
+					}
+					else if(s->rc == E_INVALID)
+					{
+						tpl_addVar(vars, TPLAPPEND, "READERSTATSROWINVALID", tpl_getTpl(vars, "READERSTATSBIT"));
+						tpl_addVar(vars, TPLADD, "RESETC", urlencode(vars, rdr->label));
+						tpl_addVar(vars, TPLADD, "READERSTATSIVHEADLINE", tpl_getTpl(vars, "READERSTATSROWINVALIDBIT"));
 					}
 					else
 						{ tpl_addVar(vars, TPLAPPEND, "READERSTATSROWFOUND", tpl_getTpl(vars, "READERSTATSBIT")); }
@@ -2844,7 +2863,10 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	}
 
 	//Sleepsend
-	tpl_printf(vars, TPLADD, "SLEEPSEND", "%u", account->c35_sleepsend);
+	if(account->c35_sleepsend)	
+	{
+		tpl_printf(vars, TPLADD, "SLEEPSEND", "selected");
+	}
 
 	//User Max Idle
 	tpl_printf(vars, TPLADD, "UMAXIDLE", "%d", account->umaxidle);

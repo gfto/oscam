@@ -1191,10 +1191,10 @@ function updateStatuspage(data) {
 					if (!$(uid + " > td.statuscol14 > a").length) {
 						$(uid + " > td.statuscol14")
 							.text('')
-							.append('<a href="readerstats.html?label=' + label + '&amp;hide=4" TITLE="Show statistics for: ' + name + '">');
+							.append('<a href="readerstats.html?label=' + label + '&amp;show=0" TITLE="Show statistics for: ' + name + '">');
 					} else {
 						$(uid + " > td.statuscol14 > a")
-							.attr('href','readerstats.html?label=' + label + '&hide=4')
+							.attr('href','readerstats.html?label=' + label + '&show=0')
 							.attr('title','Show statistics for: ' + name);
 					}
 					$(uid + " > td.statuscol14 > a").text(value);

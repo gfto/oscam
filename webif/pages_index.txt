@@ -217,6 +217,7 @@ READERSTATSBIT                readerstats/readerstats_statsbit.html             
 READERSTATSROWNOTFOUNDBIT     readerstats/readerstatsnotfound.html                        WITH_LB
 READERSTATSROWBIT             readerstats/readerstatsrowbit.html                          WITH_LB
 READERSTATSROWTIMEOUTBIT      readerstats/readerstatstimeoutbit.html                      WITH_LB
+READERSTATSROWINVALIDBIT      readerstats/readerstatsinvalid.html                         WITH_LB
 
 SAVETEMPLATES                 savetemplates/savetemplates.html
 

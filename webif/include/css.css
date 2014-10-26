@@ -73,7 +73,10 @@ li {
 	list-style:none
 }
 /* readerstats.html for P */
-#text_totalecm {}
+#text_totalecm {
+	font-weight:bold;
+	margin-top:5px
+}
 /* footer.html */
 li.styleauthor:after {
 	content:"Streamboard Team"
@@ -352,6 +355,9 @@ th {
 	height:10px;
 	padding:5px;
 	background-color:#CCC
+}
+th.right {
+	text-align:right
 }
 /* status_cacheexinfo.html, status_systeminfo.html, status_userinfo.html */
 th.nameinfo {
