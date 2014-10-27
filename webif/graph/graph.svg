@@ -3,14 +3,21 @@
 	xmlns:xlink='http://www.w3.org/1999/xlink'
 	width='100%' height='100%'
 	viewBox='0 0 800 300'
-	preserveAspectRatio='none'
+	preserveAspectRatio='xMidYMid'
 	onload='init(evt)'
+	style='background-color:#F0F0F0'
 >
-<g id='graph'>
-	<rect id='g' class='graph_bg' x1='0' y1='0' width='800' height='300' />
+<g id='graph' style='font-family: Verdana, Arial; '>
+	<rect id='g' class='graph_bg' x1='0' y1='0' width='800' height='300' style='fill:#F0F0F0;' />
 	<text id='graph_error' class='graph_error' x='400' y='125' visibility='hidden'>Error occured!</text>
-	<path id='graph_grid' class='graph_grid' d='M 2 75 L 800 75 M 2 150 L 800 150 M 2 225 L 800 225'/>
-	<text id='graph_grid_interval' style='font-size:8px;'  cursor='pointer' class='graph_grid_txt' x='400' y='10'>-</text>
+	<path id='graph_grid' class='graph_grid' d='M 2 75 L 800 75 M 2 150 L 800 150 M 2 225 L 800 225 M 2 300 L 800 300'/>
+
+	<rect id='graph_grid_button_back' style='fill:#A9D0F5;' cursor='pointer' x='270' y='0' rx='5' ry='5' width='40' height='20'/>
+	<text id='graph_grid_button_text' style='font-size:8px; fill:black;' cursor='pointer' class='graph_grid_txt' x='305' y='12'>Change</text>	
+	<rect id='graph_grid_button' style='fill:#A9D0F5;opacity:0;' cursor='pointer' x='270' y='0' rx='5' ry='5' width='40' height='20'/>
+	<text id='graph_grid_interval' style='font-size:8px; fill:black;' class='graph_grid_txt' x='400' y='12'>-</text>	
+		
+	<text id='graph_grid_txt4' class='graph_grid_txt' x='800' y='298'>-</text>
 	<text id='graph_grid_txt3' class='graph_grid_txt' x='800' y='223'>-</text>
 	<text id='graph_grid_txt2' class='graph_grid_txt' x='800' y='148'>-</text>
 	<text id='graph_grid_txt1' class='graph_grid_txt' x='800' y='73'>-</text>
@@ -74,7 +81,8 @@ function init(evt) {
 	fetch_url='oscamapi.html?part=ecmhistory&' + fetch_url[fetch_url.length-1];
 	if ( location.search.indexOf('hidelabels=1') > 0 ) hideLabels = true;
 	SVGDoc = evt.target.ownerDocument;
-	SVGDoc.getElementById('graph_grid_interval').addEventListener('mousedown', switch_interval, false);
+	SVGDoc.getElementById('graph_grid_button').addEventListener('mousedown', switch_interval, false);
+	SVGDoc.getElementById('graph_grid_button_text').addEventListener('mousedown', switch_interval, false);
 	fetch_data();
 	switch_interval();
 }
@@ -223,6 +231,7 @@ function plot_data(obj) {
  	SVGDoc.getElementById('graph_grid_txt1').firstChild.data = 3*rmax/4 + 'ms'
 	SVGDoc.getElementById('graph_grid_txt2').firstChild.data = 2*rmax/4 + 'ms';
 	SVGDoc.getElementById('graph_grid_txt3').firstChild.data = rmax/4 + 'ms';
+ 	SVGDoc.getElementById('graph_grid_txt4').firstChild.data = '0ms'
 	SVGDoc.getElementById('graph_error').setAttributeNS(null, 'visibility', 'hidden');
 }
 function makeRoundMax(max) {
