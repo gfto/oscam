@@ -320,8 +320,8 @@ static int32_t Sci_Activate(struct s_reader *reader)
 	rdr_debug_mask(reader, D_IFD, "Activating card");
 	uint32_t in = 1;
 	rdr_debug_mask(reader, D_IFD, "Is card activated?");
-	ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in);
-	ioctl(reader->handle, __IOCTL_CARD_ACTIVATED, &in);
+	if(reader->sh4_stb) { ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in);}
+	else {ioctl(reader->handle, IOCTL_GET_IS_CARD_ACTIVATED, &in);}
 	return OK;
 }
 
@@ -339,8 +339,15 @@ static int32_t Sci_FastReset(struct s_reader *reader, ATR *atr)
 	ioctl(reader->handle, IOCTL_SET_RESET, 1);
 	ret = Sci_Read_ATR(reader, atr);
 	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
-	if(!reader->sh4_stb) {
-	Sci_WriteSettings(reader, crdr_data->T,crdr_data->fs,crdr_data->ETU, crdr_data->WWT,crdr_data->CWT,crdr_data->BWT,crdr_data->EGT,crdr_data->P,crdr_data->I);
+	if(reader->sh4_stb) // sh4 needs some delay after card and or reader reset
+	{
+		cs_sleepms(150);
+		Sci_WriteSettings(reader, crdr_data->T,crdr_data->fs,crdr_data->ETU, crdr_data->WWT,crdr_data->CWT,crdr_data->BWT,crdr_data->EGT,crdr_data->P,crdr_data->I);
+		cs_sleepms(150); // after changing settings sh4 needs some time
+	}
+	else
+	{
+		Sci_WriteSettings(reader, crdr_data->T,crdr_data->fs,crdr_data->ETU, crdr_data->WWT,crdr_data->CWT,crdr_data->BWT,crdr_data->EGT,crdr_data->P,crdr_data->I);
 	}
 	return ret;
 }
