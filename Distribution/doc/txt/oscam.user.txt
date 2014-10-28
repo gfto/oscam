@@ -1,4 +1,4 @@
-oscam.user(5)												oscam.user(5)
+oscam.user(5)					 File Formats Manual					oscam.user(5)
 
 
 
@@ -48,7 +48,7 @@ DESCRIPTIONS
 	   3 = only one connection per user, but only the last login
 	       will survive (old MpCS behavior)
 	   4 = set user only to fake if source ip is different,
-	       but only the last login will survive 
+	       but only the last login will survive
 
        numusers = quantity
 	  anti-cascading: user per account,  0	=  anti-cascading  disabled,  -1  =  global  value  from  oscam.conf,
@@ -138,10 +138,13 @@ DESCRIPTIONS
 	  cache exchange incoming ECM filter setting (mode 3 only) for Cardservproxy, default:none
 
        cacheex_drop_csp = 0|1
-	  drop incoming Cardservproxy cache (mode 3 only), detection is zero ecmd5, default:0
+	  1 = drop incoming Cardservproxy cache (mode 3 only), detection is zero ecmd5, default:0
 
        cacheex_allow_request = 0|1
-	  allow incoming ECM request (mode 3 only), default:1
+	  1 = allow incoming ECM request (mode 3 only), default:1
+
+       cacheex_allow_filter = 0|1
+	  1= allow cache exchange filter (for cache exchange mode 3 only), default:1
 
        sleep = minutes
 	  time waiting for inactive user, default:none
@@ -158,7 +161,8 @@ DESCRIPTIONS
 	  0 = disable keepalive between server and client for newcamd or CCcam protocol, default:1
 
        umaxidle = seconds
-	  value for user being idle before disconnect, 0 = idle disconnect disabled, -1 use clientmaxidle in global section, default:-1
+	  value for user being idle before disconnect, 0 = idle disconnect disabled, -1 use clientmaxidle  in  global
+	  section, default:-1
 
        caid = <CAID>[&<mask>][:<target CAID>][,<CAID>[&<mask>][:<target CAID>]]...
 	  limit and mapping of CAIDs, default:all CAIDs with mask FFFF
@@ -181,7 +185,7 @@ DESCRIPTIONS
 	  user assingment to reader groups, default:none, required
 
        betatunnel = <CAID>.<ServiceID>:<target CAID>[,<CAID>.<ServiceID>: <target CAID>]...
-	  define Betacrypt tunneling (maximum see CS_MAXTUNTAB in globals.h).  The ServiceID can  also	be  used  for
+	  define  Betacrypt  tunneling	(maximum  see CS_MAXTUNTAB in globals.h).  The ServiceID can also be used for
 	  wildcarded CAIDs.
 
 	   example: betatunnel = 0100.0001:0200,0300.0004:0500
@@ -266,8 +270,8 @@ EXAMPLES
 	uniq	   = 1
 
 SEE ALSO
-       list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cacheex(5),  oscam.cert(5),  oscam.conf(5),   oscam.dvbapi(5),
-       oscam.guess(5),	 oscam.ird(5),	 oscam.provid(5),   oscam.ratelimit(5),  oscam.server(5),  oscam.services(5),
+       list_smargo(1),	 oscam(1),  oscam.ac(5),  oscam.cacheex(5),  oscam.cert(5),  oscam.conf(5),  oscam.dvbapi(5),
+       oscam.guess(5),	oscam.ird(5),  oscam.provid(5),   oscam.ratelimit(5),	oscam.server(5),   oscam.services(5),
        oscam.tiers(5), oscam.srvid(5), oscam.whitelist(5)
 
 

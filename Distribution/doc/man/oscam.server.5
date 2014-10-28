@@ -417,12 +417,17 @@ cache exchange incoming ECM filter setting (mode 2 only) for Cardservproxy, defa
 .PP
 \fBcacheex_drop_csp\fP = \fB0\fP|\fB1\fP
 .RS 3n
-drop incoming Cardservproxy cache (mode 2 only), detection is zero ecmd5, default:0
+1 = drop incoming Cardservproxy cache (mode 2 only), detection is zero ecmd5, default:0
 .RE
 .PP
 \fBcacheex_allow_request\fP = \fB0\fP|\fB1\fP
 .RS 3n
-allow incoming ECM request (mode 2), default:1
+1 = allow incoming ECM request (mode 2), default:1
+.RE
+.PP
+\fBcacheex_allow_filter\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = allow cache exchange filter (for cache exchange mode 2 only), default:1
 .RE
 .PP
 \fBecmwhitelist\fP = [\fBCAID\fP[@\fBprovid\fP]:]\fBlength\fP[,\fBlength\fP]...[;[\fBCAID\fP[@\fBprovid\fP]:]\fBlength\fP[,\fBlength\fP]...]...

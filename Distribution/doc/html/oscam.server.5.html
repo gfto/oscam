@@ -536,14 +536,21 @@ cache exchange incoming ECM filter setting (mode 2 only) for Cardservproxy, defa
 
 <B>cacheex_drop_csp</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
-drop incoming Cardservproxy cache (mode 2 only), detection is zero ecmd5, default:0
+1 = drop incoming Cardservproxy cache (mode 2 only), detection is zero ecmd5, default:0
 </DL>
 
 <P>
 
 <B>cacheex_allow_request</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
-allow incoming ECM request (mode 2), default:1
+1 = allow incoming ECM request (mode 2), default:1
+</DL>
+
+<P>
+
+<B>cacheex_allow_filter</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = allow cache exchange filter (for cache exchange mode 2 only), default:1
 </DL>
 
 <P>
