@@ -23,7 +23,6 @@
 
 struct sr_data
 {
-	int8_t srdataok;
 	unsigned char T;
 	uint32_t fs; 
 	uint32_t ETU;
@@ -255,6 +254,7 @@ static int32_t Sci_Reset(struct s_reader *reader, ATR *atr)
 	int32_t tries = 0;
 	while(ret == ERROR && tries < 5)
 	{
+		cs_sleepms(150);
 		ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params);
 		cs_sleepms(150); // give the reader some time to process the params
 		ioctl(reader->handle, IOCTL_SET_RESET, 1);
@@ -269,6 +269,7 @@ static int32_t Sci_Reset(struct s_reader *reader, ATR *atr)
 
 static int32_t Sci_WriteSettings(struct s_reader *reader, unsigned char T, uint32_t fs, uint32_t ETU, uint32_t WWT, uint32_t CWT, uint32_t BWT, uint32_t EGT, unsigned char P, unsigned char I)
 {
+    cs_sleepms(150);
 	struct sr_data *crdr_data = reader->crdr_data;
 	crdr_data->T = T;
 	crdr_data->fs = fs;
@@ -309,12 +310,6 @@ static int32_t Sci_WriteSettings(struct s_reader *reader, unsigned char T, uint3
 	return OK;
 }
 
-#if defined(__SH4__)
-#define __IOCTL_CARD_ACTIVATED IOCTL_GET_IS_CARD_PRESENT
-#else
-#define __IOCTL_CARD_ACTIVATED IOCTL_GET_IS_CARD_ACTIVATED
-#endif
-
 static int32_t Sci_Activate(struct s_reader *reader)
 {
 	rdr_debug_mask(reader, D_IFD, "Activating card");
@@ -339,16 +334,8 @@ static int32_t Sci_FastReset(struct s_reader *reader, ATR *atr)
 	ioctl(reader->handle, IOCTL_SET_RESET, 1);
 	ret = Sci_Read_ATR(reader, atr);
 	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
-	if(reader->sh4_stb) // sh4 needs some delay after card and or reader reset
-	{
-		cs_sleepms(150);
-		Sci_WriteSettings(reader, crdr_data->T,crdr_data->fs,crdr_data->ETU, crdr_data->WWT,crdr_data->CWT,crdr_data->BWT,crdr_data->EGT,crdr_data->P,crdr_data->I);
-		cs_sleepms(150); // after changing settings sh4 needs some time
-	}
-	else
-	{
-		Sci_WriteSettings(reader, crdr_data->T,crdr_data->fs,crdr_data->ETU, crdr_data->WWT,crdr_data->CWT,crdr_data->BWT,crdr_data->EGT,crdr_data->P,crdr_data->I);
-	}
+
+	Sci_WriteSettings(reader, crdr_data->T,crdr_data->fs,crdr_data->ETU, crdr_data->WWT,crdr_data->CWT,crdr_data->BWT,crdr_data->EGT,crdr_data->P,crdr_data->I);
 	return ret;
 }
 
@@ -368,8 +355,6 @@ static int32_t Sci_Init(struct s_reader *reader)
 
 	if(!reader->crdr_data && !cs_malloc(&reader->crdr_data, sizeof(struct sr_data)))
 		{ return ERROR; }
-	struct sr_data *crdr_data = reader->crdr_data;
-	crdr_data->srdataok = 1; // just to avoid non used parameter warning. reader->crdr_date is used later on.
 
 	return OK;
 }
