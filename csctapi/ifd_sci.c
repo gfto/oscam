@@ -310,13 +310,19 @@ static int32_t Sci_WriteSettings(struct s_reader *reader, unsigned char T, uint3
 	return OK;
 }
 
+#if defined(__SH4__) 
+#define __IOCTL_CARD_ACTIVATED IOCTL_GET_IS_CARD_PRESENT 
+#else 
+#define __IOCTL_CARD_ACTIVATED IOCTL_GET_IS_CARD_ACTIVATED 
+#endif 
+
 static int32_t Sci_Activate(struct s_reader *reader)
 {
 	rdr_debug_mask(reader, D_IFD, "Activating card");
 	uint32_t in = 1;
 	rdr_debug_mask(reader, D_IFD, "Is card activated?");
-	if(reader->sh4_stb) { ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in);}
-	else {ioctl(reader->handle, IOCTL_GET_IS_CARD_ACTIVATED, &in);}
+	ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in);
+	ioctl(reader->handle, __IOCTL_CARD_ACTIVATED, &in);
 	return OK;
 }
 
@@ -336,6 +342,7 @@ static int32_t Sci_FastReset(struct s_reader *reader, ATR *atr)
 	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
 
 	Sci_WriteSettings(reader, crdr_data->T,crdr_data->fs,crdr_data->ETU, crdr_data->WWT,crdr_data->CWT,crdr_data->BWT,crdr_data->EGT,crdr_data->P,crdr_data->I);
+	cs_sleepms(150);
 	return ret;
 }
 
@@ -389,16 +396,19 @@ static int32_t sci_write_settings3(struct s_reader *reader, uint32_t ETU, uint32
 		if(reader->protocol_type != ATR_PROTOCOL_TYPE_T14)   // fix VU+ internal reader slow responses on T0/T1
 		{
 			call(Sci_WriteSettings(reader, 0, reader->divider, ETU, WWT, CWT, BWT, EGT, 5, (unsigned char)I));
+			cs_sleepms(150);
 		}
 		else     // no fixup for T14 protocol otherwise error
 		{
 			call(Sci_WriteSettings(reader, reader->protocol_type, reader->divider, ETU, WWT, CWT, BWT, EGT, 5, (unsigned char)I));
+			cs_sleepms(150);
 		}
 	}
 	else     // all other brand boxes than dreamboxes or VU+!
 	{
 		// P fixed at 5V since this is default class A card, and TB is deprecated
 		call(Sci_WriteSettings(reader, reader->protocol_type, F, ETU, WWT, CWT, BWT, EGT, 5, (unsigned char)I));
+		cs_sleepms(150);
 	}
 	return OK;
 }
