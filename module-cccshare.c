@@ -233,8 +233,8 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
 				{
 					continue;	
 				}
-				buf[ofs + 0] = srvid->sid >> 8;
-				buf[ofs + 1] = srvid->sid & 0xFF;
+				buf[ofs + 0] = srvidblock->sid >> 8;
+				buf[ofs + 1] = srvidblock->sid & 0xFF;
 				ofs += 2;
 				buf[22]++; //nreject
 				if(buf[22] >= 200)
