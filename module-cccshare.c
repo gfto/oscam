@@ -214,6 +214,7 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
 			//assigned sids:
 			it = ll_iter_create(card->goodsids);
 			struct cc_srvid *srvid;
+			struct cc_srvid_block *srvidblock;
 			while((srvid = ll_iter_next(&it)))
 			{
 				buf[ofs + 0] = srvid->sid >> 8;
@@ -226,8 +227,12 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
 
 			//reject sids:
 			it = ll_iter_create(card->badsids);
-			while((srvid = ll_iter_next(&it)))
+			while((srvidblock = ll_iter_next(&it)))
 			{
+				if(srvidblock->blocked_till > 0)
+				{
+					continue;	
+				}
 				buf[ofs + 0] = srvid->sid >> 8;
 				buf[ofs + 1] = srvid->sid & 0xFF;
 				ofs += 2;
