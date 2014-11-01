@@ -34,15 +34,17 @@ function gotosite(Action) {
 /* Function for add new reader in readers.html */
 function addreader() {
 	cdpause();
-	$("#searchTable").fadeOut('slow');
-	$("#newreader").fadeIn('slow');
+	$("#searchTable").fadeOut('slow', function() {
+		$("#newreader").fadeIn('slow');
+	});
 }
 
 /* Function for add new user in userconfig.html */
 function adduser() {
 	cdpause();
-	$("#searchTable").fadeOut('slow');
-	$("#newuser").fadeIn('slow');
+	$("#searchTable").fadeOut('slow', function() {
+		$("#newuser").fadeIn('slow');
+	});
 };
 
 String.prototype.toHHMMSS = function () {
@@ -114,7 +116,8 @@ $(function () {
 		var uid = '#' + $(this).parent().attr('id');
 		if ('pcr'.indexOf($(uid).attr('class')) >= 0) {
 			if ($(uid).data('ecmhistory')) {
-				$('#charthead').text($(uid + ' > td:nth-child(3) > a:nth-child(1)').text() + ' History');
+				var head = $(uid + ' > td:nth-child(3)').attr('title').indexOf('(') > -1 ? $(uid + ' > td:nth-child(3)').attr('title').substring(0, $(uid + ' > td:nth-child(3)').attr('title').indexOf('(')-1) : $(uid + ' > td:nth-child(3)').attr('title');
+				$('#charthead').text(head + ' History');
 				$("#graph").html('');
 				var arry = $(uid).data('ecmhistory').split(",");
 				$.each(arry, function (index, value) {
@@ -228,7 +231,8 @@ $(function () {
 	});
 
 	// switch reader ON/OFF
-	$("a.switchreader").click(function () {
+	$("a.switchreader").click(function (e) {
+		e.preventDefault();
 		var parameters_old = parameters;
 		parameters += '&label=' + $(this).data('reader-name') + '&action=' + $(this).data('next-action');
 		var rowid = '#' + $(this).data('md5');
@@ -247,7 +251,8 @@ $(function () {
 	});
 
 	// delete reader
-	$("a.deletereader").click(function () {
+	$("a.deletereader").click(function (e) {
+		e.preventDefault();
 		if (confirm("Delete Reader " + $(this).data('reader-name') + "?")) {
 			var parameters_old = parameters;
 			parameters += '&label=' + $(this).data('reader-name') + '&action=' + $(this).data('next-action');
@@ -258,7 +263,8 @@ $(function () {
 	});
 
 	// switch user ON/OFF
-	$("a.switchuser").click(function () {
+	$("a.switchuser").click(function (e) {
+		e.preventDefault();
 		var parameters_old = parameters;
 		parameters += '&user=' + $(this).data('user-name') + '&action=' + $(this).data('next-action');
 		var rowid = '#' + $(this).data('md5');
@@ -279,7 +285,8 @@ $(function () {
 	});
 
 	// reset user stats
-	$("a.resetuser").click(function () {
+	$("a.resetuser").click(function (e) {
+		e.preventDefault();
 		if (confirm("Reset Stats for " + $(this).data('user-name') + "?")) {
 			var parameters_old = parameters;
 			parameters += '&user=' + $(this).data('user-name') + '&action=' + $(this).data('next-action');
@@ -289,7 +296,8 @@ $(function () {
 	});
 
 	// delete user
-	$("a.deleteuser").click(function () {
+	$("a.deleteuser").click(function (e) {
+		e.preventDefault();
 		if (confirm("Delete User " + $(this).data('user-name') + "?")) {
 			var parameters_old = parameters;
 			parameters += '&user=' + $(this).data('user-name') + '&action=' + $(this).data('next-action');
@@ -1054,10 +1062,10 @@ function updateStatuspage(data) {
 			if (!is_nopoll('statuscol4')) {
 				if (data.oscam.piconenabled == "1" && !item.upicmissing) {
 					$(uid + " > td.statuscol4").append('<a href="' + edit1 + name2 + '"><img class="statususericon" title="Edit ' +
-						name1 + ': ' + item.name + item.desc + '" src="image?i=IC_' + name2 + '"></img></a>');
+						name1 + ': ' + item.name + '\n' + item.desc + '" src="image?i=IC_' + name2 + '"></img></a>');
 				} else {
 					$(uid + " > td.statuscol4").append('<a href="' + edit1 + name2 + '" title="Edit ' + name1 + ': ' +
-						item.name + item.desc + item.upicmissing + '">' + item.name + '</a>');
+						item.name + '\n' + item.desc + '\n' + item.upicmissing + '">' + item.name + '</a>');
 				}
 			}
 
@@ -1067,10 +1075,10 @@ function updateStatuspage(data) {
 
 			if (!is_nopoll('statuscol9')) {
 				if (data.oscam.piconenabled == "1" && item.protoicon) {
-					$(uid + " > td.statuscol9").append('<img class="protoicon" title="' + item.protocolext + '" alt="' +
-						item.protocolext + '" src="image?i=IC_' + item.protoicon + '"></img>');
+					$(uid + " > td.statuscol9").append('<img class="protoicon" title="Protocol ' + item.protocol + ' ' + 
+						item.protocolext + '" alt="IC_' + item.protoicon + '" src="image?i=IC_' + item.protoicon + '"></img>');
 				} else {
-					$(uid + " > td.statuscol9").text(item.protocol);
+					$(uid + " > td.statuscol9").attr('title', item.protocolext).text(item.protocol);
 				}
 			}
 		}
@@ -1078,13 +1086,13 @@ function updateStatuspage(data) {
 		$(uid).attr('class', item.type).data('ecmhistory', item.request.ecmhistory).removeAttr('style');
 
 		// fix for anonymous newcamd-clients
-		if ($(uid + " > td.statuscol4").text().match('anonymous')) {
+		if ($(uid + " > td.statuscol4 > a").attr('href').match('anonymous')) {
 			if (!is_nopoll('statuscol9')) {
 				if (data.oscam.piconenabled == "1" && item.protoicon) {
-					$(uid + " > td.statuscol9").html('<img class="protoicon" title="' + item.protocolext + '" alt="' +
-						item.protocolext + '" src="image?i=IC_' + item.protoicon + '"></img>');
+					$(uid + " > td.statuscol9").html('<img class="protoicon" title="Protocol ' + item.protocol + ' ' + 
+						item.protocolext + '" alt="IC_' + item.protoicon + '" src="image?i=IC_' + item.protoicon + '"></img>');
 				} else {
-					$(uid + " > td.statuscol9").text(item.protocol);
+					$(uid + " > td.statuscol9").attr('title', item.protocolext).text(item.protocol);
 				}
 			}
 
@@ -1862,8 +1870,8 @@ $(document).ready(function () {
 			return 0
 		},
 		"string-ins": function (e, t, s) {
-			e = e.toLowerCase();
-			t = t.toLowerCase();
+			e = e.toString().toLowerCase();
+			t = t.toString().toLowerCase();
 			if (e == "" && s == "asc") return +1;
 			if (t == "" && s == "asc") return -1;
 			if (e < t) return -1;
