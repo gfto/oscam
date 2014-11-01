@@ -1830,9 +1830,9 @@ $(document).ready(function () {
 	var convert_locale = function (c) {
 		if (c == "") return 0;
 		if(locale_decpoint == ",") {
-			c = c.replace( /\./g,"" ).replace( /,/,"." );
+			c = c.toString().replace( /\./g,"" ).replace( /,/,"." );
 		}else if(locale_decpoint == "."){
-			c = c.replace( /,/g,"" );
+			c = c.toString().replace( /,/g,"" );
 		}
 		return(c);
 	}
