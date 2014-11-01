@@ -5380,7 +5380,6 @@ static char *send_oscam_shutdown(struct templatevars * vars, FILE * f, struct ur
 			tpl_addVar(vars, TPLADD, "STYLESHEET", CSS);
 			NULLFREE(CSS);
 			tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", SHUTDOWNREFRESH);
-			tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
 			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			tpl_printf(vars, TPLADD, "SECONDS", "%d", SHUTDOWNREFRESH);
 			char *result = tpl_getTpl(vars, "SHUTDOWN");
@@ -5410,7 +5409,6 @@ static char *send_oscam_shutdown(struct templatevars * vars, FILE * f, struct ur
 			tpl_addVar(vars, TPLADD, "STYLESHEET", CSS);
 			NULLFREE(CSS);
 			tpl_addVar(vars, TPLADD, "REFRESHTIME", "5");
-			tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
 			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			tpl_addVar(vars, TPLADD, "SECONDS", "5");
 			char *result = tpl_getTpl(vars, "SHUTDOWN");
@@ -6200,12 +6198,6 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 	{
 		// avoid compilerwarning unused vars
 	}
-	if(cfg.http_refresh > 0)
-	{
-		tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg.http_refresh);
-		tpl_addVar(vars, TPLADD, "REFRESHURL", "cacheex.html");
-		tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
-	}
 	char *level[] = {"NONE", "CACHE PULL", "CACHE PUSH", "REVERSE CACHE PUSH"};
 	char *getting = "<IMG SRC=\"image?i=ICARRL\" ALT=\"Getting\">";
 	char *pushing = "<IMG SRC=\"image?i=ICARRR\" ALT=\"Pushing\">";
@@ -6806,7 +6798,6 @@ static char *send_oscam_ghttp(struct templatevars * vars, struct uriparams * par
 		if(ghttp_autoconf(vars, params))
 		{
 			tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", 3);
-			tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
 			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			tpl_printf(vars, TPLADD, "SECONDS", "%d", 3);
 			if(apicall) { return tpl_getTpl(vars, "APICONFIRMATION"); }
@@ -7321,10 +7312,12 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			{
 				tpl_printf(vars, TPLADD, "POLLREFRESHTIME", "%d", cfg.poll_refresh);
 			}
-			if(cfg.http_refresh > 0 && (pgidx == 3 || pgidx == -1))
+			if	(	cfg.http_refresh > 0 && 
+				(((	pgidx == 1 || pgidx == 4 ) && !cfg.poll_refresh ) ||
+				(	pgidx == 3 && ( cfg.http_status_log || !cfg.poll_refresh )) ||
+					pgidx == 15 || pgidx == 23 || pgidx == -1 )) // wenn polling bei cachex.html eingeführt wird muss die 23 => 2 zeilen höher
 			{
 				tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg.http_refresh);
-				tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
 				tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			}
 #ifdef WEBIF_JQUERY

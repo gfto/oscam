@@ -1086,7 +1086,7 @@ function updateStatuspage(data) {
 		$(uid).attr('class', item.type).data('ecmhistory', item.request.ecmhistory).removeAttr('style');
 
 		// fix for anonymous newcamd-clients
-		if ($(uid + " > td.statuscol4 > a").attr('href').match('anonymous')) {
+		if ($(uid + " > td.statuscol4").text().match('anonymous')) {
 			if (!is_nopoll('statuscol9')) {
 				if (data.oscam.piconenabled == "1" && item.protoicon) {
 					$(uid + " > td.statuscol9").html('<img class="protoicon" title="Protocol ' + item.protocol + ' ' + 
