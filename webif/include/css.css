@@ -524,7 +524,8 @@ div.debugmenu, div.logmenu {
 /* entitlements_cccambit.html */
 div.cccamentitlementtotals,
 div.cccamentitlementcontrols {
-	margin-top:14px
+	font-weight:bold;
+	margin-top:5px
 }
 /* definition only for show or hide columns or DIV
  * #newuser		- in userconfig.html

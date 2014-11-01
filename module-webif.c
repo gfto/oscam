@@ -909,7 +909,7 @@ static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams
 
 	setActiveSubMenu(vars, MNU_CFG_CCCAM);
 
-	if(strcmp(getParam(params, "button"), "Refresh global list") == 0)
+	if(strcmp(getParam(params, "button"), "Refresh list") == 0)
 	{
 		cs_debug_mask(D_TRACE, "Entitlements: Refresh Shares start");
 #ifdef MODULE_CCCSHARE
@@ -3651,13 +3651,23 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, str
 			if(!apicall)
 			{
 				int32_t n;
+				char channame[32];
+				int8_t sidname = 0;
 				LL_ITER its = ll_iter_create(card->goodsids);
 				struct cc_srvid *srv;
 				n = 0;
+				if(strcmp(getParam(params, "button"), "Show detail list") == 0)
+				{ sidname = 1; }
+
 				tpl_addVar(vars, TPLADD, "SERVICESGOOD", "");
 				while((srv = ll_iter_next(&its)))
 				{
-					tpl_printf(vars, TPLAPPEND, "SERVICESGOOD", "%04X%s", srv->sid, ++n % 10 == 0 ? "<BR>\n" : " ");
+					if(sidname)
+					{
+						tpl_printf(vars, TPLAPPEND, "SERVICESGOOD", "%04X - %s<BR>", srv->sid, xml_encode(vars, get_servicename(cur_client(), srv->sid, card->caid, channame)));
+					} else {
+						tpl_printf(vars, TPLAPPEND, "SERVICESGOOD", "%04X%s", srv->sid, ++n % 10 == 0 ? "<BR>\n" : " ");
+					} 	
 				}
 
 				its = ll_iter_create(card->badsids);
@@ -3665,7 +3675,12 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, str
 				tpl_addVar(vars, TPLADD, "SERVICESBAD", "");
 				while((srv = ll_iter_next(&its)))
 				{
-					tpl_printf(vars, TPLAPPEND, "SERVICESBAD", "%04X%s", srv->sid, ++n % 10 == 0 ? "<BR>\n" : " ");
+					if(sidname)
+					{
+						tpl_printf(vars, TPLAPPEND, "SERVICESBAD", "%04X - %s<BR>", srv->sid, xml_encode(vars, get_servicename(cur_client(), srv->sid, card->caid, channame)));
+					} else {
+						tpl_printf(vars, TPLAPPEND, "SERVICESBAD", "%04X%s", srv->sid, ++n % 10 == 0 ? "<BR>\n" : " ");
+					} 	
 				}
 			}
 

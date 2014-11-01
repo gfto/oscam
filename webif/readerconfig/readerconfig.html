@@ -25,8 +25,16 @@
 			<TR><TD><A>CHID:</A></TD><TD><textarea name="chid" rows="3" class="bt">##CHIDS##</textarea></TD></TR>
 			<TR><TD><A>AU disabled:</A></TD><TD><input name="audisabled" type="hidden" value="0"><input name="audisabled" type="checkbox" value="1" ##AUDISABLED##><label></label></TD></TR>
 			<TR><TD><A>AU Provid:</A></TD><TD><input name="auprovid" class="short" type="text" maxlength="6" value="##AUPROVID##"></TD></TR>
-			<TR><TD><A>Ratelimit ECM:</A></TD><TD><input name="ratelimitecm" class="short" type="text" maxlength="5" value="##RATELIMITECM##"></TD></TR>
-			<TR><TD><A>ECM Unique:</A><input name="ecmunique" type="hidden" value="0"></TD><TD><input name="ecmunique" type="checkbox" value="1" ##ECMUNIQUECHECKED##><label></label></TD></TR>
+			<TR><TD><A>Ratelimit ECM:</A></TD>
+				<TD CLASS="invisible">
+					<TABLE>
+						<TR>
+							<TD><input name="ratelimitecm" class="short" type="text" maxlength="5" value="##RATELIMITECM##"><label></label></TD>
+							<TD><A data-p="ecmunique">ECM Unique:</A><input name="ecmunique" type="hidden" value="0"></TD><TD><input name="ecmunique" type="checkbox" value="1" ##ECMUNIQUECHECKED##><label></label></TD>
+						</TR>
+					</TABLE>
+				</TD>
+			</TR>
 			<TR><TD><A>Ratelimittime:</A></TD><TD><input name="ratelimittime" class="withunit short" type="text" maxlength="5" value="##RATELIMITTIME##"> ms</TD></TR>
 			<TR><TD><A>Additional ms to hold SRVID in slot:</A></TD><TD><input name="srvidholdtime" class="short" type="text" maxlength="5" value="##SRVIDHOLDTIME##"></TD></TR>
 			<TR><TD><A>Cooldown Delay:</A></TD><TD><input name="cooldowndelay" class="short" type="text" maxlength="5" value="##COOLDOWNDELAY##"></TD></TR>

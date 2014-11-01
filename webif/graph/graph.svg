@@ -2,25 +2,25 @@
 <svg xml:space='preserve' xmlns='http://www.w3.org/2000/svg'
 	xmlns:xlink='http://www.w3.org/1999/xlink'
 	width='100%' height='100%'
-	viewBox='0 0 800 300'
-	preserveAspectRatio='xMidYMid'
+	viewBox='0 0 800 400'
+	preserveAspectRatio='YMid'
 	onload='init(evt)'
 	style='background-color:#F0F0F0'
 >
 <g id='graph' style='font-family: Verdana, Arial; '>
-	<rect id='g' class='graph_bg' x1='0' y1='0' width='800' height='300' style='fill:#F0F0F0;' />
+	<rect id='g' class='graph_bg' x1='0' y1='0' width='800' height='400' style='fill:#F0F0F0;' />
 	<text id='graph_error' class='graph_error' x='400' y='125' visibility='hidden'>Error occured!</text>
-	<path id='graph_grid' class='graph_grid' d='M 2 75 L 800 75 M 2 150 L 800 150 M 2 225 L 800 225 M 2 300 L 800 300'/>
+	<path id='graph_grid' class='graph_grid' d='M 2 105 L 798 105 M 2 180 L 798 180 M 2 255 L 798 255 M 2 330 L 798 330'/>
 
-	<rect id='graph_grid_button_back' style='fill:#A9D0F5;' cursor='pointer' x='270' y='0' rx='5' ry='5' width='40' height='20'/>
-	<text id='graph_grid_button_text' style='font-size:8px; fill:black;' cursor='pointer' class='graph_grid_txt' x='305' y='12'>Change</text>	
-	<rect id='graph_grid_button' style='fill:#A9D0F5;opacity:0;' cursor='pointer' x='270' y='0' rx='5' ry='5' width='40' height='20'/>
-	<text id='graph_grid_interval' style='font-size:8px; fill:black;' class='graph_grid_txt' x='400' y='12'>-</text>	
+	<rect id='graph_grid_button_back' style='fill:#A9D0F5;' cursor='pointer' x='425' y='5' rx='5' ry='5' width='40' height='20'/>
+	<text id='graph_grid_button_text' style='font-size:8px; fill:black;' cursor='pointer' class='graph_grid_txt' x='460' y='17'>Change</text>	
+	<text id='graph_grid_interval' style='font-size:8px; fill:black;' class='graph_grid_txt' x='420' y='17'>-</text>	
+	<rect id='graph_grid_button' style='opacity:0;' cursor='pointer' x='340' y='5' rx='5' ry='5' width='130' height='20'/>
 		
-	<text id='graph_grid_txt4' class='graph_grid_txt' x='800' y='298'>-</text>
-	<text id='graph_grid_txt3' class='graph_grid_txt' x='800' y='223'>-</text>
-	<text id='graph_grid_txt2' class='graph_grid_txt' x='800' y='148'>-</text>
-	<text id='graph_grid_txt1' class='graph_grid_txt' x='800' y='73'>-</text>
+	<text id='graph_grid_txt4' class='graph_grid_txt' x='798' y='328'>-</text>
+	<text id='graph_grid_txt3' class='graph_grid_txt' x='798' y='253'>-</text>
+	<text id='graph_grid_txt2' class='graph_grid_txt' x='798' y='178'>-</text>
+	<text id='graph_grid_txt1' class='graph_grid_txt' x='798' y='103'>-</text>
 </g>
 <script type='text/ecmascript'>
 <![CDATA[
@@ -69,8 +69,8 @@ var svgNS = 'http://www.w3.org/2000/svg';
 var max = 0;
 var plots = new Array();
 var Color = new Array('blue','green','orange','brown','fuchsia','red','cyan','yellow','purple','turquoise','coral','khaki','greenyellow','thistle','tan','silver','darkgreen','darkviolet','gold','indianred','black');
-var max_num_points = 800;
-var step = 800 / max_num_points ;
+var max_num_points = 799;
+var step = 799 / max_num_points ;
 var fetch_url='';
 var interval = 3500;
 var activesecs = 15;
@@ -179,10 +179,10 @@ function plot_data(obj) {
 			newText.setAttributeNS(null,'fill',Color[ i - (parseInt(i/Color.length)*Color.length)]);
 			newText.setAttributeNS(null,'id','graph_txt_'+i);
 			if ( hideLabels ) {
-				newText.setAttributeNS(null,'y',8);
+				newText.setAttributeNS(null,'y',13);
 				newText.setAttributeNS(null,'style','font-size:9px;display:none;');
 			} else {
-				newText.setAttributeNS(null,'y',8+(8*i));
+				newText.setAttributeNS(null,'y',13+(10*i));
 				newText.setAttributeNS(null,'style','font-size:9px');
 			}
 			var textNode = document.createTextNode(plots[i]['name']);
@@ -215,14 +215,15 @@ function plot_data(obj) {
 	 	rdx++;
 	}
 	var rmax=makeRoundMax(max);
- 	var scale = 298 / rmax;
+	var height = 329;
+ 	var scale = height / rmax;
 	i=0;
 	while (i < plots.length) {
  		var plot = plots[i]['data'];
-		var path = 'M 0 ' + (298 - (plot[0] * scale));
-		for (b = 1; b < plot.length; b++) {
+		var path = 'M 2 ' + (height - (plot[0] * scale));
+		for (b = 2; b < plot.length; b++) {
 			var x = step * b;
-			var y_in = 298 - (plot[b] * scale);
+			var y_in = height - (plot[b] * scale);
 			path += ' L' + x + ' ' + y_in;
 		}
  		SVGDoc.getElementById('graph_path_'+i).setAttributeNS(null, 'd', path);
