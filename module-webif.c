@@ -7318,9 +7318,10 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 					pgidx == 15 || pgidx == 23 || pgidx == -1 )) // wenn polling bei cachex.html eingeführt wird muss die 23 => 2 zeilen höher
 			{
 				tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg.http_refresh);
+				tpl_addVar(vars, TPLADD, "WITHQUERY", pgidx == 15 ? "1" : "0");
 				tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			}
-#ifdef WEBIF_JQUERY
+#ifdef WEBIF_JQUERY 
 			tpl_printf(vars, TPLADD, "SRCJQUERY", "jquery.js?v=%s", CS_SVN_VERSION);
 #else
 			tpl_addVar(vars, TPLADD, "SRCJQUERY", cfg.http_extern_jquery);

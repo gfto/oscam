@@ -2,7 +2,7 @@ var oReloadTimer = null;
 var oCounterTimer = null;
 
 function reloadDocument() {
-	history.pushState('', document.title, window.location.pathname);
+	if(!withquery) history.pushState('', document.title, window.location.pathname);
 	window.location.reload();
 };
 
