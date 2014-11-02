@@ -1563,6 +1563,9 @@ void chk_dcw(struct s_ecm_answer *ea)
 	case E_TIMEOUT:   // if timeout, we have to send timeout to client: this is done by ecm_timeout callback
 		return;
 		break;
+	case E_UNHANDLED:
+		return;
+		break;
 	default:
 		cs_log("unexpected ecm answer rc=%d.", ea->rc);
 		return;
@@ -1706,14 +1709,23 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 					}
 					else
 					{
-						if(!nano) // only fix checksum if no cw encryption is applied
+						if(!nano) // only fix checksum if no cw encryption is applied (nano = 0)
 						{
 							cs_debug_mask(D_TRACE, "notice: changed dcw checksum byte cw[%i] from %02x to %02x", i + 3, cw[i + 3], c);
 							cw[i + 3] = c;
 						}
 						else
 						{
-							cs_debug_mask(D_TRACE,"NANO%02d: not fixing the crc of this cw since its still encrypted!", nano);
+							if(i==12) // there are servers delivering correct controlwords but with failing last cw checksum (on purpose?!)
+							{
+								cs_debug_mask(D_TRACE,"NANO%02d: BAD PEER DETECTED, oscam has fixed the last cw crc that wasn't matching!", nano);
+								cw[i + 3] = c; // fix the last controlword
+							}
+							else
+							{
+								cs_debug_mask(D_TRACE,"NANO%02d: not fixing the crc of this cw since its still encrypted!", nano);
+								break; // crc failed so stop!
+							}
 						}
 					}
 				}
