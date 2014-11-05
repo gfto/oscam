@@ -316,6 +316,7 @@ static void write_versionfile(bool use_stdout)
 	fprintf(fp, "Version:        oscam-%s-r%s\n", CS_VERSION, CS_SVN_VERSION);
 	fprintf(fp, "Compiler:       %s\n", CS_TARGET);
 	fprintf(fp, "ConfigDir:      %s\n", cs_confdir);
+	fprintf(fp, "WebifPort:      %d\n", cfg.http_port);
 	fprintf(fp, "\n");
 	write_conf(WEBIF, "Web interface support");
 	write_conf(WEBIF_LIVELOG, "LiveLog support");
