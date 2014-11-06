@@ -257,13 +257,31 @@ static int32_t Sci_Reset(struct s_reader *reader, ATR *atr)
 		cs_sleepms(150);
 		ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params);
 		cs_sleepms(150); // give the reader some time to process the params
-		ioctl(reader->handle, IOCTL_SET_RESET, 1);
-		ret = Sci_Read_ATR(reader, atr);
-		params.fs = 0; // fs 0 heals unresponsive readers due to incorrect previous parameters before box needed powercycle (tested working on XP1000 box)
-		tries++; // increase fs
-		if(ret == ERROR) { rdr_debug_mask(reader, D_IFD, "Read ATR fail, attempt %d/5 now trying fs = %d to recover", tries, params.fs); }
+		if(ioctl(reader->handle, IOCTL_SET_ATR_READY, NULL) < 0)
+		{
+			ret = ERROR;
+			rdr_log(reader, "Error:%s ioctl(IOCTL_SET_ATR_READY) failed.(%d:%s)", __FUNCTION__, errno, strerror(errno) );
+        }
+		else
+		{
+			if(ioctl(reader->handle, IOCTL_SET_RESET, NULL) < 0)
+			{
+				ret = ERROR;
+				rdr_log(reader, "Error:%s ioctl(IOCTL_SET_ATR_READY) failed.(%d:%s)", __FUNCTION__, errno, strerror(errno) );
+			}
+			else
+			{
+				ret = Sci_Read_ATR(reader, atr);
+			}
+			
+			if(ret == ERROR) 
+			{ 
+				params.fs = 0; // fs 0 heals unresponsive readers due to incorrect previous parameters before box needed powercycle (tested working on XP1000 box)
+				tries++; // increase fs
+				rdr_log(reader, "Read ATR fail, attempt %d/5 now trying fs = %d to recover", tries, params.fs); 
+			}
+		}
 	}
-	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
 	return ret;
 }
 
@@ -329,7 +347,7 @@ static int32_t Sci_Activate(struct s_reader *reader)
 static int32_t Sci_Deactivate(struct s_reader *reader)
 {
 	rdr_debug_mask(reader, D_IFD, "Deactivating card");
-	ioctl(reader->handle, IOCTL_SET_DEACTIVATE);
+	ioctl(reader->handle, IOCTL_SET_DEACTIVATE, NULL);
 	return OK;
 }
 
@@ -337,9 +355,23 @@ static int32_t Sci_FastReset(struct s_reader *reader, ATR *atr)
 {
 	struct sr_data *crdr_data = reader->crdr_data;
 	int32_t ret;
-	ioctl(reader->handle, IOCTL_SET_RESET, 1);
-	ret = Sci_Read_ATR(reader, atr);
-	ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
+	if(ioctl(reader->handle, IOCTL_SET_ATR_READY, NULL) < 0)
+	{
+		ret = ERROR;
+		rdr_log(reader, "Error:%s ioctl(IOCTL_SET_ATR_READY) failed.(%d:%s)", __FUNCTION__, errno, strerror(errno) );
+	}
+	else
+	{
+		if(ioctl(reader->handle, IOCTL_SET_RESET, NULL) < 0)
+		{
+			ret = ERROR;
+			rdr_log(reader, "Error:%s ioctl(IOCTL_SET_ATR_READY) failed.(%d:%s)", __FUNCTION__, errno, strerror(errno) );
+		}
+		else
+		{
+			ret = Sci_Read_ATR(reader, atr);
+		}
+	}
 
 	Sci_WriteSettings(reader, crdr_data->T,crdr_data->fs,crdr_data->ETU, crdr_data->WWT,crdr_data->CWT,crdr_data->BWT,crdr_data->EGT,crdr_data->P,crdr_data->I);
 	cs_sleepms(150);
