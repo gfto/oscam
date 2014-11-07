@@ -35,6 +35,9 @@ struct sr_data
 	unsigned char I;
 };
 
+static int32_t init_count;
+static int32_t current_count;
+
 static int32_t Sci_GetStatus(struct s_reader *reader, int32_t *status)
 {
 	ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, status);
@@ -410,6 +413,12 @@ static int32_t Sci_FastReset(struct s_reader *reader, ATR *atr)
 
 static int32_t Sci_Init(struct s_reader *reader)
 {
+	if(!init_count) {init_count = 0;}
+	if(init_count < current_count) {rdr_log(reader,"Waiting on reader_closed before restarting");}
+	while (init_count < current_count) // Restarting the reader while it was not closed does cause segfault.
+	{
+		cs_sleepms(1000);
+	}
 	int flags = O_RDWR | O_NOCTTY;
 #if defined(__SH4__) || defined(STB04SCI)
 	flags |= O_NONBLOCK;
@@ -425,7 +434,9 @@ static int32_t Sci_Init(struct s_reader *reader)
 	if(!reader->crdr_data && !cs_malloc(&reader->crdr_data, sizeof(struct sr_data)))
 		{ return ERROR; }
 	struct sr_data *crdr_data = reader->crdr_data;
-	crdr_data->old_reset = 0;	
+	crdr_data->old_reset = 1;	
+	init_count++;
+	current_count++;
 
 	return OK;
 }
@@ -447,8 +458,11 @@ static int32_t sci_activate(struct s_reader *reader, ATR *atr)
 
 static int32_t Sci_Close(struct s_reader *reader)
 {
+	--init_count;
 	Sci_Deactivate(reader);
 	IO_Serial_Close(reader);
+	cs_sleepms(3000); // some stb's needs small extra time even after close procedure seems to be ok.
+	--current_count;
 	return OK;
 }
 
