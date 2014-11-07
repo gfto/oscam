@@ -8,6 +8,7 @@
 #include "oscam-time.h"
 #include "oscam-work.h"
 #include "reader-common.h"
+#include "oscam-chk.h"
 
 const char *entitlement_type[] = { "", "package", "PPV-Event", "chid", "tier", "class", "PBM", "admin" };
 
@@ -97,7 +98,7 @@ static void reader_log_emm(struct s_reader *reader, EMM_PACKET *ep, int32_t i, i
 	char *rtxt[] =
 	{
 		"error",
-		is_cascading_reader(reader) ? "sent" : "written",
+		is_network_reader(reader) ? "sent" : "written",
 		"skipped",
 		"blocked"
 	};
@@ -171,7 +172,7 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 		int caid_found = 0;
 		for(i = 0; i < (int)ARRAY_SIZE(reader->csystem.caids); i++)
 		{
-			if(reader->csystem.caids[i] == caid)
+			if(reader->csystem.caids[i] == caid || chk_ctab_ex(caid, &reader->ctab))
 			{
 				caid_found = 1;
 				break;
@@ -367,7 +368,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 
 		struct s_cardsystem *cs = NULL;
 
-		if(is_cascading_reader(aureader))    // network reader (R_CAMD35 R_NEWCAMD R_CS378X R_CCCAM)
+		if(is_network_reader(aureader))    // network reader (R_CAMD35 R_NEWCAMD R_CS378X R_CCCAM)
 		{
 			if(!aureader->ph.c_send_emm)  // no emm support
 				{ continue; }
@@ -460,7 +461,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 			is_blocked = (aureader->blockemm & EMM_GLOBAL) == EMM_GLOBAL;
 			break;
 		}
-
+		
 		// if not already blocked we check for block by len
 		if(!is_blocked) { is_blocked = cs_emmlen_is_blocked(aureader, ep->emm[2]) ; }
 
@@ -584,7 +585,7 @@ int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	// Ecs=2 skip
 	if((rc = ecs) < 2)
 	{
-		if(is_cascading_reader(reader))
+		if(is_network_reader(reader))
 		{
 			rdr_debug_mask(reader, D_READER, "network emm reader");
 			if(reader->ph.c_send_emm)

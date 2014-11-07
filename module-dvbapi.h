@@ -284,6 +284,7 @@ int8_t is_ca_used(uint8_t cadevice);
 const char *dvbapi_get_client_name(void);
 uint16_t dvbapi_get_client_proto_version(void);
 void delayer(ECM_REQUEST *er);
+void check_add_emmpid(int32_t demux_index, uchar *filter, int32_t l, int32_t emmtype);
 
 #ifdef DVBAPI_LOG_PREFIX
 #undef cs_log
