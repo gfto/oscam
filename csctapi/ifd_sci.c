@@ -461,7 +461,7 @@ static int32_t Sci_Close(struct s_reader *reader)
 	--init_count;
 	Sci_Deactivate(reader);
 	IO_Serial_Close(reader);
-	cs_sleepms(3000); // some stb's needs small extra time even after close procedure seems to be ok.
+	cs_sleepms(300); // some stb's needs small extra time even after close procedure seems to be ok.
 	--current_count;
 	return OK;
 }
