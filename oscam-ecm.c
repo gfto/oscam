@@ -1251,7 +1251,7 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 ESC:
 
-	if(er->rc == E_TIMEOUT) // cleanout timeout ecm response so they can be asked again
+	if(er->rc == E_TIMEOUT || er->rc == E_NOTFOUND) // cleanout timeout and notfound ecm response so they can be asked again
 	{
 		struct s_ecm_answer *ea_list;
 		for(ea_list = er->matching_rdr; ea_list; ea_list = ea_list->next)
