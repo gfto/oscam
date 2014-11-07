@@ -1303,8 +1303,9 @@ static int32_t camd35_send_emm(EMM_PACKET *ep)
 	struct s_client *cl = cur_client();
 
 
-	if(!tcp_connect(cl)) { return -1; }
-
+	if(!tcp_connect(cl)) { return 0; }
+	cl->reader->card_status = CARD_INSERTED; //for udp
+	
 	memset(buf, 0, 20);
 	memset(buf + 20, 0xff, ep->emmlen + 15);
 
