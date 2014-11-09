@@ -36,12 +36,58 @@ struct sr_data
 };
 
 static int32_t init_count;
-static int32_t current_count;
+static int32_t current_count; 
 
 static int32_t Sci_GetStatus(struct s_reader *reader, int32_t *status)
 {
-	ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, status);
+	call (ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, status)<0);
 	return OK;
+}
+
+static int32_t Sci_Deactivate(struct s_reader *reader)
+{
+	int32_t in = 0 ;
+	rdr_log(reader, "Deactivating card");
+	if (ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in)<0)
+	{
+		rdr_log(reader, "Error:%s ioctl(IOCTL_GET_IS_CARD_PRESENT) failed.(%d:%s)", __FUNCTION__, errno, strerror(errno) );
+		return ERROR;
+	}
+	if (in != 1) {ioctl(reader->handle, IOCTL_GET_IS_CARD_ACTIVATED, &in);}
+
+	if(in)
+	{
+		call (ioctl(reader->handle, IOCTL_SET_DEACTIVATE)<0);
+	}
+		
+	return OK;
+	
+}
+
+static int32_t Sci_Activate(struct s_reader *reader)
+{
+	rdr_debug_mask(reader, D_IFD, "Is card present?");
+	int32_t in = 0;
+	if (ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in)<0)
+	{
+			rdr_log(reader, "Error:%s ioctl(IOCTL_GET_IS_CARD_PRESENT) failed.(%d:%s)", __FUNCTION__, errno, strerror(errno) );
+			Sci_Deactivate(reader);
+			return ERROR;
+	}
+	if (in != 1) {ioctl(reader->handle, IOCTL_GET_IS_CARD_ACTIVATED, &in);}
+
+	if (in)
+	{
+		rdr_log(reader, "Card is present in readerslot!");
+		cs_sleepms(50);
+		return OK;
+	}
+	else
+	{
+		rdr_log(reader, "Error: no card is present in readerslot!");
+		Sci_Deactivate(reader);
+		return ERROR;
+	}
 }
 
 static int32_t Sci_Read_ATR(struct s_reader *reader, ATR *atr)   // reads ATR on the fly: reading and some low levelchecking at the same time
@@ -49,17 +95,10 @@ static int32_t Sci_Read_ATR(struct s_reader *reader, ATR *atr)   // reads ATR on
 	uint32_t timeout = ATR_TIMEOUT;
 	unsigned char buf[SCI_MAX_ATR_SIZE];
 	int32_t n = 0, statusreturn = 0;
-#if !defined(WITH_AZBOX)
-	do
-	{
-		ioctl(reader->handle, IOCTL_GET_ATR_STATUS, &statusreturn);
-		rdr_debug_mask(reader, D_IFD, "Waiting for card ATR Response...");
-	}
-	while(statusreturn);
-#endif
+	
 	if(IO_Serial_Read(reader, 0, timeout, 1, buf + n))  //read first char of atr
 	{
-		rdr_debug_mask(reader, D_IFD, "ERROR: no characters found in ATR");
+		rdr_log(reader, "ERROR: no characters found in ATR!");
 		return ERROR;
 	}
 	if(buf[0] == 0x3F)   // 3F: card is using inverse convention, 3B = card is using direct convention
@@ -219,16 +258,14 @@ static int32_t Sci_Read_ATR(struct s_reader *reader, ATR *atr)   // reads ATR on
 static int32_t Sci_Reset(struct s_reader *reader, ATR *atr)
 {
 	int32_t ret = ERROR;
-	struct sr_data *crdr_data = reader->crdr_data;
 
-	rdr_debug_mask(reader, D_IFD, "Reset internal cardreader!");
 	SCI_PARAMETERS params;
 
 	memset(&params, 0, sizeof(SCI_PARAMETERS));
 
 	params.ETU = 372; //initial ETU (in iso this parameter F)
-	params.EGT = 3; //initial guardtime should be 0 (in iso this is parameter N)
-	params.fs = 5; //initial cardmhz should be 1 (in iso this is parameter D)
+	params.EGT = 0; //initial guardtime should be 0 (in iso this is parameter N)
+	params.fs = 3; //initial cardmhz 3 Mhz for non pll readers (in iso this is parameter D)
 	params.T = 0;
 	if(reader->cardmhz > 2000)    // PLL based reader
 	{
@@ -257,49 +294,63 @@ static int32_t Sci_Reset(struct s_reader *reader, ATR *atr)
 	}
 
 	int32_t tries = 0;
-	while(ret == ERROR && tries < 5)
+	while(ret == ERROR && tries < 6)
 	{
-		cs_sleepms(150);
+		cs_sleepms(50);
+		rdr_log(reader, "Set reader parameters!");
+		rdr_log(reader, "Sent reader setting at cardinit T=%d fs=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d",
+			   (int)params.T, params.fs, (int)params.ETU, (int)params.WWT,
+			   (int)params.CWT, (int)params.BWT, (int)params.EGT,
+			   (int)params.clock_stop_polarity, (int)params.check,
+			   (int)params.P, (int)params.I, (int)params.U);
 		ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params);
 		cs_sleepms(150); // give the reader some time to process the params
-		if(reader->sh4_stb || crdr_data->old_reset)
+
+		rdr_log(reader, "Reset internal cardreader!");
+		if(ioctl(reader->handle, IOCTL_SET_RESET, 1) < 0)
 		{
-			rdr_log(reader," using sh4 or old reset");
- 	        ioctl(reader->handle, IOCTL_SET_RESET, 1); 
- 	        ret = Sci_Read_ATR(reader, atr); 
- 	        params.fs = 0; // fs 0 heals unresponsive readers due to incorrect previous parameters before box needed powercycle (tested working on XP1000 box) 
- 	        tries++; // increase fs 
- 	        if(ret == ERROR) { rdr_debug_mask(reader, D_IFD, "Read ATR fail, attempt %d/5 now trying fs = %d to recover", tries, params.fs); } 
-    	}
-		else   
+			ret = ERROR;
+			rdr_log(reader, "Error:%s ioctl(IOCTL_SET_RESET) failed.(%d:%s)", __FUNCTION__, errno, strerror(errno) );
+			Sci_Deactivate(reader);
+			Sci_Activate(reader);
+			cs_sleepms(50);
+        }
+		else
 		{
-			if(ioctl(reader->handle, IOCTL_SET_ATR_READY, NULL) < 0)
+			ret = Sci_Read_ATR(reader, atr);
+			if(ret == ERROR) 
+			{ 
+				Sci_Deactivate(reader);
+				Sci_Activate(reader);
+				if (reader->cardmhz > 2000 && reader->cardmhz != 8300)
+				{
+					tries++; // increase fs
+					params.fs = (9 - tries); // if 1 Mhz init failed retry with 3.37 Mhz up to 9.0 Mhz
+					rdr_log(reader, "Read ATR fail, attempt %d/6  fs = %d", tries, params.fs);
+				}
+				else if (reader->cardmhz > 2000 && reader->cardmhz == 8300)
+				{
+					tries++; // increase fs
+					params.fs = (11 - tries); // if 1 Mhz init failed retry with 3.19 Mhz up to 9.0 Mhz
+					rdr_log(reader, "Read ATR fail, attempt %d/6  fs = %d", tries, params.fs);
+				}
+				else 
+				{
+					tries++; // increase fs
+					params.fs = (3 + tries); // if 1 Mhz init failed retry with 3.0 Mhz up to 9.0 Mhz
+					rdr_log(reader, "Read ATR fail, attempt %d/6  fs = %d", tries, params.fs);
+				} 
+			}
+			else // ATR fetched successfully!
 			{
-				ret = ERROR;
-				rdr_log(reader, "Error:%s ioctl(IOCTL_SET_ATR_READY) failed.(%d:%s)", __FUNCTION__, errno, strerror(errno) );
-	        }
-			else
-			{
-				if(ioctl(reader->handle, IOCTL_SET_RESET, NULL) < 0)
+				if(ioctl(reader->handle, IOCTL_SET_ATR_READY, 1) < 0)
 				{
 					ret = ERROR;
 					rdr_log(reader, "Error:%s ioctl(IOCTL_SET_ATR_READY) failed.(%d:%s)", __FUNCTION__, errno, strerror(errno) );
 				}
-				else
-				{
-					ret = Sci_Read_ATR(reader, atr);
-				}
-
-				if(ret == ERROR) 
-				{ 
-					params.fs = 0; // fs 0 heals unresponsive readers due to incorrect previous parameters before box needed powercycle (tested working on XP1000 box)
-					tries++; // increase fs
-					rdr_log(reader, "Read ATR fail, attempt %d/5 now trying fs = %d to recover", tries, params.fs); 
-				}
 			}
 		}
 	}
-	if(reader->sh4_stb || crdr_data->old_reset){ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);}
 	return ret;
 }
 
@@ -336,7 +387,7 @@ static int32_t Sci_WriteSettings(struct s_reader *reader, unsigned char T, uint3
 	crdr_data->P = params.P;
 	crdr_data->I = params.I;
 
-	rdr_log(reader, "Sended reader settings T=%d fs=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d",
+	rdr_log(reader, "Sent reader settings T=%d fs=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d",
 				   (int)params.T, params.fs, (int)params.ETU, (int)params.WWT,
 				   (int)params.CWT, (int)params.BWT, (int)params.EGT,
 				   (int)params.clock_stop_polarity, (int)params.check,
@@ -347,67 +398,40 @@ static int32_t Sci_WriteSettings(struct s_reader *reader, unsigned char T, uint3
 	return OK;
 }
 
-#if defined(__SH4__) 
-#define __IOCTL_CARD_ACTIVATED IOCTL_GET_IS_CARD_PRESENT 
-#else 
-#define __IOCTL_CARD_ACTIVATED IOCTL_GET_IS_CARD_ACTIVATED 
-#endif 
-
-static int32_t Sci_Activate(struct s_reader *reader)
-{
-	rdr_debug_mask(reader, D_IFD, "Activating card");
-	uint32_t in = 1;
-	rdr_debug_mask(reader, D_IFD, "Is card activated?");
-	ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in);
-	ioctl(reader->handle, __IOCTL_CARD_ACTIVATED, &in);
-	return OK;
-}
-
-static int32_t Sci_Deactivate(struct s_reader *reader)
-{
-	rdr_debug_mask(reader, D_IFD, "Deactivating card");
-	struct sr_data *crdr_data = reader->crdr_data;
-	if(reader->sh4_stb || crdr_data->old_reset){
-	ioctl(reader->handle, IOCTL_SET_DEACTIVATE);
-	} else {
-	ioctl(reader->handle, IOCTL_SET_DEACTIVATE, NULL);
-	}
-	return OK;
-}
-
 static int32_t Sci_FastReset(struct s_reader *reader, ATR *atr)
 {
 	struct sr_data *crdr_data = reader->crdr_data;
 	int32_t ret;
-	if(reader->sh4_stb || crdr_data->old_reset)
+
+	Sci_Activate(reader);
+	cs_sleepms(50);
+	if(ioctl(reader->handle, IOCTL_SET_RESET, 1) < 0)
 	{
-		ioctl(reader->handle, IOCTL_SET_RESET, 1);
-		ret = Sci_Read_ATR(reader, atr);
-		ioctl(reader->handle, IOCTL_SET_ATR_READY, 1);
+		ret = ERROR;
+		rdr_log(reader, "Error:%s ioctl(IOCTL_SET_RESET) failed.(%d:%s)", __FUNCTION__, errno, strerror(errno) );
+		Sci_Deactivate(reader);
 	}
 	else
 	{
-		if(ioctl(reader->handle, IOCTL_SET_ATR_READY, NULL) < 0)
+		ret = Sci_Read_ATR(reader, atr);
+		if (ret == OK)
 		{
-			ret = ERROR;
-			rdr_log(reader, "Error:%s ioctl(IOCTL_SET_ATR_READY) failed.(%d:%s)", __FUNCTION__, errno, strerror(errno) );
-		}
-		else
-		{
-			if(ioctl(reader->handle, IOCTL_SET_RESET, NULL) < 0)
+			if(ioctl(reader->handle, IOCTL_SET_ATR_READY, 1) < 0)
 			{
 				ret = ERROR;
 				rdr_log(reader, "Error:%s ioctl(IOCTL_SET_ATR_READY) failed.(%d:%s)", __FUNCTION__, errno, strerror(errno) );
+				Sci_Deactivate(reader);
 			}
 			else
 			{
-				ret = Sci_Read_ATR(reader, atr);
+				cs_sleepms(150);
+				Sci_WriteSettings(reader, crdr_data->T,crdr_data->fs,crdr_data->ETU, crdr_data->WWT,crdr_data->CWT,crdr_data->BWT,crdr_data->EGT,crdr_data->P,crdr_data->I);
+				cs_sleepms(150);
 			}
+			
 		}
 	}
-	cs_sleepms(150);
-	Sci_WriteSettings(reader, crdr_data->T,crdr_data->fs,crdr_data->ETU, crdr_data->WWT,crdr_data->CWT,crdr_data->BWT,crdr_data->EGT,crdr_data->P,crdr_data->I);
-	cs_sleepms(150);
+	
 	return ret;
 }
 

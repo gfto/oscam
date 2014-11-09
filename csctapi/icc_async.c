@@ -872,9 +872,12 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 	}
 	else if(reader->crdr.write_settings3)
 	{
-#if defined(__SH4__) || defined(STB04SCI) || defined(__powerpc__)
-		Fi = F/100; // workaround: SH4/DM500 internal reader needs base frequency like 1,2,3,4,5,6 MHz not clock rate conversion factor (Fi)
-#endif
+//#if defined(__SH4__) || defined(STB04SCI) || defined(__powerpc__)
+		if (reader->cardmhz < 2000)
+		{
+		Fi = F/100; // non pll internal reader needs base frequency like 1,2,3,4,5,6 MHz not clock rate conversion factor (Fi)
+		}
+//#endif
 		call(reader->crdr.write_settings3(reader, ETU, Fi, WWT, reader->CWT, reader->BWT, EGT, (unsigned char)I));
 	}
 
