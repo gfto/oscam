@@ -294,7 +294,18 @@ static int32_t Sci_Reset(struct s_reader *reader, ATR *atr)
 	}
 
 	int32_t tries = 0;
-	while(ret == ERROR && tries < 6)
+	int32_t max_tries = 0;
+	int32_t pll_start_fs = 0;
+	if (reader->cardmhz > 2000 && reader->cardmhz != 8300) 
+	{
+		max_tries = (((double)(reader->cardmhz/900)) * 2 ) + 1 ; // the higher the maxpll the higher tries needed, to have 9 Mhz or first avb below.
+		pll_start_fs = ((double)(reader->cardmhz/300)) + 1.5 ; // first avbl reader Mhz equal or above 3.0 Mhz
+	}
+	else
+	{
+		max_tries = 5;
+	}
+	while(ret == ERROR && tries < max_tries)
 	{
 		cs_sleepms(50);
 		rdr_log(reader, "Set reader parameters!");
@@ -325,20 +336,20 @@ static int32_t Sci_Reset(struct s_reader *reader, ATR *atr)
 				if (reader->cardmhz > 2000 && reader->cardmhz != 8300)
 				{
 					tries++; // increase fs
-					params.fs = (9 - tries); // if 1 Mhz init failed retry with 3.37 Mhz up to 9.0 Mhz
-					rdr_log(reader, "Read ATR fail, attempt %d/6  fs = %d", tries, params.fs);
+					params.fs = (pll_start_fs - tries); // if 1 Mhz init failed retry with min 300 Mhz up to max 9.0 Mhz
+					rdr_log(reader, "Read ATR fail, attempt %d/%d  fs = %d", tries, max_tries, params.fs);
 				}
 				else if (reader->cardmhz > 2000 && reader->cardmhz == 8300)
 				{
 					tries++; // increase fs
-					params.fs = (11 - tries); // if 1 Mhz init failed retry with 3.19 Mhz up to 9.0 Mhz
-					rdr_log(reader, "Read ATR fail, attempt %d/6  fs = %d", tries, params.fs);
+					params.fs = (11 - tries); // if 1 Mhz init failed retry with 3.19 Mhz up to 5.188 Mhz
+					rdr_log(reader, "Read ATR fail, attempt %d/5  fs = %d", tries, params.fs);
 				}
 				else 
 				{
 					tries++; // increase fs
-					params.fs = (3 + tries); // if 1 Mhz init failed retry with 3.0 Mhz up to 9.0 Mhz
-					rdr_log(reader, "Read ATR fail, attempt %d/6  fs = %d", tries, params.fs);
+					params.fs = (2 + tries); // if 1 Mhz init failed retry with 3.0 Mhz up to 7.0 Mhz
+					rdr_log(reader, "Read ATR fail, attempt %d/5  fs = %d", tries, params.fs);
 				} 
 			}
 			else // ATR fetched successfully!
