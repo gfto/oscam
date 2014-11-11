@@ -39,7 +39,7 @@ html,body,* html #wrapper {height:100%}
 #content {margin-bottom:0;padding:0 8px 115px}
 #footer {position:absolute;bottom:0;width:100%}
 
-/* **************** 3. BASIC SETTINGS - BODY,P,H4,LI */
+/* **************** 3. BASIC SETTINGS - BODY,P,H4,LI,B */
 body {
 	font-family:Arial;
 	font-size:11px;
@@ -81,7 +81,11 @@ li {
 li.styleauthor:after {
 	content:"Streamboard Team"
 }
-
+/* Solutin for vertical align in table.statusecminfo */
+tbody.statusecminfo tr:nth-child(5) td:last-child b {
+	position:relative;
+	top:1px
+}
 /* **************** 4. LINKS */
 a {
 	text-decoration:none;
