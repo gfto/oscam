@@ -1,4 +1,5 @@
 #include "globals.h"
+#include "oscam-cache.h"
 #include "oscam-chk.h"
 #include "oscam-ecm.h"
 #include "oscam-client.h"
@@ -977,6 +978,31 @@ int32_t chk_is_null_CW(uchar cw[])
 		if(cw[i])
 			{ return 0; }
 	}
+	return 1;
+}
+
+
+/**
+ * Check for wrong swapped NDS CWs
+ **/
+int8_t chk_NDS_valid_CW(ECM_REQUEST *er)
+{
+  if(er->caid >> 8 == 0x09 && er->cw && er->rc < E_NOTFOUND && !cfg.nds_swapp_cw ){
+
+	 if(
+	    (get_odd_even(er) == 0x80 && checkCWpart(er->cw, 0) && !checkCWpart(er->cw, 1))   //xxxxxxxx00000000
+		||
+		(get_odd_even(er) == 0x81 && !checkCWpart(er->cw, 0) && checkCWpart(er->cw, 1))   //00000000xxxxxxxx
+	 )
+	 {
+		return 1;
+	 }
+	 else
+	 {
+		return 0;
+	 }
+
+  }else
 	return 1;
 }
 

@@ -110,9 +110,32 @@ uint8_t check_is_pushed(CW *cw, struct s_client *cl){
 	}
 }
 
+uint8_t get_odd_even(ECM_REQUEST *er){
+	return (er->ecm[0] != 0x80 && er->ecm[0] != 0x81 ? 0 : er->ecm[0]);
+}
 
-CW *get_first_cw(ECMHASH *ecmhash){
-	return get_first_elem_list(&ecmhash->ll_cw);
+
+CW *get_first_cw(ECMHASH *ecmhash, ECM_REQUEST *er){
+	if(!ecmhash) return NULL;
+
+	if(er->caid >> 8 == 0x09 && !cfg.nds_swapp_cw){
+		node *j;
+		CW *cw;
+
+		j = get_first_node_list(&ecmhash->ll_cw);
+		while (j) {
+			cw = get_data_from_node(j);
+			if(cw && cw->odd_even==get_odd_even(er)){
+				return cw;
+			}
+			j = j->next;
+		}
+
+		return NULL;
+
+	}else{
+		return get_first_elem_list(&ecmhash->ll_cw);
+	}
 }
 
 int compare_csp_hash(const void *arg, const void *obj){
@@ -124,9 +147,6 @@ int compare_cw(const void *arg, const void *obj){
 	return memcmp(arg, ((const CW*)obj)->cw, 16);
 }
 
-uint8_t get_odd_even(ECM_REQUEST *er){
-	return (er->ecm[0] != 0x80 && er->ecm[0] != 0x81 ? 0 : er->ecm[0]);
-}
 
 /*
  * This function returns cw (mostly received) in cache for er, or NULL if not found.
@@ -143,35 +163,37 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 
 	ECM_REQUEST *ecm = NULL;
 	ECMHASH *result;
+	CW *cw;
 	uint64_t grp = cl?cl->grp:0;
 
 	pthread_rwlock_rdlock(&cache_lock);
 
 	result = find_hash_table(&ht_cache, &er->csp_hash, sizeof(int32_t),&compare_csp_hash);
+	cw = get_first_cw(result, er);
+
 	if(
-		   result
-		   && get_first_cw(result)
-		   &&
-		   (
-				get_first_cw(result)->csp    //csp have no grp!
-				||
-				!grp		   			     //csp client(no grp) searching for cache
-				||
-				(
-				  grp
-				  &&
-				  get_first_cw(result)->grp  //ecm group --> only when readers/ex-clients answer (e_found) it
-				  && (grp & get_first_cw(result)->grp)
-				)
+		cw
+		&&
+	    (
+			cw->csp    //csp have no grp!
+			||
+			!grp		   			     //csp client(no grp) searching for cache
+			||
+			(
+			  grp
+			  &&
+			  cw->grp  //ecm group --> only when readers/ex-clients answer (e_found) it
+			  && (grp & cw->grp)
 			)
+		 )
 	){
 
 #ifdef CS_CACHEEX
 		CWCHECK check_cw = get_cwcheck(er);
 
-		if(get_first_cw(result)->cacheex_src
+		if(cw->cacheex_src
 		   && check_cw.counter>1
-		   && get_first_cw(result)->count < check_cw.counter
+		   && cw->count < check_cw.counter
 		   && (check_cw.mode || !er->cacheex_wait_time_expired)
 		){
 		    pthread_rwlock_unlock(&cache_lock);
@@ -182,18 +204,18 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 
 #ifdef CW_CYCLE_CHECK
 
-		uint8_t cwc_ct = get_first_cw(result)->cwc_cycletime > 0 ? get_first_cw(result)->cwc_cycletime : 0;
-		uint8_t cwc_ncwc = get_first_cw(result)->cwc_next_cw_cycle < 2 ? get_first_cw(result)->cwc_next_cw_cycle : 2;
-		if(get_first_cw(result)->got_bad_cwc)
+		uint8_t cwc_ct = cw->cwc_cycletime > 0 ? cw->cwc_cycletime : 0;
+		uint8_t cwc_ncwc = cw->cwc_next_cw_cycle < 2 ? cw->cwc_next_cw_cycle : 2;
+		if(cw->got_bad_cwc)
 		{
 			pthread_rwlock_unlock(&cache_lock);
 			return NULL;
 		}
-		if(checkcwcycle(cl, er, NULL, get_first_cw(result)->cw, 0, cwc_ct, cwc_ncwc) != 0){
+		if(checkcwcycle(cl, er, NULL, cw->cw, 0, cwc_ct, cwc_ncwc) != 0){
 			cs_debug_mask(D_CWC | D_LB, "{client %s, caid %04X, srvid %04X} [check_cache] cyclecheck passed ecm in INT. cache, ecm->rc %d", (cl ? cl->account->usr : "-"), er->caid, er->srvid, ecm ? ecm->rc : -1);
 		}else{
 			cs_debug_mask(D_CWC, "cyclecheck [BAD CW Cycle] from Int. Cache detected.. {client %s, caid %04X, srvid %04X} [check_cache] -> skip cache answer", (cl ? cl->account->usr : "-"), er->caid, er->srvid);
-			get_first_cw(result)->got_bad_cwc = 1; // no need to check it again
+			cw->got_bad_cwc = 1; // no need to check it again
 			pthread_rwlock_unlock(&cache_lock);
 			return NULL;
 		}
@@ -202,23 +224,15 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 		if (cs_malloc(&ecm, sizeof(ECM_REQUEST))){
 			ecm->rc = E_FOUND;
 			ecm->rcEx = 0;
-
-			//checks for ecm[0] odd/even byte, if we need swapp cw (all this stuff could be removed when we'll include ecm[0] to csp_hash)
-			if(get_first_cw(result)->odd_even != 0 && get_odd_even(er) != get_first_cw(result)->odd_even){  //swapp it
-				memcpy(ecm->cw, get_first_cw(result)->cw+8, 8);
-				memcpy(ecm->cw+8, get_first_cw(result)->cw, 8);
-			}else{
-				memcpy(ecm->cw, get_first_cw(result)->cw, 16);
-			}
-
-			ecm->grp = get_first_cw(result)->grp;
-			ecm->selected_reader = get_first_cw(result)->selected_reader;
-			ecm->cwc_cycletime = get_first_cw(result)->cwc_cycletime;
-			ecm->cwc_next_cw_cycle = get_first_cw(result)->cwc_next_cw_cycle;
+			memcpy(ecm->cw, cw->cw, 16);
+			ecm->grp = cw->grp;
+			ecm->selected_reader = cw->selected_reader;
+			ecm->cwc_cycletime = cw->cwc_cycletime;
+			ecm->cwc_next_cw_cycle = cw->cwc_next_cw_cycle;
 #ifdef CS_CACHEEX
-			ecm->cacheex_src = get_first_cw(result)->cacheex_src;
+			ecm->cacheex_src = cw->cacheex_src;
 #endif
-			ecm->cw_count = (get_first_cw(result)->count%1000) + ((int)(get_first_cw(result)->count/1000));  //set correct cw_count, removing trick from "normal" reader!
+			ecm->cw_count = cw->count;
 		}
 	}
 
@@ -230,6 +244,7 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 void add_cache(ECM_REQUEST *er){
 	if(!er->csp_hash) return;
 	if(chk_is_null_CW(er->cw)) return;
+	if(!chk_NDS_valid_CW(er)) return;
 
 	ECMHASH *result = NULL;
 	CW *cw = NULL;
@@ -261,16 +276,6 @@ void add_cache(ECM_REQUEST *er){
 
 	//add cw to this csp hash
 	cw = find_hash_table(&result->ht_cw, er->cw, sizeof(er->cw), &compare_cw);
-
-	//checks for same hash but cw swapped (all this stuff could be removed when we'll include ecm[0] in csp_hash calcultaion)
-	if(!cw){  //search for cw swapped
-		uchar cw_swap[16];
-		memcpy(cw_swap, er->cw+8, 8);
-		memcpy(cw_swap+8, er->cw, 8);
-		cw = find_hash_table(&result->ht_cw, cw_swap, sizeof(er->cw), &compare_cw);
-		if(cw) memcpy(er->cw, cw_swap, 16); //so we have correct cw for checking cw diff
-	}
-	//end checks
 
 	if(!cw){
 
@@ -322,14 +327,7 @@ void add_cache(ECM_REQUEST *er){
 	//always update group and counter
 	cw->grp |= er->grp;
 	if(er->from_csp) cw->csp = 1;
-
-	//if cw from normal reader, give it priority respect cacheex src, moving cw at first position!
-#ifdef CS_CACHEEX
-	if(er->cacheex_src)
-		cw->count++;
-	else
-#endif
-	cw->count+=1000;  //trick from "normal" reader to increase priority respect cacheex src
+	cw->count++;
 
 	//sort cw_list by counter (DESC order)
 	if(cw->count>1)
@@ -349,10 +347,12 @@ void add_cache(ECM_REQUEST *er){
 		if(add_new_cw){
 			debug_ecm(D_CACHEEX|D_CSP, "got pushed ECM %s from %s", buf, er->from_csp ? "csp" : username(er->cacheex_src));
 
-			if(er && get_first_cw(result)){
+			CW *cw_first = get_first_cw(result, er);
+
+			if(er && cw_first){
 			
 			//compare er cw with mostly counted cached cw
-			if(memcmp(er->cw, get_first_cw(result)->cw, sizeof(er->cw)) != 0) {
+			if(memcmp(er->cw, cw_first->cw, sizeof(er->cw)) != 0) {
 				er->cacheex_src->cwcacheexerrcw++;
 				if (er->cacheex_src->account)
 					er->cacheex_src->account->cwcacheexerrcw++;
@@ -360,19 +360,19 @@ void add_cache(ECM_REQUEST *er){
 				if (((0x0200| 0x0800) & cs_dblevel)) { //avoid useless operations if debug is not enabled
 					char cw1[16*3+2], cw2[16*3+2];
 					cs_hexdump(0, er->cw, 16, cw1, sizeof(cw1));
-					cs_hexdump(0, get_first_cw(result)->cw, 16, cw2, sizeof(cw2));
+					cs_hexdump(0, cw_first->cw, 16, cw2, sizeof(cw2));
 
 					char ip1[20]="", ip2[20]="";
 					if (check_client(er->cacheex_src))
 						cs_strncpy(ip1, cs_inet_ntoa(er->cacheex_src->ip), sizeof(ip1));
-					if (check_client(get_first_cw(result)->cacheex_src))
-						cs_strncpy(ip2, cs_inet_ntoa(get_first_cw(result)->cacheex_src->ip), sizeof(ip2));
-					else if (get_first_cw(result)->selected_reader && check_client(get_first_cw(result)->selected_reader->client))
-						cs_strncpy(ip2, cs_inet_ntoa(get_first_cw(result)->selected_reader->client->ip), sizeof(ip2));
+					if (check_client(cw_first->cacheex_src))
+						cs_strncpy(ip2, cs_inet_ntoa(cw_first->cacheex_src->ip), sizeof(ip2));
+					else if (cw_first->selected_reader && check_client(cw_first->selected_reader->client))
+						cs_strncpy(ip2, cs_inet_ntoa(cw_first->selected_reader->client->ip), sizeof(ip2));
 
 					debug_ecm(D_CACHEEX| D_CSP, "WARNING: Different CWs %s from %s(%s)<>%s(%s): %s<>%s ", buf,
 						er->from_csp ? "csp" : username(er->cacheex_src), ip1,
-						check_client(get_first_cw(result)->cacheex_src)?username(get_first_cw(result)->cacheex_src):(get_first_cw(result)->selected_reader?get_first_cw(result)->selected_reader->label:"unknown/csp"), ip2,
+						check_client(cw_first->cacheex_src)?username(cw_first->cacheex_src):(cw_first->selected_reader?cw_first->selected_reader->label:"unknown/csp"), ip2,
 						cw1, cw2);
 				}
 			}

@@ -1859,6 +1859,7 @@ struct s_config
 #endif
 	int32_t    max_cache_time;  //seconds ecms are stored in ecmcwcache
 	int32_t    max_hitcache_time;  //seconds hits are stored in cspec_hitcache (to detect dyn wait_time)
+	int8_t     nds_swapp_cw;    //0: no swapp cw if odd/even byte is not correct; 1: swapp cw to match odd/even byte
 
 	int8_t      block_same_ip;   //0=allow all, 1=block client requests to reader with same ip   (default=1)
 	int8_t      block_same_name; //0=allow all, 1=block client requests to reader with same name (default=1)

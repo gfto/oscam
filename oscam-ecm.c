@@ -1686,6 +1686,11 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 		cs_debug_mask(D_TRACE | D_LB, "WARNING: reader %s send fake cw, set rc=E_NOTFOUND!", reader ? reader->label : "-");
 	}
 
+	if(!chk_NDS_valid_CW(er)){
+		rc = E_NOTFOUND;
+		cs_debug_mask(D_TRACE | D_LB, "WARNING: reader %s send wrong swapped NDS cw, set rc=E_NOTFOUND!", reader ? reader->label : "-");
+	}
+
 	if(reader && cw && rc < E_NOTFOUND)
 	{
 		if(reader->disablecrccws == 0)

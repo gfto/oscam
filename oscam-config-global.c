@@ -316,6 +316,7 @@ static const struct config_list global_opts[] =
 	DEF_OPT_STR("mailfile"                  , OFS(mailfile),            NULL),
 	DEF_OPT_STR("cwlogdir"                  , OFS(cwlogdir),            NULL),
 	DEF_OPT_STR("emmlogdir"                 , OFS(emmlogdir),           NULL),
+	DEF_OPT_INT8("nds_swapp_cw"             , OFS(nds_swapp_cw),        0),
 #ifdef WITH_LB
 	DEF_OPT_INT32("lb_mode"                 , OFS(lb_mode),             DEFAULT_LB_MODE),
 	DEF_OPT_INT32("lb_save"                 , OFS(lb_save),             0),
