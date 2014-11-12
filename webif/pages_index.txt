@@ -129,7 +129,7 @@ ICENA                         images/ICENA.svg
 ICENT                         images/ICENT.svg
 ICHID                         images/ICHID.svg
 ICKIL                         images/ICKIL.svg
-IC_LOGO                       images/ICMLOGO.svg
+LOGOBITSVG                    images/ICMLOGO.svg
 ICREF                         images/ICREF.svg
 ICRES                         images/ICRES.svg
 ICSTA                         images/ICSTA.svg
@@ -146,6 +146,7 @@ HEADERSHORT                   include/header_short.html
 JQUERY                        include/jquery.js                                           WEBIF_JQUERY
 JSCRIPT                       include/jscript.js
 LOGOBIT                       include/logobit.html
+LOGOBITIMG                    include/logobit_img.html
 MENU                          include/menu.html
 CACHEEXMENUITEM               include/menu_cacheexmenuitem.html                           CS_CACHEEX
 MESSAGE                       include/message.html

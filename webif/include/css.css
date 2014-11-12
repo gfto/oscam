@@ -81,11 +81,12 @@ li {
 li.styleauthor:after {
 	content:"Streamboard Team"
 }
-/* Solutin for vertical align in table.statusecminfo */
+/* Solution for vertical align in tbody.statusecminfo */
 tbody.statusecminfo tr:nth-child(5) td:last-child b {
 	position:relative;
 	top:1px
 }
+
 /* **************** 4. LINKS */
 a {
 	text-decoration:none;
@@ -487,7 +488,7 @@ div.warning {
 div.logo {
 	position:absolute;
 	top:6px;
-	left:8px;
+	left:9px;
 	z-index:0
 }
 /* READERS and USERS items */
@@ -691,6 +692,9 @@ img.usericon, img.readericon {
 /* logo IC_LOGO.tpL */
 div.logo img {
 	max-height:44px
+}
+div.logo svg.OSCam_logo {
+	fill:#111111
 }
 
 td#out.centered img,
