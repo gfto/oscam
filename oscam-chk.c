@@ -987,7 +987,7 @@ int32_t chk_is_null_CW(uchar cw[])
  **/
 int8_t chk_NDS_valid_CW(ECM_REQUEST *er)
 {
-  if(er->caid >> 8 == 0x09 && er->cw && er->rc < E_NOTFOUND && !cfg.nds_swapp_cw ){
+  if(er->caid >> 8 == 0x09 && er->cw && er->rc < E_NOTFOUND && !cfg.nds_swap_cw ){
 
 	 if(
 	    (get_odd_even(er) == 0x80 && checkCWpart(er->cw, 0) && !checkCWpart(er->cw, 1))   //xxxxxxxx00000000

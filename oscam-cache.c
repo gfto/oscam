@@ -118,7 +118,7 @@ uint8_t get_odd_even(ECM_REQUEST *er){
 CW *get_first_cw(ECMHASH *ecmhash, ECM_REQUEST *er){
 	if(!ecmhash) return NULL;
 
-	if(er->caid >> 8 == 0x09 && !cfg.nds_swapp_cw){
+	if(er->caid >> 8 == 0x09 && !cfg.nds_swap_cw){
 		node *j;
 		CW *cw;
 
