@@ -678,6 +678,7 @@ void free_client(struct s_client *cl)
 	// Clean reader. The cleaned structures should be only used by the reader thread, so we should be save without waiting
 	if(rdr)
 	{
+		add_garbage(rdr->emmcache);
 		remove_reader_from_active(rdr);
 
 		cs_sleepms(1000); //just wait a bit that really really nobody is accessing client data
@@ -728,7 +729,6 @@ void free_client(struct s_client *cl)
 		cl->cascadeusers = NULL;
 	}
 
-	add_garbage(cl->emmcache);
 #ifdef MODULE_CCCAM
 	add_garbage(cl->cc);
 #endif

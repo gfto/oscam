@@ -256,7 +256,7 @@ typedef unsigned char uchar;
 #endif
 #define PTHREAD_STACK_SIZE PTHREAD_STACK_MIN+32768
 
-#define CS_EMMCACHESIZE  127 //nr of EMMs that each client will cache; cache is per client, so memory-expensive...
+#define CS_EMMCACHESIZE  512 //nr of EMMs that each reader will cache
 #define MSGLOGSIZE 64   //size of string buffer for a ecm to return messages
 
 #define D_TRACE     0x0001  // Generate very detailed error/trace messages per routine
@@ -1074,7 +1074,6 @@ struct s_client
 	struct s_reader *reader;                        // points to s_reader when cl->typ='r'
 
 	ECM_REQUEST *ecmtask;
-	struct s_emm    *emmcache;
 
 	pthread_t       thread;
 
@@ -1084,7 +1083,6 @@ struct s_client
 	//reader common
 	int32_t         last_idx;
 	uint16_t        idx;
-	int8_t          rotate;
 
 	int8_t          ncd_proto;
 	uint8_t         ncd_header[12];
@@ -1433,7 +1431,8 @@ struct s_reader                                     //contains device info, read
 	uint8_t         ghttp_use_ssl;
 #endif
 	uint8_t cnxlastecm; // == 0 - las ecm has not been paired ecm, > 0 last ecm has been paired ecm
-
+	int16_t          rotate;
+	struct s_emm    *emmcache;
 	struct s_reader *next;
 };
 

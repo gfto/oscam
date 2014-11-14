@@ -1161,7 +1161,7 @@ int32_t reader_init(struct s_reader *reader)
 			{ return 0; }
 	}
 
-	if(!cs_malloc(&client->emmcache, CS_EMMCACHESIZE * sizeof(struct s_emm)))
+	if(!cs_malloc(&reader->emmcache, CS_EMMCACHESIZE * sizeof(struct s_emm)))
 	{
 		NULLFREE(client->ecmtask);
 		return 0;

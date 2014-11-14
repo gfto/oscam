@@ -113,8 +113,8 @@ static void reader_log_emm(struct s_reader *reader, EMM_PACKET *ep, int32_t i, i
 			{ tps = &tpe; }
 
 		rdr_log(reader, "%s emmtype=%s, len=%d, idx=%d, cnt=%d: %s (%"PRId64" ms)",
-				username(ep->client), typedesc[cl->emmcache[i].type], ep->emm[2],
-				i, cl->emmcache[i].count, rtxt[rc], comp_timeb(&tpe, tps));
+				username(ep->client), typedesc[reader->emmcache[i].type], ep->emm[2],
+				i, reader->emmcache[i].count, rtxt[rc], comp_timeb(&tpe, tps));
 	}
 
 	if(rc)
@@ -143,16 +143,15 @@ static void reader_log_emm(struct s_reader *reader, EMM_PACKET *ep, int32_t i, i
 #endif
 }
 
-static int32_t reader_store_emm(uint8_t type, uint8_t *emmd5)
+static int32_t reader_store_emm(struct s_reader *reader, uint8_t type, uint8_t *emmd5)
 {
 	int32_t rc;
-	struct s_client *cl = cur_client();
-	memcpy(cl->emmcache[cl->rotate].emmd5, emmd5, CS_EMMSTORESIZE);
-	cl->emmcache[cl->rotate].type = type;
-	cl->emmcache[cl->rotate].count = 1;
+	memcpy(reader->emmcache[reader->rotate].emmd5, emmd5, CS_EMMSTORESIZE);
+	reader->emmcache[reader->rotate].type = type;
+	reader->emmcache[reader->rotate].count = 1;
 	//  cs_debug_mask(D_READER, "EMM stored (index %d)", rotate);
-	rc = cl->rotate;
-	cl->rotate = (++cl->rotate < CS_EMMCACHESIZE) ? cl->rotate : 0;
+	rc = reader->rotate;
+	reader->rotate = (++reader->rotate < CS_EMMCACHESIZE) ? reader->rotate : 0;
 	return rc;
 }
 
@@ -172,11 +171,18 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 		int caid_found = 0;
 		for(i = 0; i < (int)ARRAY_SIZE(reader->csystem.caids); i++)
 		{
-			if(reader->csystem.caids[i] == caid || chk_ctab_ex(caid, &reader->ctab))
+			if( (reader->caid != 0) && (reader->csystem.caids[i] == caid) ) 
 			{
 				caid_found = 1;
 				break;
 			}
+			
+			if ( (reader->caid == 0) && chk_ctab_ex(caid, &reader->ctab) )
+			{
+				caid_found = 1;
+				break;
+			}
+				
 		}
 		if(!caid_found)
 		{
@@ -496,7 +502,6 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 		//Check emmcache early:
 		int32_t i;
 		unsigned char md5tmp[CS_EMMSTORESIZE];
-		struct s_client *au_cl = aureader->client;
 
 		MD5(ep->emm, ep->emm[2], md5tmp);
 		ep->client = client;
@@ -505,13 +510,13 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 
 		for(i = 0; i < CS_EMMCACHESIZE; i++)  //check emm cache hits
 		{
-			if(!memcmp(au_cl->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE))
+			if(!memcmp(aureader->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE))
 			{
 				rdr_debug_mask(aureader, D_EMM, "emm found in cache: count %d rewrite %d",
-							   au_cl->emmcache[i].count, aureader->rewritemm);
-				if(aureader->cachemm && (au_cl->emmcache[i].count > aureader->rewritemm))
+							   aureader->emmcache[i].count, aureader->rewritemm);
+				if(aureader->cachemm && (aureader->emmcache[i].count > aureader->rewritemm))
 				{
-					au_cl->emmcache[i].count++;
+					aureader->emmcache[i].count++;
 					reader_log_emm(aureader, ep, i, 2, NULL);
 					writeemm = 0; // dont write emm!
 					saveemm(aureader, ep, "emmcache");
@@ -551,10 +556,6 @@ int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	int32_t i, rc, ecs;
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 	struct timeb tps;
-	struct s_client *cl = reader->client;
-
-	if(!cl)
-		{ return 0; }
 
 	cs_ftime(&tps);
 
@@ -562,12 +563,12 @@ int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 
 	for(i = ecs = 0; i < CS_EMMCACHESIZE; i++)
 	{
-		if(!memcmp(cl->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE))
+		if(!memcmp(reader->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE))
 		{
-			cl->emmcache[i].count++;
+			reader->emmcache[i].count++;
 			if(reader->cachemm)
 			{
-				if(cl->emmcache[i].count > reader->rewritemm)
+				if(reader->emmcache[i].count > reader->rewritemm)
 				{
 					ecs = 2; //skip emm
 				}
@@ -606,7 +607,7 @@ int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 #endif
 		}
 		if(!ecs)
-			{ i = reader_store_emm(ep->type, md5tmp); }
+			{ i = reader_store_emm(reader, ep->type, md5tmp); }
 	}
 
 	reader_log_emm(reader, ep, i, rc, &tps);

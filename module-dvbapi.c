@@ -3704,8 +3704,6 @@ static void *dvbapi_main_local(void *cli)
 					}
 				}
 				if(emmstarted != demux[i].emm_filter && !emmcounter) { continue; }  // proceed with next demuxer if no emms where running before
-				// if no additional filters activated reset emmpidcount (fixes repeated trying of setting filters!)
-				if(emmstarted == demux[i].emm_filter) { demux[i].EMMpidcount = 0; }
 			}
 
 			if(ecmcounter == 0 && demux[i].ECMpidcount > 0)   // Restart decoding all caids we have ecmpids but no ecm filters!
