@@ -1,27 +1,27 @@
 <?xml-stylesheet type="text/css" href="site.css" ?>
-<svg xml:space='preserve' xmlns='http://www.w3.org/2000/svg'
-	xmlns:xlink='http://www.w3.org/1999/xlink'
-	width='100%' height='100%'
+<svg
+	xmlns='http://www.w3.org/2000/svg'
+	width='100%'
+	height='100%'
 	viewBox='0 0 800 400'
 	preserveAspectRatio='YMid'
 	onload='init(evt)'
-	style='background-color:#F0F0F0'
->
-<g id='graph' style='font-family: Verdana, Arial; '>
-	<rect id='g' class='graph_bg' x1='0' y1='0' width='800' height='400' style='fill:#F0F0F0;' />
+	class='graph' >
+ <g id='graph' >
+	<rect id='g' class='graph_bg' x1='0' y1='0' width='800' height='400' />
 	<text id='graph_error' class='graph_error' x='400' y='125' visibility='hidden'>Error occured!</text>
 	<path id='graph_grid' class='graph_grid' d='M 2 105 L 798 105 M 2 180 L 798 180 M 2 255 L 798 255 M 2 330 L 798 330'/>
 
-	<rect id='graph_grid_button_back' style='fill:#A9D0F5;' cursor='pointer' x='425' y='5' rx='5' ry='5' width='40' height='20'/>
-	<text id='graph_grid_button_text' style='font-size:8px; fill:black;' cursor='pointer' class='graph_grid_txt' x='460' y='17'>Change</text>	
-	<text id='graph_grid_interval' style='font-size:8px; fill:black;' class='graph_grid_txt' x='420' y='17'>-</text>	
+	<rect id='graph_grid_button_back' class='graph_button' cursor='pointer' x='425' y='5' rx='5' ry='5' width='40' height='20'/>
+	<text id='graph_grid_button_text' cursor='pointer' class='graph_top_txt' x='460' y='17'>Change</text>	
+	<text id='graph_grid_interval' class='graph_top_txt' x='420' y='17'>-</text>	
 	<rect id='graph_grid_button' style='opacity:0;' cursor='pointer' x='340' y='5' rx='5' ry='5' width='130' height='20'/>
 		
 	<text id='graph_grid_txt4' class='graph_grid_txt' x='798' y='328'>-</text>
 	<text id='graph_grid_txt3' class='graph_grid_txt' x='798' y='253'>-</text>
 	<text id='graph_grid_txt2' class='graph_grid_txt' x='798' y='178'>-</text>
 	<text id='graph_grid_txt1' class='graph_grid_txt' x='798' y='103'>-</text>
-</g>
+ </g>
 <script type='text/ecmascript'>
 <![CDATA[
 if (typeof getURL == 'undefined') {
@@ -95,7 +95,7 @@ function switch_interval() {
 		interval -= 1000;
 	}
 	if ( interval<250 ) interval = 10000;
-	SVGDoc.getElementById('graph_grid_interval').firstChild.data = 'Refresh:'+interval+'ms';
+	SVGDoc.getElementById('graph_grid_interval').firstChild.data = 'Refresh: '+interval+'ms';
 	window.clearInterval(activeTask);
 	activeTask = setInterval('fetch_data()', interval);
 }
@@ -110,9 +110,9 @@ function showlabel(evt) {
 	var id = evt.target.id.split('_');
 	var obj = SVGDoc.getElementById('graph_txt_'+id[2]);
 	if ( evt.type=='mouseover' ) {
-			obj.setAttributeNS(null,'style','font-size:9px;display:;');
+			obj.setAttributeNS(null,'style','');
 	} else if ( evt.type=='mouseout' ) {
-		obj.setAttributeNS(null,'style','font-size:9px;display:none;');
+		obj.setAttributeNS(null,'style','display:none;');
 	}
 }
 function plot_data(obj) {
@@ -180,10 +180,10 @@ function plot_data(obj) {
 			newText.setAttributeNS(null,'id','graph_txt_'+i);
 			if ( hideLabels ) {
 				newText.setAttributeNS(null,'y',13);
-				newText.setAttributeNS(null,'style','font-size:9px;display:none;');
+				newText.setAttributeNS(null,'style','display:none;');
 			} else {
 				newText.setAttributeNS(null,'y',13+(10*i));
-				newText.setAttributeNS(null,'style','font-size:9px');
+				newText.setAttributeNS(null,'style','');
 			}
 			var textNode = document.createTextNode(plots[i]['name']);
       newText.appendChild(textNode);
@@ -195,10 +195,8 @@ function plot_data(obj) {
 		if ( SVGDoc.getElementById('graph_path_'+i) == null ) {
 			var newPath = document.createElementNS(svgNS,'path');
 			newPath.setAttributeNS(null,'id','graph_path_'+i);
-			newPath.setAttributeNS(null,'fill','none');
+			newPath.setAttributeNS(null,'class','graph_curve');
 			newPath.setAttributeNS(null,'stroke',Color[ i - (parseInt(i/Color.length)*Color.length)]);
-			newPath.setAttributeNS(null,'stroke-width','1');
-			newPath.setAttributeNS(null,'stroke-opacity','0.8');
 			if ( hideLabels ) {
 				newPath.addEventListener('mouseover', showlabel, false);
 				newPath.addEventListener('mouseout', showlabel, false);

@@ -370,6 +370,10 @@ th.nameinfo {
 	text-align:left;
 	background-color:#999
 }
+th .nameinfo_second {
+	text-transform:none;
+	font-weight:normal
+}
 table.infotable th:first-child {
 	width:100px
 }
@@ -498,7 +502,6 @@ div.groups {
 	margin:0 auto;
 	text-align:center;
 	word-wrap:normal;
-	position:relative;
 	width:40px
 }
 /* footer.html */
@@ -736,10 +739,14 @@ span.e_expired {background-color:#FFF3E7}
 }
 
 /* **************** 15. GRAPH */
+svg.graph {background-color:#F0F0F0;font-family:Arial;font-size:9px}
 rect.graph_bg {fill:white}
+rect.graph_button {fill:#A9D0F5}
 text.graph_error {text-anchor:middle;fill:red}
-text.graph_grid_txt {text-anchor:end;font-size:12px;fill:gray}
-path.graph_grid {stroke-opacity:0.5;stroke:gray}
+text.graph_top_txt {text-anchor:end}
+text.graph_grid_txt {text-anchor:end;fill:gray}
+path.graph_grid {stroke-opacity:0.5;stroke-width:0.7px;stroke:gray}
+path.graph_curve {stroke-opacity:0.8;stroke-width:0.7px;fill:none}
 
 /* **************** 16. SORTING IN TABLE */
 .users th {

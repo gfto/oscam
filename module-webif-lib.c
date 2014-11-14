@@ -12,6 +12,8 @@
 #include "oscam-net.h"
 #if defined(__linux__)
 	#include <sys/sysinfo.h>
+#elif defined(__APPLE__)
+	#include <sys/sysctl.h>
 #endif
 
 extern int32_t ssl_active;
@@ -587,6 +589,34 @@ char *getParam(struct uriparams *params, char *name)
 	return "";
 }
 
+/*
+ * returns uptime in sec on success, -1 on error
+*/
+int32_t oscam_get_uptime(void)
+{
+#if defined(__linux__)
+	struct sysinfo uptime;
+	if(!sysinfo(&uptime)){
+		return (int32_t)uptime.uptime;
+	}
+	else{
+		return -1;
+	}
+#elif defined(__APPLE__)
+	struct timeval boottime;
+	size_t len = sizeof(boottime);
+	int mib[2] = { CTL_KERN, KERN_BOOTTIME };
+	if(sysctl(mib, 2, &boottime, &len, NULL, 0) < 0 ){
+		return -1;
+	}
+	time_t bsec = boottime.tv_sec, csec = time(NULL);
+
+	return difftime(csec, bsec);
+#else
+	return -1;
+#endif
+}
+
 #if defined(__linux__)
 /*
  * read /proc data into the passed struct pstat
@@ -648,10 +678,25 @@ int8_t get_stats_linux(const pid_t pid, struct pstat* result)
 		result->cpu_total_time += cpu_time[i];
 	}
 
+	// read cached from /proc/meminfo
+	uint64_t meminfo_cached = 0;
+	FILE *fd = fopen("/proc/meminfo", "r");
+	if (fd ) {
+		char line[256];
+		while(fgets(line, sizeof(line), fd)) {
+			if(sscanf(line, "Cached: %" PRId64" \n kB", &meminfo_cached) == 1){
+				break;
+			}
+    	}
+    }
+	fclose(fd);
+
 	// read cpu/meminfo from sysinfo()
 	struct sysinfo info;
 	float shiftfloat = (float)(1 << SI_LOAD_SHIFT);
 	if (!sysinfo(&info)) {
+		// processes
+		result->info_procs = info.procs;
 		// cpu load
 		result->cpu_avg[0] = (float) info.loads[0] / shiftfloat;
 		result->cpu_avg[1] = (float) info.loads[1] / shiftfloat;
@@ -659,8 +704,14 @@ int8_t get_stats_linux(const pid_t pid, struct pstat* result)
 		// meminfo
 		result->mem_total = info.totalram  * info.mem_unit;
 		result->mem_free = info.freeram * info.mem_unit;
-		result->mem_used = (info.totalram * info.mem_unit) - (info.freeram * info.mem_unit);
+		result->mem_used = result->mem_total - result->mem_free;
 		result->mem_buff = info.bufferram * info.mem_unit;
+		result->mem_cached = meminfo_cached * 1024;
+		result->mem_freem = result->mem_free + result->mem_buff + result->mem_cached;
+		result->mem_share = info.sharedram * info.mem_unit;
+		result->mem_total_swap = info.totalswap * info.mem_unit;
+		result->mem_free_swap = info.freeswap * info.mem_unit;
+		result->mem_used_swap = result->mem_total_swap - result->mem_free_swap;
 	}
 
 	// set timestamp for function call
@@ -681,17 +732,17 @@ void calc_cpu_usage_pct(struct pstat* cur_usage, struct pstat* last_usage)
 
 	if(cur_usage->gone_refresh < 1){
 		//set to N/A since result may provide wrong results (/proc not updated)
-		cur_usage->check_available |= (1 << 8);
 		cur_usage->check_available |= (1 << 9);
 		cur_usage->check_available |= (1 << 10);
+		cur_usage->check_available |= (1 << 11);
 	}
 	else{
 		int64_t cur_ticks = cur_usage->utime_ticks + cur_usage->cutime_ticks;
 		int64_t last_ticks = last_usage->utime_ticks + last_usage->cutime_ticks;
 		//reset flags if set bevore
-		cur_usage->check_available &= ~(1 << 8);
 		cur_usage->check_available &= ~(1 << 9);
-		cur_usage->check_available &= ~(1 << 10);
+ 		cur_usage->check_available &= ~(1 << 10);
+ 		cur_usage->check_available &= ~(1 << 11);
 
 		cur_usage->cpu_usage_user = 100.0 * abs(cur_ticks - last_ticks) / total_time_diff;
 

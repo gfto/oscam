@@ -120,26 +120,40 @@ static void set_status_info_var(struct templatevars *vars, char *varname, int no
 /*
 * Creates vars Memory/CPU/OSCAM info in for status_page
 * if check_available == 0 N/A will be displayed
+* Bit mapping
+* mem	0 total, 1 used & free, 2 buff, cached & free incl. buff, 3 share
+* swap	4 total, 5 used & free,
+* proc	6 count
+* cpu	7 load
+* oscam	8 vsize & rssize, 9 cpu user, 10 cpu sys, 11 cpu sum, 12 cpu refreshtime
+* unused 13 - 15
 */
 static void set_status_info(struct templatevars *vars, struct pstat stats){
 	set_status_info_var(vars, "MEM_CUR_TOTAL",  stats.check_available & (1 << 0), "%'.2f MB" , (double)stats.mem_total/(1024.0*1024.0));
 	set_status_info_var(vars, "MEM_CUR_FREE",   stats.check_available & (1 << 1), "%'.2f MB" , (double)stats.mem_free/(1024.0*1024.0));
-	set_status_info_var(vars, "MEM_CUR_USED",   stats.check_available & (1 << 2), "%'.2f MB" , (double)stats.mem_used/(1024.0*1024.0));
-	set_status_info_var(vars, "MEM_CUR_BUFF",   stats.check_available & (1 << 3), "%'.2f MB" , (double)stats.mem_buff/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_USED",   stats.check_available & (1 << 1), "%'.2f MB" , (double)stats.mem_used/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_BUFF",   stats.check_available & (1 << 2), "%'.2f MB" , (double)stats.mem_buff/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_CACHED", stats.check_available & (1 << 2), "%'.2f MB" , (double)stats.mem_cached/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_FREEM",  stats.check_available & (1 << 2), "%'.2f MB" , (double)stats.mem_freem/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_SHARE",  stats.check_available & (1 << 3), "%'.2f MB" , (double)stats.mem_share/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_TOTSW",  stats.check_available & (1 << 4), "%'.2f MB" , (double)stats.mem_total_swap/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_FRESW",  stats.check_available & (1 << 5), "%'.2f MB" , (double)stats.mem_free_swap/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_USESW",  stats.check_available & (1 << 5), "%'.2f MB" , (double)stats.mem_used_swap/(1024.0*1024.0));
 
-	set_status_info_var(vars, "CPU_LOAD_0",     stats.check_available & (1 << 3), "%.2f"   , stats.cpu_avg[0]);
-	set_status_info_var(vars, "CPU_LOAD_1",     stats.check_available & (1 << 4), "%.2f"   , stats.cpu_avg[1]);
-	set_status_info_var(vars, "CPU_LOAD_2",     stats.check_available & (1 << 5), "%.2f"   , stats.cpu_avg[2]);
+	set_status_info_var(vars, "SERVER_PROCS",   stats.check_available & (1 << 6), "%'.0f"    , stats.info_procs);
 
-	set_status_info_var(vars, "OSCAM_VMSIZE",   stats.check_available & (1 << 6), "%'.2f MB" , (double)stats.vsize/(1024.0*1024.0));
-	set_status_info_var(vars, "OSCAM_RSSSIZE",  stats.check_available & (1 << 7), "%'.2f MB" , (double)stats.rss/(1024.0*1024.0));
-	set_status_info_var(vars, "OSCAM_CPU_USER", stats.check_available & (1 << 8), "%.2f %%" , stats.cpu_usage_user);
-	set_status_info_var(vars, "OSCAM_CPU_SYS",  stats.check_available & (1 << 9), "%.2f %%" , stats.cpu_usage_sys);
+	set_status_info_var(vars, "CPU_LOAD_0",     stats.check_available & (1 << 7), "%.2f"     , stats.cpu_avg[0]);
+	set_status_info_var(vars, "CPU_LOAD_1",     stats.check_available & (1 << 7), "%.2f"     , stats.cpu_avg[1]);
+	set_status_info_var(vars, "CPU_LOAD_2",     stats.check_available & (1 << 7), "%.2f"     , stats.cpu_avg[2]);
 
+	set_status_info_var(vars, "OSCAM_VMSIZE",   stats.check_available & (1 << 8), "%'.2f MB" , (double)stats.vsize/(1024.0*1024.0));
+	set_status_info_var(vars, "OSCAM_RSSSIZE",  stats.check_available & (1 << 8), "%'.2f MB" , (double)stats.rss/(1024.0*1024.0));
+	set_status_info_var(vars, "OSCAM_CPU_USER", stats.check_available & (1 << 9), "%.2f %%" , stats.cpu_usage_user);
+	set_status_info_var(vars, "OSCAM_CPU_SYS",  stats.check_available & (1 << 10), "%.2f %%" , stats.cpu_usage_sys);
 	double sum_cpu = stats.cpu_usage_sys + stats.cpu_usage_user;
-	set_status_info_var(vars, "OSCAM_CPU_SUM", stats.check_available & (1 << 10), "%.2f %%" , sum_cpu);
+	set_status_info_var(vars, "OSCAM_CPU_SUM", stats.check_available & (1 << 11), "%.2f %%"  , sum_cpu);
 
-	if (stats.check_available & (1 << 11)) {
+	if (stats.check_available & (1 << 12)) {
 		tpl_addVar(vars, TPLADD, "OSCAM_REFRESH" , "N/A");
 	} else {
 		tpl_printf(vars, TPLADD, "OSCAM_REFRESH" , "%02"PRId64":%02"PRId64":%02"PRId64"h",
@@ -4581,13 +4595,16 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								tpl_addVar(vars, TPLADD, "LBLVALUE", xml_encode(vars, cl->lastreader));
 								if(strstr(cl->lastreader, " (cache)"))
 								{
-									char lastreader_new[strlen(cl->lastreader)-8];
-									strncpy(lastreader_new, cl->lastreader, strlen(cl->lastreader)-8);
-									tpl_addVar(vars, TPLADD, "LBLVALUEENC", urlencode(vars, lastreader_new));
+									char lastreader_tmp[strlen(cl->lastreader)-8];
+									tpl_addVar(vars, TPLADD, "CLIENTLBVALUE", tpl_getVar(vars, "LBLRPSTRVALUE"));
+									strncpy(lastreader_tmp, cl->lastreader, strlen(cl->lastreader)-8);
+									tpl_addVar(vars, TPLADD, "LBLVALUEENC", urlencode(vars, lastreader_tmp));
+									tpl_addVar(vars, TPLADD, "LBLVALUETITLE", xml_encode(vars, lastreader_tmp));
 								}
 								else
 								{
 									tpl_addVar(vars, TPLADD, "LBLVALUEENC", urlencode(vars, cl->lastreader));
+									tpl_addVar(vars, TPLADD, "LBLVALUETITLE", xml_encode(vars, cl->lastreader));
 								}
 								tpl_addVar(vars, TPLAPPEND, "CLIENTLBVALUE", tpl_getTpl(vars, "CLIENTLBLVALUEBIT"));
 #else
@@ -5046,6 +5063,15 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	//copy struct to p_stat_old for cpu_usage calculation
 	p_stat_old = p_stat_cur;
 
+/*
+	* check_available Bit mapping
+	* mem	0 total, 1 used & free, 2 buff, cached & free incl. buff, 3 share
+	* swap	4 total, 5 used & free,
+	* proc	6 count
+	* cpu	7 load
+	* oscam	8 vsize & rssize, 9 cpu user, 10 cpu sys, 11 cpu sum, 12 cpu refreshtime
+	* unused 13 - 15
+*/
 	//Memory-CPU Info for linux based systems
 #if defined(__linux__)
 	//get actual stats
@@ -7321,7 +7347,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				tpl_addVar(vars, TPLADD, "WITHQUERY", pgidx == 15 ? "1" : "0");
 				tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 			}
-#ifdef WEBIF_JQUERY 
+#ifdef WEBIF_JQUERY
 			tpl_printf(vars, TPLADD, "SRCJQUERY", "jquery.js?v=%s", CS_SVN_VERSION);
 #else
 			tpl_addVar(vars, TPLADD, "SRCJQUERY", cfg.http_extern_jquery);
@@ -7351,7 +7377,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				char tbuffer [30];
 				strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &st);
 				tpl_addVar(vars, TPLADD, "APISTARTTIME", tbuffer);
-				tpl_printf(vars, TPLADD, "APIUPTIME", "%ld", now - first_client->login);
+				tpl_printf(vars, TPLADD, "APIRUNTIME", "%ld", now - first_client->login);
 				tpl_printf(vars, TPLADD, "APIREADONLY", "%d", cfg.http_readonly);
 				if(strcmp(getParam(&params, "callback"), ""))
 				{
@@ -7366,13 +7392,19 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 #endif
 			// language code in helplink
 			tpl_addVar(vars, TPLADD, "LANGUAGE", cfg.http_help_lang);
-			tpl_addVar(vars, TPLADD, "UPTIME", sec2timeformat(vars, (now - first_client->login)));
+			tpl_addVar(vars, TPLADD, "RUNTIME", sec2timeformat(vars, (now - first_client->login)));
+			time_t uptime = oscam_get_uptime();
+			if(uptime > 0){
+				tpl_addVar(vars, TPLADD, "UPTIMETXT", "Up Time: ");
+				tpl_addVar(vars, TPLADD, "UPTIME", sec2timeformat(vars, uptime));
+			}
 			tpl_addVar(vars, TPLADD, "CURIP", cs_inet_ntoa(addr));
 			if(cfg.http_readonly)
 				{ tpl_addVar(vars, TPLAPPEND, "BTNDISABLED", "DISABLED"); }
 
 			i = ll_count(cfg.v_list);
 			if(i > 0) { tpl_printf(vars, TPLADD, "FAILBANNOTIFIER", "<SPAN CLASS=\"span_notifier\">%d</SPAN>", i); }
+			tpl_printf(vars, TPLADD, "FAILBANNOTIFIERPOLL", "%d", i);
 
 			char *result = NULL;
 

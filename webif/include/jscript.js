@@ -345,11 +345,26 @@ $(function () {
 });
 
 /*
- * Genaral: Update page footer
+ * General: Update page footer and failbannotifier
  */
 function updateFooter(data) {
 	$("#curtime").text(' ' + data.oscam.curdate + ' | ' + data.oscam.curtime + ' ');
-	$("#uptime").text(' ' + data.oscam.uptimefmt);
+	$("#runtime").text(' ' + data.oscam.runtime);
+	$("#uptime") .text(' ' + data.oscam.uptime);
+
+	if ($("#fbnotifier > span.span_notifier").length) {
+		if (data.oscam.failbannotifier > 0) {
+			$("#fbnotifier > span.span_notifier")
+				.text(data.oscam.failbannotifier);
+		}
+		else {
+			$("#fbnotifier > span.span_notifier").remove();
+		}
+	}
+	else if (data.oscam.failbannotifier > 0) {
+		$("#fbnotifier")
+			.append('<SPAN CLASS="span_notifier">'+ data.oscam.failbannotifier + '</SPAN>');
+	}
 }
 
 /*
@@ -957,8 +972,15 @@ function updateSysinfo(data) {
 	$("#mem_cur_free").text(data.oscam.sysinfo.mem_cur_free);
 	$("#mem_cur_used").text(data.oscam.sysinfo.mem_cur_used);
 	$("#mem_cur_buff").text(data.oscam.sysinfo.mem_cur_buff);
+	$("#mem_cur_cached").text(data.oscam.sysinfo.mem_cur_cached);
+	$("#mem_cur_freem").attr('title', 'max Free: ' + data.oscam.sysinfo.mem_cur_freem + ' \n(incl. Buffer & Cached)');
+	$("#mem_cur_totalsw").text(data.oscam.sysinfo.mem_cur_totalsw);
+	$("#mem_cur_freesw").text(data.oscam.sysinfo.mem_cur_freesw);
+	$("#mem_cur_usedsw").text(data.oscam.sysinfo.mem_cur_usedsw);
+	$("#mem_cur_shared").text(data.oscam.sysinfo.mem_cur_shared);
 	$("#oscam_vmsize").text(data.oscam.sysinfo.oscam_vmsize);
 	$("#oscam_rsssize").text(data.oscam.sysinfo.oscam_rsssize);
+	$("#server_procs").text(data.oscam.sysinfo.server_procs);
 	$("#cpu_load_0").text(data.oscam.sysinfo.cpu_load_0);
 	$("#cpu_load_1").text(data.oscam.sysinfo.cpu_load_1);
 	$("#cpu_load_2").text(data.oscam.sysinfo.cpu_load_2);
@@ -1331,7 +1353,7 @@ function updateStatuspage(data) {
 	$("#pcc").text(connectedproxys);
 
 	// update footer
-	updateFooter(data)
+	updateFooter(data);
 
 	// sysinfos
 	if ($("#mem_cur_total").length) updateSysinfo(data);
@@ -1360,7 +1382,7 @@ function updateCacheexpage(data) {
 function updatePage(data) {
 
 	// show heartbeat
-	if ($("input.pintervall").length) {
+	if ($("input.pintervall").length && $("input.pintervall").css("background-color") != $("#picolor").css("background-color")) {
 		var orgstyle = $("input.pintervall").css("background-color");
 		$("input.pintervall").css("background-color", $("#picolor").css("background-color"));
 	}
@@ -1386,7 +1408,7 @@ function updatePage(data) {
 	}
 
 	// hide heartbeat
-	if ($("input.pintervall").length) {
+	if ($("input.pintervall").length && $("input.pintervall").css("background-color") == $("#picolor").css("background-color")) {
 		setTimeout(function () {
 			$("input.pintervall").css("background-color", orgstyle);
 		}, 300);
