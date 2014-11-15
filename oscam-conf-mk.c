@@ -71,7 +71,7 @@ char *mk_t_caidtab(CAIDTAB *ctab)
 char *mk_t_tuntab(TUNTAB *ttab)
 {
 	int32_t i, needed = 1, pos = 0;
-	for(i = 0; i < ttab->n; i++)
+	for(i = 0; i < ttab->n && i <= CS_MAXTUNTAB ; i++)
 	{
 		// ttab->bt_srvid[i] or 0000 for EMM-only tunnel
 		needed += 10;
@@ -80,7 +80,7 @@ char *mk_t_tuntab(TUNTAB *ttab)
 	char *value;
 	if(needed == 1 || !cs_malloc(&value, needed)) { return ""; }
 	char *saveptr = value;
-	for(i = 0; i < ttab->n; i++)
+	for(i = 0; i < ttab->n && i <= CS_MAXTUNTAB; i++)
 	{
 		if(i == 0)
 		{
@@ -162,7 +162,7 @@ char *mk_t_ftab(FTAB *ftab)
 	if(ftab->nfilts != 0)
 	{
 		needed = ftab->nfilts * 5;
-		for(i = 0; i < ftab->nfilts; ++i)
+		for(i = 0; i < ftab->nfilts && i < CS_MAXFILTERS; ++i)
 			{ needed += ftab->filts[i].nprids * 7; }
 	}
 
@@ -170,7 +170,7 @@ char *mk_t_ftab(FTAB *ftab)
 	if(needed == 1 || !cs_malloc(&value, needed)) { return ""; }
 	char *saveptr = value;
 	char *dot = "";
-	for(i = 0; i < ftab->nfilts; ++i)
+	for(i = 0; i < ftab->nfilts && i < CS_MAXFILTERS; ++i)
 	{
 		snprintf(value + pos, needed - (value - saveptr), "%s%04X", dot, ftab->filts[i].caid);
 		pos += 4;
@@ -704,7 +704,7 @@ char *mk_t_caidvaluetab(CAIDVALUETAB *tab)
 		{ return ""; }
 	char *ptr = buf;
 
-	for(i = 0; i < tab->n; i++)
+	for(i = 0; i < tab->n && tab->n <= CS_MAX_CAIDVALUETAB; i++)
 	{
 		if(tab->caid[i] < 0x0100)  //Do not format 0D as 000D, its a shortcut for 0Dxx:
 			{ ptr += snprintf(ptr, size - (ptr - buf), "%s%02X:%d", i ? "," : "", tab->caid[i], tab->value[i]); }
@@ -725,7 +725,7 @@ char *mk_t_cacheex_valuetab(CECSPVALUETAB *tab)
 		{ return ""; }
 	char *ptr = buf;
 
-	for(i = 0; i < tab->n; i++)
+	for(i = 0; i < tab->n && tab->n <= CS_MAXCAIDTAB ; i++)
 	{
 		if(i) { ptr += snprintf(ptr, size - (ptr - buf), ","); }
 		if(tab->caid[i] >= 0)
@@ -772,7 +772,7 @@ char *mk_t_cacheex_cwcheck_valuetab(CWCHECKTAB *tab)
 		{ return ""; }
 	char *ptr = buf;
 
-	for(i = 0; i < tab->n; i++)
+	for(i = 0; i < tab->n && i <= CS_MAXCAIDTAB; i++)
 	{
 		if(i) { ptr += snprintf(ptr, size - (ptr - buf), ","); }
 		if(tab->caid[i] >= 0)
