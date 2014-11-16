@@ -1840,9 +1840,6 @@ int32_t cc_send_emm(EMM_PACKET *ep)
 	ll_append(cc->pending_emms, emmbuf);
 	cc_send_pending_emms(cl);
 
-#if defined(WEBIF) || defined(LCDSUPPORT)
-	rdr->emmwritten[ep->type]++;
-#endif
 	return 1;
 }
 
