@@ -1082,17 +1082,17 @@ void dvbapi_add_ecmpid_int(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uin
 	int32_t stream = demux[demux_id].STREAMpidcount - 1;
 	for(n = 0; n < demux[demux_id].ECMpidcount; n++)
 	{
-		if(stream > -1 && demux[demux_id].ECMpids[n].CAID == caid && demux[demux_id].ECMpids[n].ECM_PID == ecmpid)
+		if(stream > -1 && demux[demux_id].ECMpids[n].CAID == caid && demux[demux_id].ECMpids[n].ECM_PID == ecmpid && demux[demux_id].ECMpids[n].PROVID == provid)
 		{
 			if(!demux[demux_id].ECMpids[n].streams)
 			{
 				//we already got this caid/ecmpid as global, no need to add the single stream
-				cs_log("[SKIP STREAM %d] CAID: %04X ECM_PID: %04X PROVID: %06X", n, caid, ecmpid, provid);
+				cs_log("[SKIP STREAM] CAID: %04X ECM_PID: %04X PROVID: %06X (Same as ECMPID #%d)", caid, ecmpid, provid, n);
 				continue;
 			}
 			added = 1;
 			demux[demux_id].ECMpids[n].streams |= (1 << stream);
-			cs_log("[ADD STREAM %d] CAID: %04X ECM_PID: %04X PROVID: %06X", n, caid, ecmpid, provid);
+			cs_log("[ADD STREAM TO ECMPID #%d] CAID: %04X ECM_PID: %04X PROVID: %06X", n, caid, ecmpid, provid);
 		}
 	}
 
@@ -1100,7 +1100,7 @@ void dvbapi_add_ecmpid_int(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uin
 		{ return; }
 	for(n = 0; n < demux[demux_id].ECMpidcount; n++)  // check for existing pid
 	{
-		if(demux[demux_id].ECMpids[n].CAID == caid && demux[demux_id].ECMpids[n].ECM_PID == ecmpid)
+		if(demux[demux_id].ECMpids[n].CAID == caid && demux[demux_id].ECMpids[n].ECM_PID == ecmpid && demux[demux_id].ECMpids[n].PROVID == provid)
 			{ return; } // found same pid -> skip
 	}
 	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].ECM_PID = ecmpid;
@@ -1121,7 +1121,7 @@ void dvbapi_add_ecmpid_int(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uin
 	if(stream > -1)
 		{ demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].streams |= (1 << stream); }
 
-	cs_log("[ADD PID %d] CAID: %04X ECM_PID: %04X PROVID: %06X", demux[demux_id].ECMpidcount, caid, ecmpid, provid);
+	cs_log("[NEW ECMPID #%d] CAID: %04X ECM_PID: %04X PROVID: %06X", demux[demux_id].ECMpidcount, caid, ecmpid, provid);
 	if(caid >> 8 == 0x06) { demux[demux_id].emmstart.time = 1; }  // marker to fetch emms early irdeto needs them!
 
 	demux[demux_id].ECMpidcount++;
