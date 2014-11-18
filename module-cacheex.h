@@ -16,6 +16,7 @@ extern inline int8_t cacheex_match_alias(struct s_client *cl, ECM_REQUEST *er, E
 extern void cacheex_add_to_cache(struct s_client *cl, ECM_REQUEST *er);
 extern void cacheex_add_to_cache_from_csp(struct s_client *cl, ECM_REQUEST *er);
 #ifdef CS_CACHEEX
+void log_cacheex_cw(ECM_REQUEST *er, char *s);
 extern void cacheex_init(void);
 extern void cacheex_clear_account_stats(struct s_auth *account);
 extern void cacheex_clear_client_stats(struct s_client *client);

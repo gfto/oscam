@@ -457,6 +457,26 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 		return 0;
 	}
 
+
+	if(get_odd_even(er)==0){
+		cs_debug_mask(D_CACHEEX, "push received ecm with null odd/even byte from %s", csp ? "csp" : username(cl));
+		cl->cwcacheexerr++;
+		if(cl->account)
+			{ cl->account->cwcacheexerr++; }
+		return 0;
+	}
+
+
+	if(!chk_halfCW(er)){
+		log_cacheex_cw(er, "bad half cw");
+
+		cl->cwcacheexerr++;
+		if(cl->account)
+			{ cl->account->cwcacheexerr++; }
+		return 0;
+	}
+
+
 	er->grp |= cl->grp;  //ok for mode2 reader too: cl->reader->grp
 	er->rc = E_CACHEEX;
 	er->cacheex_src = cl;
@@ -495,6 +515,22 @@ void cacheex_add_to_cache_from_csp(struct s_client *cl, ECM_REQUEST *er)
 {
 	if(!cacheex_add_to_cache_int(cl, er, 1))
 		{ free_push_in_ecm(er); }
+}
+
+
+void log_cacheex_cw(ECM_REQUEST *er, char *reason){
+	uint8_t *data;
+	uchar remotenodeid[16];
+	data = ll_last_element(er->csp_lastnodes);
+	if(data)
+	{
+		memcpy(remotenodeid, data, 8);
+	}
+
+	char buf_ecm[109];
+	format_ecm(er, buf_ecm, 109);
+	cs_log("got pushed ecm [%s]: %s - odd/even 0x%x - CSP cw: %s - pushed from %s, at hop %d, origin node-id %" PRIu64 "X",
+			reason, buf_ecm, er->ecm[0], (checkECMD5(er)?"NO":"YES"), er->from_csp ? "csp" : username((er->cacheex_src?er->cacheex_src:er->client)), ll_count(er->csp_lastnodes), er->csp_lastnodes ? cacheex_node_id(remotenodeid): 0);
 }
 
 //Format:

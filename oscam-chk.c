@@ -982,25 +982,49 @@ int32_t chk_is_null_CW(uchar cw[])
 }
 
 
-/**
- * Check for wrong swapped NDS CWs
- **/
-int8_t chk_NDS_valid_CW(ECM_REQUEST *er)
-{
-  if(er->caid >> 8 == 0x09 && er->cw && er->rc < E_NOTFOUND && !cfg.nds_swap_cw && (!checkCWpart(er->cw, 0) || !checkCWpart(er->cw, 1))){
 
+/**
+ * Check for ecm request that expects half cw format
+ **/
+int8_t is_halfCW_er(ECM_REQUEST *er)
+{
+  if(
+	 er->caid >> 8 == 0x09
+	 &&
+	 (er->caid == 0x09C4 || er->caid ==  0x098C || er->caid == 0x0963 || er->caid == 0x09CD || er->caid == 0x0919 || er->caid == 0x093B)
+	)
+		return 1;
+
+  return 0;
+}
+
+
+/**
+ * Check for wrong half CWs
+ **/
+int8_t chk_halfCW(ECM_REQUEST *er)
+{
+  if(is_halfCW_er(er) && er->cw && er->rc < E_NOTFOUND){
+
+	 int8_t part1 = checkCWpart(er->cw, 0);
+	 int8_t part2 = checkCWpart(er->cw, 1);
+
+	 //check for correct half cw format
+	 if(part1 && part2){
+		 return 0;
+	 }
+
+	 //check for correct cw position
 	 if(
-	    (get_odd_even(er) == 0x80 && checkCWpart(er->cw, 0) && !checkCWpart(er->cw, 1))   //xxxxxxxx00000000
+	    (get_odd_even(er) == 0x80 && part1 && !part2)   //xxxxxxxx00000000
 		||
-		(get_odd_even(er) == 0x81 && !checkCWpart(er->cw, 0) && checkCWpart(er->cw, 1))   //00000000xxxxxxxx
+		(get_odd_even(er) == 0x81 && !part1 && part2)   //00000000xxxxxxxx
 	 )
 	 {
 		return 1;
 	 }
-	 else
-	 {
-		return 0;  //not correct swapped cw's
-	 }
+
+	 return 0;  //not correct swapped cw
 
   }else
 	return 1;

@@ -31,7 +31,8 @@ int32_t chk_caid(uint16_t caid, CAIDTAB *ctab);
 int32_t chk_caid_rdr(struct s_reader *rdr, uint16_t caid);
 int32_t chk_bcaid(ECM_REQUEST *er, CAIDTAB *ctab);
 int32_t chk_is_null_CW(uchar cw[]);
-int8_t chk_NDS_valid_CW(ECM_REQUEST *er);
+int8_t is_halfCW_er(ECM_REQUEST *er);
+int8_t chk_halfCW(ECM_REQUEST *er);
 int32_t chk_is_null_nodeid(uint8_t node_id[], uint8_t len);
 bool check_client(struct s_client *cl);
 

@@ -1176,20 +1176,6 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 		er->rc = E_FOUND;
 	}
 
-	if (er->caid >> 8 == 0x09 && er->cw && er->rc < E_NOTFOUND){
-		if (er->ecm[0] == 0x80 && checkCWpart(er->cw, 1) && !checkCWpart(er->cw, 0)){ // wrong: even ecm should only have even part of cw used
-			cs_debug_mask(D_TRACE,"NDS videoguard controlword swapped");
-			memcpy(er->cw, er->cw + 8, 8);  // move card cw answer to right part!
-			memset(er->cw+8,0,8); // blanc old position
-		}
-
-		if (er->ecm[0] == 0x81 && checkCWpart(er->cw, 0) && !checkCWpart(er->cw, 1)){ // wrong: odd ecm should only have odd part of cw used
-			cs_debug_mask(D_TRACE,"NDS videoguard controlword swapped");
-			memcpy(er->cw+8, er->cw, 8);  // move card cw answer to right part!
-			memset(er->cw,0,8); // blanc old position
-		}
-	}
-
 	if(cfg.double_check &&  er->rc == E_FOUND && er->selected_reader && is_double_check_caid(er))
 	{
 		if(er->checked == 0)   //First CW, save it and wait for next one
@@ -1426,10 +1412,6 @@ void chk_dcw(struct s_ecm_answer *ea)
 	struct s_reader *eardr = ea->reader;
 	if(!ert)
 		{ return; }
-
-	//cache update
-	if(ea && ea->rc < E_NOTFOUND)
-		add_cache_from_reader(ert, eardr, ert->csp_hash, ert->ecmd5, ea->cw, ert->caid, ert->prid, ert->srvid );
 
 	//ecm request already answered!
 	if(ert->rc < E_99)
@@ -1686,7 +1668,7 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 		cs_debug_mask(D_TRACE | D_LB, "WARNING: reader %s send fake cw, set rc=E_NOTFOUND!", reader ? reader->label : "-");
 	}
 
-	if(!chk_NDS_valid_CW(er)){
+	if(!chk_halfCW(er)){
 		rc = E_NOTFOUND;
 		cs_debug_mask(D_TRACE | D_LB, "WARNING: reader %s send wrong swapped NDS cw, set rc=E_NOTFOUND!", reader ? reader->label : "-");
 	}
@@ -1788,7 +1770,12 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 
 	if(!ea->is_pending)   //not for pending ea - only once for ea
 	{
-		send_reader_stat(reader, er, ea, ea->rc);   //send stats for LB
+		//cache update
+		if(ea && ea->rc < E_NOTFOUND && ea->cw)
+			add_cache_from_reader(er, reader, er->csp_hash, er->ecmd5, ea->cw, er->caid, er->prid, er->srvid );
+
+		//readers stats for LB
+		send_reader_stat(reader, er, ea, ea->rc);
 
 		//reader checks
 		char ecmd5[17 * 3];
@@ -2269,6 +2256,11 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 		}
 	}
 
+	//cheks for odd/even byte
+	if(get_odd_even(er)==0){
+		cs_debug_mask(D_TRACE, "warning: ecm with null odd/even byte from %s", (check_client(er->client)?er->client->account->usr:"-"));
+		er->rc = E_INVALID;
+	}
 
 	//not continue, send rc to client
 	if(er->rc < E_UNHANDLED)

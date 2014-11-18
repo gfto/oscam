@@ -118,24 +118,26 @@ uint8_t get_odd_even(ECM_REQUEST *er){
 CW *get_first_cw(ECMHASH *ecmhash, ECM_REQUEST *er){
 	if(!ecmhash) return NULL;
 
-	if(er->caid >> 8 == 0x09 && !cfg.nds_swap_cw){
-		node *j;
-		CW *cw;
+	node *j;
+	CW *cw;
 
-		j = get_first_node_list(&ecmhash->ll_cw);
-		while (j) {
-			cw = get_data_from_node(j);
-			if(cw && cw->odd_even==get_odd_even(er)){
-				return cw;
-			}
-			j = j->next;
+	j = get_first_node_list(&ecmhash->ll_cw);
+	while (j) {
+		cw = get_data_from_node(j);
+
+		if(cw
+		   && cw->odd_even==get_odd_even(er)
+#ifdef CW_CYCLE_CHECK
+	       && !cw->got_bad_cwc
+#endif
+		){
+			return cw;
 		}
 
-		return NULL;
-
-	}else{
-		return get_first_elem_list(&ecmhash->ll_cw);
+		j = j->next;
 	}
+
+	return NULL;
 }
 
 int compare_csp_hash(const void *arg, const void *obj){
@@ -216,6 +218,12 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 		}else{
 			cs_debug_mask(D_CWC, "cyclecheck [BAD CW Cycle] from Int. Cache detected.. {client %s, caid %04X, srvid %04X} [check_cache] -> skip cache answer", (cl ? cl->account->usr : "-"), er->caid, er->srvid);
 			cw->got_bad_cwc = 1; // no need to check it again
+
+#ifdef CS_CACHEEX
+			if(er->cacheex_src){
+				log_cacheex_cw(er, "bad CWC cw");
+			}
+#endif
 			pthread_rwlock_unlock(&cache_lock);
 			return NULL;
 		}
@@ -243,8 +251,6 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 
 void add_cache(ECM_REQUEST *er){
 	if(!er->csp_hash) return;
-	if(chk_is_null_CW(er->cw)) return;
-	if(!chk_NDS_valid_CW(er)) return;
 
 	ECMHASH *result = NULL;
 	CW *cw = NULL;

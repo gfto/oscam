@@ -693,6 +693,8 @@ uint8_t checkcwcycle(struct s_client *client, ECM_REQUEST *er, struct s_reader *
 		{ return 2; }
 	if(!(chk_ctab_ex(er->caid, &cfg.cwcycle_check_caidtab)))  // dont check caid not in list
 		{ return 1; } // no match leave the check
+	if(is_halfCW_er(er))
+		{ return 1; } // half cw cycle, checks are done in ecm-handler
 
 	memcpy(er->cw, cw, 16);
 	char er_ecmf[ECM_FMT_LEN];
@@ -713,53 +715,6 @@ uint8_t checkcwcycle(struct s_client *client, ECM_REQUEST *er, struct s_reader *
 
 
 	cs_debug_mask(D_CWC | D_TRACE, "cyclecheck EA: %s rc: %i reader: %s", er_ecmf, rc, c_reader);
-
-	if(er->caid == 0x09C4 || er->caid ==  0x098C || er->caid == 0x09CD || er->caid == 0x0963) // CWC light for NDS
-	{
-		switch(checkvalidCW(er, c_reader, 1))
-		{
-			case 0: // NDS CWCYCLE NOK
-				count_nok(client);
-				snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NDS NOK");
-				if(cfg.onbadcycle > 0)    // ignore ECM Request
-				{
-					cs_log("cyclecheck [Bad CW Cycle] for: %s %s from: %s -> drop cw (ECM Answer)", user, er_ecmf, c_reader); //D_CWC| D_TRACE
-					return 0;
-				}
-				else      // only logging
-				{
-					cs_log("cyclecheck [Bad CW Cycle] for: %s %s from: %s -> do nothing", user, er_ecmf, c_reader);//D_CWC| D_TRACE
-					return 1;
-				}
-
-			case 1:  // NDS Cycle OK
-				count_ok(client);
-				snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NDS OK");
-				return 1;
-
-			case 2: // CycleCheck NDS Swapp drop or ignored
-				if(cfg.onbadcycle == 2)
-				{
-					count_nok(client);
-					snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NDS Swapp");
-					cs_log("cyclecheck [Swapped NDS CW] for: %s %s from: %s -> drop cw", user, er_ecmf, c_reader);//D_CWC| D_TRACE
-					return 0;
-				}
-				else
-				{
-					count_ign(client);
-					snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NDS Swapp");
-					cs_log("cyclecheck [Swapped NDS CW] for: %s %s from: %s -> pass through", user, er_ecmf, c_reader);//D_CWC| D_TRACE
-				return 1;
-				}
-
-			case 5: //answer from fixed Fallbackreader with Bad Cycle
-				count_nok(client);
-				snprintf(er->cwc_msg_log, sizeof(er->cwc_msg_log), "cwc NDS NOK but IGN (fixed FB)");
-				cs_log("cyclecheck [Bad CW Cycle] for: %s %s from: %s -> But Ignored because of answer from Fixed Fallback Reader", user, er_ecmf, c_reader);
-				return 1;
-		}
-	}
 
 	switch(checkcwcycle_int(er, er_ecmf, user, cw, c_reader, cycletime_fr, next_cw_cycle_fr))
 	{
