@@ -1002,12 +1002,12 @@ int8_t is_halfCW_er(ECM_REQUEST *er)
 /**
  * Check for wrong half CWs
  **/
-int8_t chk_halfCW(ECM_REQUEST *er)
+int8_t chk_halfCW(ECM_REQUEST *er, uchar *cw)
 {
-  if(is_halfCW_er(er) && er->cw && er->rc < E_NOTFOUND){
+  if(is_halfCW_er(er) && cw){
 
-	 int8_t part1 = checkCWpart(er->cw, 0);
-	 int8_t part2 = checkCWpart(er->cw, 1);
+	 int8_t part1 = checkCWpart(cw, 0);
+	 int8_t part2 = checkCWpart(cw, 1);
 
 	 //check for correct half cw format
 	 if(part1 && part2){

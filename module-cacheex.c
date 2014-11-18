@@ -467,7 +467,7 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 	}
 
 
-	if(!chk_halfCW(er)){
+	if(!chk_halfCW(er, er->cw)){
 		log_cacheex_cw(er, "bad half cw");
 
 		cl->cwcacheexerr++;
@@ -529,7 +529,7 @@ void log_cacheex_cw(ECM_REQUEST *er, char *reason){
 
 	char buf_ecm[109];
 	format_ecm(er, buf_ecm, 109);
-	cs_log("got pushed ecm [%s]: %s - odd/even 0x%x - CSP cw: %s - pushed from %s, at hop %d, origin node-id %" PRIu64 "X",
+	cs_debug_mask(D_CACHEEX,"got pushed ecm [%s]: %s - odd/even 0x%x - CSP cw: %s - pushed from %s, at hop %d, origin node-id %" PRIu64 "X",
 			reason, buf_ecm, er->ecm[0], (checkECMD5(er)?"NO":"YES"), er->from_csp ? "csp" : username((er->cacheex_src?er->cacheex_src:er->client)), ll_count(er->csp_lastnodes), er->csp_lastnodes ? cacheex_node_id(remotenodeid): 0);
 }
 
