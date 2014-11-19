@@ -1531,7 +1531,11 @@ void chk_dcw(struct s_ecm_answer *ea)
 		}
 		}
 
-		if(!reader_left && !cfg.wait_until_ctimeout)   // no more matching reader
+		if(!reader_left  // no more matching reader
+#ifdef CS_CACHEEX
+		  && !cfg.wait_until_ctimeout
+#endif
+		  )
 			{ ert->rc = E_NOTFOUND; } //so we set the return code
 
 		break;
