@@ -975,7 +975,6 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 	LL_ITER itr = ll_iter_create(cl->aureader_list);
 	while((rdr = ll_iter_next(&itr)))
 	{
-
 		if(!rdr->client || rdr->audisabled != 0 || !rdr->enable || (!is_network_reader(rdr) && rdr->card_status != CARD_INSERTED))
 			{ continue; }
 
@@ -985,15 +984,17 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 		{
 			caid = ncaid = demux[demux_index].EMMpids[c].CAID;
 			if(!caid) continue;
-			if(emm_reader_match(rdr, caid, 0))
+
+			if(chk_is_betatunnel_caid(caid) == 2)
+			{
+				ncaid = tunemm_caid_map(FROM_TO, caid, demux[demux_index].program_number);
+			}
+
+			if (emm_reader_match(rdr, caid, 0) || emm_reader_match(rdr, ncaid, 0))
 			{
 				cs = get_cardsystem_by_caid(caid);
 				if(cs)
 				{
-					if(chk_is_betatunnel_caid(caid) == 1)
-					{ 
-						ncaid = tunemm_caid_map(TO_FROM, caid, demux[demux_index].program_number);
-					}
 					if(caid != ncaid && dvbapi_find_emmpid(demux_index, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL, ncaid, 0) > -1)
 					{
 						cs->get_tunemm_filter(rdr, &dmx_filter, &filter_count);
