@@ -1530,6 +1530,7 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 		{
 			int32_t j, n;
 			er->ecmlen = 5;
+			er->ecm[0] = 0x80; // to pass the cache check it must be 0x80 or 0x81
 			er->ecm[1] = 0x00;
 			er->ecm[2] = 0x02;
 			i2b_buf(2, er->srvid, er->ecm + 3);
