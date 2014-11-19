@@ -528,6 +528,8 @@ int32_t check_hitcache(ECM_REQUEST *er, struct s_client *cl) {
 
 
 void add_hitcache(struct s_client *cl, ECM_REQUEST *er) {
+	if (!cfg.max_hitcache_time)  //we don't want check/save hitcache
+		return;
 	if (!cfg.cacheex_wait_timetab.n)
 		return;
 	uint32_t cacheex_wait_time = get_cacheex_wait_time(er,NULL);

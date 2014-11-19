@@ -80,22 +80,18 @@ void cacheex_timeout(ECM_REQUEST *er)
 		cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} cacheex timeout! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
 
 		//check if "normal" readers selected, if not send NOT FOUND!
-		if(  !cfg.wait_until_ctimeout
-			 &&
-			 (
-				(!er->from_cacheex1_client && (er->reader_count + er->fallback_reader_count - er->cacheex_reader_count) <= 0)    //not-cacheex-1 client and no normal readers available (or filtered by LB)
-					||
-				(er->from_cacheex1_client && !er->reader_nocacheex_avail)  //cacheex1-client and no normal readers available for others clients
-		     )
-		  )
+		//cacheex1-client (having always no "normal" reader), or not-cacheex-1 client with no normal readers available (or filtered by LB)
+		if( (er->reader_count + er->fallback_reader_count - er->cacheex_reader_count) <= 0 )
 		{
-			er->rc = E_NOTFOUND;
-			er->selected_reader = NULL;
-			er->rcEx = 0;
+			if(!cfg.wait_until_ctimeout){
+				er->rc = E_NOTFOUND;
+				er->selected_reader = NULL;
+				er->rcEx = 0;
 
-			cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} cacheex timeout: NO \"normal\" readers... not_found! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
-			send_dcw(er->client, er);
-			return;
+				cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} cacheex timeout: NO \"normal\" readers... not_found! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
+				send_dcw(er->client, er);
+				return;
+			}
 		}
 		else
 		{
@@ -1444,7 +1440,7 @@ void chk_dcw(struct s_ecm_answer *ea)
 	//check if check_cw enabled
 	if(eardr && cacheex_reader(eardr)){  //IF mode-1 reader
 		CWCHECK check_cw = get_cwcheck(ert);
-		if(check_cw.counter>1) //if answer from cacheex-1 reader, and we have to check cw counter, not send answer to client! thread check_cache will send answer to client!
+		if(check_cw.counter>1) //if answer from cacheex-1 reader, and we have to check cw counter, not send answer to client! thread check_cache will check counter and send answer to client!
 			return;
 	}
 #endif
@@ -1477,10 +1473,8 @@ void chk_dcw(struct s_ecm_answer *ea)
 	{
 
 #ifdef CS_CACHEEX
-		/* if not wait_time expired and wait_time due to hitcache, or ecm is cacheex-1 and there are other normal readers for check INT cache, we have to wait wait_time expires before send rc to client!
-		 * (Before cacheex_wait_time_expired, this answered reader is obviously a cacheex mode 1 reader!)
-		 */
-		if((!ert->cacheex_wait_time_expired && ert->cacheex_hitcache) || (ert->from_cacheex1_client && ert->reader_nocacheex_avail))
+		// if not wait_time expired and wait_time due to hitcache (or awtime>0), we have to wait cacheex before call readers. This one is (should be) answer by ex1-readers
+		if(cacheex_reader(eardr) && !ert->cacheex_wait_time_expired && ert->cacheex_hitcache)
 			{ return; }
 #endif
 
@@ -1537,7 +1531,7 @@ void chk_dcw(struct s_ecm_answer *ea)
 		}
 		}
 
-		if(!reader_left)   // no more matching reader
+		if(!reader_left && !cfg.wait_until_ctimeout)   // no more matching reader
 			{ ert->rc = E_NOTFOUND; } //so we set the return code
 
 		break;
