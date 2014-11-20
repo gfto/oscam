@@ -843,7 +843,6 @@ static int32_t irdeto_get_tunemm_filter(struct s_reader *rdr, struct s_csystem_e
 
 		struct s_csystem_emm_filter *filters = *emm_filters;
 		*filter_count = 0;
-		memset(filters, 0x00, max_filter_count * sizeof(struct s_csystem_emm_filter));
 
 		unsigned int idx = 0;
 

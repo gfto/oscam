@@ -995,11 +995,19 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 				cs = get_cardsystem_by_caid(caid);
 				if(cs)
 				{
-					if(caid != ncaid && dvbapi_find_emmpid(demux_index, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL, ncaid, 0) > -1)
+					if(caid != ncaid && dvbapi_find_emmpid(demux_index, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL, caid, 0) > -1)
 					{
-						cs->get_tunemm_filter(rdr, &dmx_filter, &filter_count);
-						cs_debug_mask(D_DVBAPI, "[EMM Filter] setting emm filter for betatunnel: %04X -> %04X", ncaid, caid);
-						caid = ncaid;
+						cs = get_cardsystem_by_caid(ncaid);
+						if(cs)
+						{
+							cs->get_tunemm_filter(rdr, &dmx_filter, &filter_count);
+							cs_debug_mask(D_DVBAPI, "[EMM Filter] setting emm filter for betatunnel: %04X -> %04X", ncaid, caid);
+						}
+						else
+						{
+							cs_debug_mask(D_DVBAPI, "[EMM Filter] cardsystem for emm filter for caid %04X of reader %s not found", ncaid, rdr->label);
+							continue;
+						}
 					}
 					else if (cs->get_emm_filter)
 					{
