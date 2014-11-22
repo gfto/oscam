@@ -116,6 +116,16 @@ void rdr_debug_mask_sensitive(struct s_reader *reader, uint16_t mask, char *fmt,
 	}
 }
 
+void rdr_dump(struct s_reader *reader, const uint8_t *buf, int n, char *fmt, ...)
+{
+	char txt[2048];
+	va_list args;
+	va_start(args, fmt);
+	vsnprintf(txt, sizeof(txt), fmt, args);
+	va_end(args);
+	cs_dump(buf, n, "%s [%s] %s", reader->label, reader_desc_txt(reader), txt);
+}
+
 void rdr_ddump_mask(struct s_reader *reader, uint16_t mask, const uint8_t *buf, int n, char *fmt, ...)
 {
 	if(config_enabled(WITH_DEBUG))
