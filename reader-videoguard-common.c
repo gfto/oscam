@@ -751,6 +751,21 @@ int32_t status_ok(const unsigned char *status)
 			   || status[1] == 0xa0 || status[1] == 0xa1);
 }
 
+int32_t checksum_ok(const unsigned char *ird_payload)		/*checksum for precam datas*/
+{
+	int32_t b,check=0;
+	for (b = 0; b <= ird_payload[1]; b++)
+	{        
+		check=(check+ird_payload[b])&0xFF;
+	}
+	if (ird_payload[ird_payload[1]+1]==check)
+		{
+			return 1;
+		}else{
+			return 0;	//Checksum error
+		}
+}
+
 void memorize_cmd_table(struct s_reader *reader, const unsigned char *mem, int32_t size)
 {
 	struct videoguard_data *csystem_data = reader->csystem_data;
@@ -931,6 +946,7 @@ int32_t videoguard_do_emm(struct s_reader *reader, EMM_PACKET *ep, unsigned char
 {
 	unsigned char cta_res[CTA_RES_LEN];
 	unsigned char ins42[5] = { CLA, 0x42, 0x00, 0x00, 0xFF };
+	unsigned char *EmmIrdHeader;
 	int32_t rc = SKIPPED;
 	int32_t nsubs = ((ep->emm[3] & 0x30) >> 4) + 1;
 	int32_t offs = 4;
@@ -979,6 +995,16 @@ int32_t videoguard_do_emm(struct s_reader *reader, EMM_PACKET *ep, unsigned char
 			{ ++offs; }
 		if(ep->emm[offs] == 0x02 || ep->emm[offs] == 0x03 || ep->emm[offs] == 0x07)
 		{
+			if(ep->emm[offs+1] != 0)				//	Checksum test for sub-packets emm:
+			{										// 	
+				EmmIrdHeader = ep->emm + offs;		// 	example: 
+				int32_t chk;						//	827097300000
+				chk = checksum_ok(EmmIrdHeader);	//	D002 0602C317ABA02F 1690144004A6... chk=2F
+				if (chk != 1)						//	D607 0E03A3010325070102810002000778 1B90154004A9... chk=78
+				{									//	D607 0E03A301032507010281000200097A 1B9015400441..	chk=7A
+					return rc;						//	...
+				}									//			
+			}
 			if(ep->emm[offs] == 0x03)
 			{
 				if(position == ua_position || vdrsc_fix)

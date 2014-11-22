@@ -855,16 +855,17 @@ static int32_t videoguard2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 	int32_t posECMpart2 = er->ecm[6] + 7;
 	int32_t lenECMpart2 = er->ecm[posECMpart2] + 1;
 	unsigned char tbuff[264], rbuff[264];
+	const unsigned char *EcmIrdHeader = er->ecm + 5;
 	tbuff[0] = 0;
-
+	
 	memset(ea->cw + 0, 0, 16); //set cw to 0 so client will know it is invalid unless it is overwritten with a valid cw
-
-	if(memcmp(&(er->ecm[3]), valid_ecm, sizeof(valid_ecm)) != 0)
+	int32_t chk;
+	chk = checksum_ok(EcmIrdHeader);
+	if((memcmp(&(er->ecm[3]), valid_ecm, sizeof(valid_ecm)) != 0) || (chk == 0))
 	{
 		rdr_log(reader, "Not a valid ecm");
 		return ERROR;
 	}
-
 	memcpy(tbuff + 1, er->ecm + posECMpart2 + 1, lenECMpart2 - 1);
 
 	/*
