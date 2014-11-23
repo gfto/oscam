@@ -1220,8 +1220,8 @@ void set_au_data(struct s_client *cl, struct s_reader *rdr, struct cc_card *card
 	}
 
 	rdr->caid = card->caid;
-	//if (cur_er) stefansat disabled for now as it seems to stop updating management providers
-	//  rdr->auprovid = cur_er->prid;
+	if (cur_er)
+		rdr->auprovid = cur_er->prid;
 }
 
 int32_t same_first_node(struct cc_card *card1, struct cc_card *card2)
