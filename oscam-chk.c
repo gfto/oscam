@@ -991,7 +991,7 @@ int8_t is_halfCW_er(ECM_REQUEST *er)
   if(
 	 er->caid >> 8 == 0x09
 	 &&
-	 (er->caid == 0x09C4 || er->caid ==  0x098C || er->caid == 0x0963 || er->caid == 0x09CD || er->caid == 0x0919 || er->caid == 0x093B || er->caid == 0x098E)
+	 (er->caid == 0x09C4 || er->caid == 0x09C7 || er->caid ==  0x098C || er->caid == 0x0963 || er->caid == 0x09CD || er->caid == 0x0919 || er->caid == 0x093B || er->caid == 0x098E)
 	)
 		return 1;
 
