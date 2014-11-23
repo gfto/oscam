@@ -4,23 +4,24 @@
 	width='100%'
 	height='100%'
 	viewBox='0 0 800 400'
-	preserveAspectRatio='YMid'
+	preserveAspectRatio='XMaxYMid'
 	onload='init(evt)'
 	class='graph' >
+ <title>##HTTPOSCAMLABEL## r##CS_SVN_VERSION## (ECM Graph)</title>
  <g id='graph' >
-	<rect id='g' class='graph_bg' x1='0' y1='0' width='800' height='400' />
+	<rect id='g' class='graph_bg' x='0' y='0' width='800' height='400' />
 	<text id='graph_error' class='graph_error' x='400' y='125' visibility='hidden'>Error occured!</text>
-	<path id='graph_grid' class='graph_grid' d='M 2 105 L 798 105 M 2 180 L 798 180 M 2 255 L 798 255 M 2 330 L 798 330'/>
+	<path id='graph_grid' class='graph_grid' d='M 2 125 L 798 125 M 2 200 L 798 200 M 2 275 L 798 275 M 2 350 L 798 350'/>
 
 	<rect id='graph_grid_button_back' class='graph_button' cursor='pointer' x='425' y='5' rx='5' ry='5' width='40' height='20'/>
 	<text id='graph_grid_button_text' cursor='pointer' class='graph_top_txt' x='460' y='17'>Change</text>	
 	<text id='graph_grid_interval' class='graph_top_txt' x='420' y='17'>-</text>	
 	<rect id='graph_grid_button' style='opacity:0;' cursor='pointer' x='340' y='5' rx='5' ry='5' width='130' height='20'/>
 		
-	<text id='graph_grid_txt4' class='graph_grid_txt' x='798' y='328'>-</text>
-	<text id='graph_grid_txt3' class='graph_grid_txt' x='798' y='253'>-</text>
-	<text id='graph_grid_txt2' class='graph_grid_txt' x='798' y='178'>-</text>
-	<text id='graph_grid_txt1' class='graph_grid_txt' x='798' y='103'>-</text>
+	<text id='graph_grid_txt1' class='graph_grid_txt' x='798' y='123'>-</text>
+	<text id='graph_grid_txt2' class='graph_grid_txt' x='798' y='198'>-</text>
+	<text id='graph_grid_txt3' class='graph_grid_txt' x='798' y='273'>-</text>
+	<text id='graph_grid_txt4' class='graph_grid_txt' x='798' y='348'>-</text>
  </g>
 <script type='text/ecmascript'>
 <![CDATA[
@@ -183,10 +184,9 @@ function plot_data(obj) {
 				newText.setAttributeNS(null,'style','display:none;');
 			} else {
 				newText.setAttributeNS(null,'y',13+(10*i));
-				newText.setAttributeNS(null,'style','');
 			}
 			var textNode = document.createTextNode(plots[i]['name']);
-      newText.appendChild(textNode);
+			newText.appendChild(textNode);
 			document.getElementById('graph').appendChild(newText);
 		}
 		if ( plots[i]['ecmtime']==-1 ) {			SVGDoc.getElementById('graph_txt_'+i).firstChild.data = plots[i]['name'] + ':idle';
@@ -213,28 +213,28 @@ function plot_data(obj) {
 	 	rdx++;
 	}
 	var rmax=makeRoundMax(max);
-	var height = 329;
- 	var scale = height / rmax;
+	var height = 350;
+ 	var scale = (height-50) / rmax;
 	i=0;
 	while (i < plots.length) {
  		var plot = plots[i]['data'];
-		var path = 'M 2 ' + (height - (plot[0] * scale));
-		for (b = 2; b < plot.length; b++) {
+		var path = 'M 2 '+ (plot[0] > 0 ? Math.round((height - (plot[0] * scale))*10)/10 : height);
+		for (b = 3; b < plot.length; b++) {
 			var x = step * b;
-			var y_in = height - (plot[b] * scale);
+			var y_in = plot[b] > 0 ? Math.round((height - (plot[b] * scale))*10)/10 : height;
 			path += ' L' + x + ' ' + y_in;
 		}
  		SVGDoc.getElementById('graph_path_'+i).setAttributeNS(null, 'd', path);
 		i++;
 	}
- 	SVGDoc.getElementById('graph_grid_txt1').firstChild.data = 3*rmax/4 + 'ms'
+ 	SVGDoc.getElementById('graph_grid_txt1').firstChild.data = 3*rmax/4 + 'ms';
 	SVGDoc.getElementById('graph_grid_txt2').firstChild.data = 2*rmax/4 + 'ms';
 	SVGDoc.getElementById('graph_grid_txt3').firstChild.data = rmax/4 + 'ms';
- 	SVGDoc.getElementById('graph_grid_txt4').firstChild.data = '0ms'
+ 	SVGDoc.getElementById('graph_grid_txt4').firstChild.data = '0ms';
 	SVGDoc.getElementById('graph_error').setAttributeNS(null, 'visibility', 'hidden');
 }
 function makeRoundMax(max) {
-		rmax = 1000;
+		rmax = 100;
 		i = 0;
 		while (max > rmax) {
 			i++;
@@ -243,10 +243,9 @@ function makeRoundMax(max) {
 			} else {
 				rmax *= 2;
 			}
-			if (i == 8) rmax *= 1.000;
 		}
 	return rmax;
-}
+} 
 function handle_error() {
 	SVGDoc.getElementById('graph_error').setAttributeNS(null, 'visibility', 'visible');
 }
