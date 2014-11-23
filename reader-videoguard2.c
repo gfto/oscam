@@ -864,7 +864,7 @@ static int32_t videoguard2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 	if((memcmp(&(er->ecm[3]), valid_ecm, sizeof(valid_ecm)) != 0) || (chk == 0))
 	{
 		rdr_log(reader, "Not a valid ecm");
-		return ERROR;
+		return E_CORRUPT;
 	}
 	memcpy(tbuff + 1, er->ecm + posECMpart2 + 1, lenECMpart2 - 1);
 
