@@ -5488,7 +5488,7 @@ static char *send_oscam_script(struct templatevars * vars, struct uriparams * pa
 		char *result = "not executable";
 		char system_str[256];
 		struct stat s;
-		snprintf(system_str, 256, "%s/%s", cfg.http_script, scriptname);
+		snprintf(system_str, sizeof(system_str), "%s/%s", cfg.http_script, scriptname);
 
 		if(!stat(system_str,&s))
 		{
@@ -5496,16 +5496,20 @@ static char *send_oscam_script(struct templatevars * vars, struct uriparams * pa
 			{
 				if(s.st_mode & S_IXUSR)
 				{
-					int32_t rc = 0;
-					rc = system(system_str);
-					if(rc == 0){
-						result = "done";}
-					else{
-						result = "failed";}
+					int8_t rc;
+					FILE *fp;
+					char buf[256];
+					fp = popen(system_str,"r");
+
+					while (fgets(buf, sizeof(buf), fp) != NULL) {
+						tpl_addVar(vars, TPLAPPEND, "SCRIPTRESULTOUT", buf);
+					}
+
+					rc = WEXITSTATUS(pclose(fp));
+
 					tpl_printf(vars, TPLAPPEND, "CODE", "returncode: %d", rc);
 					tpl_printf(vars, TPLADD, "SCRIPTNAME", "scriptname: %s", scriptname);
-					tpl_printf(vars, TPLADD, "SCRIPTRESULT", "scriptresult: %s", result);
-					}
+				}
 				else
 				{
 					tpl_printf(vars, TPLADD, "SCRIPTRESULT", "scriptresult: %s", result);
