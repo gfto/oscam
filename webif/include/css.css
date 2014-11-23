@@ -663,6 +663,20 @@ td.configcolsave {
     display:none
 }
 
+div.extract {
+        width: 750px;
+        margin: 10px auto;
+	text-align: left;
+}
+div.extract pre {
+        min-height: 100px;
+	margin: 10px 0;
+        padding: 10px;
+	font-family: courier,monospace;
+        border:1px dotted #AAA;
+	white-space: pre
+}
+
 /* **************** 13. IMAGE */
 /* generaly settings for images */
 img {
