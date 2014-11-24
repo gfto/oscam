@@ -7324,7 +7324,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			tpl_addVar(vars, TPLADD, "CS_VERSION", CS_VERSION);
 			tpl_addVar(vars, TPLADD, "CS_SVN_VERSION", CS_SVN_VERSION);
 			tpl_addVar(vars, TPLADD, "CS_TARGET", CS_TARGET);
-			tpl_addVar(vars, TPLADD, "HTTPOSCAMLABEL", cfg.http_oscam_label);
+			tpl_addVar(vars, TPLADD, "HTTPOSCAMLABEL", xml_encode(vars,cfg.http_oscam_label));
 
 			if(cfg.http_locale){
 				float decimal_point = 0.0;
