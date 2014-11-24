@@ -671,8 +671,9 @@ do
 	;;
 	'-O'|'--detect-osx-sdk-version')
 		shift
-		OSX_VER=${1:-10.9}
-		for DIR in /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX{$OSX_VER,10.9,10.8,10.7}.sdk /Developer/SDKs/MacOSX{$OSX_VER,10.6,10.5}.sdk
+		OSX_VER=${1:-10.10}
+		for DIR in /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX{$OSX_VER,10.10,10.9,10.8,10.7}.sdk /Developer/SDKs/MacOSX{$OSX_VER,10.6,10.5}.sdk
+
 		do
 			if test -d $DIR
 			then
