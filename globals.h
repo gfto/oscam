@@ -1520,6 +1520,7 @@ struct s_auth
 	int32_t         cwcycledok;     // count pos checked cwcycles per client
 	int32_t         cwcyclednok;        // count neg checked cwcycles per client
 	int32_t         cwcycledign;        // count ign cwcycles per client
+	int8_t			cwc_disable;			// disable cwc checking for this Client
 #endif
 	int32_t         emmok;
 	int32_t         emmnok;
