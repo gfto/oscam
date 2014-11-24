@@ -5496,7 +5496,7 @@ static char *send_oscam_script(struct templatevars * vars, struct uriparams * pa
 			{
 				if(s.st_mode & S_IXUSR)
 				{
-					int8_t rc;
+					int32_t rc;
 					FILE *fp;
 					char buf[256];
 					fp = popen(system_str,"r");
@@ -5505,7 +5505,7 @@ static char *send_oscam_script(struct templatevars * vars, struct uriparams * pa
 						tpl_addVar(vars, TPLAPPEND, "SCRIPTRESULTOUT", buf);
 					}
 
-					rc = WEXITSTATUS(pclose(fp));
+					rc = pclose(fp)/256;
 
 					tpl_printf(vars, TPLAPPEND, "CODE", "returncode: %d", rc);
 					tpl_printf(vars, TPLADD, "SCRIPTNAME", "scriptname: %s", scriptname);
