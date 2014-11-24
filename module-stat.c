@@ -1349,7 +1349,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 		{
 
 			//Reader can decode this service (rc==0) and has lb_min_ecmcount ecms:
-			if(cfg.preferlocalcards && (ea->status & READER_LOCAL))
+			if(er->preferlocalcards && (ea->status & READER_LOCAL))
 				{ nlocal_readers++; } //Prefer local readers!
 
 			switch(cfg.lb_mode)

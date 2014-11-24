@@ -1013,7 +1013,7 @@ void reader_get_ecm(struct s_reader *reader, ECM_REQUEST *er)
 		{
 			//check if ask this reader
 			ea = get_ecm_answer(reader, ecm);
-			if(ea && !ea->is_pending && (ea->status & REQUEST_SENT)) { break; }
+			if(ea && !ea->is_pending && (ea->status & REQUEST_SENT) && ea->rc!=E_TIMEOUT) { break; }
 			ea = NULL;
 		}
 	}

@@ -321,6 +321,11 @@ void *work_thread(void *ptr)
 				}
 				module->s_handler(cl, mbuf, n);
 				break;
+			case ACTION_CACHEEX1_DELAY:
+#ifdef CS_CACHEEX
+				cacheex_mode1_delay(data->ptr);
+#endif
+				break;
 			case ACTION_CACHEEX_TIMEOUT:
 #ifdef CS_CACHEEX
 				cacheex_timeout(data->ptr);

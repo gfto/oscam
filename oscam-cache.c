@@ -26,14 +26,17 @@ typedef struct cw_t {
 #ifdef CW_CYCLE_CHECK
 	uint8_t			got_bad_cwc;
 #endif
-	uint16_t		caid;				//first caid receved
-	uint32_t		prid;				//first prid receved
-	uint16_t		srvid;				//first srvid receved
-	struct s_reader	*selected_reader;   //first answering reader
-	struct s_client *cacheex_src;  		//first answering cacheex client
+	uint16_t		caid;				//first caid received
+	uint32_t		prid;				//first prid received
+	uint16_t		srvid;				//first srvid received
+	struct s_reader	*selected_reader;   //first answering: reader
+	struct s_client *cacheex_src;  		//first answering: cacheex client
 
 	uint64_t		grp;				//updated grp
 	uint8_t			csp; 				//updated if answer from csp
+	uint8_t			cacheex; 			//updated if answer from cacheex
+	uint8_t			localcards;			//updated if answer from local cards (or proxy using localcards option)
+	uint8_t			proxy;				//updated if answer from local reader
 
 	uint32_t 		count;				//count of same cws receved
 
@@ -190,13 +193,20 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 		 )
 	){
 
-#ifdef CS_CACHEEX
-		CWCHECK check_cw = get_cwcheck(er);
 
-		if(cw->cacheex_src
+#ifdef CS_CACHEEX
+
+		//if preferlocalcards=2 for this ecm request, we can server ONLY cw from localcards readers until stage<3
+		if(er->preferlocalcards==2 && !cw->localcards && er->stage<3){
+		    pthread_rwlock_unlock(&cache_lock);
+		    return NULL;
+		}
+
+		CWCHECK check_cw = get_cwcheck(er);
+		if((!cw->proxy && !cw->localcards)  //cw received from ONLY cacheex/csp peers
 		   && check_cw.counter>1
 		   && cw->count < check_cw.counter
-		   && (check_cw.mode || !er->cacheex_wait_time_expired)
+		   && (check_cw.mode || !er->cacheex_wait_time || !er->cacheex_wait_time_expired)
 		){
 		    pthread_rwlock_unlock(&cache_lock);
 		    return NULL;
@@ -205,7 +215,6 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 
 
 #ifdef CW_CYCLE_CHECK
-
 		uint8_t cwc_ct = cw->cwc_cycletime > 0 ? cw->cwc_cycletime : 0;
 		uint8_t cwc_ncwc = cw->cwc_next_cw_cycle < 2 ? cw->cwc_next_cw_cycle : 2;
 		if(cw->got_bad_cwc)
@@ -218,12 +227,6 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 		}else{
 			cs_debug_mask(D_CWC, "cyclecheck [BAD CW Cycle] from Int. Cache detected.. {client %s, caid %04X, srvid %04X} [check_cache] -> skip cache answer", (cl ? cl->account->usr : "-"), er->caid, er->srvid);
 			cw->got_bad_cwc = 1; // no need to check it again
-
-#ifdef CS_CACHEEX
-			if(er->cacheex_src){
-				log_cacheex_cw(er, "bad CWC cw");
-			}
-#endif
 			pthread_rwlock_unlock(&cache_lock);
 			return NULL;
 		}
@@ -298,6 +301,9 @@ void add_cache(ECM_REQUEST *er){
 				cw->cwc_next_cw_cycle = er->cwc_next_cw_cycle;
 				cw->count= 0;
 				cw->csp = 0;
+				cw->cacheex = 0;
+				cw->localcards=0;
+				cw->proxy=0;
 				cw->grp = 0;
 				cw->caid = er->caid;
 				cw->prid = er->prid;
@@ -330,9 +336,16 @@ void add_cache(ECM_REQUEST *er){
 		}
 	}
 
+	//update if answered from csp/cacheex/local_proxy
+	if(er->from_cacheex) cw->cacheex = 1;
+	if(er->from_csp) cw->csp = 1;
+	if(!er->cacheex_src){
+		if(is_localreader(er->selected_reader, er)) cw->localcards=1;
+		else cw->proxy = 1;
+	}
+
 	//always update group and counter
 	cw->grp |= er->grp;
-	if(er->from_csp) cw->csp = 1;
 	cw->count++;
 
 	//sort cw_list by counter (DESC order)

@@ -835,6 +835,7 @@ typedef struct ecm_request_t
 	uint16_t            fallback_reader_count;      // count of contacted fb readers
 	uint16_t            cacheex_reader_count;       // count of contacted cacheex mode-1 readers
 	uint16_t            reader_requested;           // count of real requested readers
+	int8_t          preferlocalcards;
 	int8_t          checked;                //for doublecheck
 	uchar           cw_checked[16];     //for doublecheck
 	int8_t          readers_timeout_check;  // set to 1 after ctimeout occurs and readers not answered are checked
@@ -859,8 +860,8 @@ typedef struct ecm_request_t
 	uint8_t         csp_answered;               // =1 if er get answer by csp
 	LLIST           *csp_lastnodes;             // last 10 Cacheex nodes atm cc-proto-only
 	uint32_t        cacheex_wait_time;          // cacheex wait time in ms
-	struct timeb    cacheex_wait;               // incoming time stamp (tps) + cacheex wait time
 	uint8_t         cacheex_wait_time_expired;  // =1 if cacheex wait_time expires
+	uint16_t        cacheex_mode1_delay;        // cacheex mode 1 delay
 	uint8_t         cacheex_hitcache;           // =1 if wait_time due hitcache
 	void            *cw_cache;					//pointer to cw stored in cache
 #endif
@@ -1236,6 +1237,7 @@ struct s_reader                                     //contains device info, read
 	uint64_t        grp;
 	int8_t          fallback;
 	FTAB            fallback_percaid;
+	FTAB            localcards;
 #ifdef MODULE_CAMD35
 	int8_t			via_emm_global;					// to enable global emm viaccess on camd35
 #endif
@@ -1472,6 +1474,7 @@ struct s_auth
 	FTAB            ftab;                           // user [caid] and ident filter
 	CLASSTAB        cltab;
 	TUNTAB          ttab;
+	int8_t          preferlocalcards;
 #ifdef CS_ANTICASC
 	int32_t         ac_fakedelay;                   // When this is -1, the global ac_fakedelay is used
 	int32_t         ac_users;                       // 0 - unlimited
@@ -1868,7 +1871,8 @@ struct s_config
 	CWCHECKTAB  cacheex_cwcheck_tab;
 	IN_ADDR_T   csp_srvip;
 	int32_t     csp_port;
-	CECSPVALUETAB   cacheex_wait_timetab;
+	CECSPVALUETAB  cacheex_wait_timetab;
+	CAIDVALUETAB   cacheex_mode1_delay_tab;
 	CECSP       csp; //CSP Settings
 	uint8_t     cacheex_enable_stats;   //enable stats
 	struct s_cacheex_matcher *cacheex_matcher;

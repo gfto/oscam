@@ -45,58 +45,79 @@ static uint32_t auto_timeout(ECM_REQUEST *er, uint32_t timeout)
 	return timeout;
 }
 
+
 #ifdef CS_CACHEEX
+void cacheex_mode1_delay(ECM_REQUEST *er){
+  if(!er->cacheex_wait_time_expired
+	  && er->cacheex_mode1_delay
+	  && er->cacheex_reader_count > 0
+	  && !er->stage
+	  && er->rc >= E_UNHANDLED
+   )
+	{
+	  cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} cacheex_mode1_delay timeout! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
+  	  request_cw_from_readers(er, 1); // setting stop_stage=1, we request only cacheex mode 1 readers. Others are requested at cacheex timeout!
+	}
+}
+
+
 void cacheex_timeout(ECM_REQUEST *er)
 {
-	er->cacheex_wait_time_expired = 1;
+	if(!er->cacheex_wait_time_expired){
 
-	//if check_cw mode=0, first try to get cw from cache without check counter!
-	CWCHECK check_cw = get_cwcheck(er);
-	if(!check_cw.mode)
-	{
-		struct ecm_request_t *ecm=NULL;
-		ecm = check_cache(er, er->client);
-		if(ecm)     //found in cache
+		er->cacheex_wait_time_expired = 1;
+
+		if(er->rc >= E_UNHANDLED)
 		{
-			struct s_write_from_cache *wfc=NULL;
-			if(!cs_malloc(&wfc, sizeof(struct s_write_from_cache)))
+			cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} cacheex timeout! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
+
+
+			//if check_cw mode=0, first try to get cw from cache without check counter!
+			CWCHECK check_cw = get_cwcheck(er);
+			if(!check_cw.mode)
 			{
-				NULLFREE(ecm);
-				return;
+				struct ecm_request_t *ecm=NULL;
+				ecm = check_cache(er, er->client);
+				if(ecm)     //found in cache
+				{
+					struct s_write_from_cache *wfc=NULL;
+					if(!cs_malloc(&wfc, sizeof(struct s_write_from_cache)))
+					{
+						NULLFREE(ecm);
+						return;
+					}
+					wfc->er_new=er;
+					wfc->er_cache=ecm;
+
+					if(!add_job(er->client, ACTION_ECM_ANSWER_CACHE, wfc, sizeof(struct s_write_from_cache)))  //write_ecm_answer_fromcache
+						{ NULLFREE(ecm); }
+
+					return;
+				}
 			}
-			wfc->er_new=er;
-			wfc->er_cache=ecm;
-
-			if(!add_job(er->client, ACTION_ECM_ANSWER_CACHE, wfc, sizeof(struct s_write_from_cache)))  //write_ecm_answer_fromcache
-				{ NULLFREE(ecm); }
-
-			return;
-		}
-	}
 
 
-	if(er->rc >= E_UNHANDLED && er->stage < 2 && er->cacheex_wait_time)
-	{
-		cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} cacheex timeout! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
+			//check if "normal" readers selected, if not send NOT FOUND!
+			//cacheex1-client (having always no "normal" reader), or not-cacheex-1 client with no normal readers available (or filtered by LB)
+			if( (er->reader_count + er->fallback_reader_count - er->cacheex_reader_count) <= 0 )
+			{
+				if(!cfg.wait_until_ctimeout){
+					er->rc = E_NOTFOUND;
+					er->selected_reader = NULL;
+					er->rcEx = 0;
 
-		//check if "normal" readers selected, if not send NOT FOUND!
-		//cacheex1-client (having always no "normal" reader), or not-cacheex-1 client with no normal readers available (or filtered by LB)
-		if( (er->reader_count + er->fallback_reader_count - er->cacheex_reader_count) <= 0 )
-		{
-			if(!cfg.wait_until_ctimeout){
-				er->rc = E_NOTFOUND;
-				er->selected_reader = NULL;
-				er->rcEx = 0;
-
-				cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} cacheex timeout: NO \"normal\" readers... not_found! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
-				send_dcw(er->client, er);
-				return;
+					cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} cacheex timeout: NO \"normal\" readers... not_found! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
+					send_dcw(er->client, er);
+					return;
+				}
 			}
-		}
-		else
-		{
-			debug_ecm(D_TRACE, "request for %s %s", username(er->client), buf);
-			request_cw_from_readers(er, 0);
+			else
+			{
+				if(er->stage < 2){
+					debug_ecm(D_TRACE, "request for %s %s", username(er->client), buf);
+					request_cw_from_readers(er, 0);
+				}
+			}
 		}
 	}
 }
@@ -188,6 +209,7 @@ static void *cw_process(void)
 
 #ifdef CS_CACHEEX
 	int64_t time_to_check_cacheex_wait_time;
+	int64_t time_to_check_cacheex_mode1_delay;
 #endif
 
 	cs_pthread_cond_init(&cw_process_sleep_cond_mutex, &cw_process_sleep_cond);
@@ -243,17 +265,30 @@ static void *cw_process(void)
 
 #ifdef CS_CACHEEX
 				//cacheex_wait_time
-				if(er->stage < 2 && er->cacheex_wait_time)
+				if(er->cacheex_wait_time && !er->cacheex_wait_time_expired)
 				{
 					tbc = er->tps;
+					time_to_check_cacheex_mode1_delay = 0;
 					time_to_check_cacheex_wait_time = add_ms_to_timeb_diff(&tbc, auto_timeout(er, er->cacheex_wait_time));
 					if(comp_timeb(&t_now, &tbc) >= 0)
 					{
 						add_job(er->client, ACTION_CACHEEX_TIMEOUT, (void *)er, 0);
 						time_to_check_cacheex_wait_time = 0;
+
+					}else if(er->cacheex_mode1_delay && !er->stage && er->cacheex_reader_count>0){
+						//check for cacheex_mode1_delay
+						tbc = er->tps;
+						time_to_check_cacheex_mode1_delay = add_ms_to_timeb_diff(&tbc, auto_timeout(er, er->cacheex_mode1_delay));
+						if(comp_timeb(&t_now, &tbc) >= 0)
+						{
+							add_job(er->client, ACTION_CACHEEX1_DELAY, (void *)er, 0);
+							time_to_check_cacheex_mode1_delay = 0;
+						}
 					}
 					if(!next_check || (time_to_check_cacheex_wait_time > 0 && time_to_check_cacheex_wait_time < next_check))
 						{ next_check = time_to_check_cacheex_wait_time; }
+					if(!next_check || (time_to_check_cacheex_mode1_delay > 0 && time_to_check_cacheex_mode1_delay < next_check))
+						{ next_check = time_to_check_cacheex_mode1_delay; }
 				}
 #endif
 				if(er->stage < 4)
@@ -665,10 +700,6 @@ ECM_REQUEST *get_ecmtask(void)
 		{ return NULL; }
 	cs_ftime(&er->tps);
 
-#ifdef CS_CACHEEX
-	er->cacheex_wait = er->tps;
-	er->cacheex_wait_time = 0;
-#endif
 #ifdef MODULE_GBOX
 	er->gbox_ecm_id = 0;
 #endif
@@ -816,7 +847,7 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 								};
 	static const char *stxtEx[16] = {"", "group", "caid", "ident", "class", "chid", "queue", "peer", "sid", "", "", "", "", "", "", ""};
 	static const char *stxtWh[16] = {"", "user ", "reader ", "server ", "lserver ", "", "", "", "", "", "", "", "" , "" , "", ""};
-	char sby[100] = "", sreason[32] = "", scwcinfo[32] = "", schaninfo[32] = "";
+	char sby[100] = "", sreason[32] = "", scwcinfo[32] = "", schaninfo[32] = "", srealecmtime[50]="";
 	char erEx[32] = "";
 	char uname[38] = "";
 	char channame[32];
@@ -846,14 +877,22 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	struct s_reader *er_reader = er->selected_reader; //responding reader
 	struct s_ecm_answer *ea_orig = get_ecm_answer(er_reader, er);
 
+
 	//check if ecm_answer from pending's
 	if(ea_orig && ea_orig->is_pending && er->rc == E_FOUND)
 		{ er->rc = E_CACHE2; }
+
 
 	//check if answer from cacheex-1 reader
 	if(er->rc == E_FOUND && er_reader && cacheex_reader(er_reader))  //so add hit to cacheex mode 1 readers
 	{
 		er->rc = E_CACHEEX;
+	}
+
+	//real ecm time
+	if(ea_orig && !ea_orig->is_pending && er->rc == E_FOUND && (er->cacheex_wait_time || (ea_orig->status & READER_FALLBACK)))  //real time for readers selected after timeouts
+	{
+		snprintf(srealecmtime, sizeof(srealecmtime) - 1, " (real %d ms)", ea_orig->ecm_time);
 	}
 
 
@@ -905,6 +944,7 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	}
 #endif
 
+
 	if(er->rc < E_NOTFOUND)
 		{ er->rcEx = 0; }
 
@@ -927,26 +967,12 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	cs_ftime(&tpe);
 
 #ifdef CS_CACHEEX
-	if(er->cacheex_wait_time && er->rc != E_TIMEOUT)
-	{
-		if(er->rc >= E_CACHEEX)
-		{
-			uint32_t ntime = comp_timeb(&tpe, &er->tps);
-			if(ntime >= er->cacheex_wait_time)
-			{
-				snprintf(sreason, sizeof(sreason) - 1, " (wait_time over)");
-			}
-		}
-		else if(er->rc == E_FOUND)
-		{
-			if(ea_orig) { snprintf(sreason, sizeof(sreason) - 1, " (real %d ms)", ea_orig->ecm_time); }
-		}
+	int cx = 0;
+	if(er->rc >= E_CACHEEX && er->cacheex_wait_time && er->cacheex_wait_time_expired){
+		cx = snprintf ( sreason, sizeof sreason, " (wait_time over)");
 	}
-
-	//print counter
 	if(er->cw_count>1){
-		char *cur = sreason;
-		cur += snprintf(cur, sizeof(sreason) - 1, " (cw count %d)", er->cw_count);
+		snprintf ( sreason+cx, (sizeof sreason)-cx, " (cw count %d)", er->cw_count);
 	}
 #endif
 
@@ -1219,12 +1245,12 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 		}
 		else
 		{
-			cs_log("%s (%s): %s (%d ms)%s (%c/%d/%d/%d)%s%s%s",
+			cs_log("%s (%s): %s (%d ms)%s (%c/%d/%d/%d)%s%s%s%s",
 				   uname, buf,
 				   er->rcEx ? erEx : stxt[er->rc],
 				   client->cwlastresptime, sby,
 				   stageTxt[er->stage], er->reader_requested, (er->reader_count + er->fallback_reader_count), er->reader_avail,
-				   schaninfo, sreason, scwcinfo);
+				   schaninfo, srealecmtime, sreason, scwcinfo);
 		}
 	}
 
@@ -1232,21 +1258,6 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	led_status_cw_not_found(er);
 
 ESC:
-
-	if(er->rc == E_TIMEOUT) // cleanout timeout ecm response so they can be asked again
-	{
-		struct s_ecm_answer *ea_list;
-		for(ea_list = er->matching_rdr; ea_list; ea_list = ea_list->next)
-		{
-			if(ea_list->reader)
-			{
-				ea_list->status = 0; // clear status
-				ea_list->rc = E_UNHANDLED; // set
-			}
-		}
-		er->rc = E_UNHANDLED; // set default rc status to unhandled
-		er->cwc_next_cw_cycle = 2; //set it to: we dont know
-	}	
 
 	return 0;
 }
@@ -1282,11 +1293,15 @@ void request_cw_from_readers(ECM_REQUEST *er, uint8_t stop_stage)
 
 		er->stage++;
 
-#ifndef CS_CACHEEX
+#ifdef CS_CACHEEX
+		if(er->stage == 1 && er->preferlocalcards==2)
+			{ er->stage++; }
+#else
 		if(er->stage == 1)
 			{ er->stage++; }
 #endif
-		if(er->stage == 2 && !cfg.preferlocalcards)
+
+		if(er->stage == 2 && !er->preferlocalcards)
 			{ er->stage++; }
 
 		for(ea = er->matching_rdr; ea; ea = ea->next)
@@ -1298,7 +1313,7 @@ void request_cw_from_readers(ECM_REQUEST *er, uint8_t stop_stage)
 			{
 				// Cache-Exchange
 				if((ea->status & REQUEST_SENT) ||
-						(ea->status & (READER_CACHEEX | READER_ACTIVE)) != (READER_CACHEEX | READER_ACTIVE) || cfg.preferlocalcards==2)
+						(ea->status & (READER_CACHEEX | READER_ACTIVE)) != (READER_CACHEEX | READER_ACTIVE))
 					{ continue; }
 				break;
 			}
@@ -1437,21 +1452,38 @@ void chk_dcw(struct s_ecm_answer *ea)
 
 
 #ifdef CS_CACHEEX
-	//check if check_cw enabled
-	if(eardr && cacheex_reader(eardr)){  //IF mode-1 reader
-		CWCHECK check_cw = get_cwcheck(ert);
-		if(check_cw.counter>1) //if answer from cacheex-1 reader, and we have to check cw counter, not send answer to client! thread check_cache will check counter and send answer to client!
-			return;
+	/* if answer from cacheex-1 reader, not send answer to client! thread check_cache will check counter and send answer to client!
+	 * Anyway, we should check if we have to go to oher stage (>1)
+	 */
+
+	if(eardr && cacheex_reader(eardr)){
+
+		// if wait_time, and not wait_time expired and wait_time due to hitcache(or awtime>0), we have to wait cacheex timeout before call other readers (stage>1)
+		if(cacheex_reader(eardr) && !ert->cacheex_wait_time_expired && ert->cacheex_hitcache)
+			{ return; }
+
+		int8_t cacheex_left = 0;
+		uint8_t has_cacheex = 0;
+		if(ert->stage==1){
+			for(ea_list = ert->matching_rdr; ea_list; ea_list = ea_list->next)
+			{
+				cs_readlock(&ea_list->ecmanswer_lock);
+				if(((ea_list->status & (READER_CACHEEX | READER_FALLBACK | READER_ACTIVE))) == (READER_CACHEEX | READER_ACTIVE))
+					{ has_cacheex = 1; }
+				if((!(ea_list->status & READER_FALLBACK)  && ((ea_list->status & (REQUEST_SENT | REQUEST_ANSWERED | READER_CACHEEX | READER_ACTIVE)) == (REQUEST_SENT | READER_CACHEEX | READER_ACTIVE))) || ea_list->rc < E_NOTFOUND)
+					{ cacheex_left++; }
+				cs_readunlock(&ea_list->ecmanswer_lock);
+			}
+
+			if(has_cacheex && !cacheex_left) { request_cw_from_readers(ert, 0); }
+		}
+
+		return;
 	}
 #endif
 
 
 	int32_t reader_left = 0, local_left = 0, reader_not_flb_left = 0, has_not_fallback = 0, has_local = 0;
-#ifdef CS_CACHEEX
-	int8_t cacheex_left = 0;
-	uint8_t has_cacheex = 0;
-#endif
-
 	ert->selected_reader = eardr;
 
 	switch(ea->rc)
@@ -1461,22 +1493,11 @@ void chk_dcw(struct s_ecm_answer *ea)
 		ert->rcEx = 0;
 		ert->rc = ea->rc;
 		ert->grp |= eardr->grp;
-#ifdef CS_CACHEEX
-		if(eardr && cacheex_reader(eardr))
-		{
-			ert->cacheex_src = eardr->client; //so adds hits to reader
-		}
-#endif
+
 		break;
 	case E_INVALID:
 	case E_NOTFOUND:
 	{
-
-#ifdef CS_CACHEEX
-		// if not wait_time expired and wait_time due to hitcache (or awtime>0), we have to wait cacheex before call readers. This one is (should be) answer by ex1-readers
-		if(cacheex_reader(eardr) && !ert->cacheex_wait_time_expired && ert->cacheex_hitcache)
-			{ return; }
-#endif
 
 		//check if there are other readers to ask, and if not send NOT_FOUND to client
 		ert->rcEx = ea->rcEx;
@@ -1486,12 +1507,6 @@ void chk_dcw(struct s_ecm_answer *ea)
 		{
 			cs_readlock(&ea_list->ecmanswer_lock);
 
-#ifdef CS_CACHEEX
-			if(((ea_list->status & (READER_CACHEEX | READER_FALLBACK | READER_ACTIVE))) == (READER_CACHEEX | READER_ACTIVE))
-				{ has_cacheex = 1; }
-			if((!(ea_list->status & READER_FALLBACK)  && ((ea_list->status & (REQUEST_SENT | REQUEST_ANSWERED | READER_CACHEEX | READER_ACTIVE)) == (REQUEST_SENT | READER_CACHEEX | READER_ACTIVE))) || ea_list->rc < E_NOTFOUND)
-				{ cacheex_left++; }
-#endif
 			if((!(ea_list->status & READER_FALLBACK)  && ((ea_list->status & (REQUEST_SENT | REQUEST_ANSWERED | READER_LOCAL | READER_ACTIVE)) == (REQUEST_SENT | READER_LOCAL | READER_ACTIVE))) || ea_list->rc < E_NOTFOUND)
 				{ local_left++; }
 
@@ -1511,14 +1526,7 @@ void chk_dcw(struct s_ecm_answer *ea)
 
 		switch(ert->stage)
 		{
-#ifdef CS_CACHEEX
-		case 1:   // Cache-Exchange
-		{
-			if(has_cacheex && !cacheex_left) { request_cw_from_readers(ert, 0); }
-			break;
-		}
-#endif
-		case 2:   // only local reader (used only if cfg.preferlocalcards=1)
+		case 2:   // only local reader (used only if preferlocalcards=1)
 		{
 			if(has_local && !local_left) { request_cw_from_readers(ert, 0); }
 			break;
@@ -2271,21 +2279,24 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 #ifdef CS_CACHEEX
 	int8_t cacheex = client->account ? client->account->cacheex.mode : 0;
 	er->from_cacheex1_client = 0;
-	if(cacheex == 1) { er->from_cacheex1_client = 1; }
+	if(cacheex == 1) {er->from_cacheex1_client = 1;}
 #endif
 
 
-	//Schlocke: above checks could change er->rc so
-	/*BetaCrypt tunneling
-	 *moved behind the check routines,
-	 *because newcamd ECM will fail
-	 *if ECM is converted before
-	 */
+	//set preferlocalcards for this ecm request (actually, paramter is per user based, maybe in fiture it will be caid based too)
+	er->preferlocalcards = cfg.preferlocalcards;
+	if(client->account->preferlocalcards > -1){
+		er->preferlocalcards = client->account->preferlocalcards;
+	}
+	if(er->preferlocalcards <0 || er->preferlocalcards >2) {er->preferlocalcards=0;}
+
+
 	if(chk_is_betatunnel_caid(er->caid) && client->ttab.n)
 	{
 		cs_ddump_mask(D_TRACE, er->ecm, 13, "betatunnel? ecmlen=%d", er->ecmlen);
 		cs_betatunnel(er);
 	}
+
 
 	// ignore ecm ...
 	int32_t offset = 3;
@@ -2391,7 +2402,7 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 			prv = ea;
 
 			ea->status = READER_ACTIVE;
-			if(!is_network_reader(rdr))
+			if(is_localreader(rdr, er))
 				{ ea->status |= READER_LOCAL; }
 			else if(cacheex_reader(rdr))
 			{
@@ -2399,7 +2410,7 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 				er->cacheex_reader_count++;
 			}
 
-			if(is_fallback)
+			if(is_fallback && (!is_localreader(rdr, er) || (is_localreader(rdr, er) && !er->preferlocalcards)))
 				{ ea->status |= READER_FALLBACK; }
 
 			ea->pending = NULL;
@@ -2428,7 +2439,7 @@ OUT:
 	uint32_t wait_time_no_hitcache = 0;
 	uint32_t wait_time_hitcache = 0;
 
-	if(client->account && !client->account->no_wait_time)
+	if(client->account && !client->account->no_wait_time && er->preferlocalcards<2)
 	{
 		wait_time_no_hitcache = get_cacheex_wait_time(er,NULL);   //NO check hitcache. Wait_time is dwtime, or, if 0, awtime.
 		wait_time_hitcache = get_cacheex_wait_time(er,client);  //check hitcache for calculating wait_time! If hitcache wait_time is biggest value between dwtime and awtime, else it's awtime.
@@ -2449,7 +2460,7 @@ OUT:
 	}
 
 	cs_debug_mask(D_TRACE | D_CACHEEX, "[GET_CW] wait_time %d caid %04X prov %06X srvid %04X rc %d cacheex cl mode %d ex1rdr %d", cacheex_wait_time, er->caid, er->prid, er->srvid, er->rc, cacheex, er->cacheex_reader_count);
-	cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [get_cw] wait_time %d - client cacheex mode %d, reader avail for ecm %d, hitcache %d", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid, cacheex_wait_time, cacheex == 1 ? 1 : 0, er->reader_avail, wait_time_hitcache ? 1 : 0);
+	cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [get_cw] wait_time %d - client cacheex mode %d, reader avail for ecm %d, hitcache %d, preferlocalcards %d", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid, cacheex_wait_time, cacheex == 1 ? 1 : 0, er->reader_avail, wait_time_hitcache ? 1 : 0, er->preferlocalcards);
 	//END WAIT_TIME calculation
 
 	if(!cacheex_wait_time && (er->reader_count + er->fallback_reader_count) == 0)
@@ -2496,16 +2507,20 @@ OUT:
 
 	er->rcEx = 0;
 #ifdef CS_CACHEEX
+	er->cacheex_wait_time = 0;
 	er->cacheex_wait_time_expired = 1;
 	er->cacheex_hitcache = 0;
+	er->cacheex_mode1_delay = 0;
+
 	if(cacheex_wait_time)      //wait time for cacheex
 	{
-		add_ms_to_timeb(&er->cacheex_wait, cacheex_wait_time);
 		er->cacheex_wait_time = cacheex_wait_time;
 		er->cacheex_wait_time_expired = 0;
-		if(er->cacheex_reader_count > 0)
+		er->cacheex_hitcache = wait_time_hitcache ? 1 : 0; //usefull only when cacheex mode 1 readers answers before wait_time and we have to decide if we have to wait until wait_time expires.
+		er->cacheex_mode1_delay = get_cacheex_mode1_delay(er);
+
+		if(!er->cacheex_mode1_delay && er->cacheex_reader_count > 0)
 		{
-			er->cacheex_hitcache = wait_time_hitcache ? 1 : 0; //usefull only when cacheex mode 1 readers answers before wait_time and we have to decide if we have to wait until wait_time expires.
 			request_cw_from_readers(er, 1); // setting stop_stage=1, we request only cacheex mode 1 readers. Others are requested at cacheex timeout!
 		}
 	}

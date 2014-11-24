@@ -376,6 +376,7 @@ static const struct config_list account_opts[] =
 	DEF_OPT_FUNC("betatunnel"           , OFS(ttab),                    account_tuntab_fn),
 	DEF_OPT_FUNC("group"                , OFS(grp),                     group_fn),
 	DEF_OPT_FUNC("services"             , OFS(sidtabs),                 services_fn),
+	DEF_OPT_INT8("preferlocalcards"     , OFS(preferlocalcards),        -1),
 	DEF_OPT_FUNC_X("ident"              , OFS(ftab),                    ftab_fn, FTAB_ACCOUNT | FTAB_PROVID),
 	DEF_OPT_FUNC_X("chid"               , OFS(fchid),                   ftab_fn, FTAB_ACCOUNT | FTAB_CHID),
 	DEF_OPT_FUNC("class"                , OFS(cltab),                   class_fn),

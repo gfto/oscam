@@ -582,6 +582,7 @@ static const struct config_list cache_opts[] =
 #ifdef CS_CACHEEX
 	DEF_OPT_UINT32("max_hit_time"		, OFS(max_hitcache_time),	DEFAULT_MAX_HITCACHE_TIME),
 	DEF_OPT_FUNC("wait_time"		, OFS(cacheex_wait_timetab),	cacheex_valuetab_fn),
+	DEF_OPT_FUNC("cacheex_mode1_delay"  , OFS(cacheex_mode1_delay_tab), caidvaluetab_fn),
 	DEF_OPT_UINT8("cacheexenablestats"	, OFS(cacheex_enable_stats),	0),
 	DEF_OPT_INT32("csp_port"		, OFS(csp_port),		0),
 	DEF_OPT_FUNC("csp_serverip"		, OFS(csp_srvip),		serverip_fn),

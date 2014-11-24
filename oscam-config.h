@@ -53,6 +53,7 @@ enum ftab_fn
 	FTAB_PROVID  = 0x04,
 	FTAB_CHID    = 0x08,
 	FTAB_FBPCAID = 0x10,
+	FTAB_LOCALCARDS = 0x20
 };
 
 void ftab_fn(const char *token, char *value, void *setting, long ftab_type, FILE *f);

@@ -19,6 +19,7 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er);
 void free_ecm(ECM_REQUEST *ecm);
 void free_push_in_ecm(ECM_REQUEST *ecm);
 void write_ecm_answer_fromcache(struct s_write_from_cache *wfc);
+void cacheex_mode1_delay(ECM_REQUEST *er);
 void cacheex_timeout(ECM_REQUEST *er);
 void fallback_timeout(ECM_REQUEST *er);
 void ecm_timeout(ECM_REQUEST *er);

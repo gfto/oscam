@@ -342,7 +342,7 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName
 			cs_log("PANIC: CAID field not found in CHID parameter!");
 			return;
 		}
-		else if(zFiltName && zFiltName[0] == 'f')
+		else if(zFiltName && (zFiltName[0] == 'f' || zFiltName[0] == 'l') )
 		{
 			newftab.filts[i].caid = (uint16_t)a2i(ptr1, 4);
 			ptr[i] = NULL;
@@ -357,7 +357,7 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName
 	for(i = 0; i < newftab.nfilts; i++)
 	{
 		cs_debug_mask(D_CLIENT, "CAID #%d: %04X", i, newftab.filts[i].caid);
-		if(zFiltName && zFiltName[0] == 'f' && ptr[i] == NULL) { continue; }
+		if(zFiltName && (zFiltName[0] == 'f' || zFiltName[0] == 'l') && ptr[i] == NULL) { continue; }
 		for(j = 0, ptr3 = strtok_r(ptr[i], ",", &saveptr1); (j < CS_MAXPROV) && (ptr3); ptr3 = strtok_r(NULL, ",", &saveptr1), j++)
 		{
 			newftab.filts[i].prids[j] = a2i(ptr3, 6);
