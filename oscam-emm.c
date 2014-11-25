@@ -437,7 +437,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 
 		int32_t is_blocked = 0;
 
-		if (aureader->fix_07 == 1 && (caid == 0x098C || caid == 0x9C4) && ep->type == UNIQUE)
+		if (aureader->fix_07 == 1 && (caid == 0x098C || caid == 0x09C4) && ep->type == UNIQUE)
 		{
 			if(ep->emm[1] == 0x70 && (ep->emm[8] * 0x100 + ep->emm[9] != 0x200))
 			{
