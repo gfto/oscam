@@ -890,7 +890,14 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	}
 
 	//real ecm time
-	if(ea_orig && !ea_orig->is_pending && er->rc == E_FOUND && (er->cacheex_wait_time || (ea_orig->status & READER_FALLBACK)))  //real time for readers selected after timeouts
+	if(ea_orig && !ea_orig->is_pending && er->rc == E_FOUND
+	   &&
+	   (
+#ifdef CS_CACHEEX
+		  er->cacheex_wait_time ||
+#endif
+	     (ea_orig->status & READER_FALLBACK))
+	 )
 	{
 		snprintf(srealecmtime, sizeof(srealecmtime) - 1, " (real %d ms)", ea_orig->ecm_time);
 	}
@@ -1915,6 +1922,9 @@ static void set_readers_counter(ECM_REQUEST *er)
 
 	er->reader_count = 0;
 	er->fallback_reader_count = 0;
+	er->localreader_count = 0;
+	er->cacheex_reader_count = 0;
+
 	for(ea = er->matching_rdr; ea; ea = ea->next)
 	{
 		if(ea->status & READER_ACTIVE)
@@ -1923,6 +1933,11 @@ static void set_readers_counter(ECM_REQUEST *er)
 				{ er->reader_count++; }
 			else
 				{ er->fallback_reader_count++; }
+
+			if(is_localreader(ea->reader, er))
+				{  er->localreader_count++; }
+			else if(cacheex_reader(ea->reader))
+				{ er->cacheex_reader_count++; }
 		}
 	}
 }
@@ -2348,9 +2363,6 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 
 	er->reader_avail = 0;
 	er->readers = 0;
-#ifdef CS_CACHEEX
-	er->reader_nocacheex_avail = 0;
-#endif
 
 	struct s_ecm_answer *ea, *prv = NULL;
 	struct s_reader *rdr;
@@ -2382,7 +2394,6 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 			er->reader_avail++;
 
 #ifdef CS_CACHEEX
-			if(!rdr->cacheex.mode) { er->reader_nocacheex_avail++; }
 			if(cacheex == 1 && !cacheex_reader(rdr))  //ex1-cl only ask ex1-rdr
 				{ continue; }
 #endif
@@ -2407,7 +2418,6 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 			else if(cacheex_reader(rdr))
 			{
 				ea->status |= READER_CACHEEX;
-				er->cacheex_reader_count++;
 			}
 
 			if(is_fallback && (!is_localreader(rdr, er) || (is_localreader(rdr, er) && !er->preferlocalcards)))
@@ -2425,12 +2435,33 @@ OUT:
 
 
 #ifdef WITH_LB
-	//FILTER readers by loadbalancing
-	stat_get_best_reader(er);
+	if(cfg.lb_mode){
+		//cache2 is handled by readers queue, so, if a same ecm hash with same readers, use these same readers to get cache2 from them! Not ask other readers!
+		struct ecm_request_t *ecm_eq = NULL;
+		ecm_eq = check_same_ecm(er);
+		if(ecm_eq)
+		{
+			//set all readers used by ecm_eq, so we get cache2 from them!
+			use_same_readers(er, ecm_eq);
+			cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [get_cw] found same ecm with same readers from client %s, use them!", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid, (check_client(ecm_eq->client) ? ecm_eq->client->account->usr : "-"));
+		}else{
+
+			//FILTER readers by loadbalancing
+			stat_get_best_reader(er);
+		}
+    }
 #endif
 
 	//set reader_count and fallback_reader_count
 	set_readers_counter(er);
+
+	//if preferlocalcards>0, check if we have local readers selected: if not, switch to preferlocalcards=0 for this ecm
+	if(er->preferlocalcards>0){
+		if(er->localreader_count == 0){
+			er->preferlocalcards=0;
+			cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} NO local readers, set preferlocalcards = %d", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid, er->preferlocalcards);
+		}
+	}
 
 
 #ifdef CS_CACHEEX
@@ -2485,24 +2516,6 @@ OUT:
 	ecmcwcache = er;
 	ecmcwcache_size++;
 	cs_writeunlock(&ecmcache_lock);
-
-
-#ifdef WITH_LB
-	if(cfg.lb_mode){
-		//cache2 is handled by readers queue, so, if a same ecm hash with same readers, use these same readers to get cache2 from them! Not ask other readers!
-		struct ecm_request_t *ecm_eq = NULL;
-		ecm_eq = check_same_ecm(er);
-		if(ecm_eq)
-		{
-			//set all readers used by ecm_eq, so we get cache2 from them!
-			use_same_readers(er, ecm_eq);
-			cs_debug_mask(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [get_cw] found same ecm with same readers from client %s, use them!", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid, (check_client(ecm_eq->client) ? ecm_eq->client->account->usr : "-"));
-
-			//set reader_count and fallback_reader_count
-			set_readers_counter(er);
-		}
-    }
-#endif
 
 
 	er->rcEx = 0;

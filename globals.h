@@ -829,12 +829,12 @@ typedef struct ecm_request_t
 	struct timeb    tps;                // incoming time stamp
 	int8_t          btun;               // mark er as betatunneled
 	uint16_t            reader_avail;               // count of available readers for ecm
-	uint16_t            readers;                    // count of available used readers
-	uint16_t            reader_nocacheex_avail;     // count of "normal" readers
-	uint16_t            reader_count;               // count of contacted readers
-	uint16_t            fallback_reader_count;      // count of contacted fb readers
-	uint16_t            cacheex_reader_count;       // count of contacted cacheex mode-1 readers
+	uint16_t            readers;                    // count of available used readers for ecm
 	uint16_t            reader_requested;           // count of real requested readers
+	uint16_t            localreader_count;          // count of selected local readers
+	uint16_t            cacheex_reader_count;       // count of selected cacheex mode-1 readers
+	uint16_t            fallback_reader_count;      // count of selected fb readers
+	uint16_t            reader_count;               // count of selected not fb readers
 	int8_t          preferlocalcards;
 	int8_t          checked;                //for doublecheck
 	uchar           cw_checked[16];     //for doublecheck

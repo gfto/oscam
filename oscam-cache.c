@@ -206,7 +206,7 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 		if((!cw->proxy && !cw->localcards)  //cw received from ONLY cacheex/csp peers
 		   && check_cw.counter>1
 		   && cw->count < check_cw.counter
-		   && (check_cw.mode || !er->cacheex_wait_time || !er->cacheex_wait_time_expired)
+		   && (check_cw.mode || !er->cacheex_wait_time_expired)
 		){
 		    pthread_rwlock_unlock(&cache_lock);
 		    return NULL;
@@ -339,10 +339,14 @@ void add_cache(ECM_REQUEST *er){
 	//update if answered from csp/cacheex/local_proxy
 	if(er->from_cacheex) cw->cacheex = 1;
 	if(er->from_csp) cw->csp = 1;
+#ifdef CS_CACHEEX
 	if(!er->cacheex_src){
+#endif
 		if(is_localreader(er->selected_reader, er)) cw->localcards=1;
 		else cw->proxy = 1;
+#ifdef CS_CACHEEX
 	}
+#endif
 
 	//always update group and counter
 	cw->grp |= er->grp;
