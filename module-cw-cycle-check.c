@@ -93,8 +93,8 @@ static uint8_t checkvalidCW(ECM_REQUEST *er)
 	if(checkCWpart(er->cw, 0) && checkCWpart(er->cw, 1))
 	{ return 1; } //cw1 and cw2 is filled -> we can check for cwc
 
-	if(!checkCWpart(er->cw, 0) || !checkCWpart(er->cw, 1))
-		{
+	if((!checkCWpart(er->cw, 0) || !checkCWpart(er->cw, 1)) && is_halfCW_er(er))
+	{
 		cs_log("CAID: %04X uses obviously half cycle cw's : NO need to check it with CWC! Remove CAID: %04X from CWC Config!", er->caid, er->caid);
 		ret = 0;  // cw1 or cw2 is null 
 	}
