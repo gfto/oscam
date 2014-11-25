@@ -1934,10 +1934,10 @@ static void set_readers_counter(ECM_REQUEST *er)
 			else
 				{ er->fallback_reader_count++; }
 
-			if(is_localreader(ea->reader, er))
-				{  er->localreader_count++; }
-			else if(cacheex_reader(ea->reader))
+			if(cacheex_reader(ea->reader))
 				{ er->cacheex_reader_count++; }
+			else if(is_localreader(ea->reader, er))
+				{  er->localreader_count++; }
 		}
 	}
 }
@@ -2413,12 +2413,10 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 			prv = ea;
 
 			ea->status = READER_ACTIVE;
-			if(is_localreader(rdr, er))
+			if(cacheex_reader(rdr))
+				{ ea->status |= READER_CACHEEX; }
+			else if(is_localreader(rdr, er))
 				{ ea->status |= READER_LOCAL; }
-			else if(cacheex_reader(rdr))
-			{
-				ea->status |= READER_CACHEEX;
-			}
 
 			if(is_fallback && (!is_localreader(rdr, er) || (is_localreader(rdr, er) && !er->preferlocalcards)))
 				{ ea->status |= READER_FALLBACK; }
