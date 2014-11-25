@@ -2922,6 +2922,10 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	
 #endif
 
+#ifdef CW_CYCLE_CHECK
+	tpl_addVar(vars, TPLADD, "USERCWCYCLEDISABLE", (account->cwc_disable == 1) ? "checked" : "");
+#endif
+
 	//Keepalive
 	if(!apicall)
 	{

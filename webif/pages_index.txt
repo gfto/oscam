@@ -271,6 +271,7 @@ TOUCH_STATUS                  touch/status.html                                 
 USEREDIT                      user_edit/user_edit.html
 USEREDITANTICASC              user_edit/user_edit_anticasc.html                           CS_ANTICASC
 USEREDITCACHEEXBIT            user_edit/user_edit_cacheexbit.html                         CS_CACHEEX
+USEREDITCWCYCLE               user_edit/user_edit_cwcycle.html                            CW_CYCLE_CHECK
 USEREDITCCCAM                 user_edit/user_edit_cccam.html                              MODULE_CCCAM
 USEREDITMONLEVEL              user_edit/user_edit_monlevel.html                           MODULE_MONITOR
 USEREDITSID                   user_edit/user_edit_sid.html
