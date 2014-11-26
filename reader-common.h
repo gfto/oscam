@@ -24,6 +24,12 @@ int32_t card_write(struct s_reader *reader, const uchar *, const uchar *, uchar 
     memset(atr, 0, sizeof(atr)); \
     ATR_GetRaw(newatr, atr, &atr_size);
 
+#define get_atr2 \
+    unsigned char atr2[ATR_MAX_SIZE]; \
+    uint32_t atr_size2; \
+    memset(atr2, 0, sizeof(atr2)); \
+    ATR_GetRaw(newatr, atr2, &atr_size2);
+
 #define get_hist \
     unsigned char hist[ATR_MAX_HISTORICAL]; \
     uint32_t hist_size = 0; \

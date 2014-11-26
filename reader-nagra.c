@@ -759,8 +759,8 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 			}
 			reader->card_atr_length = 23;
 			call(reader->crdr.activate(reader, newatr)); //read nagra atr
-			get_atr;
-			memcpy(reader->rom, atr + 8, 15);// get historical bytes containing romrev from nagra atr
+			get_atr2;
+			memcpy(reader->rom, atr2 + 8, 15);// get historical bytes containing romrev from nagra atr
 			rdr_log(reader,"Nagra layer found"); 
 			rdr_log(reader,"Rom revision: %.15s", reader->rom);
 			reader->card_atr_length = 14;
