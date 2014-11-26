@@ -687,6 +687,9 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 	get_atr;
 	def_resp;
 	memset(reader->rom, 0, 15);
+	static const uchar ins80[] = { 0x80, 0xCA, 0x00, 0x00, 0x11 }; // switch to nagra layer
+	static const uchar handshake[] = { 0xEE, 0x51, 0xDC, 0xB8, 0x4A, 0x1C, 0x15, 0x05, 0xB5, 0xA6, 0x9B, 0x91, 0xBA, 0x33, 0x19, 0xC4, 0x10 }; // nagra handshake
+	int8_t ins7e11_state = 0;
 
 	int8_t is_pure_nagra = 0;
 	int8_t is_tiger = 0;
@@ -739,8 +742,46 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 		}
 		memcpy(reader->rom, cta_res + 2, 15);
 	}
-	else { return ERROR; }
+	else if(memcmp(atr + 7, "pp", 2) == 0 && atr[9] >= 10)
+	{
+		rdr_log(reader, "detect seca/nagra tunneled card");
 
+		if(!cs_malloc(&reader->csystem_data, sizeof(struct nagra_data)))
+			{ rdr_log(reader,"mem alloc error"); return ERROR; }
+		write_cmd(ins80, handshake); // try to init nagra layer
+		if(cta_res[0] == 0x61 && cta_res[1] == 0x10)
+		{
+			reader->seca_nagra_card = 1;
+			if ((reader->typ == R_SMART || reader->typ == R_INTERNAL || !strcasecmp(reader->crdr.desc, "smargo")) && !reader->ins7e11_fast_reset)
+			{
+				ins7e11_state = 1;
+				reader->ins7e11_fast_reset = 1;
+			}
+			reader->card_atr_length = 23;
+			call(reader->crdr.activate(reader, newatr)); //read nagra atr
+			get_atr;
+			memcpy(reader->rom, atr + 8, 15);// get historical bytes containing romrev from nagra atr
+			rdr_log(reader,"Nagra layer found"); 
+			rdr_log(reader,"Rom revision: %.15s", reader->rom);
+			reader->card_atr_length = 14;
+			reader->seca_nagra_card = 2;
+			call(reader->crdr.activate(reader, newatr));// read seca atr to switch back
+			if ((reader->typ == R_SMART || reader->typ == R_INTERNAL || !strcasecmp(reader->crdr.desc, "smargo")) && ins7e11_state == 1)
+			{
+				ins7e11_state = 0;
+				reader->ins7e11_fast_reset = 0;
+			}
+		}
+		else
+		{
+			rdr_log(reader," Nagra atr not ok");
+			return ERROR;
+		}
+		NULLFREE(reader->csystem_data);
+		return ERROR; // quitting csystem still not having needed commands to run on nagra layer
+	}
+	else { return ERROR; }
+	
 	// Private data may be already allocated, see above (the irdeto check).
 	if(!reader->csystem_data)
 	{

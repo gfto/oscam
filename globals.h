@@ -1270,6 +1270,7 @@ struct s_reader                                     //contains device info, read
 	uchar           atr[64];
 	uchar           card_atr[64];                   // ATR readed from card
 	int8_t          card_atr_length;                // length of ATR
+	int8_t          seca_nagra_card;                // seca nagra card 
 	int32_t         atrlen;
 	SIDTABS         sidtabs;
 	SIDTABS         lb_sidtabs;

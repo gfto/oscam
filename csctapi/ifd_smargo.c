@@ -144,16 +144,25 @@ static int32_t smargo_fast_reset_by_atr(struct s_reader *reader, ATR *atr)
 {
 	int32_t ret = ERROR;
 	unsigned char buf[ATR_MAX_SIZE];
+	int32_t n = 0;
+	int8_t atr_len = 0;
 
-	IO_Serial_Read(reader, 0, 500000, ATR_MAX_SIZE, buf);
+	if(reader->seca_nagra_card == 1)
+	{
+		atr_len = reader->card_atr_length; // this is a special case the data buffer has only the atr lenght.
+	}
+	else
+	{
+		atr_len = reader->card_atr_length + 2; // data buffer has atr lenght + 2 bytes 
+	}
+
+	IO_Serial_Read(reader, 0, 500000, atr_len, buf);
 
 	IO_Serial_RTS_Set(reader);
 	cs_sleepms(150);
 	IO_Serial_RTS_Clr(reader);
 
-	int32_t n = 0;
-
-	smargo_Serial_Read(reader, ATR_TIMEOUT, ATR_MAX_SIZE, buf, &n);
+	smargo_Serial_Read(reader, ATR_TIMEOUT, atr_len + 1, buf, &n);
 
 	if(ATR_InitFromArray(atr, buf, n) != ERROR)
 	{

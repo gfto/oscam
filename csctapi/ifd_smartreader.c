@@ -1023,7 +1023,7 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 				errno != EBUSY)
 		{
 #if defined(__linux__)
-			if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
+//			if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
 #endif
 			smartreader_usb_close_internal(reader);
 			if(detach_errno == EPERM)
@@ -1044,7 +1044,7 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 	if(ret != 0)
 	{
 #if defined(__linux__)
-		if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
+//		if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
 #endif
 		smartreader_usb_close_internal(reader);
 		if(detach_errno == EPERM)
@@ -1062,7 +1062,7 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 	{
 		libusb_release_interface(crdr_data->usb_dev_handle, crdr_data->interface);
 #if defined(__linux__)
-		if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
+//		if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
 #endif
 		smartreader_usb_close_internal(reader);
 		rdr_log(reader, "smartreader_usb_reset failed");
@@ -1102,7 +1102,7 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 	{
 		libusb_release_interface(crdr_data->usb_dev_handle, crdr_data->interface);
 #if defined(__linux__)
-		if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
+//		if(detach_errno == 0) { libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); }
 #endif
 		smartreader_usb_close_internal(reader);
 		rdr_log(reader, "set baudrate failed");
@@ -1462,8 +1462,7 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 
 
 		//Read the ATR
-		rdr_log(reader," Reading atr");
-		ret = smart_read(reader, data, ATR_MAX_SIZE, (1500));
+		ret = smart_read(reader, data, ATR_MAX_SIZE, (800)); // timeouts are in ms by smartreader
 		rdr_debug_mask(reader, D_DEVICE, "SR: get ATR ret = %d" , ret);
 		if(ret)
 			{ rdr_ddump_mask(reader, D_DEVICE, data, ATR_MAX_SIZE * 2, "SR:"); }
@@ -1479,7 +1478,6 @@ static int32_t SR_Reset(struct s_reader *reader, ATR *atr)
 		{
 			rdr_debug_mask(reader, D_DEVICE, "SR: Inverse convention detected, setting smartreader inv to 1");
 
-//			smart_flush(reader);
 			crdr_data->inv = 1;
 			EnableSmartReader(reader, baud_temp2, crdr_data->fs / 10000, crdr_data->F, (unsigned char)crdr_data->D, crdr_data->N, crdr_data->T, crdr_data->inv, parity[i]);
 		}
@@ -1631,7 +1629,7 @@ int32_t SR_WriteSettings(struct s_reader *reader, uint16_t  F, unsigned char D, 
 	if(!reader->ins7e11_fast_reset){
 	rdr_log(reader, "Effective reader settings mhz =%u F= %u D= %u N=%u T=%u inv=%u parity=%s", reader->mhz, F, D, N, T, crdr_data->inv, parity_str[crdr_data->parity]);
 	smart_fastpoll(reader, 1);
-	uint32_t baud_temp2 = (double)(D * (reader->mhz * 10000) / (double)F);
+	uint32_t baud_temp2 = 3000000; //set to max device speed compatible with usb 1.1 card sets the baudrate.
 	smart_flush(reader);
 	EnableSmartReader(reader, baud_temp2, reader->mhz, F, D, N, T, crdr_data->inv, crdr_data->parity);
 	smart_fastpoll(reader, 0);
@@ -1678,10 +1676,11 @@ static int32_t SR_Close(struct s_reader *reader)
 		{
 			init_count--;
 		}
+		reader->seca_nagra_card = 0;
 		cs_writelock(&sr_lock);
 		libusb_release_interface(crdr_data->usb_dev_handle, crdr_data->interface);
 #if defined(__linux__)
-		libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); // attaching kernel drive
+//		libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); // attaching kernel drive
 #endif
 		libusb_close(crdr_data->usb_dev_handle);
 		cs_writeunlock(&sr_lock);
@@ -1722,8 +1721,17 @@ static int32_t SR_Close(struct s_reader *reader)
 static int32_t SR_FastReset_With_ATR(struct s_reader *reader, ATR *atr)
 {
 	unsigned char data[ATR_MAX_SIZE];
-	int32_t ret;
+	int32_t ret = 0;
 	int32_t atr_ok = CMD_ERROR;
+	int8_t atr_len = 0;
+	if(reader->seca_nagra_card == 1)
+	{
+		atr_len = reader->card_atr_length; // this is a special case the data buffer has only the atr lenght.
+	}
+	else
+	{
+		atr_len = reader->card_atr_length + 2; // data buffer has atr lenght + 2 bytes 
+	}
 
 	smart_fastpoll(reader, 1);
 	//Set the DTR HIGH and RTS HIGH
@@ -1737,10 +1745,10 @@ static int32_t SR_FastReset_With_ATR(struct s_reader *reader, ATR *atr)
 	smartreader_setdtr_rts(reader, 1, 0);
 
 	//Read the ATR
-	ret = smart_read(reader, data, ATR_MAX_SIZE, (1500));
+	ret = smart_read(reader, data, atr_len , (800)); // timeouts are in ms by smartreader.
 
 	// parse atr
-	if(ATR_InitFromArray(atr, data, ret) != CMD_ERROR)
+	if (ATR_InitFromArray(atr, data, ret) != CMD_ERROR)
 	{
 		rdr_debug_mask(reader, D_DEVICE, "SR: ATR parsing OK");
 		atr_ok = CMD_OK;
@@ -1758,7 +1766,6 @@ int32_t SR_Activate(struct s_reader *reader, struct s_ATR *atr)
 	}
 	else
 	{
-		rdr_log(reader, "Fast card reset with atr");
 		SR_FastReset_With_ATR(reader, atr);
 	}
 	return CMD_OK;

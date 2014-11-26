@@ -78,7 +78,7 @@ static int32_t Sci_Activate(struct s_reader *reader)
 
 	if (in)
 	{
-		rdr_log(reader, "Card is present in readerslot!");
+//		rdr_log(reader, "Card is present in readerslot!");
 		cs_sleepms(50);
 		return OK;
 	}
@@ -308,8 +308,8 @@ static int32_t Sci_Reset(struct s_reader *reader, ATR *atr)
 	while(ret == ERROR && tries < max_tries)
 	{
 		cs_sleepms(50);
-		rdr_log(reader, "Set reader parameters!");
-		rdr_log(reader, "Sent reader setting at cardinit T=%d fs=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d",
+//		rdr_log(reader, "Set reader parameters!");
+		rdr_debug_mask(reader, D_IFD, "Sent reader setting at cardinit T=%d fs=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d",
 			   (int)params.T, params.fs, (int)params.ETU, (int)params.WWT,
 			   (int)params.CWT, (int)params.BWT, (int)params.EGT,
 			   (int)params.clock_stop_polarity, (int)params.check,
@@ -317,7 +317,7 @@ static int32_t Sci_Reset(struct s_reader *reader, ATR *atr)
 		ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params);
 		cs_sleepms(150); // give the reader some time to process the params
 
-		rdr_log(reader, "Reset internal cardreader!");
+//		rdr_log(reader, "Reset internal cardreader!");
 		if(ioctl(reader->handle, IOCTL_SET_RESET, 1) < 0)
 		{
 			ret = ERROR;
@@ -398,7 +398,7 @@ static int32_t Sci_WriteSettings(struct s_reader *reader, unsigned char T, uint3
 	crdr_data->P = params.P;
 	crdr_data->I = params.I;
 
-	rdr_log(reader, "Sent reader settings T=%d fs=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d",
+	rdr_debug_mask(reader, D_IFD, "Sent reader settings T=%d fs=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d",
 				   (int)params.T, params.fs, (int)params.ETU, (int)params.WWT,
 				   (int)params.CWT, (int)params.BWT, (int)params.EGT,
 				   (int)params.clock_stop_polarity, (int)params.check,
@@ -412,38 +412,56 @@ static int32_t Sci_WriteSettings(struct s_reader *reader, unsigned char T, uint3
 static int32_t Sci_FastReset(struct s_reader *reader, ATR *atr)
 {
 	struct sr_data *crdr_data = reader->crdr_data;
-	int32_t ret;
+	int8_t atr_ok = 1; // initiate atr in ERROR
+	uint32_t timeout = ATR_TIMEOUT;
+	unsigned char buf[SCI_MAX_ATR_SIZE];
+	int8_t atr_len = 0;
+
+	if(reader->seca_nagra_card == 1)
+	{
+		atr_len = reader->card_atr_length; // this is a special case the data buffer has only the atr lenght.
+	}
+	else
+	{
+		atr_len = reader->card_atr_length + 2; // data buffer has atr lenght + 2 bytes 
+	}
 
 	Sci_Activate(reader);
 	cs_sleepms(50);
 	if(ioctl(reader->handle, IOCTL_SET_RESET, 1) < 0)
 	{
-		ret = ERROR;
 		rdr_log(reader, "Error:%s ioctl(IOCTL_SET_RESET) failed.(%d:%s)", __FUNCTION__, errno, strerror(errno) );
 		Sci_Deactivate(reader);
+		atr_ok = ERROR;
 	}
 	else
 	{
-		ret = Sci_Read_ATR(reader, atr);
-		if (ret == OK)
+		IO_Serial_Read(reader, 0, timeout,atr_len, buf);  //read atr
+//		rdr_dump(reader,buf, SCI_MAX_ATR_SIZE * 2, "SCI ATR :"); // just to crosscheck the buffer I left it commented.
+		if(ioctl(reader->handle, IOCTL_SET_ATR_READY, 1) < 0)
 		{
-			if(ioctl(reader->handle, IOCTL_SET_ATR_READY, 1) < 0)
+			rdr_log(reader, "Error:%s ioctl(IOCTL_SET_ATR_READY) failed.(%d:%s)", __FUNCTION__, errno, strerror(errno) );
+			Sci_Deactivate(reader);
+			atr_ok = ERROR;
+		}
+		else
+		{
+			if(ATR_InitFromArray(atr, buf, atr_len) != ERROR)
 			{
-				ret = ERROR;
-				rdr_log(reader, "Error:%s ioctl(IOCTL_SET_ATR_READY) failed.(%d:%s)", __FUNCTION__, errno, strerror(errno) );
-				Sci_Deactivate(reader);
+				atr_ok = OK;
 			}
 			else
 			{
-				cs_sleepms(150);
-				Sci_WriteSettings(reader, crdr_data->T,crdr_data->fs,crdr_data->ETU, crdr_data->WWT,crdr_data->CWT,crdr_data->BWT,crdr_data->EGT,crdr_data->P,crdr_data->I);
-				cs_sleepms(150);
+				rdr_log(reader,"Error reading ATR");
+				atr_ok= ERROR;
 			}
-			
+				
+			cs_sleepms(150);
+			Sci_WriteSettings(reader, crdr_data->T,crdr_data->fs,crdr_data->ETU, crdr_data->WWT,crdr_data->CWT,crdr_data->BWT,crdr_data->EGT,crdr_data->P,crdr_data->I);
+			cs_sleepms(150);
 		}
 	}
-	
-	return ret;
+	return atr_ok;
 }
 
 static int32_t Sci_Init(struct s_reader *reader)
@@ -485,7 +503,7 @@ static int32_t sci_activate(struct s_reader *reader, ATR *atr)
 	}
 	else
 	{
-		rdr_log(reader, "Fast card reset with atr");
+		rdr_debug_mask(reader, D_IFD, "Fast card reset with atr");
 		call(Sci_FastReset(reader, atr));
 	}
 	return OK;

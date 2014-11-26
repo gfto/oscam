@@ -177,19 +177,11 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 	get_atr;
 	def_resp;
 	char *card;
-	uint16_t pmap = 0;  // provider-maptable
 	uint64_t serial ;
-	uchar buf[256];
 	static const uchar ins0e[] = { 0xc1, 0x0e, 0x00, 0x00, 0x08 }; // get serial number (UA)
-	static const uchar ins16[] = { 0xc1, 0x16, 0x00, 0x00, 0x06 }; // get nr. of providers
-	static const uchar ins80[] = { 0x80, 0xCA, 0x00, 0x00, 0x11 }; // switch to nagra layer
-	static const uchar handshake[] = { 0xEE, 0x51, 0xDC, 0xB8, 0x4A, 0x1C, 0x15, 0x05, 0xB5, 0xA6, 0x9B, 0x91, 0xBA, 0x33, 0x19, 0xC4, 0x10 }; // nagra handshake
-	int32_t i;
-	uint8_t ins7e11_state = 0;
 
 	cs_clear_entitlement(reader);
 
-	buf[0] = 0x00;
 	if((atr[10] != 0x0e) || (atr[11] != 0x6c) || (atr[12] != 0xb6) || (atr[13] != 0xd6)) { return ERROR; }
 
 	if(!cs_malloc(&reader->csystem_data, sizeof(struct seca_data)))
@@ -227,72 +219,7 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 	serial = b2ll(5, cta_res + 3) ;
 	rdr_log_sensitive(reader, "type: SECA, caid: %04X, serial: {%llu}, card: %s v%d.%d",
 					  reader->caid, (unsigned long long) serial, card, atr[9] & 0x0F, atr[9] >> 4);
-	if (((atr[7] << 8 | atr[8]) == 0x7070) && ((atr[9] &0x0F) >= 10)) // is this possibly a nagra card tunneling seca commands?
-	{
-		rdr_log(reader, "Trying to switch to nagra layer of this card!");
-		write_cmd(ins80, handshake); // try to init nagra layer
-		if(cta_res[0] == 0x61 && cta_res[1] == 0x10)
-		{
-			if ((reader->typ == R_SMART || reader->typ == R_INTERNAL || !strcasecmp(reader->crdr.desc, "smargo")) && !reader->ins7e11_fast_reset)
-			{
-				ins7e11_state = 1;
-				reader->ins7e11_fast_reset = 1;
-			}
-			rdr_log(reader, "Fetching nagra ATR!");
-			ATR nagra_atr;
-			call(reader->crdr.activate(reader, &nagra_atr)); // get nagra atr		
-			uint32_t hist_size; 
-			memset(reader->rom, 0, sizeof(reader->rom));
-			
-			ATR_GetHistoricalBytes(&nagra_atr, reader->rom, &hist_size); // get historical bytes containing romrev from nagra atr
 
-			rdr_log(reader, "Switching back to seca mode! ");
-			call(reader->crdr.activate(reader, &nagra_atr)); // switch back to seca layer
-
-			if ((reader->typ == R_SMART || reader->typ == R_INTERNAL || !strcasecmp(reader->crdr.desc, "smargo")) && ins7e11_state == 1)
-			{
-				ins7e11_state = 0;
-				reader->ins7e11_fast_reset = 0;
-			}
-		}
-		else
-		{
-			rdr_log(reader, "Nagra handshake failed!");
-		}
-	}
-	
-	int16_t tries = 0;
-	while(reader->nprov == 0 && tries < 254)
-	{
-		write_cmd(ins16, NULL); // read nr of providers
-		pmap = cta_res[2] << 8 | cta_res[3];
-		for(reader->nprov = 0, i = pmap; i; i >>= 1)
-			{ reader->nprov += i & 1; }
-		
-		if(reader->nprov == 0)
-		{
-			tries++;
-			continue;
-		}
-		for(i = 0; i < 16; i++)
-			if(pmap & (1 << i))
-			{
-				if(set_provider_info(reader, i) == ERROR)
-				{ 
-					continue; // on error just continue! 
-				}
-				else
-				{ 
-					snprintf((char *) buf + strlen((char *)buf), sizeof(buf) - strlen((char *)buf), ",%04X", b2i(2, &reader->prid[i][2]));
-				}
-			}
-
-		tries++;
-		rdr_log(reader, "Card returned %d providers(%s) after %d requests", reader->nprov, buf + 1, tries);
-		
-	}
-	if (reader->nprov == 0) return ERROR; // makes no sense to continue without any providers entitled
-	
 	
 	// Unlock parental control
 	if(cfg.ulparent != 0)
@@ -301,10 +228,8 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 	}
 	else
 	{
-		rdr_log(reader, "parental locked");
+		rdr_debug_mask(reader, D_IFD, "parental locked");
 	}
-	rdr_log(reader, "ready for requests");
-	
 	return OK;
 }
 
@@ -587,9 +512,26 @@ static int32_t seca_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 
 static int32_t seca_card_info(struct s_reader *reader)
 {
+	def_resp;
+	static const uchar ins16[] = { 0xc1, 0x16, 0x00, 0x00, 0x06 }; // get nr. of providers
+	int32_t prov = 0;
+	uint16_t pmap = 0;  // provider-maptable
 
-	int32_t prov;
-
+	int16_t tries = 0;
+	int16_t i =0;
+	while(reader->nprov == 0 && tries < 254)
+	{
+		write_cmd(ins16, NULL); // read nr of providers
+		pmap = cta_res[2] << 8 | cta_res[3];
+		for(reader->nprov = 0, i = pmap; i; i >>= 1)
+			{ reader->nprov += i & 1; }
+		
+		if(reader->nprov == 0)
+		{
+			tries++;
+			continue;
+		}
+	}
 	for(prov = 0; prov < reader->nprov; prov++)
 	{
 		set_provider_info(reader, prov);

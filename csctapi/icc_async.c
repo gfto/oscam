@@ -350,7 +350,6 @@ static int32_t ICC_Async_GetPLL_Divider(struct s_reader *reader)
 	if(reader->cardmhz != 8300)  /* Check dreambox is not DM7025 */
 	{
 		float divider;
-		rdr_log(reader," TEST tempo mhz check = %u mhz", reader->mhz);
 		divider = ((float) reader->cardmhz) / ((float) reader->mhz);
 		if (tempfi == 9) reader->divider = (int32_t) divider; // some card's runs only when slightly oveclocked like HD02
 		else {
