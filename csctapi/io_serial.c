@@ -359,23 +359,8 @@ int32_t IO_Serial_SetParity(struct s_reader *reader, unsigned char parity)
 void IO_Serial_Flush(struct s_reader *reader)
 {
 	unsigned char  b;
-	unsigned char c[8];
-	int8_t n = 0;
 	tcflush(reader->handle, TCIOFLUSH);
-	while(!IO_Serial_Read(reader, 0, 75000, 1, &b)) // first appears between 9~75ms
-	{
-		if(c[0] == 0x90 && c[n] == 0x00 && n >= 1) 
-		{
-			rdr_debug_mask(reader,D_IFD,"Answer to flush  %.2x %.2x Reader flush OK", c[0], c[1]); 
-			break;
-		}
-		else
-		{
-			c[n] = b;
-			rdr_debug_mask(reader, D_IFD,"readed byte 0x%.2x Continu reading reply on flush" , c[n]);
-			n++;
-		}
-	}
+	while(!IO_Serial_Read(reader, 0, 75000, 1, &b)) { ; } // first appears between 9~75ms
 }
 
 void IO_Serial_Sendbreak(struct s_reader *reader, int32_t duration)
