@@ -13,7 +13,11 @@ int32_t constcw_file_available(void)
 	FILE *fp;
 
 	fp = fopen(cur_client()->reader->device, "r");
-	if(!fp) { return (0); }
+	if(!fp)
+	{
+		cs_log("[CONSTCW] ERROR: Opening %s (errno=%d %s)", cur_client()->reader->device, errno, strerror(errno));
+		return (0);
+	}
 	fclose(fp);
 	return (1);
 }
@@ -27,7 +31,11 @@ int32_t constcw_analyse_file(uint16_t c_caid, uint32_t c_prid, uint16_t c_sid, u
 	int32_t cw[16];
 
 	fp = fopen(cur_client()->reader->device, "r");
-	if(!fp) { return (0); }
+	if(!fp)
+	{
+		cs_log("[CONSTCW] ERROR: Opening %s (errno=%d %s)", cur_client()->reader->device, errno, strerror(errno));
+		return (0);
+	}
 
 	cs_log("[CONSTCW] find controlword for CAID %04X PROVID %06X SRVID %04X ECMPID %04X PMTPID %04X VPID %04X", c_caid, c_prid, c_sid, c_ecmpid, c_pmtpid, c_vpid);
 
