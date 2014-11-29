@@ -777,8 +777,8 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 			gbox_write_shared_cards_info();
 			gbox_write_peer_onl();
 		}	
-		peer->last_it = it; //save position for next hello
 	}
+	peer->last_it = it; //save position for next hello
 	return 0;
 }
 
