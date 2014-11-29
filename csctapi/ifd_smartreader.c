@@ -1682,6 +1682,8 @@ static int32_t SR_Close(struct s_reader *reader)
 #endif
 		libusb_close(crdr_data->usb_dev_handle);
 		cs_writeunlock(&sr_lock);
+		NULLFREE(reader->crdr_data); //clearing allocated mem
+		NULLFREE(reader->csystem_data); //clearing allocated mem
 		current_count--; // this reader may be restarted now
 		if(!current_count)
 		{
