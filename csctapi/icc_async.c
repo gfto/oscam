@@ -303,7 +303,11 @@ int32_t ICC_Async_Close(struct s_reader *reader)
 {
 	rdr_debug_mask(reader, D_IFD, "Closing device %s", reader->device);
 	call(reader->crdr.close(reader));
-	if(reader->typ != R_SC8in1) { NULLFREE(reader->crdr_data); }
+	if(reader->typ != R_SC8in1)
+        { 
+           NULLFREE(reader->crdr_data);
+           NULLFREE(reader->csystem_data);
+        }
 	rdr_debug_mask(reader, D_IFD, "Device %s succesfully closed", reader->device);
 	return OK;
 }
