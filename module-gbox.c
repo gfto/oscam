@@ -708,7 +708,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		}
 	} // end while caid/provid
 
-	if(!(data[0x0B] & 0xF))  // first packet. We've got peer hostname
+	if(!(data[11] & 0xF))  // first packet. We've got peer hostname
 	{
 		NULLFREE(peer->hostname);
 		if(!cs_malloc(&peer->hostname, hostname_len + 1))
@@ -724,62 +724,61 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		peer->gbox.cpu_api = data[payload_len - footer_len];
 	} // end if first hello packet
 
-	uchar tmpbuf[8];
-	memset(&tmpbuf[0], 0xff, 7);		
-	if(data[10] == 0x01 && data[11] == 0x80 && !memcmp(data+12,tmpbuf,7)) //good night message
+	if(data[11] & 0x80)   //last packet
 	{
-		cs_log("->[gbx] received Good Night from %s %s",username(cli), cli->reader->device);
-		write_goodnight_to_osd_file(cli);   
-	}
-	//This is a good night / reset packet (good night data[0xA] / reset !data[0xA] 
-	if((data[0x0B] & 0x8F) == 0x80 && !ncards_in_msg) //first + last packet with no cards 
-	{
-		gbox_free_cardlist(peer->gbox.cards);
-		peer->online = 0;
-		peer->hello_stat = GBOX_STAT_HELLOL;
-		cli->reader->tcp_connected = 0;
-		cli->reader->card_status = NO_CARD;
-		cli->reader->last_s = cli->reader->last_g = 0;
-		peer->gbox.cards = ll_create("peer.cards");		
-	}
-	
-	if(data[0x0B] & 0x80)   //last packet
-	{
-		//delete cards at the end of the list if there are some
-		while ((card_s = ll_iter_next(&it)))
+		uchar tmpbuf[8];
+		memset(&tmpbuf[0], 0xff, 7);		
+		if(data[10] == 0x01 && !memcmp(data+12,tmpbuf,7)) //good night message
 		{
-			cs_debug_mask(D_READER, "delete card: caid=%04X, provid=%06X, slot=%d, level=%d, dist=%d, peer=%04X",
-						  card_s->caid, card_s->provid, card_s->slot, card_s->lvl, card_s->dist, card_s->peer_id);
-			//delete card because not send anymore 
-			ll_iter_remove(&it);
-			gbox_free_card(card_s);									
+			//This is a good night / reset packet (good night data[0xA] / reset !data[0xA] 
+			cs_log("->[gbx] received Good Night from %s %s",username(cli), cli->reader->device);
+			write_goodnight_to_osd_file(cli);   
+			gbox_free_cardlist(peer->gbox.cards);
+			peer->online = 0;
+			peer->hello_stat = GBOX_STAT_HELLOL;
+			cli->reader->tcp_connected = 0;
+			cli->reader->card_status = NO_CARD;
+			cli->reader->last_s = cli->reader->last_g = 0;
+			peer->gbox.cards = ll_create("peer.cards");		
 		}
-		peer->online = 1;
-		if(!data[0xA])
+		else	//last packet of Hello
 		{
-			cs_log("<-HelloS in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, ncards_in_msg,ll_count(peer->gbox.cards));
-			peer->hello_stat = GBOX_STAT_HELLOR;
-			gbox_send_hello(cli);
-		}
-		else
-		{
-			cs_log("<-HelloR in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, ncards_in_msg,ll_count(peer->gbox.cards));
-			gbox_send_checkcode(cli);
-		}
-		if(peer->hello_stat == GBOX_STAT_HELLOS)
-		{
-			gbox_send_hello(cli);
-		}
-		cli->reader->tcp_connected = 2; //we have card
-		cli->reader->card_status = CARD_INSERTED;
-		if(ll_count(peer->gbox.cards) == 0)
-			{ cli->reader->card_status = NO_CARD; }
+			//delete cards at the end of the list if there are some
+			while ((card_s = ll_iter_next(&it)))
+			{
+				cs_debug_mask(D_READER, "delete card: caid=%04X, provid=%06X, slot=%d, level=%d, dist=%d, peer=%04X",
+							  card_s->caid, card_s->provid, card_s->slot, card_s->lvl, card_s->dist, card_s->peer_id);
+				//delete card because not send anymore 
+				ll_iter_remove(&it);
+				gbox_free_card(card_s);									
+			}
+			peer->online = 1;
+			if(!data[0xA])
+			{
+				cs_log("<-HelloS in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, ncards_in_msg,ll_count(peer->gbox.cards));
+				peer->hello_stat = GBOX_STAT_HELLOR;
+				gbox_send_hello(cli);
+			}
+			else
+			{
+				cs_log("<-HelloR in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, ncards_in_msg,ll_count(peer->gbox.cards));
+				gbox_send_checkcode(cli);
+			}
+			if(peer->hello_stat == GBOX_STAT_HELLOS)
+			{
+				gbox_send_hello(cli);
+			}
+			cli->reader->tcp_connected = 2; //we have card
+			cli->reader->card_status = CARD_INSERTED;
+			if(ll_count(peer->gbox.cards) == 0)
+				{ cli->reader->card_status = NO_CARD; }
 			
-		gbox_write_local_cards_info();
-		gbox_write_shared_cards_info();
-		gbox_write_peer_onl();
+			gbox_write_local_cards_info();
+			gbox_write_shared_cards_info();
+			gbox_write_peer_onl();
+		}	
+		peer->last_it = it; //save position for next hello
 	}
-	peer->last_it = it; //save position for next hello
 	return 0;
 }
 
