@@ -456,6 +456,30 @@ struct s_client *switch_client_proxy(struct s_client *cli, uint16_t gbox_id)
 	return cli;
 }
 
+static int8_t gbox_reinit_peer(struct gbox_peer *peer)
+{
+	peer->online		= 0;
+	peer->ecm_idx		= 0;
+	peer->hello_stat	= GBOX_STAT_HELLOL;
+	gbox_free_cardlist(peer->gbox.cards);
+	peer->gbox.cards	= ll_create("peer.cards");		
+	peer->my_user		= NULL;
+	
+	return 0;
+}
+
+static int8_t gbox_reinit_proxy(struct s_client *proxy)
+{
+	struct gbox_peer *peer = proxy->gbox;
+	if (peer)
+		{ gbox_reinit_peer(peer); }
+	proxy->reader->tcp_connected	= 0;
+	proxy->reader->card_status	= NO_CARD;
+	proxy->reader->last_s		= proxy->reader->last_g = 0;
+
+	return 0;
+}
+
 void gbox_reconnect_client(uint16_t gbox_id)
 {
 	struct s_client *cl;
@@ -467,15 +491,8 @@ void gbox_reconnect_client(uint16_t gbox_id)
 			SIN_GET_FAMILY(cl->udp_sa) = AF_INET;
 			SIN_GET_PORT(cl->udp_sa) = htons((uint16_t)cl->reader->r_port);
 			hostname2ip(cl->reader->device, &(cl->ip));
-			cl->reader->tcp_connected = 0;
-			cl->reader->card_status = NO_CARD;
+			gbox_reinit_proxy(cl);
 			struct gbox_peer *peer = cl->gbox;
-			peer->online = 0;
-			peer->ecm_idx = 0;
-			peer->hello_stat = GBOX_STAT_HELLOL;
-			cl->reader->last_s = cl->reader->last_g = 0;
-			gbox_free_cardlist(peer->gbox.cards);
-			peer->gbox.cards = ll_create("peer.cards");
 			gbox_send_hello(cl);
 		}
 	}
@@ -575,18 +592,6 @@ int8_t get_card_action(struct gbox_card *card, uint32_t provid1, uint16_t peer_i
 		}
 		return 1; //insert
 	}	
-}
-
-static int8_t gbox_reinit_peer(struct gbox_peer *peer)
-{
-	peer->online		= 0;
-	peer->hello_stat	= GBOX_STAT_HELLOL;
-	peer->ecm_idx		= 0;
-	gbox_free_cardlist(peer->gbox.cards);
-	peer->gbox.cards	= ll_create("peer.cards");		
-	peer->my_user		= NULL;
-	
-	return 0;
 }
 
 int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
@@ -745,10 +750,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 			//This is a good night / reset packet (good night data[0xA] / reset !data[0xA] 
 			cs_log("->[gbx] received Good Night from %s %s",username(cli), cli->reader->device);
 			write_goodnight_to_osd_file(cli);
-			gbox_reinit_peer(peer);
-			cli->reader->tcp_connected = 0;
-			cli->reader->card_status = NO_CARD;
-			cli->reader->last_s = cli->reader->last_g = 0;
+			gbox_reinit_proxy(cli);
 		}
 		else	//last packet of Hello
 		{
@@ -2020,10 +2022,7 @@ static void gbox_s_idle(struct s_client *cl)
 			//gbox peer apparently died without saying goodbye
 			peer = proxy->gbox;
 			cs_debug_mask(D_READER, "gbox time since last proxy activity in sec: %d => taking gbox peer offline",time_since_last);
-			gbox_reinit_peer(peer);
-			proxy->reader->tcp_connected = 0;
-			proxy->reader->card_status = NO_CARD;
-			proxy->reader->last_s = proxy->reader->last_g = 0;
+			gbox_reinit_proxy(proxy);
 		}
 	
 		time_since_last = abs(cl->lastecm - time(NULL));
