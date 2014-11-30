@@ -50,6 +50,18 @@
 					</select>
 				</TD>
 			</TR>
+
+			<TR><TD><A>Prefer local cards:</A></TD>
+				<TD>
+					<select name="preferlocalcards">
+						<option value="-1" ##PREFERLOCALCARDS-1##>-1 - Use Global Prefer local cards</option>
+						<option value="0"  ##PREFERLOCALCARDS0## >&nbsp;0 - local cards like proxied</option>
+						<option value="1"  ##PREFERLOCALCARDS1## >&nbsp;1 - prefer cache-ex then local cards</option>
+						<option value="2"  ##PREFERLOCALCARDS2## >&nbsp;2 - prefer local cards above cache-ex</option>
+					</select>
+					&nbsp;Global Prefer local cards value:<SPAN CLASS="global_conf" TITLE="This value is used if Prefer local cards = -1"><A HREF="config.html?part=global">##CFGPREFERLOCALCARDS##</A></SPAN>
+				</TD>
+			</TR>
 ##USEREDITSIDINS##
 ##TPLUSEREDITANTICASC##
 ##TPLUSEREDITCCCAM##

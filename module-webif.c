@@ -765,6 +765,10 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 	tpl_addVar(vars, TPLADD, "WAIT_TIME", value);
 	free_mk_t(value);
 
+	value = mk_t_caidvaluetab(&cfg.cacheex_mode1_delay_tab);
+	tpl_addVar(vars, TPLADD, "CACHEEXMODE1DELAY", value);
+	free_mk_t(value);
+
 	tpl_printf(vars, TPLADD, "MAX_HIT_TIME", "%d", cfg.max_hitcache_time);
 
 	tpl_addVar(vars, TPLADD, "CACHEEXSTATSSELECTED", (cfg.cacheex_enable_stats == 1) ? "checked" : "");
@@ -2171,6 +2175,11 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	tpl_addVar(vars, TPLADD, "CHIDS", value);
 	free_mk_t(value);
 
+	//Local cards
+	value = mk_t_ftab(&rdr->localcards);
+	tpl_addVar(vars, TPLADD, "LOCALCARDS", value);
+	free_mk_t(value);
+
 	//class
 	value = mk_t_cltab(&rdr->cltab);
 	tpl_addVar(vars, TPLADD, "CLASS", value);
@@ -2894,6 +2903,34 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	else
 	{
 		tpl_printf(vars, TPLADD, "EMMRVALUE", "%d", account->emm_reassembly);
+	}
+
+	//Prefer local cards
+	if(!apicall)
+	{
+		tpl_printf(vars, TPLADD, "TMP", "PREFERLOCALCARDS%d", account->preferlocalcards);
+		tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+		char *tmp = NULL;
+		switch(cfg.preferlocalcards)
+		{
+		case -1:
+			tmp = "-1 - Use Global prefer local cards";
+			break;
+		case 0:
+			tmp = "0 - local cards like proxied";
+			break;
+		case 1:
+			tmp = "1 - prefer cache-ex then local cards";
+			break;
+		case 2:
+			tmp = "2 - prefer local cards above cache-ex";
+			break;
+		}
+		tpl_addVar(vars, TPLADD, "CFGPREFERLOCALCARDS", tmp);
+	}
+	else
+	{
+		tpl_printf(vars, TPLADD, "PREFERLOCALCARDSVALUE", "%d", account->preferlocalcards);
 	}
 
 #ifdef CS_CACHEEX
