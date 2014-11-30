@@ -5489,7 +5489,6 @@ static char *send_oscam_script(struct templatevars * vars, struct uriparams * pa
 		}
 
 		char *scriptname = getParam(params, "scriptname");
-		char *result = "not executable";
 		char system_str[256];
 		struct stat s;
 		snprintf(system_str, sizeof(system_str), "%s/%s", cfg.http_script, scriptname);
@@ -5516,14 +5515,13 @@ static char *send_oscam_script(struct templatevars * vars, struct uriparams * pa
 				}
 				else
 				{
-					tpl_printf(vars, TPLADD, "SCRIPTRESULT", "scriptresult: %s", result);
+					tpl_printf(vars, TPLADD, "SCRIPTRESULTOUT", "[Error]: Script \"%s\" not executable!", scriptname);
 				}
 			}
 		}
 		else
 		{
-			result = "not found";
-			tpl_printf(vars, TPLADD, "SCRIPTRESULT", "scriptresult: %s", result);
+			tpl_printf(vars, TPLADD, "SCRIPTRESULTOUT", "[Error]: Script \"%s\" not found!", scriptname);
 		}
 		
 	}
