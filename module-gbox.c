@@ -463,7 +463,7 @@ static int8_t gbox_reinit_peer(struct gbox_peer *peer)
 	peer->hello_stat	= GBOX_STAT_HELLOL;
 	gbox_free_cardlist(peer->gbox.cards);
 	peer->gbox.cards	= ll_create("peer.cards");		
-	peer->my_user		= NULL;
+//	peer->my_user		= NULL;
 	
 	return 0;
 }
@@ -492,7 +492,6 @@ void gbox_reconnect_client(uint16_t gbox_id)
 			SIN_GET_PORT(cl->udp_sa) = htons((uint16_t)cl->reader->r_port);
 			hostname2ip(cl->reader->device, &(cl->ip));
 			gbox_reinit_proxy(cl);
-			struct gbox_peer *peer = cl->gbox;
 			gbox_send_hello(cl);
 		}
 	}
@@ -956,7 +955,6 @@ int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 			{ return -1; }
 		break;
 	case MSG_CW:
-		cli->last = time((time_t *)0);
 		idx = gbox_recv_chk(cli, dcw, &rc1, data, n);
 		if(idx < 0) { break; }  // no dcw received
 		if(!idx) { idx = cli->last_idx; }
@@ -1718,6 +1716,7 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
 		{
 			cl = cli;
 		}
+		cl->last = time((time_t *)0);
 		*rc = 1;
 		memcpy(dcw, data + 14, 16);
 		uint32_t crc = data[30] << 24 | data[31] << 16 | data[32] << 8 | data[33];
@@ -2016,7 +2015,9 @@ static void gbox_s_idle(struct s_client *cl)
 
 	if (proxy && proxy->gbox)
 	{ 
-		time_since_last = abs(proxy->last - time(NULL));
+		if (abs(proxy->last - time(NULL)) > abs(cl->lastecm - time(NULL)))
+			{ time_since_last = abs(cl->lastecm - time(NULL)); } 
+		else { time_since_last = abs(proxy->last - time(NULL)); }
 		if (time_since_last > (HELLO_KEEPALIVE_TIME*3) && cl->gbox_peer_id != NO_GBOX_ID)	
 		{
 			//gbox peer apparently died without saying goodbye
