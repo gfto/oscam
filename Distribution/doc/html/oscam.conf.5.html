@@ -166,13 +166,6 @@ usrfile logging mode:
 
 <P>
 
-<B>nds_swap_cw</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-0 = NDS Videoguard CWs will be dropped, if CWs do not have an odd and even sample, default=0
-</DL>
-
-<P>
-
 <B>mailfile</B> = <B>file</B>
 <DL COMPACT><DT><DD>
 define file saving NDS Videoguard mail messages from provider, default:none
@@ -876,6 +869,13 @@ wait time in milli-seconds for cache exchange and Cardservproxy before sending E
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expires,&nbsp;requests&nbsp;will&nbsp;go&nbsp;to&nbsp;normal&nbsp;readers
 <BR>&nbsp;
 <BR>&nbsp;<B>counter</B>&nbsp;=&nbsp;set&nbsp;minimum&nbsp;CW&nbsp;counter&nbsp;to&nbsp;allow&nbsp;CW&nbsp;is&nbsp;used,&nbsp;default:1
+</DL>
+
+<P>
+
+<B>cacheex_mode1_delay</B> = <B>CAID1:time,[BCAID2:time]...</B>
+<DL COMPACT><DT><DD>
+delay in milli-seconds for asking cache exchange mode 1 readers, default:none
 </DL>
 
 <P>

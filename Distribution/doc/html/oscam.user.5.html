@@ -204,6 +204,18 @@ set count of best readers per CAIDs for load balancing, wildcard CAIDs with two-
 
 <P>
 
+<B>preferlocalcards</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+SC decoding behavior:.
+<P>
+<BR>&nbsp;<B>-1</B>&nbsp;=&nbsp;global&nbsp;value&nbsp;from&nbsp;oscam.conf&nbsp;(default)
+<BR>&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;local&nbsp;SCs&nbsp;used&nbsp;like&nbsp;a&nbsp;remote&nbsp;reader
+<BR>&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;prefer&nbsp;cache&nbsp;exchange&nbsp;based&nbsp;SCs
+<BR>&nbsp;&nbsp;<B>2</B>&nbsp;=&nbsp;prefer&nbsp;local&nbsp;SCs
+</DL>
+
+<P>
+
 <B>cwc_disable</B> = <B>0</B>|<B>1</B>
 <DL COMPACT><DT><DD>
 1 = disbale CW cycle check, default:0

@@ -351,13 +351,6 @@ reader [de]assignment to service group, default=none
 
 <P>
 
-<B>lb_whitelist_services</B> = <B>&lt;services&gt;,&lt;services&gt;...</B>
-<DL COMPACT><DT><DD>
-reader assignement to service group for channels which may never be blocked by the loadbalancer to the reader , default=none
-</DL>
-
-<P>
-
 <B>caid</B> = <B>&lt;CAID&gt;[&amp;&lt;mask&gt;][:&lt;target CAID&gt;][,&lt;CAID&gt;[&amp;&lt;mask&gt;][:target &lt;CAID&gt;]]...</B>
 <DL COMPACT><DT><DD>
 define and mapping of CAIDs for reader, default:all CAIDs with mask FFFF
@@ -746,6 +739,20 @@ write file (usually a copy of a file saved by savenano) to your smartcard, if no
 1 = disable CRC for CW, default: 0
 <P>
 <I>In normal operation mode this parameter is not required. Parameter is incompatible with DVB standard.</I>
+</DL>
+
+<P>
+
+<B>ident</B> = <B>&lt;CAID1&gt;[:&lt;ident1&gt;[,&lt;ident2&gt;]...][;&lt;CAID2&gt;[:&lt;ident3&gt;[,&lt;ident4&gt;]...]]...</B>
+<DL COMPACT><DT><DD>
+use this reader as local in loadbalancer's reader selection, default:none
+</DL>
+
+<P>
+
+<B>lb_whitelist_services</B> = <B>&lt;services&gt;,&lt;services&gt;...</B>
+<DL COMPACT><DT><DD>
+reader assignement to service group for channels which may never be blocked by the loadbalancer to the reader , default=none
 </DL>
 
 <P>

@@ -109,6 +109,14 @@ DESCRIPTIONS
 	   example: lb_nbest_percaid = 0100:4,0200:3,03:2,04:1
 		    (wildcard CAIDs 03xx and 04xx)
 
+       preferlocalcards = 0|1
+	  SC decoding behavior:.
+
+	   -1 = global value from oscam.conf (default)
+	    0 = local SCs used like a remote reader
+	    1 = prefer cache exchange based SCs
+	    2 = prefer local SCs
+
        cwc_disable = 0|1
 	  1 = disbale CW cycle check, default:0
 

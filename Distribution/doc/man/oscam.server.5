@@ -272,11 +272,6 @@ mgcamd encrypted gbox line, default MAC address = eth0
 reader [de]assignment to service group, default=none
 .RE
 .PP
-\fBlb_whitelist_services\fP = \fB<services>,<services>...\fP
-.RS 3n
-reader assignement to service group for channels which may never be blocked by the loadbalancer to the reader , default=none
-.RE
-.PP
 \fBcaid\fP = \fB<CAID>[&<mask>][:<target CAID>][,<CAID>[&<mask>][:target <CAID>]]...\fP
 .RS 3n
 define and mapping of CAIDs for reader, default:all CAIDs with mask FFFF
@@ -575,6 +570,16 @@ write file (usually a copy of a file saved by savenano) to your smartcard, if no
 1 = disable CRC for CW, default: 0
 
 \fIIn normal operation mode this parameter is not required. Parameter is incompatible with DVB standard.\fR
+.RE
+.PP
+\fBident\fP = \fB<CAID1>[:<ident1>[,<ident2>]...][;<CAID2>[:<ident3>[,<ident4>]...]]...\fP
+.RS 3n
+use this reader as local in loadbalancer's reader selection, default:none
+.RE
+.PP
+\fBlb_whitelist_services\fP = \fB<services>,<services>...\fP
+.RS 3n
+reader assignement to service group for channels which may never be blocked by the loadbalancer to the reader , default=none
 .RE
 .PP
 \fBlb_weight\fP = \fBweight\fP

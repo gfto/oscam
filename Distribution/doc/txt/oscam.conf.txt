@@ -95,9 +95,6 @@ DESCRIPTIONS
        disablemail = 0|1
 	  1 = disable saving NDS Videoguard mail messages from provider, default:1
 
-       nds_swap_cw = 0|1
-	  0 = NDS Videoguard CWs will be dropped, if CWs do not have an odd and even sample, default=0
-
        mailfile = file
 	  define file saving NDS Videoguard mail messages from provider, default:none
 
@@ -464,6 +461,9 @@ DESCRIPTIONS
 		      expires, requests will go to normal readers
 
 	   counter = set minimum CW counter to allow CW is used, default:1
+
+       cacheex_mode1_delay = CAID1:time,[BCAID2:time]...
+	  delay in milli-seconds for asking cache exchange mode 1 readers, default:none
 
        csp_port = port
 	  UDP port of Cardservproxy for cache exchange, default:none

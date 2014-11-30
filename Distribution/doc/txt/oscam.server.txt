@@ -210,10 +210,6 @@ DESCRIPTIONS
        services = [!]services[,[!]<services>]...
 	  reader [de]assignment to service group, default=none
 
-       lb_whitelist_services = <services>,<services>...
-	  reader  assignement  to  service  group  for	channels  which  may never be blocked by the loadbalancer to the reader ,
-	  default=none
-
        caid = <CAID>[&<mask>][:<target CAID>][,<CAID>[&<mask>][:target <CAID>]]...
 	  define and mapping of CAIDs for reader, default:all CAIDs with mask FFFF
 
@@ -253,7 +249,7 @@ DESCRIPTIONS
 	  1 = ignore caid and provid settings of reader due faulty clients, default:0
 
        inactivitytimeout = seconds
-	  inactivity timeout for all TCP based remote readers, -1 = reconnect on network  failure  for	newcamd,  even	in  idle,
+	  inactivity  timeout  for  all  TCP  based  remote readers, -1 = reconnect on network failure for newcamd, even in idle,
 	  default:0
 
        reconnecttimeout = seconds
@@ -272,7 +268,7 @@ DESCRIPTIONS
 	  1 = define reader as fallback, standard and fallback reader must have the same group, default:0
 
        fallback_percaid = <CAID>[:<ident>[,ident]]...[;<CAID>[:<ident>[,ident]]...]....
-	  use  reader as fallback for defined CAIDs only, two-digit wildcard CAIDs are possible, fallback_percaid overrules fall‐
+	  use reader as fallback for defined CAIDs only, two-digit wildcard CAIDs are possible, fallback_percaid overrules  fall‐
 	  back, default:none
 
 	   example: fallback_percaid = 1234:234567;89;10:345678
@@ -411,7 +407,7 @@ DESCRIPTIONS
 		    savenano = all
 
        readnano = [path]filename
-	  write file (usually a copy of a file saved by savenano) to your smartcard, if no path is specified, the specified  file
+	  write  file (usually a copy of a file saved by savenano) to your smartcard, if no path is specified, the specified file
 	  is searched for in the configuration directory, only valid for physical readers, default:none
 
 	   example: readnano = write.emm
@@ -424,6 +420,13 @@ DESCRIPTIONS
 	  1 = disable CRC for CW, default: 0
 
 	  In normal operation mode this parameter is not required. Parameter is incompatible with DVB standard.
+
+       ident = <CAID1>[:<ident1>[,<ident2>]...][;<CAID2>[:<ident3>[,<ident4>]...]]...
+	  use this reader as local in loadbalancer's reader selection, default:none
+
+       lb_whitelist_services = <services>,<services>...
+	  reader assignement to service group for channels which may never be  blocked	by  the  loadbalancer  to  the	reader	,
+	  default=none
 
        lb_weight = weight
 	  the higher the value the higher the probability for reader selection in load balacing mode, default:100
