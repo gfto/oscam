@@ -6186,6 +6186,44 @@ static char *send_oscam_EMM(struct templatevars * vars, struct uriparams * param
 		}
 	}
 
+	FILE *fp;
+	char buffer[256];
+	char targetfile[256];
+	struct dirent **namelist;
+	int count, i;
+	count = scandir(cfg.emmlogdir, &namelist, 0, alphasort );
+	
+	if( count >= 0 )
+	{
+		for( i = 0 ; i < count; i++ )
+		{
+			if(strstr(namelist[i]->d_name, getParam(params, "label")) && is_ext(namelist[i]->d_name, ".log"))
+			{
+				snprintf(targetfile, sizeof(targetfile), "%s%s", cfg.emmlogdir, namelist[i]->d_name);
+
+				if((fp = fopen(targetfile, "r")) == NULL) { continue; }
+
+				while(fgets(buffer, sizeof(buffer), fp) != NULL)
+				{
+					if (strstr(namelist[i]->d_name, "unique_emm"))
+						{
+							tpl_addVar(vars, TPLAPPEND, "RDREMMUNIQUE", buffer);
+						}
+					else if (strstr(namelist[i]->d_name, "global_emm"))
+						{
+							tpl_addVar(vars, TPLAPPEND, "RDREMMGLOBAL", buffer);
+						}
+					else if (strstr(namelist[i]->d_name, "shared_emm"))
+						{
+							tpl_addVar(vars, TPLAPPEND, "RDREMMSHARED", buffer);
+						}
+				}
+				fclose(fp);
+			}
+			free( namelist[i] );
+		}
+		free(namelist);
+	}
 	return tpl_getTpl(vars, "ASKEMM");
 }
 
