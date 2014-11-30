@@ -12,48 +12,47 @@
 
 struct gbox_srvid
 {
-        uint16_t sid;
-        uint32_t provid_id;
-        time_t last_cw_received;
+    uint16_t sid;
+    uint32_t provid_id;
+    time_t last_cw_received;
 };
 
 struct gbox_card
 {
-        uint16_t peer_id;
-        uint16_t caid;
-        uint32_t provid;
-        uint32_t provid_1;
-        uint8_t slot;
-        uint8_t dist;
-        uint8_t lvl;
-	uint8_t type;
-        LLIST *badsids; // sids that have failed to decode (struct cc_srvid)
-        LLIST *goodsids; //sids that could be decoded (struct cc_srvid)
-        uint32_t no_cws_returned;
-        uint32_t average_cw_time;
+    uint16_t peer_id;
+    uint16_t caid;
+    uint32_t provid;
+    uint32_t provid_1;
+    uint8_t slot;
+    uint8_t dist;
+    uint8_t lvl;
+    uint8_t type;
+    LLIST *badsids; // sids that have failed to decode (struct cc_srvid)
+    LLIST *goodsids; //sids that could be decoded (struct cc_srvid)
+    uint32_t no_cws_returned;
+    uint32_t average_cw_time;
 };
 
 struct gbox_data
 {
-        uint16_t id;
-        uchar password[4];
-        uchar checkcode[7];
-        uint8_t minor_version;
-        uint8_t cpu_api;
-        LLIST *cards;
+    uint16_t id;
+    uchar password[4];
+    uchar checkcode[7];
+    uint8_t minor_version;
+    uint8_t cpu_api;
+    LLIST *cards;
 };
 
 struct gbox_peer
 {
-        struct gbox_data gbox;
-        uchar *hostname;
-        int32_t online;
-        int32_t hello_stat;
-        uchar ecm_idx;
-        uchar gbox_count_ecm;
-        CS_MUTEX_LOCK lock;
-        struct s_client *my_user;
-        LL_ITER last_it;
+    struct gbox_data gbox;
+    uchar *hostname;
+    int32_t online;
+    int32_t hello_stat;
+    uchar ecm_idx;
+    CS_MUTEX_LOCK lock;
+    struct s_client *my_user;
+    LL_ITER last_it;
 };
 
 enum

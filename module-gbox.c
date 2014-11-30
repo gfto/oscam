@@ -577,6 +577,18 @@ int8_t get_card_action(struct gbox_card *card, uint32_t provid1, uint16_t peer_i
 	}	
 }
 
+static int8_t gbox_reinit_peer(struct gbox_peer *peer)
+{
+	peer->online		= 0;
+	peer->hello_stat	= GBOX_STAT_HELLOL;
+	peer->ecm_idx		= 0;
+	gbox_free_cardlist(peer->gbox.cards);
+	peer->gbox.cards	= ll_create("peer.cards");		
+	peer->my_user		= NULL;
+	
+	return 0;
+}
+
 int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 {
 	struct gbox_peer *peer = cli->gbox;
@@ -732,14 +744,11 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		{
 			//This is a good night / reset packet (good night data[0xA] / reset !data[0xA] 
 			cs_log("->[gbx] received Good Night from %s %s",username(cli), cli->reader->device);
-			write_goodnight_to_osd_file(cli);   
-			gbox_free_cardlist(peer->gbox.cards);
-			peer->online = 0;
-			peer->hello_stat = GBOX_STAT_HELLOL;
+			write_goodnight_to_osd_file(cli);
+			gbox_reinit_peer(peer);
 			cli->reader->tcp_connected = 0;
 			cli->reader->card_status = NO_CARD;
 			cli->reader->last_s = cli->reader->last_g = 0;
-			peer->gbox.cards = ll_create("peer.cards");		
 		}
 		else	//last packet of Hello
 		{
@@ -776,6 +785,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 			gbox_write_local_cards_info();
 			gbox_write_shared_cards_info();
 			gbox_write_peer_onl();
+			cli->last = time((time_t *)0); //hello is activity on proxy
 		}	
 	}
 	peer->last_it = it; //save position for next hello
@@ -828,7 +838,6 @@ static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 	er->src_data = ere;                
 	gbox_init_ecm_request_ext(ere);
 
-	peer->gbox_count_ecm++;
 	er->gbox_ecm_id = peer->gbox.id;
 
 	if(peer->ecm_idx == 100) { peer->ecm_idx = 0; }
@@ -1351,7 +1360,6 @@ static void gbox_send_dcw(struct s_client *cl, ECM_REQUEST *er)
 	struct s_client *cli = switch_client_proxy(cl, cl->gbox_peer_id);
 	struct gbox_peer *peer = cli->gbox;
 
-	peer->gbox_count_ecm--;
 	if(er->rc >= E_NOTFOUND)
 	{
 		cs_debug_mask(D_READER, "gbox: unable to decode!");
@@ -1679,10 +1687,7 @@ static int32_t gbox_client_init(struct s_client *cli)
 
 	cs_lock_create(&peer->lock, "gbox_lock", 5000);
 
-	peer->online     = 0;
-	peer->ecm_idx    = 0;
-	peer->hello_stat = GBOX_STAT_HELLOL;
-	peer->my_user	 = NULL;
+	gbox_reinit_peer(peer);
 
 	cli->reader->card_status = CARD_NEED_INIT;
 	gbox_send_hello(cli);
@@ -2003,21 +2008,36 @@ static void init_local_gbox(void)
 
 static void gbox_s_idle(struct s_client *cl)
 {
-	uint32_t time_since_lastecm;
+	uint32_t time_since_last;
 	struct s_client *proxy = get_gbox_proxy(cl->gbox_peer_id);
 	struct gbox_peer *peer;
+
+	if (proxy && proxy->gbox)
+	{ 
+		time_since_last = abs(proxy->last - time(NULL));
+		if (time_since_last > (HELLO_KEEPALIVE_TIME*3) && cl->gbox_peer_id != NO_GBOX_ID)	
+		{
+			//gbox peer apparently died without saying goodbye
+			peer = proxy->gbox;
+			cs_debug_mask(D_READER, "gbox time since last proxy activity in sec: %d => taking gbox peer offline",time_since_last);
+			gbox_reinit_peer(peer);
+			proxy->reader->tcp_connected = 0;
+			proxy->reader->card_status = NO_CARD;
+			proxy->reader->last_s = proxy->reader->last_g = 0;
+		}
 	
-	time_since_lastecm = abs(cl->lastecm - time(NULL));
-	if (time_since_lastecm > HELLO_KEEPALIVE_TIME && cl->gbox_peer_id != NO_GBOX_ID && proxy && proxy->gbox)
-	{
-		peer = proxy->gbox;
-		cs_debug_mask(D_READER, "gbox time since last ecm in sec: %d => trigger keepalive hello",time_since_lastecm);
-		if (!peer->online)
-			{ peer->hello_stat = GBOX_STAT_HELLOL; }
-		else
-			{ peer->hello_stat = GBOX_STAT_HELLOS; }
-		gbox_send_hello(proxy);
-		peer->hello_stat = GBOX_STAT_HELLOR;
+		time_since_last = abs(cl->lastecm - time(NULL));
+		if (time_since_last > HELLO_KEEPALIVE_TIME && cl->gbox_peer_id != NO_GBOX_ID)
+		{
+			peer = proxy->gbox;
+			cs_debug_mask(D_READER, "gbox time since last ecm in sec: %d => trigger keepalive hello",time_since_last);
+			if (!peer->online)
+				{ peer->hello_stat = GBOX_STAT_HELLOL; }
+			else
+				{ peer->hello_stat = GBOX_STAT_HELLOS; }
+			gbox_send_hello(proxy);
+			peer->hello_stat = GBOX_STAT_HELLOR;
+		}	
 	}	
 	//prevent users from timing out
 	cs_debug_mask(D_READER, "gbox client idle prevented: %s", username(cl));
