@@ -65,15 +65,6 @@ static int32_t set_provider_info(struct s_reader *reader, int32_t i)
 	memcpy(&reader->prid[i][2], cta_res, 2);
 
 	provid = b2ll(4, reader->prid[i]);
-	int seca_version = reader->card_atr[9] & 0X0F; //Get seca cardversion from cardatr
-	if(seca_version == 10){ // check for nagra smartcard (seca3) 
-		reader->secatype = 3;
-		rdr_log(reader, "Detected seca/nagra (seca3) card");
-	}
-	if(seca_version == 7){ // check for seca smartcard (seca2)
-		reader->secatype = 2;
-		rdr_log(reader, "Detected seca2 card");
-	}
 	year = (cta_res[22] >> 1) + 1990;
 	month = ((cta_res[22] & 0x1) << 3) | (cta_res[23] >> 5);
 	day = (cta_res[23] & 0x1f);
@@ -219,8 +210,17 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 	serial = b2ll(5, cta_res + 3) ;
 	rdr_log_sensitive(reader, "type: SECA, caid: %04X, serial: {%llu}, card: %s v%d.%d",
 					  reader->caid, (unsigned long long) serial, card, atr[9] & 0x0F, atr[9] >> 4);
-
 	
+	int seca_version = atr[9] & 0X0F; //Get seca cardversion from cardatr
+	if(seca_version == 10){ // check for nagra smartcard (seca3) 
+		reader->secatype = 3;
+		rdr_log(reader, "Detected seca/nagra (seca3) card");
+	}
+	if(seca_version == 7){ // check for seca smartcard (seca2)
+		reader->secatype = 2;
+		rdr_log(reader, "Detected seca2 card");
+	}
+
 	// Unlock parental control
 	if(cfg.ulparent != 0)
 	{
