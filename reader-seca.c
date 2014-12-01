@@ -214,7 +214,7 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 	int seca_version = atr[9] & 0X0F; //Get seca cardversion from cardatr
 	if(seca_version == 10){ // check for nagra smartcard (seca3) 
 		reader->secatype = 3;
-		rdr_log(reader, "Detected seca/nagra (seca3) card");
+		rdr_debug_mask(reader, D_IFD, "Detected seca/nagra (seca3) card");
 	}
 	if(seca_version == 7){ // check for seca smartcard (seca2)
 		reader->secatype = 2;
