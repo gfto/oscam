@@ -6226,9 +6226,13 @@ static char *send_oscam_EMM(struct templatevars * vars, struct uriparams * param
 	FILE *fp;
 	char buffer[256];
 	char targetfile[256];
+	const char *slash = "/";
 	struct dirent **namelist;
-	int count, i;
-	count = scandir(cfg.emmlogdir, &namelist, 0, alphasort );
+	int count = -1, i;
+	if (cfg.emmlogdir)
+	{
+		count = scandir(cfg.emmlogdir, &namelist, 0, alphasort );
+	}
 	
 	if( count >= 0 )
 	{
@@ -6236,7 +6240,8 @@ static char *send_oscam_EMM(struct templatevars * vars, struct uriparams * param
 		{
 			if(strstr(namelist[i]->d_name, getParam(params, "label")) && is_ext(namelist[i]->d_name, ".log"))
 			{
-				snprintf(targetfile, sizeof(targetfile), "%s%s", cfg.emmlogdir, namelist[i]->d_name);
+				if(cfg.emmlogdir[strlen(cfg.emmlogdir) - 1] == '/') { slash = ""; }
+				snprintf(targetfile, sizeof(targetfile), "%s%s%s", cfg.emmlogdir, slash, namelist[i]->d_name);
 
 				if((fp = fopen(targetfile, "r")) == NULL) { continue; }
 
