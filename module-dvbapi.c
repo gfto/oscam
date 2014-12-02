@@ -3989,15 +3989,14 @@ static void *dvbapi_main_local(void *cli)
 										{
 											int32_t demux_index = mbuf[4];
 											int32_t filter_num = mbuf[5];
-											int n;
 											
 											// find correct demux id used by oscam
 											// demux id from dvbapi client != oscam demux id!
-											for (n = 0; n < MAX_DEMUX; n++)
+											for (j = 0; j < MAX_DEMUX; j++)
 											{
-												if (demux[n].demux_index == demux_index)
+												if (demux[j].demux_index == demux_index)
 												{
-													dvbapi_process_input(n, filter_num, mbuf + 6, data_len + 3);
+													dvbapi_process_input(j, filter_num, mbuf + 6, data_len + 3);
 													break;
 												}
 											}
