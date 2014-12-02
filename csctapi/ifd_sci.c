@@ -95,6 +95,7 @@ static int32_t Sci_Read_ATR(struct s_reader *reader, ATR *atr)   // reads ATR on
 	uint32_t timeout = ATR_TIMEOUT;
 	unsigned char buf[SCI_MAX_ATR_SIZE];
 	int32_t n = 0, statusreturn = 0;
+	unsigned char b[10];
 	
 	if(IO_Serial_Read(reader, 0, timeout, 1, buf + n))  //read first char of atr
 	{
@@ -251,6 +252,11 @@ static int32_t Sci_Read_ATR(struct s_reader *reader, ATR *atr)   // reads ATR on
 	{
 		cs_log("Warning reader %s: ATR is invalid!", reader->label);
 		return ERROR;
+	}
+
+	while(!IO_Serial_Read(reader, 0, 75000, 9, b)) // first appears between 9~75ms
+	{
+	;
 	}
 	return OK; // return OK but atr might be softfailing!
 }
@@ -551,7 +557,7 @@ void cardreader_internal_sci(struct s_cardreader *crdr)
 {
 	crdr->desc         = "internal";
 	crdr->typ          = R_INTERNAL;
-	crdr->flush        = 1;
+	crdr->flush        = 0;
 	crdr->max_clock_speed = 1;
 	crdr->reader_init  = Sci_Init;
 	crdr->get_status   = Sci_GetStatus;
