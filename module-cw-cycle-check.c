@@ -230,7 +230,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 						if(now - cwc->time >= cwc->cycletime - cwc->dyncycletime)
 						{
 							cs_debug_mask(D_CWC, "cyclecheck [Same CW but much too late] Client: %s EA: %s CW: %s Time: %ld Timediff: %ld", user, er_ecmf, cwstr, now, now - cwc->time);
-							ret = 2; // declare it as bad(old)
+							ret = cfg.cwcycle_dropold ? 2 : 4;
 						}
 						else
 						{				
@@ -256,7 +256,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 						if(now - cwc->time >= cwc->cycletime - cwc->dyncycletime)
 						{
 							cs_debug_mask(D_CWC, "cyclecheck [Same CW but much too late] Client: %s EA: %s CW: %s Time: %ld Timediff: %ld", user, er_ecmf, cwstr, now, now - cwc->time);
-							ret = 2; // declare it as bad(old)
+							ret = cfg.cwcycle_dropold ? 2 : 4;
 						}
 						else
 						{				
