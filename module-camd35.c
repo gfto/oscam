@@ -407,7 +407,7 @@ static void camd35_request_emm(ECM_REQUEST *er)
 		mbuf[128] = (aureader->blockemm & EMM_GLOBAL && !(aureader->saveemm & EMM_GLOBAL)) ? 0 : 1;
 		mbuf[129] = (aureader->blockemm & EMM_SHARED && !(aureader->saveemm & EMM_SHARED)) ? 0 : 1;
 		mbuf[130] = (aureader->blockemm & EMM_UNIQUE && !(aureader->saveemm & EMM_UNIQUE)) ? 0 : 1;
-		mbuf[131] = (aureader->blockemm & EMM_UNKNOWN && !(aureader->saveemm & EMM_UNKNOWN)) ? 0 : 1;
+		mbuf[127] = (aureader->blockemm & EMM_UNKNOWN && !(aureader->saveemm & EMM_UNKNOWN)) ? 0 : 1;
 	}
 	else        // disable emm
 		{ mbuf[20] = mbuf[39] = mbuf[40] = mbuf[47] = mbuf[49] = 1; }
@@ -1360,7 +1360,7 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 		rdr->blockemm |= (buf[128] == 1) ? 0 : EMM_GLOBAL;
 		rdr->blockemm |= (buf[129] == 1) ? 0 : EMM_SHARED;
 		rdr->blockemm |= (buf[130] == 1) ? 0 : EMM_UNIQUE;
-		rdr->blockemm |= (buf[131] == 1) ? 0 : EMM_UNKNOWN;
+		rdr->blockemm |= (buf[127] == 1) ? 0 : EMM_UNKNOWN;
 		cs_log("%s CMD05 AU request for caid: %04X auprovid: %06X",
 			   rdr->label,
 			   rdr->caid,
