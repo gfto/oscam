@@ -452,7 +452,7 @@ int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, int32_t demux_index
 		case DVBAPI_DMX_STOP:
 		{
 			int32_t sct_filter_size = sizeof(struct dmx_sct_filter_params);
-			packet[size++] = demux[demux_index].demux_index;            //demux index - 1 byte
+			packet[size++] = demux_index;                               //demux index - 1 byte
 			packet[size++] = filter_number;                             //filter number - 1 byte
 
 			if (data)       // filter data when starting
@@ -3989,18 +3989,7 @@ static void *dvbapi_main_local(void *cli)
 										{
 											int32_t demux_index = mbuf[4];
 											int32_t filter_num = mbuf[5];
-											
-											// find correct demux id used by oscam
-											// demux id from dvbapi client != oscam demux id!
-											for (j = 0; j < MAX_DEMUX; j++)
-											{
-												if (demux[j].demux_index == demux_index)
-												{
-													dvbapi_process_input(j, filter_num, mbuf + 6, data_len + 3);
-													break;
-												}
-											}
-											
+											dvbapi_process_input(demux_index, filter_num, mbuf + 6, data_len + 3);
 											break;
 										}
 										case DVBAPI_CLIENT_INFO:
