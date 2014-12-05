@@ -1081,6 +1081,7 @@ static char *send_oscam_config_webif(struct templatevars *vars, struct uriparams
 	tpl_printf(vars, TPLADD, "HTTPREFRESH", "%d", cfg.http_refresh);
 	tpl_printf(vars, TPLADD, "HTTPPOLLREFRESH", "%d", cfg.poll_refresh);
 	tpl_addVar(vars, TPLADD, "HTTPTPL", cfg.http_tpl);
+	tpl_addVar(vars, TPLADD, "HTTPPICONPATH", cfg.http_piconpath);
 	tpl_addVar(vars, TPLADD, "HTTPSCRIPT", cfg.http_script);
 	tpl_addVar(vars, TPLADD, "HTTPJSCRIPT", cfg.http_jscript);
 #ifndef WEBIF_JQUERY
@@ -1345,10 +1346,10 @@ static void inactivate_reader(struct s_reader *rdr)
 static bool picon_exists(char *name)
 {
 	char picon_name[64], path[255];
-	if(!cfg.http_tpl)
+	if(!cfg.http_piconpath)
 		{ return false; }
 	snprintf(picon_name, sizeof(picon_name) - 1, "IC_%s", name);
-	return strlen(tpl_getTplPath(picon_name, cfg.http_tpl, path, sizeof(path) - 1)) && file_exists(path);
+	return strlen(tpl_getTplPath(picon_name, cfg.http_piconpath, path, sizeof(path) - 1)) && file_exists(path);
 }
 
 static void clear_rdr_stats(struct s_reader *rdr)
@@ -6720,10 +6721,10 @@ static char *send_oscam_image(struct templatevars * vars, FILE * f, struct uripa
 		if(etagheader == 0)
 		{
 			int8_t disktpl = 0;
-			if(cfg.http_tpl)
+			if(cfg.http_piconpath)
 			{
 				char path[255];
-				if(strlen(tpl_getTplPath(wanted, cfg.http_tpl, path, 255)) > 0 && file_exists(path))
+				if(strlen(tpl_getTplPath(wanted, cfg.http_piconpath, path, 255)) > 0 && file_exists(path))
 				{
 					struct stat st;
 					disktpl = 1;

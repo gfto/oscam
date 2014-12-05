@@ -1673,6 +1673,7 @@ struct s_config
 	int32_t         http_prepend_embedded_css;
 	char            *http_jscript;
 	char            *http_tpl;
+	char            *http_piconpath;
 	char            *http_script;
 #ifndef WEBIF_JQUERY
 	char            *http_extern_jquery;
