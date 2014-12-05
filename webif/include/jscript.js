@@ -1274,7 +1274,7 @@ function updateStatuspage(data) {
 					// cccam
 					var entobj = item.connection.entitlements[0];
 					entitlement += '<br><a href="entitlements.html?label=' + item.rname_enc + '" class="tooltip' + entobj.cccreshare + '">';
-					entitlement += '(' + entobj.locals + ' of ' + entobj.cccount + ' cards)';
+					entitlement += '(' + entobj.locals + ' of ' + entobj.cccount + ' card' + (entobj.cccount > 1 ? "s" : "") + ')';
 					entitlement += '<span>card_count=' + entobj.cccount + '<br>';
 					entitlement += 'hop1=' + entobj.ccchop1 + '<br>';
 					entitlement += 'hop2=' + entobj.ccchop2 + '<br>';

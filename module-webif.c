@@ -1116,6 +1116,7 @@ static char *send_oscam_config_webif(struct templatevars *vars, struct uriparams
 
 
 #ifdef WITH_SSL
+	if(cfg.http_cert != NULL) { tpl_addVar(vars, TPLADD, "HTTPCERT", cfg.http_cert); }
 	tpl_addVar(vars, TPLADD, "HTTPFORCESSLV3SELECT", (cfg.http_force_sslv3 == 1) ? "checked" : "");
 #endif
 
@@ -3300,6 +3301,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	int32_t total_users = 0;
 	int32_t disabled_users = 0;
 	int32_t expired_users = 0;
+	int32_t expired_or_disabled_users = 0;
 	int32_t connected_users = 0;
 	int32_t online_users = 0;
 	int8_t isactive;
@@ -3379,6 +3381,10 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICDIS");
 			tpl_addVar(vars, TPLADD, "SWITCHTITLE", "Disable this account");
 			tpl_addVar(vars, TPLADD, "SWITCH", "disable");
+		}
+		if((account->expirationdate && account->expirationdate < now)||account->disabled != 0)
+		{
+			expired_or_disabled_users++;
 		}
 
 		int32_t lastresponsetm = 0, latestactivity = 0;
@@ -3614,7 +3620,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	tpl_printf(vars, TPLADD, "TOTAL_USERS", "%d", total_users);
 	tpl_printf(vars, TPLADD, "TOTAL_DISABLED", "%d", disabled_users);
 	tpl_printf(vars, TPLADD, "TOTAL_EXPIRED", "%d", expired_users);
-	tpl_printf(vars, TPLADD, "TOTAL_ACTIVE", "%d", total_users - expired_users - disabled_users);
+	tpl_printf(vars, TPLADD, "TOTAL_ACTIVE", "%d", total_users - expired_or_disabled_users);
 	tpl_printf(vars, TPLADD, "TOTAL_CONNECTED", "%d", connected_users);
 	tpl_printf(vars, TPLADD, "TOTAL_ONLINE", "%d", online_users);
 
@@ -4414,11 +4420,11 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					{
 						monitor_count_shown++;
 					}
-					else
+					else if (cl->reader->card_status == CARD_INSERTED)
 					{
-						if(cl->typ == 'r' && cl->reader->card_status == CARD_INSERTED)
+						if(cl->typ == 'r')
 							{ reader_count_conn++; }
-						else if(cl->typ == 'p' && (cl->reader->card_status == CARD_INSERTED || cl->reader->tcp_connected))
+						else if(cl->typ == 'p')
 							{ proxy_count_conn++; }
 					}
 
@@ -5047,6 +5053,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	int32_t total_users = 0;
 	int32_t disabled_users = 0;
 	int32_t expired_users = 0;
+	int32_t expired_or_disabled_users = 0;
 	int32_t connected_users = 0;
 	int32_t online_users = 0;
 	for(account = cfg.account; (account); account = account->next)
@@ -5059,6 +5066,10 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 		if(account->disabled != 0)
 		{
 			disabled_users++;
+		}
+		if((account->expirationdate && account->expirationdate < now)||account->disabled != 0)
+		{
+			expired_or_disabled_users++;
 		}
 		int32_t latestactivity = 0;
 		struct s_client *latestclient = NULL;
@@ -5092,7 +5103,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 		}
 	}
 	tpl_printf(vars, TPLADD, "TOTAL_USERS", "%d", total_users);
-	tpl_printf(vars, TPLADD, "TOTAL_ACTIVE", "%d", total_users - expired_users - disabled_users);
+	tpl_printf(vars, TPLADD, "TOTAL_ACTIVE", "%d", total_users - expired_or_disabled_users);
 	tpl_printf(vars, TPLADD, "TOTAL_EXPIRED", "%d", expired_users);
 	tpl_printf(vars, TPLADD, "TOTAL_DISABLED", "%d", disabled_users);
 	tpl_printf(vars, TPLADD, "TOTAL_ONLINE", "%d", online_users);

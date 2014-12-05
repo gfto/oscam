@@ -247,11 +247,9 @@ static char *get_emmlog_filename(char *dest, size_t destlen, const char *basefil
 static void saveemm(struct s_reader *aureader, EMM_PACKET *ep, const char *proceded)
 {
 	FILE *fp_log;
-	FILE *fp_bin;
 	char tmp[17];
 	char buf[80];
 	char token_log[256];
-	char token_bin[256];
 	char *tmp2;
 	time_t rawtime;
 	uint32_t emmtype;
@@ -271,20 +269,16 @@ static void saveemm(struct s_reader *aureader, EMM_PACKET *ep, const char *proce
 		{
 			case GLOBAL:
 				fp_log = fopen(get_emmlog_filename(token_log, sizeof(token_log), aureader->label, "global", "log"), "a");
-				fp_bin = fopen(get_emmlog_filename(token_bin, sizeof(token_bin), aureader->label, "global", "bin"), "ab");
 				break;
 			case SHARED:
 				fp_log = fopen(get_emmlog_filename(token_log, sizeof(token_log), aureader->label, "shared", "log"), "a");
-				fp_bin = fopen(get_emmlog_filename(token_bin, sizeof(token_bin), aureader->label, "shared", "bin"), "ab");
 				break;
 			case UNIQUE:
 				fp_log = fopen(get_emmlog_filename(token_log, sizeof(token_log), aureader->label, "unique", "log"), "a");
-				fp_bin = fopen(get_emmlog_filename(token_bin, sizeof(token_bin), aureader->label, "unique", "bin"), "ab");
 				break;
 			case UNKNOWN:
 			default:
 				fp_log = fopen(get_emmlog_filename(token_log, sizeof(token_log), aureader->label, "unknown", "log"), "a");
-				fp_bin = fopen(get_emmlog_filename(token_bin, sizeof(token_bin), aureader->label, "unknown", "bin"), "ab");
 		}			
 		
 		if(!fp_log)
@@ -301,22 +295,6 @@ static void saveemm(struct s_reader *aureader, EMM_PACKET *ep, const char *proce
 				rdr_log(aureader, "Successfully added EMM to %s", token_log);
 			}
 			fclose(fp_log);
-		}
-		if(!fp_bin)
-		{
-			rdr_log(aureader, "ERROR: Cannot open file '%s' (errno=%d: %s)\n", token_bin, errno, strerror(errno));
-		}
-		else
-		{
-			if((int)fwrite(ep->emm, 1, emm_length + 3, fp_bin) == emm_length + 3)
-			{
-				rdr_log(aureader, "Successfully added binary EMM to %s", token_bin);
-			}
-			else
-			{
-				rdr_log(aureader, "ERROR: Cannot write binary EMM to %s (errno=%d: %s)\n", token_bin, errno, strerror(errno));
-			}
-			fclose(fp_bin);
 		}
 	}
 }

@@ -78,7 +78,6 @@ CONFIGMENUNEWCAMD             config/menu_newcamd.html                          
 CONFIGMENURADEGAST            config/menu_radegast.html                                   MODULE_RADEGAST
 CONFIGMENUSCAM                config/menu_scam.html                                       MODULE_SCAM
 CONFIGMENUSERIAL              config/menu_serial.html                                     MODULE_SERIAL
-CONFIGMENUWEBIF               config/menu_webif.html
 CONFIGMONITOR                 config/monitor.html                                         MODULE_MONITOR
 CONFIGNEWCAMD                 config/newcamd.html                                         MODULE_NEWCAMD
 CONFIGRADEGAST                config/radegast.html                                        MODULE_RADEGAST
@@ -86,7 +85,7 @@ CONFIGSCAM                    config/scam.html                                  
 CONFIGSERIAL                  config/serial.html                                          MODULE_SERIAL
 CONFIGSERIALDEVICEBIT         config/serial_devices.html                                  MODULE_SERIAL
 CONFIGWEBIF                   config/webif.html
-HTTPFORCESSLV3                config/webif_httpforcesslv3.html                            WITH_SSL
+HTTPSSL                       config/webif_httpssl.html                                   WITH_SSL
 SHOWCACHEEXINFO               config/webif_showcacheexinfo.html                           CS_CACHEEX
 CONFIGWEBIFJQUERYBIT          config/webif_show_jquery.html
 
