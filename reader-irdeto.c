@@ -193,6 +193,7 @@ static time_t chid_date(struct s_reader *reader, uint32_t date, char *buf, int32
 		{0x0606, 0x0606, "NLD", 946598400L},    // 31.12.1999, 00:00    //Caiway irdeto card caid: 0606, acs: 6.06
 		{0x0652, 0x0005, "MCR", 1206662400L},   // 28.03.2008, 00:00    //Raduga caid:0652, acs: 0.05
 		{0x0652, 0x0608, "MCR", 1206662400L},   // 28.03.2008, 00:00    //Raduga caid:0652, acs: 6.08
+		{0x0606, 0x0006, "ZAF", 946598400L}, 	// 31.12.1999, 00:00 	//dstv irdeto
 		// {0x1702, 0x0384, "AUT", XXXXXXXXXL},     // -> we need the base date for this
 		// {0x1702, 0x0384, "GER", 888883200L},     // 02.03.1998, 16:00 -> this fixes some card but break others (S02).
 		{0x0, 0x0, "", 0L}
