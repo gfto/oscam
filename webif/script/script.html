@@ -7,9 +7,10 @@
 		<script type="text/javascript">function runscript(){var e=document.getElementById("scriptselect");var URL=e.options[e.selectedIndex].value;window.location.href=URL;}</script>
 		<P ID="filename">OSCam execute script:</P>
 	<DIV ID="otherdropdown">
-		<select ID="scriptselect" name="action" size="1" onChange="runscript()">
+		<select ID="scriptselect" name="action" size="1">
 ##SCRIPTOPTIONS##
 		</select>
+		<input type="button" onclick="runscript()" value="Run Script" title="Run Script">
 	</DIV>
 		<P ID="filesubmit">##SCRIPTNAME## ##CODE##</P>
 	<DIV CLASS="extract">
