@@ -999,12 +999,8 @@ function updateSysinfo(data) {
 function updateStatuspage(data) {
 
 	var updatedclients = "";
-	var cardokreader = 0;
-	var connectedproxys = 0;
 	// update status lines
 	$.each(data.oscam.status.client, function (i, item) {
-		if (item.connection.status == 'CARDOK') cardokreader++;
-		if (item.connection.status == 'CONNECTED') connectedproxys++;
 		var newrow;
 
 		//add ID's for type c and m to list of existing elements. We need this to delete all not longer existing
@@ -1347,10 +1343,10 @@ function updateStatuspage(data) {
 	}
 
 	//update reader-headline
-	$("#rcc").text(cardokreader);
+	$("#rcc").text(data.oscam.status.rcc);
 
 	//update proxy-headline
-	$("#pcc").text(connectedproxys);
+	$("#pcc").text(data.oscam.status.pcc);
 
 	// update footer
 	updateFooter(data);

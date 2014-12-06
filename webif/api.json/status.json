@@ -9,6 +9,8 @@
 	"sca":"##SCA##",
 	"mcs":"##MCS##",
 	"mca":"##MCA##",
+	"rcc":"##RCC##",
+	"pcc":"##PCC##",
 	"client":[
 	                          ##JSONSTATUSBITS##
 								]}

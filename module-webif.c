@@ -4297,7 +4297,11 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 		{
 			struct s_client *cl;
 			for(cl = first_client; cl ; cl = cl->next)
-				{ cl->wihidden = 0; }
+			{
+				if(cl->typ == 's' || cl->typ == 'h' || cl->typ == 'm'){
+					cl->wihidden = 0;
+				}
+			}
 		}
 		else if(atoi(hideidle) == 3)
 		{
@@ -4421,12 +4425,13 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					{
 						monitor_count_shown++;
 					}
-					else if (cl->reader->card_status == CARD_INSERTED)
+					else if(cl->typ == 'r')
 					{
-						if(cl->typ == 'r')
-							{ reader_count_conn++; }
-						else if(cl->typ == 'p')
-							{ proxy_count_conn++; }
+						reader_count_conn++;
+					}
+					else if(cl->typ == 'p')
+					{
+						proxy_count_conn++;
 					}
 
 					if(cl->typ == 'c' || cl->typ == 'r' || cl->typ == 'p')
@@ -5215,6 +5220,8 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 			tpl_printf(vars, TPLADD, "SCS", "%d", server_count_shown);
 			tpl_printf(vars, TPLADD, "SCH", "%d", server_count_hidden);
 			tpl_printf(vars, TPLADD, "SCA", "%d", server_count_all);
+			tpl_printf(vars, TPLADD, "RCC", "%d", reader_count_conn);
+			tpl_printf(vars, TPLADD, "PCC", "%d", proxy_count_conn);
 			tpl_printf(vars, TPLADD, "PICONENABLED", "%d", cfg.http_showpicons?1:0);
 			return tpl_getTpl(vars, "JSONSTATUS");
 		}
@@ -7408,6 +7415,8 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				return 0;
 			}
 
+			if(!cfg.http_piconpath && cfg.http_tpl)
+				{ cfg.http_piconpath = cfg.http_tpl; }
 			tpl_addVar(vars, TPLADD, "SUBDIR", subdir);
 
 			struct tm lt, st;
