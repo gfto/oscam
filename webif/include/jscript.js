@@ -31,21 +31,34 @@ function gotosite(Action) {
 	window.location.href = Action;
 }
 
-/* Function for add new reader in readers.html */
-function addreader() {
+/* Function for add new reader/user in readers.html/userconfig.html */
+function addinsert() {
 	cdpause();
 	$("#searchTable").fadeOut('slow', function() {
-		$("#newreader").fadeIn('slow');
+		$("#newinsert").fadeIn('slow');
 	});
 }
 
-/* Function for add new user in userconfig.html */
-function adduser() {
-	cdpause();
-	$("#searchTable").fadeOut('slow', function() {
-		$("#newuser").fadeIn('slow');
-	});
-};
+/* Function for add new reader/user in readers.html/userconfig.html  */
+function chkinsert(chkvalue) {
+	if(existing_inserts.indexOf(encodeURIComponent(chkvalue))!=-1){
+		alert('Entry "' + chkvalue + '" already exists!');
+		return false;
+	}
+}
+
+/* Function for del entry in readers.html/userconfig.html  */
+function cleaninsert(deleteinsert) {
+	var tmp_array = existing_inserts.slice();
+	existing_inserts.length = 0;
+	var i2 = 0;
+ 	for (i = 0; i < tmp_array.length; i++) {
+ 		if (tmp_array[i] != deleteinsert){
+			existing_inserts[i2] = tmp_array[i];
+			i2++; 
+		}
+	}
+}
 
 String.prototype.toHHMMSS = function () {
 	if (this.length < 1) {
@@ -256,6 +269,7 @@ $(function () {
 		if (confirm("Delete Reader " + $(this).data('reader-name') + "?")) {
 			var parameters_old = parameters;
 			parameters += '&label=' + $(this).data('reader-name') + '&action=' + $(this).data('next-action');
+			cleaninsert($(this).data('reader-name'));
 			waitForMsg();
 			parameters = parameters_old;
 			$('#' + $(this).data('md5')).fadeOut('slow');
@@ -301,6 +315,7 @@ $(function () {
 		if (confirm("Delete User " + $(this).data('user-name') + "?")) {
 			var parameters_old = parameters;
 			parameters += '&user=' + $(this).data('user-name') + '&action=' + $(this).data('next-action');
+			cleaninsert($(this).data('user-name'));
 			waitForMsg();
 			parameters = parameters_old;
 			$('#' + $(this).data('md5')).fadeOut('slow');

@@ -691,12 +691,20 @@ int8_t get_stats_linux(const pid_t pid, struct pstat* result)
     }
 	fclose(fd);
 
+	// read processes from ps -A
+	uint info_procs = 0;
+	FILE *fp = popen("ps -A | wc -l", "r");
+	if (fp ) {
+		if(fscanf(fp, "%d", &info_procs) == EOF) {;}
+    }
+	fclose(fp);
+
 	// read cpu/meminfo from sysinfo()
 	struct sysinfo info;
 	float shiftfloat = (float)(1 << SI_LOAD_SHIFT);
 	if (!sysinfo(&info)) {
 		// processes
-		result->info_procs = info.procs;
+		result->info_procs = info_procs-2; // exclude running procs ps and script
 		// cpu load
 		result->cpu_avg[0] = (float) info.loads[0] / shiftfloat;
 		result->cpu_avg[1] = (float) info.loads[1] / shiftfloat;
@@ -741,8 +749,8 @@ void calc_cpu_usage_pct(struct pstat* cur_usage, struct pstat* last_usage)
 		int64_t last_ticks = last_usage->utime_ticks + last_usage->cutime_ticks;
 		//reset flags if set bevore
 		cur_usage->check_available &= ~(1 << 9);
- 		cur_usage->check_available &= ~(1 << 10);
- 		cur_usage->check_available &= ~(1 << 11);
+		cur_usage->check_available &= ~(1 << 10);
+		cur_usage->check_available &= ~(1 << 11);
 
 		cur_usage->cpu_usage_user = 100.0 * abs(cur_ticks - last_ticks) / total_time_diff;
 

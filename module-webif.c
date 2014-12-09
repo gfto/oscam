@@ -1492,6 +1492,7 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 	}
 
 	int jsondelimiter = 0;
+	int existing_insert = 0;
 
 	ll_iter_reset(&itr); //going to iterate all configured readers
 	while((rdr = ll_iter_next(&itr)))
@@ -1516,6 +1517,12 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 			}
 #endif
 			tpl_addVar(vars, TPLADD, "READERNAMEENC", urlencode(vars, rdr->label));
+			if(!existing_insert){
+				tpl_printf(vars, TPLADD, "EXISTING_INS", "'%s'", urlencode(vars, rdr->label));
+				existing_insert++;
+			}else{
+				tpl_printf(vars, TPLAPPEND, "EXISTING_INS", ",'%s'", urlencode(vars, rdr->label));
+			}
 			tpl_addVar(vars, TPLADD, "CTYP", reader_get_type_desc(rdr, 0));
 			tpl_addVar(vars, TPLADD, "CTYPSORT", reader_get_type_desc(rdr, 0));
 
@@ -1720,6 +1727,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		reader_set_defaults(newrdr);
 		newrdr->enable = 0; // do not start the reader because must configured before
 		ll_append(configured_readers, newrdr);
+		tpl_addMsg(vars, "New Reader has been added with default settings");
 	}
 	else if(strcmp(getParam(params, "action"), "Save") == 0)
 	{
@@ -1754,7 +1762,8 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 			restart_cardreader(rdr, 1);
 		}
 
-		if(write_server() != 0) { tpl_addMsg(vars, "Write Config failed!"); }
+		if(write_server() != 0) { tpl_addMsg(vars, "Write Config failed!"); } else { tpl_addMsg(vars, "Reader config updated and saved"); }
+
 	}
 
 	rdr = get_reader_by_label(reader_);
@@ -2673,17 +2682,28 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 
 static char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *params, int32_t apicall)
 {
-	struct s_auth *account, *ptr;
+	struct s_auth *account, *ptr, *chk;
 	char user[sizeof(first_client->account->usr)];
 
 	int32_t i;
+	int existing_insert = 0;
 
 	if(!apicall) { setActiveMenu(vars, MNU_USERS); }
 
 	if(strcmp(getParam(params, "action"), "Save As") == 0) { cs_strncpy(user, getParam(params, "newuser"), sizeof(user) / sizeof(char)); }
 	else { cs_strncpy(user, getParam(params, "user"), sizeof(user) / sizeof(char)); }
 
-	for(account = cfg.account; account != NULL && strcmp(user, account->usr) != 0; account = account->next) { ; }
+	account = NULL;
+	for(chk = cfg.account; chk != NULL; chk = chk->next) {
+		if(strcmp(user, chk->usr) == 0)
+			{ account = chk; }
+		if(!existing_insert){
+			tpl_printf(vars, TPLADD, "EXISTING_INS", "'%s'", urlencode(vars, chk->usr));
+			existing_insert++;
+		}else{
+			tpl_printf(vars, TPLAPPEND, "EXISTING_INS", ",'%s'", urlencode(vars, chk->usr));
+		}
+	}
 
 	// Create a new user if it doesn't yet
 	if(account == NULL)
@@ -2708,9 +2728,9 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 		cs_strncpy((char *)account->usr, user, sizeof(account->usr));
 		if(!account->grp)
 			{ account->grp = 1; }
-		tpl_addMsg(vars, "New user has been added with default settings");
-
 		if(write_userdb() != 0) { tpl_addMsg(vars, "Write Config failed!"); }
+		else if(strcmp(getParam(params, "action"), "Save As") == 0) { tpl_addMsg(vars, "New user has been added with cloned settings"); }
+		else { tpl_addMsg(vars, "New user has been added with default settings"); }
 		// no need to refresh anything here as the account is disabled by default and there's no client with this new account anyway!
 	}
 
@@ -2733,11 +2753,11 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 			}
 		}
 		chk_account("services", servicelabels, account);
-		tpl_addMsg(vars, "Account updated");
 
 		refresh_oscam(REFR_CLIENTS);
 
 		if(write_userdb() != 0) { tpl_addMsg(vars, "Write Config failed!"); }
+		else if(strcmp(getParam(params, "action"), "Save As") != 0) { tpl_addMsg(vars, "User Account updated and saved"); }
 	}
 
 	tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, account->usr));
@@ -3309,6 +3329,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 	int32_t casc_users = 0;
 	int32_t casc_users2 = 0;
 	int32_t n_request = 0;
+	int existing_insert = 0;
 
 	for(account = cfg.account; (account); account = account->next)
 	{
@@ -3572,6 +3593,12 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		}
 		tpl_addVar(vars, TPLADD, "USERNAME", xml_encode(vars, account->usr));
 		tpl_addVar(vars, TPLADD, "USERNAMEENC", urlencode(vars, account->usr));
+			if(!existing_insert){
+				tpl_printf(vars, TPLADD, "EXISTING_INS", "'%s'", urlencode(vars, account->usr));
+				existing_insert++;
+			}else{
+				tpl_printf(vars, TPLAPPEND, "EXISTING_INS", ",'%s'", urlencode(vars, account->usr));
+			}
 
 		if(account->description)
 			tpl_printf(vars, TPLADD, "DESCRIPTION","%s(%s)",!apicall?"&#013;":"",xml_encode(vars, account->description));

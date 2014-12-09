@@ -8,7 +8,8 @@
 	var stoppoll = 0;
 	var pollintervall = 0;
 	var pollrefresh = '##POLLREFRESHTIME##';
-	
+	existing_inserts = new Array(##EXISTING_INS##);
+
 	</script>
 	<script type="text/javascript">
 	// script customization for templates
@@ -38,7 +39,7 @@
 ##TPLMENU##
 	<DIV ID="subnav">
 		<UL ID="nav">
-			<LI CLASS="configmenu"><A HREF="#" onclick="adduser();">Add User</A></LI>
+			<LI CLASS="configmenu"><A HREF="#" onclick="addinsert();">Add User</A></LI>
 			<LI CLASS="configmenu"><A HREF="userconfig.html?action=reinit">Reinit User DB</A></LI>
 			<LI CLASS="configmenu"><A HREF="userconfig.html?action=resetalluserstats" onclick="return confirm('Reset Userstats ?')">Reset Userstats</A></LI>
 			<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=users&amp;hidelabels=1">Show Graphs</A></LI>
@@ -46,8 +47,8 @@
 		</UL>
 	</DIV>
 ##TPLMESSAGE##
-	<DIV ID="newuser">
-		<form action="user_edit.html" method="get">
+	<DIV ID="newinsert">
+		<form action="user_edit.html" method="get" name="new_insert" onsubmit="return chkinsert(document.new_insert.user.value)">
 		<TABLE CLASS="users">
 			<TR><TH>New User: <input name="user" type="text"><input type="submit" value="Add" title="Add New User"></TH></TR>
 		</TABLE>

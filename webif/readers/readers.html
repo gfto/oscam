@@ -8,6 +8,7 @@
 	var stoppoll = 0;
 	var pollintervall = 0;
 	var pollrefresh = '##POLLREFRESHTIME##';
+	existing_inserts = new Array(##EXISTING_INS##);
 
 	</script>
 ##TPLBODY##
@@ -15,7 +16,7 @@
 ##TPLMESSAGE##
 	<DIV ID="subnav">
 		<UL ID="nav">
-			<LI CLASS="configmenu"><A HREF="#" onclick="addreader();">Add Reader</A></LI>
+			<LI CLASS="configmenu"><A HREF="#" onclick="addinsert();">Add Reader</A></LI>
 			<LI CLASS="configmenu"><A HREF="readers.html?action=reloadreaders">Reload Readers</A></LI>
 			<LI CLASS="configmenu"><A HREF="scanusb.html">Scan USB</A></LI>
 			<LI CLASS="configmenu"><A HREF="readers.html?action=resetallrdrstats" onclick="return confirm('Reset Readerstats ?')">Reset Readerstats</A></LI>
@@ -23,8 +24,8 @@
 			<LI ID="poll" CLASS="pollselect" style="display: none;">Pollintervall:<input type="text" name="pintervall" class="pintervall" value="" readonly>sec.<button id="dec">&ndash;</button><button id="inc">+</button></LI>
 		</UL>
 	</DIV>
-	<DIV ID="newreader">
-		<form action="readerconfig.html" method="get">
+	<DIV ID="newinsert">
+		<form action="readerconfig.html" method="get" name="new_insert" onsubmit="return chkinsert(document.new_insert.label.value)">
 			<TABLE CLASS="readers">
 				<TR><TH>NEW Reader Label: <input type="text" name="label" value="##NEXTREADER##">  Protocol: <select name="protocol">##ADDPROTOCOL##</select><input type="submit" name="action" value="Add" title="Add New Reader"></TH></TR>
 			</TABLE>

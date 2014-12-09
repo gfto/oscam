@@ -246,7 +246,7 @@ table.config, table.configreader,table.configuser {
 table.readers {
 	width:100%
 }
-#newreader table, #searchTable table.readers {
+#newinsert table.readers, #searchTable table.readers {
 	border-spacing:1px 0px;
 	margin-top:1px
 }
@@ -271,7 +271,7 @@ table.statsbalance td:last-child img.icon {
 table.users {
 	width:100%
 }
-#newuser table, #searchTable table.users {
+#newinsert table.users, #searchTable table.users {
 	border-spacing:1px 0px;
 	margin-top:1px
 }
@@ -536,11 +536,10 @@ div.cccamentitlementcontrols {
 	margin-top:5px
 }
 /* definition only for show or hide columns or DIV
- * #newuser		- in userconfig.html
- * #newreader	- in readers.html
+ * #newinsert		- in userconfig.html, readers.html
  * #exp, #cwc, #acasc - only in module-webif.c for show/hide columns in userconfig.html
  */
-#newuser, #newreader,
+#newinsert,
 .exp, .cwc, .acas, .grp, .hidden {
 	display:none
 }
