@@ -5572,6 +5572,7 @@ static char *send_oscam_script(struct templatevars * vars, struct uriparams * pa
 		}
 
 		char *scriptname = getParam(params, "scriptname");
+		char *scriptparam = getParam(params, "scriptparam");
 		char system_str[256];
 		struct stat s;
 		snprintf(system_str, sizeof(system_str), "%s/%s", cfg.http_script, scriptname);
@@ -5585,6 +5586,13 @@ static char *send_oscam_script(struct templatevars * vars, struct uriparams * pa
 					int32_t rc;
 					FILE *fp;
 					char buf[256];
+
+					if((scriptparam != NULL) && (sizeof(scriptparam) > 0))
+					{
+						strcat(system_str, " ");
+						strcat(system_str, scriptparam);
+					}
+
 					fp = popen(system_str,"r");
 
 					while (fgets(buf, sizeof(buf), fp) != NULL) {

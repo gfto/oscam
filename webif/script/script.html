@@ -4,12 +4,29 @@
 		<UL ID="nav"><LI></LI></UL>
 	</DIV>
 ##TPLMESSAGE##
-		<script type="text/javascript">function runscript(){var e=document.getElementById("scriptselect");var URL=e.options[e.selectedIndex].value;window.location.href=URL;}</script>
+	<script type="text/javascript">
+		function runscript() {
+			var e=document.getElementById("scriptselect");
+			var URL=e.options[e.selectedIndex].value;
+			if(URL) {
+				var p=document.getElementById("scriptparam").value;
+				if(p) {
+					var param=p.trim();
+					if(param) URL=URL+"&scriptparam="+param;
+				}
+				window.location.href=URL;
+			}
+			else {
+				return;
+			}
+		}
+	</script>
 		<P ID="filename">OSCam execute script:</P>
 	<DIV ID="otherdropdown">
 		<select ID="scriptselect" name="action" size="1">
 ##SCRIPTOPTIONS##
 		</select>
+		<input id="scriptparam" type="text" name="scriptparam" value="" class="short" title="Script Parameters (optional)">
 		<input type="button" onclick="runscript()" value="Run Script" title="Run Script">
 	</DIV>
 		<P ID="filesubmit">##SCRIPTNAME## ##CODE##</P>
