@@ -1346,10 +1346,12 @@ static void inactivate_reader(struct s_reader *rdr)
 static bool picon_exists(char *name)
 {
 	char picon_name[64], path[255];
-	if(!cfg.http_piconpath)
+	char *tpl_path;
+	tpl_path = cfg.http_piconpath ? cfg.http_piconpath : cfg.http_tpl;
+	if(!tpl_path)
 		{ return false; }
 	snprintf(picon_name, sizeof(picon_name) - 1, "IC_%s", name);
-	return strlen(tpl_getTplPath(picon_name, cfg.http_piconpath, path, sizeof(path) - 1)) && file_exists(path);
+	return strlen(tpl_getTplPath(picon_name, tpl_path, path, sizeof(path) - 1)) && file_exists(path);
 }
 
 static void clear_rdr_stats(struct s_reader *rdr)
@@ -6763,10 +6765,13 @@ static char *send_oscam_image(struct templatevars * vars, FILE * f, struct uripa
 		if(etagheader == 0)
 		{
 			int8_t disktpl = 0;
-			if(cfg.http_piconpath)
+			char *tpl_path;
+			tpl_path = cfg.http_piconpath? cfg.http_piconpath : cfg.http_tpl;
+
+			if(tpl_path)
 			{
 				char path[255];
-				if(strlen(tpl_getTplPath(wanted, cfg.http_piconpath, path, 255)) > 0 && file_exists(path))
+				if(strlen(tpl_getTplPath(wanted, tpl_path, path, 255)) > 0 && file_exists(path))
 				{
 					struct stat st;
 					disktpl = 1;
@@ -7450,8 +7455,6 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				return 0;
 			}
 
-			if(!cfg.http_piconpath && cfg.http_tpl)
-				{ cfg.http_piconpath = cfg.http_tpl; }
 			tpl_addVar(vars, TPLADD, "SUBDIR", subdir);
 
 			struct tm lt, st;

@@ -346,19 +346,19 @@ char *tpl_getUnparsedTpl(const char *name, int8_t removeHeader, const char *subd
 {
 	int32_t i;
 	char *result;
-	char *tpl_pfad;
+	char *tpl_path;
 	
-	tpl_pfad = (strlen(name) > 3 && name[0] == 'I' && name[1] == 'C' && name[2] == '_') ? cfg.http_piconpath : cfg.http_tpl;
+	tpl_path = (cfg.http_piconpath && strlen(name) > 3 && name[0] == 'I' && name[1] == 'C' && name[2] == '_') ? cfg.http_piconpath : cfg.http_tpl;
 
-	if(tpl_pfad)
+	if(tpl_path)
 	{
 		char path[255];
-		if((strlen(tpl_getFilePathInSubdir(tpl_pfad, subdir, name, ".tpl", path, 255)) > 0 && file_exists(path))
+		if((strlen(tpl_getFilePathInSubdir(tpl_path, subdir, name, ".tpl", path, 255)) > 0 && file_exists(path))
 				|| (strlen(subdir) > 0
 #ifdef TOUCH
 					&& strcmp(subdir, TOUCH_SUBDIR)
 #endif
-					&& strlen(tpl_getFilePathInSubdir(tpl_pfad, ""    , name, ".tpl", path, 255)) > 0 && file_exists(path)))
+					&& strlen(tpl_getFilePathInSubdir(tpl_path, ""    , name, ".tpl", path, 255)) > 0 && file_exists(path)))
 		{
 			FILE *fp;
 			char buffer[1025];
