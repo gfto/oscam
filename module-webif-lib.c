@@ -691,9 +691,9 @@ int8_t get_stats_linux(const pid_t pid, struct pstat* result)
     }
 	fclose(fd);
 
-	// read processes from ps -A
+	// read processes from /proc
 	uint info_procs = 0;
-	FILE *fp = popen("ps -A | wc -l", "r");
+	FILE *fp = popen("ls /proc | grep '^[0-9]' | wc -l", "r");
 	if (fp ) {
 		if(fscanf(fp, "%d", &info_procs) == EOF) {;}
     }
