@@ -509,6 +509,20 @@ div.footer {
 	background-color:#EEE;
 	border-top:3px solid #CCC
 }
+div.footer .top_link {
+	padding-left:12px;
+	position:absolute;
+	font-weight:bold;
+	bottom:5px;
+	left:7px;
+	z-index:0
+}
+div.footer .top_link a:before {
+	content:"\25b2";
+	font-weight:normal;
+	position:absolute;
+	left:1px
+}
 div.footer li {
 	margin:5px
 }
