@@ -1855,6 +1855,8 @@ $(document).ready(function () {
 					n.children("tbody").append(l);
 					n.find("th.sorting-desc, th.sorting-asc").data("sort-dir", null).removeClass("sorting-desc sorting-asc").addClass("sortable");
 					r.data("sort-dir", o).removeClass("sortable").addClass("sorting-" + o);
+					$('tr').find('td.td-sorting').removeClass('td-sorting');
+					$('tr').find('td:eq(' + i + ')').addClass('td-sorting');
 					n.trigger("aftertablesort", {
 						column: i,
 						direction: o

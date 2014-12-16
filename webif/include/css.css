@@ -339,7 +339,7 @@ tr.infocolswidth, tr.infocolswidth td, tr.infocolswidth th {
 tr.e_valid td {background-color:#E6FEBF}
 tr.e_expired td {background-color:#FFF3E7}
 /* rowcolors for users rows in unserconfig.html depend on status */
-tr.online td.usercol6 {background-color:#949494;color:#FFF}
+tr.online td.usercol6 {background-color:#DDD;color:#FFF}
 tr.online td {background-color:#BFA}
 tr.offline td {}
 tr.expired td {background-color:#FBA}
@@ -788,9 +788,6 @@ path.graph_curve {stroke-opacity:0.8;stroke-width:0.7px;fill:none}
 	padding-left:12px;
 	padding-right:8px
 }
-.sorting-asc, .sorting-desc {
-	background-color:#999
-}
 .sorting-desc {
 	background-image: url(data:image/png;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIFlD03K1sAOw==);
 	background-repeat:no-repeat;
@@ -807,6 +804,15 @@ path.graph_curve {stroke-opacity:0.8;stroke-width:0.7px;fill:none}
 	padding-left:10px;
 	padding-right:8px
 }
+.sorting-asc, .sorting-desc {background-color:#aaa}
+.readers .td-sorting,
+.users tr.offline .td-sorting,
+.users tr.disabled .td-sorting,
+.statsbalance .td-sorting {background-color: #d9d9d9}
+.users tr.connected .td-sorting {background-color: #eaea95}
+.users tr.online .td-sorting {background-color: #a6ea95}
+.users tr.online td.usercol6.td-sorting {background-color:#c8c8c8}
+.users tr.expired .td-sorting {background-color: #eaa69f}
 
 /* **************** 17. POLLING */
 /*  for UL in logpoll.html */
