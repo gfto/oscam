@@ -693,9 +693,12 @@ int8_t get_stats_linux(const pid_t pid, struct pstat* result)
 
 	// read processes from /proc
 	uint info_procs = 0;
-	FILE *fp = popen("ls /proc | grep '^[0-9]' | wc -l", "r");
+	FILE *fp = popen("ls -dl /proc/[0-9]*", "r");
 	if (fp ) {
-		if(fscanf(fp, "%d", &info_procs) == EOF) {;}
+		char line[256];
+		while(fgets(line, sizeof(line), fp)) {
+			info_procs++;
+		}
     }
 	fclose(fp);
 
@@ -704,7 +707,7 @@ int8_t get_stats_linux(const pid_t pid, struct pstat* result)
 	float shiftfloat = (float)(1 << SI_LOAD_SHIFT);
 	if (!sysinfo(&info)) {
 		// processes
-		result->info_procs = info_procs-2; // exclude running procs ps and script
+		result->info_procs = info_procs-1; // exclude running process ls
 		// cpu load
 		result->cpu_avg[0] = (float) info.loads[0] / shiftfloat;
 		result->cpu_avg[1] = (float) info.loads[1] / shiftfloat;
