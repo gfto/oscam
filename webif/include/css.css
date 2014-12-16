@@ -781,7 +781,7 @@ path.graph_curve {stroke-opacity:0.8;stroke-width:0.7px;fill:none}
 	font-size:11px
 }
 .sortable {
-	background-image: url(data:image/png;base64,R0lGODlhBQAIAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAgAAAIL3GQnuJ2f2lLI1AIAOw==);
+	background-image: url(data:image/gif;base64,R0lGODlhBQAIAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAgAAAIL3GQnuJ2f2lLI1AIAOw==);
 	background-repeat:no-repeat;
 	background-position:4px center;
 	cursor:pointer;
@@ -789,7 +789,7 @@ path.graph_curve {stroke-opacity:0.8;stroke-width:0.7px;fill:none}
 	padding-right:8px
 }
 .sorting-desc {
-	background-image: url(data:image/png;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIFlD03K1sAOw==);
+	background-image: url(data:image/gif;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIFlD03K1sAOw==);
 	background-repeat:no-repeat;
 	background-position:4px center;
 	cursor:pointer;
@@ -797,7 +797,7 @@ path.graph_curve {stroke-opacity:0.8;stroke-width:0.7px;fill:none}
 	padding-right:8px
 }
 .sorting-asc {
-	background-image: url(data:image/png;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIF3GQnuF0AOw==);
+	background-image: url(data:image/gif;base64,R0lGODlhBQADAJEAAAAAAP///yMtMP///yH5BAEAAAMALAAAAAAFAAMAAAIF3GQnuF0AOw==);
 	background-repeat:no-repeat;
 	background-position:4px center;
 	cursor:pointer;
