@@ -57,9 +57,7 @@ static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n);
 static int8_t gbox_cw_received(struct s_client *cli, uchar *data, int32_t n);
 static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, uchar *data, int32_t n);
 static int32_t gbox_checkcode_recv(struct s_client *cli, uchar *checkcode);
-static int32_t gbox_decode_cmd(uchar *buf);
-static uint8_t gbox_compare_pw(uchar *my_pw, uchar *rec_pw);
-static uint16_t gbox_convert_password_to_id(uchar *password);
+static uint16_t gbox_convert_password_to_id(uint32_t password);
 uint32_t gbox_get_ecmchecksum(ECM_REQUEST *er);
 static void	init_local_gbox(void);
 
@@ -86,7 +84,7 @@ uint16_t gbox_get_local_gbox_id(void)
 
 uint32_t gbox_get_local_gbox_password(void)
 {
-	return local_gbox.password[0] << 24 | local_gbox.password[1] << 16 | local_gbox.password[2] << 8 | local_gbox.password[3];
+	return local_gbox.password;
 }
 
 static uint8_t gbox_get_my_vers (void)
@@ -321,14 +319,9 @@ void hostname2ip(char *hostname, IN_ADDR_T *ip)
 	cs_resolve(hostname, ip, NULL, NULL);
 }
 
-static uint8_t gbox_compare_pw(uchar *my_pw, uchar *rec_pw)
+static uint16_t gbox_convert_password_to_id(uint32_t password)
 {
-	return my_pw[0] == rec_pw[0] && my_pw[1] == rec_pw[1] && my_pw[2] == rec_pw[2] && my_pw[3] == rec_pw[3];
-}
-
-static uint16_t gbox_convert_password_to_id(uchar *password)
-{
-	return (password[0] ^ password[2]) << 8 | (password[1] ^ password[3]);
+	return (((password >> 24) & 0xff) ^ ((password >> 8) & 0xff)) << 8 | (((password >> 16) & 0xff) ^ (password & 0xff));
 }
 
 void gbox_add_good_card(struct s_client *cl, uint16_t id_card, uint16_t caid, uint8_t slot, uint16_t sid_ok, uint32_t cw_time)
@@ -533,7 +526,7 @@ static int8_t gbox_disconnect_double_peers(struct s_client *cli)
 	return 0;
 }
 
-static int8_t gbox_auth_client(struct s_client *cli, uchar *gbox_password)
+static int8_t gbox_auth_client(struct s_client *cli, uint32_t gbox_password)
 {
 	uint16_t gbox_id = gbox_convert_password_to_id(gbox_password);
 	struct s_client *cl = switch_client_proxy(cli, gbox_id);
@@ -543,7 +536,7 @@ static int8_t gbox_auth_client(struct s_client *cli, uchar *gbox_password)
 		struct gbox_peer *peer = cl->gbox;
 		struct s_auth *account = get_account_by_name(gbox_username(cl));
 
-		if (gbox_compare_pw(&peer->gbox.password[0],gbox_password) && account)
+		if ((peer->gbox.password == gbox_password) && account)
 		{
 			cli->crypted = 1; //display as crypted
 			cli->gbox = cl->gbox; //point to the same gbox as proxy
@@ -571,6 +564,29 @@ static void gbox_server_init(struct s_client *cl)
 		cl->init_done = 1;
 	}
 	return;
+}
+
+static uint16_t gbox_decode_cmd(uchar *buf)
+{
+	return buf[0] << 8 | buf[1];
+}
+
+int8_t gbox_message_header(uchar *buf, uint16_t cmd, uint32_t peer_password, uint32_t local_password)
+{
+	if (!buf) { return -1; }
+	buf[0] = cmd >> 8;
+	buf[1] = cmd & 0xff;
+	if (cmd == MSG_GSMS_1) { return 0; }
+	buf[2] = (peer_password >> 24) & 0xff;
+	buf[3] = (peer_password >> 16) & 0xff;
+	buf[4] = (peer_password >> 8) & 0xff;
+	buf[5] = peer_password & 0xff;
+	if (cmd == MSG_CW) { return 0; }	
+	buf[6] = (local_password >> 24) & 0xff;
+	buf[7] = (local_password >> 16) & 0xff;
+	buf[8] = (local_password >> 8) & 0xff;
+	buf[9] = local_password & 0xff;
+	return 0;
 }
 
 int8_t get_card_action(struct gbox_card *card, uint32_t provid1, uint16_t peer_id, uint8_t slot, struct gbox_peer *peer)
@@ -888,7 +904,9 @@ static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 
 int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 {
-	switch(gbox_decode_cmd(data))
+	if (!data || !cli) { return -1; }
+	uint16_t cmd = gbox_decode_cmd(data);
+	switch(cmd)
 	{
 	case MSG_BOXINFO:
 		gbox_send_hello(cli);
@@ -962,6 +980,7 @@ int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 		gbox_incoming_ecm(cli, data, n);
 		break;
 	default:
+		cs_log("->[gbx] unknown command %02X received from %s", cmd, username(cli));
 		cs_ddump_mask(D_READER, data, n, "gbox: unknown data received (%d bytes):", n);
 	} // end switch
 	if ((time(NULL) - last_stats_written) > STATS_WRITE_TIME)
@@ -970,6 +989,11 @@ int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 		last_stats_written = time(NULL);
 	}
 	return 0;
+}
+
+static uint32_t gbox_get_pw(uchar *buf)
+{
+	return buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
 }
 
 static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
@@ -984,6 +1008,8 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 
 	char tmp[0x50];
 	int32_t n = l;
+	uint32_t my_received_pw = 0;
+	uint32_t peer_received_pw = 0;
 	cs_ddump_mask(D_READER, data, n, "gbox: encrypted data received (%d bytes):", n);
 
 	if(gbox_decode_cmd(data) == MSG_HELLO1)
@@ -994,7 +1020,8 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 	cs_ddump_mask(D_READER, data, n, "gbox: decrypted received data (%d bytes):", n);
 
 	//verify my pass received
-	if (gbox_compare_pw(&data[2],&local_gbox.password[0]))
+	my_received_pw = gbox_get_pw(&data[2]);
+	if (my_received_pw == local_gbox.password)
 	{
 		cs_debug_mask(D_READER, "received data, peer : %04x   data: %s", cli->gbox_peer_id, cs_hexdump(0, data, l, tmp, sizeof(tmp)));
 
@@ -1002,7 +1029,7 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 		{
 			if (cli->gbox_peer_id == NO_GBOX_ID)
 			{
-				if (gbox_auth_client(cli, &data[6]) < 0)
+				if (gbox_auth_client(cli, gbox_get_pw(&data[6])) < 0)
 				{ 
 					cs_debug_mask(D_READER, "gbox: Authentication failed. Please check user in oscam.server and oscam.user");
 					return -1;
@@ -1019,7 +1046,8 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 				if (peer) { peer->my_user = cli; }
 			}
 			if (!peer) { return -1; }
-			if (!gbox_compare_pw(&data[6],&peer->gbox.password[0]))
+			peer_received_pw = gbox_get_pw(&data[6]);
+			if (peer_received_pw != peer->gbox.password)
 			{
 				cs_log("gbox peer: %04X sends wrong password", peer->gbox.id);
 				return -1;
@@ -1065,17 +1093,6 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 	cs_writeunlock(&peer->lock);
 
 	return 0;
-}
-
-static int32_t gbox_decode_cmd(uchar *buf)
-{
-	return buf[0] << 8 | buf[1];
-}
-
-void gbox_code_cmd(uchar *buf, int16_t cmd)
-{
-	buf[0] = cmd >> 8;
-	buf[1] = cmd & 0xff;
 }
 
 static void gbox_calc_checkcode(void)
@@ -1180,10 +1197,7 @@ static void gbox_send_hello_packet(struct s_client *cli, int8_t number, uchar *o
 	struct gbox_peer *peer = cli->gbox;
 	int32_t hostname_len = strlen(cfg.gbox_hostname);
 	int32_t len;
-
-	gbox_code_cmd(outbuf, MSG_HELLO);
-	memcpy(outbuf + 2, peer->gbox.password, 4);
-	memcpy(outbuf + 6, local_gbox.password, 4);
+	gbox_message_header(outbuf, MSG_HELLO, peer->gbox.password, local_gbox.password);
 	// initial HELLO = 0, subsequent = 1
 	if(peer->hello_stat > GBOX_STAT_HELLOS)
 		{ outbuf[10] = 1; }
@@ -1294,9 +1308,7 @@ static void gbox_send_checkcode(struct s_client *cli)
 	uchar outbuf[20];
 
 	gbox_calc_checkcode();
-	gbox_code_cmd(outbuf, MSG_CHECKCODE);
-	memcpy(outbuf + 2, peer->gbox.password, 4);
-	memcpy(outbuf + 6, local_gbox.password, 4);
+	gbox_message_header(outbuf, MSG_CHECKCODE, peer->gbox.password, local_gbox.password);
 	memcpy(outbuf + 10, local_gbox.checkcode, 7);
 
 	gbox_send(cli, outbuf, 17);
@@ -1308,9 +1320,7 @@ static void gbox_send_boxinfo(struct s_client *cli)
 	uchar outbuf[256];
 	int32_t hostname_len = strlen(cfg.gbox_hostname);
 
-	gbox_code_cmd(outbuf, MSG_BOXINFO);
-	memcpy(outbuf + 2, peer->gbox.password, 4);
-	memcpy(outbuf + 6, local_gbox.password, 4);
+	gbox_message_header(outbuf, MSG_BOXINFO, peer);
 	outbuf[0xA] = local_gbox.minor_version;
 	outbuf[0xB] = local_gbox.type;
 	memcpy(&outbuf[0xC], cfg.gbox_hostname, hostname_len);
@@ -1355,11 +1365,7 @@ static void gbox_send_dcw(struct s_client *cl, ECM_REQUEST *er)
 
 	struct gbox_ecm_request_ext *ere = er->src_data;
 
-	gbox_code_cmd(buf, MSG_CW);
-	buf[2] = peer->gbox.password[0];	//Peer key
-	buf[3] = peer->gbox.password[1];	//Peer key
-	buf[4] = peer->gbox.password[2];	//Peer key
-	buf[5] = peer->gbox.password[3];	//Peer key
+	gbox_message_header(buf, MSG_CW , peer->gbox.password, 0);
 	buf[6] = er->pid >> 8;			//PID
 	buf[7] = er->pid & 0xff;		//PID
 	buf[8] = er->srvid >> 8;		//SrvID
@@ -1617,16 +1623,10 @@ static int32_t gbox_client_init(struct s_client *cli)
 
 	memset(peer, 0, sizeof(struct gbox_peer));
 
-	uint32_t r_pwd = a2i(rdr->r_pwd, 4);
-	int32_t i;
-	for(i = 3; i >= 0; i--)
-	{
-		peer->gbox.password[3 - i] = (r_pwd >> (8 * i)) & 0xff;
-	}
+	peer->gbox.password = a2i(rdr->r_pwd, 4);
+	cs_debug_mask(D_READER, "gbox peer password: %s:", rdr->r_pwd);
 
-	cs_ddump_mask(D_READER, peer->gbox.password, 4, "Peer password: %s:", rdr->r_pwd);
-
-	peer->gbox.id = gbox_convert_password_to_id(&peer->gbox.password[0]);	
+	peer->gbox.id = gbox_convert_password_to_id(peer->gbox.password);	
 	if (get_gbox_proxy(peer->gbox.id) || peer->gbox.id == NO_GBOX_ID || peer->gbox.id == local_gbox.id)
 	{
 		cs_log("gbox: error, double/invalid gbox id: %04X", peer->gbox.id);	
@@ -1845,10 +1845,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 	int32_t cont_send = 0;
 	uint32_t cont_card_1 = 0;
 
-	send_buf_1[0] = MSG_ECM >> 8;
-	send_buf_1[1] = MSG_ECM & 0xff;
-	memcpy(send_buf_1 + 2, peer->gbox.password, 4);
-	memcpy(send_buf_1 + 6, local_gbox.password, 4);
+	gbox_message_header(send_buf_1, MSG_ECM , peer->gbox.password, local_gbox.password);
 
 	send_buf_1[10] = (er->pid >> 8) & 0xFF;
 	send_buf_1[11] = er->pid & 0xFF;
@@ -1986,23 +1983,17 @@ static int32_t gbox_send_emm(EMM_PACKET *UNUSED(ep))
 static void init_local_gbox(void)
 {
 	local_gbox.id = 0;
-	memset(&local_gbox.password[0], 0, 4);
+	local_gbox.password = 0;
 	memset(&local_gbox.checkcode[0], 0, 7);
 	local_gbox.minor_version = gbox_get_my_vers();
 	local_gbox.cpu_api = gbox_get_my_cpu_api();
 
 	if(!cfg.gbox_my_password || strlen(cfg.gbox_my_password) != 8) { return; }
 
-	uint32_t key = a2i(cfg.gbox_my_password, 4);
-	int32_t i;
-	for(i = 3; i >= 0; i--)
-	{
-		local_gbox.password[3 - i] = (key >> (8 * i)) & 0xff;
-	}
+	local_gbox.password = a2i(cfg.gbox_my_password, 4);
+	cs_debug_mask(D_READER, "gbox my password: %s:", cfg.gbox_my_password);
 
-	cs_ddump_mask(D_READER, local_gbox.password,      4, " My  password: %s:", cfg.gbox_my_password);
-
-	local_gbox.id = gbox_convert_password_to_id(&local_gbox.password[0]);
+	local_gbox.id = gbox_convert_password_to_id(local_gbox.password);
 	if (local_gbox.id == NO_GBOX_ID)
 	{
 		cs_log("gbox: invalid local gbox id: %04X", local_gbox.id);	
@@ -2061,9 +2052,7 @@ static int8_t gbox_send_peer_good_night(struct s_client *proxy)
 		struct s_reader *rdr = proxy->reader;
 		if (peer->online)
 		{
-			gbox_code_cmd(outbuf, MSG_HELLO);
-			memcpy(outbuf + 2, peer->gbox.password, 4);
-			memcpy(outbuf + 6, local_gbox.password, 4);
+			gbox_message_header(outbuf, MSG_HELLO, peer->gbox.password, local_gbox.password);
 			outbuf[10] = 0x01;
 			outbuf[11] = 0x80;
 			memset(&outbuf[12], 0xff, 7);
@@ -2112,9 +2101,7 @@ void gbox_send_goodbye(uint16_t boxid) //to implement later
 			struct gbox_peer *peer = cli->gbox;
 			if (peer->online && boxid == peer->gbox.id)
 			{	
-				gbox_code_cmd(outbuf, MSG_GOODBYE);
-				memcpy(outbuf + 2, peer->gbox.password, 4);
-				memcpy(outbuf + 6, local_gbox.password, 4);
+				gbox_message_header(outbuf, MSG_GOODBYE, peer->gbox.password, local_gbox.password);
 				cs_log("gbox send goodbye to boxid: %04X", peer->gbox.id);
 				gbox_send(cli, outbuf, 0xA);
 			}
@@ -2135,9 +2122,7 @@ void gbox_send_HERE_query (uint16_t boxid)	//gbox.net send this cmd
 			struct gbox_peer *peer = cli->gbox;
 			if (peer->online && boxid == peer->gbox.id)
 			{	
-				gbox_code_cmd(outbuf, MSG_HERE);
-				memcpy(outbuf + 2, peer->gbox.password, 4);
-				memcpy(outbuf + 6, local_gbox.password, 4);
+				gbox_message_header(outbuf, MSG_HERE, peer->gbox.password, local_gbox.password);
 				outbuf[0xA] = gbox_get_my_vers();
 				outbuf[0xB] = gbox_get_my_cpu_api();
 				memcpy(&outbuf[0xC], cfg.gbox_hostname, hostname_len);

@@ -4,6 +4,15 @@
 #include "minilzo/minilzo.h"
 #include "oscam-string.h"
 
+static void gbox_convert_pw(uchar *password, uint32_t pw)
+{
+        int32_t i;
+        for(i = 3; i >= 0; i--)
+        {
+                password[3 - i] = (pw >> (8 * i)) & 0xff;
+        }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // GBOX BUFFER ENCRYPTION/DECRYPTION (thanks to dvbcrypt@gmail.com)
 ////////////////////////////////////////////////////////////////////////////////
@@ -111,16 +120,20 @@ static void gbox_decryptA(unsigned char *buffer, unsigned char *pass)
         }
 }
 
-void gbox_encrypt(uchar *buffer, int bufsize, uchar *key)
+void gbox_encrypt(uchar *buffer, int bufsize, uint32_t key)
 {
-        gbox_encryptA(buffer, key);
-        gbox_encryptB(buffer, bufsize, key);
+        uchar pass[4];
+        gbox_convert_pw(&pass[0], key);
+        gbox_encryptA(buffer, &pass[0]);
+        gbox_encryptB(buffer, bufsize, &pass[0]);
 }
 
-void gbox_decrypt(uchar *buffer, int bufsize, uchar *localkey)
+void gbox_decrypt(uchar *buffer, int bufsize, uint32_t localkey)
 {
-        gbox_decryptB(buffer, bufsize, localkey);
-        gbox_decryptA(buffer, localkey);
+        uchar pass[4];
+        gbox_convert_pw(&pass[0], localkey);
+        gbox_decryptB(buffer, bufsize, &pass[0]);
+        gbox_decryptA(buffer, &pass[0]);
 }
 
 void gbox_compress(uchar *buf, int32_t unpacked_len, int32_t *packed_len)

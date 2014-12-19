@@ -167,7 +167,7 @@ static void gbox_send_gsms2peer(struct s_client *cl, char *gsms, uint8_t msg_typ
 
 			if (gsms_prot == 1)
 			{
-				gbox_code_cmd(outbuf, MSG_GSMS_1);
+				gbox_message_header(outbuf, MSG_GSMS_1, 0, 0);
 				outbuf[2] = gsms_len; // gsms len 
 				outbuf[3] = msg_type;  //msg type
 				memcpy(&outbuf[4], gsms,gsms_len);
@@ -176,12 +176,7 @@ static void gbox_send_gsms2peer(struct s_client *cl, char *gsms, uint8_t msg_typ
 			}
 			if (gsms_prot == 2)
 			{
-				gbox_code_cmd(outbuf, MSG_GSMS_2);
-				memcpy(outbuf + 2, peer->gbox.password, 4);
-				outbuf[6] = (local_gbox_pw >> 24) & 0xff;
-				outbuf[7] = (local_gbox_pw >> 16) & 0xff;
-				outbuf[8] = (local_gbox_pw >> 8) & 0xff;
-				outbuf[9] = local_gbox_pw & 0xff;				
+				gbox_message_header(outbuf, MSG_GSMS_2, peer->gbox.password, local_gbox_pw);
 				outbuf[10] = (peer->gbox.id >> 8) & 0xff;
 				outbuf[11] = peer->gbox.id & 0xff;
 				outbuf[12] = (local_gbox_id >> 8) & 0xff;
@@ -269,26 +264,13 @@ void gbox_send_gsms_ack(struct s_client *cli, uint8_t gsms_prot)
 	struct s_reader *rdr = cli->reader;
 		if (peer->online && gsms_prot == 1)
 		{
-		gbox_code_cmd(outbuf, MSG_GSMS_ACK_1);
-		outbuf[2] = 0x90;
-		outbuf[3] = 0x98; 
-		outbuf[4] = 0x90;
-		outbuf[5] = 0x98;
-		outbuf[6] = 0x90;
-		outbuf[7] = 0x98;
-		outbuf[8] = 0x90;
-		outbuf[9] = 0x98; 
+		gbox_message_header(outbuf, MSG_GSMS_ACK_1, 0x90989098, 0x90989098);
 		gbox_send(cli, outbuf, 10);
 		cs_debug_mask(D_READER,"<-[gbx] send GSMS_ACK_1 to %s:%d id: %04X",rdr->device, rdr->r_port, peer->gbox.id);
 		}
 		if (peer->online && gsms_prot == 2)
 		{
-		gbox_code_cmd(outbuf, MSG_GSMS_ACK_2);
-		memcpy(outbuf + 2, peer->gbox.password, 4);
-		outbuf[6] = (local_gbox_pw >> 24) & 0xff;
-		outbuf[7] = (local_gbox_pw >> 16) & 0xff;
-		outbuf[8] = (local_gbox_pw >> 8) & 0xff;
-		outbuf[9] = local_gbox_pw & 0xff;						
+		gbox_message_header(outbuf, MSG_GSMS_ACK_2, peer->gbox.password, local_gbox_pw);
 		outbuf[10] = 0;
 		outbuf[11] = 0;
 		outbuf[12] = (local_gbox_id >> 8) & 0xff;
