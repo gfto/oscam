@@ -687,27 +687,29 @@ int8_t get_stats_linux(const pid_t pid, struct pstat* result)
 			if(sscanf(line, "Cached: %" PRId64" \n kB", &meminfo_cached) == 1){
 				break;
 			}
-    	}
-    }
+		}
+	}
 	fclose(fd);
 
 	// read processes from /proc
 	uint info_procs = 0;
-	FILE *fp = popen("ls -dl /proc/[0-9]*", "r");
-	if (fp ) {
-		char line[256];
-		while(fgets(line, sizeof(line), fp)) {
-			info_procs++;
+	DIR *hdir;
+	if((hdir = opendir("/proc")) != NULL){
+		struct dirent entry;
+		struct dirent *dirresult;
+		while(cs_readdir_r(hdir, &entry, &dirresult) == 0 && dirresult != NULL)
+		{
+			if (entry.d_name[0] > '0' && entry.d_name[0] <= '9') { info_procs++; }
 		}
-    }
-	fclose(fp);
+		closedir(hdir);
+	}
 
 	// read cpu/meminfo from sysinfo()
 	struct sysinfo info;
 	float shiftfloat = (float)(1 << SI_LOAD_SHIFT);
 	if (!sysinfo(&info)) {
 		// processes
-		result->info_procs = info_procs-1; // exclude running process ls
+		result->info_procs = info_procs;
 		// cpu load
 		result->cpu_avg[0] = (float) info.loads[0] / shiftfloat;
 		result->cpu_avg[1] = (float) info.loads[1] / shiftfloat;

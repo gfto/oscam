@@ -339,7 +339,7 @@ tr.infocolswidth, tr.infocolswidth td, tr.infocolswidth th {
 tr.e_valid td {background-color:#E6FEBF}
 tr.e_expired td {background-color:#FFF3E7}
 /* rowcolors for users rows in unserconfig.html depend on status */
-tr.online td.usercol6 {background-color:#DDD;color:#FFF}
+tr.online td.usercol6 {background-color:#DDD}
 tr.online td {background-color:#BFA}
 tr.offline td {}
 tr.expired td {background-color:#FBA}
