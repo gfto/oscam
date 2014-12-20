@@ -105,7 +105,7 @@ static int32_t dir_fd = -1;
 char *client_name = NULL;
 static uint16_t client_proto_version = 0;
 
-static int32_t ca_fd[8]; // holds fd handle of each ca device 0 = not in use
+static int32_t ca_fd[MAX_DEMUX]; // holds fd handle of each ca device 0 = not in use
 static LLIST * ll_activestreampids; // list of all enabled streampids on ca devices
 
 static int32_t unassoc_fd[MAX_DEMUX];
@@ -1360,9 +1360,8 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 		break;
 #endif
 	default:
-		for(i = 0; i < 8; i++)
+		for(i = 0; i < MAX_DEMUX; i++)
 		{
-			currentfd = ca_fd[i]; 
 			if(demux[demux_id].ca_mask & (1 << i))
 			{	
 				int8_t action = 0;
@@ -1387,6 +1386,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 						dvbapi_net_send(DVBAPI_CA_SET_PID, demux[demux_id].socket_fd, demux_id, -1 /*unused*/, (unsigned char *) &ca_pid2);
 					else
 					{
+						currentfd = ca_fd[i];
 						if(currentfd <= 0)
 						{
 							currentfd = dvbapi_open_device(1, i, demux[demux_id].adapter_index);
@@ -4127,7 +4127,7 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid)
 			coolapi_write_cw(demux[demux_id].ca_mask, demux[demux_id].STREAMpids, demux[demux_id].STREAMpidcount, &ca_descr);
 #else
 			int32_t i;
-			for(i = 0; i < 8; i++)
+			for(i = 0; i < MAX_DEMUX; i++)
 			{
 				if(demux[demux_id].ca_mask & (1 << i))
 				{
@@ -4912,7 +4912,7 @@ void disable_unused_streampids(int16_t demux_id)
 	int32_t i,n;
 	struct s_streampid *listitem;
 	// search for old enabled streampids on all ca devices that have to be disabled, index 0 is skipped as it belongs to fta!
-	for(i = 0; i < 8 && idx; i++){
+	for(i = 0; i < MAX_DEMUX && idx; i++){
 		if(!(demux[demux_id].ca_mask & (1 << i))) continue; // continue if ca is unused by this demuxer
 		
 		LL_ITER itr;
