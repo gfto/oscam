@@ -1606,8 +1606,16 @@ uint32_t chk_provid(uint8_t *ecm, uint16_t caid)
 			}
 		}
 		break;
+		
+	case 0x18:
+		// nagra2
+		if (caid == 0x1801) // more safety
+			provid = b2i(2, ecm + 5);
+		break;
+	}
 #ifdef WITH_LB
-	default:
+	if (!provid)
+	{
 		for(i = 0; i < CS_MAXCAIDTAB; i++)
 		{
 			uint16_t tcaid = cfg.lb_noproviderforcaid.caid[i];
@@ -1623,8 +1631,8 @@ uint32_t chk_provid(uint8_t *ecm, uint16_t caid)
 				break;
 			}
 		}
-#endif
 	}
+#endif
 	return provid;
 }
 

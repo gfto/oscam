@@ -2358,9 +2358,6 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 			if(descriptor_ca_system_id >> 8 == 0x18 && descriptor_length == 0x07)
 				{ descriptor_ca_provider = b2i(2, buffer + j + 7); }
 			
-			if(descriptor_ca_system_id >> 8 == 0x18 && descriptor_length == 0x04) //Quick patch DVB-C UPC-NL since it doesnt send provid in pmt!
-				{ descriptor_ca_provider = 0x7911; }
-
 			if(descriptor_ca_system_id >> 8 == 0x4A && descriptor_length == 0x05)
 				{ descriptor_ca_provider = buffer[j + 6]; }
 
