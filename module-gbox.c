@@ -492,7 +492,7 @@ void gbox_reconnect_client(uint16_t gbox_id)
 	}
 }
 
-static void *gbox_server(struct s_client *cli, uchar *b, int32_t l)
+static void *gbox_server(struct s_client *cli, uchar *UNUSED(b), int32_t l)
 {
 	if(l > 0)
 	{
@@ -613,7 +613,7 @@ int8_t get_card_action(struct gbox_card *card, uint32_t provid1, uint16_t peer_i
 
 int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 {
-	if (!cli || !cli->gbox || !data) { return -1; };
+	if (!cli || !cli->gbox || !cli->reader || !data) { return -1; };
 	struct gbox_peer *peer = cli->gbox;
 	int32_t ncards_in_msg = 0;
 	int32_t payload_len = n;
