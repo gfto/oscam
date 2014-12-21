@@ -942,13 +942,20 @@ static int32_t dvbapi_find_emmpid(int32_t demux_id, uint8_t type, uint16_t caid,
 {
 	int32_t k;
 	int32_t bck = -1;
+	cs_debug_mask(D_DVBAPI,"Wanted: emmcaid: %04x, emmprovid: %06x, emmtype: %02x", caid, provid, type);
 	for(k = 0; k < demux[demux_id].EMMpidcount; k++)
 	{
+		cs_debug_mask(D_DVBAPI,"Entry #%d: emmpid: %04x, emmcaid: %04X, emmprovid: %06X, emmtype: %02X", k+1, demux[demux_id].EMMpids[k].PID, demux[demux_id].EMMpids[k].CAID,
+			demux[demux_id].EMMpids[k].PROVID, demux[demux_id].EMMpids[k].type);
 		if(demux[demux_id].EMMpids[k].CAID == caid
 				&& demux[demux_id].EMMpids[k].PROVID == provid
 				&& (demux[demux_id].EMMpids[k].type & type))
-			{ return k; }
+		{ 
+			cs_debug_mask(D_DVBAPI,"Matching emmstream found!");
+			return k;
+		}
 	}
+	cs_debug_mask(D_DVBAPI,"No matching emmstream found!");
 	return bck;
 }
 
@@ -1038,25 +1045,48 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 
 					if((rdr->blockemm & emmtype) && !(((1 << (filter[0] % 0x80)) & rdr->s_nano) || (rdr->saveemm & emmtype)))
 					{ continue; }
+				
+					uint32_t emm_provid = 0;
 
-					if(caid == 0x100)
+					if (emmtype == EMM_SHARED)
 					{
-						uint32_t seca_provid = 0;
-						if(emmtype == EMM_SHARED)
-							{ seca_provid = b2i(2, filter + 1); }
-						l = dvbapi_find_emmpid(demux_index, emmtype, 0x0100, seca_provid);
+						switch(caid >> 8)
+						{
+						case 0x01:
+							//seca
+							emm_provid = b2i(2, filter + 1);
+							break;
+						case 0x05:
+							// viaccess
+							break;
+						case 0x06:
+							// irdeto
+							emm_provid = b2i(2, filter + 2);
+							break;
+						case 0x0D:
+							// cryptoworks
+							break;
+						case 0x18:
+							// nagra
+							break;
+						}
+						
+						if(!emm_provid)
+						{
+							emm_provid = rdr->auprovid;
+						}
+						l = dvbapi_find_emmpid(demux_index, emmtype, caid, emm_provid); //check specific auprovid
 						check_add_emmpid(demux_index, filter, l, emmtype);
 					}
 					else
 					{
-						if(rdr->auprovid)
-						{
-							l = dvbapi_find_emmpid(demux_index, emmtype, caid, rdr->auprovid); //check specific auprovid
-							check_add_emmpid(demux_index, filter, l, emmtype);
-						}
-						l = dvbapi_find_emmpid(demux_index, emmtype, caid, 0); //check generic for all provids (provid 000000)
+						// global and unique emm
+						l = dvbapi_find_emmpid(demux_index, emmtype, caid, rdr->auprovid); //check specific auprovid
 						check_add_emmpid(demux_index, filter, l, emmtype);
 					}
+						
+					l = dvbapi_find_emmpid(demux_index, emmtype, caid, 0); //always check emmpids without provid for generic emms
+					check_add_emmpid(demux_index, filter, l, emmtype);
 				}
 					
 				// dmx_filter not use below this point
