@@ -46,19 +46,19 @@ static struct gbox_data local_gbox;
 static time_t last_stats_written;
 
 //static void    gbox_send_boxinfo(struct s_client *cli);
-static void    gbox_send_hello(struct s_client *cli);
-static void    gbox_send_hello_packet(struct s_client *cli, int8_t number, uchar *outbuf, uchar *ptr, int32_t nbcards);
-static void    gbox_send_checkcode(struct s_client *cli);
-static void    gbox_local_cards(struct s_client *cli);
-static void    gbox_init_ecm_request_ext(struct gbox_ecm_request_ext *ere); 	
-static int32_t gbox_client_init(struct s_client *cli);
-static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l);
-static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n);
-static int8_t gbox_cw_received(struct s_client *cli, uchar *data, int32_t n);
-static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, uchar *data, int32_t n);
-static int32_t gbox_checkcode_recv(struct s_client *cli, uchar *checkcode);
-static uint16_t gbox_convert_password_to_id(uint32_t password);
-uint32_t gbox_get_ecmchecksum(ECM_REQUEST *er);
+static void	gbox_send_hello(struct s_client *cli);
+static void	gbox_send_hello_packet(struct s_client *cli, int8_t number, uchar *outbuf, uchar *ptr, int32_t nbcards);
+static void	gbox_send_checkcode(struct s_client *cli);
+static void	gbox_local_cards(struct s_client *cli);
+static void	gbox_init_ecm_request_ext(struct gbox_ecm_request_ext *ere); 	
+static int32_t	gbox_client_init(struct s_client *cli);
+static int8_t	gbox_check_header(struct s_client *cli, struct s_client *proxy, uchar *data, int32_t l);
+static int8_t	gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n);
+static int8_t	gbox_cw_received(struct s_client *cli, uchar *data, int32_t n);
+static int32_t	gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, uchar *data, int32_t n);
+static int32_t	gbox_checkcode_recv(struct s_client *cli, uchar *checkcode);
+static uint16_t	gbox_convert_password_to_id(uint32_t password);
+uint32_t	gbox_get_ecmchecksum(uchar *ecm, uint16_t ecmlen);
 static void	init_local_gbox(void);
 
 char *get_gbox_tmp_fname(char *fext)
@@ -455,6 +455,7 @@ static int8_t gbox_reinit_peer(struct gbox_peer *peer)
 	peer->online		= 0;
 	peer->ecm_idx		= 0;
 	peer->hello_stat	= GBOX_STAT_HELLOL;
+	peer->next_hello	= 0;	
 	gbox_free_cardlist(peer->gbox.cards);
 	peer->gbox.cards	= ll_create("peer.cards");		
 //	peer->my_user		= NULL;
@@ -496,7 +497,7 @@ static void *gbox_server(struct s_client *cli, uchar *b, int32_t l)
 	if(l > 0)
 	{
 		cs_log("gbox:  gbox_server %s/%d", cli->reader->label, cli->port);
-		gbox_check_header(cli, b, l);
+//		gbox_check_header(cli, NULL, b, l);
 	}
 	return 0;
 }
@@ -612,6 +613,7 @@ int8_t get_card_action(struct gbox_card *card, uint32_t provid1, uint16_t peer_i
 
 int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 {
+	if (!cli || !cli->gbox || !data) { return -1; };
 	struct gbox_peer *peer = cli->gbox;
 	int32_t ncards_in_msg = 0;
 	int32_t payload_len = n;
@@ -630,8 +632,16 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		gbox_decompress(data, &payload_len);
 	}
 	cs_ddump_mask(D_READER, data, payload_len, "gbox: decompressed data (%d bytes):", payload_len);
-
-	if((data[0xB] & 0xF) == 0) //is first packet 
+	if ((data[11] & 0xf) != peer->next_hello)
+	{
+		cs_log("->[gbx] received out of sync hello from %s %s, expected: %02X, received: %02X"
+			,username(cli), cli->reader->device, peer->next_hello, data[11] & 0xf);
+		peer->next_hello = 0;
+		peer->hello_stat = GBOX_STAT_HELLOL;
+		gbox_send_hello(cli);
+		return 0;
+	} 
+	if ((data[11] & 0xf) == 0) //is first packet 
 	{
 		if(!peer->gbox.cards)
 			{ peer->gbox.cards = ll_create("peer.cards"); }
@@ -647,7 +657,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		{ ptr = data + 11; }
 	else
 		{ ptr = data + 12; }
-
+	cs_debug_mask(D_READER, "Hello packet no. %d received", (data[11] & 0xF) + 1);
 	while(ptr < data + payload_len - footer_len - checkcode_len - 1)
 	{
 		uint16_t caid;
@@ -800,12 +810,14 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 			if(ll_count(peer->gbox.cards) == 0)
 				{ cli->reader->card_status = NO_CARD; }
 			
+			peer->next_hello = 0;
 			gbox_write_local_cards_info();
 			gbox_write_shared_cards_info();
 			gbox_write_peer_onl();
 			cli->last = time((time_t *)0); //hello is activity on proxy
-		}	
+		}		
 	}
+	else { peer->next_hello++; }
 	peer->last_it = it; //save position for next hello
 	return 0;
 }
@@ -884,7 +896,7 @@ static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 
 	diffcheck = gbox_checkcode_recv(cl, data + n - 14);
 	//TODO: What do we do with our own checkcode @-7?
-	er->gbox_crc = gbox_get_ecmchecksum(er);
+	er->gbox_crc = gbox_get_ecmchecksum(&er->ecm[0], er->ecmlen);
 	ere->gbox_hops = data[n - 15] + 1;
 	memcpy(&ere->gbox_routing_info[0], &data[n - 15 - ere->gbox_hops + 1], ere->gbox_hops - 1);
 
@@ -902,29 +914,29 @@ static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 	return 0;
 }
 
-int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
+int32_t gbox_cmd_switch(struct s_client *proxy, uchar *data, int32_t n)
 {
-	if (!data || !cli) { return -1; }
+	if (!data || !proxy) { return -1; }
 	uint16_t cmd = gbox_decode_cmd(data);
 	switch(cmd)
 	{
 	case MSG_BOXINFO:
-		gbox_send_hello(cli);
+		gbox_send_hello(proxy);
 		break;
 	case MSG_GOODBYE:
-		cs_log("->[gbx] received goodbye message from %s",username(cli));	
+		cs_log("->[gbx] received goodbye message from %s",username(proxy));	
 		//needfix what to do after Goodbye?
 		//suspect: we get goodbye as signal of SID not found
 		break;
 	case MSG_UNKNWN:
-		cs_log("->[gbx] received MSG_UNKNWN 48F9 from %s", username(cli));	  
+		cs_log("->[gbx] received MSG_UNKNWN 48F9 from %s", username(proxy));	  
 		break;
 	case MSG_GSMS_1:
 		if (!cfg.gsms_dis)
 		{
-			cs_log("->[gbx] received MSG_GSMS_1 from %s", username(cli));
-			gbox_send_gsms_ack(cli,1);
-			write_gsms_msg(cli, data +4, data[3], data[2]);
+			cs_log("->[gbx] received MSG_GSMS_1 from %s", username(proxy));
+			gbox_send_gsms_ack(proxy,1);
+			write_gsms_msg(proxy, data +4, data[3], data[2]);
 		}
 		else
 		{
@@ -934,9 +946,9 @@ int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 	case MSG_GSMS_2:
 		if (!cfg.gsms_dis)
 		{
-			cs_log("->[gbx] received MSG_GSMS_2 from %s", username(cli));
-			gbox_send_gsms_ack(cli,2);
-			write_gsms_msg(cli, data +16, data[14], data[15]);
+			cs_log("->[gbx] received MSG_GSMS_2 from %s", username(proxy));
+			gbox_send_gsms_ack(proxy,2);
+			write_gsms_msg(proxy, data +16, data[14], data[15]);
 		}
 		else
 		{
@@ -946,8 +958,8 @@ int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 	case MSG_GSMS_ACK_1:
 		if (!cfg.gsms_dis)
 		{
-			cs_log("->[gbx] received MSG_GSMS_ACK_1 from %s", username(cli));
-			write_gsms_ack(cli,1);
+			cs_log("->[gbx] received MSG_GSMS_ACK_1 from %s", username(proxy));
+			write_gsms_ack(proxy,1);
 		}
 		else
 		{
@@ -957,8 +969,8 @@ int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 	case MSG_GSMS_ACK_2:
 		if (!cfg.gsms_dis)
 		{
-			cs_log("->[gbx] received MSG_GSMS_ACK_2 from %s", username(cli));
-			write_gsms_ack(cli,2);
+			cs_log("->[gbx] received MSG_GSMS_ACK_2 from %s", username(proxy));
+			write_gsms_ack(proxy,2);
 		} 
 		else
 		{
@@ -967,20 +979,20 @@ int32_t gbox_cmd_switch(struct s_client *cli, uchar *data, int32_t n)
 		break;
 	case MSG_HELLO1:
 	case MSG_HELLO:
-		if (gbox_cmd_hello(cli, data, n) < 0)
+		if (gbox_cmd_hello(proxy, data, n) < 0)
 			{ return -1; }
 		break;
 	case MSG_CW:
-		gbox_cw_received(cli, data, n);
+		gbox_cw_received(proxy, data, n);
 		break;
 	case MSG_CHECKCODE:
-		gbox_checkcode_recv(cli, data + 10);
+		gbox_checkcode_recv(proxy, data + 10);
 		break;
 	case MSG_ECM:
-		gbox_incoming_ecm(cli, data, n);
+		gbox_incoming_ecm(proxy, data, n);
 		break;
 	default:
-		cs_log("->[gbx] unknown command %02X received from %s", cmd, username(cli));
+		cs_log("->[gbx] unknown command %04X received from %s", cmd, username(proxy));
 		cs_ddump_mask(D_READER, data, n, "gbox: unknown data received (%d bytes):", n);
 	} // end switch
 	if ((time(NULL) - last_stats_written) > STATS_WRITE_TIME)
@@ -996,18 +1008,17 @@ static uint32_t gbox_get_pw(uchar *buf)
 	return buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
 }
 
-static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
+//returns -1 in case of error, 1 if authentication was performed, 0 else
+static int8_t gbox_check_header(struct s_client *cli, struct s_client *proxy, uchar *data, int32_t l)
 {
-	struct s_client *cl = switch_client_proxy(cli, cli->gbox_peer_id);
-
-	//clients may timeout - attach to peer's gbox/reader
-	cli->gbox = cl->gbox; //point to the same gbox as proxy
-	cli->reader = cl->reader; //point to the same reader as proxy
-
-	struct gbox_peer *peer = cl->gbox;
+	struct gbox_peer *peer = NULL;
+	
+	if (proxy) 
+		{ peer = proxy->gbox; }
 
 	char tmp[0x50];
 	int32_t n = l;
+	uint8_t authentication_done = 0;
 	uint32_t my_received_pw = 0;
 	uint32_t peer_received_pw = 0;
 	cs_ddump_mask(D_READER, data, n, "gbox: encrypted data received (%d bytes):", n);
@@ -1018,7 +1029,6 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 		{ gbox_decrypt(data, n, local_gbox.password); }
 
 	cs_ddump_mask(D_READER, data, n, "gbox: decrypted received data (%d bytes):", n);
-
 	//verify my pass received
 	my_received_pw = gbox_get_pw(&data[2]);
 	if (my_received_pw == local_gbox.password)
@@ -1035,14 +1045,10 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 					return -1;
 				}
 				//NEEDFIX: Pretty sure this should not be done here
+				authentication_done = 1;
 				gbox_local_cards(cli);	
-				cl = switch_client_proxy(cli, cli->gbox_peer_id);
-
-				//clients may timeout - attach to peer's gbox/reader
-				cli->gbox = cl->gbox; //point to the same gbox as proxy
-				cli->reader = cl->reader; //point to the same reader as proxy
-
-				peer = cl->gbox;
+				proxy = get_gbox_proxy(cli->gbox_peer_id);
+				if (proxy) { peer = proxy->gbox; }
 				if (peer) { peer->my_user = cli; }
 			}
 			if (!peer) { return -1; }
@@ -1075,24 +1081,17 @@ static int8_t gbox_check_header(struct s_client *cli, uchar *data, int32_t l)
 		return -1;
 		//continue; // next client
 	}
+	if (!proxy) { return -1; }
 
-	if (!IP_EQUAL(cli->ip, cl->ip))
+	if (!IP_EQUAL(cli->ip, proxy->ip))
 	{ 
-		cs_log("gbox: Received IP %s did not match previous IP %s. Try to reconnect.", cs_inet_ntoa(cli->ip), cs_inet_ntoa(cl->ip));
+		cs_log("gbox: Received IP %s did not match previous IP %s. Try to reconnect.", cs_inet_ntoa(cli->ip), cs_inet_ntoa(proxy->ip));
 		gbox_reconnect_client(cli->gbox_peer_id); 
 		return -1;	
 	}
-
 	if(!peer) { return -1; }
-	
-	cli->last = time((time_t *)0);
 
-	cs_writelock(&peer->lock);
-	if(gbox_cmd_switch(cl, data, n) < 0)
-		{ return -1; }
-	cs_writeunlock(&peer->lock);
-
-	return 0;
+	return authentication_done;
 }
 
 static void gbox_calc_checkcode(void)
@@ -1155,23 +1154,22 @@ static int32_t gbox_checkcode_recv(struct s_client *cli, uchar *checkcode)
 	return 0;
 }
 
-uint32_t gbox_get_ecmchecksum(ECM_REQUEST *er)
+uint32_t gbox_get_ecmchecksum(uchar *ecm, uint16_t ecmlen)
 {
-
 	uint8_t checksum[4];
 	int32_t counter;
 
-	checksum[3] = er->ecm[0];
-	checksum[2] = er->ecm[1];
-	checksum[1] = er->ecm[2];
-	checksum[0] = er->ecm[3];
+	checksum[3] = ecm[0];
+	checksum[2] = ecm[1];
+	checksum[1] = ecm[2];
+	checksum[0] = ecm[3];
 
-	for(counter = 1; counter < (er->ecmlen / 4) - 4; counter++)
+	for(counter = 1; counter < (ecmlen / 4) - 4; counter++)
 	{
-		checksum[3] ^= er->ecm[counter * 4];
-		checksum[2] ^= er->ecm[counter * 4 + 1];
-		checksum[1] ^= er->ecm[counter * 4 + 2];
-		checksum[0] ^= er->ecm[counter * 4 + 3];
+		checksum[3] ^= ecm[counter * 4];
+		checksum[2] ^= ecm[counter * 4 + 1];
+		checksum[1] ^= ecm[counter * 4 + 2];
+		checksum[0] ^= ecm[counter * 4 + 3];
 	}
 
 	return checksum[3] << 24 | checksum[2] << 16 | checksum[1] << 8 | checksum[0];
@@ -1331,22 +1329,44 @@ static int32_t gbox_recv(struct s_client *cli, uchar *buf, int32_t l)
 {
 	uchar data[RECEIVE_BUFFER_SIZE];
 	int32_t n = l;
+	int8_t ret = 0;
 
-	if(cli->udp_fd && cli->is_udp && cli->typ == 'c')
-	{
-		n = recv_from_udpipe(buf);		
-		if (n >= MIN_GBOX_MESSAGE_LENGTH && n < RECEIVE_BUFFER_SIZE) //protect against too short or too long messages
-		{
-			memcpy(&data[0], buf, n);
-			gbox_check_header(cli, &data[0], n);
+	if(!cli->udp_fd || !cli->is_udp || cli->typ != 'c')
+		{ return -1; }
+	
+	n = recv_from_udpipe(buf);		
+	if (n < MIN_GBOX_MESSAGE_LENGTH || n >= RECEIVE_BUFFER_SIZE) //protect against too short or too long messages
+		{ return -1; }
+			
+	struct s_client *proxy = get_gbox_proxy(cli->gbox_peer_id);
+			
+	memcpy(&data[0], buf, n);
+	ret = gbox_check_header(cli, proxy, &data[0], n);
+	if (ret < 0)
+		{ return -1; }
+	
+	//in case of new authentication the proxy gbox can now be found 
+	if (ret)
+		{ proxy = get_gbox_proxy(cli->gbox_peer_id); } 	
 
-			//clients may timeout - dettach from peer's gbox/reader
-			cli->gbox = NULL;
-			cli->reader = NULL;
-			return 0;	
-		}	
-	}
-	return -1;
+	if (!proxy)
+		{ return -1; }	
+		
+	cli->last = time((time_t *)0);
+	//clients may timeout - attach to peer's gbox/reader
+	cli->gbox = proxy->gbox; //point to the same gbox as proxy
+	cli->reader = proxy->reader; //point to the same reader as proxy
+	struct gbox_peer *peer = proxy->gbox;
+				
+	cs_writelock(&peer->lock);
+	if(gbox_cmd_switch(proxy, data, n) < 0)
+		{ return -1; }
+	cs_writeunlock(&peer->lock);
+				
+	//clients may timeout - dettach from peer's gbox/reader
+	cli->gbox = NULL;
+	cli->reader = NULL;
+	return 0;	
 }
 
 static void gbox_send_dcw(struct s_client *cl, ECM_REQUEST *er)
@@ -1835,7 +1855,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 	if(!er->ecmlen) { return 0; }
 
 	len2 = er->ecmlen + 18;
-	er->gbox_crc = gbox_get_ecmchecksum(er);
+	er->gbox_crc = gbox_get_ecmchecksum(&er->ecm[0], er->ecmlen);
 
 	memset(send_buf_1, 0, sizeof(send_buf_1));
 

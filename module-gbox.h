@@ -62,6 +62,7 @@ struct gbox_peer
     uchar *hostname;
     int32_t online;
     int32_t hello_stat;
+    uint8_t next_hello;
     uchar ecm_idx;
     CS_MUTEX_LOCK lock;
     struct s_client *my_user;
