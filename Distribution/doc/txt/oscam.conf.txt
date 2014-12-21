@@ -408,6 +408,9 @@ DESCRIPTIONS
        httpshowpicons = 0|1
 	  1 = show picons in user list, default:0
 
+       httppiconpath = path
+	  path to picons, default:none
+
        httphelplang = en|de|fr|<available wiki languages>
 	  set right language for wiki entry point, default:en
 
