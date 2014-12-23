@@ -1333,6 +1333,7 @@ int32_t main(int32_t argc, char *argv[])
 #endif
 	init_config();
 	cs_init_log();
+	init_check();
 	if(!oscam_pidfile && cfg.pidfile)
 		{ oscam_pidfile = cfg.pidfile; }
 	if(!oscam_pidfile)
@@ -1342,7 +1343,6 @@ int32_t main(int32_t argc, char *argv[])
 	if(oscam_pidfile)
 		{ pidfile_create(oscam_pidfile); }
 	cs_init_statistics();
-	init_check();
 	coolapi_open_all();
 	init_stat();
 
