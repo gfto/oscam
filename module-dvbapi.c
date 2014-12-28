@@ -1267,7 +1267,7 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len)
 				for(k = i + 6; k < i + buf[i + 1] + 2; k += buf[k + 1] + 2)
 				{
 					emm_provider = (buf[k] == 0x14) ? b2i(3, buf + k + 2)&0xFFFFF0 : 0; 
-					dvbapi_add_emmpid(demux_id, caid, emm_pid, 0, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
+					dvbapi_add_emmpid(demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
 				}
 				break;
 			case 0x18:
