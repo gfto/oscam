@@ -1088,7 +1088,11 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 			}
 		}
 	}
-	cs_debug_mask(D_DVBAPI, "[EMM Filter] %i activated emm filters", demux[demux_index].emm_filter);
+	if(demux[demux_index].emm_filter == -1) // first run -1
+	{
+		demux[demux_index].emm_filter = 0;
+	}
+	cs_debug_mask(D_DVBAPI, "[EMM Filter] Demuxer #%d has %i activated emm filters", demux_index, demux[demux_index].emm_filter);
 }
 
 void dvbapi_add_ecmpid_int(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_t provid) 
@@ -2743,6 +2747,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		}
 	}
 
+	demux[demux_id].emm_filter = -1; // to register first run emmfilter start
 	if(cfg.dvbapi_au > 0 && demux[demux_id].emmstart.time == 1)   // irdeto fetch emm cat direct!
 	{
 		cs_ftime(&demux[demux_id].emmstart); // trick to let emm fetching start after 30 seconds to speed up zapping
@@ -3652,7 +3657,7 @@ static void *dvbapi_main_local(void *cli)
 			struct timeb now;
 			cs_ftime(&now);
 			
-			if(cfg.dvbapi_au > 0 && demux[i].emm_filter == 0 && demux[i].EMMpidcount == 0 && emmcounter == 0)
+			if(cfg.dvbapi_au > 0 && demux[i].emm_filter == -1 && demux[i].EMMpidcount == 0 && emmcounter == 0)
 			{
 				int32_t gone = comp_timeb(&now, &demux[i].emmstart);
 				if(gone > 30*1000){
@@ -3666,7 +3671,7 @@ static void *dvbapi_main_local(void *cli)
 			int32_t emmstarted = demux[i].emm_filter;
 			if(cfg.dvbapi_au && demux[i].EMMpidcount > 0)   // check every time since share readers might give us new filters due to hexserial change
 			{
-				if(!emmcounter)
+				if(!emmcounter && emmstarted == -1)
 				{
 					demux[i].emmstart = now;
 					dvbapi_start_emm_filter(i); // start emmfiltering if emmpids are found
@@ -4957,6 +4962,10 @@ void check_add_emmpid(int32_t demux_index, uchar *filter, int32_t l, int32_t emm
 	}
 	if(ret != -1)
 	{
+		if(demux[demux_index].emm_filter == -1) // first run -1
+		{
+			demux[demux_index].emm_filter = 0;
+		}
 		demux[demux_index].emm_filter++; // increase total active filters
 		cs_ddump_mask(D_DVBAPI, filter, 32, "[EMM Filter] started emm filter type %s, pid: 0x%04X", typtext[typtext_idx], demux[demux_index].EMMpids[l].PID);
 		return;
