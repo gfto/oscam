@@ -942,20 +942,15 @@ static int32_t dvbapi_find_emmpid(int32_t demux_id, uint8_t type, uint16_t caid,
 {
 	int32_t k;
 	int32_t bck = -1;
-	cs_debug_mask(D_DVBAPI,"Wanted: emmcaid: %04x, emmprovid: %06x, emmtype: %02x", caid, provid, type);
 	for(k = 0; k < demux[demux_id].EMMpidcount; k++)
 	{
-		cs_debug_mask(D_DVBAPI,"Entry #%d: emmpid: %04x, emmcaid: %04X, emmprovid: %06X, emmtype: %02X", k+1, demux[demux_id].EMMpids[k].PID, demux[demux_id].EMMpids[k].CAID,
-			demux[demux_id].EMMpids[k].PROVID, demux[demux_id].EMMpids[k].type);
 		if(demux[demux_id].EMMpids[k].CAID == caid
 				&& demux[demux_id].EMMpids[k].PROVID == provid
 				&& (demux[demux_id].EMMpids[k].type & type))
 		{ 
-			cs_debug_mask(D_DVBAPI,"Matching emmstream found!");
 			return k;
 		}
 	}
-	cs_debug_mask(D_DVBAPI,"No matching emmstream found!");
 	return bck;
 }
 
@@ -1343,7 +1338,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 				if(!enable){
 					action = remove_streampid_from_list(i, demux[demux_id].STREAMpids[num], idx);
 				}
-				if(action == ADDED_STREAMPID_INDEX || action != NO_STREAMPID_LISTED)
+				if(action != NO_STREAMPID_LISTED && action != FOUND_STREAMPID_INDEX)
 				{
 					ca_pid_t ca_pid2;
 					memset(&ca_pid2, 0, sizeof(ca_pid2));
@@ -4842,7 +4837,7 @@ int8_t update_streampid_list(uint8_t cadevice, uint16_t pid, int32_t idx)
 
 int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, int32_t idx)
 {
-	if(!ll_activestreampids) return 1;
+	if(!ll_activestreampids) return NO_STREAMPID_LISTED;
 	
 	struct s_streampid *listitem;
 	
