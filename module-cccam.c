@@ -1063,8 +1063,7 @@ int32_t get_UA_ofs(uint16_t caid)
 		ofs = 2;
 		break;
 	}
-	if(caid == 0x5581 || caid == 0x4AEE)  //BULCRYPT:
-		{ ofs = 0; }
+
 	return ofs;
 }
 
@@ -1114,6 +1113,15 @@ void cc_UA_oscam2cccam(uint8_t *in, uint8_t *out, uint16_t caid)
 	//
 	//  //Place here your own adjustments!
 	//}
+
+	if (caid == 0x5581 || caid == 0x4aee) { // Bulcrypt fix
+           out[4] = in[0];
+           out[5] = in[1];
+           out[6] = in[2];
+           out[7] = in[3];
+           return;
+   }
+
 	hexserial_to_newcamd(in, tmp + 2, caid);
 	UA_right(tmp, out, 8);
 }
@@ -1143,7 +1151,7 @@ void cc_UA_cccam2oscam(uint8_t *in, uint8_t *out, uint16_t caid)
 		out[0] = in[4];
 		out[1] = in[5];
 		out[2] = in[6];
-		out[3] = in[7]; // hexbase
+		out[3] = in[7];
 		return;
 	}
 
