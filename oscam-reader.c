@@ -507,13 +507,6 @@ bool hexserialset(struct s_reader *rdr)
 
 void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid)
 {
-	if(caid == 0x5581 || caid == 0x4aee)    // Bulcrypt
-	{
-		dest[0] = 0x00;
-		dest[1] = 0x00;
-		memcpy(dest + 2, source, 4);
-		return;
-	}
 	caid = caid >> 8;
 	if(caid == 0x17 || caid == 0x06)    // Betacrypt or Irdeto
 	{
