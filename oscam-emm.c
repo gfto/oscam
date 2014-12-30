@@ -198,19 +198,23 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 
 	if(!provid)
 	{
-		rdr_debug_mask(reader, D_EMM, "caid %04X has no provider", caid);
+		rdr_debug_mask(reader, D_EMM, "Match for %04X contains no provid -> SEND!", caid);
 		return 1;
 	}
 
-	if(reader->auprovid && reader->auprovid == provid)
+	if(reader->auprovid)
 	{
-		rdr_debug_mask(reader, D_EMM, "matched auprovid %06X", reader->auprovid);
+		if(reader->auprovid != provid)
+		{
+			rdr_debug_mask(reader, D_EMM, "auprovid = %06X, but match for provid = %06X -> SKIP!", reader->auprovid, provid);
+			return 0;
+		}
 		return 1;
 	}
 
 	if(!reader->nprov)
 	{
-		rdr_debug_mask(reader, D_EMM, "no provider is set");
+		rdr_debug_mask(reader, D_EMM, "Reader has no provider set -> SEND!");
 		return 1;
 	}
 
@@ -219,11 +223,11 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 		uint32_t prid = b2i(4, reader->prid[i]);
 		if(prid == provid || ((reader->typ == R_CAMD35 || reader->typ == R_CS378X) && (prid & 0xFFFF) == (provid & 0xFFFF)))
 		{
-			rdr_debug_mask(reader, D_EMM, "provider match %04X:%06X", caid, provid);
+			rdr_debug_mask(reader, D_EMM, "provider match %04X:%06X -> SEND!", caid, provid);
 			return 1;
 		}
 	}
-	rdr_debug_mask(reader, D_EMM, "skip provider %04X:%06X", caid, provid);
+	rdr_debug_mask(reader, D_EMM, "Match for %04X:%06X but no match with reader providers found -> SKIP!", caid, provid);
 	return 0;
 }
 

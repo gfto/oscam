@@ -257,14 +257,14 @@ int32_t add_emmfilter_to_list(int32_t demux_id, uchar *filter, uint16_t caid, ui
 	else if(num < 0)
 	{
 		ll_append(ll_emm_pending_filter, filter_item);
-		cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d Filter #%d added to pending emmfilters (CAID %04X PROVID %06X EMMPID %04X)",
-					  filter_item->demux_id, filter_item->num, filter_item->caid, filter_item->provid, filter_item->pid);
+		cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d Filter added to pending emmfilters (CAID %04X PROVID %06X EMMPID %04X)",
+					  filter_item->demux_id, filter_item->caid, filter_item->provid, filter_item->pid);
 	}
 	else
 	{
 		ll_append(ll_emm_inactive_filter, filter_item);
-		cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d Filter #%d added to inactive emmfilters (CAID %04X PROVID %06X EMMPID %04X)",
-					  filter_item->demux_id, filter_item->num, filter_item->caid, filter_item->provid, filter_item->pid);
+		cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d Filter added to inactive emmfilters (CAID %04X PROVID %06X EMMPID %04X)",
+					  filter_item->demux_id, filter_item->caid, filter_item->provid, filter_item->pid);
 	}
 	return 1;
 }
@@ -278,7 +278,7 @@ int32_t is_emmfilter_in_list_internal(LLIST *ll, uchar *filter, uint16_t emmpid,
 		itr = ll_iter_create(ll);
 		while((filter_item = ll_iter_next(&itr)))
 		{
-			if(!memcmp(filter_item->filter, filter, 32) && filter_item->pid == emmpid && filter_item->provid == provid)
+		if(!memcmp(filter_item->filter, filter, 32) && filter_item->pid == emmpid && (filter_item->provid == 0 || filter_item->provid == provid))
 				{ return 1; }
 		}
 	}
@@ -938,26 +938,22 @@ void dvbapi_start_filter(int32_t demux_id, int32_t pidindex, uint16_t pid, uint1
 	dvbapi_set_filter(demux_id, selected_api, pid, caid, provid, filter, filter + 16, timeout, pidindex, type, 0);
 }
 
-static int32_t dvbapi_find_emmpid(int32_t demux_id, uint8_t type, uint16_t caid, uint32_t provid)
+static int32_t dvbapi_find_emmpid(int32_t demux_id, uint8_t type, uint16_t caid, uint32_t provid, int32_t k)
 {
-	int32_t k;
-	int32_t bck = -1;
-	for(k = 0; k < demux[demux_id].EMMpidcount; k++)
-	{
-		if(demux[demux_id].EMMpids[k].CAID == caid
-				&& demux[demux_id].EMMpids[k].PROVID == provid
-				&& (demux[demux_id].EMMpids[k].type & type))
-		{ 
-			return k;
-		}
+	if(demux[demux_id].EMMpids[k].CAID == caid && (!provid || demux[demux_id].EMMpids[k].PROVID == provid) // !provid for multiprovider cards
+		&& (demux[demux_id].EMMpids[k].type & type))
+	{ 
+		return k;
 	}
-	return bck;
+	else
+	{
+		return -1;
+	}
 }
 
 void dvbapi_start_emm_filter(int32_t demux_index)
 {
 	unsigned int j;
-	
 	if(!demux[demux_index].EMMpidcount)
 		{ return; }
 
@@ -977,11 +973,12 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 	LL_ITER itr = ll_iter_create(cl->aureader_list);
 	while((rdr = ll_iter_next(&itr)))
 	{
-		if(!rdr->client || rdr->audisabled != 0 || !rdr->enable || (!is_network_reader(rdr) && rdr->card_status != CARD_INSERTED))
+		if(rdr->audisabled || !rdr->enable || (!is_network_reader(rdr) && rdr->card_status != CARD_INSERTED))
 			{ continue; }
 
 		struct s_cardsystem *cs;
 		uint16_t c;
+		cs_debug_mask(D_DVBAPI, "[EMM Filter] Demuxer #%d matching reader %s against available emmpids -> START!", demux_index, rdr->label);
 		for(c = 0; c < demux[demux_index].EMMpidcount; c++)
 		{
 			caid = ncaid = demux[demux_index].EMMpids[c].CAID;
@@ -991,13 +988,12 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 			{
 				ncaid = tunemm_caid_map(FROM_TO, caid, demux[demux_index].program_number);
 			}
-
-			if (emm_reader_match(rdr, caid, 0) || emm_reader_match(rdr, ncaid, 0))
+			if(emm_reader_match(rdr, caid, demux[demux_index].EMMpids[c].PROVID) || emm_reader_match(rdr, ncaid, demux[demux_index].EMMpids[c].PROVID))
 			{
 				cs = get_cardsystem_by_caid(caid);
 				if(cs)
 				{
-					if(caid != ncaid && dvbapi_find_emmpid(demux_index, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL, caid, 0) > -1)
+					if(caid != ncaid && dvbapi_find_emmpid(demux_index, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL, caid, 0, c) != -1)
 					{
 						cs = get_cardsystem_by_caid(ncaid);
 						if(cs)
@@ -1041,45 +1037,9 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 					if((rdr->blockemm & emmtype) && !(((1 << (filter[0] % 0x80)) & rdr->s_nano) || (rdr->saveemm & emmtype)))
 					{ continue; }
 				
-					uint32_t emm_provid = 0;
-
-					if (emmtype == EMM_SHARED)
-					{
-						switch(caid >> 8)
-						{
-						case 0x01:
-							//seca
-							emm_provid = b2i(2, filter + 1);
-							break;
-						case 0x05:
-							// viaccess
-							break;
-						case 0x06:
-							// irdeto
-							break;
-						case 0x0D:
-							// cryptoworks
-							break;
-						case 0x18:
-							// nagra
-							break;
-						}
-						
-						if(!emm_provid)
-						{
-							emm_provid = rdr->auprovid;
-						}
-						l = dvbapi_find_emmpid(demux_index, emmtype, caid, emm_provid); //check specific auprovid
-						check_add_emmpid(demux_index, filter, l, emmtype);
-					}
-					else
-					{
-						// global and unique emm
-						l = dvbapi_find_emmpid(demux_index, emmtype, caid, rdr->auprovid); //check specific auprovid
-						check_add_emmpid(demux_index, filter, l, emmtype);
-					}
-						
-					l = dvbapi_find_emmpid(demux_index, emmtype, caid, 0); //always check emmpids without provid since most emmpid entries dont have any provid associated
+					l = dvbapi_find_emmpid(demux_index, emmtype, caid, rdr->auprovid, c); //check specific auprovid
+					check_add_emmpid(demux_index, filter, l, emmtype);
+					l = dvbapi_find_emmpid(demux_index, emmtype, caid, 0, c); //always check emmpids without provid since most emmpid entries dont have any provid associated
 					check_add_emmpid(demux_index, filter, l, emmtype);
 				}
 					
@@ -1087,12 +1047,13 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 				NULLFREE(dmx_filter);
 			}
 		}
+		cs_debug_mask(D_DVBAPI, "[EMM Filter] Demuxer #%d matching reader %s against available emmpids -> DONE!", demux_index, rdr->label);
 	}
 	if(demux[demux_index].emm_filter == -1) // first run -1
 	{
 		demux[demux_index].emm_filter = 0;
 	}
-	cs_debug_mask(D_DVBAPI, "[EMM Filter] Demuxer #%d has %i activated emm filters", demux_index, demux[demux_index].emm_filter);
+	cs_debug_mask(D_DVBAPI, "[EMM Filter] Demuxer #%d handles %i emm filters", demux_index, demux[demux_index].emm_filter);
 }
 
 void dvbapi_add_ecmpid_int(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_t provid) 
