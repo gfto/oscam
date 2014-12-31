@@ -1037,23 +1037,27 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 					if((rdr->blockemm & emmtype) && !(((1 << (filter[0] % 0x80)) & rdr->s_nano) || (rdr->saveemm & emmtype)))
 					{ continue; }
 				
-					if(rdr->auprovid && rdr->auprovid == provid) //check specific auprovid, multi provider cards should leave auprovid empty!
+					if(rdr->auprovid) //check specific auprovid, multi provider cards should leave auprovid empty!
 					{
-						
-						l = dvbapi_find_emmpid(demux_index, emmtype, caid, provid, c);
-						check_add_emmpid(demux_index, filter, l, emmtype);
-					}
-					else
-					{
-						int32_t i;
-						for(i = 0; i < rdr->nprov; i++)
+						if (rdr->auprovid == provid) 
 						{
-							uint32_t prid = b2i(4, rdr->prid[i]);
-							if(prid == provid)
-							{
-								l = dvbapi_find_emmpid(demux_index, emmtype, caid, prid, c); //check specific auprovid, multi provider cards should leave auprovid empty!
-								check_add_emmpid(demux_index, filter, l, emmtype);
-							}
+							l = dvbapi_find_emmpid(demux_index, emmtype, caid, provid, c);
+							check_add_emmpid(demux_index, filter, l, emmtype);
+						}
+						if(!is_network_reader(rdr)) //share readers change auprovid all the time we need to check more!
+						{
+							continue; // physical reader -> next filter
+						}
+					}
+					
+					int32_t i;
+					for(i = 0; i < rdr->nprov; i++)
+					{
+						uint32_t prid = b2i(4, rdr->prid[i]);
+						if(prid == provid)
+						{
+							l = dvbapi_find_emmpid(demux_index, emmtype, caid, prid, c); //check specific auprovid, multi provider cards should leave auprovid empty!
+							check_add_emmpid(demux_index, filter, l, emmtype);
 						}
 					}
 				}

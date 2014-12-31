@@ -186,7 +186,7 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 		}
 		if(!caid_found)
 		{
-			rdr_debug_mask(reader, D_EMM, "reader_caid %04X != caid %04X", reader->caid, caid);
+			rdr_debug_mask(reader, D_EMM, "reader_caid %04X != emmpid caid %04X -> SKIP!", reader->caid, caid);
 			return 0;
 		}
 	}
@@ -198,7 +198,7 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 
 	if(!provid)
 	{
-		rdr_debug_mask(reader, D_EMM, "Match for %04X contains no provid -> SEND!", caid);
+		rdr_debug_mask(reader, D_EMM, "reader %04X match since emmpid has no provid -> SEND!", caid);
 		return 1;
 	}
 
@@ -206,10 +206,12 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 	{
 		if(reader->auprovid != provid)
 		{
-			rdr_debug_mask(reader, D_EMM, "auprovid = %06X, but match for provid = %06X -> SKIP!", reader->auprovid, provid);
-			return 0;
+			if(!is_network_reader(reader)) // auprovid can change for share readers so we need to check more!
+			{
+				rdr_debug_mask(reader, D_EMM, "reader auprovid = %06X, but emm provid = %06X -> SKIP!", reader->auprovid, provid);
+				return 0;
+			}
 		}
-		return 1;
 	}
 
 	if(!reader->nprov)
@@ -223,11 +225,14 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 		uint32_t prid = b2i(4, reader->prid[i]);
 		if(prid == provid)
 		{
-			rdr_debug_mask(reader, D_EMM, "provider match %04X:%06X -> SEND!", caid, provid);
+			rdr_debug_mask(reader, D_EMM, "reader provid %06X matching with emm provid %06X -> SEND!", prid, provid);
 			return 1;
 		}
+		else
+		{
+			rdr_debug_mask(reader, D_EMM, "reader provid %06X no match with emm provid %06X -> SKIP!", prid, provid);
+		}
 	}
-	rdr_debug_mask(reader, D_EMM, "Match for %04X:%06X but no match with reader providers found -> SKIP!", caid, provid);
 	return 0;
 }
 
