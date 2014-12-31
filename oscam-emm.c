@@ -158,8 +158,7 @@ static int32_t reader_store_emm(struct s_reader *reader, uint8_t type, uint8_t *
 int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid)
 {
 	int32_t i;
-	provid = provid&0xFFFF; //since sharereaders only deliver 2 bytes provid
-	
+
 	// if physical reader a card needs to be inserted
 	if(!is_network_reader(reader) && reader->card_status != CARD_INSERTED)
 		{ return 0; }
@@ -205,7 +204,7 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 
 	if(reader->auprovid)
 	{
-		if((reader->auprovid&0xFFFF) != provid)
+		if(reader->auprovid != provid)
 		{
 			rdr_debug_mask(reader, D_EMM, "auprovid = %06X, but match for provid = %06X -> SKIP!", reader->auprovid, provid);
 			return 0;
@@ -221,7 +220,7 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 
 	for(i = 0; i < reader->nprov; i++)
 	{
-		uint32_t prid = b2i(4, reader->prid[i])&0xFFFF;
+		uint32_t prid = b2i(4, reader->prid[i]);
 		if(prid == provid)
 		{
 			rdr_debug_mask(reader, D_EMM, "provider match %04X:%06X -> SEND!", caid, provid);
