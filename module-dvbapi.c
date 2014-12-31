@@ -3587,13 +3587,14 @@ static void *dvbapi_main_local(void *cli)
 				/* socket init */
 				if((listenfd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
 				{
-					cs_log("socket error (errno=%d)\n", errno);
+					
+					cs_log("socket error (errno=%d %s)", errno, strerror(errno));
 					listenfd = -1;
 				}
-
-				if(connect(listenfd, (struct sockaddr *)&saddr, sizeof(saddr)) < 0)
+				else if(connect(listenfd, (struct sockaddr *)&saddr, sizeof(saddr)) < 0)
 				{
-					cs_log("socket connect error (errno=%d)\n", errno);
+					cs_log("socket connect error (errno=%d %s)", errno, strerror(errno));
+					close(listenfd);
 					listenfd = -1;
 				}
 				else
