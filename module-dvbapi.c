@@ -940,8 +940,7 @@ void dvbapi_start_filter(int32_t demux_id, int32_t pidindex, uint16_t pid, uint1
 
 static int32_t dvbapi_find_emmpid(int32_t demux_id, uint8_t type, uint16_t caid, uint32_t provid, int32_t k)
 {
-	if(demux[demux_id].EMMpids[k].CAID == caid && (!provid || demux[demux_id].EMMpids[k].PROVID == provid) // !provid for multiprovider cards
-		&& (demux[demux_id].EMMpids[k].type & type))
+	if((demux[demux_id].EMMpids[k].CAID == caid) && (demux[demux_id].EMMpids[k].PROVID == provid) && (demux[demux_id].EMMpids[k].type & type))
 	{ 
 		return k;
 	}
@@ -963,7 +962,7 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 
 	struct s_csystem_emm_filter *dmx_filter = NULL;
 	unsigned int filter_count = 0;
-	uint16_t caid, ncaid;
+	uint16_t caid, ncaid, provid;
 
 	struct s_reader *rdr = NULL;
 	struct s_client *cl = cur_client();
@@ -988,12 +987,13 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 			{
 				ncaid = tunemm_caid_map(FROM_TO, caid, demux[demux_index].program_number);
 			}
-			if(emm_reader_match(rdr, caid, demux[demux_index].EMMpids[c].PROVID) || emm_reader_match(rdr, ncaid, demux[demux_index].EMMpids[c].PROVID))
+			provid = demux[demux_index].EMMpids[c].PROVID;
+			if(emm_reader_match(rdr, caid, provid) || emm_reader_match(rdr, ncaid, provid))
 			{
 				cs = get_cardsystem_by_caid(caid);
 				if(cs)
 				{
-					if(caid != ncaid && dvbapi_find_emmpid(demux_index, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL, caid, 0, c) != -1)
+					if(caid != ncaid)
 					{
 						cs = get_cardsystem_by_caid(ncaid);
 						if(cs)
@@ -1037,10 +1037,25 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 					if((rdr->blockemm & emmtype) && !(((1 << (filter[0] % 0x80)) & rdr->s_nano) || (rdr->saveemm & emmtype)))
 					{ continue; }
 				
-					l = dvbapi_find_emmpid(demux_index, emmtype, caid, rdr->auprovid, c); //check specific auprovid
-					check_add_emmpid(demux_index, filter, l, emmtype);
-					l = dvbapi_find_emmpid(demux_index, emmtype, caid, 0, c); //always check emmpids without provid since most emmpid entries dont have any provid associated
-					check_add_emmpid(demux_index, filter, l, emmtype);
+					if(rdr->auprovid && rdr->auprovid == provid) //check specific auprovid, multi provider cards should leave auprovid empty!
+					{
+						
+						l = dvbapi_find_emmpid(demux_index, emmtype, caid, provid, c);
+						check_add_emmpid(demux_index, filter, l, emmtype);
+					}
+					else
+					{
+						int32_t i;
+						for(i = 0; i < rdr->nprov; i++)
+						{
+							uint32_t prid = b2i(4, rdr->prid[i]);
+							if(prid == provid || ((rdr->typ == R_CAMD35 || rdr->typ == R_CS378X) && (prid & 0xFFFF) == (provid & 0xFFFF)))
+							{
+								l = dvbapi_find_emmpid(demux_index, emmtype, caid, prid, c); //check specific auprovid, multi provider cards should leave auprovid empty!
+								check_add_emmpid(demux_index, filter, l, emmtype);
+							}
+						}
+					}
 				}
 					
 				// dmx_filter not use below this point
@@ -1226,13 +1241,26 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len)
 			case 0x05:
 				for(k = i + 6; k < i + buf[i + 1] + 2; k += buf[k + 1] + 2)
 				{
-					emm_provider = (buf[k] == 0x14) ? b2i(3, buf + k + 2)&0xFFFFF0 : 0; 
-					dvbapi_add_emmpid(demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
+					if (buf[k] == 0x14)
+					{
+						emm_provider = b2i(3, buf + k + 2)&0xFFFFF0;
+						dvbapi_add_emmpid(demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
+					}
 				}
 				break;
 			case 0x18:
-				emm_provider = (buf[i + 1] == 0x07) ? b2i(3, buf + i + 6) : 0;
-				dvbapi_add_emmpid(demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
+				if(buf[i + 1] == 0x07 || buf[i + 1] == 0x0B)
+				{
+					for(k = i + 7; k < i + 7 + buf[i + 6]; k += 2)
+					{
+						emm_provider = b2i(2, buf + k);
+						dvbapi_add_emmpid(demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
+					}
+				}
+				else
+				{
+					dvbapi_add_emmpid(demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
+				}
 				break;
 			default:
 				dvbapi_add_emmpid(demux_id, caid, emm_pid, 0, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
