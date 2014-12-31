@@ -940,7 +940,7 @@ void dvbapi_start_filter(int32_t demux_id, int32_t pidindex, uint16_t pid, uint1
 
 static int32_t dvbapi_find_emmpid(int32_t demux_id, uint8_t type, uint16_t caid, uint32_t provid, int32_t k)
 {
-	if((demux[demux_id].EMMpids[k].CAID == caid) && (demux[demux_id].EMMpids[k].PROVID == provid) && (demux[demux_id].EMMpids[k].type & type))
+	if((demux[demux_id].EMMpids[k].CAID == caid) && ((demux[demux_id].EMMpids[k].PROVID &0xFFFF) == (provid&0xFFFF)) && (demux[demux_id].EMMpids[k].type & type))
 	{ 
 		return k;
 	}
@@ -987,7 +987,7 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 			{
 				ncaid = tunemm_caid_map(FROM_TO, caid, demux[demux_index].program_number);
 			}
-			provid = demux[demux_index].EMMpids[c].PROVID;
+			provid = demux[demux_index].EMMpids[c].PROVID&0xFFFF;
 			if(emm_reader_match(rdr, caid, provid) || emm_reader_match(rdr, ncaid, provid))
 			{
 				cs = get_cardsystem_by_caid(caid);
@@ -1037,7 +1037,7 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 					if((rdr->blockemm & emmtype) && !(((1 << (filter[0] % 0x80)) & rdr->s_nano) || (rdr->saveemm & emmtype)))
 					{ continue; }
 				
-					if(rdr->auprovid && rdr->auprovid == provid) //check specific auprovid, multi provider cards should leave auprovid empty!
+					if(rdr->auprovid && (rdr->auprovid&0xFFFF) == provid) //check specific auprovid, multi provider cards should leave auprovid empty!
 					{
 						
 						l = dvbapi_find_emmpid(demux_index, emmtype, caid, provid, c);
@@ -1048,8 +1048,8 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 						int32_t i;
 						for(i = 0; i < rdr->nprov; i++)
 						{
-							uint32_t prid = b2i(4, rdr->prid[i]);
-							if(prid == provid || ((rdr->typ == R_CAMD35 || rdr->typ == R_CS378X) && (prid & 0xFFFF) == (provid & 0xFFFF)))
+							uint32_t prid = b2i(4, rdr->prid[i])&0xFFFF;
+							if(prid == provid)
 							{
 								l = dvbapi_find_emmpid(demux_index, emmtype, caid, prid, c); //check specific auprovid, multi provider cards should leave auprovid empty!
 								check_add_emmpid(demux_index, filter, l, emmtype);
