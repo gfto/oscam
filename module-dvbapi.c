@@ -1037,6 +1037,13 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 					if((rdr->blockemm & emmtype) && !(((1 << (filter[0] % 0x80)) & rdr->s_nano) || (rdr->saveemm & emmtype)))
 					{ continue; }
 				
+					if(!provid) // emmpid contains no provid -> match all!
+					{
+						l = dvbapi_find_emmpid(demux_index, emmtype, caid, provid, c);
+						check_add_emmpid(demux_index, filter, l, emmtype);
+						continue; // next filter
+					}
+					
 					if(rdr->auprovid) //check specific auprovid, multi provider cards should leave auprovid empty!
 					{
 						if (rdr->auprovid == provid) 
