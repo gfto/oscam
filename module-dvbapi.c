@@ -976,7 +976,7 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 			{ continue; }
 
 		struct s_cardsystem *cs;
-		uint16_t c;
+		uint16_t c, match;
 		cs_debug_mask(D_DVBAPI, "[EMM Filter] Demuxer #%d matching reader %s against available emmpids -> START!", demux_index, rdr->label);
 		for(c = 0; c < demux[demux_index].EMMpidcount; c++)
 		{
@@ -988,7 +988,15 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 				ncaid = tunemm_caid_map(FROM_TO, caid, demux[demux_index].program_number);
 			}
 			provid = demux[demux_index].EMMpids[c].PROVID;
-			if(emm_reader_match(rdr, caid, provid) || emm_reader_match(rdr, ncaid, provid))
+			if (caid == ncaid)
+			{
+				match = emm_reader_match(rdr, caid, provid);
+			}
+			else
+			{
+				match = emm_reader_match(rdr, ncaid, provid);
+			}
+			if(match)
 			{
 				cs = get_cardsystem_by_caid(caid);
 				if(cs)
@@ -1037,35 +1045,12 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 					if((rdr->blockemm & emmtype) && !(((1 << (filter[0] % 0x80)) & rdr->s_nano) || (rdr->saveemm & emmtype)))
 					{ continue; }
 				
-					if(!provid) // emmpid contains no provid -> match all!
+					l = dvbapi_find_emmpid(demux_index, emmtype, caid, provid, c);
+					check_add_emmpid(demux_index, filter, l, emmtype);
+					if(caid != ncaid)
 					{
-						l = dvbapi_find_emmpid(demux_index, emmtype, caid, provid, c);
+						l = dvbapi_find_emmpid(demux_index, emmtype, ncaid, provid, c);
 						check_add_emmpid(demux_index, filter, l, emmtype);
-						continue; // next filter
-					}
-					
-					if(rdr->auprovid) //check specific auprovid, multi provider cards should leave auprovid empty!
-					{
-						if (rdr->auprovid == provid) 
-						{
-							l = dvbapi_find_emmpid(demux_index, emmtype, caid, provid, c);
-							check_add_emmpid(demux_index, filter, l, emmtype);
-						}
-						if(!is_network_reader(rdr)) //share readers change auprovid all the time we need to check more!
-						{
-							continue; // physical reader -> next filter
-						}
-					}
-					
-					int32_t i;
-					for(i = 0; i < rdr->nprov; i++)
-					{
-						uint32_t prid = b2i(4, rdr->prid[i]);
-						if(prid == provid)
-						{
-							l = dvbapi_find_emmpid(demux_index, emmtype, caid, prid, c); //check specific auprovid, multi provider cards should leave auprovid empty!
-							check_add_emmpid(demux_index, filter, l, emmtype);
-						}
 					}
 				}
 					
@@ -1254,7 +1239,7 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len)
 				{
 					if (buf[k] == 0x14)
 					{
-						emm_provider = b2i(3, buf + k + 2)&0xFFFFF0;
+						emm_provider = b2i(3, buf + k + 2);
 						dvbapi_add_emmpid(demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
 					}
 				}
