@@ -204,7 +204,7 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 
 	if(reader->auprovid)
 	{
-		if(reader->auprovid != provid)
+		if((reader->auprovid & 0xFFFF) != (provid & 0xFFFF))
 		{
 			if(!is_network_reader(reader)) // auprovid can change for share readers so we need to check more!
 			{
@@ -223,7 +223,7 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 	for(i = 0; i < reader->nprov; i++)
 	{
 		uint32_t prid = b2i(4, reader->prid[i]);
-		if(prid == provid || ((reader->typ == R_CAMD35 || reader->typ == R_CS378X) && (prid & 0xFFFF) == (provid & 0xFFFF)))
+		if((prid & 0xFFFF) == (provid & 0xFFFF))
 		{
 			rdr_debug_mask(reader, D_EMM, "reader provid %06X matching with emm provid %06X -> SEND!", prid, provid);
 			return 1;
