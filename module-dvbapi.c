@@ -3360,7 +3360,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 
 	if(demux[demux_id].demux_fd[filter_num].type == TYPE_EMM)
 	{
-		if(buffer[0] == 0x01)  //CAT
+		if(demux[demux_id].demux_fd[filter_num].pid == 0x01) // CAT
 		{
 			cs_debug_mask(D_DVBAPI, "receiving cat");
 			dvbapi_parse_cat(demux_id, buffer, len);
