@@ -1043,6 +1043,7 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 				
 					if(demux[demux_index].EMMpids[c].type & emmtype)
 					{
+						cs_debug_mask(D_DVBAPI, "[EMM Filter] Demuxer #%d reader %s filter #%d/%d type match -> ENABLE!", demux_index, rdr->label, j+1, filter_count);
 						check_add_emmpid(demux_index, filter, c, emmtype);
 					}
 					else
@@ -4931,7 +4932,7 @@ void check_add_emmpid(int32_t demux_index, uchar *filter, int32_t l, int32_t emm
 	//filter already in list?
 	if(is_emmfilter_in_list(filter, demux[demux_index].EMMpids[l].PID, demux[demux_index].EMMpids[l].PROVID, demux[demux_index].EMMpids[l].CAID))
 	{
-		cs_ddump_mask(D_DVBAPI, filter, 32, "[EMM Filter] duplicate emm filter type %s, emmpid: 0x%04X, emmcaid: %04X, emmprovid: %06X -> SKIPPED!",
+		cs_debug_mask(D_DVBAPI, "[EMM Filter] duplicate emm filter type %s, emmpid: 0x%04X, emmcaid: %04X, emmprovid: %06X -> SKIPPED!",
 			typtext[typtext_idx], demux[demux_index].EMMpids[l].PID, demux[demux_index].EMMpids[l].CAID, demux[demux_index].EMMpids[l].PROVID);
 		return;
 	}
