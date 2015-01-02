@@ -1030,14 +1030,24 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 					int32_t emmtype = dmx_filter[j].type;
 
 					if(filter[0] && (((1 << (filter[0] % 0x80)) & rdr->b_nano) && !((1 << (filter[0] % 0x80)) & rdr->s_nano)))
-					{ continue; }
+					{ 
+						cs_debug_mask(D_DVBAPI, "[EMM Filter] Demuxer #%d reader %s filter #%d/%d blocked by userconfig -> SKIP!", demux_index, rdr->label, j+1, filter_count);
+						continue; 
+					}
 
 					if((rdr->blockemm & emmtype) && !(((1 << (filter[0] % 0x80)) & rdr->s_nano) || (rdr->saveemm & emmtype)))
-					{ continue; }
+					{ 
+						cs_debug_mask(D_DVBAPI, "[EMM Filter] Demuxer #%d reader %s filter #%d/%d blocked by userconfig -> SKIP!", demux_index, rdr->label, j+1, filter_count);
+						continue;
+					}
 				
 					if(demux[demux_index].EMMpids[c].type & emmtype)
 					{
 						check_add_emmpid(demux_index, filter, c, emmtype);
+					}
+					else
+					{
+						cs_debug_mask(D_DVBAPI, "[EMM Filter] Demuxer #%d reader %s filter #%d/%d type mismatch -> SKIP!", demux_index, rdr->label, j+1, filter_count);
 					}
 				}
 					
