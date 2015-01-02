@@ -199,7 +199,10 @@ static bool smartreader_check_endpoint(libusb_device *usb_dev, uint8_t in_endpoi
 				}
 	}
 	if(nb_endpoint_ok != 2)
-		{ return 0; }
+	{
+		cs_log("Smartreader : endpoint check failed , assuming this is not a smartreader");
+		return 0;
+	}
 	return 1;
 }
 
