@@ -283,24 +283,20 @@ bool cardreader_init(struct s_reader *reader)
 	client->typ = 'r';
 	int8_t i = 0;
 	set_localhost_ip(&client->ip);
-	while(cardreader_device_init(reader) == 2)
+	while((cardreader_device_init(reader) == 2) && i < 10)
 	{
-		while (i < 15)
-		{
-			cs_sleepms(2000);
-			if(!ll_contains(configured_readers, reader) || !is_valid_client(client) || reader->enable != 1)
-				{ return false; }
-			i++;
-		}
-		if (i >= 15) { break; } 
+		cs_sleepms(2000);
+		if(!ll_contains(configured_readers, reader) || !is_valid_client(client) || reader->enable != 1)
+			{ return false; }
+		i++;
 	}
-	if (i >= 15) 
+	if (i >= 10)
 	{
 		reader->card_status = READER_DEVICE_ERROR;
 		cardreader_close(reader);
 		reader->enable = 0;
 		return false;
-	} 
+	}
 	else 
 	{
 		if((reader->cardmhz > 2000) && (reader->typ != R_SMART))
