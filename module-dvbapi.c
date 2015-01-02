@@ -914,7 +914,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 			}
 		}
 
-		if(demux[demux_index].demux_fd[num].type == TYPE_EMM && demux[demux_index].demux_fd[num].pid != 0x001)   // If emm type remove from emm filterlist
+		if(demux[demux_index].demux_fd[num].type == TYPE_EMM)   // If emm type remove from emm filterlist
 		{
 			remove_emmfilter_from_list(demux_index, demux[demux_index].demux_fd[num].caid, demux[demux_index].demux_fd[num].provid, demux[demux_index].demux_fd[num].pid, num + 1);
 		}
