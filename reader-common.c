@@ -292,10 +292,11 @@ bool cardreader_init(struct s_reader *reader)
 				{ return false; }
 			i++;
 		}
-		if (i == 15) { break; } 
+		if (i >= 15) { break; } 
 	}
-	if (i == 15) 
+	if (i >= 15) 
 	{
+		reader->card_status = READER_DEVICE_ERROR;
 		cardreader_close(reader);
 		reader->enable = 0;
 		return false;

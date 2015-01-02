@@ -380,11 +380,12 @@ typedef unsigned char uchar;
 #define NCD_525     2
 
 // moved from reader-common.h
-#define UNKNOWN        0
-#define CARD_NEED_INIT 1
-#define CARD_INSERTED  2
-#define CARD_FAILURE   3
-#define NO_CARD        4
+#define UNKNOWN               0
+#define CARD_NEED_INIT        1
+#define CARD_INSERTED         2
+#define CARD_FAILURE          3
+#define NO_CARD               4
+#define READER_DEVICE_ERROR   5
 
 // moved from stats
 #define DEFAULT_REOPEN_SECONDS 30

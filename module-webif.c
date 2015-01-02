@@ -2517,6 +2517,9 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 		case UNKNOWN:
 			txt = "UNKNOWN";
 			break;
+		case READER_DEVICE_ERROR:
+			txt = "READER DEVICE ERROR";
+			break;
 		case CARD_NEED_INIT:
 			txt = "NEEDINIT";
 			break;
@@ -4795,6 +4798,9 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								break;
 							case UNKNOWN:
 								txt = "UNKNOWN";
+								break;
+							case READER_DEVICE_ERROR:
+								txt = "READER DEVICE ERROR";
 								break;
 							case CARD_NEED_INIT:
 #ifdef CS_CACHEEX
