@@ -241,10 +241,12 @@ int32_t add_emmfilter_to_list(int32_t demux_id, uchar *filter, uint16_t caid, ui
 	filter_item->provid         = provid;
 	filter_item->pid            = emmpid;
 	filter_item->num            = num;
-	if (enable){
+	if (enable)
+	{
 		cs_ftime(&filter_item->time_started);
 	}
-	else {
+	else
+	{
 		memset(&filter_item->time_started, 0, sizeof(filter_item->time_started));
 	}
 		
@@ -269,23 +271,23 @@ int32_t add_emmfilter_to_list(int32_t demux_id, uchar *filter, uint16_t caid, ui
 	return 1;
 }
 
-int32_t is_emmfilter_in_list_internal(LLIST *ll, uchar *filter, uint16_t emmpid, uint32_t provid)
+int32_t is_emmfilter_in_list_internal(LLIST *ll, uchar *filter, uint16_t emmpid, uint32_t provid, uint16_t caid)
 {
 	struct s_emm_filter *filter_item;
 	LL_ITER itr;
 	if(ll_count(ll) > 0)
 	{
 		itr = ll_iter_create(ll);
-		while((filter_item = ll_iter_next(&itr)))
+		while((filter_item = ll_iter_next(&itr)) != NULL)
 		{
-		if(!memcmp(filter_item->filter, filter, 32) && filter_item->pid == emmpid && (filter_item->provid == 0 || filter_item->provid == provid))
-				{ return 1; }
+			if(!memcmp(filter_item->filter, filter, 32) && (filter_item->pid == emmpid) && (filter_item->provid == provid) && (filter_item->caid == caid))
+			{ return 1; }
 		}
 	}
 	return 0;
 }
 
-int32_t is_emmfilter_in_list(uchar *filter, uint16_t emmpid, uint32_t provid)
+int32_t is_emmfilter_in_list(uchar *filter, uint16_t emmpid, uint32_t provid, uint16_t caid)
 {
 	if(!ll_emm_active_filter)
 		{ ll_emm_active_filter = ll_create("ll_emm_active_filter"); }
@@ -296,11 +298,11 @@ int32_t is_emmfilter_in_list(uchar *filter, uint16_t emmpid, uint32_t provid)
 	if(!ll_emm_pending_filter)
 		{ ll_emm_pending_filter = ll_create("ll_emm_pending_filter"); }
 
-	if(is_emmfilter_in_list_internal(ll_emm_active_filter, filter, emmpid, provid))
+	if(is_emmfilter_in_list_internal(ll_emm_active_filter, filter, emmpid, provid, caid))
 		{ return 1; }
-	if(is_emmfilter_in_list_internal(ll_emm_inactive_filter, filter, emmpid, provid))
+	if(is_emmfilter_in_list_internal(ll_emm_inactive_filter, filter, emmpid, provid, caid))
 		{ return 1; }
-	if(is_emmfilter_in_list_internal(ll_emm_pending_filter, filter, emmpid, provid))
+	if(is_emmfilter_in_list_internal(ll_emm_pending_filter, filter, emmpid, provid, caid))
 		{ return 1; }
 
 	return 0;
@@ -938,18 +940,6 @@ void dvbapi_start_filter(int32_t demux_id, int32_t pidindex, uint16_t pid, uint1
 	dvbapi_set_filter(demux_id, selected_api, pid, caid, provid, filter, filter + 16, timeout, pidindex, type, 0);
 }
 
-static int32_t dvbapi_find_emmpid(int32_t demux_id, uint8_t type, uint16_t caid, uint32_t provid, int32_t k)
-{
-	if((demux[demux_id].EMMpids[k].CAID == caid) && (demux[demux_id].EMMpids[k].PROVID == provid) && (demux[demux_id].EMMpids[k].type & type))
-	{ 
-		return k;
-	}
-	else
-	{
-		return -1;
-	}
-}
-
 void dvbapi_start_emm_filter(int32_t demux_index)
 {
 	unsigned int j;
@@ -962,7 +952,8 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 
 	struct s_csystem_emm_filter *dmx_filter = NULL;
 	unsigned int filter_count = 0;
-	uint16_t caid, ncaid, provid;
+	uint16_t caid, ncaid;
+	uint32_t provid;
 
 	struct s_reader *rdr = NULL;
 	struct s_client *cl = cur_client();
@@ -1037,20 +1028,16 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 					memcpy(filter, dmx_filter[j].filter, usefilterbytes);
 					memcpy(filter + 16, dmx_filter[j].mask, usefilterbytes);
 					int32_t emmtype = dmx_filter[j].type;
-					int32_t l = -1;
 
-					if((filter[0] && (((1 << (filter[0] % 0x80)) & rdr->b_nano) && !((1 << (filter[0] % 0x80)) & rdr->s_nano))))
+					if(filter[0] && (((1 << (filter[0] % 0x80)) & rdr->b_nano) && !((1 << (filter[0] % 0x80)) & rdr->s_nano)))
 					{ continue; }
 
 					if((rdr->blockemm & emmtype) && !(((1 << (filter[0] % 0x80)) & rdr->s_nano) || (rdr->saveemm & emmtype)))
 					{ continue; }
 				
-					l = dvbapi_find_emmpid(demux_index, emmtype, caid, provid, c);
-					check_add_emmpid(demux_index, filter, l, emmtype);
-					if(caid != ncaid)
+					if(demux[demux_index].EMMpids[c].type & emmtype)
 					{
-						l = dvbapi_find_emmpid(demux_index, emmtype, ncaid, provid, c);
-						check_add_emmpid(demux_index, filter, l, emmtype);
+						check_add_emmpid(demux_index, filter, c, emmtype);
 					}
 				}
 					
@@ -3397,12 +3384,12 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		LL_ITER itr;
 		itr = ll_iter_create(ll_emm_active_filter);
 
-		while((filter_item = ll_iter_next(&itr)))
+		while((filter_item = ll_iter_next(&itr)) != NULL)
 		{
 			if(!ll_count(ll_emm_inactive_filter) || started == filter_queue)
 				{ break; }
-
-			if(comp_timeb(&now, &filter_item->time_started) > 45*1000)
+			int32_t gone = comp_timeb(&now, &filter_item->time_started); 
+			if( gone > 45*1000)
 			{
 				struct s_dvbapi_priority *forceentry = dvbapi_check_prio_match_emmpid(filter_item->demux_id, filter_item->caid,
 													   filter_item->provid, 'p');
@@ -3442,7 +3429,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 
 		itr = ll_iter_create(ll_emm_pending_filter);
 
-		while((filter_item = ll_iter_next(&itr)))
+		while((filter_item = ll_iter_next(&itr)) != NULL)
 		{
 			add_emmfilter_to_list(filter_item->demux_id, filter_item->filter, filter_item->caid, filter_item->provid, filter_item->pid, 0, false);
 			ll_iter_remove_data(&itr);
@@ -4922,12 +4909,6 @@ void check_add_emmpid(int32_t demux_index, uchar *filter, int32_t l, int32_t emm
 {
 	if (l<0) return;
 	
-	//filter already in list?
-	if(is_emmfilter_in_list(filter, demux[demux_index].EMMpids[l].PID, demux[demux_index].EMMpids[l].PROVID))
-	{
-		return;
-	}
-
 	uint32_t typtext_idx = 0;
 	int32_t ret = -1;
 	const char *typtext[] = { "UNIQUE", "SHARED", "GLOBAL", "UNKNOWN" };
@@ -4935,6 +4916,14 @@ void check_add_emmpid(int32_t demux_index, uchar *filter, int32_t l, int32_t emm
 	while(((emmtype >> typtext_idx) & 0x01) == 0 && typtext_idx < sizeof(typtext) / sizeof(const char *))
 	{
 		++typtext_idx;
+	}
+	
+	//filter already in list?
+	if(is_emmfilter_in_list(filter, demux[demux_index].EMMpids[l].PID, demux[demux_index].EMMpids[l].PROVID, demux[demux_index].EMMpids[l].CAID))
+	{
+		cs_ddump_mask(D_DVBAPI, filter, 32, "[EMM Filter] duplicate emm filter type %s, emmpid: 0x%04X, emmcaid: %04X, emmprovid: %06X -> SKIPPED!",
+			typtext[typtext_idx], demux[demux_index].EMMpids[l].PID, demux[demux_index].EMMpids[l].CAID, demux[demux_index].EMMpids[l].PROVID);
+		return;
 	}
 
 	if(demux[demux_index].emm_filter >= demux[demux_index].max_emm_filter) // can this filter be started? if not add to list of inactive emmfilters
