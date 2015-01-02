@@ -1345,6 +1345,7 @@ static int32_t SR_Init(struct s_reader *reader)
 	if(!crdr_data->usb_dev)
 	{
 		--init_count;
+		--current_count;
 		if(!init_count)
 			{ libusb_exit(NULL); }
 		cs_writeunlock(&sr_lock);
@@ -1356,6 +1357,7 @@ static int32_t SR_Init(struct s_reader *reader)
 	if((ret = smartreader_usb_open_dev(reader)))
 	{
 		--init_count;
+		--current_count;
 		if(!init_count)
 			{ libusb_exit(NULL); }
 		cs_writeunlock(&sr_lock);
@@ -1395,6 +1397,8 @@ static int32_t SR_Init(struct s_reader *reader)
 	if(ret)
 	{
 		rdr_log(reader, "ERROR: Can't create smartreader thread (errno=%d %s)", ret, strerror(ret));
+		--init_count;
+		--current_count;
 		return ERROR;
 	}
 	return OK;
