@@ -577,6 +577,10 @@ textarea.bt {
 select {
 	padding:2px
 }
+/* settings for select in script.html */
+#scriptselect {
+	height: 22px;
+}
 /* generaly settings for all input */
 input,textarea {
 	-moz-box-sizing:border-box;
