@@ -7,12 +7,12 @@ struct timeval lasttime; // holds previous time to detect systemtime adjustments
 #endif
 int64_t comp_timeb(struct timeb *tpa, struct timeb *tpb)
 {
-	return (uint64_t)(((uint64_t)(tpa->time - tpb->time) * 1000ull) + (tpa->millitm - tpb->millitm));
+	return (int64_t)(((int64_t)(tpa->time - tpb->time) * 1000ull) + (tpa->millitm - tpb->millitm));
 }
 
 int64_t comp_timebus(struct timeb *tpa, struct timeb *tpb)
 {
-	return (uint64_t)(((uint64_t)(tpa->time - tpb->time) * 1000000ull) + (tpa->millitm - tpb->millitm));
+	return (int64_t)(((int64_t)(tpa->time - tpb->time) * 1000000ull) + (tpa->millitm - tpb->millitm));
 }
 
 /* Checks if year is a leap year. If so, 1 is returned, else 0. */
