@@ -487,8 +487,8 @@ static int32_t seca_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	i = get_prov_index(reader, prov_id_ptr);
 	if(i == -1)
 	{
-		rdr_log(reader, "EMM: provider id not found.");
-		return ERROR;
+		rdr_log(reader, "EMM: skipped since provider id doesnt match");
+		return SKIPPED;
 	}
 
 	ins40[2] = (ep->emm[ins40data_offset - 2] & 0xF0) | (i & 0x0F);
