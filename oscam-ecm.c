@@ -953,7 +953,10 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 
 	if(er->rc < E_NOTFOUND)
-		{ er->rcEx = 0; }
+	{ 
+		er->rcEx = 0;
+		memset(er->msglog, 0, MSGLOGSIZE); // remove reader msglog from previous requests that failed, founds never give back msglog!
+	}
 
 	if(er->rcEx)
 		{ snprintf(erEx, sizeof(erEx) - 1, "rejected %s%s", stxtWh[er->rcEx >> 4], stxtEx[er->rcEx & 0xf]); }
