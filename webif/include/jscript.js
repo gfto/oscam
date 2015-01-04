@@ -1213,8 +1213,8 @@ function updateStatuspage(data) {
 
 			} else {
 				// picon is not delivered in JSON - we set the text of column
-				if (item.request.chprovider && item.request.chname && item.request.srvid != '0000') {
-					$(uid + " > td.statuscol13").html(item.request.chprovider + item.request.chname);
+				if (item.request.chname && item.request.srvid != '0000') {
+					$(uid + " > td.statuscol13 > a").html(item.request.chprovider + item.request.chname);
 				} else {
 					$(uid + " > td.statuscol13").html('');
 				}
