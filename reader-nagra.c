@@ -1328,8 +1328,10 @@ static int32_t nagra2_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	{
 		//check EMM prov id
 		if(memcmp(&reader->prid[0][2], ep->emm + 10, 2))
-			{ return ERROR; }
-
+		{ 
+			rdr_debug_mask(reader, D_READER, "EMM skipped since provider doesnt match!");
+			return SKIPPED;
+		}
 		//   emm_data: 82 70 8E 00 00 00 00 00 D3 87 8D 11 C0 F4 B1 27 2C 3D 25 94 ...
 		//serial_data: A0 CA 00 00 8C D3 8A 01 00 00 00 00 C0 F4 B1 27 2C 3D 25 94 ...
 		unsigned char emm_trim[150] = { 0x01, 0x00, 0x00, 0x00, 0x00 };
