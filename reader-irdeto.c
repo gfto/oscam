@@ -1036,7 +1036,10 @@ static int32_t irdeto_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 				sc_Acs57_Cmd[4] = acslength;
 				reader_chk_cmd(sc_Acs57_Cmd, acslength + 2);
 				if(cta_res[2] != 0)
-					{ rdr_log(reader, "EMM write error %02X", cta_res[2]); }
+				{ 
+					rdr_log(reader, "EMM write error %02X", cta_res[2]);
+					return ERROR;
+				}
 				return OK;
 			}
 			else
@@ -1057,13 +1060,20 @@ static int32_t irdeto_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 				ptr += ADDRLEN;
 				emm += l;
 				memcpy(ptr, &emm[2], dataLen);                  // copy emm bytes
-				return (irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr) ? 0 : 1); // TODO: this always returns success cause return code cant be 0
+				return (irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr) == 0 ? OK : ERROR);
 			}
 		}
 		else
-			{ rdr_debug_mask(reader, D_EMM, "addrlen %d > %d", l, ADDRLEN); }
+		{ 
+			rdr_debug_mask(reader, D_EMM, "addrlen %d > %d", l, ADDRLEN);
+			return ERROR;
+		}
 	}
-	return ERROR;
+	else
+	{
+		rdr_debug_mask(reader, D_EMM, "EMM skipped since its hexserial or base doesnt match with this card!");
+		return SKIPPED;
+	}
 }
 
 static int32_t irdeto_card_info(struct s_reader *reader)
