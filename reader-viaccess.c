@@ -1472,8 +1472,8 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 			}
 			else
 			{
-				rdr_log(reader, "EMM: provider or key not found on card (%x, %x)", emm_provid, keynr);
-				return ERROR;
+				rdr_log(reader, "EMM: ignored since provider or key not present on card (%x, %x)", emm_provid, keynr);
+				return SKIPPED;
 			}
 
 			// check if the provider changes. If yes, set the new one. If not, don't .. card will return an error if we do.
