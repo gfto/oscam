@@ -514,7 +514,7 @@ enum {E2_GLOBAL = 0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE, E
 struct timeb
 {
 	time_t time;
-	uint16_t millitm;
+	uint64_t millitm;
 };
 
 typedef struct cs_mutexlock
