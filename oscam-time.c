@@ -10,6 +10,11 @@ int64_t comp_timeb(struct timeb *tpa, struct timeb *tpb)
 	return (uint64_t)(((uint64_t)(tpa->time - tpb->time) * 1000ull) + (tpa->millitm - tpb->millitm));
 }
 
+int64_t comp_timebus(struct timeb *tpa, struct timeb *tpb)
+{
+	return (uint64_t)(((uint64_t)(tpa->time - tpb->time) * 1000000ull) + (tpa->millitm - tpb->millitm));
+}
+
 /* Checks if year is a leap year. If so, 1 is returned, else 0. */
 static int8_t is_leap(unsigned int y)
 {
@@ -119,6 +124,25 @@ void cs_ftime(struct timeb *tp)
 #endif	
 	tp->time    = tv.tv_sec;
 	tp->millitm = tv.tv_usec / 1000;
+}
+
+void cs_ftimeus(struct timeb *tp)
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+#if defined(CLOCKFIX)
+	if (tv.tv_sec > lasttime.tv_sec || (tv.tv_sec == lasttime.tv_sec && tv.tv_usec >= lasttime.tv_usec)){ // check for time issues!
+		lasttime = tv; // register this valid time 
+	}
+	else
+	{
+		tv = lasttime;
+		settimeofday(&tv, NULL); // set time back to last known valid time
+		//fprintf(stderr, "*** WARNING: BAD TIME AFFECTING WHOLE OSCAM ECM HANDLING, SYSTEMTIME SET TO LAST KNOWN VALID TIME **** \n");
+	}
+#endif	
+	tp->time    = tv.tv_sec;
+	tp->millitm = tv.tv_usec;
 }
 
 void cs_sleepms(uint32_t msec)

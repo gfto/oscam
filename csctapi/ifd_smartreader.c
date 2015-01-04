@@ -91,6 +91,7 @@ static int32_t smart_read(struct s_reader *reader, unsigned char *buff, uint32_t
 	struct sr_data *crdr_data = reader->crdr_data;
 	int32_t ret = 0;
 	uint32_t  total_read = 0;
+	int32_t gone = 0;
 	struct timeb start, now;
 
 	cs_ftime(&start);
@@ -100,7 +101,7 @@ static int32_t smart_read(struct s_reader *reader, unsigned char *buff, uint32_t
 
 		while(crdr_data->g_read_buffer_size == 0)
 		{
-			int32_t gone = comp_timeb(&now, &start);
+			gone = comp_timeb(&now, &start);
 			if (gone >= timeout_ms)
 				break;
 			struct timespec ts;
@@ -119,7 +120,7 @@ static int32_t smart_read(struct s_reader *reader, unsigned char *buff, uint32_t
 		total_read += ret;
 		pthread_mutex_unlock(&crdr_data->g_read_mutex);
 		cs_ftime(&now);
-		if(ret>0) start=now; // reset timeout calculation again since reader is responsive!
+		if(ret>0) { cs_ftime(&start); now = start;} // reset timeout calculation again since reader is responsive!
 	} while(total_read < size && comp_timeb(&now, &start) < timeout_ms);
 
 	rdr_ddump_mask(reader, D_DEVICE, buff, total_read, "SR: Receive:");

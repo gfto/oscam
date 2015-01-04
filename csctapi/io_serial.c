@@ -359,8 +359,27 @@ int32_t IO_Serial_SetParity(struct s_reader *reader, unsigned char parity)
 void IO_Serial_Flush(struct s_reader *reader)
 {
 	unsigned char b;
+	uint8_t n = 0;
 	tcflush(reader->handle, TCIOFLUSH);
-	while(!IO_Serial_Read(reader, 0, 75000, 1, &b)) { ; } // first appears between 9~75ms
+	struct timeb starttotal, endtotal;
+	struct timeb start, end;
+	cs_ftimeus(&starttotal);
+	endtotal = starttotal; 
+	cs_ftimeus(&start);
+	end = start;
+	int64_t gone = 0;
+	while(!IO_Serial_Read(reader, 0, 75000, 1, &b)) // first appears between 9~75ms
+	{
+		n++;
+		cs_ftimeus(&end);
+		gone = comp_timebus(&end, &start);
+		rdr_log(reader,"Flush readed byte Nr %d value %.2x time_us %"PRId64, n, b, gone);
+		cs_ftimeus(&start); // Reset timer
+		end = start;
+	}
+	cs_ftimeus(&endtotal);
+	gone = comp_timebus(&endtotal, &starttotal);
+	rdr_log(reader,"Buffers readed  %d bytes total time_us %"PRId64, n, gone);
 }
 
 void IO_Serial_Sendbreak(struct s_reader *reader, int32_t duration)
@@ -404,7 +423,8 @@ bool IO_Serial_Read(struct s_reader *reader, uint32_t delay, uint32_t timeout, u
 			if(readed > 0)
 			{
 				count += readed;
-				end = start; // reset timeout again since card is responsive!
+				cs_ftime(&start); // Reset timer
+				end = start;
 			}
 			gone = comp_timeb(&end, &start);
 			if(count < size)
