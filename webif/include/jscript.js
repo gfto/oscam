@@ -3,7 +3,7 @@ var oCounterTimer = null;
 
 function reloadDocument() {
 	if(!withquery) history.pushState('', document.title, window.location.pathname);
-	window.location.reload();
+	window.location.href = window.location.href.replace(/(&amp;|&)action=[a-z]+/i,'');
 };
 
 function cdpause() {
