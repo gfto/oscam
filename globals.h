@@ -33,6 +33,7 @@
 #include <dirent.h>
 #include <termios.h>
 #include <inttypes.h>
+#include <sys/utsname.h>
 
 /*
  * The following hack is taken from Linux: include/linux/kconfig.h
