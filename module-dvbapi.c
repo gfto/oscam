@@ -1947,35 +1947,33 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 			return;
 		}
 	}
-	else
+	
+	// prioritize CAIDs which already decoded same caid:provid
+	for(n = 0; n < demux[demux_index].ECMpidcount; n++)
 	{
-		// prioritize CAIDs which already decoded same caid:provid
-		for(n = 0; n < demux[demux_index].ECMpidcount; n++)
+		c = find_channel_cache(demux_index, n, 1);
+		if(c != NULL)
 		{
-			c = find_channel_cache(demux_index, n, 1);
-			if(c != NULL)
-			{
-				cache = 1; //found cache entry
-				demux[demux_index].ECMpids[n].status = prio;
-				cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X:%04X (found caid/provid in cache - weight: %d)", n,
-							  demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID,
-							  demux[demux_index].ECMpids[n].status);
-			}
+			cache = 1; //found cache entry
+			demux[demux_index].ECMpids[n].status = prio;
+			cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X:%04X (found caid/provid in cache - weight: %d)", n,
+						  demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID,
+						  demux[demux_index].ECMpids[n].status);
 		}
+	}
 
-		// prioritize CAIDs which already decoded same caid:provid:srvid
-		for(n = 0; n < demux[demux_index].ECMpidcount; n++)
+	// prioritize CAIDs which already decoded same caid:provid:srvid
+	for(n = 0; n < demux[demux_index].ECMpidcount; n++)
+	{
+		c = find_channel_cache(demux_index, n, 0);
+		if(c != NULL)
 		{
-			c = find_channel_cache(demux_index, n, 0);
-			if(c != NULL)
-			{
-				cache = 2; //found cache entry with higher priority
-				demux[demux_index].ECMpids[n].status = prio * 2;
-				if(c->chid < 0x10000) { demux[demux_index].ECMpids[n].CHID = c->chid; }
-				cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X:%04X (found caid/provid/srvid in cache - weight: %d)", n,
-							  demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID,
-							  demux[demux_index].ECMpids[n].status);
-			}
+			cache = 2; //found cache entry with higher priority
+			demux[demux_index].ECMpids[n].status = prio * 2;
+			if(c->chid < 0x10000) { demux[demux_index].ECMpids[n].CHID = c->chid; }
+			cs_debug_mask(D_DVBAPI, "[PRIORITIZE PID %d] %04X:%06X:%04X (found caid/provid/srvid in cache - weight: %d)", n,
+						  demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID,
+						  demux[demux_index].ECMpids[n].status);
 		}
 	}
 
