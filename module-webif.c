@@ -4664,8 +4664,13 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					tpl_addVar(vars, TPLADD, "CLIENTLASTRESPONSETIMEHIST", value);
 					free_mk_t(value);
 
+#ifdef HAVE_DVBAPI
+					if((isec < cfg.hideclient_to || cfg.hideclient_to == 0 || streq(cl->account->usr, cfg.dvbapi_usr)) && (cl->typ == 'c' || cl->typ == 'p' || cl->typ == 'r'))
+					{
+#else
 					if((isec < cfg.hideclient_to || cfg.hideclient_to == 0) && (cl->typ == 'c' || cl->typ == 'p' || cl->typ == 'r'))
 					{
+#endif
 						if(((cl->typ == 'c')) && (cl->lastreader[0]))
 						{
 							tpl_printf(vars, TPLADD, "MSVALUE", PRINTF_LOCAL_D, cl->cwlastresptime);
@@ -4696,8 +4701,9 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								tpl_printf(vars, TPLAPPEND, "CLIENTLBVALUE", "%s (%'d ms)", xml_encode(vars, cl->lastreader), cl->cwlastresptime);
 #endif
 							}
+							if(cl->last_caid == NO_CAID_VALUE) tpl_addVar(vars, TPLADD, "CLIENTLBVALUE", "");
 						}
-						if(cl->last_caid != NO_CAID_VALUE && cl->last_srvid != NO_SRVID_VALUE)
+						if(cl->last_caid != NO_CAID_VALUE || cl->last_srvid != NO_SRVID_VALUE)
 						{
 							char channame[32];
 							tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", cl->last_caid);

@@ -3,7 +3,8 @@ var oCounterTimer = null;
 
 function reloadDocument() {
 	if(!withquery) history.pushState('', document.title, window.location.pathname);
-	window.location.href = window.location.href.replace(/(&amp;|&)action=[a-z]+/i,'');
+	else if (window.location.href.match(/(&amp;|&)action=\w+/)) history.pushState('', document.title, window.location.href.replace(/(&amp;|&)action=\w+/,''));
+	window.location.reload();
 };
 
 function cdpause() {
@@ -1222,7 +1223,7 @@ function updateStatuspage(data) {
 		}
 
 		if (!is_nopoll('statuscol14')) {
-			if (item.type == 's' || item.type == 'h' || item.type == 'm') {
+			if ('hms'.indexOf(item.type) > (-1) || item.request.caid == 'FFFE') {
 				$(uid + " > td.statuscol14").text('');
 			} else {
 				var value = item.type == 'c' ? (item.request.answered ? item.request.answered + ' (' + item.request.msvalue + ' ms)' : '') : item.request.lbvalue;
