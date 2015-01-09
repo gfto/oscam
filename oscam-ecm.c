@@ -849,11 +849,11 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	static const char *stxtWh[16] = {"", "user ", "reader ", "server ", "lserver ", "", "", "", "", "", "", "", "" , "" , "", ""};
 	char sby[100] = "", sreason[32] = "", scwcinfo[32] = "", schaninfo[32] = "", srealecmtime[50]="";
 	char erEx[32] = "";
-	char uname[38] = "";
+	char usrname[38] = "";
 	char channame[32];
 	struct timeb tpe;
 
-	snprintf(uname, sizeof(uname) - 1, "%s", username(client));
+	snprintf(usrname, sizeof(usrname) - 1, "%s", username(client));
 
 #ifdef WITH_DEBUG
 	if(cs_dblevel & D_CLIENTECM)
@@ -1250,13 +1250,13 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 		if(er->reader_avail == 1 || er->stage == 0)
 		{
 			cs_log("%s (%s): %s (%d ms)%s%s%s%s",
-				   uname, buf,
+				   usrname, buf,
 				   er->rcEx ? erEx : stxt[er->rc], client->cwlastresptime, sby, schaninfo, sreason, scwcinfo);
 		}
 		else
 		{
 			cs_log("%s (%s): %s (%d ms)%s (%c/%d/%d/%d)%s%s%s%s",
-				   uname, buf,
+				   usrname, buf,
 				   er->rcEx ? erEx : stxt[er->rc],
 				   client->cwlastresptime, sby,
 				   stageTxt[er->stage], er->reader_requested, (er->reader_count + er->fallback_reader_count), er->reader_avail,
