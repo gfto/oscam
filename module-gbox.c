@@ -634,6 +634,25 @@ int8_t get_card_action(struct gbox_card *card, uint32_t provid1, uint16_t peer_i
 	}	
 }
 
+static int8_t gbox_init_card(struct gbox_card *card, uint16_t caid, uint32_t provid, uint32_t provid1, uint8_t *ptr)
+{
+	if (!card || !ptr) { return -1; }
+
+	card->caid = caid;
+	card->provid = provid;
+	card->provid_1 = provid1;
+	card->id.slot = ptr[0];
+	card->dist = ptr[1] & 0xf;
+	card->lvl = ptr[1] >> 4;
+	card->id.peer = ptr[2] << 8 | ptr[3];
+	card->badsids = ll_create("badsids");
+	card->goodsids = ll_create("goodsids");
+	card->no_cws_returned = 0;
+	card->average_cw_time = 0;
+
+	return 0;
+}
+
 int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 {
 	if (!cli || !cli->gbox || !cli->reader || !data) { return -1; };
@@ -706,7 +725,6 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		}
 
 		ncards_in_msg += ptr[4];
-
 		//caid check
 		if(chk_ctab(caid, &cli->reader->ctab))
 		{
@@ -718,54 +736,52 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 			// for all cards of current caid/provid,
 			while (ptr < current_ptr + 5 + current_ptr[4] * 4)
 			{
-				previous_it = it;
-				card_s = ll_iter_next(&it);
-				switch (get_card_action(card_s,provid1,ptr[2] << 8 | ptr[3],ptr[0],peer))
+				if ((ptr[1] & 0xf) <= cli->reader->gbox_maxdist)
 				{
-				case -1:
-					//IDEA: Later put card to a list of temporary not available cards
-					//reason: not loose good/bad sids
-					//can be later removed by daily garbage collector for example
-					cs_debug_mask(D_READER, "delete card: caid=%04X, provid=%06X, slot=%d, level=%d, dist=%d, peer=%04X",
-								  card_s->caid, card_s->provid, card_s->id.slot, card_s->lvl, card_s->dist, card_s->id.peer);
-					//delete card because not send anymore 
-					ll_iter_remove(&it);
-					gbox_free_card(card_s);				
-					break;
-				case 0:
-					ptr += 4;	
-					break;
-				case 1:	
-					// create card info from data and add card to peer.cards
-					if(!cs_malloc(&card, sizeof(struct gbox_card)))
-						{ continue; }
-					card->caid = caid;
-					card->provid = provid;
-					card->provid_1 = provid1;
-					card->id.slot = ptr[0];
-					card->dist = ptr[1] & 0xf;
-					card->lvl = ptr[1] >> 4;
-					card->id.peer = ptr[2] << 8 | ptr[3];
-					card->badsids = ll_create("badsids");
-					card->goodsids = ll_create("goodsids");
-					card->no_cws_returned = 0;
-					card->average_cw_time = 0;
-				
-					if (!card_s)
-						{ ll_append(peer->gbox.cards, card); }
-					else
-					{ 
-						ll_iter_insert(&previous_it, card); 
-						it = previous_it;
-					}
-					ll_iter_next(&it);
-					cs_debug_mask(D_READER, "new card: caid=%04X, provid=%06X, slot=%d, level=%d, dist=%d, peer=%04X",
-								  card->caid, card->provid, card->id.slot, card->lvl, card->dist, card->id.peer);			
-					ptr += 4;
-					break;
-				default:
-					break;	
-				}	//switch	
+					previous_it = it;
+					card_s = ll_iter_next(&it);
+					switch (get_card_action(card_s,provid1,ptr[2] << 8 | ptr[3],ptr[0],peer))
+					{
+					case -1:
+						//IDEA: Later put card to a list of temporary not available cards
+						//reason: not loose good/bad sids
+						//can be later removed by daily garbage collector for example
+						cs_debug_mask(D_READER, "delete card: caid=%04X, provid=%06X, slot=%d, level=%d, dist=%d, peer=%04X",
+									  card_s->caid, card_s->provid, card_s->id.slot, card_s->lvl, card_s->dist, card_s->id.peer);
+						//delete card because not send anymore 
+						ll_iter_remove(&it);
+						gbox_free_card(card_s);				
+						break;
+					case 0:
+						ptr += 4;	
+						break;
+					case 1:	
+						// create card info from data and add card to peer.cards
+						if(!cs_malloc(&card, sizeof(struct gbox_card)))
+						{ 
+							cs_log("[gbx]: Can't allocate gbox card");
+							continue;	
+						}
+						gbox_init_card(card,caid,provid,provid1,ptr);
+						if (!card_s)
+							{ ll_append(peer->gbox.cards, card); }
+						else
+						{ 
+							ll_iter_insert(&previous_it, card); 
+							it = previous_it;
+						}
+						ll_iter_next(&it);
+						cs_debug_mask(D_READER, "new card: caid=%04X, provid=%06X, slot=%d, level=%d, dist=%d, peer=%04X",
+									  card->caid, card->provid, card->id.slot, card->lvl, card->dist, card->id.peer);			
+						ptr += 4;
+						break;
+					default:
+						ptr += 4;
+						break;	
+					}	//switch
+				} // if <= maxdist
+				else
+					{ ptr += 4; }	//ignore because of maxdist
 			} // end while cards for provider
 		}
 		else
