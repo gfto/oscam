@@ -334,7 +334,7 @@ static int8_t gbox_remove_all_bad_sids(struct gbox_peer *peer, ECM_REQUEST *er, 
 	struct gbox_bad_srvid *srvid = NULL;
 	struct gbox_card_pending *pending = NULL;
 	LL_ITER it = ll_iter_create(er->gbox_cards_pending);
-	while (pending = ll_iter_next(&it))
+	while ((pending = ll_iter_next(&it)))
 	{
 		LL_ITER it2 = ll_iter_create(peer->gbox.cards);
 		while((card = ll_iter_next(&it2)))
@@ -1750,7 +1750,7 @@ static uint32_t gbox_get_pending_time(ECM_REQUEST *er, uint16_t peer_id, uint8_t
 	
 	struct gbox_card_pending *pending = NULL;
 	LL_ITER it = ll_iter_create(er->gbox_cards_pending);
-	while (pending = ll_iter_next(&it))
+	while ((pending = ll_iter_next(&it)))
 	{
 		if ((pending->id.peer == peer_id) && (pending->id.slot == slot))
 			{ return pending->pending_time; }
@@ -1998,7 +1998,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 	time_t time_since_lastcw;
 	uint32_t current_avg_card_time = 0;
 	//loop over good only
-	while(card = ll_iter_next(&it))
+	while((card = ll_iter_next(&it)))
 	{
 		current_id.peer = card->id.peer;
 		current_id.slot = card->id.slot;					
@@ -2046,7 +2046,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 	
 	//loop over bad and unknown cards
 	it = ll_iter_create(peer->gbox.cards);	
-	while(card = ll_iter_next(&it))
+	while((card = ll_iter_next(&it)))
 	{
 		current_id.peer = card->id.peer;
 		current_id.slot = card->id.slot;					
@@ -2068,7 +2068,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 			{
 				//check if sid is bad
 				LL_ITER itt = ll_iter_create(card->badsids);
-				while(srvid_bad = ll_iter_next(&itt))
+				while((srvid_bad = ll_iter_next(&itt)))
 				{
 					if(srvid_bad->srvid.provid_id == er->prid && srvid_bad->srvid.sid == er->srvid)
 					{
@@ -2155,7 +2155,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 		}
 	
 		it = ll_iter_create(er->gbox_cards_pending);
-		while (pending = ll_iter_next(&it))
+		while ((pending = ll_iter_next(&it)))
 			{ cs_debug_mask(D_READER, "[gbx]: Pending Card ID: %04X Slot: %02X Time: %d", pending->id.peer, pending->id.slot, pending->pending_time); }
 	
 		if(er->gbox_ecm_status > GBOX_ECM_NOT_ASKED)
