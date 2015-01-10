@@ -677,6 +677,9 @@ void free_ecm(ECM_REQUEST *ecm)
 	}
 	if(ecm->src_data)
 		{ add_garbage(ecm->src_data); }
+#ifdef MODULE_GBOX
+	ll_destroy_data_NULL(ecm->gbox_cards_pending);
+#endif
 	add_garbage(ecm);
 }
 
@@ -686,6 +689,9 @@ void free_push_in_ecm(ECM_REQUEST *ecm)
 	cacheex_free_csp_lastnodes(ecm);
 	if(ecm->src_data)
 		{ NULLFREE(ecm->src_data); }
+#ifdef MODULE_GBOX
+	ll_destroy_data_NULL(ecm->gbox_cards_pending);
+#endif
 	NULLFREE(ecm);
 }
 
@@ -702,6 +708,8 @@ ECM_REQUEST *get_ecmtask(void)
 
 #ifdef MODULE_GBOX
 	er->gbox_ecm_id = 0;
+	er->gbox_ecm_status = GBOX_ECM_NOT_ASKED;
+	er->gbox_cards_pending = ll_create("pending_gbox_cards");
 #endif
 	er->rc     = E_UNHANDLED;
 	er->client = cl;

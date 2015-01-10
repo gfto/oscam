@@ -850,7 +850,8 @@ typedef struct ecm_request_t
 #if defined MODULE_GBOX
 	uint32_t        gbox_crc;       // rcrc for gbox, used to identify ECM task in peer responses
 	uint16_t        gbox_ecm_id;
-	uint8_t         gbox_ecm_ok;
+	uint8_t         gbox_ecm_status;
+	LLIST		*gbox_cards_pending; //type gbox_card_pending
 #endif
 
 	void            *src_data;

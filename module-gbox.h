@@ -9,6 +9,9 @@
 #define DEFAULT_GBOX_MAX_ECM_SEND	3
 #define DEFAULT_GBOX_RECONNECT		300
 #define CS_GBOX_MAX_LOCAL_CARDS		16
+#define GBOX_REBROADCAST_TIMEOUT        1250
+#define GBOX_SID_CONFIRM_TIME		3600
+#define GBOX_DEFAULT_CW_TIME		500
 
 #define MSG_ECM		0x445C
 #define MSG_CW		0x4844
@@ -23,16 +26,52 @@
 #define MSG_BOXINFO	0xA0A1
 #define MSG_UNKNWN	0x48F9
 
+#define GBOX_ECM_NOT_ASKED	0
+#define GBOX_ECM_SENT		1
+#define GBOX_ECM_SENT_ALL	2
+#define GBOX_ECM_SENT_ALL_TWICE 3
+#define GBOX_ECM_ANSWERED	4
+
+struct gbox_rbc_thread_args 
+{
+    struct s_client *cli;
+    ECM_REQUEST *er;
+    uint32_t waittime;
+};
+
 struct gbox_srvid
 {
     uint16_t sid;
     uint32_t provid_id;
+};
+
+struct gbox_good_srvid
+{
+    struct gbox_srvid srvid;
     time_t last_cw_received;
+};
+
+struct gbox_bad_srvid
+{
+    struct gbox_srvid srvid;
+    uint8_t bad_strikes;
+};
+
+struct gbox_card_id
+{
+    uint16_t peer;
+    uint8_t slot;
+};
+
+struct gbox_card_pending
+{
+    struct gbox_card_id id;
+    uint32_t pending_time;
 };
 
 struct gbox_card
 {
-    uint16_t peer_id;
+    struct gbox_card_id id;
     uint16_t caid;
     uint32_t provid;
     uint32_t provid_1;
@@ -40,8 +79,8 @@ struct gbox_card
     uint8_t dist;
     uint8_t lvl;
     uint8_t type;
-    LLIST *badsids; // sids that have failed to decode (struct cc_srvid)
-    LLIST *goodsids; //sids that could be decoded (struct cc_srvid)
+    LLIST *badsids; // sids that have failed to decode (struct gbox_srvid)
+    LLIST *goodsids; //sids that could be decoded (struct gbox_srvid)
     uint32_t no_cws_returned;
     uint32_t average_cw_time;
 };
