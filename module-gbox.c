@@ -1796,6 +1796,7 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
                 if(proxy->ecmtask[i].gbox_ecm_status == GBOX_ECM_NOT_ASKED || proxy->ecmtask[i].gbox_ecm_status == GBOX_ECM_ANSWERED)
                     { return -1; }
                 proxy->ecmtask[i].gbox_ecm_status = GBOX_ECM_ANSWERED;
+                proxy->ecmtask[i].gbox_ecm_id = id_card;
                 *rc = 1;
                 return proxy->ecmtask[i].idx;
             }
