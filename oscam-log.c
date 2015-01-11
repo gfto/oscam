@@ -263,9 +263,9 @@ int32_t cs_open_logfiles(void)
     			cs_log("Failure to open file:  %s", "/proc/stb/info/model");
     			goto END;
    			}
-			for (line = 1;line < 2 ; line++) // read only line 1
+			for (line = 1; line < 2; line++) // read only line 1
 			{
-    			if (!fgets(data, 22, f)) /* reads one line at a time */
+    			if (!fgets(data, 22, f)) // reads one line at a time
         		break;
     			if (!(p = strchr(data, '\n')))
 				{
@@ -286,9 +286,9 @@ int32_t cs_open_logfiles(void)
     				cs_log("Failure to open file:  %s", "/proc/stb/info/vumodel");
     				goto END;
    				}
-				for (line = 1; ; line++)
+				for (line = 1; line < 2; line++) // read only line 1
 				{
-    				if (!fgets(data, 22, f)) /* reads one line at a time */
+    				if (!fgets(data, 22, f)) // reads one line at a time
         			break;
     				if (!(p = strchr(data, '\n')))
 					{
