@@ -257,7 +257,7 @@ int32_t cs_open_logfiles(void)
 			char data[23], *p;
 			FILE *f;
 			int32_t line = 0;
-			char *stbproc_vumodel;  // to store vumodel
+			char *stbproc_boxtype;  // to store specific boxtype
 			char *stbproc_model;    // to store stb model
 
 
@@ -282,12 +282,15 @@ int32_t cs_open_logfiles(void)
 				cs_log("Stb model      = %s", stbproc_model);
     		}
 			fclose(f);
-			if(lstat("/proc/stb/info/vumodel",&info) == 0)
+			if((lstat("/proc/stb/info/vumodel",&info) == 0) || (lstat("/proc/stb/info/boxtype",&info) == 0))
 			{
 				if (!(f = fopen("/proc/stb/info/vumodel", "r")))
 				{
-    				cs_log("Failure to open file:  %s", "/proc/stb/info/vumodel");
-    				goto END;
+					if (!(f = fopen("/proc/stb/info/boxtype", "r")))
+					{
+    					cs_log("Failure to open file:  %s", "specific box type file");
+    					goto END;
+					}
    				}
 				for (line = 1; line < 2; line++) // read only line 1
 				{
@@ -301,8 +304,10 @@ int32_t cs_open_logfiles(void)
         				goto END;
         			}
     				*p = '\0';
-					stbproc_vumodel = data;
-					cs_log("Stb vumodel    = vu%s", stbproc_vumodel);
+					stbproc_boxtype = data;
+					if(lstat("/proc/stb/info/vumodel",&info) == 0) {cs_log("Stb boxtype    = vu%s", stbproc_boxtype);}
+					else {cs_log("Stb boxtype    = %s", stbproc_boxtype);}
+					fclose(f);
 				}
 			}
 		}
