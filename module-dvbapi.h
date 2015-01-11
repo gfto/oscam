@@ -285,6 +285,7 @@ const char *dvbapi_get_client_name(void);
 uint16_t dvbapi_get_client_proto_version(void);
 void delayer(ECM_REQUEST *er);
 void check_add_emmpid(int32_t demux_index, uchar *filter, int32_t l, int32_t emmtype);
+void save_ccache_to_file(void);
 
 #ifdef DVBAPI_LOG_PREFIX
 #undef cs_log

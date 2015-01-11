@@ -9,6 +9,7 @@
 #include "module-anticasc.h"
 #include "module-cacheex.h"
 #include "module-cccam.h"
+#include "module-dvbapi.h"
 #include "module-dvbapi-azbox.h"
 #include "module-dvbapi-mca.h"
 #include "module-ird-guess.h"
@@ -1453,6 +1454,10 @@ int32_t main(int32_t argc, char *argv[])
 	remove_versionfile();
 
 	stat_finish();
+#ifdef HAVE_DVBAPI
+	save_ccache_to_file(); // save dvbapi channelcache
+#endif
+	
 	cccam_done_share();
 
 	kill_all_clients();

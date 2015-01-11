@@ -21,6 +21,8 @@
 #include "oscam-time.h"
 #include "reader-irdeto.h"
 
+#define LINESIZE 1024
+
 #ifdef DVBAPI_SAMYGO
 
 static int _ioctl(int fd, int request, ...)
@@ -134,6 +136,110 @@ struct s_channel_cache
 	uint16_t    pid;
 	uint32_t    chid;
 };
+
+void save_ccache_to_file(void)
+{
+	char buf[256];
+
+	set_thread_name(__func__);
+
+	char *fname;
+	get_config_filename(buf, sizeof(buf), "oscam.ccache");
+	fname = buf;
+	FILE *file = fopen(fname, "w");
+
+	if(!file)
+	{
+		cs_log("dvbapi channelcache can't write to file %s", fname);
+		return;
+	}
+
+	setvbuf(file, NULL, _IOFBF, 128 * 1024);
+	
+	LL_ITER it = ll_iter_create(channel_cache);
+	struct s_channel_cache *c;
+	while((c = ll_iter_next(&it)))
+	{
+		fprintf(file, "%04X,%06X,%04X,%04X,%06X\n", c->caid, c->prid, c->srvid, c->pid, c->chid);
+	}
+
+	fclose(file);
+	cs_log("dvbapi channelcache saved to %s", fname);
+}
+
+void load_ccache_from_file(void)
+{
+	char buf[256];
+	char *line;
+	char *fname;
+	FILE *file;
+	struct s_channel_cache *c;
+
+	get_config_filename(buf, sizeof(buf), "oscam.ccache");
+	fname = buf;
+	
+	file = fopen(fname, "r");
+
+	if(!file)
+	{
+		cs_log("dvbapi channelcache can't read from file %s", fname);
+		return;
+	}
+
+	if(!cs_malloc(&line, LINESIZE))
+	{
+		fclose(file);
+		return;
+	}
+
+	setvbuf(file, NULL, _IOFBF, 128 * 1024);
+	
+	int32_t i = 1;
+	int32_t valid = 0;
+	char *ptr, *saveptr1 = NULL;
+	char *split[6];
+
+	while(fgets(line, LINESIZE, file))
+	{
+		if(!line[0] || line[0] == '#' || line[0] == ';')
+			{ continue; }
+
+		if(!cs_malloc(&c, sizeof(struct s_channel_cache)))
+			{ continue; }
+
+		for(i = 0, ptr = strtok_r(line, ",", &saveptr1); ptr && i < 6 ; ptr = strtok_r(NULL, ",", &saveptr1), i++)
+		{ 
+			split[i] = ptr;
+		}
+		
+		valid = (i == 5);
+		if(valid)
+		{
+			c->caid = a2i(split[0], 4);
+			c->prid = a2i(split[1], 6);
+			c->srvid = a2i(split[2], 4);
+			c->pid = a2i(split[3], 4);
+			c->chid = a2i(split[4], 6);
+			
+			if(valid && c->caid != 0)
+			{
+				if(!channel_cache)
+				{ 
+					channel_cache = ll_create("channel cache");
+				}
+
+				ll_append(channel_cache, c);
+			}
+			else
+			{
+				NULLFREE(c);
+			}
+		}
+	}
+	fclose(file);
+	NULLFREE(line);
+	cs_log("dvbapi channelcache loaded from %s", fname);
+}
 
 struct s_channel_cache *find_channel_cache(int32_t demux_id, int32_t pidindex, int8_t caid_and_prid_only)
 {
@@ -3448,7 +3554,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 
 static void *dvbapi_main_local(void *cli)
 {
-
+	load_ccache_from_file(); // load channelcache
 #ifdef WITH_AZBOX
 	return azbox_main_thread(cli);
 #endif
@@ -4040,6 +4146,7 @@ static void *dvbapi_main_local(void *cli)
 			}
 		}
 	}
+	save_ccache_to_file(); // save dvbapi channelcache
 	return NULL;
 }
 
