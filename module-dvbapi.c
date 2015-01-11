@@ -295,11 +295,12 @@ int32_t edit_channel_cache(int32_t demux_id, int32_t pidindex, uint8_t add)
 		if(demux[demux_id].program_number == c->srvid
 				&& p->CAID == c->caid
 				&& p->ECM_PID == c->pid
-				&& (p->PROVID == c->prid || p->PROVID == 0)
-				&& (!add || p->CHID == c->chid))
+				&& (p->PROVID == c->prid || p->PROVID == 0))
 		{
-			if(add)
-				{ return 0; } //already added
+			if(add && p->CHID == c->chid)
+			{
+				return 0; //already added 
+			} 
 			ll_iter_remove_data(&it);
 			count++;
 		}
@@ -2022,36 +2023,33 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 
 	struct s_channel_cache *c = NULL;
 
-	if(cfg.dvbapi_requestmode == 1)
+	for(n = 0; n < demux[demux_index].ECMpidcount; n++)
+	{
+		c = find_channel_cache(demux_index, n, 0); // find exact channel match
+		if(c != NULL)
+		{
+			found = n;
+			break;
+		}
+	}
+	if(found != -1)     // Found in cache
 	{
 		for(n = 0; n < demux[demux_index].ECMpidcount; n++)
 		{
-			c = find_channel_cache(demux_index, n, 0);
-			if(c != NULL)
+			if(n != found)
 			{
-				found = n;
-				break;
+				demux[demux_index].ECMpids[n].status = -1;
+				if(c->chid < 0x10000) { demux[demux_index].ECMpids[n].CHID = c->chid; }
+			}
+			else
+			{
+				demux[demux_index].ECMpids[n].status = 1;
 			}
 		}
-		if(found != -1)     // Found in cache
-		{
-			for(n = 0; n < demux[demux_index].ECMpidcount; n++)
-			{
-				if(n != found)
-				{
-					demux[demux_index].ECMpids[n].status = -1;
-					if(c->chid < 0x10000) { demux[demux_index].ECMpids[n].CHID = c->chid; }
-				}
-				else
-				{
-					demux[demux_index].ECMpids[n].status = 1;
-				}
-			}
-			demux[demux_index].max_emm_filter = MAX_FILTER - 1;
-			demux[demux_index].max_status = 1;
-			cs_debug_mask(D_DVBAPI, "[DVBAPI] Found channel in cache, start descrambling pid %d ", found);
-			return;
-		}
+		demux[demux_index].max_emm_filter = MAX_FILTER - 1;
+		demux[demux_index].max_status = 1;
+		cs_debug_mask(D_DVBAPI, "[DVBAPI] Found channel in cache, start descrambling pid %d ", found);
+		return;
 	}
 	
 	// prioritize CAIDs which already decoded same caid:provid
