@@ -275,8 +275,8 @@ int32_t cs_open_logfiles(void)
         			goto END;
         		}
     			*p = '\0';
-				stb_model = data;
-				cs_log("Stb model      = %s", stb_model);
+				stbproc_model = data;
+				cs_log("Stb model      = %s", stbproc_model);
     		}
 			fclose(f);
 			if(lstat("/proc/stb/info/vumodel",&info) == 0)
@@ -298,8 +298,8 @@ int32_t cs_open_logfiles(void)
         				goto END;
         			}
     				*p = '\0';
-					stb_vumodel = data;
-					cs_log("Stb vumodel    = vu%s", stb_vumodel);
+					stbproc_vumodel = data;
+					cs_log("Stb vumodel    = vu%s", stbproc_vumodel);
 				}
 			}
 		}
