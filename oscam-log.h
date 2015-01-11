@@ -5,6 +5,8 @@ int32_t cs_init_log(void);
 void cs_reopen_log(void);
 int32_t cs_open_logfiles(void);
 void cs_disable_log(int8_t disabled);
+char *stb_vumodel;  // to store vumodel
+char *stb_model;    // to store stb model
 
 void cs_reinit_loghist(uint32_t size);
 

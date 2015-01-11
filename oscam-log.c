@@ -230,8 +230,81 @@ int32_t cs_open_logfiles(void)
 	// according to syslog docu: calling closelog is not necessary and calling openlog multiple times is safe
 	// We use openlog to set the default syslog settings so that it's possible to allow switching syslog on and off
 	openlog(syslog_ident, LOG_NDELAY | LOG_PID, LOG_DAEMON);
-
 	cs_log_nolock(">> OSCam <<  cardserver %s, version " CS_VERSION ", build r" CS_SVN_VERSION " (" CS_TARGET ")", starttext);
+
+	struct utsname buffer;
+	int8_t rc = 0;
+	rc = uname(&buffer);
+
+	if (rc == 0) 
+	{ 
+		cs_log("System name    = %s", buffer.sysname);
+		cs_log("Host name      = %s", buffer.nodename);
+		cs_log("Release        = %s", buffer.release);
+		cs_log("Version        = %s", buffer.version);
+		cs_log("Machine        = %s", buffer.machine);
+	} 
+	else 
+	{
+		cs_log("unable to use uname unknown router,stb or pc");
+	}
+	
+	if (!strcasecmp(buffer.sysname, "Linux"))
+	{
+		struct stat info;
+		if((lstat("/proc/stb/info",&info) == 0) && (lstat("/proc/stb/info/model",&info) == 0))
+		{
+			char data[23], *p;
+			FILE *f;
+			int line;
+
+			if (!(f = fopen("/proc/stb/info/model", "r")))
+			{
+    			cs_log("Failure to open file:  %s", "/proc/stb/info/model");
+    			goto END;
+   			}
+			for (line = 1;line < 2 ; line++) // read only line 1
+			{
+    			if (!fgets(data, 22, f)) /* reads one line at a time */
+        		break;
+    			if (!(p = strchr(data, '\n')))
+				{
+        			cs_log("No end-of-line detected in line %d or too long for buffer.", line);
+					*p = '\0';
+					fclose(f);
+        			goto END;
+        		}
+    			*p = '\0';
+				stb_model = data;
+				cs_log("Stb model      = %s", stb_model);
+    		}
+			fclose(f);
+			if(lstat("/proc/stb/info/vumodel",&info) == 0)
+			{
+				if (!(f = fopen("/proc/stb/info/vumodel", "r")))
+				{
+    				cs_log("Failure to open file:  %s", "/proc/stb/info/vumodel");
+    				goto END;
+   				}
+				for (line = 1; ; line++)
+				{
+    				if (!fgets(data, 22, f)) /* reads one line at a time */
+        			break;
+    				if (!(p = strchr(data, '\n')))
+					{
+        				cs_log("No end-of-line detected in line %d or too long for buffer.", line);
+						*p = '\0';
+						fclose(f);
+        				goto END;
+        			}
+    				*p = '\0';
+					stb_vumodel = data;
+					cs_log("Stb vumodel    = vu%s", stb_vumodel);
+				}
+			}
+		}
+	}
+END:
 	return (fp <= (FILE *)0);
 }
 
