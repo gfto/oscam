@@ -3552,7 +3552,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 
 static void *dvbapi_main_local(void *cli)
 {
-	load_ccache_from_file(); // load channelcache
+
 #ifdef WITH_AZBOX
 	return azbox_main_thread(cli);
 #endif
@@ -3561,6 +3561,9 @@ static void *dvbapi_main_local(void *cli)
 	return mca_main_thread(cli);
 #endif
 
+#if HAVE_DVBAPI && !defined WITH_MCA && !defined WITH_AZBOX	
+	load_ccache_from_file(); // load channelcache
+#endif
 	int32_t i, j;
 	struct s_client *client = (struct s_client *) cli;
 	client->thread = pthread_self();
@@ -4144,7 +4147,6 @@ static void *dvbapi_main_local(void *cli)
 			}
 		}
 	}
-	save_ccache_to_file(); // save dvbapi channelcache
 	return NULL;
 }
 
