@@ -5,9 +5,6 @@ int32_t cs_init_log(void);
 void cs_reopen_log(void);
 int32_t cs_open_logfiles(void);
 void cs_disable_log(int8_t disabled);
-char *stbproc_vumodel;  // to store vumodel
-char *stbproc_model;    // to store stb model
-
 void cs_reinit_loghist(uint32_t size);
 
 void cs_log_int(uint16_t mask, int8_t lock, const uchar *buf, int32_t n, const char *fmt, ...) __attribute__((format(printf, 5, 6)));
