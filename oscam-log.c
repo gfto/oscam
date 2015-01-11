@@ -256,7 +256,7 @@ int32_t cs_open_logfiles(void)
 		{
 			char data[23], *p;
 			FILE *f;
-			int line;
+			int32_t line = 0;
 
 			if (!(f = fopen("/proc/stb/info/model", "r")))
 			{
