@@ -1267,7 +1267,7 @@ struct s_reader                                     //contains device info, read
 	CAIDTAB         ctab;
 	uint32_t        boxid;
 	int8_t          nagra_read;                     // read nagra ncmed records: 0 Disabled (default), 1 read all records, 2 read valid records only
-	uint8_t         boxkey[8];                      // n3 boxkey 8byte
+	uint8_t         boxkey[16];                      // n3 boxkey 8byte, seca sessionkey 16byte
 	int8_t          force_irdeto;
 	uchar           rsa_mod[120];                   // rsa modulus for nagra cards.
 	uchar           atr[64];

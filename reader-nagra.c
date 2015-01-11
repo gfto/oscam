@@ -360,7 +360,7 @@ static int32_t NegotiateSessionKey(struct s_reader *reader)
 	{
 		rdr_debug_mask(reader, D_READER, "No valid DT08 calc using rsa from config and serial from card");
 		memcpy(csystem_data->plainDT08RSA, reader->rsa_mod, 64);
-		memcpy(csystem_data->signature, reader->boxkey, sizeof(reader->boxkey));
+		memcpy(csystem_data->signature, reader->boxkey, 8);
 	}
 
 	if((csystem_data->is_n3_na) && (!do_cmd(reader, 0x29, 0x02, 0xA9, 0x04, NULL, cta_res, &cta_lr)))
@@ -510,7 +510,7 @@ static void decryptDT08(struct s_reader *reader, unsigned char *cta_res)
 	static_dt08[64] |= static_dt08[0] & 0x80;
 
 	// IdeaCamKey
-	memcpy(&csystem_data->IdeaCamKey[0], reader->boxkey, sizeof(reader->boxkey));
+	memcpy(&csystem_data->IdeaCamKey[0], reader->boxkey, 8);
 	memcpy(&csystem_data->IdeaCamKey[8], reader->irdId, 4);
 	for(i = 0; i < 4; i++)
 		{ csystem_data->IdeaCamKey[12 + i] = ~reader->irdId[i]; }

@@ -477,6 +477,38 @@ static void rsakey_fn(const char *token, char *value, void *setting, FILE *f)
 		{ fprintf_conf(f, "rsakey", "\n"); }
 }
 
+static void boxkey_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	struct s_reader *rdr = setting;
+	if(value)
+	{
+		int32_t len = strlen(value);
+		if(len != 16 && len != 32)
+		{
+			memset(rdr->boxkey, 0, sizeof(rdr->boxkey));
+		}
+		else
+		{
+			if(key_atob_l(value, rdr->boxkey, len))
+			{
+				fprintf(stderr, "reader boxkey parse error, %s=%s\n", token, value);
+				memset(rdr->boxkey, 0, sizeof(rdr->boxkey));
+			}
+		}
+		return;
+	}
+	int32_t len = check_filled(rdr->boxkey, sizeof(rdr->boxkey));
+	if(len > 0)
+	{
+		if(len > 8) { len = 16; }
+		else { len = 8; }
+		char tmp[len * 2 + 1];
+		fprintf_conf(f, "boxkey", "%s\n", cs_hexdump(0, rdr->boxkey, len, tmp, sizeof(tmp)));
+	}
+	else if(cfg.http_full_cfg)
+		{ fprintf_conf(f, "boxkey", "\n"); }
+}
+
 static void flags_fn(const char *token, char *value, void *setting, long flag, FILE *f)
 {
 	uint32_t *var = setting;
@@ -994,7 +1026,7 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC("caid"                 , OFS(ctab),                    reader_caid_fn),
 	DEF_OPT_FUNC("atr"                  , 0,                            atr_fn),
 	DEF_OPT_FUNC("boxid"                , 0,                            boxid_fn),
-	DEF_OPT_HEX("boxkey"                , OFS(boxkey),                  SIZEOF(boxkey)),
+	DEF_OPT_FUNC("boxkey"               , 0,                            boxkey_fn),
 	DEF_OPT_FUNC("rsakey"               , 0,                            rsakey_fn),
 	DEF_OPT_FUNC_X("ins7e"              , OFS(ins7E),                   ins7E_fn, SIZEOF(ins7E)),
 	DEF_OPT_FUNC_X("ins7e11"            , OFS(ins7E11),                 ins7E_fn, SIZEOF(ins7E11)),
