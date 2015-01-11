@@ -8,6 +8,7 @@
 #include "oscam-net.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
+#include "oscam-log-xtr.h"
 
 // Do not allow log_list to grow bigger than that many entries
 #define MAX_LOG_LIST_BACKLOG 10000
@@ -257,9 +258,6 @@ int32_t cs_open_logfiles(void)
 			char data[23], *p;
 			FILE *f;
 			int32_t line = 0;
-			char *stbproc_boxtype;  // to store specific boxtype
-			char *stbproc_model;    // to store stb model
-
 
 			if (!(f = fopen("/proc/stb/info/model", "r")))
 			{
