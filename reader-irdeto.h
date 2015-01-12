@@ -4,7 +4,7 @@
 #ifdef READER_IRDETO
 void irdeto_add_emm_header(EMM_PACKET *ep);
 #else
-static inline void irdeto_add_emm_header(EMM_PACKET *ep) { }
+static inline void irdeto_add_emm_header(EMM_PACKET *UNUSED(ep)) { }
 #endif
 
 #endif
