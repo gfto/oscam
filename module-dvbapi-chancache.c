@@ -69,7 +69,7 @@ void dvbapi_load_channel_cache(void)
 	char *ptr, *saveptr1 = NULL;
 	char *split[6];
 
-	memset(line, sizeof(line), 0);
+	memset(line, 0, sizeof(line));
 	while(fgets(line, sizeof(line), file))
 	{
 		if(!line[0] || line[0] == '#' || line[0] == ';')
