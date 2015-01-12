@@ -3739,10 +3739,13 @@ static void *dvbapi_main_local(void *cli)
 							{
 								//client disconnects, stop all assigned decoding
 								cs_debug_mask(D_DVBAPI, "Socket %d reported connection close", connfd);
+								int active_conn = 0; //other active connections counter
 								for (j = 0; j < MAX_DEMUX; j++)
 								{
 									if (demux[j].socket_fd == connfd)
 										dvbapi_stop_descrambling(j);
+									else if (demux[j].socket_fd)
+										active_conn++;
 									// remove from unassoc_fd when necessary
 									if (unassoc_fd[j] == connfd)
 										unassoc_fd[j] = 0;
@@ -3750,17 +3753,20 @@ static void *dvbapi_main_local(void *cli)
 								close(connfd);
 								connfd = -1;
 								add_to_poll = 0;
-								client_proto_version = 0;
-								if (client_name)
+								if (!active_conn) //last connection closed
 								{
-									free(client_name);
-									client_name = NULL;
-								}
-								if (cfg.dvbapi_listenport)
-								{
-									//update webif data
-									client->ip = get_null_ip();
-									client->port = 0;
+									client_proto_version = 0;
+									if (client_name)
+									{
+										free(client_name);
+										client_name = NULL;
+									}
+									if (cfg.dvbapi_listenport)
+									{
+										//update webif data
+										client->ip = get_null_ip();
+										client->port = 0;
+									}
 								}
 								break;
 							}
