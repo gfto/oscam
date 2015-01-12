@@ -9,6 +9,9 @@ struct seca_data
 	bool valid_provider[CS_MAXPROV];
 };
 
+IDEA_KEY_SCHEDULE ks;
+IDEA_KEY_SCHEDULE ksSession;
+
 static uint64_t get_pbm(struct s_reader *reader, uint8_t idx)
 {
 	def_resp;
@@ -231,6 +234,13 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 	{
 		rdr_debug_mask(reader, D_IFD, "parental locked");
 	}
+	
+	//init ideakeys
+	unsigned char IdeaKey[16];
+	memcpy(IdeaKey, reader->boxkey, 16);
+	idea_set_encrypt_key(IdeaKey, &ks);
+	idea_set_decrypt_key(&ks, &ksSession);
+	
 	return OK;
 }
 
@@ -335,13 +345,7 @@ static int32_t seca_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, struc
 		
 		if(check_filled(reader->boxkey, 16) == 16)
 		{	
-			IDEA_KEY_SCHEDULE ks;
-			IDEA_KEY_SCHEDULE ksSession;
-			unsigned char IdeaKey[16];
 			unsigned char v[8];
-			memcpy(IdeaKey, reader->boxkey, 16);
-			idea_set_encrypt_key(IdeaKey, &ks);
-			idea_set_decrypt_key(&ks, &ksSession);
 			memset(v, 0, sizeof(v));
 			idea_cbc_encrypt(cta_res, ea->cw, 8, &ksSession, v, IDEA_DECRYPT);
 			memset(v, 0, sizeof(v));
