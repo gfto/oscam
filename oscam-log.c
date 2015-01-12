@@ -8,7 +8,6 @@
 #include "oscam-net.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
-#include "oscam-log-xtr.h"
 
 // Do not allow log_list to grow bigger than that many entries
 #define MAX_LOG_LIST_BACKLOG 10000
@@ -27,6 +26,9 @@ static int log_list_queued;
 static pthread_t log_thread;
 static pthread_cond_t log_thread_sleep_cond;
 static pthread_mutex_t log_thread_sleep_cond_mutex;
+
+static char *stbproc_boxtype;  // to store specific boxtype
+static char *stbproc_model;    // to store stb model
 
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 static uint64_t counter = 0;
