@@ -18,8 +18,6 @@ void dvbapi_save_channel_cache(void)
 {
 	char buf[256];
 
-	set_thread_name(__func__);
-
 	char *fname;
 	get_config_filename(buf, sizeof(buf), "oscam.ccache");
 	fname = buf;
