@@ -8,19 +8,14 @@
 #include "module-dvbapi.h"
 #include "module-dvbapi-chancache.h"
 
-#define LINESIZE 1024
-
 extern DEMUXTYPE demux[MAX_DEMUX];
 
 static LLIST *channel_cache;
 
 void dvbapi_save_channel_cache(void)
 {
-	char buf[256];
-
-	char *fname;
-	get_config_filename(buf, sizeof(buf), "oscam.ccache");
-	fname = buf;
+	char fname[256];
+	get_config_filename(fname, sizeof(fname), "oscam.ccache");
 	FILE *file = fopen(fname, "w");
 
 	if(!file)
@@ -45,26 +40,16 @@ void dvbapi_load_channel_cache(void)
 	if (USE_OPENXCAS) // Why?
 		return;
 
-	char buf[256];
-	char *line;
-	char *fname;
+	char fname[256];
+	char line[1024];
 	FILE *file;
 	struct s_channel_cache *c;
 
-	get_config_filename(buf, sizeof(buf), "oscam.ccache");
-	fname = buf;
-
+	get_config_filename(fname, sizeof(fname), "oscam.ccache");
 	file = fopen(fname, "r");
-
 	if(!file)
 	{
 		cs_log("dvbapi channelcache can't read from file %s", fname);
-		return;
-	}
-
-	if(!cs_malloc(&line, LINESIZE))
-	{
-		fclose(file);
 		return;
 	}
 
@@ -73,7 +58,8 @@ void dvbapi_load_channel_cache(void)
 	char *ptr, *saveptr1 = NULL;
 	char *split[6];
 
-	while(fgets(line, LINESIZE, file))
+	memset(line, sizeof(line), 0);
+	while(fgets(line, sizeof(line), file))
 	{
 		if(!line[0] || line[0] == '#' || line[0] == ';')
 			{ continue; }
@@ -111,7 +97,6 @@ void dvbapi_load_channel_cache(void)
 		}
 	}
 	fclose(file);
-	NULLFREE(line);
 	cs_log("dvbapi channelcache loaded from %s", fname);
 }
 
