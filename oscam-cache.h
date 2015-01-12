@@ -18,6 +18,8 @@ void del_hitcache(ECM_REQUEST *er);
 struct csp_ce_hit_t *check_hitcache(ECM_REQUEST *er, struct s_client *cl);
 void cleanup_hitcache(void);
 uint32_t hitcache_size(void);
+#else
+static inline void init_hitcache(void) { }
 #endif
 
 

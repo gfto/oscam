@@ -81,6 +81,7 @@ static inline void cacheex_free_csp_lastnodes(ECM_REQUEST *UNUSED(er)) { }
 static inline void cacheex_set_cacheex_src(ECM_REQUEST *UNUSED(ecm), struct s_client *UNUSED(cl)) { }
 static inline void cacheex_init_cacheex_src(ECM_REQUEST *UNUSED(ecm), ECM_REQUEST *UNUSED(er)) { }
 static inline void cleanup_hitcache(void) { }
+static inline void checkcache_process_thread_start(void) { }
 #endif
 
 #endif

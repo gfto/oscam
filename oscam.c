@@ -1329,9 +1329,7 @@ int32_t main(int32_t argc, char *argv[])
 	cs_lock_create(&readdir_lock, "readdir_lock", 5000);
 	cs_lock_create(&cwcycle_lock, "cwcycle_lock", 5000);
 	init_cache();
-#ifdef CS_CACHEEX
 	init_hitcache();
-#endif
 	init_config();
 	cs_init_log();
 	init_check();
@@ -1411,9 +1409,7 @@ int32_t main(int32_t argc, char *argv[])
 
 	start_thread((void *) &reader_check, "reader check");
 	cw_process_thread_start();
-#ifdef CS_CACHEEX
 	checkcache_process_thread_start();
-#endif
 
 	lcd_thread_start();
 
