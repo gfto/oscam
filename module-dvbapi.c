@@ -80,9 +80,21 @@ static int _ioctl(int fd, int request, ...)
 #define FROM_TO 0
 #define TO_FROM 1
 
-// These are declared in module-dvbapi-mca.c
+#if defined(WITH_AZBOX) || defined(WITH_MCA)
+#define USE_OPENXCAS 1
 extern int32_t openxcas_provid;
 extern uint16_t openxcas_sid, openxcas_caid, openxcas_ecm_pid;
+static inline void openxcas_set_caid(uint16_t _caid) { openxcas_caid = _caid; }
+static inline void openxcas_set_ecm_pid(uint16_t _pid) { openxcas_ecm_pid = _pid; }
+static inline void openxcas_set_sid(uint16_t _sid) { openxcas_sid = _sid; }
+static inline void openxcas_set_provid(uint32_t _provid) { openxcas_provid = _provid; }
+#else
+#define USE_OPENXCAS 0
+static inline void openxcas_set_caid(uint16_t UNUSED(_caid)) { }
+static inline void openxcas_set_ecm_pid(uint16_t UNUSED(_pid)) { }
+static inline void openxcas_set_sid(uint16_t UNUSED(_sid)) { }
+static inline void openxcas_set_provid(uint32_t UNUSED(_provid)) { }
+#endif
 
 int32_t pausecam = 0, disable_pmt_files = 0, pmt_stopmarking = 0, pmthandling = 0;
 DEMUXTYPE demux[MAX_DEMUX];
@@ -167,9 +179,8 @@ void dvbapi_save_channel_cache(void)
 
 static void dvbapi_load_channel_cache(void)
 {
-#if defined(WITH_MCA) || defined(WITH_AZBOX)
-	return;
-#endif
+	if (USE_OPENXCAS) // Why?
+		return;
 
 	char buf[256];
 	char *line;
@@ -632,12 +643,10 @@ int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, int32_t demux_index
 int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t caid, uint32_t provid, uchar *filt, uchar *mask, int32_t timeout, int32_t pidindex, int32_t type,
 	int8_t add_to_emm_list)
 {
-#if defined WITH_AZBOX || defined WITH_MCA
-	openxcas_caid = demux[demux_id].ECMpids[pidindex].CAID;
-	openxcas_ecm_pid = pid;
-
-	return 1;
-#endif
+	openxcas_set_caid(demux[demux_id].ECMpids[pidindex].CAID);
+	openxcas_set_ecm_pid(pid);
+	if (USE_OPENXCAS)
+		return 1;
 
 	int32_t ret = -1, n = -1, i;
 
@@ -2442,23 +2451,21 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 void request_cw(struct s_client *client, ECM_REQUEST *er, int32_t demux_id, uint8_t delayed_ecm_check)
 {
 	int32_t filternum = dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd -> even and visaversa
-#if defined WITH_AZBOX || defined WITH_MCA
-	if(filternum) {}
-#else
-	if(filternum < 0)
+
+	if(!USE_OPENXCAS && filternum < 0)
 	{
 		cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d not requesting cw -> ecm filter was killed!", demux_id);
 		return;
 	}
-#endif
+
 	cs_debug_mask(D_DVBAPI, "[DVBAPI] GET_CW");
 	get_cw(client, er);
-#if defined WITH_AZBOX || defined WITH_MCA
-	if(delayed_ecm_check) {}
-#else
-	if(delayed_ecm_check) { memcpy(demux[demux_id].demux_fd[filternum].ecmd5, er->ecmd5, CS_ECMSTORESIZE); }  // register this ecm as latest request for this filter
-	else { memset(demux[demux_id].demux_fd[filternum].ecmd5, 0, CS_ECMSTORESIZE); } // zero out ecmcheck!
-#endif
+
+	if (!USE_OPENXCAS) {
+		if(delayed_ecm_check) { memcpy(demux[demux_id].demux_fd[filternum].ecmd5, er->ecmd5, CS_ECMSTORESIZE); }  // register this ecm as latest request for this filter
+		else { memset(demux[demux_id].demux_fd[filternum].ecmd5, 0, CS_ECMSTORESIZE); } // zero out ecmcheck!
+	}
+
 #ifdef WITH_DEBUG
 	char buf[ECM_FMT_LEN];
 	format_ecm(er, buf, ECM_FMT_LEN);
@@ -2483,11 +2490,11 @@ void dvbapi_try_next_caid(int32_t demux_id, int8_t checked)
 			if(demux[demux_id].ECMpids[n].checked == checked && demux[demux_id].ECMpids[n].status == j)
 			{
 				found = n;
-#if defined WITH_AZBOX || defined WITH_MCA
-				openxcas_provid = demux[demux_id].ECMpids[found].PROVID;
-				openxcas_caid = demux[demux_id].ECMpids[found].CAID;
-				openxcas_ecm_pid = demux[demux_id].ECMpids[found].ECM_PID;
-#endif
+
+				openxcas_set_provid(demux[demux_id].ECMpids[found].PROVID);
+				openxcas_set_caid(demux[demux_id].ECMpids[found].CAID);
+				openxcas_set_ecm_pid(demux[demux_id].ECMpids[found].ECM_PID);
+
 				// fixup for cas that need emm first!
 				if((demux[demux_id].ECMpids[found].CAID >> 8) == 0x06) { demux[demux_id].emmstart.time = 0; }
 				started = dvbapi_start_descrambling(demux_id, found, checked);
@@ -2606,9 +2613,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			cs_log("[DVBAPI] Demuxer #%d continue decoding of SRVID %04X", i, demux[i].program_number);
 #endif
 
-#if defined WITH_AZBOX || defined WITH_MCA
-			openxcas_sid = program_number;
-#endif			
+			openxcas_set_sid(program_number);
+
 			demux[i].stopdescramble = 0; // dont stop current demuxer!
 			if(demux[demux_id].ECMpidcount != 0) { running = 1; }  // fix for channel changes from fta to scrambled		
 			break; // no need to explore other demuxers since we have a found!
@@ -2822,9 +2828,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			if(demux[demux_id].STREAMpidcount < 1)
 			{
 				cs_log("[pmt] Found no streams for normal demuxer. Not starting additional decoding on it.");
-#if defined WITH_AZBOX || defined WITH_MCA
-				openxcas_sid = program_number;
-#endif
+				openxcas_set_sid(program_number);
 				return xtra_demux_id;
 			}
 		}
@@ -2838,9 +2842,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	}
 	else { cs_ftime(&demux[demux_id].emmstart); } // for all other caids delayed start!
 
-#if defined WITH_AZBOX || defined WITH_MCA
-	openxcas_sid = program_number;
-#endif
+	openxcas_set_sid(program_number);
 	
 	if(demux[demux_id].ECMpidcount == 0) { // for FTA it ends here, but do logging and part of ecmhandler since there will be no ecms asked!
 		if(cfg.usrfileflag) { cs_statistics(dvbapi_client);} // add to user log previous channel + time on channel
