@@ -1451,7 +1451,7 @@ int32_t main(int32_t argc, char *argv[])
 
 	stat_finish();
 	
-	save_ccache_to_file(); // save dvbapi channelcache
+	dvbapi_save_channel_cache();
 	
 	cccam_done_share();
 

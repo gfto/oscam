@@ -137,7 +137,7 @@ struct s_channel_cache
 	uint32_t    chid;
 };
 
-void save_ccache_to_file(void)
+void dvbapi_save_channel_cache(void)
 {
 	char buf[256];
 
@@ -165,7 +165,7 @@ void save_ccache_to_file(void)
 	cs_log("dvbapi channelcache saved to %s", fname);
 }
 
-void load_ccache_from_file(void)
+static void dvbapi_load_channel_cache(void)
 {
 #if defined(WITH_MCA) || defined(WITH_AZBOX)
 	return;
@@ -241,7 +241,7 @@ void load_ccache_from_file(void)
 	cs_log("dvbapi channelcache loaded from %s", fname);
 }
 
-struct s_channel_cache *find_channel_cache(int32_t demux_id, int32_t pidindex, int8_t caid_and_prid_only)
+static struct s_channel_cache *dvbapi_find_channel_cache(int32_t demux_id, int32_t pidindex, int8_t caid_and_prid_only)
 {
 	struct s_ecmpids *p = &demux[demux_id].ECMpids[pidindex];
 	struct s_channel_cache *c;
@@ -279,7 +279,7 @@ struct s_channel_cache *find_channel_cache(int32_t demux_id, int32_t pidindex, i
 	return NULL;
 }
 
-int32_t edit_channel_cache(int32_t demux_id, int32_t pidindex, uint8_t add)
+static int32_t dvbapi_edit_channel_cache(int32_t demux_id, int32_t pidindex, uint8_t add)
 {
 	struct s_ecmpids *p = &demux[demux_id].ECMpids[pidindex];
 	struct s_channel_cache *c;
@@ -1661,7 +1661,7 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 			   demux[demux_id].ECMpids[pid].CAID, demux[demux_id].ECMpids[pid].PROVID, demux[demux_id].ECMpids[pid].ECM_PID, demux[demux_id].pmtpid);
 		demux[demux_id].ECMpids[pid].checked = 4; // flag this pid as checked
 		demux[demux_id].ECMpids[pid].status = -1; // flag this pid as unusable
-		edit_channel_cache(demux_id, pid, 0); // remove this pid from channelcache
+		dvbapi_edit_channel_cache(demux_id, pid, 0); // remove this pid from channelcache
 	}
 	if(!fake_ecm) { NULLFREE(er); }
 	return started;
@@ -2023,7 +2023,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 
 	for(n = 0; n < demux[demux_index].ECMpidcount; n++)
 	{
-		c = find_channel_cache(demux_index, n, 0); // find exact channel match
+		c = dvbapi_find_channel_cache(demux_index, n, 0); // find exact channel match
 		if(c != NULL)
 		{
 			found = n;
@@ -2053,7 +2053,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 	// prioritize CAIDs which already decoded same caid:provid
 	for(n = 0; n < demux[demux_index].ECMpidcount; n++)
 	{
-		c = find_channel_cache(demux_index, n, 1);
+		c = dvbapi_find_channel_cache(demux_index, n, 1);
 		if(c != NULL)
 		{
 			cache = 1; //found cache entry
@@ -2067,7 +2067,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 	// prioritize CAIDs which already decoded same caid:provid:srvid
 	for(n = 0; n < demux[demux_index].ECMpidcount; n++)
 	{
-		c = find_channel_cache(demux_index, n, 0);
+		c = dvbapi_find_channel_cache(demux_index, n, 0);
 		if(c != NULL)
 		{
 			cache = 2; //found cache entry with higher priority
@@ -3559,7 +3559,7 @@ static void *dvbapi_main_local(void *cli)
 	return mca_main_thread(cli);
 #endif
 
-	load_ccache_from_file(); // load channelcache
+	dvbapi_load_channel_cache();
 
 	int32_t i, j;
 	struct s_client *client = (struct s_client *) cli;
@@ -3821,7 +3821,7 @@ static void *dvbapi_main_local(void *cli)
 						demux[i].ECMpids[g].irdeto_maxindex = 0;
 						demux[i].ECMpids[g].irdeto_cycle = 0xFE;
 						demux[i].ECMpids[g].table = 0;
-						edit_channel_cache(i, g, 0); // remove this pid from channelcache since we had no founds on any ecmpid!
+						dvbapi_edit_channel_cache(i, g, 0); // remove this pid from channelcache since we had no founds on any ecmpid!
 					}
 					dvbapi_resort_ecmpids(i);
 					dvbapi_try_next_caid(i, 0);
@@ -4354,7 +4354,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 									dvbapi_set_pid(i, n, idx - 1, false); // disable streampid not used by new pid  
 								}
 							}
-							edit_channel_cache(i, pidindex, 0); // remove lowerstatus pid from channelcache
+							dvbapi_edit_channel_cache(i, pidindex, 0); // remove lowerstatus pid from channelcache
 
 						}
 #endif
@@ -4379,7 +4379,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 				if(ecmcounter == 1)   // if total found running ecmfilters is 1 -> we found the "best" pid
 				{
-					edit_channel_cache(i, j, 1);
+					dvbapi_edit_channel_cache(i, j, 1);
 					demux[i].ECMpids[j].checked = 4; // mark best pid last ;)
 				}
 
@@ -4444,7 +4444,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				}
 			}
 
-			edit_channel_cache(i, j, 0); // remove this pid from channelcache
+			dvbapi_edit_channel_cache(i, j, 0); // remove this pid from channelcache
 			if(demux[i].pidindex == j)
 			{
 				demux[i].pidindex = -1; // current pid delivered a notfound so this pid isnt being used to descramble any longer-> clear pidindex
@@ -4495,7 +4495,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 		uint32_t chid = get_subid(er); // derive current chid in case of irdeto, or a unique part of ecm on other cas systems
 		demux[i].ECMpids[j].CHID = (chid != 0 ? chid : 0x10000); // if not zero apply, otherwise use no chid value 0x10000
-		edit_channel_cache(i, j, 1); // do it here to here after the right CHID is registered
+		dvbapi_edit_channel_cache(i, j, 1); // do it here to here after the right CHID is registered
 
 		//dvbapi_set_section_filter(i, er);  is not needed anymore (unsure)
 		demux[i].ECMpids[j].tries = 0xFE; // reset timeout retry flag
