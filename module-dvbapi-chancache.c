@@ -12,6 +12,17 @@ extern DEMUXTYPE demux[MAX_DEMUX];
 
 static LLIST *channel_cache;
 
+void dvbapi_clear_channel_cache(void)
+{
+	if (USE_OPENXCAS) // Why?
+		return;
+		
+	if(channel_cache)
+	{
+		ll_destroy_free_data(channel_cache);
+	}
+}
+
 void dvbapi_save_channel_cache(void)
 {
 	char fname[256];

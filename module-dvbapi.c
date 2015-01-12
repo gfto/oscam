@@ -1794,6 +1794,7 @@ void dvbapi_read_priority(void)
 
 	ret = fclose(fp);
 	if(ret < 0) { cs_log("ERROR: Could not close oscam.dvbapi fd (errno=%d %s)", errno, strerror(errno)); }
+	dvbapi_clear_channel_cache(); // clear channelcache since prio/ignores could be changed!
 	return;
 }
 
@@ -3345,8 +3346,6 @@ static void *dvbapi_main_local(void *cli)
 	return mca_main_thread(cli);
 #endif
 
-	dvbapi_load_channel_cache();
-
 	int32_t i, j;
 	struct s_client *client = (struct s_client *) cli;
 	client->thread = pthread_self();
@@ -3383,6 +3382,7 @@ static void *dvbapi_main_local(void *cli)
 	memset(unassoc_fd, 0, sizeof(unassoc_fd));
 
 	dvbapi_read_priority();
+	dvbapi_load_channel_cache();
 	dvbapi_detect_api();
 
 	if(selected_box == -1 || selected_api == -1)
