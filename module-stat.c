@@ -107,8 +107,6 @@ void load_stat_from_file(void)
 		return;
 	}
 
-	setvbuf(file, NULL, _IOFBF, 128 * 1024);
-
 	cs_debug_mask(D_LB, "loadbalancer: load statistics from %s", fname);
 
 	struct timeb ts, te;
@@ -314,8 +312,6 @@ static void save_stat_to_file_thread(void)
 		cs_log("can't write to file %s", fname);
 		return;
 	}
-
-	setvbuf(file, NULL, _IOFBF, 128 * 1024);
 
 	struct timeb ts, te;
 	cs_ftime(&ts);

@@ -505,7 +505,6 @@ FILE *create_config_file(const char *conf_filename)
 		cs_log("ERROR: Cannot create file \"%s\" (errno=%d %s)", temp_file, errno, strerror(errno));
 		return NULL;
 	}
-	setvbuf(f, NULL, _IOFBF, 16 * 1024);
 	fprintf(f, "# %s generated automatically by Streamboard OSCAM %s SVN r%s\n",
 			conf_filename, CS_VERSION, CS_SVN_VERSION);
 	fprintf(f, "# Read more: http://www.streamboard.tv/svn/oscam/trunk/Distribution/doc/txt/%s.txt\n\n",

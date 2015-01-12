@@ -217,7 +217,6 @@ int32_t cs_open_logfiles(void)
 		}
 		else
 		{
-			setvbuf(fp, NULL, _IOFBF, 8 * 1024);
 			char line[80];
 			memset(line, '-', sizeof(line));
 			line[(sizeof(line) / sizeof(char)) - 1] = '\0';

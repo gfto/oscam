@@ -154,8 +154,6 @@ void save_ccache_to_file(void)
 		return;
 	}
 
-	setvbuf(file, NULL, _IOFBF, 128 * 1024);
-	
 	LL_ITER it = ll_iter_create(channel_cache);
 	struct s_channel_cache *c;
 	while((c = ll_iter_next(&it)))
@@ -192,8 +190,6 @@ void load_ccache_from_file(void)
 		return;
 	}
 
-	setvbuf(file, NULL, _IOFBF, 128 * 1024);
-	
 	int32_t i = 1;
 	int32_t valid = 0;
 	char *ptr, *saveptr1 = NULL;
