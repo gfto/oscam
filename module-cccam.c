@@ -1278,13 +1278,21 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 	struct cc_card *card = NULL, *ncard, *xcard = NULL;
 	while((ncard = ll_iter_next(&it)))
 	{
+		int lb_match = 0;
+		if (config_enabled(WITH_LB)) {
+			//accept beta card when beta-tunnel is on
+			lb_match = chk_only && cfg.lb_mode && cfg.lb_auto_betatunnel &&
+				(
+					(cur_er->caid >> 8 == 0x18 && ncard->caid >> 8 == 0x17 && cfg.lb_auto_betatunnel_mode <= 3) ||
+					(cur_er->caid >> 8 == 0x17 && ncard->caid >> 8 == 0x18 && cfg.lb_auto_betatunnel_mode >= 1)
+				);
+		}
+
 		if((ncard->caid == cur_er->caid  // caid matches
 				|| (rdr->cc_want_emu && (ncard->caid == (cur_er->caid & 0xFF00))))
 				// or system matches if caid ends with 00
 				// needed for wantemu
-#ifdef WITH_LB
-				|| (chk_only && cfg.lb_mode && cfg.lb_auto_betatunnel && ((cur_er->caid >> 8 == 0x18 && ncard->caid >> 8 == 0x17 && cfg.lb_auto_betatunnel_mode <= 3) || (cur_er->caid >> 8 == 0x17 && ncard->caid >> 8 == 0x18 && cfg.lb_auto_betatunnel_mode >= 1))) //accept beta card when beta-tunnel is on
-#endif
+				|| lb_match
 		  )
 		{		
 			int32_t goodSidCount = ll_count(ncard->goodsids);
@@ -2482,7 +2490,6 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	i2b_buf(4, er->prid, ecmbuf + 2);
 	i2b_buf(2, er->srvid, ecmbuf + 10);
 
-#ifdef CS_CACHEEX
 	if(er->cwc_cycletime && er->cwc_next_cw_cycle < 2)
 	{
 		ecmbuf[18] = er->cwc_cycletime; // contains cwc stage3 cycletime
@@ -2495,7 +2502,6 @@ int32_t cc_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 			{ cl->cwc_info++; }
 		cs_debug_mask(D_CWC, "CWC (CE) push to %s (cccam) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
 	}
-#endif
 
 	ecmbuf[19] = er->ecm[0] != 0x80 && er->ecm[0] != 0x81 ? 0 : er->ecm[0];
 
@@ -2570,7 +2576,6 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 	er->ecm[0] = buf[19]!=0x80 && buf[19]!=0x81 ? 0 : buf[19]; //odd/even byte, usefull to send it over CSP and to check cw for swapping
 	er->rc = rc;
 
-#ifdef CS_CACHEEX
 	if(buf[18])
 	{
 		if(buf[18] & (0x01 << 7))
@@ -2593,7 +2598,6 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 			{ cl->cwc_info++; }
 		cs_debug_mask(D_CWC, "CWC (CE) received from %s (cccam) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
 	}
-#endif
 
 	er->ecmlen = 0;
 
@@ -2654,6 +2658,8 @@ void cc_cache_push_in(struct s_client *cl, uchar *buf)
 
 	cacheex_add_to_cache(cl, er);
 }
+#else
+static inline void cc_cache_filter_out(struct s_client *UNUSED(cl)) { }
 #endif
 
 int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
@@ -2912,15 +2918,11 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 			}
 			else
 			{
-#ifdef WITH_LB
-				if(!cfg.lb_mode)
+				if(config_enabled(WITH_LB) && !cfg.lb_mode)
 				{
-#endif
 					cl->stopped = 1; // server says invalid
 					rdr->card_status = CARD_FAILURE;
-#ifdef WITH_LB
 				}
-#endif
 			}
 		}
 		//NO BREAK!! NOK Handling needed!
@@ -4078,9 +4080,7 @@ void cc_srv_init2(struct s_client *cl)
 		else
 		{
 			cl->init_done = 1;
-#ifdef CS_CACHEEX
 			cc_cache_filter_out(cl);
-#endif
 		}
 	}
 	return;
@@ -4281,9 +4281,7 @@ int32_t cc_cli_connect(struct s_client *cl)
 	cl->crypted = 1;
 	cc->ecm_busy = 0;
 
-#ifdef CS_CACHEEX
 	cc_cache_filter_out(cl);
-#endif
 
 	return 0;
 }

@@ -1781,9 +1781,10 @@ struct s_config
 
 
 	//Loadbalancer-Config:
-	int32_t         lb_auto_betatunnel;             // automatic selection of betatunnel convertion based on learned data
-#ifdef WITH_LB
 	int32_t         lb_mode;                        // schlocke: reader loadbalancing mode
+	int32_t         lb_auto_betatunnel;             // automatic selection of betatunnel convertion based on learned data
+	int32_t         lb_auto_betatunnel_mode;        // automatic selection of betatunnel direction
+#ifdef WITH_LB
 	int32_t         lb_save;                        // schlocke: load/save statistics to file, save every x ecms
 	int32_t         lb_nbest_readers;               // count of best readers
 	int32_t         lb_nfb_readers;                 // count of fallback readers
@@ -1799,7 +1800,6 @@ struct s_config
 	char            *lb_savepath;                   // path where the stat file is save. Empty=default=/tmp/.oscam/stat
 	int32_t         lb_stat_cleanup;                // duration in hours for cleaning old statistics
 	int32_t         lb_max_readers;                 // limit the amount of readers during learning
-	int32_t         lb_auto_betatunnel_mode;        // automatic selection of betatunnel direction
 	int32_t         lb_auto_betatunnel_prefer_beta; // prefer-beta-over-nagra factor
 	int32_t         lb_auto_timeout;                // Automatic timeout by loadbalancer statistics
 	int32_t         lb_auto_timeout_p;              // percent added to avg time as timeout time
