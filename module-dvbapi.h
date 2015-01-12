@@ -298,6 +298,7 @@ void save_ccache_to_file(void);
 
 #else
 static inline void dvbapi_read_priority(void) { }
+static inline void save_ccache_to_file(void) { }
 #endif // WITH_DVBAPI
 
 #endif // MODULE_DVBAPI_H_

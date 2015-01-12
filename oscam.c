@@ -1451,9 +1451,7 @@ int32_t main(int32_t argc, char *argv[])
 
 	stat_finish();
 	
-#if HAVE_DVBAPI && !defined WITH_MCA && !defined WITH_AZBOX
 	save_ccache_to_file(); // save dvbapi channelcache
-#endif
 	
 	cccam_done_share();
 

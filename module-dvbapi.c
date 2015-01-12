@@ -167,6 +167,10 @@ void save_ccache_to_file(void)
 
 void load_ccache_from_file(void)
 {
+#if defined(WITH_MCA) || defined(WITH_AZBOX)
+	return;
+#endif
+
 	char buf[256];
 	char *line;
 	char *fname;
@@ -3557,9 +3561,8 @@ static void *dvbapi_main_local(void *cli)
 	return mca_main_thread(cli);
 #endif
 
-#if HAVE_DVBAPI && !defined WITH_MCA && !defined WITH_AZBOX	
 	load_ccache_from_file(); // load channelcache
-#endif
+
 	int32_t i, j;
 	struct s_client *client = (struct s_client *) cli;
 	client->thread = pthread_self();
