@@ -1572,8 +1572,8 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 			continue; // skip this card needs to process emms first before it can be used for descramble
 		}
 		if(p && p->force) { match = 1; }  // forced pid always started!
-#ifdef WITH_LB
-		if(!match && cfg.lb_auto_betatunnel)    //if this reader does not match, check betatunnel for it
+
+		if(config_enabled(WITH_LB) && (!match && cfg.lb_auto_betatunnel))    //if this reader does not match, check betatunnel for it
 		{
 			uint16_t caid = lb_get_betatunnel_caid_to(er->caid);
 			if(caid)
@@ -1584,15 +1584,15 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 				er->caid = save_caid;
 			}
 		}
-#endif
+
 		if(!match && chk_is_betatunnel_caid(er->caid))  // these caids might be tunneled invisible by peers
 			{ match = 1; } // so make it a match to try it!
-#ifdef CS_CACHEEX
-		if(!match && (cacheex_is_match_alias(dvbapi_client, er)))   // check if cache-ex is matching
+
+		if(config_enabled(CS_CACHEEX) && (!match && (cacheex_is_match_alias(dvbapi_client, er))))   // check if cache-ex is matching
 		{
 			match = 1; // so make it a match to try it!
 		}
-#endif
+
 		// BISS or FAKE CAID
 		// ecm stream pid is fake, so send out one fake ecm request
 		// special treatment: if we asked the cw first without starting a filter the cw request will be killed due to no ecmfilter started
@@ -1755,8 +1755,7 @@ void dvbapi_process_emm(int32_t demux_index, int32_t filter_num, unsigned char *
 	epg.emmlen = len > sizeof(epg.emm) ? sizeof(epg.emm) : len;
 	memcpy(epg.emm, buffer, epg.emmlen);
 
-#ifdef READER_IRDETO
-	if(chk_is_betatunnel_caid(caid) == 2)
+	if(config_enabled(READER_IRDETO) && chk_is_betatunnel_caid(caid) == 2)
 	{
 		uint16_t ncaid = tunemm_caid_map(FROM_TO, caid, demux[demux_index].program_number);
 		if(caid != ncaid)
@@ -1765,7 +1764,6 @@ void dvbapi_process_emm(int32_t demux_index, int32_t filter_num, unsigned char *
 			i2b_buf(2, ncaid, epg.caid);
 		}
 	}
-#endif
 
 	do_emm(dvbapi_client, &epg);
 }
