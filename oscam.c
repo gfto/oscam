@@ -12,6 +12,7 @@
 #include "module-dvbapi.h"
 #include "module-dvbapi-azbox.h"
 #include "module-dvbapi-mca.h"
+#include "module-dvbapi-chancache.h"
 #include "module-ird-guess.h"
 #include "module-lcd.h"
 #include "module-led.h"

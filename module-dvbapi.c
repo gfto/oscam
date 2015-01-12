@@ -8,6 +8,7 @@
 #include "module-dvbapi-mca.h"
 #include "module-dvbapi-coolapi.h"
 #include "module-dvbapi-stapi.h"
+#include "module-dvbapi-chancache.h"
 #include "module-stat.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
@@ -20,8 +21,6 @@
 #include "oscam-string.h"
 #include "oscam-time.h"
 #include "reader-irdeto.h"
-
-#define LINESIZE 1024
 
 #ifdef DVBAPI_SAMYGO
 
@@ -80,22 +79,6 @@ static int _ioctl(int fd, int request, ...)
 #define FROM_TO 0
 #define TO_FROM 1
 
-#if defined(WITH_AZBOX) || defined(WITH_MCA)
-#define USE_OPENXCAS 1
-extern int32_t openxcas_provid;
-extern uint16_t openxcas_sid, openxcas_caid, openxcas_ecm_pid;
-static inline void openxcas_set_caid(uint16_t _caid) { openxcas_caid = _caid; }
-static inline void openxcas_set_ecm_pid(uint16_t _pid) { openxcas_ecm_pid = _pid; }
-static inline void openxcas_set_sid(uint16_t _sid) { openxcas_sid = _sid; }
-static inline void openxcas_set_provid(uint32_t _provid) { openxcas_provid = _provid; }
-#else
-#define USE_OPENXCAS 0
-static inline void openxcas_set_caid(uint16_t UNUSED(_caid)) { }
-static inline void openxcas_set_ecm_pid(uint16_t UNUSED(_pid)) { }
-static inline void openxcas_set_sid(uint16_t UNUSED(_sid)) { }
-static inline void openxcas_set_provid(uint32_t UNUSED(_provid)) { }
-#endif
-
 int32_t pausecam = 0, disable_pmt_files = 0, pmt_stopmarking = 0, pmthandling = 0;
 DEMUXTYPE demux[MAX_DEMUX];
 struct s_dvbapi_priority *dvbapi_priority;
@@ -123,7 +106,6 @@ static int32_t ca_fd[MAX_DEMUX]; // holds fd handle of each ca device 0 = not in
 static LLIST * ll_activestreampids; // list of all enabled streampids on ca devices
 
 static int32_t unassoc_fd[MAX_DEMUX];
-static LLIST *channel_cache;
 
 struct s_emm_filter
 {
@@ -139,204 +121,6 @@ struct s_emm_filter
 static LLIST *ll_emm_active_filter;
 static LLIST *ll_emm_inactive_filter;
 static LLIST *ll_emm_pending_filter;
-
-struct s_channel_cache
-{
-	uint16_t    caid;
-	uint32_t    prid;
-	uint16_t    srvid;
-	uint16_t    pid;
-	uint32_t    chid;
-};
-
-void dvbapi_save_channel_cache(void)
-{
-	char buf[256];
-
-	set_thread_name(__func__);
-
-	char *fname;
-	get_config_filename(buf, sizeof(buf), "oscam.ccache");
-	fname = buf;
-	FILE *file = fopen(fname, "w");
-
-	if(!file)
-	{
-		cs_log("dvbapi channelcache can't write to file %s", fname);
-		return;
-	}
-
-	LL_ITER it = ll_iter_create(channel_cache);
-	struct s_channel_cache *c;
-	while((c = ll_iter_next(&it)))
-	{
-		fprintf(file, "%04X,%06X,%04X,%04X,%06X\n", c->caid, c->prid, c->srvid, c->pid, c->chid);
-	}
-
-	fclose(file);
-	cs_log("dvbapi channelcache saved to %s", fname);
-}
-
-static void dvbapi_load_channel_cache(void)
-{
-	if (USE_OPENXCAS) // Why?
-		return;
-
-	char buf[256];
-	char *line;
-	char *fname;
-	FILE *file;
-	struct s_channel_cache *c;
-
-	get_config_filename(buf, sizeof(buf), "oscam.ccache");
-	fname = buf;
-	
-	file = fopen(fname, "r");
-
-	if(!file)
-	{
-		cs_log("dvbapi channelcache can't read from file %s", fname);
-		return;
-	}
-
-	if(!cs_malloc(&line, LINESIZE))
-	{
-		fclose(file);
-		return;
-	}
-
-	int32_t i = 1;
-	int32_t valid = 0;
-	char *ptr, *saveptr1 = NULL;
-	char *split[6];
-
-	while(fgets(line, LINESIZE, file))
-	{
-		if(!line[0] || line[0] == '#' || line[0] == ';')
-			{ continue; }
-
-		if(!cs_malloc(&c, sizeof(struct s_channel_cache)))
-			{ continue; }
-
-		for(i = 0, ptr = strtok_r(line, ",", &saveptr1); ptr && i < 6 ; ptr = strtok_r(NULL, ",", &saveptr1), i++)
-		{ 
-			split[i] = ptr;
-		}
-		
-		valid = (i == 5);
-		if(valid)
-		{
-			c->caid = a2i(split[0], 4);
-			c->prid = a2i(split[1], 6);
-			c->srvid = a2i(split[2], 4);
-			c->pid = a2i(split[3], 4);
-			c->chid = a2i(split[4], 6);
-			
-			if(valid && c->caid != 0)
-			{
-				if(!channel_cache)
-				{ 
-					channel_cache = ll_create("channel cache");
-				}
-
-				ll_append(channel_cache, c);
-			}
-			else
-			{
-				NULLFREE(c);
-			}
-		}
-	}
-	fclose(file);
-	NULLFREE(line);
-	cs_log("dvbapi channelcache loaded from %s", fname);
-}
-
-static struct s_channel_cache *dvbapi_find_channel_cache(int32_t demux_id, int32_t pidindex, int8_t caid_and_prid_only)
-{
-	struct s_ecmpids *p = &demux[demux_id].ECMpids[pidindex];
-	struct s_channel_cache *c;
-	LL_ITER it;
-
-	if(!channel_cache)
-		{ channel_cache = ll_create("channel cache"); }
-
-	it = ll_iter_create(channel_cache);
-	while((c = ll_iter_next(&it)))
-	{
-
-		if(caid_and_prid_only)
-		{
-			if(p->CAID == c->caid && (p->PROVID == c->prid || p->PROVID == 0))  // PROVID ==0 some provider no provid in PMT table
-				{ return c; }
-		}
-		else
-		{
-			if(demux[demux_id].program_number == c->srvid
-					&& p->CAID == c->caid
-					&& p->ECM_PID == c->pid
-					&& (p->PROVID == c->prid || p->PROVID == 0)) // PROVID ==0 some provider no provid in PMT table
-			{
-
-#ifdef WITH_DEBUG
-				char buf[ECM_FMT_LEN];
-				ecmfmt(c->caid, 0, c->prid, c->chid, c->pid, c->srvid, 0, 0, 0, 0, buf, ECM_FMT_LEN, 0, 0);
-				cs_debug_mask(D_DVBAPI, "[DVBAPI] found in channel cache: %s", buf);
-#endif
-				return c;
-			}
-		}
-	}
-	return NULL;
-}
-
-static int32_t dvbapi_edit_channel_cache(int32_t demux_id, int32_t pidindex, uint8_t add)
-{
-	struct s_ecmpids *p = &demux[demux_id].ECMpids[pidindex];
-	struct s_channel_cache *c;
-	LL_ITER it;
-	int32_t count = 0;
-
-	if(!channel_cache)
-		{ channel_cache = ll_create("channel cache"); }
-
-	it = ll_iter_create(channel_cache);
-	while((c = ll_iter_next(&it)))
-	{
-		if(demux[demux_id].program_number == c->srvid
-				&& p->CAID == c->caid
-				&& p->ECM_PID == c->pid
-				&& (p->PROVID == c->prid || p->PROVID == 0))
-		{
-			if(add && p->CHID == c->chid)
-			{
-				return 0; //already added 
-			} 
-			ll_iter_remove_data(&it);
-			count++;
-		}
-	}
-
-	if(add)
-	{
-		if(!cs_malloc(&c, sizeof(struct s_channel_cache)))
-			{ return count; }
-		c->srvid = demux[demux_id].program_number;
-		c->caid = p->CAID;
-		c->pid = p->ECM_PID;
-		c->prid = p->PROVID;
-		c->chid = p->CHID;
-		ll_append(channel_cache, c);
-#ifdef WITH_DEBUG
-		char buf[ECM_FMT_LEN];
-		ecmfmt(c->caid, 0, c->prid, c->chid, c->pid, c->srvid, 0, 0, 0, 0, buf, ECM_FMT_LEN, 0, 0);
-		cs_debug_mask(D_DVBAPI, "[DVBAPI] added to channel cache: %s", buf);
-#endif
-		count++;
-	}
-
-	return count;
-}
 
 int32_t add_emmfilter_to_list(int32_t demux_id, uchar *filter, uint16_t caid, uint32_t provid, uint16_t emmpid, int32_t num, bool enable)
 {

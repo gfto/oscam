@@ -285,7 +285,6 @@ const char *dvbapi_get_client_name(void);
 uint16_t dvbapi_get_client_proto_version(void);
 void delayer(ECM_REQUEST *er);
 void check_add_emmpid(int32_t demux_index, uchar *filter, int32_t l, int32_t emmtype);
-void dvbapi_save_channel_cache(void);
 
 #ifdef DVBAPI_LOG_PREFIX
 #undef cs_log
@@ -296,9 +295,24 @@ void dvbapi_save_channel_cache(void);
 #endif
 #endif
 
+#if defined(WITH_AZBOX) || defined(WITH_MCA)
+#define USE_OPENXCAS 1
+extern int32_t openxcas_provid;
+extern uint16_t openxcas_sid, openxcas_caid, openxcas_ecm_pid;
+static inline void openxcas_set_caid(uint16_t _caid) { openxcas_caid = _caid; }
+static inline void openxcas_set_ecm_pid(uint16_t _pid) { openxcas_ecm_pid = _pid; }
+static inline void openxcas_set_sid(uint16_t _sid) { openxcas_sid = _sid; }
+static inline void openxcas_set_provid(uint32_t _provid) { openxcas_provid = _provid; }
+#else
+#define USE_OPENXCAS 0
+static inline void openxcas_set_caid(uint16_t UNUSED(_caid)) { }
+static inline void openxcas_set_ecm_pid(uint16_t UNUSED(_pid)) { }
+static inline void openxcas_set_sid(uint16_t UNUSED(_sid)) { }
+static inline void openxcas_set_provid(uint32_t UNUSED(_provid)) { }
+#endif
+
 #else
 static inline void dvbapi_read_priority(void) { }
-static inline void dvbapi_save_channel_cache(void) { }
 #endif // WITH_DVBAPI
 
 #endif // MODULE_DVBAPI_H_
