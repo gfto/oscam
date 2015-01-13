@@ -23,54 +23,45 @@
 #include "reader-irdeto.h"
 
 #ifdef DVBAPI_SAMYGO
-
 static int _ioctl(int fd, int request, ...)
 {
-    typedef struct dmx_sct_filter_params dmx_sct_filter_params_t;
-    typedef struct dmxSctFilterParams dmxSctFilterParams_t;
+	typedef struct dmx_sct_filter_params dmx_sct_filter_params_t;
+	typedef struct dmxSctFilterParams dmxSctFilterParams_t;
+	va_list args;
+	va_start(args, request);
+	int ret = -1;
+	switch(request) {
+	case DMX_SET_FILTER:
+	{
+		dmx_sct_filter_params_t *sFP2 = va_arg(args, dmx_sct_filter_params_t*);
+		// prepare packet
+		unsigned char packet[sizeof(request) + sizeof(dmx_sct_filter_params_t)];
+		memcpy(&packet, &request, sizeof(request));
+		memcpy(&packet[sizeof(request)], sFP2, sizeof(dmx_sct_filter_params_t));
+		ret = send(fd, packet, sizeof(packet), 0);
+		break;
+	}
+	case DMX_SET_FILTER1:
+	{
+		dmxSctFilterParams_t *sFP1 = va_arg(args, dmxSctFilterParams_t*);
+		ret = send(fd, sFP1, sizeof(dmxSctFilterParams_t), 0);
+		break;
+	}
+	case DMX_STOP:
+	{
+		ret = send(fd, &request, sizeof(request), 0);
+		ret = 1;
+		break;
+	}
+	default:
+		cs_log("ERROR: Unknown ioctl request");
+	}
+	va_end(args);
 
-    va_list ap;
-    va_start(ap, request);
-    int ret = -1;
-    switch(request)
-    {
-    case DMX_SET_FILTER:
-        {
-            dmx_sct_filter_params_t *sFP2 = va_arg(ap, dmx_sct_filter_params_t*);
+	if(ret > 0)
+		ret = 1;
 
-            // preparing packet
-			unsigned char packet[sizeof(request) + sizeof(dmx_sct_filter_params_t)];
-			memcpy(&packet, &request, sizeof(request));
-			memcpy(&packet[sizeof(request)], sFP2, sizeof(dmx_sct_filter_params_t));
-                        
-            ret = send(fd, packet, sizeof(packet), 0);
-            //ret = send(fd, sFP2, sizeof(dmx_sct_filter_params_t), 0);
-		    //cs_log("****** send DMX_SET_FILTER %d", ret);
-        }
-        break;
-    case DMX_SET_FILTER1:
-        {
-            dmxSctFilterParams_t *sFP1 = va_arg(ap, dmxSctFilterParams_t*);
-            ret = send(fd, sFP1, sizeof(dmxSctFilterParams_t), 0);
-		    //cs_log("****** send DMX_SET_FILTER1 %d", ret);
-        }
-        break;
-    case DMX_STOP:
-        {
-            ret = send(fd, &request, sizeof(request), 0);
-		    //cs_log("****** send DMX_STOP %d", ret);
-            ret = 1;
-        }
-        break;
-    default:
-		cs_log("ERROR: Invalid ioctl request");
-    }
-    va_end(ap);
-
-    if(ret > 0)
-        ret = 1;
-
-    return ret;
+	return ret;
 }
 #define ioctl _ioctl
 #endif
