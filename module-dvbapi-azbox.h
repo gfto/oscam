@@ -10,6 +10,7 @@ void *azbox_main_thread(void *cli);
 #if defined(HAVE_DVBAPI) && defined(WITH_AZBOX)
 void azbox_init(void);
 void azbox_close(void);
+void *azbox_handler(struct s_client *cl, uchar *mbuf, int32_t module_idx);
 #else
 static inline void azbox_init(void) { }
 static inline void azbox_close(void) { }

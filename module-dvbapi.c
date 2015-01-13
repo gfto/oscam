@@ -3333,15 +3333,6 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 
 static void *dvbapi_main_local(void *cli)
 {
-
-#ifdef WITH_AZBOX
-	return azbox_main_thread(cli);
-#endif
-#ifdef WITH_MCA
-	selected_box = selected_api = 0; // Prevent compiler warning about out of bounds array access
-	return mca_main_thread(cli);
-#endif
-
 	int32_t i, j;
 	struct s_client *client = (struct s_client *) cli;
 	client->thread = pthread_self();
@@ -4020,16 +4011,6 @@ void delayer(ECM_REQUEST *er)
 
 void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
-#ifdef WITH_AZBOX
-	azbox_send_dcw(client, er);
-	return;
-#endif
-
-#ifdef WITH_MCA
-	mca_send_dcw(client, er);
-	return;
-#endif
-
 	int32_t i, j, handled = 0;
 
 	for(i = 0; i < MAX_DEMUX; i++)
@@ -4378,7 +4359,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 }
 
-static void *dvbapi_handler(struct s_client *cl, uchar *UNUSED(mbuf), int32_t module_idx)
+void *dvbapi_start_handler(struct s_client *cl, uchar *UNUSED(mbuf), int32_t module_idx, void * (*_main_func)(void *))
 {
 	// cs_log("dvbapi loaded fd=%d", idx);
 	if(cfg.dvbapi_enabled == 1)
@@ -4386,7 +4367,7 @@ static void *dvbapi_handler(struct s_client *cl, uchar *UNUSED(mbuf), int32_t mo
 		cl = create_client(get_null_ip());
 		cl->module_idx = module_idx;
 		cl->typ = 'c';
-		int32_t ret = pthread_create(&cl->thread, NULL, dvbapi_main_local, (void *) cl);
+		int32_t ret = pthread_create(&cl->thread, NULL, _main_func, (void *) cl);
 		if(ret)
 		{
 			cs_log("ERROR: Can't create dvbapi handler thread (errno=%d %s)", ret, strerror(ret));
@@ -4397,6 +4378,11 @@ static void *dvbapi_handler(struct s_client *cl, uchar *UNUSED(mbuf), int32_t mo
 	}
 
 	return NULL;
+}
+
+void *dvbapi_handler(struct s_client *cl, uchar *mbuf, int32_t module_idx)
+{
+	return dvbapi_start_handler(cl, mbuf, module_idx, dvbapi_main_local);
 }
 
 int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er)
@@ -4868,7 +4854,16 @@ void module_dvbapi(struct s_module *ph)
 	ph->desc = "dvbapi";
 	ph->type = MOD_CONN_SERIAL;
 	ph->listenertype = LIS_DVBAPI;
+#if defined(WITH_AZBOX)
+	ph->s_handler = azbox_handler;
+	ph->send_dcw = azbox_send_dcw;
+#elif defined(WITH_MCA)
+	ph->s_handler = mca_handler;
+	ph->send_dcw = mca_send_dcw;
+	selected_box = selected_api = 0; // HACK: This fixes incorrect warning about out of bounds array access in functionas that are not even called when WITH_MCA is defined
+#else
 	ph->s_handler = dvbapi_handler;
 	ph->send_dcw = dvbapi_send_dcw;
+#endif
 }
 #endif // HAVE_DVBAPI

@@ -544,4 +544,9 @@ void mca_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	}
 }
 
+void *mca_handler(struct s_client *cl, uchar *mbuf, int32_t module_idx)
+{
+	return dvbapi_start_handler(cl, mbuf, module_idx, mca_main_thread);
+}
+
 #endif

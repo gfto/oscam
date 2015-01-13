@@ -345,4 +345,9 @@ void azbox_close(void)
 		{ cs_log(LOG_PREFIX "could not close"); }
 }
 
+void *azbox_handler(struct s_client *cl, uchar *mbuf, int32_t module_idx)
+{
+	return dvbapi_start_handler(cl, mbuf, module_idx, azbox_main_thread);
+}
+
 #endif

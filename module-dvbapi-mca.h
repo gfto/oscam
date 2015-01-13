@@ -92,6 +92,7 @@ void *mca_main_thread(void *cli);
 #if defined(HAVE_DVBAPI) && defined(WITH_MCA)
 void mca_init(void);
 void mca_close(void);
+void *mca_handler(struct s_client *cl, uchar *mbuf, int32_t module_idx);
 #else
 static inline void mca_init(void) { }
 static inline void mca_close(void) { }
