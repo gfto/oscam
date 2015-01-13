@@ -717,29 +717,29 @@ void init_machine_info(void)
     		}}
 			if((lstat("/proc/stb/info/vumodel",&info) == 0) || (lstat("/proc/stb/info/boxtype",&info) == 0))
 			{
-				if (!(f = fopen("/proc/stb/info/vumodel", "r")))
+				if (!(f = fopen("/proc/stb/info/vumodel", "r")) && !(f = fopen("/proc/stb/info/boxtype", "r")))
 				{
-					if (!(f = fopen("/proc/stb/info/boxtype", "r")))
-					{
     					cs_log("Failure to open file:  %s", "specific box type file");
-					}
-   				} else {
-				for (line = 1; line < 2; line++) // read only line 1
+   				} 
+				else 
 				{
-    				if (!fgets(data, 22, f)) // reads one line at a time
-        			break;
-    				if (!(p = strchr(data, '\n')))
+					for (line = 1; line < 2; line++) // read only line 1
 					{
-        				cs_log("No end-of-line detected in line %d or too long for buffer.", line);
-						*p = '\0';
-						fclose(f);
-        			} else {
-    				*p = '\0';
-					stbproc_boxtype = data;
-					if(lstat("/proc/stb/info/vumodel",&info) == 0) {cs_log("Stb boxtype    = vu%s", stbproc_boxtype);}
-					else {cs_log("Stb boxtype    = %s", stbproc_boxtype);}
-					fclose(f);}
-				}}
+	    				if (!fgets(data, 22, f)) // reads one line at a time
+	        			break;
+	    				if (!(p = strchr(data, '\n')))
+						{
+	        				cs_log("No end-of-line detected in line %d or too long for buffer.", line);
+							*p = '\0';
+							fclose(f);
+	        			} else {
+	    				*p = '\0';
+						stbproc_boxtype = data;
+						if(lstat("/proc/stb/info/vumodel",&info) == 0) {cs_log("Stb boxtype    = vu%s", stbproc_boxtype);}
+						else {cs_log("Stb boxtype    = %s", stbproc_boxtype);}
+						fclose(f);}
+					}
+				}
 			}
 		}
 	}
