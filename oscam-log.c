@@ -27,9 +27,6 @@ static pthread_t log_thread;
 static pthread_cond_t log_thread_sleep_cond;
 static pthread_mutex_t log_thread_sleep_cond_mutex;
 
-static char *stbproc_boxtype;  // to store specific boxtype
-static char *stbproc_model;    // to store stb model
-
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 static uint64_t counter = 0;
 #endif
@@ -234,84 +231,6 @@ int32_t cs_open_logfiles(void)
 	openlog(syslog_ident, LOG_NDELAY | LOG_PID, LOG_DAEMON);
 	cs_log_nolock(">> OSCam <<  cardserver %s, version " CS_VERSION ", build r" CS_SVN_VERSION " (" CS_TARGET ")", starttext);
 
-	struct utsname buffer;
-	int8_t rc = 0;
-	rc = uname(&buffer);
-
-	if (rc == 0) 
-	{ 
-		cs_log("System name    = %s", buffer.sysname);
-		cs_log("Host name      = %s", buffer.nodename);
-		cs_log("Release        = %s", buffer.release);
-		cs_log("Version        = %s", buffer.version);
-		cs_log("Machine        = %s", buffer.machine);
-	} 
-	else 
-	{
-		cs_log("unable to use uname unknown router,stb or pc");
-	}
-	
-	if (!strcasecmp(buffer.sysname, "Linux"))
-	{
-		struct stat info;
-		if((lstat("/proc/stb/info",&info) == 0) && (lstat("/proc/stb/info/model",&info) == 0))
-		{
-			char data[23], *p;
-			FILE *f;
-			int32_t line = 0;
-
-			if (!(f = fopen("/proc/stb/info/model", "r")))
-			{
-    			cs_log("Failure to open file:  %s", "/proc/stb/info/model");
-    			goto END;
-   			}
-			for (line = 1; line < 2; line++) // read only line 1
-			{
-    			if (!fgets(data, 22, f)) // reads one line at a time
-        		break;
-    			if (!(p = strchr(data, '\n')))
-				{
-        			cs_log("No end-of-line detected in line %d or too long for buffer.", line);
-					*p = '\0';
-					fclose(f);
-        			goto END;
-        		}
-    			*p = '\0';
-				stbproc_model = data;
-				cs_log("Stb model      = %s", stbproc_model);
-    		}
-			fclose(f);
-			if((lstat("/proc/stb/info/vumodel",&info) == 0) || (lstat("/proc/stb/info/boxtype",&info) == 0))
-			{
-				if (!(f = fopen("/proc/stb/info/vumodel", "r")))
-				{
-					if (!(f = fopen("/proc/stb/info/boxtype", "r")))
-					{
-    					cs_log("Failure to open file:  %s", "specific box type file");
-    					goto END;
-					}
-   				}
-				for (line = 1; line < 2; line++) // read only line 1
-				{
-    				if (!fgets(data, 22, f)) // reads one line at a time
-        			break;
-    				if (!(p = strchr(data, '\n')))
-					{
-        				cs_log("No end-of-line detected in line %d or too long for buffer.", line);
-						*p = '\0';
-						fclose(f);
-        				goto END;
-        			}
-    				*p = '\0';
-					stbproc_boxtype = data;
-					if(lstat("/proc/stb/info/vumodel",&info) == 0) {cs_log("Stb boxtype    = vu%s", stbproc_boxtype);}
-					else {cs_log("Stb boxtype    = %s", stbproc_boxtype);}
-					fclose(f);
-				}
-			}
-		}
-	}
-END:
 	return (fp <= (FILE *)0);
 }
 

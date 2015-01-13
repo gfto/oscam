@@ -665,6 +665,86 @@ void cs_exit(int32_t sig)
 		{ exit_oscam = sig ? sig : 1; }
 }
 
+/* Obtain machine info */
+void init_machine_info(void)
+{
+	char *stbproc_boxtype;  // to store specific boxtype
+	char *stbproc_model;    // to store stb model
+	struct utsname buffer;
+	int8_t rc = 0;
+	rc = uname(&buffer);
+
+	if (rc == 0) 
+	{ 
+		cs_log("System name    = %s", buffer.sysname);
+		cs_log("Host name      = %s", buffer.nodename);
+		cs_log("Release        = %s", buffer.release);
+		cs_log("Version        = %s", buffer.version);
+		cs_log("Machine        = %s", buffer.machine);
+	} 
+	else 
+	{
+		cs_log("unable to use uname unknown router,stb or pc");
+	}
+	
+	if (!strcasecmp(buffer.sysname, "Linux"))
+	{
+		struct stat info;
+		if((lstat("/proc/stb/info",&info) == 0) && (lstat("/proc/stb/info/model",&info) == 0))
+		{
+			char data[23], *p;
+			FILE *f;
+			int32_t line = 0;
+
+			if (!(f = fopen("/proc/stb/info/model", "r")))
+			{
+    			cs_log("Failure to open file:  %s", "/proc/stb/info/model");
+    		}
+			for (line = 1; line < 2; line++) // read only line 1
+			{
+    			if (!fgets(data, 22, f)) // reads one line at a time
+        		break;
+    			if (!(p = strchr(data, '\n')))
+				{
+        			cs_log("No end-of-line detected in line %d or too long for buffer.", line);
+					*p = '\0';
+					fclose(f);
+        		}
+    			*p = '\0';
+				stbproc_model = data;
+				cs_log("Stb model      = %s", stbproc_model);
+    		}
+			fclose(f);
+			if((lstat("/proc/stb/info/vumodel",&info) == 0) || (lstat("/proc/stb/info/boxtype",&info) == 0))
+			{
+				if (!(f = fopen("/proc/stb/info/vumodel", "r")))
+				{
+					if (!(f = fopen("/proc/stb/info/boxtype", "r")))
+					{
+    					cs_log("Failure to open file:  %s", "specific box type file");
+					}
+   				}
+				for (line = 1; line < 2; line++) // read only line 1
+				{
+    				if (!fgets(data, 22, f)) // reads one line at a time
+        			break;
+    				if (!(p = strchr(data, '\n')))
+					{
+        				cs_log("No end-of-line detected in line %d or too long for buffer.", line);
+						*p = '\0';
+						fclose(f);
+        			}
+    				*p = '\0';
+					stbproc_boxtype = data;
+					if(lstat("/proc/stb/info/vumodel",&info) == 0) {cs_log("Stb boxtype    = vu%s", stbproc_boxtype);}
+					else {cs_log("Stb boxtype    = %s", stbproc_boxtype);}
+					fclose(f);
+				}
+			}
+		}
+	}
+}
+
 /* Checks if the date of the system is correct and waits if necessary. */
 static void init_check(void)
 {
@@ -1333,6 +1413,7 @@ int32_t main(int32_t argc, char *argv[])
 	init_hitcache();
 	init_config();
 	cs_init_log();
+	init_machine_info();
 	init_check();
 	if(!oscam_pidfile && cfg.pidfile)
 		{ oscam_pidfile = cfg.pidfile; }
