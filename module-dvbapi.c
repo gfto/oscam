@@ -23,7 +23,7 @@
 #include "reader-irdeto.h"
 
 #ifdef DVBAPI_SAMYGO
-static int _ioctl(int fd, int request, ...)
+static int dvbapi_ioctl(int fd, int request, ...)
 {
 	typedef struct dmx_sct_filter_params dmx_sct_filter_params_t;
 	typedef struct dmxSctFilterParams dmxSctFilterParams_t;
@@ -63,7 +63,16 @@ static int _ioctl(int fd, int request, ...)
 
 	return ret;
 }
-#define ioctl _ioctl
+#else
+static int dvbapi_ioctl(int fd, unsigned long request, ...)
+{
+	int ret;
+	va_list args;
+	va_start(args, request);
+	ret = ioctl(fd, request, args);
+	va_end(args);
+	return ret;
+}
 #endif
 
 // tunemm_caid_map
@@ -475,7 +484,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 			//structure, which is incorrect (it should be  dmxSctFilterParams).
 			//The only way to get it right is to call DMX_SET_FILTER1 with the argument
 			//expected by DMX_SET_FILTER. Otherwise, the timeout parameter is not passed correctly.
-			ret = ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER1, &sFP2);
+			ret = dvbapi_ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER1, &sFP2);
 		}
 		else
 		{
@@ -484,7 +493,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
 				ret = dvbapi_net_send(DVBAPI_DMX_SET_FILTER, demux[demux_id].socket_fd, demux_id, n, (unsigned char *) &sFP2);
 			else
-				ret = ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER, &sFP2);
+				ret = dvbapi_ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER, &sFP2);
 		}
 		break;
 
@@ -500,7 +509,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 		sFP1.flags          = DMX_IMMEDIATE_START;
 		memcpy(sFP1.filter.filter, filt, 16);
 		memcpy(sFP1.filter.mask, mask, 16);
-		ret = ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER1, &sFP1);
+		ret = dvbapi_ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER1, &sFP1);
 
 		break;
 #ifdef WITH_STAPI
@@ -743,15 +752,15 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
 				retfilter = dvbapi_net_send(DVBAPI_DMX_STOP, demux[demux_index].socket_fd, demux_index, num, NULL);
 			else
-				retfilter = ioctl(fd, DMX_STOP); // for modern dvbapi boxes, they do give filter status back to us
+				retfilter = dvbapi_ioctl(fd, DMX_STOP); // for modern dvbapi boxes, they do give filter status back to us
 			break;
 
 		case DVBAPI_1:
 #if defined(__powerpc__)
-			ioctl(fd, DMX_STOP); // for old boxes dvbapi1 complaint like dm500 ppcold, no action feedback.
+			dvbapi_ioctl(fd, DMX_STOP); // for old boxes dvbapi1 complaint like dm500 ppcold, no action feedback.
 			retfilter = 1; // set always successful, but we will never know for sure
 #else
-			retfilter = ioctl(fd, DMX_STOP); // for modern dvbapi boxes, they do give filter status back to us
+			retfilter = dvbapi_ioctl(fd, DMX_STOP); // for modern dvbapi boxes, they do give filter status back to us
 #endif
 			break;
 
@@ -1236,7 +1245,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 						if(currentfd > 0)
 						{
 							// This ioctl fails on dm500 but that is OK.
-							if(ioctl(currentfd, CA_SET_PID, &ca_pid2) == -1)
+							if(dvbapi_ioctl(currentfd, CA_SET_PID, &ca_pid2) == -1)
 								cs_debug_mask(D_TRACE | D_DVBAPI,"[DVBAPI] CA_SET_PID ioctl error (errno=%d %s)", errno, strerror(errno));
 							int8_t result = is_ca_used(i);
 							if(!enable && result == CA_IS_CLEAR){
@@ -3972,7 +3981,7 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid)
 							if(ca_fd[i] <= 0)
 								{ continue; } // proceed next stream
 						}
-						int32_t ret = ioctl(ca_fd[i], CA_SET_DESCR, &ca_descr);
+						int32_t ret = dvbapi_ioctl(ca_fd[i], CA_SET_DESCR, &ca_descr);
 						if (ret < 0) {
 // FIXME: ppcold (dm500?) returns error (why, is it not supported?)
 #ifndef __powerpc__
@@ -4528,7 +4537,7 @@ int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t
 			//structure, which is incorrect (it should be  dmxSctFilterParams).
 			//The only way to get it right is to call DMX_SET_FILTER1 with the argument
 			//expected by DMX_SET_FILTER. Otherwise, the timeout parameter is not passed correctly.
-			ret = ioctl(fd, DMX_SET_FILTER1, &sFP2);
+			ret = dvbapi_ioctl(fd, DMX_SET_FILTER1, &sFP2);
 		}
 		else
 		{
@@ -4537,7 +4546,7 @@ int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t
 			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
 				ret = dvbapi_net_send(DVBAPI_DMX_SET_FILTER, demux[demux_index].socket_fd, demux_index, num, (unsigned char *) &sFP2);
 			else
-				ret = ioctl(fd, DMX_SET_FILTER, &sFP2);
+				ret = dvbapi_ioctl(fd, DMX_SET_FILTER, &sFP2);
 		}
 		break;
 	}
@@ -4551,7 +4560,7 @@ int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t
 		sFP1.flags = DMX_IMMEDIATE_START;
 		memcpy(sFP1.filter.filter, filter, 16);
 		memcpy(sFP1.filter.mask, mask, 16);
-		ret = ioctl(fd, DMX_SET_FILTER1, &sFP1);
+		ret = dvbapi_ioctl(fd, DMX_SET_FILTER1, &sFP1);
 		break;
 	}
 #ifdef WITH_STAPI
