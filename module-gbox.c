@@ -1867,36 +1867,24 @@ static int8_t is_already_pending(ECM_REQUEST *er, struct gbox_card_id *searched_
 
 static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSED(buf))
 {
-	struct gbox_peer *peer = cli->gbox;
-	int32_t cont_1;
-	uint32_t sid_verified = 0;
-//	uint32_t time_since_lastcw = 0;
-/*	struct gbox_ecm_request_ext *ere;
+	if(!cli || !er || !cli->reader)
+		{ return -1; }
 
-	if (!er->src_data) {
-                if(!cs_malloc(&ere, sizeof(struct gbox_ecm_request_ext)))
-                {
-                	cs_writeunlock(&gbox->lock);
-                	return -1;
-                }
-		er->src_data = ere;
-		gbox_init_ecm_request_ext(ere);
-	}
-	else
-		ere = er->src_data;
-*/
-	if(!peer || !cli->reader->tcp_connected)
+	if(!cli->gbox || !cli->reader->tcp_connected)
 	{
 		cs_debug_mask(D_READER, "gbox: %s server not init!", cli->reader->label);
 		write_ecm_answer(cli->reader, er, E_NOTFOUND, 0x27, NULL, NULL);
-
 		return -1;
 	}
+
+	struct gbox_peer *peer = cli->gbox;
+	int32_t cont_1;
+	uint32_t sid_verified = 0;
 
 	if(!ll_count(peer->gbox.cards))
 	{
 		cs_debug_mask(D_READER, "gbox: %s NO CARDS!", cli->reader->label);
-		write_ecm_answer(cli->reader, er, E_NOTFOUND, 0x27, NULL, NULL);
+		write_ecm_answer(cli->reader, er, E_NOTFOUND, E2_CCCAM_NOCARD, NULL, NULL);
 		return -1;
 	}
 
@@ -1922,11 +1910,6 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 
 	uint16_t ercaid = er->caid;
 	uint32_t erprid = er->prid;
-
-	if(cli->reader->gbox_maxecmsend == 0)
-	{
-		cli->reader->gbox_maxecmsend = DEFAULT_GBOX_MAX_ECM_SEND;
-	}
 
 	switch(ercaid >> 8)
 	{
@@ -2311,9 +2294,7 @@ void gbox_send_good_night(void)
 void gbox_cleanup(struct s_client *cl)
 {
 	 if(cl->gbox && cl->typ == 'p')
-	 {
-	 	gbox_send_peer_good_night(cl);
-	 }
+	 	{ gbox_send_peer_good_night(cl); }
 }
 
 /*
