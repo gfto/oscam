@@ -671,10 +671,10 @@ void init_machine_info(void)
 {
 	int8_t mallocok = 0;
 
-	if(!cs_malloc(&minfo, 200)) {mallocok = -1; goto ENDMACHINEINFO;}
+	if(!cs_malloc(&minfo, sizeof(struct machine_info))) {mallocok = -1; goto ENDMACHINEINFO;}
 	struct machine_info *minfos = minfo;
-	if(!cs_malloc(&minfos->stbproc_model, 23) || !cs_malloc(&minfos->stbproc_boxtype, 23))
-		{mallocok = -1; goto ENDMACHINEINFO;}
+//	if(!cs_malloc(&minfos->stbproc_model, 23) || !cs_malloc(&minfos->stbproc_boxtype, 23))
+//		{mallocok = -1; goto ENDMACHINEINFO;}
 		
 	struct utsname buffer;
 	int8_t rc = 0;
@@ -717,7 +717,9 @@ void init_machine_info(void)
 					fclose(f);
         		} else {
     			*p = '\0';
-				memset(minfos->stbproc_model,0,23);
+				if(!cs_malloc(&minfos->stbproc_model, sizeof(data)))
+					{fclose(f); mallocok = -1; goto ENDMACHINEINFO;}
+				memset(minfos->stbproc_model,0,sizeof(data));
 				memcpy(minfos->stbproc_model,data,sizeof(data));
 				cs_log("Stb model      = %s", minfos->stbproc_model);
 				fclose(f);}
@@ -741,7 +743,9 @@ void init_machine_info(void)
 							fclose(f);
 	        			} else {
 	    				*p = '\0';
-						memset(minfos->stbproc_boxtype,0,23);
+						if(!cs_malloc(&minfos->stbproc_boxtype,sizeof(data)))
+							{fclose(f); mallocok = -1; goto ENDMACHINEINFO;}
+						memset(minfos->stbproc_boxtype,0,sizeof(data));
 						memcpy(minfos->stbproc_boxtype,data,sizeof(data));
 						{cs_log("Stb boxtype    = %s", minfos->stbproc_boxtype);}
 						fclose(f);}
