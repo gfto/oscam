@@ -70,6 +70,15 @@ static int dvbapi_ioctl(int fd, unsigned long request, ...)
 	va_list args;
 	va_start(args, request);
 	ret = ioctl(fd, request, args);
+#if defined(__powerpc__)
+	// Old dm500 boxes (ppc old) are using broken kernel, se we need some fixups
+	switch (request) {
+	case DMX_STOP:
+	case CA_SET_DESCR:
+	case CA_SET_PID:
+		ret = 1;
+	}
+#endif
 	va_end(args);
 	return ret;
 }
@@ -752,16 +761,11 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
 				retfilter = dvbapi_net_send(DVBAPI_DMX_STOP, demux[demux_index].socket_fd, demux_index, num, NULL);
 			else
-				retfilter = dvbapi_ioctl(fd, DMX_STOP); // for modern dvbapi boxes, they do give filter status back to us
+				retfilter = dvbapi_ioctl(fd, DMX_STOP);
 			break;
 
 		case DVBAPI_1:
-#if defined(__powerpc__)
-			dvbapi_ioctl(fd, DMX_STOP); // for old boxes dvbapi1 complaint like dm500 ppcold, no action feedback.
-			retfilter = 1; // set always successful, but we will never know for sure
-#else
-			retfilter = dvbapi_ioctl(fd, DMX_STOP); // for modern dvbapi boxes, they do give filter status back to us
-#endif
+			retfilter = dvbapi_ioctl(fd, DMX_STOP);
 			break;
 
 #ifdef WITH_STAPI
@@ -1244,7 +1248,6 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 						}
 						if(currentfd > 0)
 						{
-							// This ioctl fails on dm500 but that is OK.
 							if(dvbapi_ioctl(currentfd, CA_SET_PID, &ca_pid2) == -1)
 								cs_debug_mask(D_TRACE | D_DVBAPI,"[DVBAPI] CA_SET_PID ioctl error (errno=%d %s)", errno, strerror(errno));
 							int8_t result = is_ca_used(i);
@@ -3981,12 +3984,8 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid)
 							if(ca_fd[i] <= 0)
 								{ continue; } // proceed next stream
 						}
-						int32_t ret = dvbapi_ioctl(ca_fd[i], CA_SET_DESCR, &ca_descr);
-						if (ret < 0) {
-// FIXME: ppcold (dm500?) returns error (why, is it not supported?)
-#ifndef __powerpc__
+						if (dvbapi_ioctl(ca_fd[i], CA_SET_DESCR, &ca_descr) < 0) {
 							cs_log("ERROR: ioctl(CA_SET_DESCR): %s", strerror(errno));
-#endif
 						}
 					}
 				}
