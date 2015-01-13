@@ -1826,17 +1826,18 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 		{
 			if(n != found)
 			{
+				// disable non matching pid
 				demux[demux_index].ECMpids[n].status = -1;
-				if(c->chid < 0x10000) { demux[demux_index].ECMpids[n].CHID = c->chid; }
 			}
 			else
 			{
 				demux[demux_index].ECMpids[n].status = 1;
+				if(c->chid < 0x10000) { demux[demux_index].ECMpids[n].CHID = c->chid; } // use chid match from cache right away!
 			}
 		}
 		demux[demux_index].max_emm_filter = MAX_FILTER - 1;
 		demux[demux_index].max_status = 1;
-		cs_debug_mask(D_DVBAPI, "[DVBAPI] Found channel in cache, start descrambling pid %d ", found);
+		cs_log("[DVBAPI] Found channel in cache -> start descrambling ecmpid #%d ", found);
 		return;
 	}
 	
