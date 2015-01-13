@@ -3993,13 +3993,13 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid)
 							if(ca_fd[i] <= 0)
 								{ continue; } // proceed next stream
 						}
-#if defined(__powerpc__)
-						ioctl(ca_fd[i], CA_SET_DESCR, &ca_descr); // ppcold return value never given!
-#else
 						int32_t ret = ioctl(ca_fd[i], CA_SET_DESCR, &ca_descr);
-						if(ret < 0)
-							{ cs_log("ERROR: ioctl(CA_SET_DESCR): %s", strerror(errno)); }
+						if (ret < 0) {
+// FIXME: ppcold (dm500?) returns error (why, is it not supported?)
+#ifndef __powerpc__
+							cs_log("ERROR: ioctl(CA_SET_DESCR): %s", strerror(errno));
 #endif
+						}
 					}
 				}
 			}
