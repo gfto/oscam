@@ -45,6 +45,7 @@ extern char *config_mak;
 const char *syslog_ident = "oscam";
 static char *oscam_pidfile;
 static char default_pidfile[64];
+void *minfo;
 
 int32_t exit_oscam = 0;
 static struct s_module modules[CS_MAX_MOD];
@@ -668,8 +669,13 @@ void cs_exit(int32_t sig)
 /* Obtain machine info */
 void init_machine_info(void)
 {
-	char *stbproc_boxtype;  // to store specific boxtype
-	char *stbproc_model;    // to store stb model
+	int8_t mallocok = 0;
+
+	if(!cs_malloc(&minfo, 200)) {mallocok = -1; goto ENDMACHINEINFO;}
+	struct machine_info *minfos = minfo;
+	if(!cs_malloc(&minfos->stbproc_model, 23) || !cs_malloc(&minfos->stbproc_boxtype, 23))
+		{mallocok = -1; goto ENDMACHINEINFO;}
+		
 	struct utsname buffer;
 	int8_t rc = 0;
 	rc = uname(&buffer);
@@ -711,8 +717,9 @@ void init_machine_info(void)
 					fclose(f);
         		} else {
     			*p = '\0';
-				stbproc_model = data;
-				cs_log("Stb model      = %s", stbproc_model);
+				memset(minfos->stbproc_model,0,23);
+				memcpy(minfos->stbproc_model,data,sizeof(data));
+				cs_log("Stb model      = %s", minfos->stbproc_model);
 				fclose(f);}
     		}}
 			if((lstat("/proc/stb/info/vumodel",&info) == 0) || (lstat("/proc/stb/info/boxtype",&info) == 0))
@@ -734,15 +741,17 @@ void init_machine_info(void)
 							fclose(f);
 	        			} else {
 	    				*p = '\0';
-						stbproc_boxtype = data;
-						if(lstat("/proc/stb/info/vumodel",&info) == 0) {cs_log("Stb boxtype    = vu%s", stbproc_boxtype);}
-						else {cs_log("Stb boxtype    = %s", stbproc_boxtype);}
+						memset(minfos->stbproc_boxtype,0,23);
+						memcpy(minfos->stbproc_boxtype,data,sizeof(data));
+						{cs_log("Stb boxtype    = %s", minfos->stbproc_boxtype);}
 						fclose(f);}
 					}
 				}
 			}
 		}
 	}
+ENDMACHINEINFO:
+	if(mallocok == -1) {cs_log("memory allocation machine info failed");}
 }
 
 /* Checks if the date of the system is correct and waits if necessary. */

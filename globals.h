@@ -1970,10 +1970,18 @@ struct s_write_from_cache
 	ECM_REQUEST *er_cache;
 };
 
+/* to memorize machine info and make avbl to other modules */
+struct machine_info
+{
+	char *stbproc_boxtype;  // to store specific boxtype
+	char *stbproc_model;    // to store stb model
+};
+
 
 /* ===========================
  *      global variables
  * =========================== */
+extern void *minfo;  // for structure machine info
 extern pthread_key_t getclient;
 extern struct s_client *first_client;
 extern CS_MUTEX_LOCK config_lock;

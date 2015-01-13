@@ -307,6 +307,8 @@ bool cardreader_init(struct s_reader *reader)
 					RDR_CD_TXT[reader->detect & 0x7f],
 					(float)reader->cardmhz / 100,
 					(float)reader->mhz / 100);
+			struct machine_info *minfos = minfo;
+			rdr_log(reader,"Reader sci internal for box model %s box type %s ", minfos->stbproc_model, minfos->stbproc_boxtype);
 		}
 		else
 		{
