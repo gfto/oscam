@@ -75,9 +75,6 @@ void dvbapi_load_channel_cache(void)
 		if(!line[0] || line[0] == '#' || line[0] == ';')
 			{ continue; }
 
-		if(!cs_malloc(&c, sizeof(struct s_channel_cache)))
-			{ continue; }
-
 		for(i = 0, ptr = strtok_r(line, ",", &saveptr1); ptr && i < 6 ; ptr = strtok_r(NULL, ",", &saveptr1), i++)
 		{
 			split[i] = ptr;
@@ -86,6 +83,8 @@ void dvbapi_load_channel_cache(void)
 		valid = (i == 5);
 		if(valid)
 		{
+			if(!cs_malloc(&c, sizeof(struct s_channel_cache)))
+			{ continue; }
 			c->caid = a2i(split[0], 4);
 			c->prid = a2i(split[1], 6);
 			c->srvid = a2i(split[2], 4);
