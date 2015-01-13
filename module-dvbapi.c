@@ -640,7 +640,7 @@ static int32_t dvbapi_read_device(int32_t dmx_fd, unsigned char *buf, int32_t le
 
 int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter)
 {
-	int32_t dmx_fd;
+	int32_t dmx_fd, ret;
 	int32_t ca_offset = 0;
 	char device_path[128], device_path2[128];
 
@@ -678,20 +678,16 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter)
 	saddr.sun_family = AF_UNIX;
 	strncpy(saddr.sun_path, device_path, sizeof(saddr.sun_path) - 1);
     dmx_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if(connect(dmx_fd, (struct sockaddr *)&saddr, sizeof(saddr)) < 0)
-    {
-		cs_log("ERROR: Can't open device %s (errno=%d %s)", device_path, errno, strerror(errno));
-        dmx_fd = -1;
-    }
-
+	ret = connect(dmx_fd, (struct sockaddr *)&saddr, sizeof(saddr));
 #else
+	dmx_fd = ret = open(device_path, O_RDWR | O_NONBLOCK);
+#endif
 
-	if((dmx_fd = open(device_path, O_RDWR | O_NONBLOCK)) < 0)
+	if(ret < 0)
 	{
 		cs_log("ERROR: Can't open device %s (errno=%d %s)", device_path, errno, strerror(errno));
 		return -1;
 	}
-#endif
 
 	cs_debug_mask(D_DVBAPI, "DEVICE open (%s) fd %d", device_path, dmx_fd);
 
