@@ -10,6 +10,55 @@
 #include "oscam-string.h"
 #include "oscam-time.h"
 
+struct STDEVICE
+{
+	char name[20];
+	uint32_t SessionHandle;
+	uint32_t SignalHandle;
+	pthread_t thread;
+	struct filter_s demux_fd[MAX_DEMUX][MAX_FILTER];
+};
+
+struct read_thread_param
+{
+	int32_t id;
+	struct s_client *cli;
+};
+
+#define BUFFLEN 1024
+#define PROCDIR "/proc/stpti4_core/"
+
+/* These functions are in liboscam_stapi.a */
+extern uint32_t oscam_stapi_Capability(char *name);
+extern char *oscam_stapi_LibVersion(void);
+extern uint32_t oscam_stapi_Open(char *name, uint32_t *sessionhandle);
+extern uint32_t oscam_stapi_SignalAllocate(uint32_t sessionhandle, uint32_t *signalhandle);
+extern uint32_t oscam_stapi_FilterAllocate(uint32_t sessionhandle, uint32_t *filterhandle);
+extern uint32_t oscam_stapi_SlotInit(uint32_t sessionhandle, uint32_t signalhandle, uint32_t *bufferhandle, uint32_t *slothandle, uint16_t pid);
+extern uint32_t oscam_stapi_FilterSet(uint32_t filterhandle, uchar *filt, uchar *mask);
+extern uint32_t oscam_stapi_FilterAssociate(uint32_t filterhandle, uint32_t slothandle);
+extern uint32_t oscam_stapi_SlotDeallocate(uint32_t slothandle);
+extern uint32_t oscam_stapi_BufferDeallocate(uint32_t bufferhandle);
+extern uint32_t oscam_stapi_FilterDeallocate(uint32_t filterhandle);
+extern uint32_t oscam_stapi_Close(uint32_t sessionhandle);
+extern uint32_t oscam_stapi_CheckVersion(void);
+extern uint32_t oscam_stapi_DescramblerAssociate(uint32_t deschandle, uint32_t slot);
+extern uint32_t oscam_stapi_DescramblerDisassociate(uint32_t deschandle, uint32_t slot);
+extern uint32_t oscam_stapi_DescramblerAllocate(uint32_t sessionhandle, uint32_t *deschandle);
+extern uint32_t oscam_stapi_DescramblerDeallocate(uint32_t deschandle);
+extern uint32_t oscam_stapi_DescramblerSet(uint32_t deschandle, int32_t parity, uchar *cw);
+extern uint32_t oscam_stapi_SignalWaitBuffer(uint32_t signalhandle, uint32_t *qbuffer, int32_t timeout);
+extern uint32_t oscam_stapi_BufferReadSection(uint32_t bufferhandle, uint32_t *filterlist, int32_t maxfilter, uint32_t *filtercount, int32_t *crc, uchar *buf, int32_t bufsize, uint32_t *size);
+extern uint32_t oscam_stapi_SignalAbort(uint32_t signalhandle);
+extern uint32_t oscam_stapi_PidQuery(char *name, uint16_t pid);
+extern uint32_t oscam_stapi_BufferFlush(uint32_t bufferhandle);
+extern uint32_t oscam_stapi_SlotClearPid(uint32_t slot);
+
+// Local functions
+static void *stapi_read_thread(void *);
+static int32_t stapi_do_set_filter(int32_t demux_id, FILTERTYPE *filter, uint16_t *pids, int32_t pidcount, uchar *filt, uchar *mask, int32_t dev_id);
+static int32_t stapi_do_remove_filter(int32_t demux_id, FILTERTYPE *filter, int32_t dev_id);
+
 // These variables are declared in module-dvbapi.c
 extern int32_t disable_pmt_files;
 extern struct s_dvbapi_priority *dvbapi_priority;
@@ -19,7 +68,7 @@ static int32_t stapi_on;
 static pthread_mutex_t filter_lock;
 static struct STDEVICE dev_list[PTINUM];
 
-void stapi_off(void)
+static void stapi_off(void)
 {
 	int32_t i;
 
@@ -278,7 +327,7 @@ int32_t stapi_remove_filter(int32_t demux_id, int32_t num, char *pmtfile)
 	return ret;
 }
 
-uint32_t check_slot(int32_t dev_id, uint32_t checkslot, FILTERTYPE *skipfilter)
+static uint32_t check_slot(int32_t dev_id, uint32_t checkslot, FILTERTYPE *skipfilter)
 {
 	int32_t d, f, l;
 	for(d = 0; d < MAX_DEMUX; d++)
@@ -300,7 +349,7 @@ uint32_t check_slot(int32_t dev_id, uint32_t checkslot, FILTERTYPE *skipfilter)
 }
 
 
-int32_t stapi_do_set_filter(int32_t demux_id, FILTERTYPE *filter, uint16_t *pids, int32_t pidcount, uchar *filt, uchar *mask, int32_t dev_id)
+static int32_t stapi_do_set_filter(int32_t demux_id, FILTERTYPE *filter, uint16_t *pids, int32_t pidcount, uchar *filt, uchar *mask, int32_t dev_id)
 {
 	uint32_t FilterAssociateError = 0;
 	int32_t k, ret = 0;
@@ -367,7 +416,7 @@ int32_t stapi_do_set_filter(int32_t demux_id, FILTERTYPE *filter, uint16_t *pids
 	}
 }
 
-int32_t stapi_do_remove_filter(int32_t UNUSED(demux_id), FILTERTYPE *filter, int32_t dev_id)
+static int32_t stapi_do_remove_filter(int32_t UNUSED(demux_id), FILTERTYPE *filter, int32_t dev_id)
 {
 	if(filter->fd == 0) { return 0; }
 
@@ -402,7 +451,7 @@ int32_t stapi_do_remove_filter(int32_t UNUSED(demux_id), FILTERTYPE *filter, int
 	}
 }
 
-void stapi_cleanup_thread(void *dev)
+static void stapi_cleanup_thread(void *dev)
 {
 	int32_t dev_index = (int)dev;
 
@@ -413,7 +462,7 @@ void stapi_cleanup_thread(void *dev)
 	dev_list[dev_index].SessionHandle = 0;
 }
 
-void *stapi_read_thread(void *sparam)
+static void *stapi_read_thread(void *sparam)
 {
 	int32_t dev_index, ErrorCode, i, j, CRCValid;
 	uint32_t QueryBufferHandle = 0, DataSize = 0;
@@ -510,7 +559,7 @@ void *stapi_read_thread(void *sparam)
 #define DE_START 0
 #define DE_STOP 1
 
-void stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t mode, int32_t n)
+static void stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t mode, int32_t n)
 {
 	uint32_t Slot = 0;
 	int32_t ErrorCode = 0;
@@ -570,7 +619,7 @@ void stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t mode, in
 	return;
 }
 
-void stapi_startdescrambler(int32_t demux_id, int32_t dev_index, int32_t mode)
+static void stapi_startdescrambler(int32_t demux_id, int32_t dev_index, int32_t mode)
 {
 	int32_t ErrorCode;
 
