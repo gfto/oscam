@@ -301,14 +301,14 @@ bool cardreader_init(struct s_reader *reader)
 	{
 		if((reader->cardmhz > 2000) && (reader->typ != R_SMART))
 		{
-			rdr_log(reader, "Reader initialized (device=%s, detect=%s%s, pll max=%.2f MHz, wanted mhz=%.2f MHz",
+			rdr_log(reader, "Reader initialized (device=%s, detect=%s%s, pll max=%.2f MHz, wanted mhz=%.2f MHz)",
 					reader->device,
 					reader->detect & 0x80 ? "!" : "",
 					RDR_CD_TXT[reader->detect & 0x7f],
 					(float)reader->cardmhz / 100,
 					(float)reader->mhz / 100);
 			struct machine_info *minfos = minfo;
-			rdr_log(reader,"Reader sci internal for box model %s box type %s ", minfos->stbproc_model, minfos->stbproc_boxtype);
+			rdr_log(reader,"Reader sci internal for box type %s", minfos->stbproc_boxtype);
 		}
 		else
 		{

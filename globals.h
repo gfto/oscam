@@ -1974,7 +1974,6 @@ struct s_write_from_cache
 struct machine_info
 {
 	char *stbproc_boxtype;  // to store specific boxtype
-	char *stbproc_model;    // to store stb model
 };
 
 

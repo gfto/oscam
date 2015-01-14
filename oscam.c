@@ -669,93 +669,132 @@ void cs_exit(int32_t sig)
 /* Obtain machine info */
 void init_machine_info(void)
 {
-	int8_t mallocok = 0;
-
-	if(!cs_malloc(&minfo, sizeof(struct machine_info))) {mallocok = -1; goto ENDMACHINEINFO;}
-	struct machine_info *minfos = minfo;
-//	if(!cs_malloc(&minfos->stbproc_model, 23) || !cs_malloc(&minfos->stbproc_boxtype, 23))
-//		{mallocok = -1; goto ENDMACHINEINFO;}
-		
 	struct utsname buffer;
+	struct stat info;
+	int8_t function_errors = 0; /* -1 memallocerror, -2 boxtype error , -3 uname error */
 	int8_t rc = 0;
-	rc = uname(&buffer);
+	char *stbboxtype = 0;  // to store specific boxtype
+	char *stbmodel = 0;
+	char data[23], *p;
+	FILE *f;
+	int32_t line = 0;
 
-	if (rc == 0) 
-	{ 
+	rc = uname(&buffer);
+	if (rc == 0)
+	{
 		cs_log("System name    = %s", buffer.sysname);
 		cs_log("Host name      = %s", buffer.nodename);
 		cs_log("Release        = %s", buffer.release);
 		cs_log("Version        = %s", buffer.version);
 		cs_log("Machine        = %s", buffer.machine);
-	} 
-	else 
-	{
-		cs_log("unable to use uname unknown router,stb or pc");
 	}
-	
+	else
+	{
+		function_errors = -3;
+		goto ENDMACHINEINFO;
+	}
 	if (!strcasecmp(buffer.sysname, "Linux"))
 	{
-		struct stat info;
-		if((lstat("/proc/stb/info",&info) == 0) && (lstat("/proc/stb/info/model",&info) == 0))
+		if (lstat("/proc/stb/info/model",&info) == 0)
 		{
-			char data[23], *p;
-			FILE *f;
-			int32_t line = 0;
-
 			if (!(f = fopen("/proc/stb/info/model", "r")))
 			{
     			cs_log("Failure to open file:  %s", "/proc/stb/info/model");
     		} else {
-			for (line = 1; line < 2; line++) // read only line 1
-			{
-    			if (!fgets(data, 22, f)) // reads one line at a time
-        		break;
-    			if (!(p = strchr(data, '\n')))
+				for (line = 1; line < 2; line++) // read only line 1
 				{
-        			cs_log("No end-of-line detected in line %d or too long for buffer.", line);
-					*p = '\0';
-					fclose(f);
-        		} else {
-    			*p = '\0';
-				if(!cs_malloc(&minfos->stbproc_model, sizeof(data)))
-					{fclose(f); mallocok = -1; goto ENDMACHINEINFO;}
-				memset(minfos->stbproc_model,0,sizeof(data));
-				memcpy(minfos->stbproc_model,data,sizeof(data));
-				cs_log("Stb model      = %s", minfos->stbproc_model);
-				fclose(f);}
-    		}}
-			if((lstat("/proc/stb/info/vumodel",&info) == 0) || (lstat("/proc/stb/info/boxtype",&info) == 0))
-			{
-				if (!(f = fopen("/proc/stb/info/vumodel", "r")) && !(f = fopen("/proc/stb/info/boxtype", "r")))
-				{
-    					cs_log("Failure to open file:  %s", "specific box type file");
-   				} 
-				else 
-				{
-					for (line = 1; line < 2; line++) // read only line 1
+		   			if (!fgets(data, 22, f)) // reads one line at a time
+	        		break;
+					if (!(p = strchr(data, '\n')))
 					{
-	    				if (!fgets(data, 22, f)) // reads one line at a time
-	        			break;
-	    				if (!(p = strchr(data, '\n')))
-						{
-	        				cs_log("No end-of-line detected in line %d or too long for buffer.", line);
-							*p = '\0';
-							fclose(f);
-	        			} else {
-	    				*p = '\0';
-						if(!cs_malloc(&minfos->stbproc_boxtype,sizeof(data)))
-							{fclose(f); mallocok = -1; goto ENDMACHINEINFO;}
-						memset(minfos->stbproc_boxtype,0,sizeof(data));
-						memcpy(minfos->stbproc_boxtype,data,sizeof(data));
-						{cs_log("Stb boxtype    = %s", minfos->stbproc_boxtype);}
-						fclose(f);}
+						cs_log("No end-of-line detected in line %d or too long for buffer.", line);
+						*p = '\0';
+						fclose(f);
+					} else {
+						*p = '\0';
+						stbmodel = data;
+						cs_log("Stb model      = %s", stbmodel);
+						fclose(f);
 					}
 				}
 			}
 		}
+		if(lstat("/proc/stb/info/boxtype",&info) == 0)
+		{
+			if (!(f = fopen("/proc/stb/info/boxtype", "r")))
+			{
+    			cs_log("Failure to open file:  %s", "/proc/stb/info/boxtype");
+    		} else {
+				for (line = 1; line < 2; line++) // read only line 1
+				{
+		   			if (!fgets(data, 22, f)) // reads one line at a time
+	        		break;
+					if (!(p = strchr(data, '\n')))
+					{
+						cs_log("No end-of-line detected in line %d or too long for buffer.", line);
+						*p = '\0';
+						fclose(f);
+					} else {
+						*p = '\0';
+						stbboxtype = data;
+						cs_log("Stb model      = %s", stbboxtype);
+						fclose(f);
+					}
+				}
+			}
+		}
+		if(lstat("/proc/stb/info/vumodel",&info) == 0)
+		{
+			if (!(f = fopen("/proc/stb/info/vumodel", "r")))
+			{
+    			cs_log("Failure to open file:  %s", "/proc/stb/info/vumodel");
+    		} else {
+				for (line = 1; line < 2; line++) // read only line 1
+				{
+		   			if (!fgets(data, 22, f)) // reads one line at a time
+	        		break;
+					if (!(p = strchr(data, '\n')))
+					{
+						cs_log("No end-of-line detected in line %d or too long for buffer.", line);
+						*p = '\0';
+						fclose(f);
+					} else {
+						*p = '\0';
+						char *vu = "vu";
+						char stbboxtypevu[25];
+						strncpy(stbboxtypevu, vu, sizeof(stbboxtypevu));
+						if (sizeof(stbboxtypevu) < (strlen(data) + 3)) {fclose(f); function_errors = -2; goto ENDMACHINEINFO;}
+						strncat(stbboxtypevu, data, (sizeof(stbboxtypevu) - strlen(stbboxtypevu)));
+						stbboxtype = stbboxtypevu;
+						cs_log("Stb model      = %s", stbboxtype);
+						fclose(f);
+					}
+				}
+			}
+		}
+
+		if(!cs_malloc(&minfo, sizeof(struct machine_info))) {function_errors = -1; goto ENDMACHINEINFO;}
+		struct machine_info *minfos = minfo;
+		if (stbboxtype)
+		{
+			if(!cs_malloc(&minfos->stbproc_boxtype,(sizeof(stbboxtype) + 1)))
+				{function_errors = -1; goto ENDMACHINEINFO;}
+			memset(minfos->stbproc_boxtype,0,(sizeof(stbboxtype) + 3));
+			memcpy(minfos->stbproc_boxtype,stbboxtype,(sizeof(stbboxtype) + 2));
+		}
+		else if (stbmodel && !stbboxtype)
+		{
+			if(!cs_malloc(&minfos->stbproc_boxtype,(sizeof(stbmodel) + 1)))
+				{function_errors = -1; goto ENDMACHINEINFO;}
+			memset(minfos->stbproc_boxtype,0,(sizeof(stbmodel) + 3));
+			memcpy(minfos->stbproc_boxtype,stbmodel,(sizeof(stbmodel) + 2));
+		}			
 	}
+
 ENDMACHINEINFO:
-	if(mallocok == -1) {cs_log("memory allocation machine info failed");}
+	if(function_errors == -1) {cs_log("memory allocation machine info failed");}
+	if(function_errors == -2) {cs_log("Unable to determine boxtype ");}
+	if(function_errors == -3) {cs_log("unable to use uname unknown router,stb or pc");}
 }
 
 /* Checks if the date of the system is correct and waits if necessary. */
