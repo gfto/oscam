@@ -359,6 +359,8 @@ static int8_t gbox_remove_all_bad_sids(struct gbox_peer *peer, ECM_REQUEST *er, 
 
 void gbox_add_good_card(struct s_client *cl, uint16_t id_card, uint16_t caid, uint8_t slot, uint16_t sid_ok, uint32_t cw_time)
 {
+	if (!cl || !cl->gbox) { return; }
+
 	struct gbox_peer *peer = cl->gbox;
 	struct gbox_card *card = NULL;
 	struct gbox_good_srvid *srvid = NULL;
@@ -447,9 +449,7 @@ struct s_client *get_gbox_proxy(uint16_t gbox_id)
 	for(cl = first_client; cl; cl = cl->next)
 	{
 		if(cl->typ == 'p' && cl->gbox && cl->gbox_peer_id == gbox_id)
-		{
-			return cl;
-		}
+			{ return cl; }
 	}
 	return NULL;
 }
@@ -457,6 +457,8 @@ struct s_client *get_gbox_proxy(uint16_t gbox_id)
 // if input client is typ proxy get client and vice versa
 struct s_client *switch_client_proxy(struct s_client *cli, uint16_t gbox_id)
 {
+	if (!cli) { return cli; }
+	
 	struct s_client *cl;
 	int8_t typ;
 	if(cli->typ == 'c')
@@ -466,9 +468,7 @@ struct s_client *switch_client_proxy(struct s_client *cli, uint16_t gbox_id)
 	for(cl = first_client; cl; cl = cl->next)
 	{
 		if(cl->typ == typ && cl->gbox && cl->gbox_peer_id == gbox_id)
-		{
-			return cl;
-		}
+			{ return cl; }
 	}
 	return cli;
 }
@@ -552,6 +552,8 @@ static int8_t gbox_disconnect_double_peers(struct s_client *cli)
 
 static int8_t gbox_auth_client(struct s_client *cli, uint32_t gbox_password)
 {
+	if (!cli) { return -1; }
+
 	uint16_t gbox_id = gbox_convert_password_to_id(gbox_password);
 	struct s_client *cl = switch_client_proxy(cli, gbox_id);
 
@@ -869,6 +871,8 @@ static int8_t is_blocked_peer(uint16_t peer)
 
 static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 {
+	if (!cli || !cli->gbox || !data) { return -1; }
+
 	struct gbox_peer *peer;
 	struct s_client *cl;
 	int32_t diffcheck = 0;
@@ -1410,7 +1414,10 @@ static int32_t gbox_recv(struct s_client *cli, uchar *buf, int32_t l)
 
 static void gbox_send_dcw(struct s_client *cl, ECM_REQUEST *er)
 {
+	if (!cl || !er) { return; }
+
 	struct s_client *cli = switch_client_proxy(cl, cl->gbox_peer_id);
+	if (!cli->gbox) { return; }
 	struct gbox_peer *peer = cli->gbox;
 
 	if(er->rc >= E_NOTFOUND)
@@ -1767,13 +1774,9 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
         uint16_t id_card = 0;
         struct s_client *proxy;
         if(cli->typ != 'p')
-        {
-            proxy = switch_client_proxy(cli, cli->gbox_peer_id);
-        }
+        	{ proxy = switch_client_proxy(cli, cli->gbox_peer_id); }
         else
-        {
-            proxy = cli;
-        }
+        	{ proxy = cli; }
         proxy->last = time((time_t *)0);
         *rc = 1;
         memcpy(dcw, data + 14, 16);
@@ -1787,20 +1790,20 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
         uint32_t cw_time = GBOX_DEFAULT_CW_TIME;
         for(i = 0; i < cfg.max_pending; i++)
         {
-            if(proxy->ecmtask[i].gbox_crc == crc)
-            {
-                id_card = data[10] << 8 | data[11];
-   	        cw_time = comp_timeb(&t_now, &proxy->ecmtask[i].tps) - gbox_get_pending_time(&proxy->ecmtask[i], id_card, data[36]);
-                gbox_add_good_card(proxy, id_card, proxy->ecmtask[i].caid, data[36], proxy->ecmtask[i].srvid, cw_time);
-                gbox_remove_all_bad_sids(proxy->gbox, &proxy->ecmtask[i], proxy->ecmtask[i].srvid);
-                if(proxy->ecmtask[i].gbox_ecm_status == GBOX_ECM_NOT_ASKED || proxy->ecmtask[i].gbox_ecm_status == GBOX_ECM_ANSWERED)
-                    { return -1; }
-                proxy->ecmtask[i].gbox_ecm_status = GBOX_ECM_ANSWERED;
-                proxy->ecmtask[i].gbox_ecm_id = id_card;
-                *rc = 1;
-                return proxy->ecmtask[i].idx;
-            }
-        }
+        	if(proxy->ecmtask[i].gbox_crc == crc)
+        	{
+        		id_card = data[10] << 8 | data[11];
+        		cw_time = comp_timeb(&t_now, &proxy->ecmtask[i].tps) - gbox_get_pending_time(&proxy->ecmtask[i], id_card, data[36]);
+        		gbox_add_good_card(proxy, id_card, proxy->ecmtask[i].caid, data[36], proxy->ecmtask[i].srvid, cw_time);
+        		gbox_remove_all_bad_sids(proxy->gbox, &proxy->ecmtask[i], proxy->ecmtask[i].srvid);
+        		if(proxy->ecmtask[i].gbox_ecm_status == GBOX_ECM_NOT_ASKED || proxy->ecmtask[i].gbox_ecm_status == GBOX_ECM_ANSWERED)
+        			{ return -1; }
+			proxy->ecmtask[i].gbox_ecm_status = GBOX_ECM_ANSWERED;
+			proxy->ecmtask[i].gbox_ecm_id = id_card;
+			*rc = 1;
+			return proxy->ecmtask[i].idx;
+		}
+	}
         //late answers from other peers,timing not possible
         gbox_add_good_card(proxy, id_card, data[34] << 8 | data[35], data[36], data[8] << 8 | data[9], GBOX_DEFAULT_CW_TIME);
         cs_debug_mask(D_READER, "gbox: no task found for crc=%08x", crc);
@@ -1836,14 +1839,23 @@ void *gbox_rebroadcast_thread(struct gbox_rbc_thread_args *args)
 	struct s_client *cli = args->cli;
 	ECM_REQUEST *er = args->er;
 	uint32_t waittime = args->waittime;
+
+	if (!cli) { return NULL; }
+	pthread_setspecific(getclient, cli);
 	set_thread_name(__func__);
 
 	cs_sleepms(waittime);
-	if (!cli || !er) { return NULL; }
+	if (!cli || !cli->gbox || !er) { return NULL; }
+
+	struct gbox_peer *peer = cli->gbox;
 
 	//ecm is not answered yet
 	if (er->rc >= E_NOTFOUND)
-		{ gbox_send_ecm(cli, er, NULL); }
+	{
+ 		cs_writelock(&peer->lock);
+		gbox_send_ecm(cli, er, NULL);
+ 		cs_writeunlock(&peer->lock);
+	}
 
 	return NULL;
 }
@@ -2167,7 +2179,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 			else
 				{ args.waittime = GBOX_REBROADCAST_TIMEOUT; }
 			cs_debug_mask(D_READER, "[gbx]: Creating rebroadcast thread with waittime: %d", args.waittime);
-			int32_t ret = pthread_create(&rbc_thread, NULL, (void *)gbox_rebroadcast_thread, &args);
+			int32_t ret = pthread_create(&rbc_thread, NULL, gbox_rebroadcast_thread, &args);
 			if(ret)
 			{
 				cs_log("[gbx]: Can't create gbox rebroadcast thread (errno=%d %s)", ret, strerror(ret));
