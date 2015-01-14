@@ -2179,7 +2179,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 			else
 				{ args.waittime = GBOX_REBROADCAST_TIMEOUT; }
 			cs_debug_mask(D_READER, "[gbx]: Creating rebroadcast thread with waittime: %d", args.waittime);
-			int32_t ret = pthread_create(&rbc_thread, NULL, gbox_rebroadcast_thread, &args);
+			int32_t ret = pthread_create(&rbc_thread, NULL, (void *)gbox_rebroadcast_thread, &args);
 			if(ret)
 			{
 				cs_log("[gbx]: Can't create gbox rebroadcast thread (errno=%d %s)", ret, strerror(ret));
