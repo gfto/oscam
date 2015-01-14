@@ -802,6 +802,7 @@ void init_machine_info(void)
 					stbboxtype = "dm500 or dm600pvr";
 					cs_log("Stb boxtype    = %s", stbboxtype);
 				}
+				fclose(f);
 			}
 		}
 
