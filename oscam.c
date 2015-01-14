@@ -737,7 +737,7 @@ void init_machine_info(void)
 					} else {
 						*p = '\0';
 						stbboxtype = data;
-						cs_log("Stb model      = %s", stbboxtype);
+						cs_log("Stb boxtype    = %s", stbboxtype);
 						fclose(f);
 					}
 				}
@@ -766,9 +766,41 @@ void init_machine_info(void)
 						if (sizeof(stbboxtypevu) < (strlen(data) + 3)) {fclose(f); function_errors = -2; goto ENDMACHINEINFO;}
 						strncat(stbboxtypevu, data, (sizeof(stbboxtypevu) - strlen(stbboxtypevu)));
 						stbboxtype = stbboxtypevu;
-						cs_log("Stb model      = %s", stbboxtype);
+						cs_log("Stb boxtype    = %s", stbboxtype);
 						fclose(f);
 					}
+				}
+			}
+		}
+
+		if ((!strcasecmp(buffer.machine, "ppc")) && (lstat("/proc/stb",&info) == 0) && !stbmodel && !stbboxtype)
+		{
+			char data2[100];
+			char *cpuinfo1 = "STBx25xx";
+			char *cpuinfo2 = "pvr";
+			char *cpuinfo3 = "Dreambox";
+			char *cpuinfo4 = "9.80";
+			char *cpuinfo5 = "63MHz";
+			uint8_t ncpuinfo = 0;
+
+			if (!(f = fopen("/proc/cpuinfo", "r")))
+			{
+    			function_errors = -4; goto ENDMACHINEINFO;
+    		}
+			else
+			{
+				while (fgets(data2, sizeof(data2), f))
+				{
+					if (strstr(data2, cpuinfo1)) {ncpuinfo++;}
+					if (strstr(data2, cpuinfo2)) {ncpuinfo++;}
+					if (strstr(data2, cpuinfo3)) {ncpuinfo++;}
+					if (strstr(data2, cpuinfo4)) {ncpuinfo++;}
+					if (strstr(data2, cpuinfo5)) {ncpuinfo++;}
+				}
+				if (ncpuinfo == 5) 
+				{
+					stbboxtype = "dm500 or dm600pvr";
+					cs_log("Stb boxtype    = %s", stbboxtype);
 				}
 			}
 		}
@@ -777,17 +809,17 @@ void init_machine_info(void)
 		struct machine_info *minfos = minfo;
 		if (stbboxtype)
 		{
-			if(!cs_malloc(&minfos->stbproc_boxtype,(sizeof(stbboxtype) + 1)))
+			if(!cs_malloc(&minfos->stbproc_boxtype,strlen(stbboxtype)))
 				{function_errors = -1; goto ENDMACHINEINFO;}
-			memset(minfos->stbproc_boxtype,0,(sizeof(stbboxtype) + 3));
-			memcpy(minfos->stbproc_boxtype,stbboxtype,(sizeof(stbboxtype) + 2));
+			memset(minfos->stbproc_boxtype,0,strlen(stbboxtype) + 1);
+			memcpy(minfos->stbproc_boxtype,stbboxtype,strlen(stbboxtype));
 		}
 		else if (stbmodel && !stbboxtype)
 		{
-			if(!cs_malloc(&minfos->stbproc_boxtype,(sizeof(stbmodel) + 1)))
+			if(!cs_malloc(&minfos->stbproc_boxtype,strlen(stbmodel)))
 				{function_errors = -1; goto ENDMACHINEINFO;}
-			memset(minfos->stbproc_boxtype,0,(sizeof(stbmodel) + 3));
-			memcpy(minfos->stbproc_boxtype,stbmodel,(sizeof(stbmodel) + 2));
+			memset(minfos->stbproc_boxtype,0,strlen(stbmodel) + 1);
+			memcpy(minfos->stbproc_boxtype,stbmodel,strlen(stbmodel));
 		}			
 	}
 
@@ -795,6 +827,7 @@ ENDMACHINEINFO:
 	if(function_errors == -1) {cs_log("memory allocation machine info failed");}
 	if(function_errors == -2) {cs_log("Unable to determine boxtype ");}
 	if(function_errors == -3) {cs_log("unable to use uname unknown router,stb or pc");}
+	if(function_errors == -4) {cs_log("Failure to open file:  %s", "/proc/cpuinfo");}
 }
 
 /* Checks if the date of the system is correct and waits if necessary. */
