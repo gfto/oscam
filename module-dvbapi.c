@@ -66,44 +66,11 @@ static int dvbapi_ioctl(int fd, int request, ...)
 #else 
 static int dvbapi_ioctl(int fd, unsigned long request, ...)
 { 
-	typedef struct dmx_sct_filter_params dmx_sct_filter_params_t;
-	typedef struct dmxSctFilterParams dmxSctFilterParams_t;
-	
 	int ret = 0;
 	va_list args; 
 	va_start(args, request);
-	switch(request)
-	{
-		case DMX_SET_FILTER1:
-		{
-			dmx_sct_filter_params_t *sFP2 = va_arg(args, dmx_sct_filter_params_t *);
-			ret = ioctl(fd, DMX_SET_FILTER1, sFP2);
-			break;
-		}
-		case DMX_SET_FILTER:
-		{
-			dmxSctFilterParams_t *sFP1 = va_arg(args, dmxSctFilterParams_t *);
-			ret = ioctl(fd, DMX_SET_FILTER, sFP1);
-			break;
-		}
-		case DMX_STOP:
-		{
-			ret = ioctl(fd, DMX_STOP);
-			break;
-		}
-		case CA_SET_PID:
-		{
-			ca_pid_t *ca_pid2 = va_arg(args, ca_pid_t *);
-			ret = ioctl(fd, CA_SET_PID, ca_pid2);
-			break;
-		}
-		case CA_SET_DESCR:
-		{
-			ca_descr_t *ca_descr = va_arg(args, ca_descr_t *);
-			ret = ioctl(fd, CA_SET_DESCR, ca_descr);
-			break;
-		}
-	} 
+	void *param = va_arg(args, void *);
+	ret = ioctl(fd, request, param);
 #if defined(__powerpc__)
 	// Old dm500 boxes (ppc old) are using broken kernel, se we need some fixups
 	switch (request)
