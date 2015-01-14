@@ -63,19 +63,54 @@ static int dvbapi_ioctl(int fd, int request, ...)
 
 	return ret;
 }
-#else
+#else 
 static int dvbapi_ioctl(int fd, unsigned long request, ...)
-{
-	int ret;
-	va_list args;
+{ 
+	typedef struct dmx_sct_filter_params dmx_sct_filter_params_t;
+	typedef struct dmxSctFilterParams dmxSctFilterParams_t;
+	
+	int ret = 0;
+	va_list args; 
 	va_start(args, request);
-	ret = ioctl(fd, request, args);
+	switch(request)
+	{
+		case DMX_SET_FILTER1:
+		{
+			dmx_sct_filter_params_t *sFP2 = va_arg(args, dmx_sct_filter_params_t *);
+			ret = ioctl(fd, DMX_SET_FILTER1, sFP2);
+			break;
+		}
+		case DMX_SET_FILTER:
+		{
+			dmxSctFilterParams_t *sFP1 = va_arg(args, dmxSctFilterParams_t *);
+			ret = ioctl(fd, DMX_SET_FILTER, sFP1);
+			break;
+		}
+		case DMX_STOP:
+		{
+			ret = ioctl(fd, DMX_STOP);
+			break;
+		}
+		case CA_SET_PID:
+		{
+			ca_pid_t *ca_pid2 = va_arg(args, ca_pid_t *);
+			ret = ioctl(fd, CA_SET_PID, ca_pid2);
+			break;
+		}
+		case CA_SET_DESCR:
+		{
+			ca_descr_t *ca_descr = va_arg(args, ca_descr_t *);
+			ret = ioctl(fd, CA_SET_DESCR, ca_descr);
+			break;
+		}
+	} 
 #if defined(__powerpc__)
 	// Old dm500 boxes (ppc old) are using broken kernel, se we need some fixups
-	switch (request) {
-	case DMX_STOP:
-	case CA_SET_DESCR:
-	case CA_SET_PID:
+	switch (request)
+	{
+		case DMX_STOP:
+		case CA_SET_DESCR:
+		case CA_SET_PID:
 		ret = 1;
 	}
 #endif
@@ -761,11 +796,11 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
 				retfilter = dvbapi_net_send(DVBAPI_DMX_STOP, demux[demux_index].socket_fd, demux_index, num, NULL);
 			else
-				retfilter = dvbapi_ioctl(fd, DMX_STOP);
+				retfilter = dvbapi_ioctl(fd, DMX_STOP, NULL);
 			break;
 
 		case DVBAPI_1:
-			retfilter = dvbapi_ioctl(fd, DMX_STOP);
+			retfilter = dvbapi_ioctl(fd, DMX_STOP, NULL);
 			break;
 
 #ifdef WITH_STAPI
