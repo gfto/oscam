@@ -1984,9 +1984,12 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	}
 
 	// BoxKey
-	if(check_filled(rdr->boxkey, sizeof(rdr->boxkey)))
+	len = check_filled(rdr->boxkey, sizeof(rdr->boxkey));
+	if( len > 0)
 	{
-		for(i = 0; i < (int32_t)sizeof(rdr->boxkey) ; i++)
+		if(len > 8) { len = 16; }
+		else { len = 8; }
+		for(i = 0; i < len ; i++)
 			{ tpl_printf(vars, TPLAPPEND, "BOXKEY", "%02X", rdr->boxkey[i]); }
 	}
 
