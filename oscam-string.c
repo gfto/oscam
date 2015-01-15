@@ -145,6 +145,40 @@ bool streq(const char *s1, const char *s2)
 	return strcmp(s1, s2) == 0;
 }
 
+/* Converts the string to first or last n(selected numbers) of chars positif from begin negatif from end */
+char *strtonchars(char *txt , int32_t n)
+{
+	int32_t lenin = strlen(txt);
+	int32_t lenout = 0;
+	int32_t i = 0;
+	int32_t ii = 0;
+
+	if(n < 1) {lenout = (n * -1) + 1;}
+	else {lenout = n + 1;}
+
+	if (lenout > lenin + 1) {return txt;}
+
+	char p[lenout];
+
+	if(n > 0) {i = 0; n *= -1;}
+	else if(n < 0) {i = lenin + n;}
+	else {return NULL;}
+
+	while(n != 0)
+	{
+		p[ii] = txt[i]; 
+		i++;
+		ii++;
+		n++;
+		printf("%s",p);
+	}
+
+	p[ii] = '\0';
+	txt = p;
+		
+	return txt;
+}
+
 char *cs_hexdump(int32_t m, const uchar *buf, int32_t n, char *target, int32_t len)
 {
 	int32_t i = 0;
