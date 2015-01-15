@@ -412,7 +412,7 @@ bool IO_Serial_Read(struct s_reader *reader, uint32_t delay, uint32_t timeout, u
 		struct timeb start, end;
 		cs_ftime(&start);
 		end = start;
-		int32_t gone = 0;
+		int64_t gone = 0;
 		int32_t timeout_ms = timeout / 1000;
 		readed = 0;
 
@@ -692,7 +692,7 @@ bool IO_Serial_WaitToRead(struct s_reader *reader, uint32_t delay_us, uint32_t t
 	struct timeb start, end;
 	int32_t ret_val;
 	int32_t in_fd;
-	int32_t polltimeout = timeout_us / 1000;
+	int64_t polltimeout = timeout_us / 1000;
 
 	if(delay_us > 0)
 		{ cs_sleepus(delay_us); }  // wait in us
@@ -736,7 +736,7 @@ static bool IO_Serial_WaitToWrite(struct s_reader *reader, uint32_t delay_us, ui
 	struct timeb start, end;
 	int32_t ret_val;
 	int32_t out_fd;
-	int32_t polltimeout = timeout_us / 1000;
+	int64_t polltimeout = timeout_us / 1000;
 
 #if !defined(WITH_COOLAPI)
 	if(reader->typ == R_INTERNAL) { return OK; }  // needed for internal readers, otherwise error!

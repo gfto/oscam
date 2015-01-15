@@ -91,7 +91,7 @@ static int32_t smart_read(struct s_reader *reader, unsigned char *buff, uint32_t
 	struct sr_data *crdr_data = reader->crdr_data;
 	int32_t ret = 0;
 	uint32_t  total_read = 0;
-	int32_t gone = 0;
+	int64_t gone = 0;
 	struct timeb start, now;
 
 	cs_ftime(&start);

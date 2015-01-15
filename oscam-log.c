@@ -481,7 +481,7 @@ void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar 
 						{ last_log_ts = log_ts; }
 					// Report duplicated lines when the new log line is different
 					// than the old or 60 seconds have passed.
-					int32_t gone = comp_timeb(&log_ts, &last_log_ts);
+					int64_t gone = comp_timeb(&log_ts, &last_log_ts);
 					if(!repeated_line || gone >= 60*1000)
 					{
 						dupl_header_len = get_log_header(2, dupl);
@@ -543,7 +543,7 @@ void cs_log_int_nospace(uint16_t mask, int8_t lock __attribute__((unused)), cons
 						{ last_log_ts = log_ts; }
 					// Report duplicated lines when the new log line is different
 					// than the old or 60 seconds have passed.
-					int32_t gone = comp_timeb(&log_ts, &last_log_ts);
+					int64_t gone = comp_timeb(&log_ts, &last_log_ts);
 					if(!repeated_line || gone >= 60*1000)
 					{
 						dupl_header_len = get_log_header(2, dupl);

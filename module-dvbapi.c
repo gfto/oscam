@@ -1358,7 +1358,7 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 	for(rdr = first_active_reader; rdr != NULL ; rdr = rdr->next)
 	{
 		int8_t match = matching_reader(er, rdr); // check for matching reader
-		int32_t gone = comp_timeb(&now, &rdr->emm_last);
+		int64_t gone = comp_timeb(&now, &rdr->emm_last);
 		if(gone > 3600*1000 && rdr->needsemmfirst && er->caid >> 8 == 0x06)
 		{
 			cs_log("[DVBAPI] Warning reader %s received no emms for the last %d seconds -> skip, this reader needs emms first!", rdr->label,
@@ -3288,7 +3288,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		{
 			if(!ll_count(ll_emm_inactive_filter) || started == filter_queue)
 				{ break; }
-			int32_t gone = comp_timeb(&now, &filter_item->time_started); 
+			int64_t gone = comp_timeb(&now, &filter_item->time_started); 
 			if( gone > 45*1000)
 			{
 				struct s_dvbapi_priority *forceentry = dvbapi_check_prio_match_emmpid(filter_item->demux_id, filter_item->caid,
@@ -3524,7 +3524,7 @@ static void *dvbapi_main_local(void *cli)
 			
 			if(cfg.dvbapi_au > 0 && demux[i].emm_filter == -1 && demux[i].EMMpidcount == 0 && emmcounter == 0)
 			{
-				int32_t gone = comp_timeb(&now, &demux[i].emmstart);
+				int64_t gone = comp_timeb(&now, &demux[i].emmstart);
 				if(gone > 30*1000){
 					cs_ftime(&demux[i].emmstart); // trick to let emm fetching start after 30 seconds to speed up zapping
 					dvbapi_start_filter(i, demux[i].pidindex, 0x001, 0x001, 0x01, 0x01, 0xFF, 0, TYPE_EMM); //CAT
@@ -3543,7 +3543,7 @@ static void *dvbapi_main_local(void *cli)
 				}
 				else
 				{
-					int32_t gone = comp_timeb(&now, &demux[i].emmstart);
+					int64_t gone = comp_timeb(&now, &demux[i].emmstart);
 					if(gone > 30*1000)
 					{
 						demux[i].emmstart = now;
@@ -3639,11 +3639,11 @@ static void *dvbapi_main_local(void *cli)
 		if(rc > 0)
 		{
 			cs_ftime(&end); // register end time
-			int32_t timeout = comp_timeb(&end, &start);
+			int64_t timeout = comp_timeb(&end, &start);
 			if (timeout < 0) {
 				cs_log("*** WARNING: BAD TIME AFFECTING WHOLE OSCAM ECM HANDLING ****");
 			}
-			cs_debug_mask(D_TRACE, "[DVBAPI] new events occurred on %d of %d handlers after %d ms inactivity", rc, pfdcount, timeout);
+			cs_debug_mask(D_TRACE, "[DVBAPI] new events occurred on %d of %d handlers after %"PRId64" ms inactivity", rc, pfdcount, timeout);
 			cs_ftime(&start); // register new start time for next poll
 		}
 
@@ -4003,10 +4003,10 @@ void delayer(ECM_REQUEST *er)
 
 	struct timeb tpe;
 	cs_ftime(&tpe);
-	int32_t gone = comp_timeb(&tpe, &er->tps);
+	int64_t gone = comp_timeb(&tpe, &er->tps);
 	if( gone < cfg.dvbapi_delayer)
 	{
-		cs_debug_mask(D_DVBAPI, "delayer: gone=%d ms, cfg=%d ms -> delay=%d ms", gone, cfg.dvbapi_delayer, cfg.dvbapi_delayer - gone);
+		cs_debug_mask(D_DVBAPI, "delayer: gone=%"PRId64" ms, cfg=%d ms -> delay=%"PRId64" ms", gone, cfg.dvbapi_delayer, cfg.dvbapi_delayer - gone);
 		cs_sleepms(cfg.dvbapi_delayer - gone);
 	}
 }

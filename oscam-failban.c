@@ -29,7 +29,7 @@ static int32_t cs_check_v(IN_ADDR_T ip, int32_t port, int32_t add, char *info, i
 	while((v_ban_entry = ll_iter_next(&itr)))
 	{
 		// housekeeping:
-		int32_t gone = comp_timeb(&now, &v_ban_entry->v_time);
+		int64_t gone = comp_timeb(&now, &v_ban_entry->v_time);
 		if(((gone >= ftime) && !v_ban_entry->acosc_entry) || (v_ban_entry->acosc_entry && ((gone/1000) >= v_ban_entry->acosc_penalty_dur))) // entry out of time->remove
 		{
 			NULLFREE(v_ban_entry->info);
@@ -52,9 +52,9 @@ static int32_t cs_check_v(IN_ADDR_T ip, int32_t port, int32_t add, char *info, i
 				if(v_ban_entry->v_count >= cfg.failbancount)
 				{
 					if(!v_ban_entry->acosc_entry)
-                    	{ cs_debug_mask(D_TRACE, "failban: banned ip %s:%d - %d seconds left%s%s", cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, (ftime - gone)/1000, info ? ", info: " : "", info ? info : ""); }
+                    	{ cs_debug_mask(D_TRACE, "failban: banned ip %s:%d - %"PRId64" seconds left%s%s", cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, (ftime - gone)/1000, info ? ", info: " : "", info ? info : ""); }
 					else
-						{ cs_debug_mask(D_TRACE, "failban: banned ip %s:%d - %d seconds left%s%s", cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, (v_ban_entry->acosc_penalty_dur - (gone/1000)), info?", info: ":"", info?info:""); }
+						{ cs_debug_mask(D_TRACE, "failban: banned ip %s:%d - %"PRId64" seconds left%s%s", cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, (v_ban_entry->acosc_penalty_dur - (gone/1000)), info?", info: ":"", info?info:""); }
 
 				}
 				else

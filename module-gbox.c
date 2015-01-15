@@ -1787,7 +1787,7 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
                       data[10] << 8 | data[11], data[6] << 8 | data[7], data[8] << 8 | data[9], crc, data[41], data[42] & 0x0f, data[42] >> 4, data[43], data[37] << 8 | data[38]);
         struct timeb t_now;             
         cs_ftime(&t_now);
-        uint32_t cw_time = GBOX_DEFAULT_CW_TIME;
+        int64_t cw_time = GBOX_DEFAULT_CW_TIME;
         for(i = 0; i < cfg.max_pending; i++)
         {
         	if(proxy->ecmtask[i].gbox_crc == crc)

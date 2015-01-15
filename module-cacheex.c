@@ -388,7 +388,7 @@ inline int8_t cacheex_match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQU
 		struct s_cacheex_matcher *entry = is_cacheex_matcher_matching(ecm, er);
 		if(entry)
 		{
-			int32_t diff = comp_timeb(&er->tps, &ecm->tps);
+			int64_t diff = comp_timeb(&er->tps, &ecm->tps);
 			if(diff > entry->valid_from && diff < entry->valid_to)
 			{
 #ifdef WITH_DEBUG

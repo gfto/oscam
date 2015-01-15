@@ -415,7 +415,7 @@ void cleanup_cache(void){
 	node *i,*i_next,*j,*j_next;
 
 	struct timeb now;
-	int32_t gone_first, gone_upd;
+	int64_t gone_first, gone_upd;
 
 
 	pthread_rwlock_wrlock(&cache_lock);
@@ -526,7 +526,7 @@ int32_t check_hitcache(ECM_REQUEST *er, struct s_client *cl) {
 
     	struct timeb now;
 	    cs_ftime(&now);
-	    int32_t gone = comp_timeb(&now, &result->time);
+	    int64_t gone = comp_timeb(&now, &result->time);
     	uint64_t grp = cl?cl->grp:0;
 
     	if(
@@ -603,7 +603,7 @@ void cleanup_hitcache(void) {
 	CACHE_HIT *cachehit;
 	node *i,*i_next;
 	struct timeb now;
-	int32_t gone;
+	int64_t gone;
 
 	int32_t timeout = (cfg.max_hitcache_time + (cfg.max_hitcache_time / 2))*1000;  //1,5
 

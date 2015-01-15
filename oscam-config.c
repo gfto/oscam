@@ -491,12 +491,12 @@ int32_t init_srvid(void)
 	NULLFREE(token);
 
 	cs_ftime(&te);
-	int32_t load_time = comp_timeb(&te, &ts);
+	int64_t load_time = comp_timeb(&te, &ts);
 
 	fclose(fp);
 	if(nr > 0)
 	{
-		cs_log("%d service-id's loaded in %d ms", nr, load_time);
+		cs_log("%d service-id's loaded in %"PRId64" ms", nr, load_time);
 		if(nr > 2000)
 		{
 			cs_log("WARNING: You risk high CPU load and high ECM times with more than 2000 service-id's!");

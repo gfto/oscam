@@ -323,7 +323,7 @@ static int32_t oscam_ser_set_serial_device(int32_t fd, speed_t baud)
 
 static int32_t oscam_ser_poll(int32_t event, struct s_client *client)
 {
-	int32_t msec;
+	int64_t msec;
 	struct pollfd pfds;
 	struct timeb tpc;
 	cs_ftime(&tpc);

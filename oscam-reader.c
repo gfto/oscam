@@ -39,10 +39,10 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 	for(h = 0; h < MAXECMRATELIMIT; h++)    // release slots with srvid that are overtime, even if not called from reader module to maximize available slots!
 	{
 		if(reader->rlecmh[h].last.time == -1) { continue; }
-		int32_t gone = comp_timeb(&actualtime, &reader->rlecmh[h].last);
+		int64_t gone = comp_timeb(&actualtime, &reader->rlecmh[h].last);
 		if( gone >= (reader->rlecmh[h].ratelimittime + reader->rlecmh[h].srvidholdtime) || gone < 0) // gone <0 fixup for bad systemtime on dvb receivers while changing transponders
 		{
-			cs_debug_mask(D_CLIENT, "ratelimiter srvid %04X released from slot #%d/%d of reader %s (%d>=%d ratelimit ms + %d ms srvidhold!)",
+			cs_debug_mask(D_CLIENT, "ratelimiter srvid %04X released from slot #%d/%d of reader %s (%"PRId64">=%d ratelimit ms + %d ms srvidhold!)",
 						  reader->rlecmh[h].srvid, h + 1, MAXECMRATELIMIT, reader->label, gone,
 						  reader->rlecmh[h].ratelimittime, reader->rlecmh[h].srvidholdtime);
 			reader->rlecmh[h].last.time = -1;
@@ -64,8 +64,8 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 		if(reader->rlecmh[h].srvid == er->srvid && reader->rlecmh[h].caid == rl.caid && reader->rlecmh[h].provid == rl.provid
 				&& (!reader->rlecmh[h].chid || (reader->rlecmh[h].chid == rl.chid)))
 		{
-			int32_t gone = comp_timeb(&actualtime, &reader->rlecmh[h].last);
-			cs_debug_mask(D_CLIENT, "ratelimiter found srvid %04X for %d ms in slot #%d/%d of reader %s", er->srvid,
+			int64_t gone = comp_timeb(&actualtime, &reader->rlecmh[h].last);
+			cs_debug_mask(D_CLIENT, "ratelimiter found srvid %04X for %"PRId64" ms in slot #%d/%d of reader %s", er->srvid,
 						  gone, h + 1, MAXECMRATELIMIT, reader->label);
 
 			// check ecmunique if enabled and ecmunique time is done
@@ -175,8 +175,8 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 			return h; // free slot found -> assign it!
 		}
 		else { 
-			int32_t gone = comp_timeb(&actualtime, &reader->rlecmh[h].last);
-		cs_debug_mask(D_CLIENT, "ratelimiter srvid %04X for %d ms present in slot #%d/%d of reader %s", reader->rlecmh[h].srvid, gone , h + 1,
+			int64_t gone = comp_timeb(&actualtime, &reader->rlecmh[h].last);
+		cs_debug_mask(D_CLIENT, "ratelimiter srvid %04X for %"PRId64" ms present in slot #%d/%d of reader %s", reader->rlecmh[h].srvid, gone , h + 1,
 			maxecms, reader->label); }  //occupied slots
 	}
 
@@ -184,7 +184,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 	/* Overide ratelimit priority for dvbapi request */
 
 	foundspace = -1;
-	int32_t gone = 0;
+	int64_t gone = 0;
 	if((cfg.dvbapi_enabled == 1) && streq(er->client->account->usr, cfg.dvbapi_usr))
 	{
 		if(reader->lastdvbapirateoverride.time == 0) { // fixup for first run!

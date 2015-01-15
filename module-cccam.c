@@ -3033,7 +3033,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 			int8_t retry = 1;
 			struct timeb tpe;
 			cs_ftime(&tpe);
-			int32_t cwlastresptime = comp_timeb(&tpe, &eei->tps);
+			int64_t cwlastresptime = comp_timeb(&tpe, &eei->tps);
 
 			add_garbage(eei);
 
@@ -3309,7 +3309,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 						//check response time, if > fallbacktime, switch cards!
 						struct timeb tpe;
 						cs_ftime(&tpe);
-						uint32_t cwlastresptime = comp_timeb(&tpe, &cc->ecm_time);
+						int64_t cwlastresptime = comp_timeb(&tpe, &cc->ecm_time);
 						if(cwlastresptime > get_fallbacktimeout(card->caid) && !cc->extended_mode)
 						{
 							cs_debug_mask(D_READER, "%s card %04X is too slow, moving to the end...", getprefix(), card->id);

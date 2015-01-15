@@ -45,7 +45,7 @@ static bool Stinger_IO_Serial_WaitToWrite(struct s_reader *reader, uint32_t dela
 	struct timeb start, end;
 	int32_t ret_val;
 	int32_t out_fd;
-	int32_t polltimeout = timeout_us / 1000;
+	int64_t polltimeout = timeout_us / 1000;
 
 #if !defined(WITH_COOLAPI) && !defined(WITH_AZBOX)
 

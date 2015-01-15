@@ -347,7 +347,8 @@ int32_t recv_from_udpipe(uint8_t *buf)
 
 int32_t process_input(uint8_t *buf, int32_t buflen, int32_t timeout)
 {
-	int32_t rc, i, pfdcount, polltime, timeoutms;
+	int32_t rc, i, pfdcount;
+	int64_t polltime, timeoutms;
 	struct pollfd pfd[2];
 	struct s_client *cl = cur_client();
 
@@ -367,7 +368,7 @@ int32_t process_input(uint8_t *buf, int32_t buflen, int32_t timeout)
 		int32_t p_rc = poll(pfd, pfdcount, polltime);
 
 		cs_ftime(&currenttime);
-		int32_t gone = comp_timeb(&currenttime, &starttime);
+		int64_t gone = comp_timeb(&currenttime, &starttime);
 		polltime  = timeoutms - gone; // calculate polltime left
 		if(polltime < 0)
 		{

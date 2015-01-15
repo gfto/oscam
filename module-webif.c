@@ -6025,7 +6025,7 @@ static char *send_oscam_failban(struct templatevars * vars, struct uriparams * p
 
 		tpl_printf(vars, TPLADD, "VIOLATIONCOUNT", "%d", v_ban_entry->v_count);
 
-		int32_t gone = comp_timeb(&now, &v_ban_entry->v_time);
+		int64_t gone = comp_timeb(&now, &v_ban_entry->v_time);
 		if(!apicall)
 		{
 			if(!v_ban_entry->acosc_entry)
@@ -6036,9 +6036,9 @@ static char *send_oscam_failban(struct templatevars * vars, struct uriparams * p
 		else
 		{
 			if(!v_ban_entry->acosc_entry)
-			{ tpl_printf(vars, TPLADD, "LEFTTIME", "%d", (cfg.failbantime * 60) - (gone / 1000)); }
+			{ tpl_printf(vars, TPLADD, "LEFTTIME", "%"PRId64"", (cfg.failbantime * 60) - (gone / 1000)); }
 			else
-				{ tpl_printf(vars, TPLADD, "LEFTTIME", "%d", v_ban_entry->acosc_penalty_dur - (gone / 1000)); }
+				{ tpl_printf(vars, TPLADD, "LEFTTIME", "%"PRId64"", v_ban_entry->acosc_penalty_dur - (gone / 1000)); }
 		}
 
 		tpl_addVar(vars, TPLADD, "INTIP", cs_inet_ntoa(v_ban_entry->v_ip));
