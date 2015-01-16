@@ -1522,6 +1522,7 @@ const char *newcamd_get_client_name(uint16_t client_id)
 		{ 0x7878, "tsdecrypt" },
 		{ 0x8888, "OSCam" },
 		{ 0x9911, "ACamd" },
+		{ 0x9922, "DVBplug" },
 		{ 0xFFFF, NULL }
 	};
 	int i = 0;
