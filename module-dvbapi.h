@@ -312,8 +312,10 @@ static inline void openxcas_set_sid(uint16_t UNUSED(_sid)) { }
 static inline void openxcas_set_provid(uint32_t UNUSED(_provid)) { }
 #endif
 
+bool is_dvbapi_usr(char *usr);
 #else
 static inline void dvbapi_read_priority(void) { }
+static inline bool is_dvbapi_usr(char *UNUSED(usr)) { return 0; }
 #endif // WITH_DVBAPI
 
 #endif // MODULE_DVBAPI_H_

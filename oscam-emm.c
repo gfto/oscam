@@ -1,5 +1,6 @@
 #include "globals.h"
 #include "cscrypt/md5.h"
+#include "module-dvbapi.h"
 #include "module-led.h"
 #include "oscam-client.h"
 #include "oscam-config.h"
@@ -309,10 +310,8 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 	struct s_reader *aureader = NULL;
 	cs_ddump_mask(D_EMM, ep->emm, ep->emmlen, "emm:");
 
-	int8_t cl_dvbapi = 0, assemble = 0;
-#ifdef HAVE_DVBAPI
-	cl_dvbapi = streq(cfg.dvbapi_usr, client->account->usr);
-#endif
+	int8_t assemble = 0;
+	bool cl_dvbapi = is_dvbapi_usr(client->account->usr);
 	if(client->account->emm_reassembly > 1 || (client->account->emm_reassembly && cl_dvbapi))
 		{ assemble = 1; }
 

@@ -4271,8 +4271,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 
 		if(cl && is_valid_client(cl))
 		{
-#ifdef HAVE_DVBAPI
-			if(streq(cl->account->usr, cfg.dvbapi_usr))
+			if(is_dvbapi_usr(cl->account->usr))
 			{
 				cs_log("WebIF from %s requests to kill dvbapi client %s -> ignoring!",  cs_inet_ntoa(GET_IP()), cl->account->usr);
 			}
@@ -4282,11 +4281,6 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 				cs_log("Client %s killed by WebIF from %s", cl->account->usr, cs_inet_ntoa(GET_IP()));
 			}
 		}
-#else
-			kill_thread(cl);
-			cs_log("Client %s killed by WebIF from %s", cl->account->usr, cs_inet_ntoa(GET_IP()));
-		}
-#endif
 	}
 
 	if(strcmp(getParam(params, "action"), "resetserverstats") == 0)
@@ -4667,13 +4661,8 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 					tpl_addVar(vars, TPLADD, "CLIENTLASTRESPONSETIMEHIST", value);
 					free_mk_t(value);
 
-#ifdef HAVE_DVBAPI
-					if((isec < cfg.hideclient_to || cfg.hideclient_to == 0 || streq(cl->account->usr, cfg.dvbapi_usr)) && (cl->typ == 'c' || cl->typ == 'p' || cl->typ == 'r'))
+					if((isec < cfg.hideclient_to || cfg.hideclient_to == 0 || is_dvbapi_usr(cl->account->usr)) && (cl->typ == 'c' || cl->typ == 'p' || cl->typ == 'r'))
 					{
-#else
-					if((isec < cfg.hideclient_to || cfg.hideclient_to == 0) && (cl->typ == 'c' || cl->typ == 'p' || cl->typ == 'r'))
-					{
-#endif
 						if(((cl->typ == 'c')) && (cl->lastreader[0]))
 						{
 							tpl_printf(vars, TPLADD, "MSVALUE", PRINTF_LOCAL_D, cl->cwlastresptime);

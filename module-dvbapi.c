@@ -118,6 +118,10 @@ static LLIST * ll_activestreampids; // list of all enabled streampids on ca devi
 
 static int32_t unassoc_fd[MAX_DEMUX];
 
+bool is_dvbapi_usr(char *usr) {
+	return streq(cfg.dvbapi_usr, usr);
+}
+
 struct s_emm_filter
 {
 	int32_t      demux_id;
@@ -3365,7 +3369,7 @@ static void *dvbapi_main_local(void *cli)
 	int32_t ok = 0;
 	for(account = cfg.account; account != NULL; account = account->next)
 	{
-		if((ok = streq(cfg.dvbapi_usr, account->usr)))
+		if((ok = is_dvbapi_usr(account->usr)))
 			{ break; }
 	}
 	cs_auth_client(client, ok ? account : (struct s_auth *)(-1), "dvbapi");

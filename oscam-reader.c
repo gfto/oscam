@@ -185,7 +185,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 
 	foundspace = -1;
 	int64_t gone = 0;
-	if((cfg.dvbapi_enabled == 1) && streq(er->client->account->usr, cfg.dvbapi_usr))
+	if((cfg.dvbapi_enabled == 1) && is_dvbapi_usr(er->client->account->usr))
 	{
 		if(reader->lastdvbapirateoverride.time == 0) { // fixup for first run!
 			gone = comp_timeb(&actualtime, &reader->lastdvbapirateoverride);
