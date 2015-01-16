@@ -113,6 +113,16 @@ OSCam build system documentation
                      In order for USE_COOLAPI to work you have to have libnxp.so
                      library in your cross compilation toolchain.
 
+   USE_SU980=1  - Request support for SU980 API (libentropic) aka Enimga2 arm
+                    box. The variables that control the build are:
+                         COOLAPI_FLAGS='-DWITH_SU980=1'
+                         COOLAPI_CFLAGS='-DWITH_SU980=1'
+                         COOLAPI_LDFLAGS='-DWITH_SU980=1'
+                         COOLAPI_LIB='-lentropic -lrt'
+                     Using USE_SU980=1 adds to '-su980' to PLUS_TARGET.
+                     In order for USE_SU980 to work you have to have libentropic.a
+                     library in your cross compilation toolchain.
+
    USE_AZBOX=1    - Request support for AZBOX (openxcas)
                     box. The variables that control the build are:
                          AZBOX_FLAGS='-DWITH_AZBOX=1'
