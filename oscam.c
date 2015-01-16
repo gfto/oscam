@@ -830,6 +830,7 @@ void init_machine_info(void)
 								if(totalmemconvert > 40000){stbboxtype = "dm600pvr";} else{stbboxtype = "dm500";}
 								cs_log("Stb boxtype    = %s", stbboxtype);
 								fclose(f);
+								NULLFREE(totalmem);
 							}
 						}
 					}
