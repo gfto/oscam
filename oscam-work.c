@@ -384,10 +384,11 @@ void *work_thread(void *ptr)
 				break;
 			case ACTION_CLIENT_SEND_MSG:
 			{
-#ifdef MODULE_CCCAM
-				struct s_clientmsg *clientmsg = (struct s_clientmsg *)data->ptr;
-				cc_cmd_send(cl, clientmsg->msg, clientmsg->len, clientmsg->cmd);
-#endif
+				if (config_enabled(MODULE_CCCAM))
+				{
+					struct s_clientmsg *clientmsg = (struct s_clientmsg *)data->ptr;
+					cc_cmd_send(cl, clientmsg->msg, clientmsg->len, clientmsg->cmd);
+				}
 				break;
 			}
 			} // switch
