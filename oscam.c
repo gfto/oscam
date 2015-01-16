@@ -764,7 +764,7 @@ void init_machine_info(void)
 						char stbboxtypevu[25];
 						strncpy(stbboxtypevu, vu, sizeof(stbboxtypevu));
 						if (sizeof(stbboxtypevu) < (strlen(data) + 3)) {fclose(f); function_errors = -2; goto ENDMACHINEINFO;}
-						strncat(stbboxtypevu, data, (sizeof(stbboxtypevu) - strlen(stbboxtypevu)));
+						strncat(stbboxtypevu, data, (sizeof(stbboxtypevu) - (strlen(stbboxtypevu) -1 )));
 						stbboxtype = stbboxtypevu;
 						cs_log("Stb boxtype    = %s", stbboxtype);
 						fclose(f);
