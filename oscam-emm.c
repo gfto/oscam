@@ -593,9 +593,7 @@ int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		else
 		{
 			rdr_debug_mask(reader, D_READER, "local emm reader");
-#if WITH_CARDREADER == 1
 			rc = cardreader_do_emm(reader, ep);
-#endif
 		}
 		if(!ecs)
 			{ i = reader_store_emm(reader, ep->type, md5tmp); }
@@ -667,9 +665,7 @@ void do_emm_from_file(struct s_reader *reader)
 	reader->saveemm = 0;
 
     int32_t rc = 0;
-#if WITH_CARDREADER == 1
 	rc = cardreader_do_emm(reader, eptmp);
-#endif
 	if(rc == OK)
 		{ rdr_log(reader, "EMM from file %s was successfully written.", token); }
 	else
