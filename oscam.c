@@ -335,7 +335,6 @@ static void write_versionfile(bool use_stdout)
 		write_conf(WITH_MCA, "DVB API with MCA support");
 		write_conf(WITH_COOLAPI, "DVB API with COOLAPI support");
 		write_conf(WITH_STAPI, "DVB API with STAPI support");
-		write_conf(DVBAPI_SAMYGO, "DVB API with Samsung TV support");
 	}
 	write_conf(IRDETO_GUESSING, "Irdeto guessing");
 	write_conf(CS_ANTICASC, "Anti-cascading support");

@@ -22,55 +22,54 @@
 #include "oscam-time.h"
 #include "reader-irdeto.h"
 
-#ifdef DVBAPI_SAMYGO
-static int dvbapi_ioctl(int fd, int request, ...)
-{
-	typedef struct dmx_sct_filter_params dmx_sct_filter_params_t;
-	typedef struct dmxSctFilterParams dmxSctFilterParams_t;
-	va_list args;
-	va_start(args, request);
-	int ret = -1;
-	switch(request) {
-	case DMX_SET_FILTER:
-	{
-		dmx_sct_filter_params_t *sFP2 = va_arg(args, dmx_sct_filter_params_t*);
-		// prepare packet
-		unsigned char packet[sizeof(request) + sizeof(dmx_sct_filter_params_t)];
-		memcpy(&packet, &request, sizeof(request));
-		memcpy(&packet[sizeof(request)], sFP2, sizeof(dmx_sct_filter_params_t));
-		ret = send(fd, packet, sizeof(packet), 0);
-		break;
-	}
-	case DMX_SET_FILTER1:
-	{
-		dmxSctFilterParams_t *sFP1 = va_arg(args, dmxSctFilterParams_t*);
-		ret = send(fd, sFP1, sizeof(dmxSctFilterParams_t), 0);
-		break;
-	}
-	case DMX_STOP:
-	{
-		ret = send(fd, &request, sizeof(request), 0);
-		ret = 1;
-		break;
-	}
-	default:
-		cs_log("ERROR: Unknown ioctl request");
-	}
-	va_end(args);
+static int is_samygo;
 
-	if(ret > 0)
-		ret = 1;
-
-	return ret;
-}
-#else 
-static int dvbapi_ioctl(int fd, unsigned long request, ...)
+static int dvbapi_ioctl(int fd, uint32_t request, ...)
 { 
 	int ret = 0;
 	va_list args; 
 	va_start(args, request);
-	void *param = va_arg(args, void *);
-	ret = ioctl(fd, request, param);
+	if (!is_samygo) {
+		void *param = va_arg(args, void *);
+		ret = ioctl(fd, request, param);
+	} else {
+		switch(request) {
+		case DMX_SET_FILTER:
+		{
+			struct dmxSctFilterParams *sFP = va_arg(args, struct dmxSctFilterParams *);
+			// prepare packet
+			unsigned char packet[sizeof(request) + sizeof(struct dmxSctFilterParams)];
+			memcpy(&packet, &request, sizeof(request));
+			memcpy(&packet[sizeof(request)], sFP, sizeof(struct dmxSctFilterParams));
+			ret = send(fd, packet, sizeof(packet), 0);
+			break;
+		}
+		case DMX_SET_FILTER1:
+		{
+			struct dmx_sct_filter_params *sFP = va_arg(args, struct dmx_sct_filter_params *);
+			ret = send(fd, sFP, sizeof(struct dmx_sct_filter_params), 0);
+			break;
+		}
+		case DMX_STOP:
+		{
+			ret = send(fd, &request, sizeof(request), 0);
+			ret = 1;
+			break;
+		}
+		case CA_SET_PID:
+		{
+			ret = 1;
+			break;
+		}
+		case CA_SET_DESCR:
+		{
+			ret = 1;
+			break;
+		}
+		}
+		if (ret > 0) // send() may return larger than 1
+			ret = 1;
+	}
 #if defined(__powerpc__)
 	// Old dm500 boxes (ppc old) are using broken kernel, se we need some fixups
 	switch (request)
@@ -84,7 +83,6 @@ static int dvbapi_ioctl(int fd, unsigned long request, ...)
 	va_end(args);
 	return ret;
 }
-#endif
 
 // tunemm_caid_map
 #define FROM_TO 0
@@ -562,14 +560,6 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 
 static int32_t dvbapi_detect_api(void)
 {
-#ifdef DVBAPI_SAMYGO
-	selected_api = DVBAPI_3;
-	selected_box = 0;
-	disable_pmt_files = 1;
-	cs_log("Using SamyGO dvbapi v0.1");
-	return 1;
-#endif
-
 #ifdef WITH_COOLAPI
 	selected_api = COOLAPI;
 	selected_box = 5;
@@ -598,6 +588,19 @@ static int32_t dvbapi_detect_api(void)
 		snprintf(device_path2, sizeof(device_path2), devices[i].demux_device, 0);
 		snprintf(device_path, sizeof(device_path), devices[i].path, n);
 		strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path) - 1);
+		// FIXME: *THIS SAMYGO CHECK IS UNTESTED*
+		// FIXME: Detect samygo, checking if default DVBAPI_3 device paths are sockets
+		if (i == 1) { // We need boxnum 1 only
+			struct stat sb;
+			if (stat(device_path, &sb) > 0 && S_ISSOCK(sb.st_mode)) {
+				cs_log("[DVBAPI] SAMYGO detected.");
+				selected_box = 0;
+				disable_pmt_files = 1;
+				is_samygo = 1;
+				devnum = i;
+				break;
+			}
+		}
 		if((dmx_fd = open(device_path, O_RDWR | O_NONBLOCK)) > 0)
 		{
 			devnum = i;
@@ -686,17 +689,18 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter)
 		strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path) - 1);
 	}
 
-#ifdef DVBAPI_SAMYGO
-
-	struct sockaddr_un saddr;
-    memset(&saddr, 0, sizeof(saddr));
-	saddr.sun_family = AF_UNIX;
-	strncpy(saddr.sun_path, device_path, sizeof(saddr.sun_path) - 1);
-    dmx_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-	ret = connect(dmx_fd, (struct sockaddr *)&saddr, sizeof(saddr));
-#else
-	dmx_fd = ret = open(device_path, O_RDWR | O_NONBLOCK);
-#endif
+	if (is_samygo) {
+		struct sockaddr_un saddr;
+		memset(&saddr, 0, sizeof(saddr));
+		saddr.sun_family = AF_UNIX;
+		strncpy(saddr.sun_path, device_path, sizeof(saddr.sun_path) - 1);
+		dmx_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+		ret = connect(dmx_fd, (struct sockaddr *)&saddr, sizeof(saddr));
+		if (ret < 0)
+			close(dmx_fd);
+	} else {
+		dmx_fd = ret = open(device_path, O_RDWR | O_NONBLOCK);
+	}
 
 	if(ret < 0)
 	{
@@ -2382,16 +2386,22 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		if(demux[i].program_number == 0) { continue; }
 		if(cfg.dvbapi_boxtype == BOXTYPE_IPBOX_PMT) demux_index = i; // fixup for ipbox
 
-#if defined WITH_COOLAPI || defined DVBAPI_SAMYGO
-		if(connfd > 0 && demux[i].program_number == program_number)
+		bool full_check = 1, matched = 0;
+		if (config_enabled(WITH_COOLAPI) || is_samygo)
+			full_check = 0;
+
+		if (full_check)
+			matched = (connfd > 0 && demux[i].socket_fd == connfd) && demux[i].program_number == program_number;
+		else
+			matched = connfd > 0 && demux[i].program_number == program_number;
+
+		if(matched)
 		{
-#else
-		if((connfd > 0 && demux[i].socket_fd == connfd) && demux[i].program_number == program_number)
-		{
-			if (demux[i].adapter_index != adapter_index) continue; // perhaps next demuxer matches?
-			if (demux[i].ca_mask != ca_mask) continue; // perhaps next demuxer matches?
-			if (demux[i].demux_index != demux_index) continue; // perhaps next demuxer matches?
-#endif	
+			if (full_check) {
+				if (demux[i].adapter_index != adapter_index) continue; // perhaps next demuxer matches?
+				if (demux[i].ca_mask != ca_mask) continue; // perhaps next demuxer matches?
+				if (demux[i].demux_index != demux_index) continue; // perhaps next demuxer matches?
+			}
 			if(ca_pmt_list_management == LIST_UPDATE){
 				cs_log("[DVBAPI] Demuxer #%d PMT update for decoding of SRVID %04X! ", i, program_number);
 			}
@@ -4393,9 +4403,6 @@ void *dvbapi_handler(struct s_client *cl, uchar *mbuf, int32_t module_idx)
 
 int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er)
 {
-#ifdef DVBAPI_SAMYGO // samygo section filtering is not working (tested samygolib 0.4)
-	return 0;
-#endif
 	if(!er) { return -1; }
 
 	if(selected_api != DVBAPI_3 && selected_api != DVBAPI_1 && selected_api != STAPI)   // only valid for dvbapi3, dvbapi1 and STAPI
