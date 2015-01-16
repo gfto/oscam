@@ -675,9 +675,13 @@ void init_machine_info(void)
 	int8_t rc = 0;
 	char *stbboxtype = 0;  // to store specific boxtype
 	char *stbmodel = 0;
-	char data[23], *p;
+	char data[80], *p;
 	FILE *f;
 	int32_t line = 0;
+
+	if(!cs_malloc(&minfo, sizeof(struct machine_info))) {function_errors = -1; goto ENDMACHINEINFO;}
+	struct machine_info *minfos = minfo;
+	minfos->stbproc_boxtype = NULL;
 
 	rc = uname(&buffer);
 	if (rc == 0)
@@ -693,6 +697,7 @@ void init_machine_info(void)
 		function_errors = -3;
 		goto ENDMACHINEINFO;
 	}
+
 	if (!strcasecmp(buffer.sysname, "Linux"))
 	{
 		if (lstat("/proc/stb/info/model",&info) == 0)
@@ -703,7 +708,7 @@ void init_machine_info(void)
     		} else {
 				for (line = 1; line < 2; line++) // read only line 1
 				{
-		   			if (!fgets(data, 22, f)) // reads one line at a time
+		   			if (!fgets(data, sizeof(data) -1, f)) // reads one line at a time
 	        		break;
 					if (!(p = strchr(data, '\n')))
 					{
@@ -727,7 +732,7 @@ void init_machine_info(void)
     		} else {
 				for (line = 1; line < 2; line++) // read only line 1
 				{
-		   			if (!fgets(data, 22, f)) // reads one line at a time
+		   			if (!fgets(data, sizeof(data) -1, f)) // reads one line at a time
 	        		break;
 					if (!(p = strchr(data, '\n')))
 					{
@@ -751,7 +756,7 @@ void init_machine_info(void)
     		} else {
 				for (line = 1; line < 2; line++) // read only line 1
 				{
-		   			if (!fgets(data, 22, f)) // reads one line at a time
+		   			if (!fgets(data, sizeof(data) -1, f)) // reads one line at a time
 	        		break;
 					if (!(p = strchr(data, '\n')))
 					{
@@ -761,10 +766,10 @@ void init_machine_info(void)
 					} else {
 						*p = '\0';
 						char *vu = "vu";
-						char stbboxtypevu[25];
+						char stbboxtypevu[83];
 						strncpy(stbboxtypevu, vu, sizeof(stbboxtypevu));
 						if (sizeof(stbboxtypevu) < (strlen(data) + 3)) {fclose(f); function_errors = -2; goto ENDMACHINEINFO;}
-						strncat(stbboxtypevu, data, (sizeof(stbboxtypevu) - (strlen(stbboxtypevu) -1 )));
+						strncat(stbboxtypevu, data, (sizeof(stbboxtypevu) - (strlen(stbboxtypevu) -1)));
 						stbboxtype = stbboxtypevu;
 						cs_log("Stb boxtype    = %s", stbboxtype);
 						fclose(f);
@@ -797,17 +802,41 @@ void init_machine_info(void)
 					if (strstr(data2, cpuinfo4)) {ncpuinfo++;}
 					if (strstr(data2, cpuinfo5)) {ncpuinfo++;}
 				}
-				if (ncpuinfo == 5) 
+			}
+			fclose(f);
+			if (ncpuinfo == 5)
+			{
+				if(lstat("/proc/meminfo",&info) == 0)
 				{
-					stbboxtype = "dm500 or dm600pvr";
-					cs_log("Stb boxtype    = %s", stbboxtype);
+					if (!(f = fopen("/proc/meminfo", "r")))
+					{
+		    			function_errors = -5; goto ENDMACHINEINFO;
+		    		} else {
+						for (line = 1; line < 2; line++) // read only line 1
+						{
+				   			if (!fgets(data, sizeof(data) -1, f)) // reads one line at a time
+			        		break;
+							if (!(p = strchr(data, '\n')))
+							{
+								cs_log("No end-of-line detected in line %d or too long for buffer.", line);
+								*p = '\0';
+								fclose(f);
+							} else {
+								*p = '\0';
+								char *totalmem;
+								totalmem = strtonchars(strtonchars(data,-9),6);
+								totalmem = remove_white_chars(totalmem);
+								int32_t totalmemconvert = atoi(totalmem);
+								if(totalmemconvert > 40000){stbboxtype = "dm600pvr";} else{stbboxtype = "dm500";}
+								cs_log("Stb boxtype    = %s", stbboxtype);
+								fclose(f);
+							}
+						}
+					}
 				}
-				fclose(f);
 			}
 		}
 
-		if(!cs_malloc(&minfo, sizeof(struct machine_info))) {function_errors = -1; goto ENDMACHINEINFO;}
-		struct machine_info *minfos = minfo;
 		if (stbboxtype)
 		{
 			if(!cs_malloc(&minfos->stbproc_boxtype,strlen(stbboxtype)))
@@ -829,6 +858,7 @@ ENDMACHINEINFO:
 	if(function_errors == -2) {cs_log("Unable to determine boxtype ");}
 	if(function_errors == -3) {cs_log("unable to use uname unknown router,stb or pc");}
 	if(function_errors == -4) {cs_log("Failure to open file:  %s", "/proc/cpuinfo");}
+	if(function_errors == -5) {cs_log("Failure to open file:  %s", "/proc/meminfo");}
 }
 
 /* Checks if the date of the system is correct and waits if necessary. */
