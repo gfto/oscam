@@ -158,7 +158,8 @@ char *strtonchars(char *txt , int32_t n)
 
 	if (lenout > lenin + 1) {return txt;}
 
-	char p[lenout];
+	char data[lenout];
+	char *newstr;
 
 	if(n > 0) {i = 0; n *= -1;}
 	else if(n < 0) {i = lenin + n;}
@@ -166,19 +167,20 @@ char *strtonchars(char *txt , int32_t n)
 
 	while(n != 0)
 	{
-		p[ii] = txt[i]; 
+		data[ii] = txt[i]; 
 		i++;
 		ii++;
 		n++;
-		printf("%s",p);
 	}
 
-	p[ii] = '\0';
-	txt = p;
-		
-	return txt;
+	if(!cs_malloc(&newstr, lenout ))
+	{
+		return txt;
+	}
+	strncpy(newstr, data, lenout - 1);
+	
+	return newstr;
 }
-
 char *cs_hexdump(int32_t m, const uchar *buf, int32_t n, char *target, int32_t len)
 {
 	int32_t i = 0;
