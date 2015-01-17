@@ -131,9 +131,15 @@ uint32_t gbox_get_local_gbox_password(void);
 void gbox_send(struct s_client *cli, uchar *buf, int32_t l);
 int8_t gbox_message_header(uchar *buf, uint16_t cmd, uint32_t peer_password, uint32_t local_password);
 void gbox_send_good_night(void);
+static inline void gbox_free_cards_pending(ECM_REQUEST *er)
+{
+    LLIST *l = er->gbox_cards_pending;
+    er->gbox_cards_pending = NULL;
+    ll_destroy_free_data(l);
+}
 #else
 static inline void gbox_send_good_night(void) { }
-
+static inline void gbox_free_cards_pending(ECM_REQUEST *UNUSED(er)) { }
 #endif
 
 #endif

@@ -353,7 +353,6 @@ static int8_t gbox_remove_all_bad_sids(struct gbox_peer *peer, ECM_REQUEST *er, 
 			}	
 		}
 	}
-	ll_destroy_data_NULL(er->gbox_cards_pending);
 	return 0;
 }
 
@@ -1909,9 +1908,10 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 	}
 
 	if(er->gbox_ecm_status == GBOX_ECM_ANSWERED)
-	{
-		cs_debug_mask(D_READER, "gbox: %s replied to this ecm already", cli->reader->label);
-	}
+		{ cs_debug_mask(D_READER, "gbox: %s replied to this ecm already", cli->reader->label); }
+
+	if(er->gbox_ecm_status == GBOX_ECM_NOT_ASKED)
+		{ er->gbox_cards_pending = ll_create("pending_gbox_cards"); }
 
 	if(er->gbox_ecm_id == peer->gbox.id)
 	{
