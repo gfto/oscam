@@ -45,7 +45,6 @@ extern char *config_mak;
 const char *syslog_ident = "oscam";
 static char *oscam_pidfile;
 static char default_pidfile[64];
-void *minfo;
 
 int32_t exit_oscam = 0;
 static struct s_module modules[CS_MAX_MOD];
@@ -94,6 +93,7 @@ struct  s_config  cfg;
 int log_remove_sensitive = 1;
 
 static char *prog_name;
+char *stb_boxtype = NULL;
 
 /*****************************************************************************
         Statics
@@ -665,200 +665,92 @@ void cs_exit(int32_t sig)
 		{ exit_oscam = sig ? sig : 1; }
 }
 
-/* Obtain machine info */
-void init_machine_info(void)
+static char *read_line_from_file(char *fname, char *buf, int bufsz)
+{
+	memset(buf, 0, bufsz);
+	FILE *f = fopen(fname, "r");
+	if (!f)
+		return NULL;
+	if (fgets(buf, bufsz, f)) { // only the first line is needed
+		char *p = strchr(buf, '\n');
+		*p = '\0';
+	}
+	fclose(f);
+	if (buf[0])
+		return buf;
+	return NULL;
+}
+
+static void init_machine_info(void)
 {
 	struct utsname buffer;
-	struct stat info;
-	int8_t function_errors = 0; /* -1 memallocerror, -2 boxtype error , -3 uname error */
-	int8_t rc = 0;
-	char *stbboxtype = 0;  // to store specific boxtype
-	char *stbmodel = 0;
-	char data[80], *p;
-	FILE *f;
-	int32_t line = 0;
-
-	if(!cs_malloc(&minfo, sizeof(struct machine_info))) {function_errors = -1; goto ENDMACHINEINFO;}
-	struct machine_info *minfos = minfo;
-	minfos->stbproc_boxtype = NULL;
-
-	rc = uname(&buffer);
-	if (rc == 0)
+	if (uname(&buffer) == 0)
 	{
 		cs_log("System name    = %s", buffer.sysname);
 		cs_log("Host name      = %s", buffer.nodename);
 		cs_log("Release        = %s", buffer.release);
 		cs_log("Version        = %s", buffer.version);
 		cs_log("Machine        = %s", buffer.machine);
-	}
-	else
-	{
-		function_errors = -3;
-		goto ENDMACHINEINFO;
+	} else {
+		cs_log("ERROR: uname call failed: %s", strerror(errno));
 	}
 
-	if (!strcasecmp(buffer.sysname, "Linux"))
+#if !defined(__linux__)
+	return;
+#endif
+
+	// Linux only functionality
+	char boxtype[128];
+	char model[128];
+	char vumodel[128];
+
+	read_line_from_file("/proc/stb/info/model", model, sizeof(model));
+	read_line_from_file("/proc/stb/info/boxtype", boxtype, sizeof(boxtype));
+	if (read_line_from_file("/proc/stb/info/vumodel", vumodel, sizeof(vumodel)))
+		snprintf(boxtype, sizeof(boxtype), "vu%s", vumodel);
+
+	// Detect dreambox type
+	if (strcasecmp(buffer.machine, "ppc") == 0 && !model[0] && !boxtype[0])
 	{
-		if (lstat("/proc/stb/info/model",&info) == 0)
+		FILE *f;
+		char line[128], *p;
+		int have_dreambox = 0;
+		if ((f = fopen("/proc/cpuinfo", "r")))
 		{
-			if (!(f = fopen("/proc/stb/info/model", "r")))
+			while (fgets(line, sizeof(line), f))
 			{
-    			cs_log("Failure to open file:  %s", "/proc/stb/info/model");
-    		} else {
-				for (line = 1; line < 2; line++) // read only line 1
-				{
-		   			if (!fgets(data, sizeof(data) -1, f)) // reads one line at a time
-	        		break;
-					if (!(p = strchr(data, '\n')))
-					{
-						cs_log("No end-of-line detected in line %d or too long for buffer.", line);
-						*p = '\0';
-						fclose(f);
-					} else {
-						*p = '\0';
-						stbmodel = data;
-						cs_log("Stb model      = %s", stbmodel);
-						fclose(f);
-					}
-				}
-			}
-		}
-		if(lstat("/proc/stb/info/boxtype",&info) == 0)
-		{
-			if (!(f = fopen("/proc/stb/info/boxtype", "r")))
-			{
-    			cs_log("Failure to open file:  %s", "/proc/stb/info/boxtype");
-    		} else {
-				for (line = 1; line < 2; line++) // read only line 1
-				{
-		   			if (!fgets(data, sizeof(data) -1, f)) // reads one line at a time
-	        		break;
-					if (!(p = strchr(data, '\n')))
-					{
-						cs_log("No end-of-line detected in line %d or too long for buffer.", line);
-						*p = '\0';
-						fclose(f);
-					} else {
-						*p = '\0';
-						stbboxtype = data;
-						cs_log("Stb boxtype    = %s", stbboxtype);
-						fclose(f);
-					}
-				}
-			}
-		}
-		if(lstat("/proc/stb/info/vumodel",&info) == 0)
-		{
-			if (!(f = fopen("/proc/stb/info/vumodel", "r")))
-			{
-    			cs_log("Failure to open file:  %s", "/proc/stb/info/vumodel");
-    		} else {
-				for (line = 1; line < 2; line++) // read only line 1
-				{
-		   			if (!fgets(data, sizeof(data) -1, f)) // reads one line at a time
-	        		break;
-					if (!(p = strchr(data, '\n')))
-					{
-						cs_log("No end-of-line detected in line %d or too long for buffer.", line);
-						*p = '\0';
-						fclose(f);
-					} else {
-						*p = '\0';
-						char *vu = "vu";
-						char stbboxtypevu[83];
-						strncpy(stbboxtypevu, vu, sizeof(stbboxtypevu));
-						if (sizeof(stbboxtypevu) < (strlen(data) + 3)) {fclose(f); function_errors = -2; goto ENDMACHINEINFO;}
-						strncat(stbboxtypevu, data, (sizeof(stbboxtypevu) - (strlen(stbboxtypevu) -1)));
-						stbboxtype = stbboxtypevu;
-						cs_log("Stb boxtype    = %s", stbboxtype);
-						fclose(f);
-					}
-				}
-			}
-		}
-
-		if ((!strcasecmp(buffer.machine, "ppc")) && (lstat("/proc/stb",&info) == 0) && !stbmodel && !stbboxtype)
-		{
-			char data2[100];
-			char *cpuinfo1 = "STBx25xx";
-			char *cpuinfo2 = "pvr";
-			char *cpuinfo3 = "Dreambox";
-			char *cpuinfo4 = "9.80";
-			char *cpuinfo5 = "63MHz";
-			uint8_t ncpuinfo = 0;
-
-			if (!(f = fopen("/proc/cpuinfo", "r")))
-			{
-    			function_errors = -4; goto ENDMACHINEINFO;
-    		}
-			else
-			{
-				while (fgets(data2, sizeof(data2), f))
-				{
-					if (strstr(data2, cpuinfo1)) {ncpuinfo++;}
-					if (strstr(data2, cpuinfo2)) {ncpuinfo++;}
-					if (strstr(data2, cpuinfo3)) {ncpuinfo++;}
-					if (strstr(data2, cpuinfo4)) {ncpuinfo++;}
-					if (strstr(data2, cpuinfo5)) {ncpuinfo++;}
-				}
+				if (strstr(line, "STBx25xx")) have_dreambox++;
+				if (strstr(line, "pvr"     )) have_dreambox++;
+				if (strstr(line, "Dreambox")) have_dreambox++;
+				if (strstr(line, "9.80"    )) have_dreambox++;
+				if (strstr(line, "63MHz"   )) have_dreambox++;
 			}
 			fclose(f);
-			if (ncpuinfo == 5)
+			have_dreambox = have_dreambox == 5 ? 1 : 0; // Need to find all 5 strings
+		}
+		if (have_dreambox)
+		{
+			if (read_line_from_file("/proc/meminfo", line, sizeof(line)) && (p = strchr(line, ' ')))
 			{
-				if(lstat("/proc/meminfo",&info) == 0)
-				{
-					if (!(f = fopen("/proc/meminfo", "r")))
-					{
-		    			function_errors = -5; goto ENDMACHINEINFO;
-		    		} else {
-						for (line = 1; line < 2; line++) // read only line 1
-						{
-				   			if (!fgets(data, sizeof(data) -1, f)) // reads one line at a time
-			        		break;
-							if (!(p = strchr(data, '\n')))
-							{
-								cs_log("No end-of-line detected in line %d or too long for buffer.", line);
-								*p = '\0';
-								fclose(f);
-							} else {
-								*p = '\0';
-								char *totalmem;
-								totalmem = strtonchars(strtonchars(data,-9),6);
-								totalmem = remove_white_chars(totalmem);
-								int32_t totalmemconvert = atoi(totalmem);
-								if(totalmemconvert > 40000){stbboxtype = "dm600pvr";} else{stbboxtype = "dm500";}
-								cs_log("Stb boxtype    = %s", stbboxtype);
-								fclose(f);
-								NULLFREE(totalmem);
-							}
-						}
-					}
-				}
+				unsigned long memtotal = strtoul(p, NULL, 10);
+				if (memtotal > 40000)
+					snprintf(boxtype, sizeof(boxtype), "%s", "dm600pvr");
+				else
+					snprintf(boxtype, sizeof(boxtype), "%s", "dm500");
 			}
 		}
-
-		if (stbboxtype)
-		{
-			if(!cs_malloc(&minfos->stbproc_boxtype,strlen(stbboxtype)))
-				{function_errors = -1; goto ENDMACHINEINFO;}
-			memset(minfos->stbproc_boxtype,0,strlen(stbboxtype) + 1);
-			memcpy(minfos->stbproc_boxtype,stbboxtype,strlen(stbboxtype));
-		}
-		else if (stbmodel && !stbboxtype)
-		{
-			if(!cs_malloc(&minfos->stbproc_boxtype,strlen(stbmodel)))
-				{function_errors = -1; goto ENDMACHINEINFO;}
-			memset(minfos->stbproc_boxtype,0,strlen(stbmodel) + 1);
-			memcpy(minfos->stbproc_boxtype,stbmodel,strlen(stbmodel));
-		}			
 	}
 
-ENDMACHINEINFO:
-	if(function_errors == -1) {cs_log("memory allocation machine info failed");}
-	if(function_errors == -2) {cs_log("Unable to determine boxtype ");}
-	if(function_errors == -3) {cs_log("unable to use uname unknown router,stb or pc");}
-	if(function_errors == -4) {cs_log("Failure to open file:  %s", "/proc/cpuinfo");}
-	if(function_errors == -5) {cs_log("Failure to open file:  %s", "/proc/meminfo");}
+	if (model[0])
+		cs_log("Stb model      = %s", model);
+
+	if (boxtype[0])
+		cs_log("Stb boxtype    = %s", boxtype);
+
+	if (boxtype[0])
+		stb_boxtype = cs_strdup(boxtype);
+	else if (model[0])
+		stb_boxtype = cs_strdup(model);
 }
 
 /* Checks if the date of the system is correct and waits if necessary. */
@@ -1691,6 +1583,7 @@ int32_t main(int32_t argc, char *argv[])
 
 	NULLFREE(first_client->account);
 	NULLFREE(first_client);
+	free(stb_boxtype);
 
 	// This prevents the compiler from removing config_mak from the final binary
 	syslog_ident = config_mak;

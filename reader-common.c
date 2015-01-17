@@ -17,6 +17,7 @@
 
 extern struct s_cardsystem cardsystems[CS_MAX_MOD];
 extern char *RDR_CD_TXT[];
+extern char *stb_boxtype;
 
 int32_t check_sct_len(const uchar *data, int32_t off)
 {
@@ -307,8 +308,7 @@ bool cardreader_init(struct s_reader *reader)
 					RDR_CD_TXT[reader->detect & 0x7f],
 					(float)reader->cardmhz / 100,
 					(float)reader->mhz / 100);
-			struct machine_info *minfos = minfo;
-			rdr_log(reader,"Reader sci internal for box type %s", minfos->stbproc_boxtype);
+			rdr_log(reader,"Reader sci internal, detected box type: %s", stb_boxtype ? stb_boxtype : "generic");
 		}
 		else
 		{

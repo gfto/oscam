@@ -11,7 +11,6 @@ char *strtoupper(char *txt);
 char *trim(char *txt);
 char *remove_white_chars(char *txt);
 bool streq(const char *s1, const char *s2);
-char *strtonchars(char *txt , int32_t n);
 
 char *cs_hexdump(int32_t m, const uchar *buf, int32_t n, char *target, int32_t len);
 
