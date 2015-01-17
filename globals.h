@@ -73,7 +73,7 @@
 #  define socklen_t unsigned long
 #endif
 
-#if defined(__SOLARIS__) || defined(__FreeBSD__)
+#if defined(__SOLARIS__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #  define BSD_COMP
 #endif
 
@@ -81,7 +81,7 @@
 #  define _XOPEN_SOURCE_EXTENDED
 #endif
 
-#if (defined(__APPLE__) || defined(__FreeBSD__)) && !defined(s6_addr32)
+#if (defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__)) && !defined(s6_addr32)
 #define s6_addr32 __u6_addr.__u6_addr32
 #endif
 
@@ -120,7 +120,7 @@ typedef unsigned char uchar;
 #define __BYTE_ORDER __DARWIN_BYTE_ORDER
 #define __BIG_ENDIAN    __DARWIN_BIG_ENDIAN
 #define __LITTLE_ENDIAN __DARWIN_LITTLE_ENDIAN
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <sys/endian.h>
 #define __BYTE_ORDER _BYTE_ORDER
 #define __BIG_ENDIAN    _BIG_ENDIAN
@@ -448,7 +448,7 @@ enum {E2_GLOBAL = 0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE, E
 
 #define LB_MAX_STAT_TIME        10
 
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #define OSCAM_SIGNAL_WAKEUP     SIGCONT
 #else
 #define OSCAM_SIGNAL_WAKEUP     SIGRTMAX-2
