@@ -564,22 +564,28 @@ static int32_t dvbapi_detect_api(void)
 	selected_api = COOLAPI;
 	selected_box = 5;
 	disable_pmt_files = 1;
+	cfg.dvbapi_listenport = 0;
 	cs_log("Detected Coolstream API");
 	return 1;
 #else
-	if (cfg.dvbapi_listenport)
-	{
-		selected_api = DVBAPI_3;
-		selected_box = 1;
-		cs_log("[DVBAPI] Using TCP listen socket, API forced to DVBAPIv3 (%d), userconfig boxtype: %d", selected_api, cfg.dvbapi_boxtype);
-		return 1;
-	}
 	if (cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) {
+		if (cfg.dvbapi_listenport)
+		{
+			cs_log("[DVBAPI] Using TCP listen socket, API forced to DVBAPIv3 (%d), userconfig boxtype: %d", selected_api, cfg.dvbapi_boxtype);
+		}
+		else
+		{
+			cs_log("[DVBAPI] Using %s listen socket, API forced to DVBAPIv3 (%d), userconfig boxtype: %d", devices[selected_box].cam_socket_path, selected_api, cfg.dvbapi_boxtype);
+		}
 		selected_api = DVBAPI_3;
 		selected_box = 1;
-		cs_log("[DVBAPI] Using %s listen socket, API forced to DVBAPIv3 (%d), userconfig boxtype: %d", devices[selected_box].cam_socket_path, selected_api, cfg.dvbapi_boxtype);
 		return 1;
 	}
+	else
+	{
+		cfg.dvbapi_listenport = 0;
+	}
+	
 	int32_t i = 0, n = 0, devnum = -1, dmx_fd = 0, boxnum = sizeof(devices) / sizeof(struct box_devices);
 	char device_path[128], device_path2[128];
 
