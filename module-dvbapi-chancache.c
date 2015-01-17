@@ -19,7 +19,7 @@ void dvbapi_clear_channel_cache(void)
 		
 	if(channel_cache)
 	{
-		ll_destroy_free_data(channel_cache);
+		ll_destroy_data_NULL(channel_cache);
 	}
 }
 
