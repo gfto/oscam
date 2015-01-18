@@ -2291,21 +2291,9 @@ static int8_t gbox_send_peer_good_night(struct s_client *proxy)
 	return 0;	
 }
 
-void gbox_send_good_night(void)
-{
-	struct s_client *cli;
-	for(cli = first_client; cli; cli = cli->next)
-	{
-		if(cli->gbox && cli->typ == 'p')
-		{
-			gbox_send_peer_good_night(cli);
-		}	
-	}
-}
-
 void gbox_cleanup(struct s_client *cl)
 {
-	 if(cl->gbox && cl->typ == 'p')
+	 if(cl && cl->gbox && cl->typ == 'p')
 	 	{ gbox_send_peer_good_night(cl); }
 }
 

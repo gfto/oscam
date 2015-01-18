@@ -1527,7 +1527,6 @@ int32_t main(int32_t argc, char *argv[])
 	pthread_cond_signal(&reader_check_sleep_cond); // Stop reader_check thread
 
 	// Cleanup
-	gbox_send_good_night();		
 	webif_close();
 	azbox_close();
 	coolapi_close_all();
