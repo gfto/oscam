@@ -568,7 +568,7 @@ static int32_t dvbapi_detect_api(void)
 	cs_log("Detected Coolstream API");
 	return 1;
 #else
-	if (cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) {
+	if (cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX || cfg.dvbapi_boxtype == BOXTYPE_PC ) {
 		if (cfg.dvbapi_listenport)
 		{
 			cs_log("[DVBAPI] Using TCP listen socket, API forced to DVBAPIv3 (%d), userconfig boxtype: %d", selected_api, cfg.dvbapi_boxtype);
