@@ -1345,7 +1345,13 @@ static int32_t nagra2_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	}
 	if(ep->type != GLOBAL)
 	{
-		add_job(reader->client, ACTION_READER_CARDINFO, NULL, 0); // refresh entitlement since it might have been changed!
+		struct timeb now;
+		cs_ftime(&now);
+		int64_t gone = comp_timeb(&now, &reader->emm_last);
+		if(gone > 3600*1000)
+		{
+			add_job(reader->client, ACTION_READER_CARDINFO, NULL, 0); // refresh entitlement since it might have been changed!
+		}
 	}
 	return OK;
 }
