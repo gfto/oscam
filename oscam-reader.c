@@ -28,6 +28,38 @@ const char *RDR_CD_TXT[] =
 	NULL
 };
 
+/* Overide ratelimit priority for dvbapi request */
+static int32_t dvbapi_override_prio(struct s_reader *reader, ECM_REQUEST *er, int32_t maxecms, struct timeb *actualtime)
+{
+	if (!module_dvbapi_enabled() || !is_dvbapi_usr(er->client->account->usr))
+		return -1;
+
+	int32_t foundspace = -1;
+	int64_t gone = 0;
+
+	if (reader->lastdvbapirateoverride.time == 0) // fixup for first run!
+		gone = comp_timeb(actualtime, &reader->lastdvbapirateoverride);
+
+	if (gone > reader->ratelimittime) {
+		int32_t h;
+		struct timeb minecmtime = *actualtime;
+		for (h = 0; h < MAXECMRATELIMIT; h++) {
+			gone = comp_timeb(&minecmtime, &reader->rlecmh[h].last);
+			if (gone > 0) {
+				minecmtime = reader->rlecmh[h].last;
+				foundspace = h;
+			}
+		}
+		reader->lastdvbapirateoverride = *actualtime;
+		cs_debug_mask(D_CLIENT, "prioritizing DVBAPI user %s over other watching client", er->client->account->usr);
+		cs_debug_mask(D_CLIENT, "ratelimiter forcing srvid %04X into slot #%d/%d of reader %s", er->srvid, foundspace + 1, maxecms, reader->label);
+	} else {
+		cs_debug_mask(D_CLIENT, "DVBAPI User %s is switching too fast for ratelimit and can't be prioritized!",
+					   er->client->account->usr);
+	}
+	return foundspace;
+}
+
 static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er, struct ecmrl rl, int32_t reader_mode)
 {
 
@@ -180,38 +212,9 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 			maxecms, reader->label); }  //occupied slots
 	}
 
-#ifdef HAVE_DVBAPI
-	/* Overide ratelimit priority for dvbapi request */
-
-	foundspace = -1;
-	int64_t gone = 0;
-	if((cfg.dvbapi_enabled == 1) && is_dvbapi_usr(er->client->account->usr))
-	{
-		if(reader->lastdvbapirateoverride.time == 0) { // fixup for first run!
-			gone = comp_timeb(&actualtime, &reader->lastdvbapirateoverride);
-		}
-		if(gone > reader->ratelimittime)
-		{
-			struct timeb minecmtime = actualtime;
-			for(h = 0; h < MAXECMRATELIMIT; h++)
-			{
-				gone = comp_timeb(&minecmtime, &reader->rlecmh[h].last);
-				if(gone > 0)
-				{
-					minecmtime = reader->rlecmh[h].last;
-					foundspace = h;
-				}
-			}
-			reader->lastdvbapirateoverride = actualtime;
-			cs_debug_mask(D_CLIENT, "prioritizing DVBAPI user %s over other watching client", er->client->account->usr);
-			cs_debug_mask(D_CLIENT, "ratelimiter forcing srvid %04X into slot #%d/%d of reader %s", er->srvid, foundspace + 1, maxecms, reader->label);
-			return foundspace;
-		}
-		else cs_debug_mask(D_CLIENT, "DVBAPI User %s is switching too fast for ratelimit and can't be prioritized!",
-							   er->client->account->usr);
-	}
-
-#endif
+	foundspace = dvbapi_override_prio(reader, er, maxecms, &actualtime);
+	if (foundspace > -1)
+		return foundspace;
 
 	return (-1); // no slot found
 }
