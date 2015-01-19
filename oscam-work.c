@@ -350,29 +350,7 @@ void *work_thread(void *ptr)
 				break;
 			case ACTION_CACHE_PUSH_OUT:
 			{
-#ifdef CS_CACHEEX
-				ECM_REQUEST *er = data->ptr;
-				int32_t res = 0, stats = -1;
-				// cc-nodeid-list-check
-				if(reader)
-				{
-					if(reader->ph.c_cache_push_chk && !reader->ph.c_cache_push_chk(cl, er))
-						{ break; }
-					res = reader->ph.c_cache_push(cl, er);
-					stats = cacheex_add_stats(cl, er->caid, er->srvid, er->prid, 0);
-				}
-				else
-				{
-					if(module->c_cache_push_chk && !module->c_cache_push_chk(cl, er))
-						{ break; }
-					res = module->c_cache_push(cl, er);
-				}
-				debug_ecm(D_CACHEEX, "pushed ECM %s to %s res %d stats %d", buf, username(cl), res, stats);
-				cl->cwcacheexpush++;
-				if(cl->account)
-					{ cl->account->cwcacheexpush++; }
-				first_client->cwcacheexpush++;
-#endif
+				cacheex_push_out(cl, data->ptr);
 				break;
 			}
 			case ACTION_CLIENT_KILL:
@@ -438,33 +416,12 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 		return 0;
 	}
 
-
-#ifdef CS_CACHEEX
-	// Avoid full running queues:
-	if(action == ACTION_CACHE_PUSH_OUT && ll_count(cl->joblist) > 2000)
+	if(action == ACTION_CACHE_PUSH_OUT && cacheex_check_queue_length(cl))
 	{
-		cs_debug_mask(D_TRACE, "WARNING: job queue %s %s has more than 2000 jobs! count=%d, dropped!",
-					  cl->typ == 'c' ? "client" : "reader",
-					  username(cl), ll_count(cl->joblist));
 		if(len && ptr)
 			{ NULLFREE(ptr); }
-		// Thread down???
-		pthread_mutex_lock(&cl->thread_lock);
-		if(cl && !cl->kill && cl->thread && cl->thread_active)
-		{
-			// Just test for invalid thread id:
-			if(pthread_detach(cl->thread) == ESRCH)
-			{
-				cl->thread_active = 0;
-				cs_debug_mask(D_TRACE, "WARNING: %s %s thread died!",
-							  cl->typ == 'c' ? "client" : "reader", username(cl));
-			}
-		}
-		pthread_mutex_unlock(&cl->thread_lock);
 		return 0;
 	}
-#endif
-
 
 	struct job_data *data;
 	if(!cs_malloc(&data, sizeof(struct job_data)))

@@ -62,6 +62,8 @@ uint8_t check_cacheex_filter(struct s_client *cl, ECM_REQUEST *er);
 void checkcache_process_thread_start(void);
 CWCHECK get_cwcheck(ECM_REQUEST *er);
 uint16_t get_cacheex_mode1_delay(ECM_REQUEST *er);
+void cacheex_push_out(struct s_client *cl, ECM_REQUEST *er);
+bool cacheex_check_queue_length(struct s_client *cl);
 
 #else
 static inline void cacheex_init(void) { };
@@ -82,6 +84,8 @@ static inline void cacheex_set_cacheex_src(ECM_REQUEST *UNUSED(ecm), struct s_cl
 static inline void cacheex_init_cacheex_src(ECM_REQUEST *UNUSED(ecm), ECM_REQUEST *UNUSED(er)) { }
 static inline void cleanup_hitcache(void) { }
 static inline void checkcache_process_thread_start(void) { }
+static inline void cacheex_push_out(struct s_client *UNUSED(cl), ECM_REQUEST *UNUSED(er)) { }
+static inline bool cacheex_check_queue_length(struct s_client *UNUSED(cl)) { return 0; }
 #endif
 
 #endif
