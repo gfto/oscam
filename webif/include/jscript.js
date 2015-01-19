@@ -1223,7 +1223,7 @@ function updateStatuspage(data) {
 		}
 
 		if (!is_nopoll('statuscol14')) {
-			if ('hms'.indexOf(item.type) > (-1) || item.request.caid == 'FFFE') {
+			if ('hms'.indexOf(item.type) > (-1)) {
 				$(uid + " > td.statuscol14").text('');
 			} else {
 				var value = item.type == 'c' ? (item.request.answered ? item.request.answered + ' (' + item.request.msvalue + ' ms)' : '') : item.request.lbvalue;

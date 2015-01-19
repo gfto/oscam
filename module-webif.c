@@ -4668,7 +4668,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							tpl_printf(vars, TPLADD, "MSVALUE", PRINTF_LOCAL_D, cl->cwlastresptime);
 							if(apicall)
 							{
-								tpl_addVar(vars, TPLADD, "LASTREADER", cl->lastreader);
+								tpl_addVar(vars, TPLADD, "LASTREADER", (cl->last_caid == NO_CAID_VALUE || isec > cfg.hideclient_to ) ? "" : cl->lastreader);
 								tpl_addVar(vars, TPLADD, "READERNAMEENC", urlencode(vars, cl->lastreader));
 							}
 							else
@@ -4693,7 +4693,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 								tpl_printf(vars, TPLAPPEND, "CLIENTLBVALUE", "%s (%'d ms)", xml_encode(vars, cl->lastreader), cl->cwlastresptime);
 #endif
 							}
-							if(cl->last_caid == NO_CAID_VALUE) tpl_addVar(vars, TPLADD, "CLIENTLBVALUE", "");
+							if(cl->last_caid == NO_CAID_VALUE || isec > cfg.hideclient_to) tpl_addVar(vars, TPLADD, "CLIENTLBVALUE", "");
 						}
 						if(cl->last_caid != NO_CAID_VALUE || cl->last_srvid != NO_SRVID_VALUE)
 						{

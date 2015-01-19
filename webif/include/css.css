@@ -605,7 +605,7 @@ input.medium[type=text] {
 	width:125px
 }
 input.longer[type=text] {
-	width:220px
+	width:250px
 }
 .readers input[type=text],
 #addnewservice input[type=text],
