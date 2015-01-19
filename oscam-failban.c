@@ -8,10 +8,7 @@ static int32_t cs_check_v(IN_ADDR_T ip, int32_t port, int32_t add, char *info, i
 {
 	int32_t result = 0;
 
-	if (!acosc_enabled())
-		return 0;
-
-	if (!cfg.failbantime)
+	if(!(cfg.failbantime || acosc_enabled()))
 		return 0;
 
 	if(!cfg.v_list)
