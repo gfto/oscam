@@ -179,6 +179,7 @@ void init_free_sidtab(void)
 	++cfg_sidtab_generation;
 }
 
+//#define DEBUG_SIDTAB 1
 #ifdef DEBUG_SIDTAB
 static void show_sidtab(struct s_sidtab *sidtab)
 {
@@ -202,6 +203,8 @@ static void show_sidtab(struct s_sidtab *sidtab)
 		cs_log("%s", buf);
 	}
 }
+#else
+static void show_sidtab(struct s_sidtab *UNUSED(sidtab)) { }
 #endif
 
 int32_t init_sidtab(void)
@@ -264,9 +267,7 @@ int32_t init_sidtab(void)
 	NULLFREE(token);
 	fclose(fp);
 
-#ifdef DEBUG_SIDTAB
 	show_sidtab(cfg.sidtab);
-#endif
 	++cfg_sidtab_generation;
 	cs_log("services reloaded: %d services freed, %d services loaded, rejected %d", nro, nr, nrr);
 	return (0);
