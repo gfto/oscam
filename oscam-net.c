@@ -508,6 +508,16 @@ int32_t accept_connection(struct s_module *module, int8_t module_idx, int8_t por
 	return 0;
 }
 
+void set_so_reuseport(int fd) {
+#ifdef SO_REUSEPORT
+	// See: http://stackoverflow.com/questions/3261965/so-reuseport-on-linux
+	int32_t on = 1;
+	setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, (void *)&on, sizeof(on));
+#else
+	fd = fd; // Do nothing
+#endif
+}
+
 int32_t start_listener(struct s_module *module, struct s_port *port)
 {
 	int32_t ov = 1, timeout, is_udp, i;
@@ -596,9 +606,7 @@ int32_t start_listener(struct s_module *module, struct s_port *port)
 		return 0;
 	}
 
-#ifdef SO_REUSEPORT
-	setsockopt(port->fd, SOL_SOCKET, SO_REUSEPORT, (void *)&ov, sizeof(ov));
-#endif
+	set_so_reuseport(port->fd);
 
 	if(set_socket_priority(port->fd, cfg.netprio) > -1)
 		{ snprintf(ptxt[1], sizeof(ptxt[1]), ", prio=%d", cfg.netprio); }

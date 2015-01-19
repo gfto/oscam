@@ -2821,9 +2821,7 @@ int32_t dvbapi_net_init_listenfd(void)
 
 	opt = 1;
 	setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(opt));
-#ifdef SO_REUSEPORT
-	setsockopt(listenfd, SOL_SOCKET, SO_REUSEPORT, (void *)&opt, sizeof(opt));
-#endif
+	set_so_reuseport(listenfd);
 
 	if(bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
 		{ return 0; }

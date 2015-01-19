@@ -36,6 +36,7 @@ uint32_t cs_getIPfromHost(const char *hostname);
 int set_socket_priority(int fd, int priority);
 void setTCPTimeouts(int32_t sock);
 int set_nonblock(int32_t fd, bool nonblock);
+void set_so_reuseport(int fd);
 int8_t check_fd_for_data(int32_t fd);
 int32_t recv_from_udpipe(uchar *);
 int32_t process_input(uint8_t *buf, int32_t buflen, int32_t timeout);

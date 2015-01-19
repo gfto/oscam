@@ -769,9 +769,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 		return -1;
 	}
 
-#ifdef SO_REUSEPORT
-	setsockopt(client->udp_fd, SOL_SOCKET, SO_REUSEPORT, (void *)&flag, sizeof(flag));
-#endif
+	set_so_reuseport(client->udp_fd);
 
 	memset((char *)&loc_sa, 0, sizeof(loc_sa));
 	SIN_GET_FAMILY(loc_sa) = s_family;

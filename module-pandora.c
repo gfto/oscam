@@ -207,9 +207,7 @@ int pandora_client_init(struct s_client *cl)
 	int32_t opt = 1;
 	setsockopt(cl->udp_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-#ifdef SO_REUSEPORT
-	setsockopt(cl->udp_fd, SOL_SOCKET, SO_REUSEPORT, (void *)&opt, sizeof(opt));
-#endif
+	set_so_reuseport(cl->udp_fd);
 
 	set_socket_priority(cl->udp_fd, cfg.netprio);
 
