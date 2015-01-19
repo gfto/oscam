@@ -1,4 +1,5 @@
 #include "globals.h"
+#include "module-anticasc.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
@@ -6,15 +7,12 @@
 static int32_t cs_check_v(IN_ADDR_T ip, int32_t port, int32_t add, char *info, int32_t acosc_penalty_duration)
 {
 	int32_t result = 0;
-	bool acosc_enabled = false;
 
-#ifdef CS_ANTICASC
-	if(cfg.acosc_enabled)
-		acosc_enabled = true;
-#endif
+	if (!acosc_enabled())
+		return 0;
 
-	if(!(cfg.failbantime || acosc_enabled))
-		{ return 0; }
+	if (!cfg.failbantime)
+		return 0;
 
 	if(!cfg.v_list)
 		{ cfg.v_list = ll_create("v_list"); }
