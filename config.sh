@@ -244,7 +244,8 @@ valid_opt() {
 
 enable_opt() {
 	valid_opt $1 && disabled $1 && {
-		sed -i.bak -e "s|//#define $1 1$|#define $1 1|g" config.h && rm config.h.bak
+		sed -e "s|//#define $1 1$|#define $1 1|g" config.h > config.h.tmp && \
+		mv config.h.tmp config.h
 		echo "Enable $1"
 	}
 }
@@ -258,7 +259,8 @@ enable_opts() {
 
 disable_opt() {
 	valid_opt $1 && enabled $1 && {
-		sed -i.bak -e "s|#define $1 1$|//#define $1 1|g" config.h && rm config.h.bak
+		sed -e "s|#define $1 1$|//#define $1 1|g" config.h > config.h.tmp && \
+		mv config.h.tmp config.h
 		echo "Disable $1"
 	}
 }
@@ -380,14 +382,16 @@ check_test() {
 
 disable_all() {
 	for i in $1; do
-		sed -i.bak -e "s/^#define ${i} 1$/\/\/#define ${i} 1/g" $tempfileconfig
+		sed -e "s/^#define ${i} 1$/\/\/#define ${i} 1/g" $tempfileconfig > ${tempfileconfig}.tmp && \
+		mv ${tempfileconfig}.tmp $tempfileconfig
 	done
 }
 
 enable_package() {
 	for i in $(cat $tempfile); do
 		strip=$(echo $i | sed "s/\"//g")
-		sed -i.bak -e "s/\/\/#define ${strip} 1$/#define ${strip} 1/g" $tempfileconfig
+		sed -e "s/\/\/#define ${strip} 1$/#define ${strip} 1/g" $tempfileconfig > ${tempfileconfig}.tmp && \
+		mv ${tempfileconfig}.tmp $tempfileconfig
 	done
 }
 
