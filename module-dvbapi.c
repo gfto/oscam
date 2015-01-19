@@ -20,6 +20,7 @@
 #include "oscam-reader.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
+#include "oscam-work.h"
 #include "reader-irdeto.h"
 
 static int is_samygo;
@@ -2348,6 +2349,23 @@ static void getDemuxOptions(int32_t demux_id, unsigned char *buffer, uint16_t *c
 	}
 }
 
+static void dvbapi_capmt_notify(struct demux_s *dmx)
+{
+	struct s_client *cl;
+	for(cl = first_client->next; cl ; cl = cl->next)
+	{
+		if((cl->typ == 'p' || cl->typ == 'r') && cl->reader && cl->reader->ph.c_capmt)
+		{
+			struct demux_s *curdemux;
+			if(cs_malloc(&curdemux, sizeof(struct demux_s)))
+			{
+				memcpy(curdemux, dmx, sizeof(struct demux_s));
+				add_job(cl, ACTION_READER_CAPMT_NOTIFY, curdemux, sizeof(struct demux_s));
+			}
+		}
+	}
+}
+
 int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connfd, char *pmtfile)
 {
 	uint32_t i = 0, running = 0;
@@ -2534,7 +2552,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	get_servicename(dvbapi_client, demux[demux_id].program_number, demux[demux_id].ECMpidcount > 0 ? demux[demux_id].ECMpids[0].CAID : NO_CAID_VALUE, channame);
 	cs_log("New program number: %04X (%s) [pmt_list_management %d]", program_number, channame, ca_pmt_list_management);
 
-	cs_capmt_notify(&demux[demux_id]);
+	dvbapi_capmt_notify(&demux[demux_id]);
 
 	cs_debug_mask(D_DVBAPI, "[DVBAPI] Demuxer #%d demux_index: %2d ca_mask: %02x program_info_length: %3d ca_pmt_list_management %02x",
 				  demux_id, demux[demux_id].demux_index, demux[demux_id].ca_mask, program_info_length, ca_pmt_list_management);
