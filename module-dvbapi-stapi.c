@@ -737,7 +737,7 @@ void cs_log(const char *fmt, ...)
 	vsnprintf(log_txt, sizeof(log_txt), fmt, params);
 	va_end(params);
 
-	cs_log_int(0, 1, NULL, 0, log_txt);
+	cs_log_int(0, NULL, 0, log_txt);
 }
 
 #endif
