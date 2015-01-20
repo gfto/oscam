@@ -449,6 +449,11 @@ static char last_log_txt[LOG_BUF_SIZE];
 static struct timeb last_log_ts;
 static unsigned int last_log_duplicates;
 
+/*
+ * FIXME: The lock parameter is unused but can't be removed because
+ * FIXME: liboscam_stapi.a for SH4 with STAPI is using cs_log()
+ * FIXME: and relies on its signature.
+ */
 void cs_log_int(uint16_t mask, int8_t lock __attribute__((unused)), const uchar *buf, int32_t n, const char *fmt, ...)
 {
 	if((mask & cs_dblevel) || !mask)
