@@ -27,10 +27,6 @@ static pthread_t log_thread;
 static pthread_cond_t log_thread_sleep_cond;
 static pthread_mutex_t log_thread_sleep_cond_mutex;
 
-#if defined(WEBIF) || defined(MODULE_MONITOR)
-static uint64_t counter = 0;
-#endif
-
 struct s_log
 {
 	char *txt;
@@ -40,13 +36,6 @@ struct s_log
 	char *cl_usr;
 	char *cl_text;
 };
-
-#if defined(WEBIF) || defined(MODULE_MONITOR)
-static CS_MUTEX_LOCK loghistory_lock;
-char *loghist = NULL;     // ptr of log-history
-char *loghistid = NULL;
-char *loghistptr = NULL;
-#endif
 
 #define LOG_BUF_SIZE 512
 
@@ -235,6 +224,13 @@ int32_t cs_open_logfiles(void)
 }
 
 #if defined(WEBIF) || defined(MODULE_MONITOR)
+static uint64_t counter = 0;
+static CS_MUTEX_LOCK loghistory_lock;
+// These are accessed in module-monitor and module-webif
+char *loghist = NULL;     // ptr of log-history
+char *loghistid = NULL;
+char *loghistptr = NULL;
+
 /*
  This function allows to reinit the in-memory loghistory with a new size.
 */
