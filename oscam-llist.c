@@ -104,7 +104,7 @@ static void *ll_iter_next_nolock(LL_ITER *it)
 	{
 #ifdef WITH_DEBUG
 		if(chk_debuglog(it->l))
-			{ cs_debug_mask_nolock(D_TRACE, "list changed, searching new position"); }
+			{ cs_debug_mask(D_TRACE, "list changed, searching new position"); }
 #endif
 
 		LL_NODE *ptr;

@@ -218,7 +218,7 @@ int32_t cs_open_logfiles(void)
 	// according to syslog docu: calling closelog is not necessary and calling openlog multiple times is safe
 	// We use openlog to set the default syslog settings so that it's possible to allow switching syslog on and off
 	openlog(syslog_ident, LOG_NDELAY | LOG_PID, LOG_DAEMON);
-	cs_log_nolock(">> OSCam <<  cardserver %s, version " CS_VERSION ", build r" CS_SVN_VERSION " (" CS_TARGET ")", starttext);
+	cs_log(">> OSCam <<  cardserver %s, version " CS_VERSION ", build r" CS_SVN_VERSION " (" CS_TARGET ")", starttext);
 
 	return (fp <= (FILE *)0);
 }
