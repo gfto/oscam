@@ -3542,6 +3542,8 @@ static void *dvbapi_main_local(void *cli)
 			uint32_t ecmcounter = 0, emmcounter = 0;
 			for(g = 0; g < MAX_FILTER; g++)
 			{
+				if(demux[i].demux_fd[g].fd <= 0) continue; // deny obvious invalid fd!
+				
 				if(!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX && demux[i].demux_fd[g].fd > 0 && selected_api != STAPI && selected_api != COOLAPI)
 				{
 					if (is_valid_fd(demux[i].demux_fd[g].fd)) // seems some boxes stop filters without being directed to do so !!!
