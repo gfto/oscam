@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "csp"
+
 /*
  * module-csp.c
  *

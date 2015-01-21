@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "net"
+
 #include "globals.h"
 #include "oscam-client.h"
 #include "oscam-failban.h"

@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "lock"
+
 #include "globals.h"
 #include "oscam-lock.h"
 #include "oscam-time.h"

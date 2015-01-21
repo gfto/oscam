@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "config"
+
 #include "globals.h"
 #include "oscam-conf-chk.h"
 #include "oscam-garbage.h"

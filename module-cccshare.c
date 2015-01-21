@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "cccam"
+
 #include "globals.h"
 
 #if defined(MODULE_CCCAM) && defined(MODULE_CCCSHARE)

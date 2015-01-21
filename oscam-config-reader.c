@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "config"
+
 #include "globals.h"
 #include "module-gbox.h"
 #include "oscam-aes.h"

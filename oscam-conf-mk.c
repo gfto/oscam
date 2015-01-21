@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "config"
+
 #include "globals.h"
 #include "oscam-conf-mk.h"
 #include "oscam-net.h"

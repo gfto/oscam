@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "lcd"
+
 #include "globals.h"
 
 #ifdef LCDSUPPORT

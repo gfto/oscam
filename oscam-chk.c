@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "chk"
+
 #include "globals.h"
 #include "oscam-cache.h"
 #include "oscam-chk.h"

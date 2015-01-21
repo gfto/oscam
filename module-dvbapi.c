@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "dvbapi"
+
 #include "globals.h"
 
 #ifdef HAVE_DVBAPI

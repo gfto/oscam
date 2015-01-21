@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "ghttp"
+
 #include "globals.h"
 #ifdef MODULE_GHTTP
 #include "oscam-client.h"

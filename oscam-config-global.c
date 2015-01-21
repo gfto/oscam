@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "config"
+
 #include "globals.h"
 #include "module-dvbapi.h"
 #include "module-gbox.h"

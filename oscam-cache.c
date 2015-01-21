@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "cache"
+
 #include "globals.h"
 #include "module-cacheex.h"
 #include "module-cw-cycle-check.h"

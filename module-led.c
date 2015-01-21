@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "led"
+
 #include "globals.h"
 
 #ifdef LEDSUPPORT

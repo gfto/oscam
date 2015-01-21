@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "serial"
+
 #include "globals.h"
 #ifdef MODULE_SERIAL
 #include "oscam-client.h"

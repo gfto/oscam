@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "main"
+
 #include "globals.h"
 #include <getopt.h>
 

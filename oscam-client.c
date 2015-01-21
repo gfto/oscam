@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "client"
+
 #include "globals.h"
 
 #include "cscrypt/md5.h"

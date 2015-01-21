@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "stat"
+
 #include "globals.h"
 
 #ifdef WITH_LB

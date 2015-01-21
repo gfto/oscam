@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "camd35"
+
 #include "globals.h"
 #if defined MODULE_CAMD35 || defined MODULE_CAMD35_TCP
 

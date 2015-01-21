@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "work"
+
 #include "globals.h"
 #include "module-cacheex.h"
 #include "oscam-client.h"

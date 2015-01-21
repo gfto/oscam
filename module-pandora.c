@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "pandora"
+
 #include "globals.h"
 
 #ifdef MODULE_PANDORA

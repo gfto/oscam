@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "aes"
+
 #include "globals.h"
 #include "oscam-aes.h"
 #include "oscam-garbage.h"

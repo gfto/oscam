@@ -1,5 +1,7 @@
 /* Reversed from libcoolstream.so, this comes without any warranty */
 
+#define MODULE_LOG_PREFIX "dvbcool"
+
 #include "globals.h"
 
 #if defined(HAVE_DVBAPI) && defined(WITH_COOLAPI)

@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "irdguess"
+
 #include "globals.h"
 
 #ifdef IRDETO_GUESSING

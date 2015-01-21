@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "scam"
+
 #include "globals.h"
 #ifdef MODULE_SCAM
 #include "oscam-client.h"

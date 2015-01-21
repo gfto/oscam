@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "dvbmca"
+
 /**
  * dvbapi-support for Matrix Cam Air
  *
@@ -22,7 +24,6 @@
 
 #include "extapi/openxcas/openxcas_message.h"
 
-#define DVBAPI_LOG_PREFIX 1
 #include "module-dvbapi.h"
 #include "module-dvbapi-mca.h"
 #include "oscam-client.h"

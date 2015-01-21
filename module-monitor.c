@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "monitor"
+
 #include "globals.h"
 #ifdef MODULE_MONITOR
 #include "cscrypt/md5.h"

@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "failban"
+
 #include "globals.h"
 #include "module-anticasc.h"
 #include "oscam-net.h"

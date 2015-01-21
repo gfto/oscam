@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "cacheex"
+
 #include "globals.h"
 
 #ifdef CS_CACHEEX

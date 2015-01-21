@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "gbox"
+
 #include "globals.h"
 
 #ifdef MODULE_GBOX

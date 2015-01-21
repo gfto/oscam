@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "newcamd"
+
 #include "globals.h"
 #ifdef MODULE_NEWCAMD
 #include "cscrypt/des.h"

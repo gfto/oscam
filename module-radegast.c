@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "radegast"
+
 #include "globals.h"
 #ifdef MODULE_RADEGAST
 #include "oscam-client.h"

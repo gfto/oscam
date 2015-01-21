@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "gc"
+
 #include "globals.h"
 #include "oscam-garbage.h"
 #include "oscam-lock.h"

@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "cwccheck"
+
 #include "globals.h"
 #ifdef CW_CYCLE_CHECK
 

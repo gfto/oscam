@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "camd33"
+
 #include "globals.h"
 #ifdef MODULE_CAMD33
 #include "oscam-aes.h"

@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "anticasc"
+
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
 

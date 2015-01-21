@@ -1,3 +1,5 @@
+#define MODULE_LOG_PREFIX "reader"
+
 #include "globals.h"
 
 #include "oscam-log.h"
