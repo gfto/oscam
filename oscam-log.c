@@ -307,10 +307,11 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 
 #ifdef CS_ANTICASC
 	extern FILE *ac_log;
-	if(!strncmp(txt + log->header_len, "acasc:", 6) && ac_log)
+	char *acasc_found = strstr(txt + log->header_len, "acasc: ");
+	if(ac_log && acasc_found)
 	{
 		strcat(txt, "\n");
-		fputs(txt + 8, ac_log);
+		fprintf(ac_log, "%s\n", acasc_found + 8);
 		fflush(ac_log);
 	}
 	else
