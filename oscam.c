@@ -748,7 +748,7 @@ static void init_machine_info(void)
 		cs_log("Stb model      = %s", model);
 
 	if (boxtype[0])
-		cs_log("Stb boxtype    = %s", boxtype);	
+		cs_log("Stb boxtype    = %s", boxtype);
 
 	if (boxtype[0])
 		stb_boxtype = cs_strdup(boxtype);
