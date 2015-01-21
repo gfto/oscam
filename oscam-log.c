@@ -482,7 +482,10 @@ static void __cs_log_check_duplicates(int32_t hdr_len)
 		va_list params; \
 		va_start(params, fmt); \
 		int32_t hdr_len = get_log_header(1, log_txt); \
-		vsnprintf(log_txt + hdr_len, sizeof(log_txt) - hdr_len, fmt, params); \
+		int32_t log_prefix_len = 0; \
+		if (log_prefix) \
+			log_prefix_len = snprintf(log_txt + hdr_len, sizeof(log_txt) - hdr_len, "(%s) ", log_prefix); \
+		vsnprintf(log_txt + hdr_len + log_prefix_len, sizeof(log_txt) - (hdr_len + log_prefix_len), fmt, params); \
 		va_end(params); \
 		if (cfg.logduplicatelines) \
 		{ \
@@ -493,14 +496,14 @@ static void __cs_log_check_duplicates(int32_t hdr_len)
 		} \
 	} while(0)
 
-void cs_log_txt(const char *fmt, ...)
+void cs_log_txt(const char *log_prefix, const char *fmt, ...)
 {
 	pthread_mutex_lock(&log_mutex);
 	__do_log();
 	pthread_mutex_unlock(&log_mutex);
 }
 
-void cs_log_dump(const uint8_t *buf, int32_t n, const char *fmt, ...)
+void cs_log_dump(const char *log_prefix, const uint8_t *buf, int32_t n, const char *fmt, ...)
 {
 	pthread_mutex_lock(&log_mutex);
 	__do_log();

@@ -737,7 +737,7 @@ void cs_log(const char *fmt, ...)
 	vsnprintf(log_txt, sizeof(log_txt), fmt, params);
 	va_end(params);
 
-	cs_log_txt("%s", log_txt);
+	cs_log_txt(MODULE_LOG_PREFIX, "%s", log_txt);
 }
 
 #endif
