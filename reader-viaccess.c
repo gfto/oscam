@@ -1221,7 +1221,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 			case 0xff: // nanoe0 responds FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
 				if(cta_res[1] == 0xff && nanoE0)
 				{
-					cs_log("[viaccess-reader] This ECM is using nano E0 and the controlword we received was invalid!");
+					rdr_log(reader, "This ECM is using nano E0 and the controlword we received was invalid!");
 					ecm88Data = nextEcm;
 					ecm88Len -= curEcm88len;
 					nanoE0 = 0; // reset detection for next ecm

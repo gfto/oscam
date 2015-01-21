@@ -16,7 +16,7 @@ struct cryptoworks_data
 
 static const char *cs_cert = "oscam.cert";
 
-static int search_boxkey(uint16_t caid, char *key)
+static int search_boxkey(struct s_reader *rdr, uint16_t caid, char *key)
 {
 	int i, rc = 0;
 	FILE *fp;
@@ -44,7 +44,7 @@ static int search_boxkey(uint16_t caid, char *key)
 				{ continue; }
 			if(cs_atob((uchar *)key, c_key, i) < 0)
 			{
-				cs_log("wrong key in \"%s\"", cs_cert);
+				rdr_log(rdr, "ERROR: wrong key in \"%s\"", cs_cert);
 				continue;
 			}
 			rc = 1;
@@ -278,7 +278,7 @@ static int32_t cryptoworks_card_init(struct s_reader *reader, ATR *newatr)
 	{
 		uchar keybuf[256];
 		BIGNUM *ipk;
-		if(search_boxkey(reader->caid, (char *)keybuf))
+		if(search_boxkey(reader, reader->caid, (char *)keybuf))
 		{
 			ipk = BN_new();
 			BN_bin2bn(cwexp, sizeof(cwexp), &csystem_data->exp);
