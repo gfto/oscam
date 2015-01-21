@@ -113,7 +113,7 @@ static int32_t Azbox_Reset(struct s_reader *reader, ATR *atr)
 
 	if(ret == ERROR)
 	{
-		cs_log("Warning reader %s: ATR is invalid!", reader->label);
+		rdr_log(reader, "WARNING: ATR is invalid!");
 		return ERROR;
 	}
 
