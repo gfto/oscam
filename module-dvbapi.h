@@ -289,10 +289,10 @@ void *dvbapi_start_handler(struct s_client *cl, uchar *mbuf, int32_t module_idx,
 
 #ifdef DVBAPI_LOG_PREFIX
 #undef cs_log
-#define cs_log(txt, x...)   cs_log_int(0, NULL, 0, "dvbapi: "txt, ##x)
+#define cs_log(fmt, params...)   cs_log_txt("dvbapi: " fmt, ##params)
 #ifdef WITH_DEBUG
 #undef cs_debug_mask
-#define cs_debug_mask(x,txt,y...)   cs_log_int(x, NULL, 0, "dvbapi: "txt, ##y)
+#define cs_debug_mask(mask, fmt, params...) do { if (config_enabled(WITH_DEBUG) && ((mask) & cs_dblevel)) cs_log_txt("dvbapi: " fmt, ##params); } while(0)
 #endif
 #endif
 

@@ -493,10 +493,15 @@ static void __cs_log_check_duplicates(int32_t hdr_len)
 		} \
 	} while(0)
 
-void cs_log_int(uint16_t mask, const uint8_t *buf, int32_t n, const char *fmt, ...)
+void cs_log_txt(const char *fmt, ...)
 {
-	if((mask & cs_dblevel) || !mask)
-	{
+	pthread_mutex_lock(&log_mutex);
+	__do_log();
+	pthread_mutex_unlock(&log_mutex);
+}
+
+void cs_log_dump(const uint8_t *buf, int32_t n, const char *fmt, ...)
+{
 	pthread_mutex_lock(&log_mutex);
 	__do_log();
 	if(buf)
@@ -510,7 +515,6 @@ void cs_log_int(uint16_t mask, const uint8_t *buf, int32_t n, const char *fmt, .
 		}
 	}
 	pthread_mutex_unlock(&log_mutex);
-	}
 }
 
 static void cs_close_log(void)
