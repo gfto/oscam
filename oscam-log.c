@@ -483,8 +483,11 @@ static void __cs_log_check_duplicates(int32_t hdr_len)
 		va_start(params, fmt); \
 		int32_t hdr_len = get_log_header(1, log_txt); \
 		int32_t log_prefix_len = 0; \
-		if (log_prefix) \
-			log_prefix_len = snprintf(log_txt + hdr_len, sizeof(log_txt) - hdr_len, "(%s) ", log_prefix); \
+		if (log_prefix) { \
+			char _lp[16]; \
+			snprintf(_lp, sizeof(_lp), "(%s)", log_prefix); \
+			log_prefix_len = snprintf(log_txt + hdr_len, sizeof(log_txt) - hdr_len, "%10s ", _lp); \
+		} \
 		vsnprintf(log_txt + hdr_len + log_prefix_len, sizeof(log_txt) - (hdr_len + log_prefix_len), fmt, params); \
 		va_end(params); \
 		if (cfg.logduplicatelines) \
