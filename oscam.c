@@ -741,11 +741,14 @@ static void init_machine_info(void)
 		}
 	}
 
+	if (!boxtype[0] && !strcasecmp(model, "dm800") && !strcasecmp(buffer.machine, "armv7l"))
+		snprintf(boxtype, sizeof(boxtype), "%s", "su980");
+
 	if (model[0])
 		cs_log("Stb model      = %s", model);
 
 	if (boxtype[0])
-		cs_log("Stb boxtype    = %s", boxtype);
+		cs_log("Stb boxtype    = %s", boxtype);	
 
 	if (boxtype[0])
 		stb_boxtype = cs_strdup(boxtype);
