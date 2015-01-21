@@ -24,6 +24,7 @@
 #include "reader-irdeto.h"
 
 static int is_samygo;
+extern char *stb_boxtype;
 
 static int dvbapi_ioctl(int fd, uint32_t request, ...)
 { 
@@ -81,6 +82,11 @@ static int dvbapi_ioctl(int fd, uint32_t request, ...)
 		ret = 1;
 	}
 #endif
+	// FIXME: Workaround for su980 bug
+	// See: http://www.streamboard.tv/wbb2/thread.php?postid=533940
+	if (streq(stb_boxtype, "su980") && request == CA_SET_DESCR) {
+		ret = 1;
+	}
 	va_end(args);
 	return ret;
 }
