@@ -164,7 +164,7 @@ static int32_t smart_write(struct s_reader *reader, unsigned char *buff, uint32_
 	return total_written;
 }
 
-static bool smartreader_check_endpoint(libusb_device *usb_dev, uint8_t in_endpoint, uint8_t out_endpoint)
+static bool smartreader_check_endpoint(struct s_reader *rdr, libusb_device *usb_dev, uint8_t in_endpoint, uint8_t out_endpoint)
 {
 	struct libusb_device_descriptor usbdesc;
 	struct libusb_config_descriptor *configDesc;
@@ -178,7 +178,7 @@ static bool smartreader_check_endpoint(libusb_device *usb_dev, uint8_t in_endpoi
 	ret = libusb_get_device_descriptor(usb_dev, &usbdesc);
 	if(ret < 0)
 	{
-		cs_log("Smartreader : couldn't read device descriptor, assuming this is not a smartreader");
+		rdr_log(rdr, "Couldn't read device descriptor, assuming this is not a smartreader");
 		return 0;
 	}
 	if(usbdesc.bNumConfigurations)
@@ -186,7 +186,7 @@ static bool smartreader_check_endpoint(libusb_device *usb_dev, uint8_t in_endpoi
 		ret = libusb_get_active_config_descriptor(usb_dev, &configDesc);
 		if(ret)
 		{
-			cs_log("Smartreader : couldn't read config descriptor , assuming this is not a smartreader");
+			rdr_log(rdr, "Couldn't read config descriptor, assuming this is not a smartreader");
 			return 0;
 		}
 
@@ -201,7 +201,7 @@ static bool smartreader_check_endpoint(libusb_device *usb_dev, uint8_t in_endpoi
 	}
 	if(nb_endpoint_ok != 2)
 	{
-		cs_log("Smartreader : endpoint check failed , assuming this is not a smartreader");
+		rdr_log(rdr, "Endpoint check failed, assuming this is not a smartreader");
 		return 0;
 	}
 	return 1;
@@ -228,7 +228,7 @@ static struct libusb_device *find_smartreader(struct s_reader *rdr, const char *
 		ret = libusb_get_device_descriptor(dev, &usbdesc);
 		if(ret < 0)
 		{
-			cs_log("failed to get device descriptor for device %s on bus %s", dev_name, busname);
+			rdr_log(rdr, "failed to get device descriptor for device %s on bus %s", dev_name, busname);
 			return NULL;
 		}
 
@@ -237,20 +237,20 @@ static struct libusb_device *find_smartreader(struct s_reader *rdr, const char *
 			ret = libusb_open(dev, &usb_dev_handle);
 			if(ret)
 			{
-				cs_log("coulnd't open device %03d:%03d", libusb_get_bus_number(dev), libusb_get_device_address(dev));
+				rdr_log(rdr, "coulnd't open device %03d:%03d", libusb_get_bus_number(dev), libusb_get_device_address(dev));
 				switch(ret)
 				{
 				case LIBUSB_ERROR_NO_MEM:
-					cs_log("libusb_open error LIBUSB_ERROR_NO_MEM : memory allocation failure");
+					rdr_log(rdr, "libusb_open error LIBUSB_ERROR_NO_MEM : memory allocation failure");
 					break;
 				case LIBUSB_ERROR_ACCESS:
-					cs_log("libusb_open error LIBUSB_ERROR_ACCESS : the user has insufficient permissions");
+					rdr_log(rdr, "libusb_open error LIBUSB_ERROR_ACCESS : the user has insufficient permissions");
 					break;
 				case LIBUSB_ERROR_NO_DEVICE:
-					cs_log("libusb_open error LIBUSB_ERROR_NO_DEVICE : the device has been disconnected");
+					rdr_log(rdr, "libusb_open error LIBUSB_ERROR_NO_DEVICE : the device has been disconnected");
 					break;
 				default:
-					cs_log("libusb_open unknown error : %d", ret);
+					rdr_log(rdr, "libusb_open unknown error : %d", ret);
 					break;
 				}
 				continue;
@@ -264,8 +264,8 @@ static struct libusb_device *find_smartreader(struct s_reader *rdr, const char *
 				{
 					if(!strcmp(trim(iserialbuffer), dev_name))
 					{
-						cs_debug_mask(D_IFD, "Found reader with serial %s at %03d:%03d", dev_name, libusb_get_bus_number(dev), libusb_get_device_address(dev));
-						if(smartreader_check_endpoint(dev, in_endpoint, out_endpoint)) {
+						rdr_debug_mask(rdr, D_IFD, "Found reader with serial %s at %03d:%03d", dev_name, libusb_get_bus_number(dev), libusb_get_device_address(dev));
+						if(smartreader_check_endpoint(rdr, dev, in_endpoint, out_endpoint)) {
 							if(out_endpoint == 0x82 && in_endpoint == 0x01 && usbdesc.idProduct == 0x6001) { rdr->smart_type = 0; rdr->smartdev_found = 1;} else
 							if(out_endpoint == 0x81 && in_endpoint == 0x01) { rdr->smart_type = 1; rdr->smartdev_found = 2;} else
 							if(out_endpoint == 0x81 && in_endpoint == 0x02 && usbdesc.idProduct == 0x6001) { rdr->smart_type = 2; rdr->smartdev_found = 3;} else
@@ -279,9 +279,9 @@ static struct libusb_device *find_smartreader(struct s_reader *rdr, const char *
 			}
 			else if(libusb_get_bus_number(dev) == atoi(busname) && libusb_get_device_address(dev) == atoi(dev_name))
 			{
-				cs_debug_mask(D_DEVICE, "SR: Checking FTDI device: %03d on bus %03d", libusb_get_device_address(dev), libusb_get_bus_number(dev));
+				rdr_debug_mask(rdr, D_DEVICE, "SR: Checking FTDI device: %03d on bus %03d", libusb_get_device_address(dev), libusb_get_bus_number(dev));
 				// check for smargo endpoints.
-						if(smartreader_check_endpoint(dev, in_endpoint, out_endpoint)) {
+						if(smartreader_check_endpoint(rdr, dev, in_endpoint, out_endpoint)) {
 							if(out_endpoint == 0x82 && in_endpoint == 0x01 && usbdesc.idProduct == 0x6001) { rdr->smart_type = 0; rdr->smartdev_found = 1;} else
 							if(out_endpoint == 0x81 && in_endpoint == 0x01) { rdr->smart_type = 1; rdr->smartdev_found = 2;} else
 							if(out_endpoint == 0x81 && in_endpoint == 0x02 && usbdesc.idProduct == 0x6001) { rdr->smart_type = 2; rdr->smartdev_found = 3;} else
@@ -300,11 +300,11 @@ static struct libusb_device *find_smartreader(struct s_reader *rdr, const char *
 
 	if(!rdr->smartdev_found)
 	{
-		cs_log("Smartreader device %s:%s not found", busname, dev_name);
+		rdr_log(rdr, "Smartreader device %s:%s not found", busname, dev_name);
 		return NULL;
 	}
 	else
-		{ cs_debug_mask(D_IFD, "Found smartreader device %s:%s", busname, dev_name); }
+		rdr_debug_mask(rdr, D_IFD, "Found smartreader device %s:%s", busname, dev_name);
 
 	return dev;
 }
@@ -361,7 +361,7 @@ static uint32_t  smartreader_determine_max_packet_size(struct s_reader *reader)
 	ret = libusb_get_device_descriptor(crdr_data->usb_dev, &usbdesc);
 	if(ret < 0)
 	{
-		rdr_log(reader, "Smartreader : couldn't read device descriptor , using default packet size");
+		rdr_log(reader, "Couldn't read device descriptor, using default packet size");
 		return packet_size;
 	}
 	if(usbdesc.bNumConfigurations)
@@ -369,7 +369,7 @@ static uint32_t  smartreader_determine_max_packet_size(struct s_reader *reader)
 		ret = libusb_get_active_config_descriptor(crdr_data->usb_dev, &configDesc);
 		if(ret)
 		{
-			rdr_log(reader, "Smartreader : couldn't read config descriptor , using default packet size");
+			rdr_log(reader, "Couldn't read config descriptor, using default packet size");
 			return packet_size;
 		}
 
@@ -976,7 +976,7 @@ static int32_t smartreader_usb_open_dev(struct s_reader *reader)
 	ret = libusb_open(crdr_data->usb_dev, &crdr_data->usb_dev_handle);
 	if(ret)
 	{
-		rdr_log(reader, "coulnd't open SmartReader device %03d:%03d", libusb_get_bus_number(crdr_data->usb_dev), libusb_get_device_address(crdr_data->usb_dev));
+		rdr_log(reader, "Coulnd't open smartreader device %03d:%03d", libusb_get_bus_number(crdr_data->usb_dev), libusb_get_device_address(crdr_data->usb_dev));
 		switch(ret)
 		{
 		case LIBUSB_ERROR_NO_MEM:
@@ -1362,7 +1362,7 @@ static int32_t SR_Init(struct s_reader *reader)
 		if(!init_count)
 			{ libusb_exit(NULL); }
 		cs_writeunlock(&sr_lock);
-		rdr_log(reader, "unable to open smartreader device %s in bus %s endpoint in 0x%02X out 0x%02X (ret=%d)\n", dev, busname, crdr_data->in_ep, crdr_data->out_ep, ret);
+		rdr_log(reader, "Unable to open smartreader device %s in bus %s endpoint in 0x%02X out 0x%02X (ret=%d)\n", dev, busname, crdr_data->in_ep, crdr_data->out_ep, ret);
 		return ERROR;
 	}
 	if (crdr_data->rdrtype >= 2) {
