@@ -286,6 +286,7 @@ uint16_t dvbapi_get_client_proto_version(void);
 void delayer(ECM_REQUEST *er);
 void check_add_emmpid(int32_t demux_index, uchar *filter, int32_t l, int32_t emmtype);
 void *dvbapi_start_handler(struct s_client *cl, uchar *mbuf, int32_t module_idx, void * (*_main_func)(void *));
+static inline bool is_valid_fd(int fd) { return fcntl(fd, F_GETFL) != -1 || errno != EBADF; }
 
 #if defined(WITH_AZBOX) || defined(WITH_MCA)
 #define USE_OPENXCAS 1

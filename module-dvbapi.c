@@ -723,7 +723,7 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter)
 		return -1;
 	}
 
-	cs_debug_mask(D_DVBAPI, "DEVICE open (%s) fd %d", device_path, dmx_fd);
+	cs_debug_mask(D_DVBAPI, "Open device %s (fd %d)", device_path, dmx_fd);
 
 	return dmx_fd;
 }
@@ -1266,7 +1266,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 					else
 					{
 						currentfd = ca_fd[i];
-						if(currentfd <= 0)
+						if(currentfd <= 0 || !is_valid_fd(currentfd))
 						{
 							currentfd = dvbapi_open_device(1, i, demux[demux_id].adapter_index);
 							ca_fd[i] = currentfd; // save fd of this ca
@@ -3544,11 +3544,19 @@ static void *dvbapi_main_local(void *cli)
 			{
 				if(!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX && demux[i].demux_fd[g].fd > 0 && selected_api != STAPI && selected_api != COOLAPI)
 				{
-					pfd2[pfdcount].fd = demux[i].demux_fd[g].fd;
-					pfd2[pfdcount].events = (POLLIN | POLLPRI);
-					ids[pfdcount] = i;
-					fdn[pfdcount] = g;
-					type[pfdcount++] = 0;
+					if (is_valid_fd(demux[i].demux_fd[g].fd)) // seems some boxes stop filters without being directed to do so !!!
+					{
+						pfd2[pfdcount].fd = demux[i].demux_fd[g].fd;
+						pfd2[pfdcount].events = (POLLIN | POLLPRI);
+						ids[pfdcount] = i;
+						fdn[pfdcount] = g;
+						type[pfdcount++] = 0;
+					}
+					else
+					{
+						dvbapi_stop_filternum(i, g); // "stop" this already stopped filter...
+						continue;
+					}
 				}
 				if(demux[i].demux_fd[g].type == TYPE_ECM) { ecmcounter++; }  // count ecm filters to see if demuxing is possible anyway
 				if(demux[i].demux_fd[g].type == TYPE_EMM) { emmcounter++; }  // count emm filters also
@@ -4024,7 +4032,7 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid)
 						dvbapi_net_send(DVBAPI_CA_SET_DESCR, demux[demux_id].socket_fd, demux_id, -1 /*unused*/, (unsigned char *) &ca_descr);
 					else
 					{
-						if(ca_fd[i] <= 0)
+						if(ca_fd[i] <= 0 || !is_valid_fd(ca_fd[i]))
 						{
 							ca_fd[i] = dvbapi_open_device(1, i, demux[demux_id].adapter_index);
 							if(ca_fd[i] <= 0)
