@@ -358,6 +358,8 @@ bool cardreader_init(struct s_reader *reader)
 						RDR_CD_TXT[reader->detect & 0x7f],
 						reader->mhz,
 						reader->cardmhz);
+				if (reader->typ == R_INTERNAL && !(reader->cardmhz > 2000))
+					{rdr_log(reader,"Reader sci internal, detected box type: %s", stb_boxtype ? stb_boxtype : "generic");}
 			}
 		}
 		return true;
