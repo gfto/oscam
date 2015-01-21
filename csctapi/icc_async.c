@@ -53,7 +53,7 @@
  * Not exported functions declaration
  */
 static uint16_t tempfi; // used to capture FI and use it for rounding or not 
-static void ICC_Async_InvertBuffer(uint32_t size, unsigned char *buffer);
+static void ICC_Async_InvertBuffer(struct s_reader *reader, uint32_t size, unsigned char *buffer);
 static int32_t Parse_ATR(struct s_reader *reader, ATR *atr, uint16_t deprecated);
 static int32_t PPS_Exchange(struct s_reader *reader, unsigned char *params, uint32_t *length);
 static uint32_t PPS_GetLength(unsigned char *block);
@@ -275,7 +275,7 @@ int32_t ICC_Async_Transmit(struct s_reader *reader, uint32_t size, uint32_t expe
 
 	if(reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse)
 	{
-		ICC_Async_InvertBuffer(size, sent);
+		ICC_Async_InvertBuffer(reader, size, sent);
 	}
 
 	call(reader->crdr.transmit(reader, sent, size, expectedlen, delay, timeout));
@@ -283,7 +283,7 @@ int32_t ICC_Async_Transmit(struct s_reader *reader, uint32_t size, uint32_t expe
 	if(reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse)
 	{
 		// revert inversion cause the code in protocol_t0 is accessing buffer after transmit
-		ICC_Async_InvertBuffer(size, sent);
+		ICC_Async_InvertBuffer(reader, size, sent);
 	}
 
 	return OK;
@@ -295,7 +295,7 @@ int32_t ICC_Async_Receive(struct s_reader *reader, uint32_t size, unsigned char 
 	call(reader->crdr.receive(reader, data, size, delay, timeout));
 	rdr_debug_mask(reader, D_IFD, "Receive succesful");
 	if(reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse == 1)
-		{ ICC_Async_InvertBuffer(size, data); }
+		ICC_Async_InvertBuffer(reader, size, data);
 	return OK;
 }
 
@@ -385,10 +385,10 @@ static int32_t ICC_Async_GetPLL_Divider(struct s_reader *reader)
 }
 
 
-static void ICC_Async_InvertBuffer(uint32_t size, unsigned char *buffer)
+static void ICC_Async_InvertBuffer(struct s_reader *reader, uint32_t size, unsigned char *buffer)
 {
 	uint32_t i;
-	cs_debug_mask(D_IFD, "%s: size=%u buf[0]=%02x", __func__, size, buffer[0]);
+	rdr_debug_mask(reader, D_IFD, "%s: size=%u buf[0]=%02x", __func__, size, buffer[0]);
 	for(i = 0; i < size; i++)
 		{ buffer[i] = ~(INVERT_BYTE(buffer[i])); }
 }

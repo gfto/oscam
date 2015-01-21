@@ -76,10 +76,10 @@ static int32_t Sc8in1_NeedBaudrateChange(struct s_reader *reader, uint32_t desir
 			(reader->mhz != reader->cardmhz) ||
 			(cmdMode == 0 && memcmp(current, new, sizeof(struct termios))))
 	{
-		cs_debug_mask(D_TRACE, "Sc8in1_NeedBaudrateChange 1");
+		rdr_debug_mask(reader, D_TRACE, "Sc8in1_NeedBaudrateChange 1");
 		return 1;
 	}
-	cs_debug_mask(D_TRACE, "Sc8in1_NeedBaudrateChange 0");
+	rdr_debug_mask(reader, D_TRACE, "Sc8in1_NeedBaudrateChange 0");
 	return 0;
 }
 
