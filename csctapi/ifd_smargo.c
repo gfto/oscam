@@ -86,7 +86,7 @@ static int32_t smargo_set_settings(struct s_reader *reader, int32_t freq, unsign
 
 static int32_t smargo_write_settings(struct s_reader *reader, struct s_cardreader_settings *s)
 {
-	return smargo_set_settings(reader, reader->mhz, reader->protocol_type == 1 ? 0 : reader->protocol_type , reader->convention, s->Fi, s->Di, s->Ni);
+	return smargo_set_settings(reader, reader->mhz, reader->protocol_type == 1 ? 0 : reader->protocol_type , reader->convention, s->Fi, s->D, s->Ni);
 }
 
 
