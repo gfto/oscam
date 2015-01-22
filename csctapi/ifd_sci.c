@@ -522,6 +522,9 @@ static int32_t Sci_Close(struct s_reader *reader)
 
 static int32_t sci_write_settings(struct s_reader *reader, struct s_cardreader_settings *s)
 {
+	if (reader->cardmhz < 2000)
+		s->Fi = s->F / 100; // non pll internal reader needs base frequency like 1,2,3,4,5,6 MHz not clock rate conversion factor (Fi)
+
 	if(reader->cardmhz > 2000)   // only for dreambox internal readers
 	{
 		// P fixed at 5V since this is default class A card, and TB is deprecated

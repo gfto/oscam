@@ -879,9 +879,6 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 		.BGT = BGT,
 	};
 
-	if (reader->cardmhz < 2000)
-		s.Fi = F/100; // non pll internal reader needs base frequency like 1,2,3,4,5,6 MHz not clock rate conversion factor (Fi)
-
 	if(reader->crdr.write_settings)
 	{
 		call(reader->crdr.write_settings(reader, &s));
