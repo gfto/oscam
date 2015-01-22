@@ -12,7 +12,6 @@ struct s_channel_cache
 	uint32_t    chid;
 };
 
-void dvbapi_clear_channel_cache(void);
 void dvbapi_save_channel_cache(void);
 void dvbapi_load_channel_cache(void);
 struct s_channel_cache *dvbapi_find_channel_cache(int32_t demux_id, int32_t pidindex, int8_t caid_and_prid_only);

@@ -1818,7 +1818,6 @@ void dvbapi_read_priority(void)
 
 	ret = fclose(fp);
 	if(ret < 0) { cs_log("ERROR: Could not close oscam.dvbapi fd (errno=%d %s)", errno, strerror(errno)); }
-	dvbapi_clear_channel_cache(); // clear channelcache since prio/ignores could be changed!
 	return;
 }
 
@@ -1845,56 +1844,28 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 		if(c != NULL)
 		{
 			found = n;
+			cache = 2; //found cache entry with higher priority
+			demux[demux_index].ECMpids[n].status = prio * 2; // prioritize CAIDs which already decoded same caid:provid:srvid
+			if(c->chid < 0x10000) { demux[demux_index].ECMpids[n].CHID = c->chid; } // if chid registered in cache -> use it!
+			cs_debug_mask(D_DVBAPI, "Prio ecmpid #%d %04X:%06X:%04X (found caid/provid/srvid in cache - weight: %d)", n,
+				demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, demux[demux_index].ECMpids[n].status);
 			break;
 		}
 	}
-	if(found != -1)     // Found in cache
+	
+	if(found == -1)
 	{
+		// prioritize CAIDs which already decoded same caid:provid
 		for(n = 0; n < demux[demux_index].ECMpidcount; n++)
 		{
-			if(n != found)
+			c = dvbapi_find_channel_cache(demux_index, n, 1);
+			if(c != NULL)
 			{
-				// disable non matching pid
-				demux[demux_index].ECMpids[n].status = -1;
+				cache = 1; //found cache entry
+				demux[demux_index].ECMpids[n].status = prio;
+				cs_debug_mask(D_DVBAPI, "Prio ecmpid #%d %04X:%06X:%04X (found caid/provid in cache - weight: %d)", n,
+					demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, demux[demux_index].ECMpids[n].status);
 			}
-			else
-			{
-				demux[demux_index].ECMpids[n].status = 1;
-				if(c->chid < 0x10000) { demux[demux_index].ECMpids[n].CHID = c->chid; } // use chid match from cache right away!
-			}
-		}
-		demux[demux_index].max_emm_filter = MAX_FILTER - 1;
-		demux[demux_index].max_status = 1;
-		cs_log("Found channel in cache -> start descrambling ecmpid #%d ", found);
-		return;
-	}
-	
-	// prioritize CAIDs which already decoded same caid:provid
-	for(n = 0; n < demux[demux_index].ECMpidcount; n++)
-	{
-		c = dvbapi_find_channel_cache(demux_index, n, 1);
-		if(c != NULL)
-		{
-			cache = 1; //found cache entry
-			demux[demux_index].ECMpids[n].status = prio;
-			cs_debug_mask(D_DVBAPI, "Prio ecmpid #%d %04X:%06X:%04X (found caid/provid in cache - weight: %d)", n,
-						  demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID,
-						  demux[demux_index].ECMpids[n].status);
-		}
-	}
-
-	// prioritize CAIDs which already decoded same caid:provid:srvid
-	for(n = 0; n < demux[demux_index].ECMpidcount; n++)
-	{
-		c = dvbapi_find_channel_cache(demux_index, n, 0);
-		if(c != NULL)
-		{
-			cache = 2; //found cache entry with higher priority
-			demux[demux_index].ECMpids[n].status = prio * 2;
-			if(c->chid < 0x10000) { demux[demux_index].ECMpids[n].CHID = c->chid; }
-			cs_debug_mask(D_DVBAPI, "Prio ecmpid #%d %04X:%06X:%04X (found caid/provid/srvid in cache - weight: %d)", n,
-						  demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID,
-						  demux[demux_index].ECMpids[n].status);
 		}
 	}
 
@@ -2141,9 +2112,14 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 	}
 
 	highest_prio = 0;
+	int32_t highest_priopid = -1;
 	for(n = 0; n < demux[demux_index].ECMpidcount; n++)
 	{
-		if(demux[demux_index].ECMpids[n].status > highest_prio) { highest_prio = demux[demux_index].ECMpids[n].status; }  // find highest prio pid
+		if(demux[demux_index].ECMpids[n].status > highest_prio) // find highest prio pid 
+		{ 
+			highest_prio = demux[demux_index].ECMpids[n].status;
+			highest_priopid = n;
+		}  
 		if(demux[demux_index].ECMpids[n].status == 0) { demux[demux_index].ECMpids[n].checked = 2; }  // set pids with no status to no prio run
 	}
 
@@ -2171,9 +2147,26 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 		}
 	}
 	demux[demux_index].max_status = highest_prio; // register maxstatus
-	return;;
+	if(highest_priopid != -1 && found == highest_priopid)     // Found in cache
+	{
+		for(n = 0; n < demux[demux_index].ECMpidcount; n++)
+		{
+			if(n != found)
+			{
+				// disable non matching pid
+				demux[demux_index].ECMpids[n].status = -1;
+			}
+			else
+			{
+				demux[demux_index].ECMpids[n].status = 1;
+			}
+		}
+		demux[demux_index].max_emm_filter = MAX_FILTER - 1;
+		demux[demux_index].max_status = 1;
+		cs_log("Found channel in cache and matching prio -> start descrambling ecmpid #%d ", found);
+	}
+	return;
 }
-
 
 void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned char *buffer)
 {
