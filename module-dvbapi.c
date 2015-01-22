@@ -1825,7 +1825,8 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 {
 	int32_t n, cache = 0, prio = 1, highest_prio = 0, matching_done = 0, found = -1;
 	uint16_t btun_caid = 0;
-
+	struct timeb start,end;
+	cs_ftime(&start);
 	for(n = 0; n < demux[demux_index].ECMpidcount; n++)
 	{
 		demux[demux_index].ECMpids[n].status = 0;
@@ -2165,6 +2166,9 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 		demux[demux_index].max_status = 1;
 		cs_log("Found channel in cache and matching prio -> start descrambling ecmpid #%d ", found);
 	}
+	cs_ftime(&end);
+	int64_t gone = comp_timeb(&end, &start);
+	cs_debug_mask(D_DVBAPI, "Sorting the ecmpids toke %"PRId64" ms", gone);
 	return;
 }
 
