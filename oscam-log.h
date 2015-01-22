@@ -20,8 +20,6 @@ void cs_log_dump(const char *log_prefix, const uint8_t *buf, int32_t n, const ch
 #define cs_debug_mask(mask, fmt, params...)         do { if (config_enabled(WITH_DEBUG) && ((mask) & cs_dblevel)) cs_log_txt(MODULE_LOG_PREFIX, fmt, ##params); } while(0)
 #define cs_ddump_mask(mask, buf, n, fmt, params...) do { if (config_enabled(WITH_DEBUG) && ((mask) & cs_dblevel)) cs_log_dump(MODULE_LOG_PREFIX, buf , n, fmt, ##params); } while(0)
 
-void logCWtoFile(ECM_REQUEST *er, uchar *cw);
-
 int32_t cs_init_statistics(void);
 void cs_statistics(struct s_client *client);
 
