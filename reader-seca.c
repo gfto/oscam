@@ -514,7 +514,7 @@ static int32_t seca_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	default:
 		rdr_log(reader, "EMM: Congratulations, you have discovered a new EMM on SECA.");
 		rdr_log(reader, "This has not been decoded yet, so send this output to authors:");
-		cs_dump(ep->emm, emm_length + 3, "EMM:");
+		rdr_dump(reader, ep->emm, emm_length + 3, "EMM:");
 		return ERROR;
 	}
 
