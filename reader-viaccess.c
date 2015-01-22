@@ -1433,7 +1433,7 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	int32_t emmLen = SCT_LEN(ep->emm) - emmdatastart;
 	int32_t rc = 0;
 
-	///rdr_dump(reader, ep->emm, emmLen+emmdatastart, "RECEIVED EMM VIACCESS");
+	///rdr_log_dump(reader, ep->emm, emmLen+emmdatastart, "RECEIVED EMM VIACCESS");
 
 	int32_t emmUpToEnd;
 	uchar *emmParsed = ep->emm + emmdatastart;
@@ -1451,7 +1451,7 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 
 	for(emmUpToEnd = emmLen; (emmParsed[1] != 0) && (emmUpToEnd > 0); emmUpToEnd -= (2 + emmParsed[1]), emmParsed += (2 + emmParsed[1]))
 	{
-		///rdr_dump(reader, emmParsed, emmParsed[1] + 2, "NANO");
+		///rdr_log_dump(reader, emmParsed, emmParsed[1] + 2, "NANO");
 
 		if(emmParsed[0] == 0x90 && emmParsed[1] == 0x03)
 		{
@@ -1482,8 +1482,8 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 				write_cmd(insa4, ident);
 				if(cta_res[cta_lr - 2] != 0x90 || cta_res[cta_lr - 1] != 0x00)
 				{
-					rdr_dump(reader, insa4, 5, "set provider cmd:");
-					rdr_dump(reader, soid, 3, "set provider data:");
+					rdr_log_dump(reader, insa4, 5, "set provider cmd:");
+					rdr_log_dump(reader, soid, 3, "set provider data:");
 					rdr_log(reader, "update error: %02X %02X", cta_res[cta_lr - 2], cta_res[cta_lr - 1]);
 					return ERROR;
 				}
@@ -1554,7 +1554,7 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 
 	if(!nanoF0Data)
 	{
-		rdr_dump(reader, ep->emm, ep->emmlen, "can't find 0xf0 in emm...");
+		rdr_log_dump(reader, ep->emm, ep->emmlen, "can't find 0xf0 in emm...");
 		return ERROR; // error
 	}
 
@@ -1568,8 +1568,8 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 			write_cmd(insf0, nano9EData);
 			if(cta_res[cta_lr - 2] != 0x90 || cta_res[cta_lr - 1] != 0x00)
 			{
-				rdr_dump(reader, insf0, 5, "set adf cmd:");
-				rdr_dump(reader, nano9EData, insf0[4] , "set adf data:");
+				rdr_log_dump(reader, insf0, 5, "set adf cmd:");
+				rdr_log_dump(reader, nano9EData, insf0[4] , "set adf data:");
 				rdr_log(reader, "update error: %02X %02X", cta_res[cta_lr - 2], cta_res[cta_lr - 1]);
 				return ERROR;
 			}
@@ -1584,8 +1584,8 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 			write_cmd(insf4, insData);
 			if((cta_res[cta_lr - 2] != 0x90 && cta_res[cta_lr - 2] != 0x91) || cta_res[cta_lr - 1] != 0x00)
 			{
-				rdr_dump(reader, insf4, 5, "set adf encrypted cmd:");
-				rdr_dump(reader, insData, insf4[4], "set adf encrypted data:");
+				rdr_log_dump(reader, insf4, 5, "set adf encrypted cmd:");
+				rdr_log_dump(reader, insData, insf4[4], "set adf encrypted data:");
 				rdr_log(reader, "update error: %02X %02X", cta_res[cta_lr - 2], cta_res[cta_lr - 1]);
 				return ERROR;
 			}
@@ -1608,8 +1608,8 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		}
 		else
 		{
-			rdr_dump(reader, ins18, 5, "set subscription cmd:");
-			rdr_dump(reader, insData, ins18[4], "set subscription data:");
+			rdr_log_dump(reader, ins18, 5, "set subscription cmd:");
+			rdr_log_dump(reader, insData, ins18[4], "set subscription data:");
 			rdr_log(reader, "update error: %02X %02X", cta_res[cta_lr - 2], cta_res[cta_lr - 1]);
 		}
 
@@ -1620,7 +1620,7 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 
 		if(!nano81Data)
 		{
-			rdr_dump(reader, ep->emm, ep->emmlen, "0x92 found, but can't find 0x81 in emm...");
+			rdr_log_dump(reader, ep->emm, ep->emmlen, "0x92 found, but can't find 0x81 in emm...");
 			return ERROR; // error
 		}
 

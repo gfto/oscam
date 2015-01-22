@@ -2775,7 +2775,7 @@ void dvbapi_handlesockmsg(unsigned char *buffer, uint32_t len, int32_t connfd)
 			break;
 		default:
 			cs_debug_mask(D_DVBAPI, "handlesockmsg() unknown command");
-			cs_dump(buffer, len, "unknown command:");
+			cs_log_dump(buffer, len, "unknown command:");
 			break;
 		}
 	}

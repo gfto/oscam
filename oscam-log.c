@@ -499,7 +499,7 @@ void cs_log_txt(const char *log_prefix, const char *fmt, ...)
 	pthread_mutex_unlock(&log_mutex);
 }
 
-void cs_log_dump(const char *log_prefix, const uint8_t *buf, int32_t n, const char *fmt, ...)
+void cs_log_hex(const char *log_prefix, const uint8_t *buf, int32_t n, const char *fmt, ...)
 {
 	pthread_mutex_lock(&log_mutex);
 	__do_log();

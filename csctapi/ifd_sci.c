@@ -438,7 +438,7 @@ static int32_t Sci_FastReset(struct s_reader *reader, ATR *atr)
 	else
 	{
 		IO_Serial_Read(reader, 0, timeout,atr_len, buf);  //read atr
-//		rdr_dump(reader,buf, SCI_MAX_ATR_SIZE * 2, "SCI ATR :"); // just to crosscheck the buffer I left it commented.
+//		rdr_log_dump(reader,buf, SCI_MAX_ATR_SIZE * 2, "SCI ATR :"); // just to crosscheck the buffer I left it commented.
 		if(ioctl(reader->handle, IOCTL_SET_ATR_READY, 1) < 0)
 		{
 			rdr_log(reader, "Error:%s ioctl(IOCTL_SET_ATR_READY) failed.(%d:%s)", __FUNCTION__, errno, strerror(errno) );
