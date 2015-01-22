@@ -1,5 +1,6 @@
 #include "globals.h"
 #include <syslog.h>
+#include "module-anticasc.h"
 #include "module-monitor.h"
 #include "oscam-client.h"
 #include "oscam-garbage.h"
@@ -305,17 +306,8 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 {
 	(void)log; // Prevent warning when WEBIF, MODULE_MONITOR and CS_ANTICASC are disabled
 
-#ifdef CS_ANTICASC
-	extern FILE *ac_log;
-	char *acasc_found = strstr(txt + log->header_len, "acasc: ");
-	if(ac_log && acasc_found)
-	{
-		strcat(txt, "\n");
-		fprintf(ac_log, "%s\n", acasc_found + 8);
-		fflush(ac_log);
-	}
-	else
-#endif
+	// anticascading messages go to their own log
+	if (!anticasc_logging(txt + log->header_len))
 	{
 		if(cfg.logtosyslog)
 			{ syslog(LOG_INFO, "%s", txt + 29); }

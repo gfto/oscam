@@ -11,6 +11,7 @@ extern void ac_init_client(struct s_client *cl, struct s_auth *account);
 extern void ac_chk(struct s_client *cl, ECM_REQUEST *er, int32_t level);
 extern void insert_zaplist(ECM_REQUEST *er, struct s_client *client);
 static inline bool acosc_enabled(void) { return cfg.acosc_enabled; }
+extern bool anticasc_logging(char *txt);
 #else
 static inline void ac_init(void) { }
 static inline void ac_init_stat(void) { }
@@ -21,6 +22,7 @@ static inline void ac_init_client(struct s_client *UNUSED(cl), struct s_auth *UN
 static inline void ac_chk(struct s_client *UNUSED(cl), ECM_REQUEST *UNUSED(er), int32_t UNUSED(level)) { }
 static inline void insert_zaplist(ECM_REQUEST *UNUSED(er), struct s_client *UNUSED(client)) { }
 static inline bool acosc_enabled(void) { return 0; }
+static inline bool anticasc_logging(char *UNUSED(txt)) { return 0; }
 #endif
 
 #endif

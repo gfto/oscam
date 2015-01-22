@@ -14,10 +14,23 @@
 
 #define cs_ac "oscam.ac"
 
-FILE *ac_log = NULL;
-
-//static time_t ac_last_chk;
+static FILE *ac_log;
 static uchar  ac_ecmd5[CS_ECMSTORESIZE];
+
+bool anticasc_logging(char *txt)
+{
+	const char acasc_ident[] = "acasc: ";
+	if (!ac_log)
+		return false;
+	char *acasc_found = strstr(txt, acasc_ident);
+	if (acasc_found)
+	{
+		fprintf(ac_log, "%s\n", acasc_found + strlen(acasc_ident) + 1);
+		fflush(ac_log);
+		return true;
+	}
+	return false;
+}
 
 static int32_t ac_init_log(void)
 {
