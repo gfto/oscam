@@ -1779,16 +1779,9 @@ int32_t SR_Activate(struct s_reader *reader, struct s_ATR *atr)
 	return OK;
 }
 
-int32_t sr_write_settings(struct s_reader *reader,
-						  uint32_t UNUSED(ETU),
-						  uint32_t EGT,
-						  unsigned char UNUSED(P),
-						  unsigned char UNUSED(I),
-						  uint16_t Fi,
-						  unsigned char Di,
-						  unsigned char UNUSED(Ni))
+int32_t sr_write_settings(struct s_reader *reader, struct s_cardreader_settings *s)
 {
-	SR_WriteSettings(reader, Fi, Di, EGT, (unsigned char)reader->protocol_type, reader->convention);
+	SR_WriteSettings(reader, s->Fi, s->Di, s->EGT, (unsigned char)reader->protocol_type, reader->convention);
 	return OK;
 }
 

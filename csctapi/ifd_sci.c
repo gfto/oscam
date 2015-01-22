@@ -520,7 +520,7 @@ static int32_t Sci_Close(struct s_reader *reader)
 	return OK;
 }
 
-static int32_t sci_write_settings3(struct s_reader *reader, uint32_t ETU, uint32_t F, uint32_t WWT, uint32_t CWT, uint32_t BWT, uint32_t EGT, uint32_t I)
+static int32_t sci_write_settings(struct s_reader *reader, struct s_cardreader_settings *s)
 {
 	if(reader->cardmhz > 2000)   // only for dreambox internal readers
 	{
@@ -528,13 +528,13 @@ static int32_t sci_write_settings3(struct s_reader *reader, uint32_t ETU, uint32
 		if(reader->protocol_type != ATR_PROTOCOL_TYPE_T14)   // fix VU+ internal reader slow responses on T0/T1
 		{
 			cs_sleepms(150);
-			call(Sci_WriteSettings(reader, 0, reader->divider, ETU, WWT, CWT, BWT, EGT, 5, (unsigned char)I));
+			call(Sci_WriteSettings(reader, 0, reader->divider, s->ETU, s->WWT, reader->CWT, reader->BWT, s->EGT, 5, (unsigned char)s->I));
 			cs_sleepms(150);
 		}
 		else     // no fixup for T14 protocol otherwise error
 		{
 			cs_sleepms(150);
-			call(Sci_WriteSettings(reader, reader->protocol_type, reader->divider, ETU, WWT, CWT, BWT, EGT, 5, (unsigned char)I));
+			call(Sci_WriteSettings(reader, reader->protocol_type, reader->divider, s->ETU, s->WWT, reader->CWT, reader->BWT, s->EGT, 5, (unsigned char)s->I));
 			cs_sleepms(150);
 		}
 	}
@@ -542,7 +542,7 @@ static int32_t sci_write_settings3(struct s_reader *reader, uint32_t ETU, uint32
 	{
 		// P fixed at 5V since this is default class A card, and TB is deprecated
 		cs_sleepms(150);
-		call(Sci_WriteSettings(reader, reader->protocol_type, F, ETU, WWT, CWT, BWT, EGT, 5, (unsigned char)I));
+		call(Sci_WriteSettings(reader, reader->protocol_type, s->F, s->ETU, s->WWT, reader->CWT, reader->BWT, s->EGT, 5, (unsigned char)s->I));
 		cs_sleepms(150);
 	}
 	return OK;
@@ -560,7 +560,7 @@ void cardreader_internal_sci(struct s_cardreader *crdr)
 	crdr->transmit     = IO_Serial_Transmit;
 	crdr->receive      = IO_Serial_Receive;
 	crdr->close        = Sci_Close;
-	crdr->write_settings3 = sci_write_settings3;
+	crdr->write_settings = sci_write_settings;
 }
 
 #endif

@@ -84,9 +84,9 @@ static int32_t smargo_set_settings(struct s_reader *reader, int32_t freq, unsign
 	return OK;
 }
 
-static int32_t smargo_writesettings(struct s_reader *reader, uint32_t UNUSED(ETU), uint32_t UNUSED(EGT), unsigned char UNUSED(P), unsigned char UNUSED(I), uint16_t Fi, unsigned char Di, unsigned char Ni)
+static int32_t smargo_write_settings(struct s_reader *reader, struct s_cardreader_settings *s)
 {
-	return smargo_set_settings(reader, reader->mhz, reader->protocol_type == 1 ? 0 : reader->protocol_type , reader->convention, Fi, Di, Ni);
+	return smargo_set_settings(reader, reader->mhz, reader->protocol_type == 1 ? 0 : reader->protocol_type , reader->convention, s->Fi, s->Di, s->Ni);
 }
 
 
@@ -266,7 +266,7 @@ void cardreader_smargo(struct s_cardreader *crdr)
 	crdr->transmit  = IO_Serial_Transmit;
 	crdr->receive       = IO_Serial_Receive;
 	crdr->close     = IO_Serial_Close;
-	crdr->write_settings = smargo_writesettings;
+	crdr->write_settings = smargo_write_settings;
 	crdr->set_parity    = IO_Serial_SetParity;
 	crdr->typ       = R_MOUSE;
 

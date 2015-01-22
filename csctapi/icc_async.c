@@ -865,23 +865,26 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 		reader->worketu *= 2; // overclocked T14 needs this otherwise high ecm reponses
 	}
 
+	struct s_cardreader_settings s = {
+		.ETU = ETU,
+		.EGT = EGT,
+		.P   = 5,
+		.I   = I,
+		.F   = Fi,
+		.Fi  = (uint16_t) Fi,
+		.Di  = (unsigned char)D,
+		.Ni  = N,
+		.D   = D,
+		.WWT = WWT,
+		.BGT = BGT,
+	};
+
+	if (reader->cardmhz < 2000)
+		s.Fi = F/100; // non pll internal reader needs base frequency like 1,2,3,4,5,6 MHz not clock rate conversion factor (Fi)
+
 	if(reader->crdr.write_settings)
 	{
-		call(reader->crdr.write_settings(reader, ETU, EGT, 5, I, (uint16_t) Fi, (unsigned char)D, N));
-	}
-	else if(reader->crdr.write_settings2)
-	{
-		call(reader->crdr.write_settings2(reader, (uint16_t) Fi, (uint8_t) D, WWT, EGT, BGT));
-	}
-	else if(reader->crdr.write_settings3)
-	{
-//#if defined(__SH4__) || defined(STB04SCI) || defined(__powerpc__)
-		if (reader->cardmhz < 2000)
-		{
-		Fi = F/100; // non pll internal reader needs base frequency like 1,2,3,4,5,6 MHz not clock rate conversion factor (Fi)
-		}
-//#endif
-		call(reader->crdr.write_settings3(reader, ETU, Fi, WWT, reader->CWT, reader->BWT, EGT, (unsigned char)I));
+		call(reader->crdr.write_settings(reader, &s));
 	}
 
 	if(reader->typ == R_INTERNAL)
