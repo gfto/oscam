@@ -44,7 +44,6 @@ static const char *const proto_txt[] = {"unknown", "hsic", "sssp", "bomba", "dsr
 static const char *const dsrproto_txt[] = {"unknown", "samsung", "openbox", "pioneer",
 		"extended", "unknown"
 										  };
-static const char *const incomplete = "incomplete request (%d bytes)";
 
 typedef struct s_gbox
 {
@@ -689,7 +688,7 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
 				cs_log("ferguson powered on");  // this is nice to ;)
 			}
 			else
-				{ cs_log(incomplete, n); }
+				cs_log("incomplete request (%d bytes)", n);
 		}
 		break;
 	case(-2):
@@ -908,7 +907,7 @@ static int32_t oscam_ser_check_ecm(ECM_REQUEST *er, uchar *buf, int32_t l)
 
 	if(l < 16)
 	{
-		cs_log(incomplete, l);
+		cs_log("incomplete request (%d bytes)", l);
 		return (1);
 	}
 
@@ -971,7 +970,7 @@ static int32_t oscam_ser_check_ecm(ECM_REQUEST *er, uchar *buf, int32_t l)
 		er->caid  = b2i(2, buf + 3);
 		if((er->ecmlen != l - 5) || (er->ecmlen > 257))
 		{
-			cs_log(incomplete, l);
+			cs_log("incomplete request (%d bytes)", l);
 			return (1);
 		}
 		memcpy(er->ecm, buf + 5, er->ecmlen);
