@@ -17,7 +17,7 @@ int32_t constcw_file_available(void)
 	fp = fopen(cur_client()->reader->device, "r");
 	if(!fp)
 	{
-		cs_log("[CONSTCW] ERROR: Opening %s (errno=%d %s)", cur_client()->reader->device, errno, strerror(errno));
+		cs_log("ERROR: Can't open %s (errno=%d %s)", cur_client()->reader->device, errno, strerror(errno));
 		return (0);
 	}
 	fclose(fp);
@@ -35,11 +35,11 @@ int32_t constcw_analyse_file(uint16_t c_caid, uint32_t c_prid, uint16_t c_sid, u
 	fp = fopen(cur_client()->reader->device, "r");
 	if(!fp)
 	{
-		cs_log("[CONSTCW] ERROR: Opening %s (errno=%d %s)", cur_client()->reader->device, errno, strerror(errno));
+		cs_log("ERROR: Can't open %s (errno=%d %s)", cur_client()->reader->device, errno, strerror(errno));
 		return (0);
 	}
 
-	cs_log("[CONSTCW] find controlword for CAID %04X PROVID %06X SRVID %04X ECMPID %04X PMTPID %04X VPID %04X", c_caid, c_prid, c_sid, c_ecmpid, c_pmtpid, c_vpid);
+	cs_log("Searching CW for CAID %04X PROVID %06X SRVID %04X ECMPID %04X PMTPID %04X VPID %04X", c_caid, c_prid, c_sid, c_ecmpid, c_pmtpid, c_vpid);
 
 	while(fgets(token, sizeof(token), fp))
 	{
@@ -64,7 +64,7 @@ int32_t constcw_analyse_file(uint16_t c_caid, uint32_t c_prid, uint16_t c_sid, u
 			int8_t i;
 			for(i = 0; i < 16; ++i)
 				{ dcw[i] = (uchar) cw[i]; }
-			cs_log("[CONSTCW] Entry found: %04X:%06X:%04X:%04X:%04X:%04X:%s", caid, provid, sid, pmtpid, ecmpid, vpid, cs_hexdump(1, dcw, 16, token, sizeof(token)));
+			cs_log("Entry found: %04X:%06X:%04X:%04X:%04X:%04X:%s", caid, provid, sid, pmtpid, ecmpid, vpid, cs_hexdump(1, dcw, 16, token, sizeof(token)));
 			return 1;
 		}
 	}
@@ -96,7 +96,7 @@ int32_t constcw_client_init(struct s_client *client)
 	client->pfd = 0;
 	if(socketpair(PF_LOCAL, SOCK_STREAM, 0, fdp))
 	{
-		cs_log("[CONSTCW] Socket creation failed (%s)", strerror(errno));
+		cs_log("ERROR: Socket creation failed: %s", strerror(errno));
 		return 1;
 	}
 	client->udp_fd = fdp[0];
@@ -108,7 +108,7 @@ int32_t constcw_client_init(struct s_client *client)
 	// Oscam has no reader.au in s_reader like ki's mpcs ;)
 	// reader[ridx].au = 0;
 	// cs_log("local reader: %s (file: %s) constant cw au=0", reader[ridx].label, reader[ridx].device);
-	cs_log("[CONSTCW] local reader: %s (file: %s)", client->reader->label, client->reader->device);
+	cs_log("Local reader: %s (file: %s)", client->reader->label, client->reader->device);
 
 	client->pfd = client->udp_fd;
 
