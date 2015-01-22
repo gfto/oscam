@@ -1781,7 +1781,7 @@ int32_t SR_Activate(struct s_reader *reader, struct s_ATR *atr)
 
 int32_t sr_write_settings(struct s_reader *reader, struct s_cardreader_settings *s)
 {
-	SR_WriteSettings(reader, s->Fi, s->Di, s->EGT, (unsigned char)reader->protocol_type, reader->convention);
+	SR_WriteSettings(reader, s->Fi, s->D, s->EGT, (unsigned char)reader->protocol_type, reader->convention);
 	return OK;
 }
 
