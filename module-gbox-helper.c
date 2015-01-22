@@ -162,7 +162,7 @@ void gbox_compress(uchar *buf, int32_t unpacked_len, int32_t *packed_len)
         lzo_init();
         lzo_uint pl = 0;
         if(lzo1x_1_compress(tmp2, unpacked_len, tmp, &pl, wrkmem) != LZO_E_OK)
-                { cs_log("gbox: compression failed!"); }
+                { cs_log("compression failed!"); }
         memcpy(buf + 12, tmp, pl);
         pl += 12;
         NULLFREE(tmp);
