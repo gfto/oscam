@@ -522,10 +522,7 @@ static int32_t Sci_Close(struct s_reader *reader)
 
 static int32_t sci_write_settings(struct s_reader *reader, struct s_cardreader_settings *s)
 {
-	if (reader->cardmhz < 2000)
-		s->Fi = s->F / 100; // non pll internal reader needs base frequency like 1,2,3,4,5,6 MHz not clock rate conversion factor (Fi)
-
-	if(reader->cardmhz > 2000)   // only for dreambox internal readers
+	if(reader->cardmhz > 2000)   // only for dreambox internal pll readers clockspeed can be set precise others like vu ignore it and work always at 4.5 Mhz 
 	{
 		// P fixed at 5V since this is default class A card, and TB is deprecated
 		if(reader->protocol_type != ATR_PROTOCOL_TYPE_T14)   // fix VU+ internal reader slow responses on T0/T1
@@ -545,7 +542,8 @@ static int32_t sci_write_settings(struct s_reader *reader, struct s_cardreader_s
 	{
 		// P fixed at 5V since this is default class A card, and TB is deprecated
 		cs_sleepms(150);
-		call(Sci_WriteSettings(reader, reader->protocol_type, s->F, s->ETU, s->WWT, reader->CWT, reader->BWT, s->EGT, 5, (unsigned char)s->I));
+		// non pll internal reader needs base frequency like 1,2,3,4,5,6 MHz not clock rate conversion factor (Fi)
+		call(Sci_WriteSettings(reader, reader->protocol_type, s->F/100, s->ETU, s->WWT, reader->CWT, reader->BWT, s->EGT, 5, (unsigned char)s->I));
 		cs_sleepms(150);
 	}
 	return OK;
