@@ -4014,6 +4014,7 @@ static void *dvbapi_main_local(void *cli)
 				continue; // continue with other events!
 			}
 		}
+	cs_sleepms(300); // give time to other processes!
 	}
 	return NULL;
 }
