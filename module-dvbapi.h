@@ -156,6 +156,8 @@ typedef struct demux_s
 	int32_t desc_pidcount;
 	uint32_t slot_assc[PTINUM][SLOTNUM];
 #endif
+	int8_t decodingtries; // -1 = first run
+	struct timeb decstart,decend;
 } DEMUXTYPE;
 
 typedef struct s_streampid
