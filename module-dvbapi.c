@@ -578,6 +578,8 @@ static int32_t dvbapi_detect_api(void)
 	return 1;
 #else
 	if (cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX || cfg.dvbapi_boxtype == BOXTYPE_PC ) {
+		selected_api = DVBAPI_3;
+		selected_box = 1;
 		if (cfg.dvbapi_listenport)
 		{
 			cs_log("Using TCP listen socket, API forced to DVBAPIv3 (%d), userconfig boxtype: %d", selected_api, cfg.dvbapi_boxtype);
@@ -586,8 +588,6 @@ static int32_t dvbapi_detect_api(void)
 		{
 			cs_log("Using %s listen socket, API forced to DVBAPIv3 (%d), userconfig boxtype: %d", devices[selected_box].cam_socket_path, selected_api, cfg.dvbapi_boxtype);
 		}
-		selected_api = DVBAPI_3;
-		selected_box = 1;
 		return 1;
 	}
 	else
