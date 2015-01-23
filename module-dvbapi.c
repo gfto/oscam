@@ -33,43 +33,47 @@ static int dvbapi_ioctl(int fd, uint32_t request, ...)
 	int ret = 0;
 	va_list args; 
 	va_start(args, request);
-	if (!is_samygo) {
+	if (!is_samygo)
+	{
 		void *param = va_arg(args, void *);
 		ret = ioctl(fd, request, param);
-	} else {
-		switch(request) {
-		case DMX_SET_FILTER:
+	} 
+	else 
+	{
+		switch(request) 
 		{
-			struct dmxSctFilterParams *sFP = va_arg(args, struct dmxSctFilterParams *);
-			// prepare packet
-			unsigned char packet[sizeof(request) + sizeof(struct dmxSctFilterParams)];
-			memcpy(&packet, &request, sizeof(request));
-			memcpy(&packet[sizeof(request)], sFP, sizeof(struct dmxSctFilterParams));
-			ret = send(fd, packet, sizeof(packet), 0);
-			break;
-		}
-		case DMX_SET_FILTER1:
-		{
-			struct dmx_sct_filter_params *sFP = va_arg(args, struct dmx_sct_filter_params *);
-			ret = send(fd, sFP, sizeof(struct dmx_sct_filter_params), 0);
-			break;
-		}
-		case DMX_STOP:
-		{
-			ret = send(fd, &request, sizeof(request), 0);
-			ret = 1;
-			break;
-		}
-		case CA_SET_PID:
-		{
-			ret = 1;
-			break;
-		}
-		case CA_SET_DESCR:
-		{
-			ret = 1;
-			break;
-		}
+			case DMX_SET_FILTER:
+			{
+				struct dmxSctFilterParams *sFP = va_arg(args, struct dmxSctFilterParams *);
+				// prepare packet
+				unsigned char packet[sizeof(request) + sizeof(struct dmxSctFilterParams)];
+				memcpy(&packet, &request, sizeof(request));
+				memcpy(&packet[sizeof(request)], sFP, sizeof(struct dmxSctFilterParams));
+				ret = send(fd, packet, sizeof(packet), 0);
+				break;
+			}
+			case DMX_SET_FILTER1:
+			{
+				struct dmx_sct_filter_params *sFP = va_arg(args, struct dmx_sct_filter_params *);
+				ret = send(fd, sFP, sizeof(struct dmx_sct_filter_params), 0);
+				break;
+			}
+			case DMX_STOP:
+			{
+				ret = send(fd, &request, sizeof(request), 0);
+				ret = 1;
+				break;
+			}
+			case CA_SET_PID:
+			{
+				ret = 1;
+				break;
+			}
+			case CA_SET_DESCR:
+			{
+				ret = 1;
+				break;
+			}
 		}
 		if (ret > 0) // send() may return larger than 1
 			ret = 1;
@@ -86,7 +90,8 @@ static int dvbapi_ioctl(int fd, uint32_t request, ...)
 #endif
 	// FIXME: Workaround for su980 bug
 	// See: http://www.streamboard.tv/wbb2/thread.php?postid=533940
-	if (streq(stb_boxtype, "su980") && request == CA_SET_DESCR) {
+	if(streq(stb_boxtype, "su980")) 
+	{
 		ret = 1;
 	}
 	va_end(args);
@@ -595,7 +600,7 @@ static int32_t dvbapi_detect_api(void)
 		cfg.dvbapi_listenport = 0;
 	}
 	
-	int32_t i = 0, n = 0, devnum = -1, dmx_fd = 0, boxnum = sizeof(devices) / sizeof(struct box_devices);
+	int32_t i = 0, n = 0, devnum = -1, dmx_fd = 0, ret = 0, boxnum = sizeof(devices) / sizeof(struct box_devices);
 	char device_path[128], device_path2[128];
 
 	while (i < boxnum)
@@ -608,7 +613,6 @@ static int32_t dvbapi_detect_api(void)
 		if (i == 1) { // We need boxnum 1 only
 			struct stat sb;
 			if (stat(device_path, &sb) > 0 && S_ISSOCK(sb.st_mode)) {
-				cs_log("SAMYGO detected.");
 				selected_box = 0;
 				disable_pmt_files = 1;
 				is_samygo = 1;
@@ -619,8 +623,7 @@ static int32_t dvbapi_detect_api(void)
 		if((dmx_fd = open(device_path, O_RDWR | O_NONBLOCK)) > 0)
 		{
 			devnum = i;
-			int32_t ret = close(dmx_fd);
-			if(ret < 0) { cs_log("ERROR: Could not close demuxer fd (errno=%d %s)", errno, strerror(errno)); }
+			ret = close(dmx_fd);
 			break;
 		}
 		/* try at least 8 adapters */
@@ -631,7 +634,9 @@ static int32_t dvbapi_detect_api(void)
 	selected_box = devnum;
 	if(selected_box > -1)
 		{ selected_api = devices[selected_box].api; }
-
+	
+	if(ret < 0) { cs_log("ERROR: Could not close demuxer fd (errno=%d %s)", errno, strerror(errno)); } // log it here since some needed var are not inited before!
+	if(is_samygo){ cs_log("SAMYGO detected."); } // log it here since some needed var are not inited before!
 #ifdef WITH_STAPI
 	if(devnum == 4 && stapi_open() == 0)
 	{
@@ -1266,7 +1271,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 					else
 					{
 						currentfd = ca_fd[i];
-						if(currentfd <= 0 || !is_valid_fd(currentfd))
+						if(currentfd <= 0)
 						{
 							currentfd = dvbapi_open_device(1, i, demux[demux_id].adapter_index);
 							ca_fd[i] = currentfd; // save fd of this ca
@@ -3550,21 +3555,13 @@ static void *dvbapi_main_local(void *cli)
 			{
 				if(demux[i].demux_fd[g].fd <= 0) continue; // deny obvious invalid fd!
 				
-				if(!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX && demux[i].demux_fd[g].fd > 0 && selected_api != STAPI && selected_api != COOLAPI)
+				if(!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX && selected_api != STAPI && selected_api != COOLAPI)
 				{
-					if (is_valid_fd(demux[i].demux_fd[g].fd)) // seems some boxes stop filters without being directed to do so !!!
-					{
-						pfd2[pfdcount].fd = demux[i].demux_fd[g].fd;
-						pfd2[pfdcount].events = (POLLIN | POLLPRI);
-						ids[pfdcount] = i;
-						fdn[pfdcount] = g;
-						type[pfdcount++] = 0;
-					}
-					else
-					{
-						dvbapi_stop_filternum(i, g); // "stop" this already stopped filter...
-						continue;
-					}
+					pfd2[pfdcount].fd = demux[i].demux_fd[g].fd;
+					pfd2[pfdcount].events = (POLLIN | POLLPRI);
+					ids[pfdcount] = i;
+					fdn[pfdcount] = g;
+					type[pfdcount++] = 0;
 				}
 				if(demux[i].demux_fd[g].type == TYPE_ECM) { ecmcounter++; }  // count ecm filters to see if demuxing is possible anyway
 				if(demux[i].demux_fd[g].type == TYPE_EMM) { emmcounter++; }  // count emm filters also
@@ -4067,7 +4064,7 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid)
 						dvbapi_net_send(DVBAPI_CA_SET_DESCR, demux[demux_id].socket_fd, demux_id, -1 /*unused*/, (unsigned char *) &ca_descr);
 					else
 					{
-						if(ca_fd[i] <= 0 || !is_valid_fd(ca_fd[i]))
+						if(ca_fd[i] <= 0)
 						{
 							ca_fd[i] = dvbapi_open_device(1, i, demux[demux_id].adapter_index);
 							if(ca_fd[i] <= 0)
