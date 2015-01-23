@@ -872,7 +872,6 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 		.I   = I,
 		.F   = Fi,
 		.Fi  = (uint16_t) Fi,
-		.Di  = (unsigned char)D,
 		.Ni  = N,
 		.D   = D,
 		.WWT = WWT,
