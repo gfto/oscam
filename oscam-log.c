@@ -470,17 +470,22 @@ static void __cs_log_check_duplicates(int32_t hdr_len)
 	}
 }
 
+#define __init_log_prefix(fmt) \
+	int32_t hdr_len = get_log_header(1, log_txt); \
+	int32_t log_prefix_len = 0; \
+	do { \
+		if (log_prefix) { \
+			char _lp[16]; \
+			snprintf(_lp, sizeof(_lp), "(%s)", log_prefix); \
+			log_prefix_len = snprintf(log_txt + hdr_len, sizeof(log_txt) - hdr_len, fmt, _lp); \
+		} \
+	} while(0)
+
 #define __do_log() \
 	do { \
 		va_list params; \
 		va_start(params, fmt); \
-		int32_t hdr_len = get_log_header(1, log_txt); \
-		int32_t log_prefix_len = 0; \
-		if (log_prefix) { \
-			char _lp[16]; \
-			snprintf(_lp, sizeof(_lp), "(%s)", log_prefix); \
-			log_prefix_len = snprintf(log_txt + hdr_len, sizeof(log_txt) - hdr_len, "%10s ", _lp); \
-		} \
+		__init_log_prefix("%10s "); \
 		vsnprintf(log_txt + hdr_len + log_prefix_len, sizeof(log_txt) - (hdr_len + log_prefix_len), fmt, params); \
 		va_end(params); \
 		if (cfg.logduplicatelines) \
@@ -506,10 +511,10 @@ void cs_log_hex(const char *log_prefix, const uint8_t *buf, int32_t n, const cha
 	if(buf)
 	{
 		int32_t i;
-		int32_t hdr_len = get_log_header(0, log_txt);
+		__init_log_prefix("%10s   ");
 		for(i = 0; i < n; i += 16)
 		{
-			cs_hexdump(1, buf + i, (n - i > 16) ? 16 : n - i, log_txt + hdr_len, sizeof(log_txt) - hdr_len);
+			cs_hexdump(1, buf + i, (n - i > 16) ? 16 : n - i, log_txt + hdr_len + log_prefix_len, sizeof(log_txt) - (hdr_len + log_prefix_len));
 			write_to_log_int(log_txt, hdr_len);
 		}
 	}
