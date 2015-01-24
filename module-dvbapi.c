@@ -1750,12 +1750,14 @@ void dvbapi_read_priority(void)
 			break;
 		case 'm':
 			sscanf(str1 + 64, "%4x:%6x", &mapcaid, &mapprovid);
+			if(!mapcaid) { mapcaid = 0xFFFF; }
 			entry->mapcaid = mapcaid;
 			entry->mapprovid = mapprovid;
 			break;
 		case 'a':
 		case 'j':
 			sscanf(str1 + 64, "%4x:%6x:%4x", &mapcaid, &mapprovid, &mapecmpid);
+			if(!mapcaid) { mapcaid = 0xFFFF; }
 			entry->mapcaid = mapcaid;
 			entry->mapprovid = mapprovid;
 			entry->mapecmpid = mapecmpid;
@@ -2539,8 +2541,9 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 						|| (addentry->ecmpid && !pmtpid && addentry->ecmpid != vpid) // some receivers dont forward pmtpid, use vpid instead
 						|| (addentry->srvid != demux[demux_id].program_number))
 					{ continue; }
-				cs_log_dbg(D_DVBAPI, "Added fake ecmpid FFFF:%06x:%04x for unencrypted stream on srvid %04X", addentry->mapprovid, addentry->mapecmpid, demux[demux_id].program_number);
-				dvbapi_add_ecmpid(demux_id, 0xFFFF, addentry->mapecmpid, addentry->mapprovid);
+				cs_log_dbg(D_DVBAPI, "Added fake ecmpid %04X:%06x:%04x for unencrypted stream on srvid %04X", addentry->mapcaid, addentry->mapprovid,
+					addentry->mapecmpid, demux[demux_id].program_number);
+				dvbapi_add_ecmpid(demux_id, addentry->mapcaid, addentry->mapecmpid, addentry->mapprovid);
 				break;
 			}
 		}
