@@ -84,9 +84,9 @@ OSCam build system documentation
 
    USE_PCSC=1      - Request linking with PCSC. The variables that control
                      USE_PCSC=1 build are:
-                         PCSC_FLAGS='-DWITH_PCSC=1 -Iextapi'
-                         PCSC_CFLAGS='-DWITH_PCSC=1 -Iextapi'
-                         PCSC_LDFLAGS='-DWITH_PCSC=1 -Iextapi'
+                         PCSC_FLAGS='-DWITH_PCSC=1 -I$(TARGET_SYSROOT)usr/include/PCSC'
+                         PCSC_CFLAGS='-DWITH_PCSC=1 -I$(TARGET_SYSROOT)usr/include/PCSC'
+                         PCSC_LDFLAGS='-DWITH_PCSC=1 -I$(TARGET_SYSROOT)usr/include/PCSC'
                          PCSC_LIB='-lpcsclite'
                      Using USE_PCSC=1 adds to '-pcsc' to PLUS_TARGET.
                      To build with static PCSC, set the variable PCSC_LIB

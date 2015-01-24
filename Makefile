@@ -90,6 +90,7 @@ endif
 
 # The compiler knows for what target it compiles, so use this information
 TARGET := $(shell $(CC) -dumpmachine 2>/dev/null)
+TARGET_SYSROOT := $(shell $(CC) -print-sysroot 2>/dev/null)
 
 # Process USE_ variables
 DEFAULT_STAPI_LIB = -L./stapi -loscam_stapi
@@ -108,7 +109,7 @@ DEFAULT_PCSC_FLAGS = -isysroot $(OSX_SDK) -I/usr/local/include
 DEFAULT_PCSC_LIB = -isysroot $(OSX_SDK) -framework IOKit -framework CoreFoundation -framework PCSC -L/usr/local/lib
 else
 # This hack is needed because PCSC includes <wintypes.h> instead of <PCSC/wintypes.h>
-DEFAULT_PCSC_FLAGS = -Iextapi
+DEFAULT_PCSC_FLAGS = -I$(TARGET_SYSROOT)usr/include/PCSC
 DEFAULT_PCSC_LIB = -lpcsclite
 endif
 
