@@ -131,7 +131,7 @@ void *work_thread(void *ptr)
 				pthread_mutex_lock(&cl->thread_lock);
 				cl->thread_active = 0;
 				pthread_mutex_unlock(&cl->thread_lock);
-				cs_debug_mask(D_TRACE, "ending thread (kill)");
+				cs_log_dbg(D_TRACE, "ending thread (kill)");
 				__free_job_data(cl, data);
 				cl->work_mbuf = NULL; // Prevent free_client from freeing mbuf (->work_mbuf)
 				free_client(cl);
@@ -143,7 +143,7 @@ void *work_thread(void *ptr)
 			}
 
 			if(data && data->action != ACTION_READER_CHECK_HEALTH)
-				{ cs_debug_mask(D_TRACE, "data from add_job action=%d client %c %s", data->action, cl->typ, username(cl)); }
+				{ cs_log_dbg(D_TRACE, "data from add_job action=%d client %c %s", data->action, cl->typ, username(cl)); }
 
 			if(!data)
 			{
@@ -156,7 +156,7 @@ void *work_thread(void *ptr)
 					data = ll_iter_next_remove(&itr);
 					if(data)
 						{ set_work_thread_name(data); }
-					//cs_debug_mask(D_TRACE, "start next job from list action=%d", data->action);
+					//cs_log_dbg(D_TRACE, "start next job from list action=%d", data->action);
 				}
 				pthread_mutex_unlock(&cl->thread_lock);
 			}
@@ -180,7 +180,7 @@ void *work_thread(void *ptr)
 				if(rc > 0)
 				{
 					cs_ftime(&end); // register end time
-					cs_debug_mask(D_TRACE, "[OSCAM-WORK] new event %d occurred on fd %d after %"PRId64" ms inactivity", pfd[0].revents,
+					cs_log_dbg(D_TRACE, "[OSCAM-WORK] new event %d occurred on fd %d after %"PRId64" ms inactivity", pfd[0].revents,
 								  pfd[0].fd, comp_timeb(&end, &start));
 					data = &tmp_data;
 					data->ptr = NULL;
@@ -221,7 +221,7 @@ void *work_thread(void *ptr)
 			int64_t gone = comp_timeb(&actualtime, &data->time);
 			if(data != &tmp_data && gone > (int) cfg.ctimeout+1000)
 			{
-				cs_debug_mask(D_TRACE, "dropping client data for %s time %"PRId64" ms", username(cl), gone);
+				cs_log_dbg(D_TRACE, "dropping client data for %s time %"PRId64" ms", username(cl), gone);
 				__free_job_data(cl, data);
 				continue;
 			}
@@ -374,10 +374,10 @@ void *work_thread(void *ptr)
 
 		if(thread_pipe[1] && (mbuf[0] != 0x00))
 		{
-			cs_ddump_mask(D_TRACE, mbuf, 1, "[OSCAM-WORK] Write to pipe:");
+			cs_log_dump_dbg(D_TRACE, mbuf, 1, "[OSCAM-WORK] Write to pipe:");
 			if(write(thread_pipe[1], mbuf, 1) == -1)    // wakeup client check
 			{
-				cs_debug_mask(D_TRACE, "[OSCAM-WORK] Writing to pipe failed (errno=%d %s)", errno, strerror(errno));
+				cs_log_dbg(D_TRACE, "[OSCAM-WORK] Writing to pipe failed (errno=%d %s)", errno, strerror(errno));
 			}
 		}
 
@@ -448,7 +448,7 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 		if(cl->thread_active == 2)
 			{ pthread_kill(cl->thread, OSCAM_SIGNAL_WAKEUP); }
 		pthread_mutex_unlock(&cl->thread_lock);
-		cs_debug_mask(D_TRACE, "add %s job action %d queue length %d %s",
+		cs_log_dbg(D_TRACE, "add %s job action %d queue length %d %s",
 					  action > ACTION_CLIENT_FIRST ? "client" : "reader", action,
 					  ll_count(cl->joblist), username(cl));
 		return 1;
@@ -463,7 +463,7 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 
 	if(action != ACTION_READER_CHECK_HEALTH)
 	{
-		cs_debug_mask(D_TRACE, "start %s thread action %d",
+		cs_log_dbg(D_TRACE, "start %s thread action %d",
 					  action > ACTION_CLIENT_FIRST ? "client" : "reader", action);
 	}
 

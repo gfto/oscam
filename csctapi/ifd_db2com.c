@@ -41,7 +41,7 @@ bool detect_db2com_reader(struct s_reader *reader)
 				}
 				reader->typ = rc;
 			}
-			rdr_debug_mask(reader, D_READER, "device is major: %d, minor: %d, typ=%d", dev_major, dev_minor, reader->typ);
+			rdr_log_dbg(reader, D_READER, "device is major: %d, minor: %d, typ=%d", dev_major, dev_minor, reader->typ);
 		}
 	}
 	return true;
@@ -101,7 +101,7 @@ static bool db2com_DTR_RTS(struct s_reader *reader, int32_t *dtr, int32_t *rts)
 
 	if(dtr)
 	{
-		rdr_debug_mask(reader, D_DEVICE, "%s DTR:%s", __func__, *dtr ? "set" : "clear");
+		rdr_log_dbg(reader, D_DEVICE, "%s DTR:%s", __func__, *dtr ? "set" : "clear");
 		if(dtr_bits[mcport])
 		{
 			if(*dtr)
@@ -118,7 +118,7 @@ static bool db2com_DTR_RTS(struct s_reader *reader, int32_t *dtr, int32_t *rts)
 
 	if(rts)
 	{
-		rdr_debug_mask(reader, D_DEVICE, "%s RTS:%s", __func__, *rts ? "set" : "clear");
+		rdr_log_dbg(reader, D_DEVICE, "%s RTS:%s", __func__, *rts ? "set" : "clear");
 		if(*rts)
 			{ msr &= (uint16_t)(~rts_bits[mcport]); }
 		else

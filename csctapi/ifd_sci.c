@@ -66,7 +66,7 @@ static int32_t Sci_Deactivate(struct s_reader *reader)
 
 static int32_t Sci_Activate(struct s_reader *reader)
 {
-	rdr_debug_mask(reader, D_IFD, "Is card present?");
+	rdr_log_dbg(reader, D_IFD, "Is card present?");
 	int32_t in = 0;
 	if (ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in)<0)
 	{
@@ -103,19 +103,19 @@ static int32_t Sci_Read_ATR(struct s_reader *reader, ATR *atr)   // reads ATR on
 	}
 	if(buf[0] == 0x3F)   // 3F: card is using inverse convention, 3B = card is using direct convention
 	{
-		rdr_debug_mask(reader, D_IFD, "This card uses inverse convention");
+		rdr_log_dbg(reader, D_IFD, "This card uses inverse convention");
 	}
-	else { rdr_debug_mask(reader, D_IFD, "This card uses direct convention"); }
+	else { rdr_log_dbg(reader, D_IFD, "This card uses direct convention"); }
 	n++;
 	if(IO_Serial_Read(reader, 0, timeout, 1, buf + n))
 	{
-		rdr_debug_mask(reader, D_IFD, "ERROR: only 1 character found in ATR");
+		rdr_log_dbg(reader, D_IFD, "ERROR: only 1 character found in ATR");
 		return ERROR;
 	}
 	int32_t T0 = buf[n];
 	int32_t historicalbytes = T0 & 0x0F; // num of historical bytes in lower nibble of T0 byte
-	rdr_debug_mask(reader, D_ATR, "ATR historicalbytes should be: %d", historicalbytes);
-	rdr_debug_mask(reader, D_ATR, "Fetching global interface characters for protocol T0"); // protocol T0 always aboard!
+	rdr_log_dbg(reader, D_ATR, "ATR historicalbytes should be: %d", historicalbytes);
+	rdr_log_dbg(reader, D_ATR, "Fetching global interface characters for protocol T0"); // protocol T0 always aboard!
 	n++;
 
 	int32_t protocols = 1, tck = 0, protocol, protocolnumber; // protocols = total protocols on card, tck = checksum byte present, protocol = mandatory protocol
@@ -127,23 +127,23 @@ static int32_t Sci_Read_ATR(struct s_reader *reader, ATR *atr)   // reads ATR on
 		{
 			if(IO_Serial_Read(reader, 0, timeout, 1, buf + n)) { break; }  //In this case, TA(i) contains the clock stop indicator XI, which indicates the logical
 			//state the clockline must assume when the clock is stopped, and the class indicator UI,
-			rdr_debug_mask(reader, D_ATR, "TA%d: %02X", protocols, buf[n]);    //which specifies the supply voltage class.
+			rdr_log_dbg(reader, D_ATR, "TA%d: %02X", protocols, buf[n]);    //which specifies the supply voltage class.
 			if((protocols > 2) && ((TDi & 0x0F) == 0x0F))  // Protocol T15 does not exists, it means mandatory on all ATRs
 			{
-				if((buf[n] & 0xC0) == 0xC0) { rdr_debug_mask(reader, D_ATR, "Clockline low or high on clockstop"); }
-				if((buf[n] & 0xC0) == 0x00) { rdr_debug_mask(reader, D_ATR, "Clockline not supported on clockstop"); }
-				if((buf[n] & 0xC0) == 0x40) { rdr_debug_mask(reader, D_ATR, "Clockline should be low on clockstop"); }
-				if((buf[n] & 0xC0) == 0x80) { rdr_debug_mask(reader, D_ATR, "Clockline should be high on clockstop"); }
-				if((buf[n] & 0x3F) == 0x01) { rdr_debug_mask(reader, D_ATR, "Voltage class A 4.5~5.5V"); }
-				if((buf[n] & 0x3F) == 0x02) { rdr_debug_mask(reader, D_ATR, "Voltage class B 2.7~3.3V"); }
-				if((buf[n] & 0x3F) == 0x03) { rdr_debug_mask(reader, D_ATR, "Voltage class A 4.5~5.5V and class B 2.7~3.3V"); }
-				if((buf[n] & 0x3F) == 0x04) { rdr_debug_mask(reader, D_ATR, "Voltage RFU"); }
+				if((buf[n] & 0xC0) == 0xC0) { rdr_log_dbg(reader, D_ATR, "Clockline low or high on clockstop"); }
+				if((buf[n] & 0xC0) == 0x00) { rdr_log_dbg(reader, D_ATR, "Clockline not supported on clockstop"); }
+				if((buf[n] & 0xC0) == 0x40) { rdr_log_dbg(reader, D_ATR, "Clockline should be low on clockstop"); }
+				if((buf[n] & 0xC0) == 0x80) { rdr_log_dbg(reader, D_ATR, "Clockline should be high on clockstop"); }
+				if((buf[n] & 0x3F) == 0x01) { rdr_log_dbg(reader, D_ATR, "Voltage class A 4.5~5.5V"); }
+				if((buf[n] & 0x3F) == 0x02) { rdr_log_dbg(reader, D_ATR, "Voltage class B 2.7~3.3V"); }
+				if((buf[n] & 0x3F) == 0x03) { rdr_log_dbg(reader, D_ATR, "Voltage class A 4.5~5.5V and class B 2.7~3.3V"); }
+				if((buf[n] & 0x3F) == 0x04) { rdr_log_dbg(reader, D_ATR, "Voltage RFU"); }
 			}
 			if((protocols > 2) && ((TDi & 0x0F) == 0x01))  // Protocol T1 specfic (There is always an obsolete T0 protocol!)
 			{
 				int32_t ifsc = buf[n];
 				if(ifsc == 0x00) { ifsc = 32; }  //default is 32
-				rdr_debug_mask(reader, D_ATR, "Maximum information field length this card can receive is %d bytes (IFSC)", ifsc);
+				rdr_log_dbg(reader, D_ATR, "Maximum information field length this card can receive is %d bytes (IFSC)", ifsc);
 			}
 
 			if(protocols < 2)
@@ -154,38 +154,38 @@ static int32_t Sci_Read_ATR(struct s_reader *reader, ATR *atr)   // reads ATR on
 
 				int32_t DI = (buf[n] & 0x0F); // DI is low nibble
 				D = atr_d_table[DI]; // lookup the bitrate adjustment (yeah there are floats in it, but in iso only integers!?)
-				rdr_debug_mask(reader, D_ATR, "Advertised max cardfrequency is %.2f (Fmax), frequency divider is %d (Fi)", fmax / 1000000L, Fi); // High nibble TA1 contains cardspeed
-				rdr_debug_mask(reader, D_ATR, "Bitrate adjustment is %d (D)", D); // Low nibble TA1 contains Bitrateadjustment
-				rdr_debug_mask(reader, D_ATR, "Work ETU = %.2f us assuming card runs at %.2f Mhz",
+				rdr_log_dbg(reader, D_ATR, "Advertised max cardfrequency is %.2f (Fmax), frequency divider is %d (Fi)", fmax / 1000000L, Fi); // High nibble TA1 contains cardspeed
+				rdr_log_dbg(reader, D_ATR, "Bitrate adjustment is %d (D)", D); // Low nibble TA1 contains Bitrateadjustment
+				rdr_log_dbg(reader, D_ATR, "Work ETU = %.2f us assuming card runs at %.2f Mhz",
 							   (double)((1 / (double)D) * ((double)Fi / (double)fmax) * 1000000), fmax / 1000000L);  // And display it...
-				rdr_debug_mask(reader, D_ATR, "Initial ETU = %.2f us", (double)372 / (double)fmax * 1000000); // And display it... since D=1 and frequency during ATR fetch might be different!
+				rdr_log_dbg(reader, D_ATR, "Initial ETU = %.2f us", (double)372 / (double)fmax * 1000000); // And display it... since D=1 and frequency during ATR fetch might be different!
 			}
 			if(protocols > 1 && protocols < 3)
 			{
-				if((buf[n] & 0x80) == 0x80) { rdr_debug_mask(reader, D_ATR, "Switching between negotiable mode and specific mode is not possible"); }
+				if((buf[n] & 0x80) == 0x80) { rdr_log_dbg(reader, D_ATR, "Switching between negotiable mode and specific mode is not possible"); }
 				else
 				{
-					rdr_debug_mask(reader, D_ATR, "Switching between negotiable mode and specific mode is possible");
+					rdr_log_dbg(reader, D_ATR, "Switching between negotiable mode and specific mode is possible");
 					// int32_t PPS = 1; Stupid compiler, will need it later on eventually
 				}
-				if((buf[n] & 0x01) == 0x01) { rdr_debug_mask(reader, D_ATR, "Transmission parameters implicitly defined in the interface characters."); }
-				else { rdr_debug_mask(reader, D_ATR, "Transmission parameters explicitly defined in the interface characters."); }
+				if((buf[n] & 0x01) == 0x01) { rdr_log_dbg(reader, D_ATR, "Transmission parameters implicitly defined in the interface characters."); }
+				else { rdr_log_dbg(reader, D_ATR, "Transmission parameters explicitly defined in the interface characters."); }
 
 				protocol = buf[n] & 0x0F;
-				if(protocol) { rdr_debug_mask(reader, D_ATR, "Protocol T = %d is to be used!", protocol); }
+				if(protocol) { rdr_log_dbg(reader, D_ATR, "Protocol T = %d is to be used!", protocol); }
 			}
 			n++; // next interface character
 		}
 		if(TDi & 0x20)   //TB Present
 		{
 			if(IO_Serial_Read(reader, 0, timeout, 1, buf + n)) { break; }
-			rdr_debug_mask(reader, D_ATR, "TB%d: %02X", protocols, buf[n]);
+			rdr_log_dbg(reader, D_ATR, "TB%d: %02X", protocols, buf[n]);
 			if((protocols > 2) && ((TDi & 0x0F) == 0x01))  // Protocol T1 specfic (There is always an obsolete T0 protocol!)
 			{
 				int32_t CWI = (buf[n] & 0x0F); // low nibble contains CWI code for the character waiting time CWT
 				int32_t BWI = (buf[n] >> 4); // high nibble contains BWI code for the block waiting time BWT
-				rdr_debug_mask(reader, D_ATR, "Protocol T1: Character waiting time is %d(CWI)", CWI);
-				rdr_debug_mask(reader, D_ATR, "Protocol T1: Block waiting time is %d (BWI)", BWI);
+				rdr_log_dbg(reader, D_ATR, "Protocol T1: Character waiting time is %d(CWI)", CWI);
+				rdr_log_dbg(reader, D_ATR, "Protocol T1: Block waiting time is %d (BWI)", BWI);
 			}
 
 			n++; // next interface character
@@ -193,32 +193,32 @@ static int32_t Sci_Read_ATR(struct s_reader *reader, ATR *atr)   // reads ATR on
 		if(TDi & 0x40)   //TC Present
 		{
 			if(IO_Serial_Read(reader, 0, timeout, 1, buf + n)) { break; }
-			rdr_debug_mask(reader, D_ATR, "TC%d: %02X", protocols, buf[n]);
+			rdr_log_dbg(reader, D_ATR, "TC%d: %02X", protocols, buf[n]);
 			if((protocols > 1) && ((TDi & 0x0F) == 0x00))
 			{
 				int32_t WI = buf[n];
-				rdr_debug_mask(reader, D_ATR, "Protocol T0: work wait time is %d work etu (WWT)", (int)(960 * D * WI));
+				rdr_log_dbg(reader, D_ATR, "Protocol T0: work wait time is %d work etu (WWT)", (int)(960 * D * WI));
 			}
 			if((protocols > 1) && ((TDi & 0x0F) == 0x01))
 			{
-				if(buf[n] & 0x01) { rdr_debug_mask(reader, D_ATR, "Protocol T1: CRC is used to compute the error detection code"); }
-				else { rdr_debug_mask(reader, D_ATR, "Protocol T1: LRC is used to compute the error detection code"); }
+				if(buf[n] & 0x01) { rdr_log_dbg(reader, D_ATR, "Protocol T1: CRC is used to compute the error detection code"); }
+				else { rdr_log_dbg(reader, D_ATR, "Protocol T1: LRC is used to compute the error detection code"); }
 			}
-			if((protocols < 2) && (buf[n] < 0xFF)) { rdr_debug_mask(reader, D_ATR, "Extra guardtime of %d ETU (N)", (int) buf[n]); }
-			if((protocols < 2) && (buf[n] == 0xFF)) { rdr_debug_mask(reader, D_ATR, "Protocol T1: Standard 2 ETU guardtime is lowered to 1 ETU"); }
+			if((protocols < 2) && (buf[n] < 0xFF)) { rdr_log_dbg(reader, D_ATR, "Extra guardtime of %d ETU (N)", (int) buf[n]); }
+			if((protocols < 2) && (buf[n] == 0xFF)) { rdr_log_dbg(reader, D_ATR, "Protocol T1: Standard 2 ETU guardtime is lowered to 1 ETU"); }
 
 			n++; // next interface character
 		}
 		if(TDi & 0x80)  //TD Present? Get next TDi there will be a next protocol
 		{
 			if(IO_Serial_Read(reader, 0, timeout, 1, buf + n)) { break; }
-			rdr_debug_mask(reader, D_ATR, "TD%d %02X", protocols, buf[n]);
+			rdr_log_dbg(reader, D_ATR, "TD%d %02X", protocols, buf[n]);
 			TDi = buf[n];
 			protocolnumber = TDi & 0x0F;
 			if(protocolnumber == 0x00) { tck = 0; }  // T0 protocol do not use tck byte  (TCK = checksum byte!)
 			if(protocolnumber == 0x0E) { tck = 1; }  // T14 protocol tck byte should be present
 			if(protocolnumber == 0x01) { tck = 1; }  // T1 protocol tck byte is mandatory, BTW: this code doesnt calculate if the TCK is valid jet...
-			rdr_debug_mask(reader, D_ATR, "Fetching global interface characters for protocol T%d:", (TDi & 0x0F)); // lower nibble contains protocol number
+			rdr_log_dbg(reader, D_ATR, "Fetching global interface characters for protocol T%d:", (TDi & 0x0F)); // lower nibble contains protocol number
 			protocols++; // there is always 1 protocol T0 in every ATR as per iso defined, max is 16 (numbered 0..15)
 
 			n++; // next interface character
@@ -228,9 +228,9 @@ static int32_t Sci_Read_ATR(struct s_reader *reader, ATR *atr)   // reads ATR on
 	int32_t atrlength = 0;
 	atrlength += n;
 	atrlength += historicalbytes;
-	rdr_debug_mask(reader, D_ATR, "Total ATR Length including %d historical bytes should be %d", historicalbytes, atrlength);
+	rdr_log_dbg(reader, D_ATR, "Total ATR Length including %d historical bytes should be %d", historicalbytes, atrlength);
 	if(T0 & 0x80) { protocols--; }  // if bit 8 set there was a TD1 and also more protocols, otherwise this is a T0 card: substract 1 from total protocols
-	rdr_debug_mask(reader, D_ATR, "Total protocols in this ATR is %d", protocols);
+	rdr_log_dbg(reader, D_ATR, "Total protocols in this ATR is %d", protocols);
 
 	while(n < atrlength + tck)  // read all the rest and mandatory tck byte if other protocol than T0 is used.
 	{
@@ -310,7 +310,7 @@ static int32_t Sci_Reset(struct s_reader *reader, ATR *atr)
 	{
 		cs_sleepms(50);
 //		rdr_log(reader, "Set reader parameters!");
-		rdr_debug_mask(reader, D_IFD, "Sent reader setting at cardinit T=%d fs=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d",
+		rdr_log_dbg(reader, D_IFD, "Sent reader setting at cardinit T=%d fs=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d",
 			   (int)params.T, params.fs, (int)params.ETU, (int)params.WWT,
 			   (int)params.CWT, (int)params.BWT, (int)params.EGT,
 			   (int)params.clock_stop_polarity, (int)params.check,
@@ -399,7 +399,7 @@ static int32_t Sci_WriteSettings(struct s_reader *reader, unsigned char T, uint3
 	crdr_data->P = params.P;
 	crdr_data->I = params.I;
 
-	rdr_debug_mask(reader, D_IFD, "Sent reader settings T=%d fs=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d",
+	rdr_log_dbg(reader, D_IFD, "Sent reader settings T=%d fs=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d",
 				   (int)params.T, params.fs, (int)params.ETU, (int)params.WWT,
 				   (int)params.CWT, (int)params.BWT, (int)params.EGT,
 				   (int)params.clock_stop_polarity, (int)params.check,
@@ -504,7 +504,7 @@ static int32_t sci_activate(struct s_reader *reader, ATR *atr)
 	}
 	else
 	{
-		rdr_debug_mask(reader, D_IFD, "Fast card reset with atr");
+		rdr_log_dbg(reader, D_IFD, "Fast card reset with atr");
 		call(Sci_FastReset(reader, atr));
 	}
 	return OK;

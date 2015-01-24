@@ -83,7 +83,7 @@ static void *chkcache_process(void)
 										rdr = ea->reader;
 										if(cl_rdr == rdr && ((ea->status & REQUEST_ANSWERED) == REQUEST_ANSWERED))
 										{
-											cs_debug_mask(D_CACHEEX|D_CSP|D_LB,"{client %s, caid %04X, prid %06X, srvid %04X} [CACHEEX] skip ADD self request!", (check_client(er->client)?er->client->account->usr:"-"),er->caid, er->prid, er->srvid);
+											cs_log_dbg(D_CACHEEX|D_CSP|D_LB,"{client %s, caid %04X, prid %06X, srvid %04X} [CACHEEX] skip ADD self request!", (check_client(er->client)?er->client->account->usr:"-"),er->caid, er->prid, er->srvid);
 											add_hitcache_er=0; //don't add hit cache, reader requested self
 										}
 									}
@@ -402,7 +402,7 @@ inline int8_t cacheex_match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQU
 					s += snprintf(result + s, size - s, " = ");
 					s += ecmfmt(entry->to_caid, 0, entry->to_provid, entry->to_chid, entry->to_pid, entry->to_srvid, entry->to_ecmlen, 0, 0, 0, result + s, size - s, 0, 0);
 					s += snprintf(result + s, size - s, " valid %d/%d", entry->valid_from, entry->valid_to);
-					cs_debug_mask(D_CACHEEX, "cacheex-matching for: %s", result);
+					cs_log_dbg(D_CACHEEX, "cacheex-matching for: %s", result);
 				}
 #endif
 				return 1;
@@ -420,17 +420,17 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 		{ return 0; }
 	if(!csp && cl->reader && cl->reader->cacheex.mode != 2)  //from reader
 	{
-		cs_debug_mask(D_CACHEEX, "CACHEX received, but disabled for %s", username(cl));
+		cs_log_dbg(D_CACHEEX, "CACHEX received, but disabled for %s", username(cl));
 		return 0;
 	}
 	if(!csp && !cl->reader && cl->account && cl->account->cacheex.mode != 3)  //from user
 	{
-		cs_debug_mask(D_CACHEEX, "CACHEX received, but disabled for %s", username(cl));
+		cs_log_dbg(D_CACHEEX, "CACHEX received, but disabled for %s", username(cl));
 		return 0;
 	}
 	if(!csp && !cl->reader && !cl->account)    //not active!
 	{
-		cs_debug_mask(D_CACHEEX, "CACHEX received, but invalid client state %s", username(cl));
+		cs_log_dbg(D_CACHEEX, "CACHEX received, but invalid client state %s", username(cl));
 		return 0;
 	}
 
@@ -442,7 +442,7 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 		null |= (er->cw[i] | er->cw[i + 1] | er->cw[i + 2]);
 		if(er->cw[i + 3] != c)
 		{
-			cs_ddump_mask(D_CACHEEX, er->cw, 16, "push received cw with chksum error from %s", csp ? "csp" : username(cl));
+			cs_log_dump_dbg(D_CACHEEX, er->cw, 16, "push received cw with chksum error from %s", csp ? "csp" : username(cl));
 			cl->cwcacheexerr++;
 			if(cl->account)
 				{ cl->account->cwcacheexerr++; }
@@ -452,7 +452,7 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 
 	if(null == 0 || chk_is_null_CW(er->cw))
 	{
-		cs_ddump_mask(D_CACHEEX, er->cw, 16, "push received null cw from %s", csp ? "csp" : username(cl));
+		cs_log_dump_dbg(D_CACHEEX, er->cw, 16, "push received null cw from %s", csp ? "csp" : username(cl));
 		cl->cwcacheexerr++;
 		if(cl->account)
 			{ cl->account->cwcacheexerr++; }
@@ -461,7 +461,7 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 
 
 	if(get_odd_even(er)==0){
-		cs_debug_mask(D_CACHEEX, "push received ecm with null odd/even byte from %s", csp ? "csp" : username(cl));
+		cs_log_dbg(D_CACHEEX, "push received ecm with null odd/even byte from %s", csp ? "csp" : username(cl));
 		cl->cwcacheexerr++;
 		if(cl->account)
 			{ cl->account->cwcacheexerr++; }
@@ -531,7 +531,7 @@ void log_cacheex_cw(ECM_REQUEST *er, char *reason){
 
 	char buf_ecm[109];
 	format_ecm(er, buf_ecm, 109);
-	cs_debug_mask(D_CACHEEX,"got pushed ecm [%s]: %s - odd/even 0x%x - CSP cw: %s - pushed from %s, at hop %d, origin node-id %" PRIu64 "X",
+	cs_log_dbg(D_CACHEEX,"got pushed ecm [%s]: %s - odd/even 0x%x - CSP cw: %s - pushed from %s, at hop %d, origin node-id %" PRIu64 "X",
 			reason, buf_ecm, er->ecm[0], (checkECMD5(er)?"NO":"YES"), er->from_csp ? "csp" : username((er->cacheex_src?er->cacheex_src:er->client)), ll_count(er->csp_lastnodes), er->csp_lastnodes ? cacheex_node_id(remotenodeid): 0);
 }
 
@@ -612,7 +612,7 @@ static struct s_cacheex_matcher *cacheex_matcher_read_int(void)
 		entry->valid_from = valid_from;
 		entry->valid_to = valid_to;
 
-		cs_debug_mask(D_TRACE, "cacheex-matcher: %c: %04X:%06X:%04X:%04X:%04X:%02X = %04X:%06X:%04X:%04X:%04X:%02X valid %d/%d",
+		cs_log_dbg(D_TRACE, "cacheex-matcher: %c: %04X:%06X:%04X:%04X:%04X:%02X = %04X:%06X:%04X:%04X:%04X:%02X valid %d/%d",
 					  entry->type, entry->caid, entry->provid, entry->srvid, entry->pid, entry->chid, entry->ecmlen,
 					  entry->to_caid, entry->to_provid, entry->to_srvid, entry->to_pid, entry->to_chid, entry->to_ecmlen,
 					  entry->valid_from, entry->valid_to);
@@ -830,7 +830,7 @@ bool cacheex_check_queue_length(struct s_client *cl)
 	if(ll_count(cl->joblist) <= 2000)
 		return 0;
 
-	cs_debug_mask(D_TRACE, "WARNING: job queue %s %s has more than 2000 jobs! count=%d, dropped!",
+	cs_log_dbg(D_TRACE, "WARNING: job queue %s %s has more than 2000 jobs! count=%d, dropped!",
 				  cl->typ == 'c' ? "client" : "reader",
 				  username(cl), ll_count(cl->joblist));
 	// Thread down???
@@ -841,7 +841,7 @@ bool cacheex_check_queue_length(struct s_client *cl)
 		if(pthread_detach(cl->thread) == ESRCH)
 		{
 			cl->thread_active = 0;
-			cs_debug_mask(D_TRACE, "WARNING: %s %s thread died!",
+			cs_log_dbg(D_TRACE, "WARNING: %s %s thread died!",
 						  cl->typ == 'c' ? "client" : "reader", username(cl));
 		}
 	}

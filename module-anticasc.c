@@ -96,7 +96,7 @@ void ac_do_stat(void)
 		{
 			if(client->ac_penalty == 2)    // banned
 			{
-				cs_debug_mask(D_CLIENT, "acasc: user '%s' banned", client->account->usr);
+				cs_log_dbg(D_CLIENT, "acasc: user '%s' banned", client->account->usr);
 				acasc->ac_deny = 1;
 			}
 			else
@@ -110,10 +110,10 @@ void ac_do_stat(void)
 				prev_deny = acasc->ac_deny;
 				acasc->ac_deny = (exceeds >= cfg.ac_denysamples);
 
-				cs_debug_mask(D_CLIENT, "acasc: %s limit=%d, max=%d, samples=%d, dsamples=%d, [idx=%d]:",
+				cs_log_dbg(D_CLIENT, "acasc: %s limit=%d, max=%d, samples=%d, dsamples=%d, [idx=%d]:",
 							  client->account->usr, client->ac_limit, maxval,
 							  cfg.ac_samples, cfg.ac_denysamples, idx);
-				cs_debug_mask(D_CLIENT, "acasc: %d %d %d %d %d %d %d %d %d %d ", ac_stat->stat[0],
+				cs_log_dbg(D_CLIENT, "acasc: %d %d %d %d %d %d %d %d %d %d ", ac_stat->stat[0],
 							  ac_stat->stat[1], ac_stat->stat[2], ac_stat->stat[3],
 							  ac_stat->stat[4], ac_stat->stat[5], ac_stat->stat[6],
 							  ac_stat->stat[7], ac_stat->stat[8], ac_stat->stat[9]);
@@ -152,13 +152,13 @@ void ac_init_client(struct s_client *client, struct s_auth *account)
 		if(numusers)
 		{
 			client->ac_limit = (numusers * 100 + 80) * cfg.ac_stime;
-			cs_debug_mask(D_CLIENT, "acasc: user '%s', users=%d, stime=%d min, dwlimit=%d per min, penalty=%d",
+			cs_log_dbg(D_CLIENT, "acasc: user '%s', users=%d, stime=%d min, dwlimit=%d per min, penalty=%d",
 						  account->usr, numusers, cfg.ac_stime,
 						  numusers * 100 + 80, client->ac_penalty);
 		}
 		else
 		{
-			cs_debug_mask(D_CLIENT, "acasc: anti-cascading not used for user '%s'", account->usr);
+			cs_log_dbg(D_CLIENT, "acasc: anti-cascading not used for user '%s'", account->usr);
 		}
 	}
 }
@@ -174,9 +174,9 @@ static int32_t ac_dw_weight(ECM_REQUEST *er)
 				(cpmap->chid  == 0 || cpmap->chid  == er->chid))
 			{ return (cpmap->dwtime * 100 / 60); }
 
-	cs_debug_mask(D_CLIENT, "acasc: WARNING: CAID %04X, PROVID %06X, SID %04X, CHID %04X not found in oscam.ac",
+	cs_log_dbg(D_CLIENT, "acasc: WARNING: CAID %04X, PROVID %06X, SID %04X, CHID %04X not found in oscam.ac",
 				  er->caid, er->prid, er->srvid, er->chid);
-	cs_debug_mask(D_CLIENT, "acasc: set DW lifetime 10 sec");
+	cs_log_dbg(D_CLIENT, "acasc: set DW lifetime 10 sec");
 	return 16; // 10*100/60
 }
 
@@ -209,11 +209,11 @@ void ac_chk(struct s_client *cl, ECM_REQUEST *er, int32_t level)
 			if(cl->ac_penalty == 3)
 			{
 				if(cl->ac_fakedelay > 0)
-					{ cs_debug_mask(D_CLIENT, "acasc: fake delay %d ms", cl->ac_fakedelay); }
+					{ cs_log_dbg(D_CLIENT, "acasc: fake delay %d ms", cl->ac_fakedelay); }
 			}
 			else
 			{
-				cs_debug_mask(D_CLIENT, "acasc: send fake dw");
+				cs_log_dbg(D_CLIENT, "acasc: send fake dw");
 				er->rc = E_FAKE; // fake
 				er->rcEx = 0;
 			}
@@ -316,7 +316,7 @@ static void ac_load_config(void)
 			cur_cpmap->dwtime = dwtime;
 			cur_cpmap->next   = 0;
 
-			cs_debug_mask(D_CLIENT, "nr=%d, caid=%04X, provid=%06X, sid=%04X, chid=%04X, dwtime=%d",
+			cs_log_dbg(D_CLIENT, "nr=%d, caid=%04X, provid=%06X, sid=%04X, chid=%04X, dwtime=%d",
 						  nr, caid, provid, sid, chid, dwtime);
 			nr++;
 		}
@@ -437,7 +437,7 @@ void insert_zaplist(ECM_REQUEST *er, struct s_client *client)
 		{
 			if(zaptime-zap_caid_weight*2 < client->client_zap_list[k].lasttime)
 			{
-				cs_debug_mask(D_TRACE, "[zaplist] update Entry [%i] for Client: %s  %04X@%06X/%04X/%04X TIME: %ld Diff: %ld zcw: %i(%i)", k, username(client), er->caid, er->prid, er->chid, er->srvid, zaptime, zaptime-client->client_zap_list[k].lasttime, zap_caid_weight, zap_caid_weight*2);
+				cs_log_dbg(D_TRACE, "[zaplist] update Entry [%i] for Client: %s  %04X@%06X/%04X/%04X TIME: %ld Diff: %ld zcw: %i(%i)", k, username(client), er->caid, er->prid, er->chid, er->srvid, zaptime, zaptime-client->client_zap_list[k].lasttime, zap_caid_weight, zap_caid_weight*2);
 				client->client_zap_list[k].lasttime = zaptime;
 				if(client->client_zap_list[k].request_stage < 10)
 				{
@@ -461,13 +461,13 @@ void insert_zaplist(ECM_REQUEST *er, struct s_client *client)
 				client->client_zap_list[k].sid = er->srvid;
 				client->client_zap_list[k].request_stage = 1; //need for ACoSC
 				client->client_zap_list[k].lasttime = zaptime;
-				cs_debug_mask(D_TRACE, "[zaplist] new Entry [%i] for Client: %s  %04X@%06X/%04X/%04X TIME: %ld", k, username(client), er->caid, er->prid, er->chid, er->srvid, zaptime);
+				cs_log_dbg(D_TRACE, "[zaplist] new Entry [%i] for Client: %s  %04X@%06X/%04X/%04X TIME: %ld", k, username(client), er->caid, er->prid, er->chid, er->srvid, zaptime);
 				new_zaplist_entry = true;
 				break;
 			}
 		}
 		if(!new_zaplist_entry)
-			{ cs_debug_mask(D_TRACE, "[zaplist] no free slot for client: %s", username(client)); }
+			{ cs_log_dbg(D_TRACE, "[zaplist] no free slot for client: %s", username(client)); }
 
 		if(client->account->acosc_user_zap_count_start_time+60 > zaptime)
 			{ client->account->acosc_user_zap_count ++; }
@@ -475,7 +475,7 @@ void insert_zaplist(ECM_REQUEST *er, struct s_client *client)
 		{
 			client->account->acosc_user_zap_count_start_time = zaptime;
 			client->account->acosc_user_zap_count = 0;
-			cs_debug_mask(D_TRACE, "[zaplist] Client: %s reset acosc_user_zap_count_start_time", username(client));
+			cs_log_dbg(D_TRACE, "[zaplist] Client: %s reset acosc_user_zap_count_start_time", username(client));
 			for(k=0; k<15 ; k++)
 			{
 				if(client->client_zap_list[k].lasttime > zaptime-60)
@@ -483,7 +483,7 @@ void insert_zaplist(ECM_REQUEST *er, struct s_client *client)
 					client->account->acosc_user_zap_count ++;
 				}
 			}
-			cs_debug_mask(D_TRACE, "[zaplist] Client: %s zap_count: %i", username(client), client->account->acosc_user_zap_count);
+			cs_log_dbg(D_TRACE, "[zaplist] Client: %s zap_count: %i", username(client), client->account->acosc_user_zap_count);
 		}
 	}
 }

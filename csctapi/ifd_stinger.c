@@ -97,13 +97,13 @@ bool Stinger_IO_Serial_Write(struct s_reader *reader, uint32_t delay, uint32_t t
 	{
 		if(reader->char_delay != 0) { timeout = reader->char_delay; }
 		else { timeout = 1000000; }
-		rdr_debug_mask(reader, D_DEVICE, "Warning: write timeout 0 changed to %d us", timeout);
+		rdr_log_dbg(reader, D_DEVICE, "Warning: write timeout 0 changed to %d us", timeout);
 	}
 	uint32_t count, to_send, i_w;
 	unsigned char data_w[512];
 
 	to_send = (delay ? 1 : size); // calculate chars to send at one
-	rdr_debug_mask(reader, D_DEVICE, "Write timeout %d us, write delay %d us, to send %d char(s), chunksize %d char(s)", timeout, delay, size, to_send);
+	rdr_log_dbg(reader, D_DEVICE, "Write timeout %d us, write delay %d us, to send %d char(s), chunksize %d char(s)", timeout, delay, size, to_send);
 
 	for(count = 0; count < size; count += to_send)
 	{
@@ -114,7 +114,7 @@ bool Stinger_IO_Serial_Write(struct s_reader *reader, uint32_t delay, uint32_t t
 		uint16_t errorcount = 0, to_do = to_send;
 		for(i_w = 0; i_w < to_send; i_w++)
 			{ data_w [i_w] = data [count + i_w]; }
-		rdr_ddump_mask(reader, D_DEVICE, data_w + (to_send - to_do), to_do, "Sending:");
+		rdr_log_dump_dbg(reader, D_DEVICE, data_w + (to_send - to_do), to_do, "Sending:");
 AGAIN:
 		if(!Stinger_IO_Serial_WaitToWrite(reader, delay, timeout))
 		{
@@ -150,12 +150,12 @@ AGAIN:
 			if(reader->crdr.read_written && reader->written > 0)    // these readers need to read all transmitted chars before they can receive!
 			{
 				unsigned char buf[256];
-				rdr_debug_mask(reader, D_DEVICE, "Reading %d echoed transmitted chars...", reader->written);
+				rdr_log_dbg(reader, D_DEVICE, "Reading %d echoed transmitted chars...", reader->written);
 				int32_t n = reader->written;
 				if(IO_Serial_Read(reader, 0, 9990000, n, buf))   // use 9990000 = aprox 10 seconds (since written chars could be hughe!)
 					{ return ERROR; }
 				reader->written = 0;
-				rdr_debug_mask(reader, D_DEVICE, "Reading of echoed transmitted chars done!");
+				rdr_log_dbg(reader, D_DEVICE, "Reading of echoed transmitted chars done!");
 			}
 			return ERROR;
 		}
@@ -245,7 +245,7 @@ int32_t Stinger_Init(struct s_reader *reader)
 
 	if(reader->crdr.flush) { IO_Serial_Flush(reader); }
 
-	rdr_debug_mask(reader, D_IFD, "Initializing reader type=%d", reader->typ);
+	rdr_log_dbg(reader, D_IFD, "Initializing reader type=%d", reader->typ);
 
 	/* Default serial port settings */
 	if(reader->atr[0] == 0)
@@ -260,7 +260,7 @@ int32_t Stinger_Init(struct s_reader *reader)
 
 int32_t Stinger_Reset(struct s_reader *reader, ATR *atr)
 {
-	rdr_debug_mask(reader, D_IFD, "Resetting card");
+	rdr_log_dbg(reader, D_IFD, "Resetting card");
 	int32_t ret;
 	int32_t i;
 	unsigned char buf[ATR_MAX_SIZE];
@@ -369,7 +369,7 @@ int32_t Stinger_IO_Serial_SetBaudrate(struct s_reader *reader, uint32_t baudrate
 	unsigned int b = 0xFF;
 	unsigned char s = 0xFF;
 	memset(dat, 0, 8);
-	rdr_debug_mask(reader, D_IFD, "Setting baudrate to %u", baudrate);
+	rdr_log_dbg(reader, D_IFD, "Setting baudrate to %u", baudrate);
 
 	if(baudrate == 9600)
 	{
@@ -385,7 +385,7 @@ int32_t Stinger_IO_Serial_SetBaudrate(struct s_reader *reader, uint32_t baudrate
 	}
 	else
 	{
-		rdr_debug_mask(reader, D_IFD, "Baudrate value not supported");
+		rdr_log_dbg(reader, D_IFD, "Baudrate value not supported");
 		return ERROR;
 	}
 
@@ -395,7 +395,7 @@ int32_t Stinger_IO_Serial_SetBaudrate(struct s_reader *reader, uint32_t baudrate
 
 	if((s == 0xFF) || (p == 0xFF) || (b == 0xFF))
 	{
-		rdr_debug_mask(reader, D_IFD, "Stinger_Get_Info error");
+		rdr_log_dbg(reader, D_IFD, "Stinger_Get_Info error");
 		return ERROR;
 	}
 
@@ -449,7 +449,7 @@ int32_t Stinger_IO_Serial_SetParity(struct s_reader *reader, unsigned char parit
 	}
 	else
 	{
-		rdr_debug_mask(reader, D_IFD, "Parity value not supported");
+		rdr_log_dbg(reader, D_IFD, "Parity value not supported");
 		return ERROR;
 	}
 
@@ -458,7 +458,7 @@ int32_t Stinger_IO_Serial_SetParity(struct s_reader *reader, unsigned char parit
 
 	if((s == 0xFF) || (p == 0xFF) || (b == 0xFF))
 	{
-		rdr_debug_mask(reader, D_IFD, "Stinger_Get_Info error");
+		rdr_log_dbg(reader, D_IFD, "Stinger_Get_Info error");
 		return ERROR;
 	}
 
@@ -486,7 +486,7 @@ int32_t Stinger_IO_Serial_SetParity(struct s_reader *reader, unsigned char parit
 
 static int32_t Stinger_Set_Clock(struct s_reader *reader, unsigned int c)
 {
-	rdr_debug_mask(reader, D_IFD, "Setting Smartcard clock at: %d", c);
+	rdr_log_dbg(reader, D_IFD, "Setting Smartcard clock at: %d", c);
 	unsigned char p = 0xFF;
 	unsigned int b = 0xFF;
 	unsigned char s = 0xFF;
@@ -496,7 +496,7 @@ static int32_t Stinger_Set_Clock(struct s_reader *reader, unsigned int c)
 
 	if((s == 0xFF) || (p == 0xFF) || (b == 0xFF))
 	{
-		rdr_debug_mask(reader, D_IFD, "Stinger_Get_Info error");
+		rdr_log_dbg(reader, D_IFD, "Stinger_Get_Info error");
 		return ERROR;
 	}
 
@@ -530,7 +530,7 @@ static int32_t Stinger_Set_Clock(struct s_reader *reader, unsigned int c)
 	}
 	else
 	{
-		rdr_debug_mask(reader, D_IFD, "Clock speed not recognized. Check configuration");
+		rdr_log_dbg(reader, D_IFD, "Clock speed not recognized. Check configuration");
 		return ERROR;
 	}
 
@@ -546,7 +546,7 @@ static int32_t Stinger_Set_Clock(struct s_reader *reader, unsigned int c)
 
 	//DTR up
 	IO_Serial_DTR_Clr(reader);
-	rdr_debug_mask(reader, D_IFD, "Smartcard clock at %d set", c);
+	rdr_log_dbg(reader, D_IFD, "Smartcard clock at %d set", c);
 	return OK;
 }
 

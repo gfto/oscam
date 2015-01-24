@@ -292,7 +292,7 @@ int32_t check_auth(char *authstring, char *method, char *path, IN_ADDR_T addr, c
 			else
 			{
 				authok = 2;
-				cs_debug_mask(D_TRACE, "WebIf: Received stale header from %s (nonce=%s, expectednonce=%s, opaque=%s).", cs_inet_ntoa(addr), authnonce, expectednonce, opaque);
+				cs_log_dbg(D_TRACE, "WebIf: Received stale header from %s (nonce=%s, expectednonce=%s, opaque=%s).", cs_inet_ntoa(addr), authnonce, expectednonce, opaque);
 			}
 		}
 	}

@@ -104,7 +104,7 @@ static int32_t mp35_reader_init(struct s_reader *reader)
 	call(IO_Serial_Read(reader, MP35_READ_DELAY, 1000000, 4, rec_buf));
 	if(rec_buf[3] != ACK)
 	{
-		rdr_debug_mask(reader, D_IFD, "Failed MP35 command: fw_version");
+		rdr_log_dbg(reader, D_IFD, "Failed MP35 command: fw_version");
 		return ERROR;
 	}
 
@@ -144,16 +144,16 @@ static int32_t mp35_reader_init(struct s_reader *reader)
 		call(IO_Serial_Read(reader, MP35_READ_DELAY, 1000000, 1, rec_buf)); // Read ACK from previous command
 		if(rec_buf[0] != ACK)
 		{
-			rdr_debug_mask(reader, D_IFD, "Failed MP35 command: set_mode_osc");
+			rdr_log_dbg(reader, D_IFD, "Failed MP35 command: set_mode_osc");
 			return ERROR;
 		}
-		rdr_debug_mask(reader, D_IFD, "%s: Leaving programming mode", __func__);
+		rdr_log_dbg(reader, D_IFD, "%s: Leaving programming mode", __func__);
 		memset(rec_buf, 0x00, sizeof(rec_buf));
 		call(IO_Serial_Write(reader, MP35_WRITE_DELAY, 1000000, 2, exit_program_mode));
 		call(IO_Serial_Read(reader, MP35_READ_DELAY, 1000000, 1, rec_buf));
 		if(rec_buf[0] != ACK)
 		{
-			rdr_debug_mask(reader, D_IFD, "Failed MP35 command: exit_program_mode");
+			rdr_log_dbg(reader, D_IFD, "Failed MP35 command: exit_program_mode");
 			return ERROR;
 		}
 	}
@@ -171,7 +171,7 @@ static int32_t mp35_reader_init(struct s_reader *reader)
 			call(IO_Serial_Read(reader, MP35_READ_DELAY, 1000000, info_len + 1, rec_buf));
 			if(rec_buf[info_len] != ACK)
 			{
-				rdr_debug_mask(reader, D_IFD, "Failed MP35 command: fw_info");
+				rdr_log_dbg(reader, D_IFD, "Failed MP35 command: fw_info");
 				return ERROR;
 			}
 			memcpy(info, rec_buf, info_len);
@@ -216,7 +216,7 @@ static int32_t mp35_reader_init(struct s_reader *reader)
 
 static int32_t mp35_close(struct s_reader *reader)
 {
-	rdr_debug_mask(reader, D_IFD, "Closing MP35 device %s", reader->device);
+	rdr_log_dbg(reader, D_IFD, "Closing MP35 device %s", reader->device);
 
 	IO_Serial_DTR_Clr(reader);
 	IO_Serial_Close(reader);

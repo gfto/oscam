@@ -555,7 +555,7 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 			{
 				if(get_module(cl)->type & MOD_CONN_NET)
 				{
-					cs_debug_mask(D_TRACE, "client '%s', thread=%8lX not found in db (or password changed)", cl->account->usr, (unsigned long)cl->thread);
+					cs_log_dbg(D_TRACE, "client '%s', thread=%8lX not found in db (or password changed)", cl->account->usr, (unsigned long)cl->thread);
 					kill_thread(cl);
 				}
 				else

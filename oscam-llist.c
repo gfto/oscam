@@ -104,7 +104,7 @@ static void *ll_iter_next_nolock(LL_ITER *it)
 	{
 #ifdef WITH_DEBUG
 		if(chk_debuglog(it->l))
-			{ cs_debug_mask(D_TRACE, "list changed, searching new position"); }
+			{ cs_log_dbg(D_TRACE, "list changed, searching new position"); }
 #endif
 
 		LL_NODE *ptr;
@@ -609,7 +609,7 @@ void **ll_sort(const LLIST *l, void *compare, int32_t *size)
 	cs_readunlock(&((LLIST *)l)->lock);
 #ifdef WITH_DEBUG
 	//  if (chk_debugLog(it->l))
-	//cs_debug_mask(D_TRACE, "sort: count %d size %d", l->count, sizeof(p[0]));
+	//cs_log_dbg(D_TRACE, "sort: count %d size %d", l->count, sizeof(p[0]));
 #endif
 	qsort(p, l->count, sizeof(p[0]), compare);
 

@@ -29,7 +29,7 @@ static uint16_t openxcas_video_pid, openxcas_audio_pid, openxcas_data_pid;
 
 static void azbox_openxcas_ecm_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t cipher_index, uint32_t UNUSED(caid), unsigned char *ecm_data, int32_t l, uint16_t pid)
 {
-	cs_debug_mask(D_DVBAPI, "ecm callback received");
+	cs_log_dbg(D_DVBAPI, "ecm callback received");
 
 	openxcas_stream_id = stream_id;
 	//openxcas_seq = seq;
@@ -64,7 +64,7 @@ static void azbox_openxcas_ecm_callback(int32_t stream_id, uint32_t UNUSED(seq),
 
 static void azbox_openxcas_ex_callback(int32_t stream_id, uint32_t seq, int32_t idx, uint32_t pid, unsigned char *ecm_data, int32_t l)
 {
-	cs_debug_mask(D_DVBAPI, "ex callback received");
+	cs_log_dbg(D_DVBAPI, "ex callback received");
 
 	openxcas_stream_id = stream_id;
 	openxcas_ecm_pid = pid;
@@ -87,7 +87,7 @@ static void azbox_openxcas_ex_callback(int32_t stream_id, uint32_t seq, int32_t 
 	if(openxcas_stop_filter_ex(stream_id, seq, openxcas_filter_idx) < 0)
 		{ cs_log("unable to stop ex filter"); }
 	else
-		{ cs_debug_mask(D_DVBAPI, "ex filter stopped"); }
+		{ cs_log_dbg(D_DVBAPI, "ex filter stopped"); }
 
 
 
@@ -102,7 +102,7 @@ static void azbox_openxcas_ex_callback(int32_t stream_id, uint32_t seq, int32_t 
 	if((openxcas_filter_idx = openxcas_start_filter_ex(stream_id, seq, openxcas_ecm_pid, mask, comp, (void *)azbox_openxcas_ex_callback)) < 0)
 		{ cs_log("unable to start ex filter"); }
 	else
-		{ cs_debug_mask(D_DVBAPI, "ex filter started, pid = %x", openxcas_ecm_pid); }
+		{ cs_log_dbg(D_DVBAPI, "ex filter started, pid = %x", openxcas_ecm_pid); }
 }
 
 static void *azbox_main_thread(void *cli)
@@ -138,7 +138,7 @@ static void *azbox_main_thread(void *cli)
 			switch(msg.cmd)
 			{
 			case OPENXCAS_SELECT_CHANNEL:
-				cs_debug_mask(D_DVBAPI, "OPENXCAS_SELECT_CHANNEL");
+				cs_log_dbg(D_DVBAPI, "OPENXCAS_SELECT_CHANNEL");
 
 				// parse channel info
 				struct stOpenXCASChannel chan;
@@ -151,7 +151,7 @@ static void *azbox_main_thread(void *cli)
 				openxcas_data_pid = chan.d_pid;
 				break;
 			case OPENXCAS_START_PMT_ECM:
-				cs_debug_mask(D_DVBAPI, "OPENXCAS_START_PMT_ECM");
+				cs_log_dbg(D_DVBAPI, "OPENXCAS_START_PMT_ECM");
 
 				// parse pmt
 				uchar *dest;
@@ -180,20 +180,20 @@ static void *azbox_main_thread(void *cli)
 				if((ret = openxcas_add_filter(msg.stream_id, OPENXCAS_FILTER_ECM, 0, 0xffff, openxcas_ecm_pid, mask, comp, (void *)azbox_openxcas_ecm_callback)) < 0)
 					{ cs_log("unable to add ecm filter"); }
 				else
-					{ cs_debug_mask(D_DVBAPI, "ecm filter added, pid = %x, caid = %x", openxcas_ecm_pid, 0); }
+					{ cs_log_dbg(D_DVBAPI, "ecm filter added, pid = %x, caid = %x", openxcas_ecm_pid, 0); }
 
 				if(openxcas_start_filter(msg.stream_id, msg.sequence, OPENXCAS_FILTER_ECM) < 0)
 					{ cs_log("unable to start ecm filter"); }
 				else
-					{ cs_debug_mask(D_DVBAPI, "ecm filter started"); }
+					{ cs_log_dbg(D_DVBAPI, "ecm filter started"); }
 
 				if(!openxcas_create_cipher_ex(msg.stream_id, openxcas_seq, 0, openxcas_ecm_pid, openxcas_video_pid, 0xffff, openxcas_audio_pid, 0xffff, 0xffff, 0xffff))
 					{ cs_log("failed to create cipher ex"); }
 				else
-					{ cs_debug_mask(D_DVBAPI, "cipher created"); }
+					{ cs_log_dbg(D_DVBAPI, "cipher created"); }
 				break;
 			case OPENXCAS_STOP_PMT_ECM:
-				cs_debug_mask(D_DVBAPI, "OPENXCAS_STOP_PMT_ECM");
+				cs_log_dbg(D_DVBAPI, "OPENXCAS_STOP_PMT_ECM");
 				openxcas_stop_filter(msg.stream_id, OPENXCAS_FILTER_ECM);
 				openxcas_remove_filter(msg.stream_id, OPENXCAS_FILTER_ECM);
 				openxcas_stop_filter_ex(msg.stream_id, msg.sequence, openxcas_filter_idx);
@@ -201,26 +201,26 @@ static void *azbox_main_thread(void *cli)
 				memset(&demux, 0, sizeof(demux));
 				break;
 			case OPENXCAS_ECM_CALLBACK:
-				cs_debug_mask(D_DVBAPI, "OPENXCAS_ECM_CALLBACK");
+				cs_log_dbg(D_DVBAPI, "OPENXCAS_ECM_CALLBACK");
 				memcpy(&data, msg.buf, msg.buf_len);
 				if(!openxcas_busy)
 					{ openxcas_filter_callback(msg.stream_id, msg.sequence, OPENXCAS_FILTER_ECM, &data); }
 				break;
 			case OPENXCAS_PID_FILTER_CALLBACK:
-				cs_debug_mask(D_DVBAPI, "OPENXCAS_PID_FILTER_CALLBACK");
+				cs_log_dbg(D_DVBAPI, "OPENXCAS_PID_FILTER_CALLBACK");
 				memcpy(&data, msg.buf, msg.buf_len);
 				openxcas_filter_callback_ex(msg.stream_id, msg.sequence, &data);
 				break;
 			case OPENXCAS_QUIT:
-				cs_debug_mask(D_DVBAPI, "OPENXCAS_QUIT");
+				cs_log_dbg(D_DVBAPI, "OPENXCAS_QUIT");
 				openxcas_close();
 				cs_log("exited");
 				return NULL;
 				break;
 			case OPENXCAS_UKNOWN_MSG:
 			default:
-				cs_debug_mask(D_DVBAPI, "OPENXCAS_UKNOWN_MSG (%d)", msg.cmd);
-				//cs_ddump_mask(D_DVBAPI, &msg, sizeof(msg), "msg dump:");
+				cs_log_dbg(D_DVBAPI, "OPENXCAS_UKNOWN_MSG (%d)", msg.cmd);
+				//cs_log_dump_dbg(D_DVBAPI, &msg, sizeof(msg), "msg dump:");
 				break;
 			}
 		}
@@ -231,7 +231,7 @@ static void *azbox_main_thread(void *cli)
 
 void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
-	cs_debug_mask(D_DVBAPI, "send_dcw");
+	cs_log_dbg(D_DVBAPI, "send_dcw");
 
 	delayer(er);
 
@@ -269,7 +269,7 @@ void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	{
 		if(er->rc >= E_NOTFOUND)
 		{
-			cs_debug_mask(D_DVBAPI, "cw not found");
+			cs_log_dbg(D_DVBAPI, "cw not found");
 
 			if(demux[i].pidindex == -1)
 				{ dvbapi_try_next_caid(i, 0); }
@@ -291,15 +291,15 @@ void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				if(openxcas_add_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM, openxcas_caid, 0xffff, openxcas_ecm_pid, mask, comp, (void *)azbox_openxcas_ecm_callback) < 0)
 					{ cs_log("unable to add ecm filter (%04x)", openxcas_caid); }
 				else
-					{ cs_debug_mask(D_DVBAPI, "ecm filter added, pid = %x, caid = %x", openxcas_ecm_pid, openxcas_caid); }
+					{ cs_log_dbg(D_DVBAPI, "ecm filter added, pid = %x, caid = %x", openxcas_ecm_pid, openxcas_caid); }
 			}
 			else
-				{ cs_debug_mask(D_DVBAPI, "ecm filter added, pid = %x, caid = %x", openxcas_ecm_pid, 0); }
+				{ cs_log_dbg(D_DVBAPI, "ecm filter added, pid = %x, caid = %x", openxcas_ecm_pid, 0); }
 
 			if(openxcas_start_filter(openxcas_stream_id, openxcas_seq, OPENXCAS_FILTER_ECM) < 0)
 				{ cs_log("unable to start ecm filter"); }
 			else
-				{ cs_debug_mask(D_DVBAPI, "ecm filter started"); }
+				{ cs_log_dbg(D_DVBAPI, "ecm filter started"); }
 
 			return;
 		}
@@ -321,7 +321,7 @@ void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	if(openxcas_set_key(openxcas_stream_id, openxcas_seq, 0, openxcas_cipher_idx, openxcas_cw, openxcas_cw + 8) != 1)
 		{ cs_log("set cw failed"); }
 	else
-		{ cs_ddump_mask(D_DVBAPI, openxcas_cw, 16, "write cws to descrambler"); }
+		{ cs_log_dump_dbg(D_DVBAPI, openxcas_cw, 16, "write cws to descrambler"); }
 }
 
 #ifdef WITH_CARDREADER

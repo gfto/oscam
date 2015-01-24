@@ -38,7 +38,7 @@ uint8_t checkCWpart(uchar *cw, int8_t part);
         if (config_enabled(WITH_DEBUG) && ((mask) & cs_dblevel)) { \
             char buf[ECM_FMT_LEN]; \
             format_ecm(er, buf, ECM_FMT_LEN); \
-            cs_debug_mask(mask, ##args); \
+            cs_log_dbg(mask, ##args); \
         } \
     } while(0)
 

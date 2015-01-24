@@ -651,7 +651,7 @@ void cs_exit(int32_t sig)
 	// this is very important - do not remove
 	if(cl->typ != 's')
 	{
-		cs_debug_mask(D_TRACE, "thread %8lX ended!", (unsigned long)pthread_self());
+		cs_log_dbg(D_TRACE, "thread %8lX ended!", (unsigned long)pthread_self());
 
 		free_client(cl);
 
@@ -816,7 +816,7 @@ void start_thread(void *startroutine, char *nameroutine)
 	pthread_t temp;
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
-	cs_debug_mask(D_TRACE, "starting thread %s", nameroutine);
+	cs_log_dbg(D_TRACE, "starting thread %s", nameroutine);
 	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 	cs_writelock(&system_lock);
 	int32_t ret = pthread_create(&temp, &attr, startroutine, NULL);
@@ -824,7 +824,7 @@ void start_thread(void *startroutine, char *nameroutine)
 		{ cs_log("ERROR: can't create %s thread (errno=%d %s)", nameroutine, ret, strerror(ret)); }
 	else
 	{
-		cs_debug_mask(D_TRACE, "%s thread started", nameroutine);
+		cs_log_dbg(D_TRACE, "%s thread started", nameroutine);
 		pthread_detach(temp);
 	}
 	pthread_attr_destroy(&attr);
@@ -1028,7 +1028,7 @@ static void process_clients(void)
 		{
 			if(pfd[i].revents == 0) { continue; }  // skip sockets with no changes
 			rc--; //event handled!
-			cs_debug_mask(D_TRACE, "[OSCAM] new event %d occurred on fd %d after %"PRId64" ms inactivity", pfd[i].revents,
+			cs_log_dbg(D_TRACE, "[OSCAM] new event %d occurred on fd %d after %"PRId64" ms inactivity", pfd[i].revents,
 						  pfd[i].fd, comp_timeb(&end, &start));
 			//clients
 			cl = cl_list[i];
@@ -1041,9 +1041,9 @@ static void process_clients(void)
 				int32_t len = read(thread_pipe[0], buf, sizeof(buf));
 				if(len == -1)
 				{
-					cs_debug_mask(D_TRACE, "[OSCAM] Reading from pipe failed (errno=%d %s)", errno, strerror(errno));
+					cs_log_dbg(D_TRACE, "[OSCAM] Reading from pipe failed (errno=%d %s)", errno, strerror(errno));
 				}
-				cs_ddump_mask(D_TRACE, buf, len, "[OSCAM] Readed:");
+				cs_log_dump_dbg(D_TRACE, buf, len, "[OSCAM] Readed:");
 				continue;
 			}
 
@@ -1083,7 +1083,7 @@ static void process_clients(void)
 					//connection to remote proxy was closed
 					//oscam should check for rdr->tcp_connected and reconnect on next ecm request sent to the proxy
 					network_tcp_connection_close(rdr, "closed");
-					rdr_debug_mask(rdr, D_READER, "connection closed");
+					rdr_log_dbg(rdr, D_READER, "connection closed");
 				}
 				if(cl2->pfd && pfd[i].fd == cl2->pfd && (pfd[i].revents & (POLLIN | POLLPRI)))
 				{

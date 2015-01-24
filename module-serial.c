@@ -364,7 +364,7 @@ static int32_t oscam_ser_send(struct s_client *client, const uchar *const buf, i
 	add_ms_to_timeb(&serialdata->tpe, (l * (serialdata->oscam_ser_delay + 1)));
 	n = oscam_ser_write(client, buf, l);
 	cs_ftime(&serialdata->tpe);
-	cs_ddump_mask(D_CLIENT, buf, l, "send %d of %d bytes to %s in %"PRId64" ms", n, l, remote_txt(),
+	cs_log_dump_dbg(D_CLIENT, buf, l, "send %d of %d bytes to %s in %"PRId64" ms", n, l, remote_txt(),
 		comp_timeb(&serialdata->tpe, &serialdata->tps));
 	if(n != l)
 		{ cs_log("transmit error. send %d of %d bytes only !", n, l); }
@@ -584,7 +584,7 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
 				int32_t all = n + r;
 				if(!oscam_ser_selrec(buf, r, l, &n))
 				{
-					cs_debug_mask(D_CLIENT, "not all data received, waiting another 50 ms");
+					cs_log_dbg(D_CLIENT, "not all data received, waiting another 50 ms");
 					add_ms_to_timeb(&serialdata->tpe, 50);
 					if(!oscam_ser_selrec(buf, all - n, l, &n))
 						{ p = (-1); }
@@ -670,7 +670,7 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
 		serialdata->serial_errors++;
 	}
 	cs_ftime(&serialdata->tpe);
-	cs_ddump_mask(D_CLIENT, buf, n, "received %d bytes from %s in %"PRId64" ms", n, remote_txt(), comp_timeb(&serialdata->tpe, &serialdata->tps));
+	cs_log_dump_dbg(D_CLIENT, buf, n, "received %d bytes from %s in %"PRId64" ms", n, remote_txt(), comp_timeb(&serialdata->tpe, &serialdata->tps));
 	client->last = serialdata->tpe.time;
 	switch(p)
 	{
@@ -692,7 +692,7 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
 		}
 		break;
 	case(-2):
-		cs_debug_mask(D_CLIENT, "unknown request or garbage");
+		cs_log_dbg(D_CLIENT, "unknown request or garbage");
 		break;
 	}
 	xbuf[0] = (uchar)((job << 4) | p);
@@ -926,7 +926,7 @@ static int32_t oscam_ser_check_ecm(ECM_REQUEST *er, uchar *buf, int32_t l)
 		for(i = 0; (i < 8) && (serialdata->sssp_tab[i].pid != er->pid); i++) { ; }
 		if(i >= serialdata->sssp_num)
 		{
-			cs_debug_mask(D_CLIENT, "illegal request, unknown pid=%04X", er->pid);
+			cs_log_dbg(D_CLIENT, "illegal request, unknown pid=%04X", er->pid);
 			return (2);
 		}
 		er->ecmlen = l - 5;

@@ -335,7 +335,7 @@ static int32_t griffin_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 		break;
 	default:
 		ep->type = UNKNOWN;
-		rdr_debug_mask(rdr, D_EMM, "UNKNOWN EMM TYPE:%02X SA:%02X %02X %02X %02X",
+		rdr_log_dbg(rdr, D_EMM, "UNKNOWN EMM TYPE:%02X SA:%02X %02X %02X %02X",
 					   ep->emm[0],
 					   ep->emm[3], ep->emm[4], ep->emm[5], ep->emm[6]);
 	}

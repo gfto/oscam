@@ -24,7 +24,7 @@ int32_t check_sct_len(const uchar *data, int32_t off)
 	int32_t len = SCT_LEN(data);
 	if(len + off > MAX_LEN)
 	{
-		cs_debug_mask(D_TRACE | D_READER, "check_sct_len(): smartcard section too long %d > %d", len, MAX_LEN - off);
+		cs_log_dbg(D_TRACE | D_READER, "check_sct_len(): smartcard section too long %d > %d", len, MAX_LEN - off);
 		len = -1;
 	}
 	return len;
@@ -44,7 +44,7 @@ int32_t reader_cmd2icc(struct s_reader *reader, const uchar *buf, const int32_t 
 {
 	int32_t rc;
 	*p_cta_lr = CTA_RES_LEN - 1; //FIXME not sure whether this one is necessary
-	rdr_ddump_mask(reader, D_READER, buf, l, "write to cardreader");
+	rdr_log_dump_dbg(reader, D_READER, buf, l, "write to cardreader");
 	rc = ICC_Async_CardWrite(reader, (uchar *)buf, (uint16_t)l, cta_res, p_cta_lr);
 	return rc;
 }
@@ -240,7 +240,7 @@ int32_t cardreader_do_checkhealth(struct s_reader *reader)
 	}
 	else
 	{
-		rdr_debug_mask(reader, D_READER, "%s: !reader_card_inserted", __func__);
+		rdr_log_dbg(reader, D_READER, "%s: !reader_card_inserted", __func__);
 		if(reader->card_status == CARD_INSERTED || reader->card_status == CARD_NEED_INIT)
 		{
 			rdr_log(reader, "card ejected");
@@ -255,7 +255,7 @@ int32_t cardreader_do_checkhealth(struct s_reader *reader)
 		}
 		reader->card_status = NO_CARD;
 	}
-	rdr_debug_mask(reader, D_READER, "%s: reader->card_status = %d, ret = %d", __func__,
+	rdr_log_dbg(reader, D_READER, "%s: reader->card_status = %d, ret = %d", __func__,
 				   reader->card_status, reader->card_status == CARD_INSERTED);
 	return reader->card_status == CARD_INSERTED;
 }
@@ -313,7 +313,7 @@ bool cardreader_init(struct s_reader *reader)
 		else
 		{
 			if ((reader->typ == R_SMART) || (!strcasecmp(reader->crdr.desc, "smargo")) ){
-				rdr_debug_mask(reader, D_IFD, "clocking for smartreader with smartreader or smargo protocol");
+				rdr_log_dbg(reader, D_IFD, "clocking for smartreader with smartreader or smargo protocol");
 				if (reader->cardmhz >= 2000) reader->cardmhz =  369; else
 				if (reader->cardmhz >= 1600) reader->cardmhz = 1600; else
 				if (reader->cardmhz >= 1200) reader->cardmhz = 1200; else
@@ -386,7 +386,7 @@ int32_t cardreader_do_ecm(struct s_reader *reader, ECM_REQUEST *er, struct s_ecm
 	int32_t rc = -1;
 	if((rc = cardreader_do_checkhealth(reader)))
 	{
-		rdr_debug_mask(reader, D_READER, "%s: cardreader_do_checkhealth returned rc=%d", __func__, rc);
+		rdr_log_dbg(reader, D_READER, "%s: cardreader_do_checkhealth returned rc=%d", __func__, rc);
 		struct s_client *cl = reader->client;
 		if(cl)
 		{
@@ -398,12 +398,12 @@ int32_t cardreader_do_ecm(struct s_reader *reader, ECM_REQUEST *er, struct s_ecm
 		if(reader->csystem.active && reader->csystem.do_ecm)
 		{
 			rc = reader->csystem.do_ecm(reader, er, ea);
-			rdr_debug_mask(reader, D_READER, "%s: after csystem.do_ecm rc=%d", __func__, rc);
+			rdr_log_dbg(reader, D_READER, "%s: after csystem.do_ecm rc=%d", __func__, rc);
 		}
 		else
 			{ rc = 0; }
 	}
-	rdr_debug_mask(reader, D_READER, "%s: ret rc=%d", __func__, rc);
+	rdr_log_dbg(reader, D_READER, "%s: ret rc=%d", __func__, rc);
 	return (rc);
 }
 
@@ -433,7 +433,7 @@ int32_t cardreader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_REQUEST *er)
 {
 
-	cs_ddump_mask(D_ATR, er->ecm, er->ecmlen, "ecm:");
+	cs_log_dump_dbg(D_ATR, er->ecm, er->ecmlen, "ecm:");
 
 	struct timeb tps, tpe;
 	struct s_ecm_answer ea;
@@ -443,7 +443,7 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 	int32_t rc = cardreader_do_ecm(reader, er, &ea);
 	cs_ftime(&tpe);
 	
-	rdr_debug_mask(reader, D_READER, "%s: cardreader_do_ecm returned rc=%d (ERROR=%d)", __func__, rc, ERROR);
+	rdr_log_dbg(reader, D_READER, "%s: cardreader_do_ecm returned rc=%d (ERROR=%d)", __func__, rc, ERROR);
 
 	ea.rc = E_FOUND; //default assume found
 	ea.rcEx = 0; //no special flag
@@ -451,7 +451,7 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 	if(rc == ERROR)
 	{
 		char buf[32];
-		rdr_debug_mask(reader, D_READER, "Error processing ecm for caid %04X, srvid %04X, servicename: %s",
+		rdr_log_dbg(reader, D_READER, "Error processing ecm for caid %04X, srvid %04X, servicename: %s",
 					   er->caid, er->srvid, get_servicename(cl, er->srvid, er->caid, buf));
 		ea.rc = E_NOTFOUND;
 		ea.rcEx = 0;
@@ -461,7 +461,7 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 	if(rc == E_CORRUPT)
 	{
 		char buf[32];
-		rdr_debug_mask(reader, D_READER, "Error processing ecm for caid %04X, srvid %04X, servicename: %s",
+		rdr_log_dbg(reader, D_READER, "Error processing ecm for caid %04X, srvid %04X, servicename: %s",
 					   er->caid, er->srvid, get_servicename(cl, er->srvid, er->caid, buf));
 		ea.rc = E_NOTFOUND;
 		ea.rcEx = E2_WRONG_CHKSUM; //flag it as wrong checksum
@@ -474,7 +474,7 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 	char ecmd5[17 * 3];
 	cs_hexdump(0, er->ecmd5, 16, ecmd5, sizeof(ecmd5));
 
-	rdr_debug_mask(reader, D_READER, "ecm hash: %s real time: %"PRId64" ms", ecmd5, comp_timeb(&tpe, &tps));
+	rdr_log_dbg(reader, D_READER, "ecm hash: %s real time: %"PRId64" ms", ecmd5, comp_timeb(&tpe, &tps));
 	
 	reader_post_process(reader);
 }

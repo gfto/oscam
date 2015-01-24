@@ -99,7 +99,7 @@ static int32_t do_cmd(struct s_reader *reader, unsigned char cmd, int32_t ilen, 
 	msg[dlen + 7] = rlen;
 	if(dlen < 0)
 	{
-		rdr_debug_mask(reader, D_READER, "invalid data length encountered");
+		rdr_log_dbg(reader, D_READER, "invalid data length encountered");
 		return ERROR;
 	}
 	if(csystem_data->is_pure_nagra == 1)
@@ -111,12 +111,12 @@ static int32_t do_cmd(struct s_reader *reader, unsigned char cmd, int32_t ilen, 
 		cs_sleepms(5);
 		if(cta_res[0] != res)
 		{
-			rdr_debug_mask(reader, D_READER, "result not expected (%02x != %02x)", cta_res[0], res);
+			rdr_log_dbg(reader, D_READER, "result not expected (%02x != %02x)", cta_res[0], res);
 			return ERROR;
 		}
 		if((*p_cta_lr - 2) != rlen)
 		{
-			rdr_debug_mask(reader, D_READER, "result length expected (%d != %d)", (*p_cta_lr - 2), rlen);
+			rdr_log_dbg(reader, D_READER, "result length expected (%d != %d)", (*p_cta_lr - 2), rlen);
 			return ERROR;
 		}
 		return *p_cta_lr;
@@ -166,11 +166,11 @@ static int32_t CamStateRequest(struct s_reader *reader)
 	if(do_cmd(reader, 0xC0, 0x02, 0xB0, 0x06, NULL, cta_res, &cta_lr))
 	{
 		memcpy(csystem_data->cam_state, cta_res + 3, 3);
-		rdr_debug_mask(reader, D_READER, "Camstate: %s", cs_hexdump(1, csystem_data->cam_state, 3, tmp_dbg, sizeof(tmp_dbg)));
+		rdr_log_dbg(reader, D_READER, "Camstate: %s", cs_hexdump(1, csystem_data->cam_state, 3, tmp_dbg, sizeof(tmp_dbg)));
 	}
 	else
 	{
-		rdr_debug_mask(reader, D_READER, "CamStateRequest failed");
+		rdr_log_dbg(reader, D_READER, "CamStateRequest failed");
 		return ERROR;
 	}
 	return OK;
@@ -181,7 +181,7 @@ static void DateTimeCMD(struct s_reader *reader)
 	def_resp;
 	if(!do_cmd(reader, 0xC8, 0x02, 0xB8, 0x06, NULL, cta_res, &cta_lr))
 	{
-		rdr_debug_mask(reader, D_READER, "DateTimeCMD failed!");
+		rdr_log_dbg(reader, D_READER, "DateTimeCMD failed!");
 	}
 
 }
@@ -204,7 +204,7 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader *reader)
 
 	if(!do_cmd(reader, 0xd1, 0x02, 0x51, 0xd2, NULL, cta_res, &cta_lr))
 	{
-		rdr_debug_mask(reader, D_READER, "CMD$D1 failed");
+		rdr_log_dbg(reader, D_READER, "CMD$D1 failed");
 		return ERROR;
 	}
 
@@ -225,21 +225,21 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader *reader)
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 
-	rdr_debug_mask(reader, D_READER, "---------- SIG CHECK ---------------------");
+	rdr_log_dbg(reader, D_READER, "---------- SIG CHECK ---------------------");
 	memset(tmp, 0, 104);
 	memcpy(tmp + 4, parte_fija + 11, 100);
 	memset(idea_key, 0x37, 16);
 	Signature(sign1, idea_key, tmp, 104);
-	rdr_debug_mask(reader, D_READER, "sign1: %s", cs_hexdump(0, sign1, 8, tmp2, sizeof(tmp2)));
-	rdr_debug_mask(reader, D_READER, "sign2: %s", cs_hexdump(0, parte_fija + 111, 8, tmp2, sizeof(tmp2)));
+	rdr_log_dbg(reader, D_READER, "sign1: %s", cs_hexdump(0, sign1, 8, tmp2, sizeof(tmp2)));
+	rdr_log_dbg(reader, D_READER, "sign2: %s", cs_hexdump(0, parte_fija + 111, 8, tmp2, sizeof(tmp2)));
 	if(!memcmp(parte_fija + 111, sign1, 8) == 0)
 	{
-		rdr_debug_mask(reader, D_READER, "signature check nok");
-		rdr_debug_mask(reader, D_READER, "------------------------------------------");
+		rdr_log_dbg(reader, D_READER, "signature check nok");
+		rdr_log_dbg(reader, D_READER, "------------------------------------------");
 		return ERROR;
 	}
-	rdr_debug_mask(reader, D_READER, "signature check ok");
-	rdr_debug_mask(reader, D_READER, "------------------------------------------");
+	rdr_log_dbg(reader, D_READER, "signature check ok");
+	rdr_log_dbg(reader, D_READER, "------------------------------------------");
 
 	memcpy(reader->hexserial + 2, parte_fija + 15, 4);
 	memcpy(reader->sa[0], parte_fija + 15, 2);
@@ -306,7 +306,7 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader *reader)
 
 	if(!do_cmd(reader, 0xd2, 0x5a, 0x52, 0x03, d2_data, cta_res, &cta_lr))
 	{
-		rdr_debug_mask(reader, D_READER, "CMD$D2 failed");
+		rdr_log_dbg(reader, D_READER, "CMD$D2 failed");
 		return ERROR;
 	}
 	if(cta_res[2] == 0x00)
@@ -315,7 +315,7 @@ static int32_t NegotiateSessionKey_Tiger(struct s_reader *reader)
 		IDEA_KEY_SCHEDULE ks;
 		idea_set_encrypt_key(csystem_data->sessi, &ks);
 		idea_set_decrypt_key(&ks, &csystem_data->ksSession);
-		rdr_debug_mask(reader, D_READER, "Tiger session key negotiated");
+		rdr_log_dbg(reader, D_READER, "Tiger session key negotiated");
 		return OK;
 	}
 	rdr_log(reader, "Negotiate sessionkey was not successful! Please check tivusat rsa key");
@@ -350,7 +350,7 @@ static int32_t NegotiateSessionKey(struct s_reader *reader)
 	{
 		if(!NegotiateSessionKey_Tiger(reader))
 		{
-			rdr_debug_mask(reader, D_READER, "NegotiateSessionKey_Tiger failed");
+			rdr_log_dbg(reader, D_READER, "NegotiateSessionKey_Tiger failed");
 			return ERROR;
 		}
 		return OK;
@@ -358,14 +358,14 @@ static int32_t NegotiateSessionKey(struct s_reader *reader)
 
 	if(!csystem_data->has_dt08)  // if we have no valid dt08 calc then we use rsa from config and hexserial for calc of sessionkey
 	{
-		rdr_debug_mask(reader, D_READER, "No valid DT08 calc using rsa from config and serial from card");
+		rdr_log_dbg(reader, D_READER, "No valid DT08 calc using rsa from config and serial from card");
 		memcpy(csystem_data->plainDT08RSA, reader->rsa_mod, 64);
 		memcpy(csystem_data->signature, reader->boxkey, 8);
 	}
 
 	if((csystem_data->is_n3_na) && (!do_cmd(reader, 0x29, 0x02, 0xA9, 0x04, NULL, cta_res, &cta_lr)))
 	{
-		rdr_debug_mask(reader, D_READER, "Nagra3: CMD$29 failed");
+		rdr_log_dbg(reader, D_READER, "Nagra3: CMD$29 failed");
 		return ERROR;
 	}
 
@@ -376,13 +376,13 @@ static int32_t NegotiateSessionKey(struct s_reader *reader)
 	{
 		if(!do_cmd(reader, 0x2a, 0x02, 0xaa, 0x42, NULL, cta_res, &cta_lr))
 		{
-			rdr_debug_mask(reader, D_READER, "CMD$2A failed");
+			rdr_log_dbg(reader, D_READER, "CMD$2A failed");
 			return ERROR;
 		}
 	}
 	else if(!do_cmd(reader, 0x26, 0x07, 0xa6, 0x42, tmp, cta_res, &cta_lr))
 	{
-		rdr_debug_mask(reader, D_READER, "CMD$26 failed");
+		rdr_log_dbg(reader, D_READER, "CMD$26 failed");
 		return ERROR;
 	}
 
@@ -443,23 +443,23 @@ static int32_t NegotiateSessionKey(struct s_reader *reader)
 	{
 		if(!do_cmd(reader, 0x2b, 0x42, 0xab, 0x02, cmd2b + 10, cta_res, &cta_lr))
 		{
-			rdr_debug_mask(reader, D_READER, "CMD$2B failed");
+			rdr_log_dbg(reader, D_READER, "CMD$2B failed");
 			return ERROR;
 		}
 	}
 	else if(!do_cmd(reader, 0x27, 0x47, 0xa7, 0x02, cmd2b + 10, cta_res, &cta_lr))
 	{
-		rdr_debug_mask(reader, D_READER, "CMD$27 failed");
+		rdr_log_dbg(reader, D_READER, "CMD$27 failed");
 		return ERROR;
 	}
 
-	rdr_debug_mask(reader, D_READER, "session key negotiated");
+	rdr_log_dbg(reader, D_READER, "session key negotiated");
 
 	DateTimeCMD(reader);
 
 	if(!CamStateRequest(reader))
 	{
-		rdr_debug_mask(reader, D_READER, "CamStateRequest failed");
+		rdr_log_dbg(reader, D_READER, "CamStateRequest failed");
 		return ERROR;
 	}
 	if RENEW_SESSIONKEY()
@@ -494,7 +494,7 @@ static void decryptDT08(struct s_reader *reader, unsigned char *cta_res)
 	ctx = BN_CTX_new();
 	if(ctx == NULL)
 	{
-		rdr_debug_mask(reader, D_READER, "RSA Error in dt08 decrypt");
+		rdr_log_dbg(reader, D_READER, "RSA Error in dt08 decrypt");
 	}
 	ReverseMem(static_dt08 + 1, 64);
 	BN_bin2bn(reader->rsa_mod, 64, bn_mod);  // rsa modulus
@@ -533,7 +533,7 @@ static void decryptDT08(struct s_reader *reader, unsigned char *cta_res)
 	{
 		memcpy(camid, reader->hexserial + 2, 4);
 	}
-	rdr_debug_mask(reader, D_READER, "using camid %s for dt08 calc", cs_hexdump(1, camid, 4, tmp_dbg, sizeof(tmp_dbg)));
+	rdr_log_dbg(reader, D_READER, "using camid %s for dt08 calc", cs_hexdump(1, camid, 4, tmp_dbg, sizeof(tmp_dbg)));
 
 	// Calculate csystem_data->signature
 	memcpy(csystem_data->signature, static_dt08, 8);
@@ -545,12 +545,12 @@ static void decryptDT08(struct s_reader *reader, unsigned char *cta_res)
 	{
 		csystem_data->has_dt08 = 1;
 		memcpy(csystem_data->plainDT08RSA, static_dt08 + 8, 64);
-		rdr_debug_mask(reader, D_READER, "DT08 signature check ok");
+		rdr_log_dbg(reader, D_READER, "DT08 signature check ok");
 	}
 	else
 	{
 		csystem_data->has_dt08 = 0;
-		rdr_debug_mask(reader, D_READER, "DT08 signature check nok");
+		rdr_log_dbg(reader, D_READER, "DT08 signature check nok");
 	}
 
 	BN_free(bn_mod);
@@ -596,7 +596,7 @@ static int32_t ParseDataType(struct s_reader *reader, unsigned char dt, unsigned
 		reader->prid[0][3] = cta_res[8];
 		if(((cta_res[7] == 0x34) && (cta_res[8] == 0x11)) || ((cta_res[7] == 0x04) && (cta_res[8] == 0x01)))   //provider 3411, 0401 needs cw swap
 		{
-			rdr_debug_mask(reader, D_READER, "detect provider with swap cw!");
+			rdr_log_dbg(reader, D_READER, "detect provider with swap cw!");
 			csystem_data->swapCW = 1;
 		}
 
@@ -655,7 +655,7 @@ static int32_t GetDataType(struct s_reader *reader, unsigned char dt, int32_t le
 	{
 		if(!do_cmd(reader, 0x22, 0x03, 0xA2, len, &dt, cta_res, &cta_lr))
 		{
-			rdr_debug_mask(reader, D_READER, "failed to get datatype %02X", dt);
+			rdr_log_dbg(reader, D_READER, "failed to get datatype %02X", dt);
 			result = ERROR;
 			break;
 		}
@@ -737,7 +737,7 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 		csystem_data->is_pure_nagra = is_pure_nagra;
 		if(!do_cmd(reader, 0x10, 0x02, 0x90, 0x11, 0, cta_res, &cta_lr))
 		{
-			rdr_debug_mask(reader, D_READER, "get rom version failed");
+			rdr_log_dbg(reader, D_READER, "get rom version failed");
 			return ERROR;
 		}
 		memcpy(reader->rom, cta_res + 2, 15);
@@ -800,30 +800,30 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 		CamStateRequest(reader);
 		if(!do_cmd(reader, 0x12, 0x02, 0x92, 0x06, 0, cta_res, &cta_lr))
 		{
-			rdr_debug_mask(reader, D_READER, "get serial failed");
+			rdr_log_dbg(reader, D_READER, "get serial failed");
 			return ERROR;
 		}
 		memcpy(reader->hexserial + 2, cta_res + 2, 4);
 		memcpy(reader->sa[0], cta_res + 2, 2);
 
 		if(!GetDataType(reader, DT01, 0x0E)) { return ERROR; }
-		rdr_debug_mask(reader, D_READER, "DT01 DONE");
+		rdr_log_dbg(reader, D_READER, "DT01 DONE");
 		CamStateRequest(reader);
 		if(!GetDataType(reader, IRDINFO, 0x39)) { return ERROR; }
-		rdr_debug_mask(reader, D_READER, "IRDINFO DONE");
+		rdr_log_dbg(reader, D_READER, "IRDINFO DONE");
 		CamStateRequest(reader);
 		if(!GetDataType(reader, CAMDATA, 0x55)) { return ERROR; }
-		rdr_debug_mask(reader, D_READER, "CAMDATA Done");
+		rdr_log_dbg(reader, D_READER, "CAMDATA Done");
 		if(!GetDataType(reader, 0x04, 0x44)) { return ERROR; }
-		rdr_debug_mask(reader, D_READER, "DT04 DONE");
+		rdr_log_dbg(reader, D_READER, "DT04 DONE");
 		CamStateRequest(reader);
 		if(!GetDataType(reader, DT06, 0x16)) { return ERROR; }
-		rdr_debug_mask(reader, D_READER, "DT06 DONE");
+		rdr_log_dbg(reader, D_READER, "DT06 DONE");
 		CamStateRequest(reader);
 	}
 	if(!NegotiateSessionKey(reader))
 	{
-		rdr_debug_mask(reader, D_READER, "NegotiateSessionKey failed");
+		rdr_log_dbg(reader, D_READER, "NegotiateSessionKey failed");
 		return ERROR;
 	}
 	rdr_log(reader, "ready for requests");
@@ -1063,15 +1063,15 @@ static int32_t nagra2_card_info(struct s_reader *reader)
 		CamStateRequest(reader);
 		if(!do_cmd(reader, 0x12, 0x02, 0x92, 0x06, 0, cta_res, &cta_lr))
 		{
-			rdr_debug_mask(reader, D_READER, "get serial failed");
+			rdr_log_dbg(reader, D_READER, "get serial failed");
 			return ERROR;
 		}
 		memcpy(reader->hexserial + 2, cta_res + 2, 4);
-		rdr_debug_mask_sensitive(reader, D_READER, "SER:  {%s}", cs_hexdump(1, reader->hexserial + 2, 4, tmp_dbg, sizeof(tmp_dbg)));
+		rdr_log_dbg_sensitive(reader, D_READER, "SER:  {%s}", cs_hexdump(1, reader->hexserial + 2, 4, tmp_dbg, sizeof(tmp_dbg)));
 		memcpy(reader->sa[0], cta_res + 2, 2);
 		reader->nprov = 1;
 		if(!GetDataType(reader, IRDINFO, 0x39)) { return ERROR; }
-		rdr_debug_mask(reader, D_READER, "IRDINFO DONE");
+		rdr_log_dbg(reader, D_READER, "IRDINFO DONE");
 		CamStateRequest(reader);
 
 		if(!memcmp(reader->rom + 5, "181", 3) == 0)  //dt05 is not supported by rom181
@@ -1114,10 +1114,10 @@ static int32_t nagra2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, str
 			while(!do_cmd(reader, er->ecm[3] + 1, er->ecm[4] + 5 + 2, 0x88, 0x04, ecm_pkt, cta_res, &cta_lr))
 			{
 				if(retry == 0)
-					{ rdr_debug_mask(reader, D_READER, "nagra2_do_ecm (N3_NA) failed, retry"); }
+					{ rdr_log_dbg(reader, D_READER, "nagra2_do_ecm (N3_NA) failed, retry"); }
 				else
 				{
-					rdr_debug_mask(reader, D_READER, "nagra2_do_ecm (N3_NA) failed, retry failed!");
+					rdr_log_dbg(reader, D_READER, "nagra2_do_ecm (N3_NA) failed, retry failed!");
 					return ERROR;
 				}
 				retry++;
@@ -1143,18 +1143,18 @@ static int32_t nagra2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, str
 					if(matchfound != 5)
 					{
 						reader->ecmcommand = 0; // reset ecm filter, start a new auto filter attempt
-						rdr_debug_mask(reader, D_READER, "Auto ecm command filter caid %04X failed!", reader->caid);
+						rdr_log_dbg(reader, D_READER, "Auto ecm command filter caid %04X failed!", reader->caid);
 					}
 					else
 					{
 						reader->ecmcommandcache[0] = er->ecm[3]; // Passed the filter, store the normal ecm command for this reader!
-						rdr_debug_mask(reader, D_READER, "Auto ecm command filter caid %04X set to command %02X", reader->caid, er->ecm[3]);
+						rdr_log_dbg(reader, D_READER, "Auto ecm command filter caid %04X set to command %02X", reader->caid, er->ecm[3]);
 					}
 				}
 			}
 			else if(reader->ecmcommandcache[0] != er->ecm[3])
 			{
-				rdr_debug_mask(reader, D_READER, "Warning: received an abnominal ecm command %02X for caid: %04X, ignoring!", er->ecm[3], reader->caid);
+				rdr_log_dbg(reader, D_READER, "Warning: received an abnominal ecm command %02X for caid: %04X, ignoring!", er->ecm[3], reader->caid);
 				memset(ea, 0, sizeof(struct s_ecm_answer)); // give it back 00000000 to not disturb the loadbalancer for valid ecm requests on this channel.
 				return OK;
 			}
@@ -1162,10 +1162,10 @@ static int32_t nagra2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, str
 			while(!do_cmd(reader, er->ecm[3], er->ecm[4] + 2, 0x87, 0x02, er->ecm + 3 + 2, cta_res, &cta_lr))
 			{
 				if(retry == 0)
-					{ rdr_debug_mask(reader, D_READER, "nagra2_do_ecm failed, retry"); }
+					{ rdr_log_dbg(reader, D_READER, "nagra2_do_ecm failed, retry"); }
 				else
 				{
-					rdr_debug_mask(reader, D_READER, "nagra2_do_ecm failed, retry failed!");
+					rdr_log_dbg(reader, D_READER, "nagra2_do_ecm failed, retry failed!");
 					return ERROR;
 				}
 				retry++;
@@ -1177,7 +1177,7 @@ static int32_t nagra2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, str
 		retry = 0;
 		while(!CamStateRequest(reader) && retry < 3)
 		{
-			rdr_debug_mask(reader, D_READER, "CamStateRequest failed, try: %d", retry);
+			rdr_log_dbg(reader, D_READER, "CamStateRequest failed, try: %d", retry);
 			retry++;
 			cs_sleepms(10);
 		}
@@ -1190,7 +1190,7 @@ static int32_t nagra2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, str
 			idea_cbc_encrypt(&cta_res[4], ea->cw + 8, 8, &csystem_data->ksSession, v, IDEA_DECRYPT);
 			if(csystem_data->swapCW == 1)
 			{
-				rdr_debug_mask(reader, D_READER, "swap cws");
+				rdr_log_dbg(reader, D_READER, "swap cws");
 				unsigned char tt[8];
 				memcpy(&tt[0], &ea->cw[0], 8);
 				memcpy(&ea->cw[0], &ea->cw[8], 8);
@@ -1222,7 +1222,7 @@ static int32_t nagra2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, str
 				idea_cbc_encrypt(&cta_res[6], ea->cw + 8, 8, &csystem_data->ksSession, v, IDEA_DECRYPT);
 				return OK;
 			}
-			rdr_debug_mask(reader, D_READER, "can't decode ecm");
+			rdr_log_dbg(reader, D_READER, "can't decode ecm");
 			return ERROR;
 		}
 	}
@@ -1313,7 +1313,7 @@ static int32_t nagra2_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	{
 		if(!do_cmd(reader, ep->emm[8], ep->emm[9] + 2, 0x84, 0x02, ep->emm + 8 + 2, cta_res, &cta_lr))
 		{
-			rdr_debug_mask(reader, D_READER, "nagra2_do_emm failed");
+			rdr_log_dbg(reader, D_READER, "nagra2_do_emm failed");
 			return ERROR;
 		}
 		// for slow t14 nagra cards, we must do additional timeout
@@ -1329,7 +1329,7 @@ static int32_t nagra2_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		//check EMM prov id
 		if(memcmp(&reader->prid[0][2], ep->emm + 10, 2))
 		{ 
-			rdr_debug_mask(reader, D_READER, "EMM skipped since provider doesnt match!");
+			rdr_log_dbg(reader, D_READER, "EMM skipped since provider doesnt match!");
 			return SKIPPED;
 		}
 		//   emm_data: 82 70 8E 00 00 00 00 00 D3 87 8D 11 C0 F4 B1 27 2C 3D 25 94 ...
@@ -1338,7 +1338,7 @@ static int32_t nagra2_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		memcpy(&emm_trim[5], ep->emm + 3 + 5 + 2 + 2, ep->emm[9] + 2);
 		if(!do_cmd(reader, ep->emm[8], ep->emm[9] + 5, 0x53, 0x16, emm_trim, cta_res, &cta_lr))
 		{
-			rdr_debug_mask(reader, D_READER, "nagra2_do_emm failed");
+			rdr_log_dbg(reader, D_READER, "nagra2_do_emm failed");
 			return ERROR;
 		}
 		cs_sleepms(300);

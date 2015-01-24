@@ -24,14 +24,14 @@ static int32_t _GetStatus(struct s_reader *reader)
 
 static int32_t Azbox_Reader_Init(struct s_reader *reader)
 {
-        rdr_debug_mask(reader, D_DEVICE, "Init");
+        rdr_log_dbg(reader, D_DEVICE, "Init");
 
 	if((reader->handle = openxcas_get_smartcard_device(0)) < 0)
 	{
-		rdr_debug_mask(reader, D_DEVICE, "Init reader failed");
+		rdr_log_dbg(reader, D_DEVICE, "Init reader failed");
 		return 0;
 	}
-	rdr_debug_mask(reader, D_DEVICE, "Init reader %d succeeded", reader->handle);
+	rdr_log_dbg(reader, D_DEVICE, "Init reader %d succeeded", reader->handle);
 	return OK;
 }
 
@@ -52,13 +52,13 @@ static int32_t Azbox_GetStatus(struct s_reader *reader, int32_t *status)
         else
                     { *status = 1; }
 
-        //rdr_debug_mask(reader, D_IFD, "openxcas sc: status = %d", *status);
+        //rdr_log_dbg(reader, D_IFD, "openxcas sc: status = %d", *status);
         return OK;
 }
 
 static int32_t Azbox_Reset(struct s_reader *reader, ATR *atr)
 {
-	rdr_debug_mask(reader, D_IFD, "Azbox resetting card");
+	rdr_log_dbg(reader, D_IFD, "Azbox resetting card");
         unsigned char buf[ATR_MAX_SIZE];
         int32_t card_status;
 
@@ -83,7 +83,7 @@ static int32_t Azbox_Reset(struct s_reader *reader, ATR *atr)
         n = ioctl(reader->handle, SCARD_IOC_CHECKCARD, &buf);
         //cs_sleepms(50);
 
-        rdr_debug_mask(reader, D_IFD, "Waiting for card ATR Response...");
+        rdr_log_dbg(reader, D_IFD, "Waiting for card ATR Response...");
 
         int32_t ret = 0;
         while(ret);
@@ -97,16 +97,16 @@ static int32_t Azbox_Reset(struct s_reader *reader, ATR *atr)
 	int32_t DI = (buf[n] & 0x0F);
 	D = atr_d_table[DI];
 
-        rdr_debug_mask(reader, D_ATR, "Advertised max cardfrequency is %.2f (Fmax), frequency divider is %d", fmax / 1000000L, Fi);
+        rdr_log_dbg(reader, D_ATR, "Advertised max cardfrequency is %.2f (Fmax), frequency divider is %d", fmax / 1000000L, Fi);
 
         if(D == 0) { D = 1;}
-	rdr_debug_mask(reader, D_ATR, "Bitrate adjustment is %d (D)", D);
+	rdr_log_dbg(reader, D_ATR, "Bitrate adjustment is %d (D)", D);
 
-	rdr_debug_mask(reader, D_ATR, "Work ETU = %.2f us assuming card runs at %.2f Mhz", (double)((double)(1 / (double)D) * ((double)Fi / (double)((double)frequency / 1000000))), (float) frequency / 1000000);
+	rdr_log_dbg(reader, D_ATR, "Work ETU = %.2f us assuming card runs at %.2f Mhz", (double)((double)(1 / (double)D) * ((double)Fi / (double)((double)frequency / 1000000))), (float) frequency / 1000000);
 
-        rdr_debug_mask(reader, D_ATR, "Initial ETU = %.2f us", (double)372 / (double)frequency * 1000000);
+        rdr_log_dbg(reader, D_ATR, "Initial ETU = %.2f us", (double)372 / (double)frequency * 1000000);
 
-        rdr_debug_mask(reader, D_IFD, "ATR Fsmax is %.2f MHz, Work ETU is %.2f us, clocking card to %.2f MHz",
+        rdr_log_dbg(reader, D_IFD, "ATR Fsmax is %.2f MHz, Work ETU is %.2f us, clocking card to %.2f MHz",
 			                fmax / 1000000, (double)((double)(1 / (double)D) * ((double)Fi / (double)((double)frequency / 1000000))), (float) frequency / 1000000);
 
         ret = ATR_InitFromArray(atr, buf, n);
@@ -117,17 +117,17 @@ static int32_t Azbox_Reset(struct s_reader *reader, ATR *atr)
 		return ERROR;
 	}
 
-        rdr_debug_mask(reader, D_IFD, "Card activated");
+        rdr_log_dbg(reader, D_IFD, "Card activated");
 	return OK;
 }
 
 static int32_t Azbox_Reader_Close(struct s_reader *reader)
 {
-        rdr_debug_mask(reader, D_IFD, "Deactivating card");
+        rdr_log_dbg(reader, D_IFD, "Deactivating card");
 
         if((reader->handle = openxcas_release_smartcard_device(0)) > 0)
         {
-                    rdr_debug_mask(reader, D_DEVICE, "Closing reader %d", reader->handle);
+                    rdr_log_dbg(reader, D_DEVICE, "Closing reader %d", reader->handle);
                     return 0;
         }
         return OK;

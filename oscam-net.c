@@ -447,7 +447,7 @@ int32_t accept_connection(struct s_module *module, int8_t module_idx, int8_t por
 				return 0;
 			}
 
-			cs_debug_mask(D_TRACE, "got %d bytes on port %d from ip %s:%d client %s",
+			cs_log_dbg(D_TRACE, "got %d bytes on port %d from ip %s:%d client %s",
 						  n, port->s_port,
 						  cs_inet_ntoa(SIN_GET_ADDR(cad)), SIN_GET_PORT(cad),
 						  username(cl));
@@ -530,7 +530,7 @@ int32_t start_listener(struct s_module *module, struct s_port *port)
 	ptxt[0][0] = ptxt[1][0] = '\0';
 	if(!port->s_port)
 	{
-		cs_debug_mask(D_TRACE, "%s: disabled", module->desc);
+		cs_log_dbg(D_TRACE, "%s: disabled", module->desc);
 		return 0;
 	}
 	is_udp = (module->type == MOD_CONN_UDP);

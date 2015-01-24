@@ -303,7 +303,7 @@ static void mca_demux_convert(DEMUXTYPE *demux_orig, DEMUXMATRIX *demux_matrix)
 
 static void mca_ecm_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t cipher_index, uint32_t caid, unsigned char *ecm_data, int32_t l, uint16_t pid)
 {
-	cs_debug_mask(D_DVBAPI, "ecm callback received");
+	cs_log_dbg(D_DVBAPI, "ecm callback received");
 
 	openxcas_stream_id = stream_id;
 	//openxcas_seq = seq;
@@ -347,7 +347,7 @@ static void mca_ecm_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t ci
 
 static void mca_ex_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t idx, uint32_t pid, unsigned char *ecm_data, int32_t l)
 {
-	cs_debug_mask(D_DVBAPI, "ex callback received");
+	cs_log_dbg(D_DVBAPI, "ex callback received");
 
 	openxcas_stream_id = stream_id;
 	openxcas_ecm_pid = pid;
@@ -370,7 +370,7 @@ static void mca_ex_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t idx
 	if(openxcas_stop_filter_ex(stream_id, seq, openxcas_filter_idx) < 0)
 		{ cs_log("unable to stop ex filter"); }
 	else
-		{ cs_debug_mask(D_DVBAPI, "ex filter stopped"); }
+		{ cs_log_dbg(D_DVBAPI, "ex filter stopped"); }
 
 
 
@@ -385,7 +385,7 @@ static void mca_ex_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t idx
 	if((openxcas_filter_idx = openxcas_start_filter_ex(stream_id, seq, openxcas_ecm_pid, mask, comp, (void *)azbox_openxcas_ex_callback)) < 0)
 		{ cs_log("unable to start ex filter"); }
 	else
-		{ cs_debug_mask(D_DVBAPI, "ex filter started, pid = %x", openxcas_ecm_pid); }
+		{ cs_log_dbg(D_DVBAPI, "ex filter started, pid = %x", openxcas_ecm_pid); }
 }
 
 static void *mca_main_thread(void *cli)
@@ -421,7 +421,7 @@ static void *mca_main_thread(void *cli)
 			switch(msg.cmd)
 			{
 			case OPENXCAS_SELECT_CHANNEL:
-				cs_debug_mask(D_DVBAPI, "OPENXCAS_SELECT_CHANNEL");
+				cs_log_dbg(D_DVBAPI, "OPENXCAS_SELECT_CHANNEL");
 
 				// parse channel info
 				struct stOpenXCASChannel chan;
@@ -435,19 +435,19 @@ static void *mca_main_thread(void *cli)
 				break;
 			case OPENXCAS_START_PMT_ECM:
 				//FIXME: Apparently this is what the original MCA-oscam does
-				cs_debug_mask(D_DVBAPI, "OPENXCAS_STOP_PMT_ECM");
+				cs_log_dbg(D_DVBAPI, "OPENXCAS_STOP_PMT_ECM");
 				memset(&demux, 0, sizeof(demux));
 				memset(&found, 0, sizeof(found));
 
-				cs_debug_mask(D_DVBAPI, "OPENXCAS_START_PMT_ECM");
+				cs_log_dbg(D_DVBAPI, "OPENXCAS_START_PMT_ECM");
 
 				// parse pmt
-				cs_ddump_mask(D_DVBAPI, msg.buf + 2, msg.buf_len - 2, "capmt:");
+				cs_log_dump_dbg(D_DVBAPI, msg.buf + 2, msg.buf_len - 2, "capmt:");
 				// For some reason the mca sometimes sends duplicate ECMpids,
 				// we remove them here so dvbapi will not try them twice.
 				int new_len = mca_capmt_remove_duplicates(msg.buf + 2, msg.buf_len - 2);
 				if(new_len < msg.buf_len - 2)
-					{ cs_ddump_mask(D_DVBAPI, msg.buf + 2, new_len, "capmt (duplicates removed):"); }
+					{ cs_log_dump_dbg(D_DVBAPI, msg.buf + 2, new_len, "capmt (duplicates removed):"); }
 				int demux_id = dvbapi_parse_capmt(msg.buf + 2, new_len, -1, NULL);
 
 
@@ -472,17 +472,17 @@ static void *mca_main_thread(void *cli)
 					{ cs_log("unable to add ecm filter"); }
 				else
 				{
-					cs_debug_mask(D_DVBAPI, "ecm filter added, pid = %x, caid = %x", openxcas_ecm_pid, 0);
-					cs_debug_mask(D_DVBAPI, "ecm filter started");
+					cs_log_dbg(D_DVBAPI, "ecm filter added, pid = %x, caid = %x", openxcas_ecm_pid, 0);
+					cs_log_dbg(D_DVBAPI, "ecm filter started");
 				}
 
 				//if (!openxcas_create_cipher_ex(msg.stream_id, openxcas_seq, 0, openxcas_ecm_pid, openxcas_video_pid, 0xffff, openxcas_audio_pid, 0xffff, 0xffff, 0xffff))
 				//  cs_log("failed to create cipher ex");
 				//else
-				cs_debug_mask(D_DVBAPI, "cipher created");
+				cs_log_dbg(D_DVBAPI, "cipher created");
 				break;
 			case OPENXCAS_STOP_PMT_ECM:
-				cs_debug_mask(D_DVBAPI, "OPENXCAS_STOP_PMT_ECM");
+				cs_log_dbg(D_DVBAPI, "OPENXCAS_STOP_PMT_ECM");
 				openxcas_stop_filter(msg.stream_id, OPENXCAS_FILTER_ECM);
 				openxcas_remove_filter(msg.stream_id, OPENXCAS_FILTER_ECM);
 				openxcas_stop_filter_ex(msg.stream_id, msg.sequence, openxcas_filter_idx);
@@ -491,28 +491,28 @@ static void *mca_main_thread(void *cli)
 				memset(&found, 0, sizeof(found));
 				break;
 			case OPENXCAS_ECM_CALLBACK:
-				cs_debug_mask(D_DVBAPI, "OPENXCAS_ECM_CALLBACK");
+				cs_log_dbg(D_DVBAPI, "OPENXCAS_ECM_CALLBACK");
 				memcpy(&data, msg.buf, msg.buf_len);
 				if(!openxcas_busy)
 					//openxcas_filter_callback(msg.stream_id, msg.sequence, OPENXCAS_FILTER_ECM, &data);
 					{ mca_ecm_callback(msg.stream_id, msg.sequence, data.cipher_index, data.ca_system_id, (unsigned char *)&data.buf, data.len, data.pid); }
 				break;
 			case OPENXCAS_PID_FILTER_CALLBACK:
-				cs_debug_mask(D_DVBAPI, "OPENXCAS_PID_FILTER_CALLBACK");
+				cs_log_dbg(D_DVBAPI, "OPENXCAS_PID_FILTER_CALLBACK");
 				memcpy(&data, msg.buf, msg.buf_len);
 				//openxcas_filter_callback_ex(msg.stream_id, msg.sequence, (struct stOpenXCAS_Data *)msg.buf);
 				mca_ex_callback(msg.stream_id, msg.sequence, data.cipher_index, data.pid, (unsigned char *)&data.buf, data.len);
 				break;
 			case OPENXCAS_QUIT:
-				cs_debug_mask(D_DVBAPI, "OPENXCAS_QUIT");
+				cs_log_dbg(D_DVBAPI, "OPENXCAS_QUIT");
 				mca_exit();
 				cs_log("exited");
 				return NULL;
 				break;
 			case OPENXCAS_UKNOWN_MSG:
 			default:
-				cs_debug_mask(D_DVBAPI, "OPENXCAS_UKNOWN_MSG (%d)", msg.cmd);
-				//cs_ddump_mask(D_DVBAPI, &msg, sizeof(msg), "msg dump:");
+				cs_log_dbg(D_DVBAPI, "OPENXCAS_UKNOWN_MSG (%d)", msg.cmd);
+				//cs_log_dump_dbg(D_DVBAPI, &msg, sizeof(msg), "msg dump:");
 				break;
 			}
 		}
@@ -523,7 +523,7 @@ static void *mca_main_thread(void *cli)
 
 void mca_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
-	cs_debug_mask(D_DVBAPI, "send_dcw");
+	cs_log_dbg(D_DVBAPI, "send_dcw");
 
 	delayer(er);
 
@@ -562,7 +562,7 @@ void mca_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 		if(er->rc >= E_NOTFOUND && !found[i])
 		{
-			cs_debug_mask(D_DVBAPI, "cw not found");
+			cs_log_dbg(D_DVBAPI, "cw not found");
 
 			if(demux[i].pidindex == -1)
 				{ dvbapi_try_next_caid(i, 0); }
@@ -584,8 +584,8 @@ void mca_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				{ cs_log("unable to add ecm filter (0)"); }
 			else
 			{
-				cs_debug_mask(D_DVBAPI, "ecm filter added, pid = %x, caid = %x", openxcas_ecm_pid, 0);
-				cs_debug_mask(D_DVBAPI, "ecm filter started");
+				cs_log_dbg(D_DVBAPI, "ecm filter added, pid = %x, caid = %x", openxcas_ecm_pid, 0);
+				cs_log_dbg(D_DVBAPI, "ecm filter started");
 			}
 
 			return;
@@ -609,7 +609,7 @@ void mca_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			if(mca_set_key(openxcas_cw) < 0)
 				{ cs_log("set cw failed"); }
 			else
-				{ cs_ddump_mask(D_DVBAPI, openxcas_cw, 16, "write cws to descrambler"); }
+				{ cs_log_dump_dbg(D_DVBAPI, openxcas_cw, 16, "write cws to descrambler"); }
 		}
 	}
 }

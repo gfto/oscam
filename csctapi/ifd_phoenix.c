@@ -37,7 +37,7 @@ static void set_gpio(struct s_reader *reader, int32_t level)
 		{ reader->gpio &= ~GPIO_PIN; }
 	ret |= write(reader->gpio_out, &reader->gpio, sizeof(reader->gpio));
 
-	rdr_debug_mask(reader, D_IFD, "%s level: %d ret: %d", __func__, level, ret);
+	rdr_log_dbg(reader, D_IFD, "%s level: %d ret: %d", __func__, level, ret);
 }
 
 static void set_gpio_input(struct s_reader *reader)
@@ -46,7 +46,7 @@ static void set_gpio_input(struct s_reader *reader)
 	ret |= read(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio));
 	reader->gpio &= ~GPIO_PIN;
 	ret |= write(reader->gpio_outen, &reader->gpio, sizeof(reader->gpio));
-	rdr_debug_mask(reader, D_IFD, "%s ret:%d", __func__, ret);
+	rdr_log_dbg(reader, D_IFD, "%s ret:%d", __func__, ret);
 }
 
 static int32_t get_gpio(struct s_reader *reader)
@@ -54,7 +54,7 @@ static int32_t get_gpio(struct s_reader *reader)
 	int ret = 0;
 	set_gpio_input(reader);
 	ret = read(reader->gpio_in, &reader->gpio, sizeof(reader->gpio));
-	rdr_debug_mask(reader, D_IFD, "%s ok:%d ret:%d", __func__, reader->gpio & GPIO_PIN, ret);
+	rdr_log_dbg(reader, D_IFD, "%s ok:%d ret:%d", __func__, reader->gpio & GPIO_PIN, ret);
 	if(reader->gpio & GPIO_PIN)
 		{ return OK; }
 	else
@@ -73,12 +73,12 @@ int32_t Phoenix_Init(struct s_reader *reader)
 		reader->gpio_outen = open("/dev/gpio/outen", O_RDWR);
 		reader->gpio_out   = open("/dev/gpio/out",   O_RDWR);
 		reader->gpio_in    = open("/dev/gpio/in",    O_RDWR);
-		rdr_debug_mask(reader, D_IFD, "init gpio_outen:%d gpio_out:%d gpio_in:%d",
+		rdr_log_dbg(reader, D_IFD, "init gpio_outen:%d gpio_out:%d gpio_in:%d",
 					   reader->gpio_outen, reader->gpio_out, reader->gpio_in);
 		set_gpio_input(reader);
 	}
 
-	rdr_debug_mask(reader, D_IFD, "Initializing reader type=%d", reader->typ);
+	rdr_log_dbg(reader, D_IFD, "Initializing reader type=%d", reader->typ);
 
 	/* Default serial port settings */
 	if(reader->atr[0] == 0)
@@ -105,7 +105,7 @@ int32_t Phoenix_GetStatus(struct s_reader *reader, int32_t *status)
 
 int32_t Phoenix_Reset(struct s_reader *reader, ATR *atr)
 {
-	rdr_debug_mask(reader, D_IFD, "Resetting card");
+	rdr_log_dbg(reader, D_IFD, "Resetting card");
 	int32_t ret;
 	int32_t i;
 	unsigned char buf[ATR_MAX_SIZE];
@@ -153,7 +153,7 @@ int32_t Phoenix_Reset(struct s_reader *reader, ATR *atr)
 
 int32_t Phoenix_Close(struct s_reader *reader)
 {
-	rdr_debug_mask(reader, D_IFD, "Closing phoenix device %s", reader->device);
+	rdr_log_dbg(reader, D_IFD, "Closing phoenix device %s", reader->device);
 	if(reader_use_gpio(reader))
 	{
 		if(reader->gpio_outen > -1)

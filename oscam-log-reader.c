@@ -91,7 +91,7 @@ void rdr_log_sensitive(struct s_reader *reader, char *fmt, ...)
 	rdr_log(reader, "%s", txt);
 }
 
-void rdr_debug_mask(struct s_reader *reader, uint16_t mask, char *fmt, ...)
+void rdr_log_dbg(struct s_reader *reader, uint16_t mask, char *fmt, ...)
 {
 	if(config_enabled(WITH_DEBUG))
 	{
@@ -100,11 +100,11 @@ void rdr_debug_mask(struct s_reader *reader, uint16_t mask, char *fmt, ...)
 		va_start(args, fmt);
 		vsnprintf(txt, sizeof(txt), fmt, args);
 		va_end(args);
-		cs_debug_mask(mask, "%s [%s] %s%s", reader->label, reader_desc_txt(reader), debug_mask_txt(mask), txt);
+		cs_log_dbg(mask, "%s [%s] %s%s", reader->label, reader_desc_txt(reader), debug_mask_txt(mask), txt);
 	}
 }
 
-void rdr_debug_mask_sensitive(struct s_reader *reader, uint16_t mask, char *fmt, ...)
+void rdr_log_dbg_sensitive(struct s_reader *reader, uint16_t mask, char *fmt, ...)
 {
 	if(config_enabled(WITH_DEBUG))
 	{
@@ -114,7 +114,7 @@ void rdr_debug_mask_sensitive(struct s_reader *reader, uint16_t mask, char *fmt,
 		vsnprintf(txt, sizeof(txt), fmt, args);
 		va_end(args);
 		format_sensitive(txt, log_remove_sensitive);
-		rdr_debug_mask(reader, mask, "%s", txt);
+		rdr_log_dbg(reader, mask, "%s", txt);
 	}
 }
 
@@ -128,7 +128,7 @@ void rdr_log_dump(struct s_reader *reader, const uint8_t *buf, int n, char *fmt,
 	cs_log_dump(buf, n, "%s [%s] %s", reader->label, reader_desc_txt(reader), txt);
 }
 
-void rdr_ddump_mask(struct s_reader *reader, uint16_t mask, const uint8_t *buf, int n, char *fmt, ...)
+void rdr_log_dump_dbg(struct s_reader *reader, uint16_t mask, const uint8_t *buf, int n, char *fmt, ...)
 {
 	if(config_enabled(WITH_DEBUG))
 	{
@@ -137,6 +137,6 @@ void rdr_ddump_mask(struct s_reader *reader, uint16_t mask, const uint8_t *buf, 
 		va_start(args, fmt);
 		vsnprintf(txt, sizeof(txt), fmt, args);
 		va_end(args);
-		cs_ddump_mask(mask, buf, n, "%s [%s] %s%s", reader->label, reader_desc_txt(reader), debug_mask_txt(mask), txt);
+		cs_log_dump_dbg(mask, buf, n, "%s [%s] %s%s", reader->label, reader_desc_txt(reader), debug_mask_txt(mask), txt);
 	}
 }

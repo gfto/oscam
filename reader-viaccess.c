@@ -973,32 +973,32 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 			if(ecm88Data[2] == 0x0b)
 			{
 				nanoD2 = 0x0b;
-				rdr_debug_mask(reader, D_READER, "ECM: nano D2 0x0b");
+				rdr_log_dbg(reader, D_READER, "ECM: nano D2 0x0b");
 			}
 			if(ecm88Data[2] == 0x0d)
 			{
 				nanoD2 = 0x0d;
-				rdr_debug_mask(reader, D_READER, "ECM: nano D2 0x0d");
+				rdr_log_dbg(reader, D_READER, "ECM: nano D2 0x0d");
 			}
 			if(ecm88Data[2] == 0x0f)
 			{
 				nanoD2 = 0x0f;
-				rdr_debug_mask(reader, D_READER, "ECM: nano D2 0x0f");
+				rdr_log_dbg(reader, D_READER, "ECM: nano D2 0x0f");
 			}
 			if(ecm88Data[2] == 0x11)
 			{
 				nanoD2 = 0x11;
-				rdr_debug_mask(reader, D_READER, "ECM: nano D2 0x11");
+				rdr_log_dbg(reader, D_READER, "ECM: nano D2 0x11");
 			}
 			if(ecm88Data[2] == 0x13)
 			{
 				nanoD2 = 0x13;
-				rdr_debug_mask(reader, D_READER, "ECM: nano D2 0x13");
+				rdr_log_dbg(reader, D_READER, "ECM: nano D2 0x13");
 			}
 			if(ecm88Data[2] == 0x15)
 			{
 				nanoD2 = 0x15;
-				rdr_debug_mask(reader, D_READER, "ECM: nano D2 0x15");
+				rdr_log_dbg(reader, D_READER, "ECM: nano D2 0x15");
 			}
 			// use the d2 arguments to get the key # to be used
 			int32_t len = ecm88Data[1] + 2;
@@ -1029,7 +1029,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 			if(nanoLen > 5)
 			{
 				curnumber_ecm = (ecm88Data[6] << 8) | (ecm88Data[7]);
-				rdr_debug_mask(reader, D_READER, "checking if the ecm number (%x) match the card one (%x)", curnumber_ecm, csystem_data->last_geo.number_ecm);
+				rdr_log_dbg(reader, D_READER, "checking if the ecm number (%x) match the card one (%x)", curnumber_ecm, csystem_data->last_geo.number_ecm);
 				// if we have an ecm number we check it.
 				// we can't assume that if the nano len is 5 or more we have an ecm number
 				// as some card don't support this
@@ -1038,15 +1038,15 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 					if(csystem_data->last_geo.number_ecm == curnumber_ecm && !(ecm88Data[nanoLen - 1] == 0x01 && (ecm88Data[2] == 0x03 && ecm88Data[3] == 0x0B && ecm88Data[4] == 0x00)))
 					{
 						keynr = ecm88Data[5];
-						rdr_debug_mask(reader, D_READER, "keyToUse = %02x, ECM ending with %02x", ecm88Data[5], ecm88Data[nanoLen - 1]);
+						rdr_log_dbg(reader, D_READER, "keyToUse = %02x, ECM ending with %02x", ecm88Data[5], ecm88Data[nanoLen - 1]);
 					}
 					else
 					{
 						if(ecm88Data[nanoLen - 1] == 0x01 && (ecm88Data[2] == 0x03 && ecm88Data[3] == 0x0B && ecm88Data[4] == 0x00))
 						{
-							rdr_debug_mask(reader, D_READER, "Skip ECM ending with = %02x for ecm number (%x) for provider %02x%02x%02x", ecm88Data[nanoLen - 1], curnumber_ecm, ecm88Data[2], ecm88Data[3], ecm88Data[4]);
+							rdr_log_dbg(reader, D_READER, "Skip ECM ending with = %02x for ecm number (%x) for provider %02x%02x%02x", ecm88Data[nanoLen - 1], curnumber_ecm, ecm88Data[2], ecm88Data[3], ecm88Data[4]);
 						}
-						rdr_debug_mask(reader, D_READER, "Skip ECM ending with = %02x for ecm number (%x)", ecm88Data[nanoLen - 1], curnumber_ecm);
+						rdr_log_dbg(reader, D_READER, "Skip ECM ending with = %02x for ecm number (%x)", ecm88Data[nanoLen - 1], curnumber_ecm);
 						ecm88Data = nextEcm;
 						ecm88Len -= curEcm88len;
 						continue; //loop to next ecm
@@ -1055,7 +1055,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 				else   // long ecm but we don't have an ecm number so we have to try them all.
 				{
 					keynr = ecm88Data[5];
-					rdr_debug_mask(reader, D_READER, "keyToUse = %02x", ecm88Data[5]);
+					rdr_log_dbg(reader, D_READER, "keyToUse = %02x", ecm88Data[5]);
 				}
 			}
 
@@ -1074,7 +1074,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 
 			if(!chk_prov(reader, ident, keynr))
 			{
-				rdr_debug_mask(reader, D_READER, "ECM: provider or key not found on card");
+				rdr_log_dbg(reader, D_READER, "ECM: provider or key not found on card");
 				snprintf(ea->msglog, MSGLOGSIZE, "provider(%02x%02x%02x) or key(%d) not found on card", ident[0], ident[1], ident[2], keynr);
 				return ERROR;
 			}
@@ -1134,7 +1134,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 				}
 
 				// use AES from list to decrypt CW
-				rdr_debug_mask(reader, D_READER, "Decoding CW : using AES key id %d for provider %06x", D2KeyID, (provid & 0xFFFFF0));
+				rdr_log_dbg(reader, D_READER, "Decoding CW : using AES key id %d for provider %06x", D2KeyID, (provid & 0xFFFFF0));
 				if(aes_decrypt_from_list(reader->aes_list, 0x500, (uint32_t)(provid & 0xFFFFF0), D2KeyID, &ecm88DataCW[0], 16) == 0)
 					{ snprintf(ea->msglog, MSGLOGSIZE, "Missing AES key(%d)[aka E%X]",D2KeyID, D2KeyID); }
 				if(nanoD2 == 0x0f)
@@ -1232,7 +1232,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 			default :
 				ecm88Data = nextEcm;
 				ecm88Len -= curEcm88len;
-				rdr_debug_mask(reader, D_READER, "Error: card respondend %02X %02X, trying next ECM", cta_res[0], cta_res[1]);
+				rdr_log_dbg(reader, D_READER, "Error: card respondend %02X %02X, trying next ECM", cta_res[0], cta_res[1]);
 				snprintf(ea->msglog, MSGLOGSIZE, "key to use is not the current one, trying next ECM");
 			}
 		}
@@ -1240,7 +1240,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 		{
 			//ecm88Data=nextEcm;
 			//ecm88Len-=curEcm88len;
-			rdr_debug_mask(reader, D_READER, "ECM: Unknown ECM type");
+			rdr_log_dbg(reader, D_READER, "ECM: Unknown ECM type");
 			snprintf(ea->msglog, MSGLOGSIZE, "Unknown ECM type");
 			return ERROR; /*Lets interupt the loop and exit, because we don't know this ECM type.*/
 		}
@@ -1259,7 +1259,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 		{
 			hdSurEncPhase1_D2_13_15(ea->cw);
 		}
-		rdr_debug_mask(reader, D_READER, "Decoding CW : using AES key id %d for provider %06x", D2KeyID, (provid & 0xFFFFF0));
+		rdr_log_dbg(reader, D_READER, "Decoding CW : using AES key id %d for provider %06x", D2KeyID, (provid & 0xFFFFF0));
 		rc = aes_decrypt_from_list(reader->aes_list, 0x500, (uint32_t)(provid & 0xFFFFF0), D2KeyID, ea->cw, 16);
 		if(rc == 0)
 			{ snprintf(ea->msglog, MSGLOGSIZE, "Missing AES key(%d)[aka E%X]",D2KeyID, D2KeyID); }
@@ -1279,7 +1279,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 static int32_t viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 {
 	uint32_t provid = 0;
-	rdr_debug_mask(rdr, D_EMM, "Entered viaccess_get_emm_type ep->emm[0]=%02x", ep->emm[0]);
+	rdr_log_dbg(rdr, D_EMM, "Entered viaccess_get_emm_type ep->emm[0]=%02x", ep->emm[0]);
 
 	if(ep->emm[3] == 0x90 && ep->emm[4] == 0x03)
 	{
@@ -1293,19 +1293,19 @@ static int32_t viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 		ep->type = UNIQUE;
 		memset(ep->hexserial, 0, 8);
 		memcpy(ep->hexserial, ep->emm + 4, 4);
-		rdr_debug_mask(rdr, D_EMM, "UNIQUE");
+		rdr_log_dbg(rdr, D_EMM, "UNIQUE");
 		return (!memcmp(rdr->hexserial + 1, ep->hexserial, 4));
 
 	case 0x8A:
 	case 0x8B:
 		ep->type = GLOBAL;
-		rdr_debug_mask(rdr, D_EMM, "GLOBAL");
+		rdr_log_dbg(rdr, D_EMM, "GLOBAL");
 		return 1;
 
 	case 0x8C:
 	case 0x8D:
 		ep->type = SHARED;
-		rdr_debug_mask(rdr, D_EMM, "SHARED (part)");
+		rdr_log_dbg(rdr, D_EMM, "SHARED (part)");
 		// We need those packets to pass otherwise we would never
 		// be able to complete EMM reassembly
 		return 1;
@@ -1314,7 +1314,7 @@ static int32_t viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 		ep->type = SHARED;
 		memset(ep->hexserial, 0, 8);
 		memcpy(ep->hexserial, ep->emm + 3, 3);
-		rdr_debug_mask(rdr, D_EMM, "SHARED");
+		rdr_log_dbg(rdr, D_EMM, "SHARED");
 
 		//check for provider as serial (cccam only?)
 		int8_t i;
@@ -1327,7 +1327,7 @@ static int32_t viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 
 	default:
 		ep->type = UNKNOWN;
-		rdr_debug_mask(rdr, D_EMM, "UNKNOWN");
+		rdr_log_dbg(rdr, D_EMM, "UNKNOWN");
 		return 1;
 	}
 }
@@ -1509,7 +1509,7 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 				afd = (uchar *)emmParsed + 2;
 
 				if(afd[31 - custwp / 8] & (1 << (custwp & 7)))
-					{ rdr_debug_mask(reader, D_READER, "emm for our card %08X", b2i(4, &reader->sa[0][0])); }
+					{ rdr_log_dbg(reader, D_READER, "emm for our card %08X", b2i(4, &reader->sa[0][0])); }
 				else
 					{ return SKIPPED; }
 			}
@@ -1546,7 +1546,7 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 
 	if(!provider_ok)
 	{
-		rdr_debug_mask(reader, D_READER, "provider not found in emm, continue anyway");
+		rdr_log_dbg(reader, D_READER, "provider not found in emm, continue anyway");
 		// force key to 1...
 		keynr = 1;
 		///return ERROR;
@@ -1603,7 +1603,7 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		write_cmd(ins18, insData);
 		if((cta_res[cta_lr - 2] == 0x90 || cta_res[cta_lr - 2] == 0x91) && cta_res[cta_lr - 1] == 0x00)
 		{
-			rdr_debug_mask(reader, D_READER, "update successfully written");
+			rdr_log_dbg(reader, D_READER, "update successfully written");
 			rc = 1; // written
 		}
 		else
@@ -1803,7 +1803,7 @@ static int32_t viaccess_reassemble_emm(struct s_client *client, EMM_PACKET *ep)
 		// copy first part of the emm-s
 		memcpy(client->via_rass_emm, buffer, *len);
 		client->via_rass_emmlen = *len;
-		//cs_ddump_mask(D_READER, buffer, len, "viaccess global emm:");
+		//cs_log_dump_dbg(D_READER, buffer, len, "viaccess global emm:");
 		return 0;
 
 	case 0x8e:
@@ -1813,7 +1813,7 @@ static int32_t viaccess_reassemble_emm(struct s_client *client, EMM_PACKET *ep)
 		//extract nanos from emm-gh and emm-s
 		uchar emmbuf[512];
 
-		cs_debug_mask(D_EMM, "[viaccess] %s: start extracting nanos", __func__);
+		cs_log_dbg(D_EMM, "[viaccess] %s: start extracting nanos", __func__);
 		//extract from emm-gh
 		for(i = 3; i < client->via_rass_emmlen; i += client->via_rass_emm[i + 1] + 2)
 		{
@@ -1845,7 +1845,7 @@ static int32_t viaccess_reassemble_emm(struct s_client *client, EMM_PACKET *ep)
 			}
 		}
 
-		cs_ddump_mask(D_EMM, buffer, *len, "[viaccess] %s: %s emm-s", __func__, (buffer[2] == 0x2c) ? "fixed" : "variable");
+		cs_log_dump_dbg(D_EMM, buffer, *len, "[viaccess] %s: %s emm-s", __func__, (buffer[2] == 0x2c) ? "fixed" : "variable");
 
 		emm_sort_nanos(buffer + 7, emmbuf, pos);
 		pos += 7;
@@ -1853,8 +1853,8 @@ static int32_t viaccess_reassemble_emm(struct s_client *client, EMM_PACKET *ep)
 		//calculate emm length and set it on position 2
 		buffer[2] = pos - 3;
 
-		cs_ddump_mask(D_EMM, client->via_rass_emm, client->via_rass_emmlen, "[viaccess] %s: emm-gh", __func__);
-		cs_ddump_mask(D_EMM, buffer, pos, "[viaccess] %s: assembled emm", __func__);
+		cs_log_dump_dbg(D_EMM, client->via_rass_emm, client->via_rass_emmlen, "[viaccess] %s: emm-gh", __func__);
+		cs_log_dump_dbg(D_EMM, buffer, pos, "[viaccess] %s: assembled emm", __func__);
 
 		*len = pos;
 		break;

@@ -101,10 +101,10 @@ static int32_t videoguard12_card_init(struct s_reader *reader, ATR *newatr)
 
 	if((hist_size < 7) || (hist[1] != 0xB0) || (hist[4] != 0xFF) || (hist[5] != 0x4A) || (hist[6] != 0x50))
 	{
-		rdr_debug_mask(reader, D_READER, "failed history check");
+		rdr_log_dbg(reader, D_READER, "failed history check");
 		return ERROR;
 	}
-	rdr_debug_mask(reader, D_READER, "passed history check");
+	rdr_log_dbg(reader, D_READER, "passed history check");
 
 	get_atr;
 	def_resp;
@@ -253,7 +253,7 @@ static int32_t videoguard12_card_init(struct s_reader *reader, ATR *newatr)
 	      }//while
 	    }//ele
 
-	  rdr_debug_mask(reader, D_READER, "calculated BoxID: %02X%02X%02X%02X", boxID[0], boxID[1], boxID[2], boxID[3]);
+	  rdr_log_dbg(reader, D_READER, "calculated BoxID: %02X%02X%02X%02X", boxID[0], boxID[1], boxID[2], boxID[3]);
 	*/
 
 	/* the boxid is specified in the config */
@@ -264,7 +264,7 @@ static int32_t videoguard12_card_init(struct s_reader *reader, ATR *newatr)
 		{
 			boxID[i] = (reader->boxid >> (8 * (3 - i))) % 0x100;
 		}
-		rdr_debug_mask(reader, D_READER, "oscam.server BoxID: %02X%02X%02X%02X", boxID[0], boxID[1], boxID[2], boxID[3]);
+		rdr_log_dbg(reader, D_READER, "oscam.server BoxID: %02X%02X%02X%02X", boxID[0], boxID[1], boxID[2], boxID[3]);
 	}
 
 	if(!boxidOK)

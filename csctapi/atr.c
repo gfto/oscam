@@ -58,7 +58,7 @@ int32_t ATR_InitFromArray(ATR *atr, const unsigned char atr_buffer[ATR_MAX_SIZE]
 	/* Check size of buffer */
 	if(length < 2)
 	{
-		cs_debug_mask(D_ATR, "ERROR: this ATR length is %d and minimum length is 2", length);
+		cs_log_dbg(D_ATR, "ERROR: this ATR length is %d and minimum length is 2", length);
 		return (ERROR);
 	}
 
@@ -91,7 +91,7 @@ int32_t ATR_InitFromArray(ATR *atr, const unsigned char atr_buffer[ATR_MAX_SIZE]
 		/* Check buffer is long enought */
 		if(pointer + atr_num_ib_table[(0xF0 & TDi) >> 4] >= length)
 		{
-			cs_debug_mask(D_ATR, "ERROR: this ATR the %d interface bytes for protocol %d are missing", pointer + atr_num_ib_table[(0xF0 & TDi) >> 4], pn + 1);
+			cs_log_dbg(D_ATR, "ERROR: this ATR the %d interface bytes for protocol %d are missing", pointer + atr_num_ib_table[(0xF0 & TDi) >> 4], pn + 1);
 			return (ERROR);
 		}
 
@@ -140,7 +140,7 @@ int32_t ATR_InitFromArray(ATR *atr, const unsigned char atr_buffer[ATR_MAX_SIZE]
 			(atr->TCK).present = ((TDi & 0x0F) != ATR_PROTOCOL_TYPE_T0);
 			if(pn >= ATR_MAX_PROTOCOLS)
 			{
-				cs_debug_mask(D_ATR, "ERROR: this ATR reports %d protocols but the maximum value is %d", pn + 1, ATR_MAX_PROTOCOLS + 1);
+				cs_log_dbg(D_ATR, "ERROR: this ATR reports %d protocols but the maximum value is %d", pn + 1, ATR_MAX_PROTOCOLS + 1);
 				return (ERROR);
 			}
 			pn++;
@@ -158,7 +158,7 @@ int32_t ATR_InitFromArray(ATR *atr, const unsigned char atr_buffer[ATR_MAX_SIZE]
 	/* Store historical bytes */
 	if(pointer + atr->hbn >= length)
 	{
-		cs_debug_mask(D_ATR, "ERROR: this ATR reports %i historical bytes but there are only %i", atr->hbn, length - pointer - 2);
+		cs_log_dbg(D_ATR, "ERROR: this ATR reports %i historical bytes but there are only %i", atr->hbn, length - pointer - 2);
 		if(length - pointer >= 2)
 			{ atr->hbn = length - pointer - 2; }
 		else
@@ -178,7 +178,7 @@ int32_t ATR_InitFromArray(ATR *atr, const unsigned char atr_buffer[ATR_MAX_SIZE]
 	{
 		if(pointer + 1 >= length)
 		{
-			cs_debug_mask(D_ATR, "ATR is malformed, this ATR should have a TCK byte but it was not received!");
+			cs_log_dbg(D_ATR, "ATR is malformed, this ATR should have a TCK byte but it was not received!");
 			return (ATR_MALFORMED);
 		}
 		pointer++;
@@ -192,12 +192,12 @@ int32_t ATR_InitFromArray(ATR *atr, const unsigned char atr_buffer[ATR_MAX_SIZE]
 	if(atr->pn == 1 && atr->ib[pn][ATR_INTERFACE_BYTE_TA].present == 1)
 	{
 		uchar FI;
-		cs_debug_mask(D_ATR, "TA1 = %02x", atr->ib[pn][ATR_INTERFACE_BYTE_TA].value);
+		cs_log_dbg(D_ATR, "TA1 = %02x", atr->ib[pn][ATR_INTERFACE_BYTE_TA].value);
 		FI = (atr->ib[pn][ATR_INTERFACE_BYTE_TA].value & 0xF0) >> 4;
-		cs_debug_mask(D_ATR, "FI = %02x", FI);
+		cs_log_dbg(D_ATR, "FI = %02x", FI);
 		if(atr_fs_table[FI] == 0)
 		{
-			cs_debug_mask(D_ATR, "ERROR: this ATR FI for protocol #%d is not returning a valid cardfrequency value", pn + 1);
+			cs_log_dbg(D_ATR, "ERROR: this ATR FI for protocol #%d is not returning a valid cardfrequency value", pn + 1);
 			return (ERROR);
 		}
 	}
@@ -207,7 +207,7 @@ int32_t ATR_InitFromArray(ATR *atr, const unsigned char atr_buffer[ATR_MAX_SIZE]
 	{
 		if(atr->ib[pn][ATR_INTERFACE_BYTE_TB].value > 0x80)
 		{
-			cs_debug_mask(D_ATR, "ERROR: this ATR TB1 for protocol #%d has an invalid value", pn + 1);
+			cs_log_dbg(D_ATR, "ERROR: this ATR TB1 for protocol #%d has an invalid value", pn + 1);
 			return (ERROR);
 		}
 	}
@@ -222,7 +222,7 @@ int32_t ATR_GetConvention(ATR *atr, int32_t *convention)
 		{ (*convention) = ATR_CONVENTION_INVERSE; }
 	else
 	{
-		cs_debug_mask(D_ATR, "ERROR: this ATR TS byte is %02X and that should be 3B for direct or 3F for inverse convention!", atr->TS);
+		cs_log_dbg(D_ATR, "ERROR: this ATR TS byte is %02X and that should be 3B for direct or 3F for inverse convention!", atr->TS);
 		return (ERROR);
 	}
 

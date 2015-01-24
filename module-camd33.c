@@ -17,7 +17,7 @@ static int32_t camd33_send(uchar *buf, int32_t ml)
 	if(!cur_client()->pfd) { return (-1); }
 	l = boundary(4, ml);
 	memset(buf + ml, 0, l - ml);
-	cs_ddump_mask(D_CLIENT, buf, l, "send %d bytes to client", l);
+	cs_log_dump_dbg(D_CLIENT, buf, l, "send %d bytes to client", l);
 	if(cur_client()->crypted)
 		{ aes_encrypt_idx(&cur_client()->aes_keys, buf, l); }
 	return (send(cur_client()->pfd, buf, l, 0));
@@ -33,7 +33,7 @@ static int32_t camd33_recv(struct s_client *client, uchar *buf, int32_t l)
 		if(client->crypted)
 			{ aes_encrypt_idx(&cur_client()->aes_keys, buf, n); }
 	}
-	cs_ddump_mask(D_CLIENT, buf, n, "received %d bytes from client", n);
+	cs_log_dump_dbg(D_CLIENT, buf, n, "received %d bytes from client", n);
 	return (n);
 }
 
@@ -154,7 +154,7 @@ static void *camd33_server(struct s_client *UNUSED(client), uchar *mbuf, int32_t
 		camd33_process_emm(mbuf, n);
 		break;
 	default:
-		cs_debug_mask(D_CLIENT, "unknown command !");
+		cs_log_dbg(D_CLIENT, "unknown command !");
 	}
 
 	return NULL;

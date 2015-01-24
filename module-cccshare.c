@@ -448,7 +448,7 @@ int32_t cc_clear_reported_carddata(LLIST *reported_carddatas, LLIST *except,
 		{
 			if(send_removed)
 			{
-				cs_debug_mask(D_TRACE, "s-card removed: id %8X remoteid %8X caid %4X hop %d reshare %d originid %8X cardtype %d",
+				cs_log_dbg(D_TRACE, "s-card removed: id %8X remoteid %8X caid %4X hop %d reshare %d originid %8X cardtype %d",
 							  card->id, card->remote_id, card->caid, card->hop, card->reshare, card->origin_id, card->card_type);
 
 				send_remove_card_to_clients(card);
@@ -1008,7 +1008,7 @@ int32_t card_timed_out(struct cc_card *card)
 	//timeout is set in future, so if current time is bigger, timeout is reached
 	int32_t res = (card->card_type != CT_REMOTECARD) && (card->timeout < time(NULL)); //local card is older than 1h?
 	if(res)
-		{ cs_debug_mask(D_TRACE, "card %08X timed out! refresh forced", card->id ? card->id : card->origin_id); }
+		{ cs_log_dbg(D_TRACE, "card %08X timed out! refresh forced", card->id ? card->id : card->origin_id); }
 	return res;
 }
 
@@ -1056,7 +1056,7 @@ void report_card(struct cc_card *card, LLIST *new_reported_carddatas, LLIST *new
 	if(!find_reported_card(card))    //Add new card:
 	{
 
-		cs_debug_mask(D_TRACE, "s-card added: id %8X remoteid %8X caid %4X hop %d reshare %d originid %8X cardtype %d",
+		cs_log_dbg(D_TRACE, "s-card added: id %8X remoteid %8X caid %4X hop %d reshare %d originid %8X cardtype %d",
 					  card->id, card->remote_id, card->caid, card->hop, card->reshare, card->origin_id, card->card_type);
 
 		ll_append(new_cards, card);
@@ -1340,7 +1340,7 @@ void update_card_list(void)
 					(cfg.cc_reshare_services < 2 || cfg.cc_reshare_services == 4) && rdr->card_status != CARD_FAILURE)
 			{
 
-				cs_debug_mask(D_TRACE, "asking reader %s for cards...", rdr->label);
+				cs_log_dbg(D_TRACE, "asking reader %s for cards...", rdr->label);
 
 				struct s_client *rc = rdr->client;
 				struct cc_data *rcc = rc ? rc->cc : NULL;
@@ -1379,8 +1379,8 @@ void update_card_list(void)
 					cs_readunlock(&rcc->cards_busy);
 				}
 				else
-					{ cs_debug_mask(D_TRACE, "reader %s not active!", rdr->label); }
-				cs_debug_mask(D_TRACE, "got %d cards from %s", count, rdr->label);
+					{ cs_log_dbg(D_TRACE, "reader %s not active!", rdr->label); }
+				cs_log_dbg(D_TRACE, "got %d cards from %s", count, rdr->label);
 			}
 		}
 		cs_readunlock(&readerlist_lock);
@@ -1391,7 +1391,7 @@ void update_card_list(void)
 	cs_writelock(&cc_shares_lock);
 
 	//report reshare cards:
-	//cs_debug_mask(D_TRACE, "%s reporting %d cards", getprefix(), ll_count(server_cards));
+	//cs_log_dbg(D_TRACE, "%s reporting %d cards", getprefix(), ll_count(server_cards));
 	for(i = 0; i < CAID_KEY; i++)
 	{
 		if(server_cards[i])
@@ -1401,7 +1401,7 @@ void update_card_list(void)
 			//we compare every card of our new list (server_cards) with the last list.
 			while((card = ll_iter_next(&it)))
 			{
-				//cs_debug_mask(D_TRACE, "%s card %d caid %04X hop %d", getprefix(), card->id, card->caid, card->hop);
+				//cs_log_dbg(D_TRACE, "%s card %d caid %04X hop %d", getprefix(), card->id, card->caid, card->hop);
 
 				if(!new_reported_carddatas[i])
 					{ new_reported_carddatas[i] = ll_create("new_cardlist"); }
@@ -1415,7 +1415,7 @@ void update_card_list(void)
 		card_removed_count += cc_free_reported_carddata(reported_carddatas_list[i], new_reported_carddatas[i], 1);
 		reported_carddatas_list[i] = new_reported_carddatas[i];
 		card_count += ll_count(reported_carddatas_list[i]);
-		//cs_debug_mask(D_TRACE, "CARDS FOR INDEX %d=%d", i, ll_count(reported_carddatas[i]));
+		//cs_log_dbg(D_TRACE, "CARDS FOR INDEX %d=%d", i, ll_count(reported_carddatas[i]));
 	}
 
 	//now send new cards. Always remove first, then add new:
@@ -1429,7 +1429,7 @@ void update_card_list(void)
 
 	cs_writeunlock(&cc_shares_lock);
 
-	cs_debug_mask(D_TRACE, "reported/updated +%d/-%d/dup %d of %d cards to sharelist",
+	cs_log_dbg(D_TRACE, "reported/updated +%d/-%d/dup %d of %d cards to sharelist",
 				  card_added_count, card_removed_count, card_dup_count, card_count);
 }
 
@@ -1452,7 +1452,7 @@ int32_t cc_srv_report_cards(struct s_client *cl)
 		}
 	}
 	cs_readunlock(&cc_shares_lock);
-	cs_debug_mask(D_TRACE, "reported %d cards for %s", count, username(cl));
+	cs_log_dbg(D_TRACE, "reported %d cards for %s", count, username(cl));
 
 	return cl->cc && !cl->kill;
 }
@@ -1477,13 +1477,13 @@ void share_updater(void)
 	{
 		if(i > 0 && card_count < 100)    //fast refresh only if we have less cards
 		{
-			cs_debug_mask(D_TRACE, "share-updater mode=initfast t=1s i=%d", i);
+			cs_log_dbg(D_TRACE, "share-updater mode=initfast t=1s i=%d", i);
 			cs_sleepms(1000);
 			i--;
 		}
 		else if(i > 0)
 		{
-			cs_debug_mask(D_TRACE, "share-updater mode=initslow t=6s i=%d", i);
+			cs_log_dbg(D_TRACE, "share-updater mode=initslow t=6s i=%d", i);
 			cs_sleepms(6000); //1s later than garbage collector because this list uses much space
 			i -= 6;
 		}
@@ -1491,7 +1491,7 @@ void share_updater(void)
 		{
 			if(cfg.cc_update_interval <= 10)
 				{ cfg.cc_update_interval = DEFAULT_UPDATEINTERVAL; }
-			cs_debug_mask(D_TRACE, "share-updater mode=interval t=%ds", cfg.cc_update_interval);
+			cs_log_dbg(D_TRACE, "share-updater mode=interval t=%ds", cfg.cc_update_interval);
 			cs_sleepms(cfg.cc_update_interval * 1000);
 		}
 		if(!share_updater_thread_active)
@@ -1552,7 +1552,7 @@ void share_updater(void)
 		{
 			last_sidtab_generation = cfg_sidtab_generation;
 			i = DEFAULT_INTERVAL;
-			cs_debug_mask(D_TRACE, "share-update [1] %u %u", cur_check, last_check);
+			cs_log_dbg(D_TRACE, "share-update [1] %u %u", cur_check, last_check);
 			refresh_shares();
 			last_check = cur_check;
 			last_card_check = cur_card_check;
@@ -1560,7 +1560,7 @@ void share_updater(void)
 		//update cardlist if cccam cards has changed:
 		else if(cur_card_check != last_card_check)
 		{
-			cs_debug_mask(D_TRACE, "share-update [2] %u %u", cur_card_check, last_card_check);
+			cs_log_dbg(D_TRACE, "share-update [2] %u %u", cur_card_check, last_card_check);
 			refresh_shares();
 			last_card_check = cur_card_check;
 		}
@@ -1614,7 +1614,7 @@ void cccam_init_share(void)
 		{ cs_log("ERROR: can't create share updater thread (errno=%d %s)", ret, strerror(ret)); }
 	else
 	{
-		cs_debug_mask(D_TRACE, "share updater thread started");
+		cs_log_dbg(D_TRACE, "share updater thread started");
 		pthread_detach(temp);
 		share_updater_thread = temp;
 	}

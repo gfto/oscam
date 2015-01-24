@@ -94,7 +94,7 @@ static int32_t csp_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 
 	if(tpe.time - cl->lastecm > PING_INTVL) { csp_send_ping(cl, 1000 * tpe.time + tpe.millitm); }
 
-	cs_ddump_mask(D_TRACE, buf, size, "pushing cache update to csp onid=%04X caid=%04X srvid=%04X hash=%08X (tag: %02X)", onid, er->caid, er->srvid, er->csp_hash, tag);
+	cs_log_dump_dbg(D_TRACE, buf, size, "pushing cache update to csp onid=%04X caid=%04X srvid=%04X hash=%08X (tag: %02X)", onid, er->caid, er->srvid, er->csp_hash, tag);
 
 	/*
 	struct SOCKADDR peer_sa = {0};
@@ -139,7 +139,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 	{
 		rs = recv(client->udp_fd, buf, client->is_udp ? l : 36, 0);
 	}
-	//cs_ddump_mask(D_TRACE, buf, rs, "received %d bytes from csp", rs);
+	//cs_log_dump_dbg(D_TRACE, buf, rs, "received %d bytes from csp", rs);
 
 	uint8_t type = buf[0]; // TYPE
 
@@ -168,7 +168,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 					if(namelen > sizeof(orgname)) { namelen = sizeof(orgname); }
 					memcpy(orgname, buf + 31, namelen);
 				}
-				cs_ddump_mask(D_TRACE, er->cw, sizeof(er->cw), "received cw from csp onid=%04X caid=%04X srvid=%04X hash=%08X (org connector: %s, tags: %02X/%02X)", er->onid, er->caid, er->srvid, er->csp_hash, orgname, commandTag, rplTag);
+				cs_log_dump_dbg(D_TRACE, er->cw, sizeof(er->cw), "received cw from csp onid=%04X caid=%04X srvid=%04X hash=%08X (org connector: %s, tags: %02X/%02X)", er->onid, er->caid, er->srvid, er->csp_hash, orgname, commandTag, rplTag);
 				cacheex_add_to_cache_from_csp(client, er);
 			}
 			else { NULLFREE(er); }
@@ -187,7 +187,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 
 			if(chk_csp_ctab(er, &cfg.csp.filter_caidtab) && cfg.csp.allow_request)
 			{
-				cs_ddump_mask(D_TRACE, buf, l, "received ecm request from csp onid=%04X caid=%04X srvid=%04X hash=%08X (tag: %02X)", er->onid, er->caid, er->srvid, er->csp_hash, commandTag);
+				cs_log_dump_dbg(D_TRACE, buf, l, "received ecm request from csp onid=%04X caid=%04X srvid=%04X hash=%08X (tag: %02X)", er->onid, er->caid, er->srvid, er->csp_hash, commandTag);
 				cacheex_add_to_cache_from_csp(client, er);
 			}
 			else { NULLFREE(er); }
@@ -205,7 +205,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 			pingrpl[0] = TYPE_PINGRPL;
 			memcpy(pingrpl + 1, buf + 1, 8);
 			int32_t status = sendto(client->udp_fd, pingrpl, sizeof(pingrpl), 0, (struct sockaddr *) &client->udp_sa, client->udp_sa_len);
-			cs_debug_mask(D_TRACE, "received ping from cache peer: %s:%d (replied: %d)", cs_inet_ntoa(SIN_GET_ADDR(client->udp_sa)), port, status);
+			cs_log_dbg(D_TRACE, "received ping from cache peer: %s:%d (replied: %d)", cs_inet_ntoa(SIN_GET_ADDR(client->udp_sa)), port, status);
 		}
 		break;
 
@@ -216,7 +216,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 			cs_ftime(&tpe);
 			uint32_t ping = b2i(4, buf + 1);
 			uint32_t now = tpe.time * 1000 + tpe.millitm;
-			cs_debug_mask(D_TRACE, "received ping reply from cache peer: %s:%d (%d ms)", cs_inet_ntoa(SIN_GET_ADDR(client->udp_sa)), ntohs(SIN_GET_PORT(client->udp_sa)), now - ping);
+			cs_log_dbg(D_TRACE, "received ping reply from cache peer: %s:%d (%d ms)", cs_inet_ntoa(SIN_GET_ADDR(client->udp_sa)), ntohs(SIN_GET_PORT(client->udp_sa)), now - ping);
 			client->cwcacheexping = now - ping;
 		}
 		break;
@@ -242,18 +242,18 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 				NULLFREE(result);
 
 				int32_t status = csp_cache_push_out(client, er);
-				cs_debug_mask(D_TRACE, "received resend request from cache peer: %s:%d (replied: %d)", cs_inet_ntoa(SIN_GET_ADDR(client->udp_sa)), port, status);
+				cs_log_dbg(D_TRACE, "received resend request from cache peer: %s:%d (replied: %d)", cs_inet_ntoa(SIN_GET_ADDR(client->udp_sa)), port, status);
 			}
 			else
 			{
-				cs_debug_mask(D_TRACE, "received resend request from cache peer: %s:%d (not found)", cs_inet_ntoa(SIN_GET_ADDR(client->udp_sa)), port);
+				cs_log_dbg(D_TRACE, "received resend request from cache peer: %s:%d (not found)", cs_inet_ntoa(SIN_GET_ADDR(client->udp_sa)), port);
 			}
 			NULLFREE(er);
 		}
 		break;
 
 	default:
-		cs_debug_mask(D_TRACE, "unknown csp cache message received: %d", type);
+		cs_log_dbg(D_TRACE, "unknown csp cache message received: %d", type);
 	}
 
 	return rs;

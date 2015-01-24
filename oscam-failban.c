@@ -49,14 +49,14 @@ static int32_t cs_check_v(IN_ADDR_T ip, int32_t port, int32_t add, char *info, i
 				if(v_ban_entry->v_count >= cfg.failbancount)
 				{
 					if(!v_ban_entry->acosc_entry)
-                    	{ cs_debug_mask(D_TRACE, "failban: banned ip %s:%d - %"PRId64" seconds left%s%s", cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, (ftime - gone)/1000, info ? ", info: " : "", info ? info : ""); }
+                    	{ cs_log_dbg(D_TRACE, "failban: banned ip %s:%d - %"PRId64" seconds left%s%s", cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, (ftime - gone)/1000, info ? ", info: " : "", info ? info : ""); }
 					else
-						{ cs_debug_mask(D_TRACE, "failban: banned ip %s:%d - %"PRId64" seconds left%s%s", cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, (v_ban_entry->acosc_penalty_dur - (gone/1000)), info?", info: ":"", info?info:""); }
+						{ cs_log_dbg(D_TRACE, "failban: banned ip %s:%d - %"PRId64" seconds left%s%s", cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, (v_ban_entry->acosc_penalty_dur - (gone/1000)), info?", info: ":"", info?info:""); }
 
 				}
 				else
 				{
-					cs_debug_mask(D_TRACE, "failban: ip %s:%d chance %d of %d%s%s",
+					cs_log_dbg(D_TRACE, "failban: ip %s:%d chance %d of %d%s%s",
 								  cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port,
 								  v_ban_entry->v_count, cfg.failbancount, info ? ", info: " : "", info ? info : "");
 					v_ban_entry->v_count++;
@@ -64,7 +64,7 @@ static int32_t cs_check_v(IN_ADDR_T ip, int32_t port, int32_t add, char *info, i
 			}
 			else
 			{
-				cs_debug_mask(D_TRACE, "failban: banned ip %s:%d - already exist in list%s%s",
+				cs_log_dbg(D_TRACE, "failban: banned ip %s:%d - already exist in list%s%s",
 							  cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, info ? ", info: " : "", info ? info : "");
 			}
 		}
@@ -89,7 +89,7 @@ static int32_t cs_check_v(IN_ADDR_T ip, int32_t port, int32_t add, char *info, i
 			if(info)
 				{ v_ban_entry->info = cs_strdup(info); }
 			ll_iter_insert(&itr, v_ban_entry);
-			cs_debug_mask(D_TRACE, "failban: ban ip %s:%d with timestamp %ld%s%s",
+			cs_log_dbg(D_TRACE, "failban: ban ip %s:%d with timestamp %ld%s%s",
 						  cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_port, v_ban_entry->v_time.time,
 						  info ? ", info: " : "", info ? info : "");
 		}

@@ -87,7 +87,7 @@ int32_t init_irdeto_guess_tab(void)
 			}
 			else
 				{ itab[b3] = ird_row; }
-			//cs_debug_mask(D_CLIENT, "%02X:%08X:%04X:%04X", b3, b47, caid, sid);
+			//cs_log_dbg(D_CLIENT, "%02X:%08X:%04X:%04X", b3, b47, caid, sid);
 		}
 	}
 	fclose(fp);
@@ -97,7 +97,7 @@ int32_t init_irdeto_guess_tab(void)
 		head = itab[i];
 		while(head)
 		{
-			cs_debug_mask(D_CLIENT, "itab[%02X]: b47=%08X, caid=%04X, sid=%04X",
+			cs_log_dbg(D_CLIENT, "itab[%02X]: b47=%08X, caid=%04X, sid=%04X",
 						  i, head->b47, head->caid, head->sid);
 			head = head->next;
 		}
@@ -136,26 +136,26 @@ void guess_irdeto(ECM_REQUEST *er)
 	ptr = itab[b3];
 	if(!ptr)
 	{
-		cs_debug_mask(D_TRACE, "unknown irdeto byte 3: %02X", b3);
+		cs_log_dbg(D_TRACE, "unknown irdeto byte 3: %02X", b3);
 		return;
 	}
 	b47  = b2i(4, er->ecm + 4);
 	//chid = b2i(2, er->ecm+6);
-	//cs_debug_mask(D_TRACE, "ecm: b47=%08X, ptr->b47=%08X, ptr->caid=%04X", b47, ptr->b47, ptr->caid);
+	//cs_log_dbg(D_TRACE, "ecm: b47=%08X, ptr->b47=%08X, ptr->caid=%04X", b47, ptr->b47, ptr->caid);
 	while(ptr)
 	{
 		if(b47 == ptr->b47)
 		{
 			if(er->srvid && (er->srvid != ptr->sid))
 			{
-				cs_debug_mask(D_TRACE, "sid mismatched (ecm: %04X, guess: %04X), wrong oscam.ird file?",
+				cs_log_dbg(D_TRACE, "sid mismatched (ecm: %04X, guess: %04X), wrong oscam.ird file?",
 							  er->srvid, ptr->sid);
 				return;
 			}
 			er->caid = ptr->caid;
 			er->srvid = ptr->sid;
 			er->chid = (uint16_t)ptr->b47;
-			//      cs_debug_mask(D_TRACE, "quess_irdeto() found caid=%04X, sid=%04X, chid=%04X",
+			//      cs_log_dbg(D_TRACE, "quess_irdeto() found caid=%04X, sid=%04X, chid=%04X",
 			//               er->caid, er->srvid, er->chid);
 			return;
 		}

@@ -207,7 +207,7 @@ static void do_post_dw_hash(struct s_reader *reader, unsigned char *cw, const un
 				}
 				cw[3] = (cw[0] + cw[1] + cw[2]) & 0xFF;
 				cw[7] = (cw[4] + cw[5] + cw[6]) & 0xFF;
-				rdr_ddump_mask(reader, D_READER, cw, 8, "Postprocessed Case 1 DW:");
+				rdr_log_dump_dbg(reader, D_READER, cw, 8, "Postprocessed Case 1 DW:");
 				break;
 			}
 			case 3:
@@ -217,7 +217,7 @@ static void do_post_dw_hash(struct s_reader *reader, unsigned char *cw, const un
 				memcpy(buffer + 8, &ecm_header_data[ecmi + 3], ecm_header_data[ecmi] & 0x7D);
 				MD5(buffer, 8 + (ecm_header_data[ecmi] & 0x7D), md5tmp);
 				memcpy(cw, md5tmp, 8);
-				rdr_ddump_mask(reader, D_READER, cw, 8, "Postprocessed Case 3 DW:");
+				rdr_log_dump_dbg(reader, D_READER, cw, 8, "Postprocessed Case 3 DW:");
 				break;
 			}
 			case 2:
@@ -300,7 +300,7 @@ static void vg2_read_tiers(struct s_reader *reader)
 
 			if(!stopemptytier)
 			{
-				rdr_debug_mask(reader, D_READER, "tier: %04x, tier-number: 0x%02x", tier_id, i);
+				rdr_log_dbg(reader, D_READER, "tier: %04x, tier-number: 0x%02x", tier_id, i);
 			}
 			rdr_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, get_tiername(tier_id, reader->caid, tiername));
 		}
@@ -312,10 +312,10 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 	get_hist;
 	if((hist_size < 7) || (hist[1] != 0xB0) || (hist[4] != 0xFF) || (hist[5] != 0x4A) || (hist[6] != 0x50))
 	{
-		rdr_debug_mask(reader, D_READER, "failed history check");
+		rdr_log_dbg(reader, D_READER, "failed history check");
 		return ERROR;
 	}
-	rdr_debug_mask(reader, D_READER, "passed history check");
+	rdr_log_dbg(reader, D_READER, "passed history check");
 
 	get_atr;
 	def_resp;
@@ -336,10 +336,10 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 		return ERROR;
 	}
 
-	rdr_debug_mask(reader, D_READER, "type: %s, baseyear: %i", csystem_data->card_desc, csystem_data->card_baseyear);
+	rdr_log_dbg(reader, D_READER, "type: %s, baseyear: %i", csystem_data->card_desc, csystem_data->card_baseyear);
 	if(reader->ndsversion == NDS2)
 	{
-		rdr_debug_mask(reader, D_READER, "forced to NDS2");
+		rdr_log_dbg(reader, D_READER, "forced to NDS2");
 	}
 
 	//a non videoguard2/NDS2 card will fail on read_cmd_len(ins7401)

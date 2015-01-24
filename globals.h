@@ -206,7 +206,7 @@ typedef unsigned char uchar;
 #ifdef WITH_DEBUG
 # define call(arg) \
     if (arg) { \
-        cs_debug_mask(D_TRACE, "ERROR, function call %s returns error.",#arg); \
+        cs_log_dbg(D_TRACE, "ERROR, function call %s returns error.",#arg); \
         return ERROR; \
     }
 #else

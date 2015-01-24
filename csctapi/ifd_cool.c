@@ -74,7 +74,7 @@ static int32_t Cool_SetClockrate(struct s_reader *reader, int32_t mhz)
 	int32_t ret = cnxt_smc_set_clock_freq(crdr_data->handle, clk);
 	coolapi_check_error("cnxt_smc_set_clock_freq", ret);
 	call(Cool_FastReset(reader));
-	rdr_debug_mask(reader, D_DEVICE, "COOL: clock succesfully set to %i", clk);
+	rdr_log_dbg(reader, D_DEVICE, "COOL: clock succesfully set to %i", clk);
 	return OK;
 }
 
@@ -117,7 +117,7 @@ static int32_t Cool_Reset(struct s_reader *reader, ATR *atr)
 		coolapi_check_error("cnxt_smc_get_clock_freq", ret);
 		if(clk / 10000 != (uint32_t)reader->cardmhz)
 		{
-			rdr_debug_mask(reader, D_DEVICE, "COOL: clock freq: %i, scheduling change to %i for card reset",
+			rdr_log_dbg(reader, D_DEVICE, "COOL: clock freq: %i, scheduling change to %i for card reset",
 						   clk, reader->cardmhz * 10000);
 			call(Cool_SetClockrate(reader, reader->cardmhz));
 		}
@@ -162,7 +162,7 @@ static int32_t Cool_Transmit(struct s_reader *reader, unsigned char *sent, uint3
 
 	coolapi_check_error("cnxt_smc_read_write", ret);
 
-	rdr_ddump_mask(reader, D_DEVICE, sent, size, "COOL Transmit:");
+	rdr_log_dump_dbg(reader, D_DEVICE, sent, size, "COOL Transmit:");
 
 	if(ret)
 		{ return ERROR; }
@@ -177,7 +177,7 @@ static int32_t Cool_Receive(struct s_reader *reader, unsigned char *data, uint32
 	memcpy(data, crdr_data->cardbuffer, size);
 	crdr_data->cardbuflen -= size;
 	memmove(crdr_data->cardbuffer, crdr_data->cardbuffer + size, crdr_data->cardbuflen);
-	rdr_ddump_mask(reader, D_DEVICE, data, size, "COOL Receive:");
+	rdr_log_dump_dbg(reader, D_DEVICE, data, size, "COOL Receive:");
 	return OK;
 }
 
@@ -221,7 +221,7 @@ static int32_t Cool_WriteSettings(struct s_reader *reader, struct s_cardreader_s
 	coolapi_check_error("cnxt_smc_get_clock_freq", ret);
 	if(clk / 10000 != (uint32_t)reader->mhz)
 	{
-		rdr_debug_mask(reader, D_DEVICE, "COOL: clock freq: %i, scheduling change to %i", clk, reader->mhz * 10000);
+		rdr_log_dbg(reader, D_DEVICE, "COOL: clock freq: %i, scheduling change to %i", clk, reader->mhz * 10000);
 		call(Cool_SetClockrate(reader, reader->mhz));
 	}
 

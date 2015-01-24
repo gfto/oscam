@@ -53,7 +53,7 @@ static int32_t __camd35_send(struct s_client *cl, uchar *buf, int32_t buflen, in
 	memset(sbuf + l, 0xff, 15); // set unused space to 0xff for newer camd3's
 	i2b_buf(4, crc32(0L, sbuf + 20, buflen), sbuf + 4);
 	l = boundary(4, l);
-	cs_ddump_mask(cl->typ == 'c' ? D_CLIENT : D_READER, sbuf, l, "send %d bytes to %s", l, username(cl));
+	cs_log_dump_dbg(cl->typ == 'c' ? D_CLIENT : D_READER, sbuf, l, "send %d bytes to %s", l, username(cl));
 	aes_encrypt_idx(&cl->aes_keys, sbuf, l);
 
 	int32_t status;
@@ -153,7 +153,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 						if (rs < 0){
 							if(errno == EINTR) { continue; }  // try again in case of interrupt
 							if(errno == EAGAIN) { continue; }  //EAGAIN needs select procedure again
-							cs_debug_mask(client->typ == 'c' ? D_CLIENT : D_READER, "ERROR: %s (errno=%d %s)", __func__, errno, strerror(errno));
+							cs_log_dbg(client->typ == 'c' ? D_CLIENT : D_READER, "ERROR: %s (errno=%d %s)", __func__, errno, strerror(errno));
 							break;
 						}else {break;}
 					}
@@ -166,7 +166,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 						if (readed < 0){
 							if(errno == EINTR) { continue; }  // try again in case of interrupt
 							if(errno == EAGAIN) { continue; }  //EAGAIN needs select procedure again
-							cs_debug_mask(client->typ == 'c' ? D_CLIENT : D_READER, "ERROR: %s (errno=%d %s)", __func__, errno, strerror(errno));
+							cs_log_dbg(client->typ == 'c' ? D_CLIENT : D_READER, "ERROR: %s (errno=%d %s)", __func__, errno, strerror(errno));
 							break;
 						}
 						if (readed == 0){ // nothing to read left!
@@ -204,7 +204,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 		case 2:
 			aes_decrypt(&client->aes_keys, buf, rs);
 			if(rs != boundary(4, rs))
-				cs_debug_mask(client->typ == 'c' ? D_CLIENT : D_READER,
+				cs_log_dbg(client->typ == 'c' ? D_CLIENT : D_READER,
 							  "WARNING: packet size has wrong decryption boundary");
 
 			n = (buf[0] == 3) ? 0x34 : 0;
@@ -229,7 +229,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 					if (readed < 0){
 						if(errno == EINTR) { continue; }  // try again in case of interrupt
 						if(errno == EAGAIN) { continue; }  //EAGAIN needs select procedure again
-						cs_debug_mask(client->typ == 'c' ? D_CLIENT : D_READER, "ERROR: %s (errno=%d %s)", __func__, errno, strerror(errno));
+						cs_log_dbg(client->typ == 'c' ? D_CLIENT : D_READER, "ERROR: %s (errno=%d %s)", __func__, errno, strerror(errno));
 						break;
 					}
 					if (readed == 0){ // nothing to read left!
@@ -255,11 +255,11 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 				}
 			}
 
-			cs_ddump_mask(client->typ == 'c' ? D_CLIENT : D_READER,
+			cs_log_dump_dbg(client->typ == 'c' ? D_CLIENT : D_READER,
 						  buf, rs, "received %d bytes from %s", rs, remote_txt());
 
 			if(n < rs)
-				cs_debug_mask(client->typ == 'c' ? D_CLIENT : D_READER,
+				cs_log_dbg(client->typ == 'c' ? D_CLIENT : D_READER,
 							  "ignoring %d bytes of garbage", rs - n);
 			else if(n > rs) { rc = -3; }
 			break;
@@ -273,7 +273,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 out:
 	if((rs > 0) && ((rc == -1) || (rc == -2)))
 	{
-		cs_ddump_mask(client->typ == 'c' ? D_CLIENT : D_READER, buf, rs,
+		cs_log_dump_dbg(client->typ == 'c' ? D_CLIENT : D_READER, buf, rs,
 					  "received %d bytes from %s (native)", rs, remote_txt());
 	}
 	if(rc >= 0) { client->last = time(NULL); }  // last client action is now
@@ -293,7 +293,7 @@ out:
 	case -4:
 		cs_log("checksum error (wrong password ?)");
 		break;
-		//default:  cs_debug_mask(D_TRACE, "camd35_recv returns rc=%d", rc); break;
+		//default:  cs_log_dbg(D_TRACE, "camd35_recv returns rc=%d", rc); break;
 	}
 
 	return (rc);
@@ -461,7 +461,7 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 					{ client->account->cwc_info++; }
 				else if((client->typ == 'p' || client->typ == 'r') && (client->reader && client->reader->cacheex.mode))
 					{ client->cwc_info++; }
-				cs_debug_mask(D_CWC, "CWC (CE1) push to %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(client), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
+				cs_log_dbg(D_CWC, "CWC (CE1) push to %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(client), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
 				buf[19] = er->ecm[0];
 			} 
 #endif
@@ -572,14 +572,14 @@ void camd35_cache_push_send_own_id(struct s_client *cl, uint8_t *mbuf)
 
 	if(!cl->crypted) { return; }
 
-	cs_debug_mask(D_CACHEEX, "cacheex: received id request from node %" PRIu64 "X %s", cacheex_node_id(mbuf + 20), username(cl));
+	cs_log_dbg(D_CACHEEX, "cacheex: received id request from node %" PRIu64 "X %s", cacheex_node_id(mbuf + 20), username(cl));
 
 	memset(rbuf, 0, sizeof(rbuf));
 	rbuf[0] = 0x3e;
 	rbuf[1] = 12;
 	rbuf[2] = 0;
 	memcpy(rbuf + 20, camd35_node_id, 8);
-	cs_debug_mask(D_CACHEEX, "cacheex: sending own id %" PRIu64 "X request %s", cacheex_node_id(camd35_node_id), username(cl));
+	cs_log_dbg(D_CACHEEX, "cacheex: sending own id %" PRIu64 "X request %s", cacheex_node_id(camd35_node_id), username(cl));
 	camd35_send(cl, rbuf, 12); //send adds +20
 }
 
@@ -595,7 +595,7 @@ void camd35_cache_push_request_remote_id(struct s_client *cl)
 	rbuf[1] = 12;
 	rbuf[2] = 0;
 	memcpy(rbuf + 20, camd35_node_id, 8);
-	cs_debug_mask(D_CACHEEX, "cacheex: sending id request to %s", username(cl));
+	cs_log_dbg(D_CACHEEX, "cacheex: sending id request to %s", username(cl));
 	camd35_send(cl, rbuf, 12); //send adds +20
 }
 
@@ -666,7 +666,7 @@ void camd35_cache_send_push_filter(struct s_client *cl, uint8_t mode)
 		i += 4;
 	}
 
-	cs_debug_mask(D_CACHEEX, "cacheex: sending push filter request to %s", username(cl));
+	cs_log_dbg(D_CACHEEX, "cacheex: sending push filter request to %s", username(cl));
 	camd35_send_without_timeout(cl, buf, 242); //send adds +20  		
 }
 
@@ -737,7 +737,7 @@ void camd35_cache_push_filter(struct s_client *cl, uint8_t *buf, uint8_t mode)
 		i += 4;
 	}
 	
-	cs_debug_mask(D_CACHEEX, "cacheex: received push filter request from %s", username(cl));
+	cs_log_dbg(D_CACHEEX, "cacheex: received push filter request from %s", username(cl));
 }
 
 /**
@@ -759,7 +759,7 @@ void camd35_cache_push_receive_remote_id(struct s_client *cl, uint8_t *buf)
 
 	memcpy(cl->ncd_skey, buf + 20, 8);
 	cl->ncd_skey[8] = 1;
-	cs_debug_mask(D_CACHEEX, "cacheex: received id answer from %s: %" PRIu64 "X", username(cl), cacheex_node_id(cl->ncd_skey));
+	cs_log_dbg(D_CACHEEX, "cacheex: received id answer from %s: %" PRIu64 "X", username(cl), cacheex_node_id(cl->ncd_skey));
 }
 
 
@@ -767,7 +767,7 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 {
 	if(ll_count(er->csp_lastnodes) >= cacheex_maxhop(cl))    //check max 10 nodes to push:
 	{
-		cs_debug_mask(D_CACHEEX, "cacheex: nodelist reached %d nodes, no push", cacheex_maxhop(cl));
+		cs_log_dbg(D_CACHEEX, "cacheex: nodelist reached %d nodes, no push", cacheex_maxhop(cl));
 		return 0;
 	}
 
@@ -775,7 +775,7 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 	{
 		if(!cl->reader->tcp_connected)
 		{
-			cs_debug_mask(D_CACHEEX, "cacheex: not connected %s -> no push", username(cl));
+			cs_log_dbg(D_CACHEEX, "cacheex: not connected %s -> no push", username(cl));
 			return 0;
 		}
 	}
@@ -783,7 +783,7 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 	//if(chk_is_null_nodeid(remote_node,8)){
 	if(!cl->ncd_skey[8])
 	{
-		cs_debug_mask(D_CACHEEX, "cacheex: NO peer_node_id got yet, skip!");
+		cs_log_dbg(D_CACHEEX, "cacheex: NO peer_node_id got yet, skip!");
 		return 0;
 	}
 
@@ -794,7 +794,7 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 	uint8_t *node;
 	while((node = ll_li_next(li)))
 	{
-		cs_debug_mask(D_CACHEEX, "cacheex: check node %" PRIu64 "X == %" PRIu64 "X ?", cacheex_node_id(node), cacheex_node_id(remote_node));
+		cs_log_dbg(D_CACHEEX, "cacheex: check node %" PRIu64 "X == %" PRIu64 "X ?", cacheex_node_id(node), cacheex_node_id(remote_node));
 		if(memcmp(node, remote_node, 8) == 0)
 		{
 			break;
@@ -805,7 +805,7 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 	//node found, so we got it from there, do not push:
 	if(node)
 	{
-		cs_debug_mask(D_CACHEEX,
+		cs_log_dbg(D_CACHEEX,
 					  "cacheex: node %" PRIu64 "X found in list => skip push!", cacheex_node_id(node));
 		return 0;
 	}
@@ -814,7 +814,7 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 	if(check_is_pushed(er->cw_cache, cl))
 		{ return 0; }
 
-	cs_debug_mask(D_CACHEEX, "cacheex: push ok %" PRIu64 "X to %" PRIu64 "X %s", cacheex_node_id(camd35_node_id), cacheex_node_id(remote_node), username(cl));
+	cs_log_dbg(D_CACHEEX, "cacheex: push ok %" PRIu64 "X to %" PRIu64 "X %s", cacheex_node_id(camd35_node_id), cacheex_node_id(remote_node), username(cl));
 
 	return 1;
 }
@@ -830,7 +830,7 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	{
 		if(!tcp_connect(cl))
 		{
-			cs_debug_mask(D_CACHEEX, "cacheex: not connected %s -> no push", username(cl));
+			cs_log_dbg(D_CACHEEX, "cacheex: not connected %s -> no push", username(cl));
 			return (-1);
 		}
 	}
@@ -863,7 +863,7 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 		else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
 			{ cl->cwc_info++; }
 #endif
-		cs_debug_mask(D_CWC, "CWC (CE) push to %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
+		cs_log_dbg(D_CWC, "CWC (CE) push to %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
 	}
 
 	buf[19] = er->ecm[0] != 0x80 && er->ecm[0] != 0x81 ? 0 : er->ecm[0];
@@ -949,7 +949,7 @@ void camd35_recv_ce1_cwc_info(struct s_client *cl, uchar *buf, int32_t idx)
 	else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
 		{ cl->cwc_info++; }
 
-	cs_debug_mask(D_CWC, "CWC (CE1) received from %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
+	cs_log_dbg(D_CWC, "CWC (CE1) received from %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
 
 }
 
@@ -963,7 +963,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 	uint16_t size = buf[1] | (buf[2] << 8);
 	if(size < sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw))
 	{
-		cs_debug_mask(D_CACHEEX, "cacheex: %s received old cash-push format! data ignored!", username(cl));
+		cs_log_dbg(D_CACHEEX, "cacheex: %s received old cash-push format! data ignored!", username(cl));
 		return;
 	}
 
@@ -1000,7 +1000,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 			{ cl->account->cwc_info++; }
 		else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
 			{ cl->cwc_info++; }
-		cs_debug_mask(D_CWC, "CWC (CE) received from %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
+		cs_log_dbg(D_CWC, "CWC (CE) received from %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
 	}
 #endif
 
@@ -1034,11 +1034,11 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 		//check max nodes:
 		if(count > cacheex_maxhop(cl))
 		{
-			cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes (max=%d), ignored! %s", (int32_t)count, cacheex_maxhop(cl), username(cl));
+			cs_log_dbg(D_CACHEEX, "cacheex: received %d nodes (max=%d), ignored! %s", (int32_t)count, cacheex_maxhop(cl), username(cl));
 			NULLFREE(er);
 			return;
 		}
-		cs_debug_mask(D_CACHEEX, "cacheex: received %d nodes %s", (int32_t)count, username(cl));
+		cs_log_dbg(D_CACHEEX, "cacheex: received %d nodes %s", (int32_t)count, username(cl));
 		if (er){
 			er->csp_lastnodes = ll_create("csp_lastnodes");
 		}
@@ -1050,12 +1050,12 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 			ofs += 8;
 			ll_append(er->csp_lastnodes, data);
 			count--;
-			cs_debug_mask(D_CACHEEX, "cacheex: received node %" PRIu64 "X %s", cacheex_node_id(data), username(cl));
+			cs_log_dbg(D_CACHEEX, "cacheex: received node %" PRIu64 "X %s", cacheex_node_id(data), username(cl));
 		}
 	}
 	else
 	{
-		cs_debug_mask(D_CACHEEX, "cacheex: received old cachex from %s", username(cl));
+		cs_log_dbg(D_CACHEEX, "cacheex: received old cachex from %s", username(cl));
 		er->csp_lastnodes = ll_create("csp_lastnodes");
 	}
 
@@ -1066,7 +1066,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 		memcpy(cl->ncd_skey, data, 8);
 		cl->ncd_skey[8] = 1; //Mark as valid node
 	}
-	cs_debug_mask(D_CACHEEX, "cacheex: received cacheex from remote node id %" PRIu64 "X", cacheex_node_id(cl->ncd_skey));
+	cs_log_dbg(D_CACHEEX, "cacheex: received cacheex from remote node id %" PRIu64 "X", cacheex_node_id(cl->ncd_skey));
 
 	//for compatibility: add peer node if no node received (not working now, maybe later):
 	if(!ll_count(er->csp_lastnodes) && cl->ncd_skey[8])
@@ -1075,7 +1075,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 			{ return; }
 		memcpy(data, cl->ncd_skey, 8);
 		ll_append(er->csp_lastnodes, data);
-		cs_debug_mask(D_CACHEEX, "cacheex: added missing remote node id %" PRIu64 "X", cacheex_node_id(data));
+		cs_log_dbg(D_CACHEEX, "cacheex: added missing remote node id %" PRIu64 "X", cacheex_node_id(data));
 	}
 
 	//  if (!ll_count(er->csp_lastnodes)) {
@@ -1085,7 +1085,7 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 	//      memcpy(data+4, &cl->port, 2);
 	//      memcpy(data+6, &cl->is_udp, 1);
 	//      ll_append(er->csp_lastnodes, data);
-	//      cs_debug_mask(D_CACHEEX, "cacheex: added compat remote node id %" PRIu64 "X", cacheex_node_id(data));
+	//      cs_log_dbg(D_CACHEEX, "cacheex: added compat remote node id %" PRIu64 "X", cacheex_node_id(data));
 	//  }
 
 	cacheex_add_to_cache(cl, er);
@@ -1181,7 +1181,7 @@ void camd35_idle(void)
 		{
 			if(check_client(cl) && cl->reader->tcp_connected && cl->reader->ph.type==MOD_CONN_TCP)
 			{
-				cs_debug_mask(D_READER, "%s inactive_timeout, close connection (fd=%d)", cl->reader->ph.desc, cl->pfd);
+				cs_log_dbg(D_READER, "%s inactive_timeout, close connection (fd=%d)", cl->reader->ph.desc, cl->pfd);
 				network_tcp_connection_close(cl->reader, "inactivity");
 			}
 			else

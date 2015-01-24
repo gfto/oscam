@@ -931,11 +931,11 @@ static char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams
 
 	if(strcmp(getParam(params, "button"), "Refresh list") == 0)
 	{
-		cs_debug_mask(D_TRACE, "Entitlements: Refresh Shares start");
+		cs_log_dbg(D_TRACE, "Entitlements: Refresh Shares start");
 #ifdef MODULE_CCCSHARE
 		refresh_shares();
 #endif
-		cs_debug_mask(D_TRACE, "Entitlements: Refresh Shares finished");
+		cs_log_dbg(D_TRACE, "Entitlements: Refresh Shares finished");
 		tpl_addMsg(vars, "Refresh Shares started");
 	}
 
@@ -6072,11 +6072,11 @@ static bool send_EMM(struct s_reader * rdr, uint16_t caid, struct s_cardsystem *
 			{
 				if(!cs->get_emm_type(emm_pack, rdr))
 				{
-					rdr_debug_mask(rdr, D_EMM, "get_emm_type() returns error");
+					rdr_log_dbg(rdr, D_EMM, "get_emm_type() returns error");
 				}
 			}
 
-			cs_debug_mask(D_EMM, "emm is being sent to reader %s.", rdr->label);
+			cs_log_dbg(D_EMM, "emm is being sent to reader %s.", rdr->label);
 			add_job(rdr->client, ACTION_READER_EMM, emm_pack, sizeof(EMM_PACKET));
 			return true;
 		}
@@ -6225,7 +6225,7 @@ static char *send_oscam_EMM_running(struct templatevars * vars, struct uriparams
 			cs = get_cardsystem_by_caid(caid);
 			if(!cs)
 			{
-				rdr_debug_mask(rdr, D_EMM, "unable to find cardsystem for caid %04X", caid);
+				rdr_log_dbg(rdr, D_EMM, "unable to find cardsystem for caid %04X", caid);
 				caid = 0;
 			}
 		}
@@ -7046,13 +7046,13 @@ static int8_t check_httpdyndns(IN_ADDR_T addr)
 			if(cfg.http_dyndns[i][0])
 			{
 				cs_resolve((const char *)cfg.http_dyndns[i], &cfg.http_dynip[i], NULL, NULL);
-				cs_debug_mask(D_TRACE, "WebIf: httpdyndns [%d] resolved %s to %s ", i, (char *)cfg.http_dyndns[i], cs_inet_ntoa(cfg.http_dynip[i]));
+				cs_log_dbg(D_TRACE, "WebIf: httpdyndns [%d] resolved %s to %s ", i, (char *)cfg.http_dyndns[i], cs_inet_ntoa(cfg.http_dynip[i]));
 			}
 		}
 	}
 	else
 	{
-		cs_debug_mask(D_TRACE, "WebIf: No dyndns addresses found");
+		cs_log_dbg(D_TRACE, "WebIf: No dyndns addresses found");
 		return 0;
 	}
 
@@ -7143,13 +7143,13 @@ static int32_t readRequest(FILE * f, IN_ADDR_T in, char **result, int8_t forcePl
 					int32_t errcode = ERR_peek_error();
 					char errstring[128];
 					ERR_error_string_n(errcode, errstring, sizeof(errstring) - 1);
-					cs_debug_mask(D_TRACE, "WebIf: read error ret=%d (%d%s%s)", n, SSL_get_error(cur_ssl(), n), errcode ? " " : "", errcode ? errstring : "");
+					cs_log_dbg(D_TRACE, "WebIf: read error ret=%d (%d%s%s)", n, SSL_get_error(cur_ssl(), n), errcode ? " " : "", errcode ? errstring : "");
 				}
 				return -1;
 			}
 #else
 			if(errno != ECONNRESET)
-				{ cs_debug_mask(D_TRACE, "WebIf: read error ret=%d (errno=%d %s)", n, errno, strerror(errno)); }
+				{ cs_log_dbg(D_TRACE, "WebIf: read error ret=%d (errno=%d %s)", n, errno, strerror(errno)); }
 #endif
 			return -1;
 		}
@@ -7213,7 +7213,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 
 		// at this point we do all checks related origin IP, ranges and dyndns stuff
 		ok = check_valid_origin(addr);
-		cs_debug_mask(D_TRACE, "WebIf: Origin checked. Result: access from %s => %s", cs_inet_ntoa(addr), (!ok) ? "forbidden" : "allowed");
+		cs_log_dbg(D_TRACE, "WebIf: Origin checked. Result: access from %s => %s", cs_inet_ntoa(addr), (!ok) ? "forbidden" : "allowed");
 
 		// based on the failed origin checks we send a 403 to calling browser
 		if(!ok)
@@ -7276,7 +7276,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 
 		if(!filebuf || bufsize < 1)
 		{
-			if(!*keepalive) { cs_debug_mask(D_CLIENT, "WebIf: No data received from client %s. Closing connection.", cs_inet_ntoa(addr)); }
+			if(!*keepalive) { cs_log_dbg(D_CLIENT, "WebIf: No data received from client %s. Closing connection.", cs_inet_ntoa(addr)); }
 			return -1;
 		}
 
@@ -7409,11 +7409,11 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				{
 					if(authheader)
 					{
-						cs_debug_mask(D_CLIENT, "WebIf: Received wrong auth header from %s:", cs_inet_ntoa(addr));
-						cs_debug_mask(D_CLIENT, "%s", authheader);
+						cs_log_dbg(D_CLIENT, "WebIf: Received wrong auth header from %s:", cs_inet_ntoa(addr));
+						cs_log_dbg(D_CLIENT, "%s", authheader);
 					}
 					else
-						{ cs_debug_mask(D_CLIENT, "WebIf: Received no auth header from %s.", cs_inet_ntoa(addr)); }
+						{ cs_log_dbg(D_CLIENT, "WebIf: Received no auth header from %s.", cs_inet_ntoa(addr)); }
 				}
 				calculate_nonce(NULL, expectednonce, opaque);
 			}
@@ -7774,7 +7774,7 @@ static void *serve_process(void *conn)
 				}
 				else
 				{
-					cs_debug_mask(D_TRACE, "WebIf: fdopen(%d) failed. (errno=%d %s)", s, errno, strerror(errno));
+					cs_log_dbg(D_TRACE, "WebIf: fdopen(%d) failed. (errno=%d %s)", s, errno, strerror(errno));
 				}
 			}
 		}
@@ -7796,7 +7796,7 @@ static void *serve_process(void *conn)
 		}
 		else
 		{
-			cs_debug_mask(D_TRACE, "WebIf: fdopen(%d) failed. (errno=%d %s)", s, errno, strerror(errno));
+			cs_log_dbg(D_TRACE, "WebIf: fdopen(%d) failed. (errno=%d %s)", s, errno, strerror(errno));
 		}
 		shutdown(s, SHUT_WR);
 		close(s);

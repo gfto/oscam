@@ -51,7 +51,7 @@ static uint32_t poll_gsms_data (uint16_t *boxid, uint8_t *num, char *text)
 		{
 		length = length1;
 		}
-	cs_debug_mask(D_READER, "total msg length taken from %s = %d, limitted to %d",fname, length1, length);
+	cs_log_dbg(D_READER, "total msg length taken from %s = %d, limitted to %d",fname, length1, length);
 	strncpy(text, &(buffer[7]),length-7);
 	return 0;
 }
@@ -64,7 +64,7 @@ static void write_gsms_to_osd_file(struct s_client *cli, unsigned char *gsms)
 	char gsms_buf[150];
 	memset(gsms_buf, 0, sizeof(gsms_buf));
 	snprintf(gsms_buf, sizeof(gsms_buf), "%s %s:%s %s", fname, username(cli), cli->reader->device, gsms);
-	cs_debug_mask(D_READER, "found OSD 'driver' %s - write gsms to OSD", fname);
+	cs_log_dbg(D_READER, "found OSD 'driver' %s - write gsms to OSD", fname);
 	char *cmd = gsms_buf;
               FILE *p;
               if ((p = popen(cmd, "w")) == NULL)
@@ -215,7 +215,7 @@ void gbox_init_send_gsms(void)
 	return;
 	}
 	int8_t gsms_len = strlen(text);
-	cs_debug_mask(D_READER,"got from %s: box_ID = %04X  num = %d  gsms_length = %d  txt = %s",fname, boxid, num, gsms_len, text);
+	cs_log_dbg(D_READER,"got from %s: box_ID = %04X  num = %d  gsms_length = %d  txt = %s",fname, boxid, num, gsms_len, text);
 
 	switch(num)
 	{
@@ -225,7 +225,7 @@ void gbox_init_send_gsms(void)
 	case 3: {gsms_prot = 2;	msg_type = 0x31; break;}
 	default:{cs_log("ERROR unknown gsms protocol"); return;}
 	}
-	cs_debug_mask(D_READER,"init gsms_length=%d  msg_type=%02X msg_prot=%d",gsms_len, msg_type, gsms_prot);
+	cs_log_dbg(D_READER,"init gsms_length=%d  msg_type=%02X msg_prot=%d",gsms_len, msg_type, gsms_prot);
 
 	struct s_client *cl;
 	for (cl = first_client; cl; cl = cl->next)
@@ -268,7 +268,7 @@ void gbox_send_gsms_ack(struct s_client *cli, uint8_t gsms_prot)
 		{
 		gbox_message_header(outbuf, MSG_GSMS_ACK_1, 0x90989098, 0x90989098);
 		gbox_send(cli, outbuf, 10);
-		cs_debug_mask(D_READER,"<-[gbx] send GSMS_ACK_1 to %s:%d id: %04X",rdr->device, rdr->r_port, peer->gbox.id);
+		cs_log_dbg(D_READER,"<-[gbx] send GSMS_ACK_1 to %s:%d id: %04X",rdr->device, rdr->r_port, peer->gbox.id);
 		}
 		if (peer->online && gsms_prot == 2)
 		{
@@ -279,7 +279,7 @@ void gbox_send_gsms_ack(struct s_client *cli, uint8_t gsms_prot)
 		outbuf[13] = local_gbox_id & 0xff;									
 		outbuf[14] = 0x1;
 		outbuf[15] = 0;
-		cs_debug_mask(D_READER,"<-[gbx] send GSMS_ACK_2 to %s:%d id: %04X",rdr->device, rdr->r_port, peer->gbox.id);
+		cs_log_dbg(D_READER,"<-[gbx] send GSMS_ACK_2 to %s:%d id: %04X",rdr->device, rdr->r_port, peer->gbox.id);
 		gbox_send(cli, outbuf, 16);
 		}
 }

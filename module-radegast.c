@@ -29,7 +29,7 @@ static int32_t radegast_recv(struct s_client *client, uchar *buf, int32_t l)
 	{
 		if((n = recv(client->pfd, buf, l, 0)) > 0)
 		{
-			cs_ddump_mask(D_CLIENT, buf, n, "radegast: received %d bytes from %s", n, remote_txt());
+			cs_log_dump_dbg(D_CLIENT, buf, n, "radegast: received %d bytes from %s", n, remote_txt());
 			client->last = time((time_t *) 0);
 			if((buf[0] == 0x02) && (buf[1] == 0x12) && (buf[2] == 0x05) && (buf[3] == 0x10)) { return (n); }  // dcw received
 			else if((buf[0] == 0x02) && (buf[1] == 0x02) && (buf[2] == 0x04) && (buf[3] == 0x00)) { return (n); }  // dcw no found
@@ -46,7 +46,7 @@ static int32_t radegast_recv_chk(struct s_client *client, uchar *dcw, int32_t *r
 	{
 		char tmp_dbg[33];
 		memcpy(dcw, buf + 4, 16);
-		cs_debug_mask(D_CLIENT, "radegast: recv chk - %s", cs_hexdump(0, dcw, 16, tmp_dbg, sizeof(tmp_dbg)));
+		cs_log_dbg(D_CLIENT, "radegast: recv chk - %s", cs_hexdump(0, dcw, 16, tmp_dbg, sizeof(tmp_dbg)));
 		*rc = 1;
 		return (client->reader->msg_idx);
 	}
@@ -195,7 +195,7 @@ static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar
 	
 	if(er->caid == 0x500)
 	{	
-		cs_ddump_mask(D_ATR, er->ecm, er->ecmlen, "%s: ecm dump BEFORE suppressing SubECMs with CWsSwap set to 01", __func__);
+		cs_log_dump_dbg(D_ATR, er->ecm, er->ecmlen, "%s: ecm dump BEFORE suppressing SubECMs with CWsSwap set to 01", __func__);
 		Len = er->ecmlen;
 		if(cs_malloc (&via_ecm_mod, Len+4))
 		{
@@ -237,7 +237,7 @@ static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar
 				Len = via_ecm_mod[2]+3;
 				er->ecmlen = Len;
 				memcpy(er->ecm, via_ecm_mod, Len);
-				cs_ddump_mask(D_ATR, er->ecm, er->ecmlen, "%s: ecm dump AFTER suppressing SubECMs with CWsSwap set to 01", __func__);
+				cs_log_dump_dbg(D_ATR, er->ecm, er->ecmlen, "%s: ecm dump AFTER suppressing SubECMs with CWsSwap set to 01", __func__);
 			}
 			NULLFREE(via_ecm_mod);
 		}
@@ -271,8 +271,8 @@ static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar
 	client->reader->msg_idx = er->idx;
 	n = send(client->pfd, ecmbuf, er->ecmlen + 30, 0);
 
-	cs_debug_mask(D_TRACE, "radegast: sending ecm");
-	cs_ddump_mask(D_CLIENT, ecmbuf, er->ecmlen + 30, "ecm:");
+	cs_log_dbg(D_TRACE, "radegast: sending ecm");
+	cs_log_dump_dbg(D_CLIENT, ecmbuf, er->ecmlen + 30, "ecm:");
 	NULLFREE(ecmbuf);
 	return ((n < 1) ? (-1) : 0);
 }
@@ -291,7 +291,7 @@ int32_t radegast_cli_init(struct s_client *cl)
 	cl->reader->card_status = CARD_INSERTED;
 	cl->reader->last_g = cl->reader->last_s = time((time_t *)0);
 
-	cs_debug_mask(D_CLIENT, "radegast: last_s=%ld, last_g=%ld", cl->reader->last_s, cl->reader->last_g);
+	cs_log_dbg(D_CLIENT, "radegast: last_s=%ld, last_g=%ld", cl->reader->last_s, cl->reader->last_g);
 
 	cl->pfd = cl->udp_fd;
 

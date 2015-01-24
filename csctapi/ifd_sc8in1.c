@@ -60,7 +60,7 @@ static int32_t Sc8in1_DebugSignals(struct s_reader *reader, uint16_t slot, const
 	uint32_t msr;
 	if(ioctl(reader->handle, TIOCMGET, &msr) < 0)
 		{ return ERROR; }
-	rdr_debug_mask(reader, D_DEVICE, "SC8in1: Signals(%s): Slot: %i, DTR: %u, RTS: %u",
+	rdr_log_dbg(reader, D_DEVICE, "SC8in1: Signals(%s): Slot: %i, DTR: %u, RTS: %u",
 				   extra, slot, msr & TIOCM_DTR ? 1 : 0, msr & TIOCM_RTS ? 1 : 0);
 	return OK;
 }
@@ -76,10 +76,10 @@ static int32_t Sc8in1_NeedBaudrateChange(struct s_reader *reader, uint32_t desir
 			(reader->mhz != reader->cardmhz) ||
 			(cmdMode == 0 && memcmp(current, new, sizeof(struct termios))))
 	{
-		rdr_debug_mask(reader, D_TRACE, "Sc8in1_NeedBaudrateChange 1");
+		rdr_log_dbg(reader, D_TRACE, "Sc8in1_NeedBaudrateChange 1");
 		return 1;
 	}
-	rdr_debug_mask(reader, D_TRACE, "Sc8in1_NeedBaudrateChange 0");
+	rdr_log_dbg(reader, D_TRACE, "Sc8in1_NeedBaudrateChange 0");
 	return 0;
 }
 
@@ -104,8 +104,8 @@ static int32_t Sc8in1_SetBaudrate(struct s_reader *reader, uint32_t baudrate, st
 			}
 		}
 	}
-	rdr_debug_mask(reader, D_IFD, "Sc8in1 Setting baudrate to %u", baudrate);
-	rdr_debug_mask(reader, D_TRACE, "Sc8in1 Setting baudrate to %u, reader br=%u, currentBaudrate=%u, cmdMode=%u",
+	rdr_log_dbg(reader, D_IFD, "Sc8in1 Setting baudrate to %u", baudrate);
+	rdr_log_dbg(reader, D_TRACE, "Sc8in1 Setting baudrate to %u, reader br=%u, currentBaudrate=%u, cmdMode=%u",
 				   baudrate, reader->current_baudrate, crdr_data->current_baudrate, cmdMode);
 	call(IO_Serial_SetBitrate(reader, baudrate, &tio));
 	crdr_data->current_baudrate = baudrate;
@@ -180,13 +180,13 @@ static int32_t sc8in1_command(struct s_reader *reader, unsigned char *buff,
 	// Do we need to set the baudrate?
 	if(Sc8in1_NeedBaudrateChange(reader, 9600, &termiobackup, &termio, 1))
 	{
-		rdr_debug_mask(reader, D_TRACE, "Sc8in1_NeedBaudrateChange for SC8in1 command");
+		rdr_log_dbg(reader, D_TRACE, "Sc8in1_NeedBaudrateChange for SC8in1 command");
 		// save current baudrate for later restore
 		currentBaudrate = crdr_data->current_baudrate;
 		crdr_data->current_baudrate = 9600;
 		cfsetospeed(&termio, B9600);
 		cfsetispeed(&termio, B9600);
-		rdr_debug_mask(reader, D_DEVICE, "standard baudrate: cardmhz=%d mhz=%d -> effective baudrate %u", reader->cardmhz, reader->mhz, 9600);
+		rdr_log_dbg(reader, D_DEVICE, "standard baudrate: cardmhz=%d mhz=%d -> effective baudrate %u", reader->cardmhz, reader->mhz, 9600);
 	}
 	if(tcsetattr(reader->handle, TCSANOW, &termio) < 0)
 	{
@@ -206,7 +206,7 @@ static int32_t sc8in1_command(struct s_reader *reader, unsigned char *buff,
 		eepromBuff[0] = 0x70;
 		eepromBuff[1] = 0xab;
 		eepromBuff[2] = 0xba;
-		rdr_ddump_mask(reader, D_DEVICE, eepromBuff, 3, "Sending:");
+		rdr_log_dump_dbg(reader, D_DEVICE, eepromBuff, 3, "Sending:");
 		if(!write(reader->handle, eepromBuff, 3))
 		{
 			rdr_log(reader, "SC8in1 Command write EEPROM error");
@@ -215,7 +215,7 @@ static int32_t sc8in1_command(struct s_reader *reader, unsigned char *buff,
 		tcflush(reader->handle, TCIOFLUSH);
 	}
 	// write cmd
-	rdr_ddump_mask(reader, D_DEVICE, buff, lenwrite, "Sending:");
+	rdr_log_dump_dbg(reader, D_DEVICE, buff, lenwrite, "Sending:");
 	int32_t dataWritten = 0, dataToWrite = lenwrite;
 	while(dataWritten < lenwrite)
 	{
@@ -248,7 +248,7 @@ static int32_t sc8in1_command(struct s_reader *reader, unsigned char *buff,
 	if(lenread <= 0 && crdr_data->mcr_type)
 	{
 		unsigned char buff_echo_hack[2] = { 0x65, 'A' };
-		rdr_ddump_mask(reader, D_DEVICE, &buff_echo_hack[0], 2, "Sending:");
+		rdr_log_dump_dbg(reader, D_DEVICE, &buff_echo_hack[0], 2, "Sending:");
 		if(write(reader->handle, &buff_echo_hack[0], 2) != 2)
 		{
 			rdr_log(reader, "SC8in1 Echo command write error");
@@ -272,7 +272,7 @@ static int32_t sc8in1_command(struct s_reader *reader, unsigned char *buff,
 			   sizeof(termiobackup));
 		if(Sc8in1_NeedBaudrateChange(reader, reader->current_baudrate, &termio, &termiobackup, 1))
 		{
-			rdr_debug_mask(reader, D_TRACE, "Sc8in1_SetTermioForSlot for select slot");
+			rdr_log_dbg(reader, D_TRACE, "Sc8in1_SetTermioForSlot for select slot");
 			if(Sc8in1_SetBaudrate(reader, reader->current_baudrate, &termiobackup, 0))
 			{
 				rdr_log(reader, "ERROR: SC8in1 Command Sc8in1_SetBaudrate");
@@ -686,7 +686,7 @@ static int32_t Sc8in1_Selectslot(struct s_reader *reader, uint16_t slot)
 	struct sc8in1_data *crdr_data = reader->crdr_data;
 	if(slot == crdr_data->current_slot)
 		{ return OK; }
-	rdr_debug_mask(reader, D_TRACE, "SC8in1: select slot %i", slot);
+	rdr_log_dbg(reader, D_TRACE, "SC8in1: select slot %i", slot);
 
 #ifdef WITH_DEBUG
 	struct timeb tv_start, tv_end;
@@ -710,7 +710,7 @@ static int32_t Sc8in1_Selectslot(struct s_reader *reader, uint16_t slot)
 	}
 #ifdef WITH_DEBUG
 	cs_ftime(&tv_end);
-	rdr_debug_mask(reader, D_DEVICE, "SC8in1 Selectslot in %"PRId64" ms", comp_timeb(&tv_end, &tv_start));
+	rdr_log_dbg(reader, D_DEVICE, "SC8in1 Selectslot in %"PRId64" ms", comp_timeb(&tv_end, &tv_start));
 #endif
 	return status;
 }
@@ -742,7 +742,7 @@ static int32_t Sc8in1_GetStatus(struct s_reader *reader, int32_t *in)
 			return ERROR;
 		}
 		crdr_data->cardstatus = i;
-		rdr_debug_mask(reader, D_TRACE, "SC8in1: Card status changed; cardstatus=0x%X", crdr_data->cardstatus);
+		rdr_log_dbg(reader, D_TRACE, "SC8in1: Card status changed; cardstatus=0x%X", crdr_data->cardstatus);
 	}
 	*in = (crdr_data->cardstatus & 1 << (reader->slot - 1));
 	return OK;
@@ -986,12 +986,12 @@ static int32_t Sc8in1_Close(struct s_reader *reader)
 	// Check if we are the last active slot for the reader,
 	// then close the serial port. Otherwise select next acive slot.
 	struct sc8in1_data *crdr_data = reader->crdr_data;
-	rdr_debug_mask(reader, D_IFD, "Closing SC8in1 device %s", reader->device);
+	rdr_log_dbg(reader, D_IFD, "Closing SC8in1 device %s", reader->device);
 	bool status = ERROR;
 
 	if(Sc8in1_GetActiveHandle(reader, 1))
 	{
-		rdr_debug_mask(reader, D_IFD, "Just deactivating SC8in1 device %s", reader->device);
+		rdr_log_dbg(reader, D_IFD, "Just deactivating SC8in1 device %s", reader->device);
 		reader->written = 0;
 		status = OK;
 		// select next active reader slot, so getstatus still works
@@ -1093,7 +1093,7 @@ static int32_t Sc8in1_InitLocks(struct s_reader *reader)
 				{
 					reader->crdr_data = rdr->crdr_data;
 					reader_config_exists = 1;
-					rdr_debug_mask(reader, D_DEVICE, "Sc8in1_InitLocks: Found config for %s", reader->device);
+					rdr_log_dbg(reader, D_DEVICE, "Sc8in1_InitLocks: Found config for %s", reader->device);
 				}
 			}
 			else
@@ -1109,7 +1109,7 @@ static int32_t Sc8in1_InitLocks(struct s_reader *reader)
 
 	if(!reader_config_exists)
 	{
-		rdr_debug_mask(reader, D_DEVICE, "Sc8in1_InitLocks: Creating new config for %s", reader->device);
+		rdr_log_dbg(reader, D_DEVICE, "Sc8in1_InitLocks: Creating new config for %s", reader->device);
 		// Create SC8in1_Config for reader
 		if(cs_malloc(&reader->crdr_data, sizeof(struct sc8in1_data)))
 		{
@@ -1139,7 +1139,7 @@ static void sc8in1_lock(struct s_reader *reader)
 {
 	struct sc8in1_data *crdr_data = reader->crdr_data;
 	cs_writelock(&crdr_data->sc8in1_lock);
-	rdr_debug_mask(reader, D_ATR, "Locked for access of slot %i", reader->slot);
+	rdr_log_dbg(reader, D_ATR, "Locked for access of slot %i", reader->slot);
 	Sc8in1_Selectslot(reader, reader->slot);
 }
 
@@ -1147,7 +1147,7 @@ static void sc8in1_unlock(struct s_reader *reader)
 {
 	struct sc8in1_data *crdr_data = reader->crdr_data;
 	cs_writeunlock(&crdr_data->sc8in1_lock);
-	rdr_debug_mask(reader, D_ATR, "Unlocked for access of slot %i", reader->slot);
+	rdr_log_dbg(reader, D_ATR, "Unlocked for access of slot %i", reader->slot);
 }
 
 static void sc8in1_display(struct s_reader *reader, char *message)
@@ -1172,7 +1172,7 @@ static int32_t sc8in1_init(struct s_reader *reader)
 	cs_writelock(&crdr_data->sc8in1_lock);
 	if(reader->handle != 0)   //this reader is already initialized
 	{
-		rdr_debug_mask(reader, D_DEVICE, "%s Sc8in1 already open", __func__);
+		rdr_log_dbg(reader, D_DEVICE, "%s Sc8in1 already open", __func__);
 		cs_writeunlock(&crdr_data->sc8in1_lock);
 		return OK;
 	}
@@ -1184,7 +1184,7 @@ static int32_t sc8in1_init(struct s_reader *reader)
 	reader->handle = Sc8in1_GetActiveHandle(reader, 0);
 	if(!reader->handle)
 	{
-		rdr_debug_mask(reader, D_DEVICE, "%s opening SC8in1", __func__);
+		rdr_log_dbg(reader, D_DEVICE, "%s opening SC8in1", __func__);
 		//open physical device
 		char deviceName[128];
 		strncpy(deviceName, reader->device, 128);
@@ -1201,7 +1201,7 @@ static int32_t sc8in1_init(struct s_reader *reader)
 	else
 	{
 		// serial port already initialized
-		rdr_debug_mask(reader, D_DEVICE, "%s another Sc8in1 already open", __func__);
+		rdr_log_dbg(reader, D_DEVICE, "%s another Sc8in1 already open", __func__);
 		cs_writeunlock(&crdr_data->sc8in1_lock);
 		return OK;
 	}
@@ -1249,7 +1249,7 @@ static int32_t sc8in1_activate(struct s_reader *reader, struct s_ATR *atr)
 	reader->crdr.unlock(reader);
 	if(retval == ERROR)
 	{
-		rdr_debug_mask(reader, D_TRACE, "ERROR: Phoenix_Reset returns error");
+		rdr_log_dbg(reader, D_TRACE, "ERROR: Phoenix_Reset returns error");
 		return ERROR;
 	}
 	return OK;

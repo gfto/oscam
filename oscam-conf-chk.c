@@ -354,17 +354,17 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName
 
 	if(newftab.nfilts)
 	{
-		cs_debug_mask(D_CLIENT, "%s '%s' %s filter(s):", zType, zName, zFiltName);
+		cs_log_dbg(D_CLIENT, "%s '%s' %s filter(s):", zType, zName, zFiltName);
 	}
 	for(i = 0; i < newftab.nfilts; i++)
 	{
-		cs_debug_mask(D_CLIENT, "CAID #%d: %04X", i, newftab.filts[i].caid);
+		cs_log_dbg(D_CLIENT, "CAID #%d: %04X", i, newftab.filts[i].caid);
 		if(zFiltName && (zFiltName[0] == 'f' || zFiltName[0] == 'l') && ptr[i] == NULL) { continue; }
 		for(j = 0, ptr3 = strtok_r(ptr[i], ",", &saveptr1); (j < CS_MAXPROV) && (ptr3); ptr3 = strtok_r(NULL, ",", &saveptr1), j++)
 		{
 			newftab.filts[i].prids[j] = a2i(ptr3, 6);
 			newftab.filts[i].nprids++;
-			cs_debug_mask(D_CLIENT, "%s #%d: %06X", zFiltName, j, newftab.filts[i].prids[j]);
+			cs_log_dbg(D_CLIENT, "%s #%d: %06X", zFiltName, j, newftab.filts[i].prids[j]);
 		}
 	}
 

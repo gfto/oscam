@@ -68,11 +68,11 @@ static int32_t chk_class(ECM_REQUEST *er, CLASSTAB *clstab, const char *type, co
 		l = er->ecm[j];
 		if(l + j > er->ecmlen) { continue; }  // skip, this is not a valid class identifier!
 		ecm_class = er->ecm[j + l];
-		cs_debug_mask(D_CLIENT, "ecm class=%02X", ecm_class);
+		cs_log_dbg(D_CLIENT, "ecm class=%02X", ecm_class);
 		for(i = 0; i < clstab->bn; i++)    // search in blocked
 			if(ecm_class == clstab->bclass[i])
 			{
-				cs_debug_mask(D_CLIENT, "class %02X rejected by %s '%s' !%02X filter",
+				cs_log_dbg(D_CLIENT, "class %02X rejected by %s '%s' !%02X filter",
 							  ecm_class, type, name, ecm_class);
 				return 0;
 			}
@@ -90,10 +90,10 @@ static int32_t chk_class(ECM_REQUEST *er, CLASSTAB *clstab, const char *type, co
 	if(cl_n && clstab->an)
 	{
 		if(an)
-			{ cs_debug_mask(D_CLIENT, "ECM classes allowed by %s '%s' filter", type, name); }
+			{ cs_log_dbg(D_CLIENT, "ECM classes allowed by %s '%s' filter", type, name); }
 		else
 		{
-			cs_debug_mask(D_CLIENT, "ECM classes don't match %s '%s' filter, rejecting", type, name);
+			cs_log_dbg(D_CLIENT, "ECM classes don't match %s '%s' filter, rejecting", type, name);
 			return 0;
 		}
 	}
@@ -317,11 +317,11 @@ int32_t chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
 				for(i = 0; (!rc) && i < ptab->ports[pi].ncd->ncd_ftab.filts[j].nprids; i++)
 				{
 					sprid = ptab->ports[pi].ncd->ncd_ftab.filts[j].prids[i];
-					cs_debug_mask(D_CLIENT, "trying server filter %04X:%06X", scaid, sprid);
+					cs_log_dbg(D_CLIENT, "trying server filter %04X:%06X", scaid, sprid);
 					if(prid == sprid)
 					{
 						rc = 1;
-						cs_debug_mask(D_CLIENT, "%04X:%06X allowed by server filter %04X:%06X",
+						cs_log_dbg(D_CLIENT, "%04X:%06X allowed by server filter %04X:%06X",
 									  caid, prid, scaid, sprid);
 					}
 				}
@@ -329,7 +329,7 @@ int32_t chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
 		}
 		if(!rc)
 		{
-			cs_debug_mask(D_CLIENT, "no match, %04X:%06X rejected by server filters", caid, prid);
+			cs_log_dbg(D_CLIENT, "no match, %04X:%06X rejected by server filters", caid, prid);
 			snprintf(er->msglog, MSGLOGSIZE, "no server match %04X:%06X",
 					 caid, (uint32_t) prid);
 
@@ -356,11 +356,11 @@ static int32_t chk_chid(ECM_REQUEST *er, FTAB *fchid, char *type, char *name)
 			found_caid = 1;
 			for(j = 0; (!rc) && j < fchid->filts[i].nprids; j++)
 			{
-				cs_debug_mask(D_CLIENT, "trying %s '%s' CHID filter %04X:%04X",
+				cs_log_dbg(D_CLIENT, "trying %s '%s' CHID filter %04X:%04X",
 							  type, name, fchid->filts[i].caid, fchid->filts[i].prids[j]);
 				if(er->chid == fchid->filts[i].prids[j])
 				{
-					cs_debug_mask(D_CLIENT, "%04X:%04X allowed by %s '%s' CHID filter %04X:%04X",
+					cs_log_dbg(D_CLIENT, "%04X:%04X allowed by %s '%s' CHID filter %04X:%04X",
 								  er->caid, er->chid, type, name, fchid->filts[i].caid,
 								  fchid->filts[i].prids[j]);
 					rc = 1;
@@ -371,12 +371,12 @@ static int32_t chk_chid(ECM_REQUEST *er, FTAB *fchid, char *type, char *name)
 	if(!rc)
 	{
 		if(found_caid)
-			cs_debug_mask(D_CLIENT, "no match, %04X:%04X rejected by %s '%s' CHID filter(s)",
+			cs_log_dbg(D_CLIENT, "no match, %04X:%04X rejected by %s '%s' CHID filter(s)",
 						  er->caid, er->chid, type, name);
 		else
 		{
 			rc = 1;
-			cs_debug_mask(D_CLIENT, "%04X:%04X allowed by %s '%s' CHID filter, CAID not spezified",
+			cs_log_dbg(D_CLIENT, "%04X:%04X allowed by %s '%s' CHID filter, CAID not spezified",
 						  er->caid, er->chid, type, name);
 		}
 	}
@@ -434,12 +434,12 @@ int32_t chk_ufilters(ECM_REQUEST *er)
 				for(j = rc = 0; (!rc) && (j < f->filts[i].nprids); j++)
 				{
 					uprid = f->filts[i].prids[j];
-					cs_debug_mask(D_CLIENT, "trying user '%s' filter %04X:%06X",
+					cs_log_dbg(D_CLIENT, "trying user '%s' filter %04X:%06X",
 								  cur_cl->account->usr, ucaid, uprid);
 					if(er->prid == uprid)
 					{
 						rc = 1;
-						cs_debug_mask(D_CLIENT, "%04X:%06X allowed by user '%s' filter %04X:%06X",
+						cs_log_dbg(D_CLIENT, "%04X:%06X allowed by user '%s' filter %04X:%06X",
 									  er->caid, er->prid, cur_cl->account->usr, ucaid, uprid);
 					}
 				}
@@ -447,7 +447,7 @@ int32_t chk_ufilters(ECM_REQUEST *er)
 		}
 		if(!rc)
 		{
-			cs_debug_mask(D_CLIENT, "no match, %04X:%06X rejected by user '%s' filters",
+			cs_log_dbg(D_CLIENT, "no match, %04X:%06X rejected by user '%s' filters",
 						  er->caid, er->prid, cur_cl->account->usr);
 			snprintf(er->msglog, MSGLOGSIZE, "no card support %04X:%06X",
 					 er->caid, (uint32_t) er->prid);
@@ -477,7 +477,7 @@ int32_t chk_rsfilter(struct s_reader *reader, ECM_REQUEST *er)
 
 	if(reader->ncd_disable_server_filt)
 	{
-		cs_debug_mask(D_CLIENT, "%04X:%06X allowed - server filters disabled",
+		cs_log_dbg(D_CLIENT, "%04X:%06X allowed - server filters disabled",
 					  er->caid, er->prid);
 		return 1;
 	}
@@ -491,19 +491,19 @@ int32_t chk_rsfilter(struct s_reader *reader, ECM_REQUEST *er)
 			prid = (uint32_t)((reader->prid[i][1] << 16) |
 							  (reader->prid[i][2] << 8) |
 							  (reader->prid[i][3]));
-			cs_debug_mask(D_CLIENT, "trying server '%s' filter %04X:%06X",
+			cs_log_dbg(D_CLIENT, "trying server '%s' filter %04X:%06X",
 						  reader->device, caid, prid);
 			if(prid == er->prid)
 			{
 				rc = 1;
-				cs_debug_mask(D_CLIENT, "%04X:%06X allowed by server '%s' filter %04X:%06X",
+				cs_log_dbg(D_CLIENT, "%04X:%06X allowed by server '%s' filter %04X:%06X",
 							  er->caid, er->prid, reader->device, caid, prid);
 			}
 		}
 	}
 	if(!rc)
 	{
-		cs_debug_mask(D_CLIENT, "no match, %04X:%06X rejected by server '%s' filters",
+		cs_log_dbg(D_CLIENT, "no match, %04X:%06X rejected by server '%s' filters",
 					  er->caid, er->prid, reader->device);
 		if(!er->rcEx) { er->rcEx = (E1_SERVER << 4) | E2_IDENT; }
 		return 0;
@@ -528,12 +528,12 @@ int32_t chk_rfilter2(uint16_t rcaid, uint32_t rprid, struct s_reader *rdr)
 				for(j = 0; (!rc) && (j < rdr->ftab.filts[i].nprids); j++)
 				{
 					prid = rdr->ftab.filts[i].prids[j];
-					cs_debug_mask(D_CLIENT, "trying reader '%s' filter %04X:%06X",
+					cs_log_dbg(D_CLIENT, "trying reader '%s' filter %04X:%06X",
 								  rdr->label, caid, prid);
 					if(prid == rprid)
 					{
 						rc = 1;
-						cs_debug_mask(D_CLIENT, "%04X:%06X allowed by reader '%s' filter %04X:%06X",
+						cs_log_dbg(D_CLIENT, "%04X:%06X allowed by reader '%s' filter %04X:%06X",
 									  rcaid, rprid, rdr->label, caid, prid);
 					}
 				}
@@ -541,7 +541,7 @@ int32_t chk_rfilter2(uint16_t rcaid, uint32_t rprid, struct s_reader *rdr)
 		}
 		if(!rc)
 		{
-			cs_debug_mask(D_CLIENT, "no match, %04X:%06X rejected by reader '%s' filters",
+			cs_log_dbg(D_CLIENT, "no match, %04X:%06X rejected by reader '%s' filters",
 						  rcaid, rprid, rdr->label);
 			return 0;
 		}
@@ -707,7 +707,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 	//Checking caids:
 	if((!er->ocaid || !chk_ctab(er->ocaid, &rdr->ctab)) && !chk_ctab(er->caid, &rdr->ctab))
 	{
-		cs_debug_mask(D_TRACE, "caid %04X not found in caidlist reader %s", er->caid, rdr->label);
+		cs_log_dbg(D_TRACE, "caid %04X not found in caidlist reader %s", er->caid, rdr->label);
 		return 0;
 	}
 
@@ -731,7 +731,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 	//Supports long ecms?
 	if(er->ecmlen > 255 && is_network_reader(rdr) && !rdr->ph.large_ecm_support)
 	{
-		cs_debug_mask(D_TRACE, "no large ecm support (l=%d) for reader %s", er->ecmlen, rdr->label);
+		cs_log_dbg(D_TRACE, "no large ecm support (l=%d) for reader %s", er->ecmlen, rdr->label);
 		return 0;
 	}
 
@@ -739,21 +739,21 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 	//Checking services:
 	if(!chk_srvid(rdr->client, er))
 	{
-		cs_debug_mask(D_TRACE, "service %04X not matching reader %s", er->srvid, rdr->label);
+		cs_log_dbg(D_TRACE, "service %04X not matching reader %s", er->srvid, rdr->label);
 		return (0);
 	}
 
 	//Checking ident:
 	if(!chk_rfilter(er, rdr))
 	{
-		cs_debug_mask(D_TRACE, "r-filter reader %s", rdr->label);
+		cs_log_dbg(D_TRACE, "r-filter reader %s", rdr->label);
 		return (0);
 	}
 
 	//Check ECM nanos:
 	if(!chk_class(er, &rdr->cltab, "reader", rdr->label))
 	{
-		cs_debug_mask(D_TRACE, "class filter reader %s", rdr->label);
+		cs_log_dbg(D_TRACE, "class filter reader %s", rdr->label);
 		return (0);
 	}
 
@@ -764,12 +764,12 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 	{
 		if(er->ecm[8] == 0x00 && rdr->secatype == 2)
 		{
-			cs_debug_mask(D_TRACE, "Error: this is a nagra/mediaguard3 ECM and readertype is seca2!");
+			cs_log_dbg(D_TRACE, "Error: this is a nagra/mediaguard3 ECM and readertype is seca2!");
 			return 0;  // we dont send a nagra/mediaguard3 ecm to a seca2 reader!
 		}
 		if((er->ecm[8] == 0x10) && (er->ecm[9] == 0x01) && rdr->secatype == 3)
 		{
-			cs_debug_mask(D_TRACE, "Error: this is a seca2 ECM and readertype is nagra/mediaguard3!");
+			cs_log_dbg(D_TRACE, "Error: this is a seca2 ECM and readertype is nagra/mediaguard3!");
 			return 0;  // we dont send a seca2 ecm to a nagra/mediaguard3 reader!
 		}
 	}
@@ -778,12 +778,12 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 	{
 		if(rdr->secatype == 2 && er->pid >> 8 == 7)
 		{
-			cs_debug_mask(D_TRACE, "Error: this is a nagra/mediaguard3 ECM and readertype is seca2!");
+			cs_log_dbg(D_TRACE, "Error: this is a nagra/mediaguard3 ECM and readertype is seca2!");
 			return 0;  // we dont send a nagra/mediaguard3 ecm to a seca2 reader!
 		}
 		if(rdr->secatype == 3 && er->pid >> 8 == 6)
 		{
-			cs_debug_mask(D_TRACE, "Error: this is a seca2 ECM and readertype is nagra/mediaguard3!");
+			cs_log_dbg(D_TRACE, "Error: this is a seca2 ECM and readertype is nagra/mediaguard3!");
 			return 0;  // we dont send a seca2 ecm to a nagra/mediaguard3 reader!
 		}
 	}
@@ -791,14 +791,14 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 	//Checking chid:
 	if(!chk_chid(er, &rdr->fchid, "reader", rdr->label))
 	{
-		cs_debug_mask(D_TRACE, "chid filter reader %s", rdr->label);
+		cs_log_dbg(D_TRACE, "chid filter reader %s", rdr->label);
 		return (0);
 	}
 
 	//Schlocke reader-defined function, reader-self-check
 	if(rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_CONNECTED, er))
 	{
-		cs_debug_mask(D_TRACE, "reader unavailable %s", rdr->label);
+		cs_log_dbg(D_TRACE, "reader unavailable %s", rdr->label);
 		return 0;
 	}
 
@@ -819,7 +819,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 		}
 		if(!found)
 		{
-			cs_debug_mask(D_TRACE, "entitlements check failed on reader %s", rdr->label);
+			cs_log_dbg(D_TRACE, "entitlements check failed on reader %s", rdr->label);
 			return 0;
 		}
 	}
@@ -854,7 +854,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 		}
 		if(foundident == 1 && ok == 0)
 		{
-			cs_debug_mask(D_TRACE, "ECM is not in ecmwhitelist of reader %s.", rdr->label);
+			cs_log_dbg(D_TRACE, "ECM is not in ecmwhitelist of reader %s.", rdr->label);
 			rdr->ecmsfilteredlen += 1;
 			return (0);
 		}
@@ -880,23 +880,23 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 			if(tmp->caid == 0 || tmp->caid == er->caid)
 			{
 				foundcaid = 1; //-> caid was in list
-				//rdr_debug_mask(rdr, D_READER, "Headerwhitelist: found matching CAID: %04X in list", tmp->caid);
+				//rdr_log_dbg(rdr, D_READER, "Headerwhitelist: found matching CAID: %04X in list", tmp->caid);
 				if(tmp->provid == 0 || tmp->provid == er->prid)
 				{
 					foundprovid = 1; //-> provid was in list
-					//rdr_debug_mask(rdr, D_READER, "Headerwhitelist: found matching Provid: %06X in list", tmp->provid);
+					//rdr_log_dbg(rdr, D_READER, "Headerwhitelist: found matching Provid: %06X in list", tmp->provid);
 					len = tmp->len;
 					for(i = 0; i < len / 2; i++)
 					{
 						if(tmp->header[i] == er->ecm[i])
 						{
 							byteok = 1;
-							//rdr_debug_mask(rdr, D_READER, "ECM Byte: %i of ECMHeaderwhitelist is correct. (%02X = %02X Headerlen: %i)", i, er->ecm[i], tmp->header[i], len/2);
+							//rdr_log_dbg(rdr, D_READER, "ECM Byte: %i of ECMHeaderwhitelist is correct. (%02X = %02X Headerlen: %i)", i, er->ecm[i], tmp->header[i], len/2);
 						}
 						else
 						{
 							byteok = 0;
-							//rdr_debug_mask(rdr, D_READER, "ECM Byte: %i of ECMHeaderwhitelist is not valid. (%02X != %02X Headerlen: %i)", i, er->ecm[i], tmp->header[i], len/2);
+							//rdr_log_dbg(rdr, D_READER, "ECM Byte: %i of ECMHeaderwhitelist is not valid. (%02X != %02X Headerlen: %i)", i, er->ecm[i], tmp->header[i], len/2);
 							entryok = 0;
 							break;
 						}
@@ -909,14 +909,14 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 				}
 				else
 				{
-					//rdr_debug_mask(rdr, D_READER, "ECMHeaderwhitelist: Provid: %06X not found in List-Entry -> skipping check", er->prid);
+					//rdr_log_dbg(rdr, D_READER, "ECMHeaderwhitelist: Provid: %06X not found in List-Entry -> skipping check", er->prid);
 					skip = 1;
 					continue;
 				}
 			}
 			else
 			{
-				//rdr_debug_mask(rdr, D_READER, "ECMHeaderwhitelist: CAID: %04X not found in List-Entry -> skipping check", er->caid);
+				//rdr_log_dbg(rdr, D_READER, "ECMHeaderwhitelist: CAID: %04X not found in List-Entry -> skipping check", er->caid);
 				skip = 1;
 				continue;
 			}
@@ -934,7 +934,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 		{
 			if(skip == 0 || (foundcaid == 1 && foundprovid == 1 && entryok == 0 && skip == 1))
 			{
-				cs_ddump_mask(D_TRACE, er->ecm, er->ecmlen,
+				cs_log_dump_dbg(D_TRACE, er->ecm, er->ecmlen,
 							  "following ECM %04X:%06X:%04X was filtered by ECMHeaderwhitelist of Reader %s from User %s because of not matching Header:",
 							  er->caid, er->prid, er->srvid, rdr->label, username(er->client));
 				rdr->ecmsfilteredhead += 1;
@@ -950,14 +950,14 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 			get_module(cur_cl)->listenertype != LIS_DVBAPI &&
 			is_network_reader(rdr))
 	{
-		rdr_debug_mask(rdr, D_TRACE, "User (%s) has the same ip (%s) as the reader, blocked because block_same_ip=1!",
+		rdr_log_dbg(rdr, D_TRACE, "User (%s) has the same ip (%s) as the reader, blocked because block_same_ip=1!",
 					   username(cur_cl), cs_inet_ntoa(rdr->client->ip));
 		return 0;
 	}
 
 	if(cfg.block_same_name && strcmp(username(cur_cl), rdr->label) == 0)
 	{
-		rdr_debug_mask(rdr, D_TRACE, "User (%s) has the same name as the reader, blocked because block_same_name=1!",
+		rdr_log_dbg(rdr, D_TRACE, "User (%s) has the same name as the reader, blocked because block_same_name=1!",
 					   username(cur_cl));
 		return 0;
 	}

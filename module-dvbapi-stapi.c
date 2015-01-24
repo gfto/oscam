@@ -233,7 +233,7 @@ int32_t stapi_activate_section_filter(int32_t fd, uchar *filter, uchar *mask)
 	while (n<3 && ret==852049) {
 		ret = oscam_stapi_FilterSet(fd, filter, mask);
 		if(ret) {		
-			cs_debug_mask(D_DVBAPI, "Error: oscam_stapi_FilterSet; %d", ret);
+			cs_log_dbg(D_DVBAPI, "Error: oscam_stapi_FilterSet; %d", ret);
 			cs_sleepms(50);
 			n++;
 		}
@@ -255,11 +255,11 @@ int32_t stapi_set_filter(int32_t demux_id, uint16_t pid, uchar *filter, uchar *m
 
 	if(!pmtfile)
 	{
-		cs_debug_mask(D_DVBAPI, "No valid pmtfile!");
+		cs_log_dbg(D_DVBAPI, "No valid pmtfile!");
 		return -1;
 	}
 
-	cs_debug_mask(D_DVBAPI, "pmt file %s demux_id %d", pmtfile, demux_id);
+	cs_log_dbg(D_DVBAPI, "pmt file %s demux_id %d", pmtfile, demux_id);
 
 	for(p = dvbapi_priority; p != NULL; p = p->next)
 	{
@@ -270,16 +270,16 @@ int32_t stapi_set_filter(int32_t demux_id, uint16_t pid, uchar *filter, uchar *m
 		{
 			if(strcmp(dev_list[i].name, p->devname) == 0 && p->disablefilter == 0)  // check device name and if filtering is enabled!
 			{
-				cs_debug_mask(D_DVBAPI, "set stapi filter on %s for pid %04X", dev_list[i].name, pids[0]);
+				cs_log_dbg(D_DVBAPI, "set stapi filter on %s for pid %04X", dev_list[i].name, pids[0]);
 				ret = stapi_do_set_filter(demux_id, &dev_list[i].demux_fd[demux_id][num], pids, 1, filter, mask, i);
 				if(ret > 0)    // success
 				{
-					cs_debug_mask(D_DVBAPI, "%s filter #%d set (pid %04X)", dev_list[i].name, num, pid);
+					cs_log_dbg(D_DVBAPI, "%s filter #%d set (pid %04X)", dev_list[i].name, num, pid);
 					return ret; // return filternumber
 				}
 				else   // failure
 				{
-					cs_debug_mask(D_DVBAPI, "Error setting new filter for pid %04X on %s!", pid, dev_list[i].name);
+					cs_log_dbg(D_DVBAPI, "Error setting new filter for pid %04X on %s!", pid, dev_list[i].name);
 					return -1; // set return to error
 				}
 			}
@@ -288,7 +288,7 @@ int32_t stapi_set_filter(int32_t demux_id, uint16_t pid, uchar *filter, uchar *m
 
 	if(p == NULL)
 	{
-		cs_debug_mask(D_DVBAPI, "No matching S: line in oscam.dvbapi for pmtfile %s -> stop descrambling!", pmtfile);
+		cs_log_dbg(D_DVBAPI, "No matching S: line in oscam.dvbapi for pmtfile %s -> stop descrambling!", pmtfile);
 		snprintf(dest, sizeof(dest), "%s%s", TMPDIR, demux[demux_id].pmt_file);
 		unlink(dest); // remove obsolete pmt file
 		dvbapi_stop_descrambling(demux_id);
@@ -319,11 +319,11 @@ int32_t stapi_remove_filter(int32_t demux_id, int32_t num, char *pmtfile)
 	}
 	if(ret == 1)
 	{
-		cs_debug_mask(D_DVBAPI, "filter #%d removed", num);
+		cs_log_dbg(D_DVBAPI, "filter #%d removed", num);
 	}
 	else
 	{
-		cs_debug_mask(D_DVBAPI, "Error: filter #%d was not removed!", num);
+		cs_log_dbg(D_DVBAPI, "Error: filter #%d was not removed!", num);
 	}
 	return ret;
 }
@@ -584,7 +584,7 @@ static void stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t m
 		}
 
 		ErrorCode = oscam_stapi_DescramblerAssociate(demux[demux_id].DescramblerHandle[n], Slot);
-		cs_debug_mask(D_DVBAPI, "set pid %04x on %s", pid, dev_list[n].name);
+		cs_log_dbg(D_DVBAPI, "set pid %04x on %s", pid, dev_list[n].name);
 
 		if(ErrorCode != 0)
 			{ cs_log("DescramblerAssociate %d", ErrorCode); }
@@ -602,9 +602,9 @@ static void stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t m
 	{
 		ErrorCode = oscam_stapi_DescramblerDisassociate(demux[demux_id].DescramblerHandle[n], Slot);
 		if(ErrorCode != 0)
-			{ cs_debug_mask(D_DVBAPI, "DescramblerDisassociate %d", ErrorCode); }
+			{ cs_log_dbg(D_DVBAPI, "DescramblerDisassociate %d", ErrorCode); }
 
-		cs_debug_mask(D_DVBAPI, "unset pid %04x on %s", pid, dev_list[n].name);
+		cs_log_dbg(D_DVBAPI, "unset pid %04x on %s", pid, dev_list[n].name);
 
 		int32_t k;
 		for(k = 0; k < SLOTNUM; k++)
@@ -660,7 +660,7 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t UNUSED(num), int32_t idx, uint16
 		{
 			if(demux[demux_id].DescramblerHandle[n] == 0) { continue; }
 
-			cs_debug_mask(D_DVBAPI, "stop descrambling PTI: %s", dev_list[n].name);
+			cs_log_dbg(D_DVBAPI, "stop descrambling PTI: %s", dev_list[n].name);
 			stapi_startdescrambler(demux_id, n, DE_STOP);
 			memset(demux[demux_id].slot_assc[n], 0, sizeof(demux[demux_id].slot_assc[n]));
 		}
@@ -693,7 +693,7 @@ int32_t stapi_write_cw(int32_t demux_id, uchar *cw, uint16_t *STREAMpids, int32_
 
 				if(strcmp(dev_list[n].name, p->devname) == 0)
 				{
-					cs_debug_mask(D_DVBAPI, "start descrambling PTI: %s", dev_list[n].name);
+					cs_log_dbg(D_DVBAPI, "start descrambling PTI: %s", dev_list[n].name);
 					stapi_startdescrambler(demux_id, n, DE_START);
 				}
 			}
@@ -719,7 +719,7 @@ int32_t stapi_write_cw(int32_t demux_id, uchar *cw, uint16_t *STREAMpids, int32_
 					{ cs_log("DescramblerSet: ErrorCode: %d", ErrorCode); }
 
 				memcpy(demux[demux_id].lastcw[l], cw + (l * 8), 8);
-				cs_debug_mask(D_DVBAPI, "write cw %s index: %d %s", text[l], demux_id, dev_list[n].name);
+				cs_log_dbg(D_DVBAPI, "write cw %s index: %d %s", text[l], demux_id, dev_list[n].name);
 			}
 		}
 	}

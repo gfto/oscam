@@ -27,7 +27,7 @@ static int32_t RSA_CNX(struct s_reader *reader, unsigned char *msg, unsigned cha
 		ctx = BN_CTX_new();
 		if(ctx == NULL)
 		{
-			rdr_debug_mask(reader, D_READER, "RSA Error in RSA_CNX");
+			rdr_log_dbg(reader, D_READER, "RSA Error in RSA_CNX");
 		}
 
 		/*RSA first round*/
@@ -211,7 +211,7 @@ static int32_t conax_send_pin(struct s_reader *reader)
 	memcpy(insPIN + 8, reader->pincode, 4);
 
 	write_cmd(insPIN, insPIN + 5);
-	rdr_debug_mask(reader, D_READER, "Sent pincode to card.");
+	rdr_log_dbg(reader, D_READER, "Sent pincode to card.");
 
 	return OK;
 }
@@ -340,7 +340,7 @@ static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 	int32_t i, ok = 0;
 	char tmp_dbg[17];
 
-	rdr_debug_mask(rdr, D_EMM, "Entered conax_get_emm_type ep->emm[2]=%02x", ep->emm[2]);
+	rdr_log_dbg(rdr, D_EMM, "Entered conax_get_emm_type ep->emm[2]=%02x", ep->emm[2]);
 
 	for(i = 0; i < rdr->nprov; i++)
 	{
@@ -353,7 +353,7 @@ static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 		ep->type = SHARED;
 		memset(ep->hexserial, 0, 8);
 		memcpy(ep->hexserial, &ep->emm[6], 4);
-		rdr_debug_mask_sensitive(rdr, D_EMM, "SHARED, ep->hexserial = {%s}", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
+		rdr_log_dbg_sensitive(rdr, D_EMM, "SHARED, ep->hexserial = {%s}", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
 		return 1;
 	}
 	else
@@ -363,13 +363,13 @@ static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 			ep->type = UNIQUE;
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial + 2, &ep->emm[6], 4);
-			rdr_debug_mask_sensitive(rdr, D_EMM, "UNIQUE, ep->hexserial = {%s}", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
+			rdr_log_dbg_sensitive(rdr, D_EMM, "UNIQUE, ep->hexserial = {%s}", cs_hexdump(1, ep->hexserial, 8, tmp_dbg, sizeof(tmp_dbg)));
 			return 1;
 		}
 		else
 		{
 			ep->type = GLOBAL;
-			rdr_debug_mask(rdr, D_EMM, "GLOBAL");
+			rdr_log_dbg(rdr, D_EMM, "GLOBAL");
 			memset(ep->hexserial, 0, 8);
 			return 1;
 		}

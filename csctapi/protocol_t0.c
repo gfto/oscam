@@ -138,7 +138,7 @@ int32_t Protocol_T0_Command(struct s_reader *reader, unsigned char *command, uin
 	case APDU_CASE_3S:
 		return Protocol_T0_ExchangeTPDU(reader, command, command_len, rsp, lr);
 	default:
-		rdr_debug_mask(reader, D_IFD, "Protocol: T=0: Invalid APDU");
+		rdr_log_dbg(reader, D_IFD, "Protocol: T=0: Invalid APDU");
 		return ERROR;
 	}
 }
@@ -370,7 +370,7 @@ static int32_t Protocol_T0_ExchangeTPDU(struct s_reader *reader, unsigned char *
 		data = NULL;
 		break;
 	default:
-		rdr_debug_mask(reader, D_TRACE, "ERROR: invalid cmd_case = %i in Protocol_T0_ExchangeTPDU", cmd_case);
+		rdr_log_dbg(reader, D_TRACE, "ERROR: invalid cmd_case = %i in Protocol_T0_ExchangeTPDU", cmd_case);
 		return ERROR;
 	}
 	timeout = ICC_Async_GetTimings(reader, reader->char_delay);  // we are going to send: char delay timeout
@@ -398,22 +398,22 @@ static int32_t Protocol_T0_ExchangeTPDU(struct s_reader *reader, unsigned char *
 			nulls++;
 			if(nulls >= PROTOCOL_T0_MAX_NULLS)                                  //Maximum number of nulls reached
 			{
-				rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Maximum number of nulls reached: %d", __func__, nulls);
+				rdr_log_dbg(reader, D_TRACE, "ERROR: %s: Maximum number of nulls reached: %d", __func__, nulls);
 				return ERROR;
 			}
 		}
 		else if((buffer[recved] & 0xF0) == 0x60 || (buffer[recved] & 0xF0) == 0x90)  /* SW1 byte received */
 		{
-			rdr_debug_mask(reader, D_TRACE, "SW1: %02X", buffer[recved] & 0xf0);
+			rdr_log_dbg(reader, D_TRACE, "SW1: %02X", buffer[recved] & 0xf0);
 			recved++;
 			if(recved >= PROTOCOL_T0_MAX_SHORT_RESPONSE)
 			{
-				rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Maximum short response exceeded: %d", __func__, recved);
+				rdr_log_dbg(reader, D_TRACE, "ERROR: %s: Maximum short response exceeded: %d", __func__, recved);
 				return ERROR;
 			}
 			timeout = ICC_Async_GetTimings(reader, reader->read_timeout);  // we are going to receive: WWT timeout
 			if(ICC_Async_Receive(reader, 1, buffer + recved, 0, timeout) != OK) { return ERROR; }   //Read SW2 byte
-			rdr_debug_mask(reader, D_TRACE, "SW2: %02X", buffer[recved] & 0xf0);
+			rdr_log_dbg(reader, D_TRACE, "SW2: %02X", buffer[recved] & 0xf0);
 			recved++;
 			break;
 		}
@@ -428,7 +428,7 @@ static int32_t Protocol_T0_ExchangeTPDU(struct s_reader *reader, unsigned char *
 			{
 				if(sent >= Lc)
 				{
-					rdr_debug_mask(reader, D_TRACE, "ERROR: %s: ACK byte: sent=%d exceeds Lc=%d", __func__, sent, Lc);
+					rdr_log_dbg(reader, D_TRACE, "ERROR: %s: ACK byte: sent=%d exceeds Lc=%d", __func__, sent, Lc);
 					return ERROR;
 				}
 				timeout = ICC_Async_GetTimings(reader, reader->char_delay);  // we are going to send: char delay timeout
@@ -440,7 +440,7 @@ static int32_t Protocol_T0_ExchangeTPDU(struct s_reader *reader, unsigned char *
 			{
 				if(recved > PROTOCOL_T0_MAX_SHORT_RESPONSE)
 				{
-					rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Case 3 ACK - maximum short response exceeded: %d", __func__, recved);
+					rdr_log_dbg(reader, D_TRACE, "ERROR: %s: Case 3 ACK - maximum short response exceeded: %d", __func__, recved);
 					return ERROR;
 				}
 
@@ -465,7 +465,7 @@ static int32_t Protocol_T0_ExchangeTPDU(struct s_reader *reader, unsigned char *
 			{
 				if(sent >= Lc)
 				{
-					rdr_debug_mask(reader, D_TRACE, "ERROR: %s: ~ACK byte: sent=%d exceeds Lc=%d", __func__, sent, Lc);
+					rdr_log_dbg(reader, D_TRACE, "ERROR: %s: ~ACK byte: sent=%d exceeds Lc=%d", __func__, sent, Lc);
 					return ERROR;
 				}
 				timeout = ICC_Async_GetTimings(reader, reader->char_delay);  // we are going to send: char delay timeout
@@ -477,7 +477,7 @@ static int32_t Protocol_T0_ExchangeTPDU(struct s_reader *reader, unsigned char *
 			{
 				if(recved > PROTOCOL_T0_MAX_SHORT_RESPONSE)
 				{
-					rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Case 3 ~ACK - maximum short response exceeded: %d", __func__, recved);
+					rdr_log_dbg(reader, D_TRACE, "ERROR: %s: Case 3 ~ACK - maximum short response exceeded: %d", __func__, recved);
 					return ERROR;
 				}
 				timeout = ICC_Async_GetTimings(reader, reader->read_timeout);  // we are going to receive: WWT timeout
@@ -488,7 +488,7 @@ static int32_t Protocol_T0_ExchangeTPDU(struct s_reader *reader, unsigned char *
 		}
 		else   /* Anything else received */
 		{
-			rdr_debug_mask(reader, D_TRACE, "ERROR: %s: Received unexpected character: %02X", __func__, buffer[recved]);
+			rdr_log_dbg(reader, D_TRACE, "ERROR: %s: Received unexpected character: %02X", __func__, buffer[recved]);
 			return ERROR;
 		}
 	}//while
@@ -518,7 +518,7 @@ int32_t Protocol_T14_ExchangeTPDU(struct s_reader *reader, unsigned char *cmd_ra
 	/* Check case of command */
 	if((cmd_case != APDU_CASE_2S) && (cmd_case != APDU_CASE_3S))
 	{
-		rdr_debug_mask(reader, D_TRACE, "ERROR: invalid cmd_case = %i in Protocol_T14_ExchangeTPDU", cmd_case);
+		rdr_log_dbg(reader, D_TRACE, "ERROR: invalid cmd_case = %i in Protocol_T14_ExchangeTPDU", cmd_case);
 		return ERROR;
 	}
 
@@ -548,7 +548,7 @@ int32_t Protocol_T14_ExchangeTPDU(struct s_reader *reader, unsigned char *cmd_ra
 		{ ixor1 ^= buffer[i]; }
 	if(ixor1 != ixor)
 	{
-		rdr_debug_mask(reader, D_TRACE, "ERROR: invalid checksum = %02X expected %02X", ixor1, ixor);
+		rdr_log_dbg(reader, D_TRACE, "ERROR: invalid checksum = %02X expected %02X", ixor1, ixor);
 		return ERROR;
 	}
 	memcpy(buffer + 8 + recved, buffer + 2, 2);

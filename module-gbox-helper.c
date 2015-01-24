@@ -180,9 +180,9 @@ void gbox_decompress(uchar *buf, int32_t *unpacked_len)
         int len = *unpacked_len - 12;
         *unpacked_len = 0x40000;
         lzo_init();
-        cs_debug_mask(D_READER, "decompressing %d bytes", len);
+        cs_log_dbg(D_READER, "decompressing %d bytes", len);
         if((err = lzo1x_decompress_safe(buf + 12, len, tmp, (lzo_uint *)unpacked_len, NULL)) != LZO_E_OK)
-                { cs_debug_mask(D_READER, "gbox: decompression failed! errno=%d", err); }
+                { cs_log_dbg(D_READER, "gbox: decompression failed! errno=%d", err); }
         memcpy(buf + 12, tmp, *unpacked_len);
         *unpacked_len += 12;
         NULLFREE(tmp);
