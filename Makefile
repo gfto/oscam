@@ -109,7 +109,7 @@ DEFAULT_PCSC_FLAGS = -isysroot $(OSX_SDK) -I/usr/local/include
 DEFAULT_PCSC_LIB = -isysroot $(OSX_SDK) -framework IOKit -framework CoreFoundation -framework PCSC -L/usr/local/lib
 else
 # This hack is needed because PCSC includes <wintypes.h> instead of <PCSC/wintypes.h>
-DEFAULT_PCSC_FLAGS = -I$(TARGET_SYSROOT)usr/include/PCSC
+DEFAULT_PCSC_FLAGS = -lextapi
 DEFAULT_PCSC_LIB = -lpcsclite
 endif
 
