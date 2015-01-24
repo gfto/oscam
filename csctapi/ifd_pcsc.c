@@ -11,10 +11,10 @@
 #include <specstrings.h>
 #include <WinSCard.h>
 #else
-#include "../extapi/PCSC/pcsclite.h"
-#include "../extapi/PCSC/winscard.h"
-#include "../extapi/PCSC/wintypes.h"
-#include "../extapi/PCSC/reader.h"
+#include <PCSC/pcsclite.h>
+#include <PCSC/winscard.h>
+#include <PCSC/wintypes.h>
+#include <PCSC/reader.h>
 #endif
 
 #ifndef ERR_INVALID
