@@ -107,7 +107,7 @@ ifeq ($(uname_S),Darwin)
 DEFAULT_PCSC_FLAGS = -isysroot $(OSX_SDK)
 DEFAULT_PCSC_LIB = -isysroot $(OSX_SDK) -framework IOKit -framework CoreFoundation -framework PCSC
 else
-DEFAULT_PCSC_FLAGS = -Iextapi
+DEFAULT_PCSC_FLAGS = -I/usr/include/PCSC -I/usr/local/include/PCSC
 DEFAULT_PCSC_LIB = -lpcsclite
 endif
 
