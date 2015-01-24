@@ -671,7 +671,13 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 	struct gbox_card *card;
 
 	if(!(gbox_decode_cmd(data) == MSG_HELLO1)) 
-		{ gbox_decompress(data, &payload_len); }
+	{
+		gbox_decompress(data, &payload_len);
+		ptr = data + 12;
+	}
+	else
+		{ ptr = data + 11; }
+		
 	cs_log_dump_dbg(D_READER, data, payload_len, "decompressed data (%d bytes):", payload_len);
 	if ((data[11] & 0xf) != peer->next_hello)
 	{
@@ -682,6 +688,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		gbox_send_hello(cli);
 		return 0;
 	} 
+	
 	if (!(data[11] & 0xf)) //is first packet 
 	{
 		if(!peer->gbox.cards)
@@ -708,10 +715,6 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 	else
 		{ it = peer->last_it; }
 
-	if(gbox_decode_cmd(data) == MSG_HELLO1)
-		{ ptr = data + 11; }
-	else
-		{ ptr = data + 12; }
 	cs_log_dbg(D_READER, "-> Hello packet no. %d received", (data[11] & 0xF) + 1);
 	while(ptr < data + payload_len - footer_len - checkcode_len - 1)
 	{
