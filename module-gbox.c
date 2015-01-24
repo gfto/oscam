@@ -702,7 +702,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		{ ptr = data + 11; }
 	else
 		{ ptr = data + 12; }
-	cs_debug_mask(D_READER, "Hello packet no. %d received", (data[11] & 0xF) + 1);
+	cs_debug_mask(D_READER, "-> Hello packet no. %d received", (data[11] & 0xF) + 1);
 	while(ptr < data + payload_len - footer_len - checkcode_len - 1)
 	{
 		uint16_t caid;
@@ -834,13 +834,13 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 			peer->online = 1;
 			if(!data[0xA])
 			{
-				cs_log("<- HelloS in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, ncards_in_msg,ll_count(peer->gbox.cards));
+				cs_log("-> HelloS in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, ncards_in_msg,ll_count(peer->gbox.cards));
 				peer->hello_stat = GBOX_STAT_HELLOR;
 				gbox_send_hello(cli);
 			}
 			else
 			{
-				cs_log("<- HelloR in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, ncards_in_msg,ll_count(peer->gbox.cards));
+				cs_log("-> HelloR in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, ncards_in_msg,ll_count(peer->gbox.cards));
 				gbox_send_checkcode(cli);
 			}
 			if(peer->hello_stat == GBOX_STAT_HELLOS)
