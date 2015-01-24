@@ -107,7 +107,8 @@ ifeq ($(uname_S),Darwin)
 DEFAULT_PCSC_FLAGS = -isysroot $(OSX_SDK) -I/usr/local/include
 DEFAULT_PCSC_LIB = -isysroot $(OSX_SDK) -framework IOKit -framework CoreFoundation -framework PCSC -L/usr/local/lib
 else
-DEFAULT_PCSC_FLAGS = -I/usr/include/PCSC
+# This hack is needed because PCSC includes <wintypes.h> instead of <PCSC/wintypes.h>
+DEFAULT_PCSC_FLAGS = -Iextapi
 DEFAULT_PCSC_LIB = -lpcsclite
 endif
 
