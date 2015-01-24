@@ -473,6 +473,7 @@ struct s_client *switch_client_proxy(struct s_client *cli, uint16_t gbox_id)
 
 static int8_t gbox_reinit_peer(struct gbox_peer *peer)
 {
+	NULLFREE(peer->hostname);
 	peer->online		= 0;
 	peer->ecm_idx		= 0;
 	peer->hello_stat	= GBOX_STAT_HELLOL;
@@ -670,9 +671,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 	struct gbox_card *card;
 
 	if(!(gbox_decode_cmd(data) == MSG_HELLO1)) 
-	{
-		gbox_decompress(data, &payload_len);
-	}
+		{ gbox_decompress(data, &payload_len); }
 	cs_log_dump_dbg(D_READER, data, payload_len, "decompressed data (%d bytes):", payload_len);
 	if ((data[11] & 0xf) != peer->next_hello)
 	{
@@ -683,7 +682,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		gbox_send_hello(cli);
 		return 0;
 	} 
-	if ((data[11] & 0xf) == 0) //is first packet 
+	if (!(data[11] & 0xf)) //is first packet 
 	{
 		if(!peer->gbox.cards)
 			{ peer->gbox.cards = ll_create("peer.cards"); }
@@ -691,6 +690,20 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		checkcode_len = 7;
 		hostname_len = data[payload_len - 1];
 		footer_len = hostname_len + 2;
+		if(!peer->hostname || memcmp(peer->hostname, data + payload_len - 1 - hostname_len, hostname_len))
+		{	
+			NULLFREE(peer->hostname);
+			if(!cs_malloc(&peer->hostname, hostname_len + 1))
+			{
+				cs_writeunlock(&peer->lock);
+				return -1;
+			}
+			memcpy(peer->hostname, data + payload_len - 1 - hostname_len, hostname_len);
+			peer->hostname[hostname_len] = '\0';
+		}
+		gbox_checkcode_recv(cli, data + payload_len - footer_len - checkcode_len - 1);
+		peer->gbox.minor_version = data[payload_len - footer_len - 1];
+		peer->gbox.cpu_api = data[payload_len - footer_len];
 	}
 	else
 		{ it = peer->last_it; }
@@ -789,22 +802,6 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 			ptr += 5 + ptr[4] * 4; //skip cards because caid
 		}
 	} // end while caid/provid
-
-	if(!(data[11] & 0xF))  // first packet. We've got peer hostname
-	{
-		NULLFREE(peer->hostname);
-		if(!cs_malloc(&peer->hostname, hostname_len + 1))
-		{
-			cs_writeunlock(&peer->lock);
-			return -1;
-		}
-		memcpy(peer->hostname, data + payload_len - 1 - hostname_len, hostname_len);
-		peer->hostname[hostname_len] = '\0';
-
-		gbox_checkcode_recv(cli, data + payload_len - footer_len - checkcode_len - 1);
-		peer->gbox.minor_version = data[payload_len - footer_len - 1];
-		peer->gbox.cpu_api = data[payload_len - footer_len];
-	} // end if first hello packet
 
 	if(data[11] & 0x80)   //last packet
 	{
