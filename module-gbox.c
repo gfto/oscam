@@ -392,7 +392,7 @@ void gbox_add_good_card(struct s_client *cl, uint16_t id_card, uint16_t caid, ui
 			srvid->srvid.sid = sid_ok;
 			srvid->srvid.provid_id = card->provid;
 			srvid->last_cw_received = time(NULL);
-			cs_log_dbg(D_READER, "GBOX Adding good SID: %04X for CAID: %04X Provider: %04X on CardID: %04X\n", sid_ok, caid, card->provid, id_card);
+			cs_log_dbg(D_READER, "Adding good SID: %04X for CAID: %04X Provider: %04X on CardID: %04X\n", sid_ok, caid, card->provid, id_card);
 			ll_append(card->goodsids, srvid);
 			break;
 		}
@@ -1074,7 +1074,7 @@ static int8_t gbox_check_header(struct s_client *cli, struct s_client *proxy, uc
 	my_received_pw = gbox_get_pw(&data[2]);
 	if (my_received_pw == local_gbox.password)
 	{
-		cs_log_dbg(D_READER, "received data, peer : %04x   data: %s", cli->gbox_peer_id, cs_hexdump(0, data, l, tmp, sizeof(tmp)));
+		cs_log_dbg(D_READER, "-> data, peer : %04x   data: %s", cli->gbox_peer_id, cs_hexdump(0, data, l, tmp, sizeof(tmp)));
 
 		if (gbox_decode_cmd(data) != MSG_CW)
 		{
@@ -1189,7 +1189,7 @@ static int32_t gbox_checkcode_recv(struct s_client *cli, uchar *checkcode)
 	if(memcmp(peer->gbox.checkcode, checkcode, 7))
 	{
 		memcpy(peer->gbox.checkcode, checkcode, 7);
-		cs_log_dbg(D_READER, "received new checkcode=%s",  cs_hexdump(0, peer->gbox.checkcode, 14, tmp, sizeof(tmp)));
+		cs_log_dbg(D_READER, "-> new checkcode=%s",  cs_hexdump(0, peer->gbox.checkcode, 14, tmp, sizeof(tmp)));
 		return 1;
 	}
 	return 0;
@@ -1220,7 +1220,7 @@ void gbox_send(struct s_client *cli, uchar *buf, int32_t l)
 {
 	struct gbox_peer *peer = cli->gbox;
 
-	cs_log_dump_dbg(D_READER, buf, l, "decrypted data send (%d bytes):", l);
+	cs_log_dump_dbg(D_READER, buf, l, "<- decrypted data (%d bytes):", l);
 
 	hostname2ip(cli->reader->device, &SIN_GET_ADDR(cli->udp_sa));
 	SIN_GET_FAMILY(cli->udp_sa) = AF_INET;
@@ -1228,7 +1228,7 @@ void gbox_send(struct s_client *cli, uchar *buf, int32_t l)
 
 	gbox_encrypt(buf, l, peer->gbox.password);
 	sendto(cli->udp_fd, buf, l, 0, (struct sockaddr *)&cli->udp_sa, cli->udp_sa_len);
-	cs_log_dump_dbg(D_READER, buf, l, "encrypted data send (%d bytes):", l);
+	cs_log_dump_dbg(D_READER, buf, l, "<- encrypted data (%d bytes):", l);
 }
 
 static void gbox_send_hello_packet(struct s_client *cli, int8_t number, uchar *outbuf, uchar *ptr, int32_t nbcards)
