@@ -679,7 +679,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 	cs_ddump_mask(D_READER, data, payload_len, "decompressed data (%d bytes):", payload_len);
 	if ((data[11] & 0xf) != peer->next_hello)
 	{
-		cs_log("->[gbx] received out of sync hello from %s %s, expected: %02X, received: %02X"
+		cs_log("-> out of sync hello from %s %s, expected: %02X, received: %02X"
 			,username(cli), cli->reader->device, peer->next_hello, data[11] & 0xf);
 		peer->next_hello = 0;
 		peer->hello_stat = GBOX_STAT_HELLOL;
@@ -762,7 +762,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 						// create card info from data and add card to peer.cards
 						if(!cs_malloc(&card, sizeof(struct gbox_card)))
 						{ 
-							cs_log("[gbx]: Can't allocate gbox card");
+							cs_log("Can't allocate gbox card");
 							continue;	
 						}
 						gbox_init_card(card,caid,provid,provid1,ptr);
@@ -816,7 +816,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		if(data[10] == 0x01 && !memcmp(data+12,tmpbuf,7)) //good night message
 		{
 			//This is a good night / reset packet (good night data[0xA] / reset !data[0xA] 
-			cs_log("->[gbx] received Good Night from %s %s",username(cli), cli->reader->device);
+			cs_log("-> Good Night from %s %s",username(cli), cli->reader->device);
 			write_goodnight_to_osd_file(cli);
 			gbox_reinit_proxy(cli);
 		}
@@ -834,13 +834,13 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 			peer->online = 1;
 			if(!data[0xA])
 			{
-				cs_log("<-HelloS in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, ncards_in_msg,ll_count(peer->gbox.cards));
+				cs_log("<- HelloS in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, ncards_in_msg,ll_count(peer->gbox.cards));
 				peer->hello_stat = GBOX_STAT_HELLOR;
 				gbox_send_hello(cli);
 			}
 			else
 			{
-				cs_log("<-HelloR in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, ncards_in_msg,ll_count(peer->gbox.cards));
+				cs_log("<- HelloR in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, ncards_in_msg,ll_count(peer->gbox.cards));
 				gbox_send_checkcode(cli);
 			}
 			if(peer->hello_stat == GBOX_STAT_HELLOS)
@@ -968,17 +968,17 @@ int32_t gbox_cmd_switch(struct s_client *proxy, uchar *data, int32_t n)
 		gbox_send_hello(proxy);
 		break;
 	case MSG_GOODBYE:
-		cs_log("->[gbx] received goodbye message from %s",username(proxy));	
+		cs_log("-> goodbye message from %s",username(proxy));	
 		//needfix what to do after Goodbye?
 		//suspect: we get goodbye as signal of SID not found
 		break;
 	case MSG_UNKNWN:
-		cs_log("->[gbx] received MSG_UNKNWN 48F9 from %s", username(proxy));	  
+		cs_log("-> MSG_UNKNWN 48F9 from %s", username(proxy));	  
 		break;
 	case MSG_GSMS_1:
 		if (!cfg.gsms_dis)
 		{
-			cs_log("->[gbx] received MSG_GSMS_1 from %s", username(proxy));
+			cs_log("-> MSG_GSMS_1 from %s", username(proxy));
 			gbox_send_gsms_ack(proxy,1);
 			write_gsms_msg(proxy, data +4, data[3], data[2]);
 		}
@@ -990,7 +990,7 @@ int32_t gbox_cmd_switch(struct s_client *proxy, uchar *data, int32_t n)
 	case MSG_GSMS_2:
 		if (!cfg.gsms_dis)
 		{
-			cs_log("->[gbx] received MSG_GSMS_2 from %s", username(proxy));
+			cs_log("-> MSG_GSMS_2 from %s", username(proxy));
 			gbox_send_gsms_ack(proxy,2);
 			write_gsms_msg(proxy, data +16, data[14], data[15]);
 		}
@@ -1002,7 +1002,7 @@ int32_t gbox_cmd_switch(struct s_client *proxy, uchar *data, int32_t n)
 	case MSG_GSMS_ACK_1:
 		if (!cfg.gsms_dis)
 		{
-			cs_log("->[gbx] received MSG_GSMS_ACK_1 from %s", username(proxy));
+			cs_log("-> MSG_GSMS_ACK_1 from %s", username(proxy));
 			write_gsms_ack(proxy,1);
 		}
 		else
@@ -1013,7 +1013,7 @@ int32_t gbox_cmd_switch(struct s_client *proxy, uchar *data, int32_t n)
 	case MSG_GSMS_ACK_2:
 		if (!cfg.gsms_dis)
 		{
-			cs_log("->[gbx] received MSG_GSMS_ACK_2 from %s", username(proxy));
+			cs_log("-> MSG_GSMS_ACK_2 from %s", username(proxy));
 			write_gsms_ack(proxy,2);
 		} 
 		else
@@ -1036,7 +1036,7 @@ int32_t gbox_cmd_switch(struct s_client *proxy, uchar *data, int32_t n)
 		gbox_incoming_ecm(proxy, data, n);
 		break;
 	default:
-		cs_log("->[gbx] unknown command %04X received from %s", cmd, username(proxy));
+		cs_log("-> unknown command %04X received from %s", cmd, username(proxy));
 		cs_ddump_mask(D_READER, data, n, "unknown data received (%d bytes):", n);
 	} // end switch
 	if ((time(NULL) - last_stats_written) > STATS_WRITE_TIME)
@@ -1265,25 +1265,25 @@ static void gbox_send_hello_packet(struct s_client *cli, int8_t number, uchar *o
 	switch(peer->hello_stat)
 	{
 	case GBOX_STAT_HELLOL:
-		cs_log("send HELLOL to %s", cli->reader->label);
+		cs_log("<- HelloL to %s", cli->reader->label);
 		if((number & 0x80) == 0x80)
 			{ peer->hello_stat = GBOX_STAT_HELLOS; }
 		break;
 	case GBOX_STAT_HELLOS:
-		cs_log("send HELLOS total cards  %d to %s", nbcards, cli->reader->label);
+		cs_log("<- HelloS total cards  %d to %s", nbcards, cli->reader->label);
 		if((number & 0x80) == 0x80)
 			{ peer->hello_stat = GBOX_STAT_HELLO3; }
 		break;
 	case GBOX_STAT_HELLOR:
-		cs_log("send HELLOR total cards  %d to %s", nbcards, cli->reader->label);
+		cs_log("<- HelloR total cards  %d to %s", nbcards, cli->reader->label);
 		if((number & 0x80) == 0x80)
 			{ peer->hello_stat = GBOX_STAT_HELLO3; }
 		break;
 	default:
-		cs_log("send hello total cards  %d to %s", nbcards, cli->reader->label);
+		cs_log("<- hello total cards  %d to %s", nbcards, cli->reader->label);
 		break;
 	}
-	cs_ddump_mask(D_READER, outbuf, len, "send hello, (len=%d):", len);
+	cs_ddump_mask(D_READER, outbuf, len, "<- hello, (len=%d):", len);
 
 	gbox_compress(outbuf, len, &len);
 
@@ -1486,7 +1486,7 @@ static void gbox_send_dcw(struct s_client *cl, ECM_REQUEST *er)
 	*/
 	gbox_send(cli, buf, ere->gbox_hops + 44);
 
-	cs_debug_mask(D_READER, "-> CW  (->%d) from %s/%d (%04X) ", ere->gbox_hops, cli->reader->label, cli->port, ere->gbox_peer);
+	cs_debug_mask(D_READER, "<- CW (distance: %d) from %s/%d (%04X) ", ere->gbox_hops, cli->reader->label, cli->port, ere->gbox_peer);
 }
 
 static uint8_t gbox_next_free_slot(uint16_t id)
@@ -1781,7 +1781,7 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
         memcpy(dcw, data + 14, 16);
         uint32_t crc = data[30] << 24 | data[31] << 16 | data[32] << 8 | data[33];
         char tmp[32];
-        cs_debug_mask(D_READER, "received cws=%s, peer=%04X, ecm_pid=%04X, sid=%04X, crc=%08X, type=%02X, dist=%01X, unkn1=%01X, unkn2=%02X, chid/0x0000/0xffff=%04X",
+        cs_debug_mask(D_READER, "-> cws=%s, peer=%04X, ecm_pid=%04X, sid=%04X, crc=%08X, type=%02X, dist=%01X, unkn1=%01X, unkn2=%02X, chid/0x0000/0xffff=%04X",
                       cs_hexdump(0, dcw, 32, tmp, sizeof(tmp)), 
                       data[10] << 8 | data[11], data[6] << 8 | data[7], data[8] << 8 | data[9], crc, data[41], data[42] & 0x0f, data[42] >> 4, data[43], data[37] << 8 | data[38]);
         struct timeb t_now;             
@@ -2140,7 +2140,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 		{	 			
 			if(!cs_malloc(&pending, sizeof(struct gbox_card_pending)))
 			{
-				cs_log("[gbx]: Can't allocate gbox card pending");
+				cs_log("Can't allocate gbox card pending");
 				return -1;
 			}
 			pending->id.peer = (send_buf_1[len2+10+i*3] << 8) | send_buf_1[len2+11+i*3];
@@ -2152,7 +2152,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 	
 		it = ll_iter_create(er->gbox_cards_pending);
 		while ((pending = ll_iter_next(&it)))
-			{ cs_debug_mask(D_READER, "[gbx]: Pending Card ID: %04X Slot: %02X Time: %d", pending->id.peer, pending->id.slot, pending->pending_time); }
+			{ cs_debug_mask(D_READER, "Pending Card ID: %04X Slot: %02X Time: %d", pending->id.peer, pending->id.slot, pending->pending_time); }
 	
 		if(er->gbox_ecm_status > GBOX_ECM_NOT_ASKED)
 			{ er->gbox_ecm_status++; }
@@ -2178,11 +2178,11 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 				{ args.waittime = current_avg_card_time + (current_avg_card_time / 2); }
 			else
 				{ args.waittime = GBOX_REBROADCAST_TIMEOUT; }
-			cs_debug_mask(D_READER, "[gbx]: Creating rebroadcast thread with waittime: %d", args.waittime);
+			cs_debug_mask(D_READER, "Creating rebroadcast thread with waittime: %d", args.waittime);
 			int32_t ret = pthread_create(&rbc_thread, NULL, (void *)gbox_rebroadcast_thread, &args);
 			if(ret)
 			{
-				cs_log("[gbx]: Can't create gbox rebroadcast thread (errno=%d %s)", ret, strerror(ret));
+				cs_log("Can't create gbox rebroadcast thread (errno=%d %s)", ret, strerror(ret));
 				return -1;
 			}
 			else
@@ -2239,7 +2239,7 @@ static void gbox_s_idle(struct s_client *cl)
 		{
 			//gbox peer apparently died without saying goodbye
 			peer = proxy->gbox;
-			cs_debug_mask(D_READER, "gbox time since last proxy activity in sec: %d => taking gbox peer offline",time_since_last);
+			cs_debug_mask(D_READER, "time since last proxy activity in sec: %d => taking gbox peer offline",time_since_last);
 			gbox_reinit_proxy(proxy);
 		}
 	
@@ -2247,7 +2247,7 @@ static void gbox_s_idle(struct s_client *cl)
 		if (time_since_last > HELLO_KEEPALIVE_TIME && cl->gbox_peer_id != NO_GBOX_ID)
 		{
 			peer = proxy->gbox;
-			cs_debug_mask(D_READER, "gbox time since last ecm in sec: %d => trigger keepalive hello",time_since_last);
+			cs_debug_mask(D_READER, "time since last ecm in sec: %d => trigger keepalive hello",time_since_last);
 			if (!peer->online)
 				{ peer->hello_stat = GBOX_STAT_HELLOL; }
 			else
@@ -2257,7 +2257,7 @@ static void gbox_s_idle(struct s_client *cl)
 		}	
 	}	
 	//prevent users from timing out
-	cs_debug_mask(D_READER, "gbox client idle prevented: %s", username(cl));
+	cs_debug_mask(D_READER, "client idle prevented: %s", username(cl));
 	cl->last = time((time_t *)0);
 }
 
@@ -2282,7 +2282,7 @@ static int8_t gbox_send_peer_good_night(struct s_client *proxy)
 			outbuf[20] = gbox_get_my_cpu_api();
 			memcpy(&outbuf[21], cfg.gbox_hostname, hostname_len);
 			outbuf[21 + hostname_len] = hostname_len;
-			cs_log("gbox send good night to %s:%d id: %04X", rdr->device, rdr->r_port, peer->gbox.id);
+			cs_log("<- good night to %s:%d id: %04X", rdr->device, rdr->r_port, peer->gbox.id);
 			gbox_compress(outbuf, len, &len);
 			gbox_send(proxy, outbuf, len);
 			gbox_reinit_proxy(proxy);
