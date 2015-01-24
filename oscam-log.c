@@ -279,27 +279,25 @@ void cs_reinit_loghist(uint32_t size)
 
 static struct timeb log_ts;
 
-static int32_t get_log_header(int32_t m, char *txt)
+static int32_t get_log_header(char *txt, int32_t txt_size)
 {
 	struct s_client *cl = cur_client();
 	struct tm lt;
-	int32_t pos;
 
 	cs_ftime(&log_ts);
 	time_t walltime = cs_walltime(&log_ts);
 	localtime_r(&walltime, &lt);
 
-	pos = snprintf(txt, LOG_BUF_SIZE,  "[LOG000]%4d/%02d/%02d %02d:%02d:%02d ", lt.tm_year + 1900, lt.tm_mon + 1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec);
-
-	switch(m)
-	{
-	case 1: // Add thread id and reader type
-		return pos + snprintf(txt + pos, LOG_BUF_SIZE - pos, "%8X %c ", cl ? cl->tid : 0, cl ? cl->typ : ' ');
-	case 0: // Add thread id
-		return pos + snprintf(txt + pos, LOG_BUF_SIZE - pos, "%8X%-3.3s ", cl ? cl->tid : 0, "");
-	default: // Add empty thread id
-		return pos + snprintf(txt + pos, LOG_BUF_SIZE - pos, "%8X%-3.3s ", 0, "");
-	}
+	return snprintf(txt, txt_size,  "[LOG000]%4d/%02d/%02d %02d:%02d:%02d %8X %c ",
+		lt.tm_year + 1900,
+		lt.tm_mon + 1,
+		lt.tm_mday,
+		lt.tm_hour,
+		lt.tm_min,
+		lt.tm_sec,
+		cl ? cl->tid : 0,
+		cl ? cl->typ : ' '
+	);
 }
 
 static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
@@ -454,8 +452,8 @@ static void __cs_log_check_duplicates(int32_t hdr_len)
 		int64_t gone = comp_timeb(&log_ts, &last_log_ts);
 		if (!repeated_line || gone >= 60*1000)
 		{
-			int32_t dupl_header_len = get_log_header(2, dupl);
-			snprintf(dupl + dupl_header_len - 1, sizeof(dupl) - dupl_header_len, "--- Skipped %u duplicated log lines ---", last_log_duplicates);
+			int32_t dupl_header_len = get_log_header(dupl, sizeof(dupl));
+			snprintf(dupl + dupl_header_len - 1, sizeof(dupl) - dupl_header_len, "        (-) -- Skipped %u duplicated log lines --", last_log_duplicates);
 			write_to_log_int(dupl, 0);
 			last_log_duplicates = 0;
 			last_log_ts = log_ts;
@@ -471,7 +469,7 @@ static void __cs_log_check_duplicates(int32_t hdr_len)
 }
 
 #define __init_log_prefix(fmt) \
-	int32_t hdr_len = get_log_header(1, log_txt); \
+	int32_t hdr_len = get_log_header(log_txt, sizeof(log_txt)); \
 	int32_t log_prefix_len = 0; \
 	do { \
 		if (log_prefix) { \
