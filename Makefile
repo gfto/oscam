@@ -107,7 +107,19 @@ ifeq ($(uname_S),Darwin)
 DEFAULT_PCSC_FLAGS = -isysroot $(OSX_SDK)
 DEFAULT_PCSC_LIB = -isysroot $(OSX_SDK) -framework IOKit -framework CoreFoundation -framework PCSC
 else
-DEFAULT_PCSC_FLAGS = -I/usr/include/PCSC -I/usr/local/include/PCSC
+# Get the compiler's last include PATHs. Basicaly it is /usr/include
+# but in case of cross compilation it might be something else.
+#
+# Since using -Iinc_path instructs the compiler to use inc_path
+# (without add the toolchain system root) we need to have this hack
+# to get the "real" last include path. Why we needs this?
+# Well, the PCSC headers are broken and rely on having the directory
+# that they are installed it to be in the include PATH.
+#
+# We can't just use -I/usr/include/PCSC because it won't work in
+# case of cross compilation.
+PCSC_INC_DIR := -I$(strip $(shell echo | $(CC) -Wp,-v -xc - 2>&1 | grep include$ | tail -n 1))/PCSC
+DEFAULT_PCSC_FLAGS = $(PCSC_INC_DIR) -I/usr/local/include/PCSC
 DEFAULT_PCSC_LIB = -lpcsclite
 endif
 
