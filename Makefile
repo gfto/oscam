@@ -118,7 +118,7 @@ else
 #
 # We can't just use -I/usr/include/PCSC because it won't work in
 # case of cross compilation.
-TOOLCHAIN_INC_DIR := $(strip $(shell echo | $(CC) -Wp,-v -xc - 2>&1 | grep include$ | tail -n 1))
+TOOLCHAIN_INC_DIR := $(strip $(shell echo | $(CC) -Wp,-v -xc - -fsyntax-only 2>&1 | grep include$ | tail -n 1))
 DEFAULT_PCSC_FLAGS = -I$(TOOLCHAIN_INC_DIR)/PCSC -I$(TOOLCHAIN_INC_DIR)/../local/include/PCSC
 DEFAULT_PCSC_LIB = -lpcsclite
 endif
