@@ -142,18 +142,15 @@ static void write_goodnight_to_osd_file(struct s_client *cli)
 	char *fname = get_gbox_tmp_fname(fext); 
 	if (file_exists(fname))
 	{
-	char buf[50];
-	memset(buf, 0, sizeof(buf));
-	snprintf(buf, sizeof(buf), "%s %s %s", fname, username(cli), cli->reader->device);
-	cs_log_dbg(D_READER, "found file %s - write goodnight info from %s %s to OSD", fname, username(cli),cli->reader->device);
-	char *cmd = buf;
-              FILE *p;
-              if ((p = popen(cmd, "w")) == NULL)
-		{	
-			cs_log("Error %s",fname);
+		cs_log_dbg(D_READER, "found file %s - write goodnight info from %s %s to OSD", fname, username(cli),cli->reader->device);
+		FILE *f = fopen(fname, "w");
+		if (!f)
+		{
+			cs_log("ERROR: Can't open: %s (%s)", fname, strerror(errno));
 			return;
 		}
-              pclose(p);
+		fprintf(f, "%s %s", username(cli), cli->reader->device);
+		fclose(f);
 	}
 	return;
 }

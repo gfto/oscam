@@ -55,24 +55,22 @@ static uint32_t poll_gsms_data (uint16_t *boxid, uint8_t *num, char *text)
 	strncpy(text, &(buffer[7]),length-7);
 	return 0;
 }
+
 static void write_gsms_to_osd_file(struct s_client *cli, unsigned char *gsms)
 {
 	char *fext= FILE_OSD_MSG; 
 	char *fname = get_gbox_tmp_fname(fext); 
 	if (file_exists(fname))
 	{
-	char gsms_buf[150];
-	memset(gsms_buf, 0, sizeof(gsms_buf));
-	snprintf(gsms_buf, sizeof(gsms_buf), "%s %s:%s %s", fname, username(cli), cli->reader->device, gsms);
-	cs_log_dbg(D_READER, "found OSD 'driver' %s - write gsms to OSD", fname);
-	char *cmd = gsms_buf;
-              FILE *p;
-              if ((p = popen(cmd, "w")) == NULL)
-		{	
-		cs_log("Error %s",fname);
-		return;
+		cs_log_dbg(D_READER, "found OSD 'driver' %s - write gsms to OSD", fname);
+		FILE *f = fopen(fname, "w");
+		if (!f)
+		{
+			cs_log("ERROR: Can't open: %s (%s)", fname, strerror(errno));
+			return;
 		}
-              pclose(p);
+		fprintf(f, "%s:%s %s", username(cli), cli->reader->device, gsms);
+		fclose(f);
 	}
 	return;
 }
