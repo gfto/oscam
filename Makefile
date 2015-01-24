@@ -90,7 +90,6 @@ endif
 
 # The compiler knows for what target it compiles, so use this information
 TARGET := $(shell $(CC) -dumpmachine 2>/dev/null)
-TARGET_SYSROOT := $(shell $(CC) -print-sysroot 2>/dev/null)
 
 # Process USE_ variables
 DEFAULT_STAPI_LIB = -L./stapi -loscam_stapi
