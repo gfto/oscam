@@ -69,7 +69,7 @@ static void write_gsms_to_osd_file(struct s_client *cli, unsigned char *gsms)
 			cs_log("ERROR: Can't open: %s (%s)", fname, strerror(errno));
 			return;
 		}
-		fprintf(f, "%s:%s %s", username(cli), cli->reader->device, gsms);
+		fprintf(f, "%s:%s %s\n", username(cli), cli->reader->device, gsms);
 		fclose(f);
 	}
 	return;

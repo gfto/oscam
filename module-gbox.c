@@ -149,7 +149,7 @@ static void write_goodnight_to_osd_file(struct s_client *cli)
 			cs_log("ERROR: Can't open: %s (%s)", fname, strerror(errno));
 			return;
 		}
-		fprintf(f, "%s %s", username(cli), cli->reader->device);
+		fprintf(f, "%s %s\n", username(cli), cli->reader->device);
 		fclose(f);
 	}
 	return;
