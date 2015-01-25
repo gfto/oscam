@@ -348,6 +348,7 @@ all:
 |  Readers  : $(shell ./config.sh --show-enabled readers | sed -e 's|READER_||g')\n\
 |  CardRdrs : $(shell ./config.sh --show-enabled card_readers | sed -e 's|CARDREADER_||g') $(SMART) $(PCSC)\n\
 |  Compiler : $(shell $(CC) --version 2>/dev/null | head -n 1)\n\
+|  Config   : $(OBJDIR)/config.mak\n\
 |  Binary   : $(OSCAM_BIN)\n\
 +-------------------------------------------------------------------------------\n"
 ifeq "$(shell ./config.sh --enabled WEBIF)" "Y"
