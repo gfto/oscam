@@ -14,7 +14,9 @@
 #include <PCSC/pcsclite.h>
 #include <PCSC/winscard.h>
 #include <PCSC/wintypes.h>
+#if !defined(__APPLE__)
 #include <PCSC/reader.h>
+#endif
 #endif
 
 #ifndef ERR_INVALID
