@@ -711,7 +711,7 @@ int16_t read_cards_from_hello(uint8_t *ptr, uint8_t *len, CAIDTAB *ctab, uint8_t
 						cs_log_dbg(D_READER, "delete card: caid=%04X, provid=%06X, slot=%d, level=%d, dist=%d, peer=%04X",
 									  card_s->caid, card_s->provid, card_s->id.slot, card_s->lvl, card_s->dist, card_s->id.peer);
 						//delete card because not send anymore 
-						ll_iter_remove(&it);
+						ll_iter_remove(it);
 						gbox_free_card(card_s);				
 						break;
 					case 0:
