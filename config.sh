@@ -584,6 +584,12 @@ do
 	'-s'|'--show-enabled'|'--show')
 		shift
 		list_enabled $(get_opts $1)
+		# Take special care of USE_xxx flags
+		if [ "$1" = "card_readers" ]
+		then
+			have_flag USE_LIBUSB && echo "CARDREADER_SMART"
+			have_flag USE_PCSC && echo "CARDREADER_PCSC"
+		fi
 		break
 		;;
 	'-Z'|'--show-disabled')
