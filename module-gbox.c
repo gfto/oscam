@@ -655,7 +655,7 @@ static int8_t gbox_init_card(struct gbox_card *card, uint16_t caid, uint32_t pro
 }
 
 //returns number of cards in a hello packet or -1 in case of error
-int16_t read_cards_from_hello(uint8_t *ptr, uint8_t *len, struct CAIDTAB *ctab, uint8_t maxdist, LL_ITER it, LLIST *cards, uint8_t last_packet)
+int16_t read_cards_from_hello(uint8_t *ptr, uint8_t *len, CAIDTAB *ctab, uint8_t maxdist, LL_ITER it, LLIST *cards, uint8_t last_packet)
 {	
 	uint8_t *current_ptr = 0;
 	uint16_t caid;
