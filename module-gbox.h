@@ -99,12 +99,13 @@ struct gbox_peer
 {
     struct gbox_data gbox;
     uchar *hostname;
-    int32_t online;
-    int32_t hello_stat;
+    int8_t online;
+    int8_t hello_stat;
     uint8_t next_hello;
     uchar ecm_idx;
     CS_MUTEX_LOCK lock;
     struct s_client *my_user;
+    uint16_t total_cards;
     LL_ITER last_it;
 };
 

@@ -614,7 +614,7 @@ int8_t gbox_message_header(uchar *buf, uint16_t cmd, uint32_t peer_password, uin
 	return 0;
 }
 
-int8_t get_card_action(struct gbox_card *card, uint32_t provid1, uint16_t peer_id, uint8_t slot, struct gbox_peer *peer)
+int8_t get_card_action(struct gbox_card *card, uint32_t provid1, uint16_t peer_id, uint8_t slot, LLIST *cards)
 {
 	LL_ITER it;
 	struct gbox_card *card_s;
@@ -624,7 +624,7 @@ int8_t get_card_action(struct gbox_card *card, uint32_t provid1, uint16_t peer_i
 		{ return 0; }	//keep
 	else
 	{ 
-		it = ll_iter_create(peer->gbox.cards);
+		it = ll_iter_create(cards);
 		while ((card_s = ll_iter_next(&it)))
 		{
 			//card is still somewhere else we need to remove current
@@ -654,74 +654,20 @@ static int8_t gbox_init_card(struct gbox_card *card, uint16_t caid, uint32_t pro
 	return 0;
 }
 
-int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
-{
-	if (!cli || !cli->gbox || !cli->reader || !data) { return -1; };
-	struct gbox_peer *peer = cli->gbox;
-	int32_t ncards_in_msg = 0;
-	int32_t payload_len = n;
-	//TODO: checkcode_len can be made void
-	int32_t checkcode_len = 0;
-	int32_t hostname_len = 0;
-	int32_t footer_len = 0;
-	uint8_t *ptr = 0;
+//returns number of cards in a hello packet or -1 in case of error
+int16_t read_cards_from_hello(uint8_t *ptr, uint8_t *len, struct CAIDTAB *ctab, uint8_t maxdist, LL_ITER it, LLIST *cards, uint8_t last_packet)
+{	
 	uint8_t *current_ptr = 0;
-	LL_ITER it,previous_it;
+	uint16_t caid;
+	uint32_t provid;
+	uint32_t provid1;
 	struct gbox_card *card_s;
 	struct gbox_card *card;
+	int16_t ncards_in_msg = 0;
+	LL_ITER previous_it;
 
-	if(!(gbox_decode_cmd(data) == MSG_HELLO1)) 
+	while(ptr < len)
 	{
-		gbox_decompress(data, &payload_len);
-		ptr = data + 12;
-	}
-	else
-		{ ptr = data + 11; }
-		
-	cs_log_dump_dbg(D_READER, data, payload_len, "decompressed data (%d bytes):", payload_len);
-	if ((data[11] & 0xf) != peer->next_hello)
-	{
-		cs_log("-> out of sync hello from %s %s, expected: %02X, received: %02X"
-			,username(cli), cli->reader->device, peer->next_hello, data[11] & 0xf);
-		peer->next_hello = 0;
-		peer->hello_stat = GBOX_STAT_HELLOL;
-		gbox_send_hello(cli);
-		return 0;
-	} 
-	
-	if (!(data[11] & 0xf)) //is first packet 
-	{
-		if(!peer->gbox.cards)
-			{ peer->gbox.cards = ll_create("peer.cards"); }
-		it = ll_iter_create(peer->gbox.cards);	
-		checkcode_len = 7;
-		hostname_len = data[payload_len - 1];
-		footer_len = hostname_len + 2;
-		if(!peer->hostname || memcmp(peer->hostname, data + payload_len - 1 - hostname_len, hostname_len))
-		{	
-			NULLFREE(peer->hostname);
-			if(!cs_malloc(&peer->hostname, hostname_len + 1))
-			{
-				cs_writeunlock(&peer->lock);
-				return -1;
-			}
-			memcpy(peer->hostname, data + payload_len - 1 - hostname_len, hostname_len);
-			peer->hostname[hostname_len] = '\0';
-		}
-		gbox_checkcode_recv(cli, data + payload_len - footer_len - checkcode_len - 1);
-		peer->gbox.minor_version = data[payload_len - footer_len - 1];
-		peer->gbox.cpu_api = data[payload_len - footer_len];
-	}
-	else
-		{ it = peer->last_it; }
-
-	cs_log_dbg(D_READER, "-> Hello packet no. %d received", (data[11] & 0xF) + 1);
-	while(ptr < data + payload_len - footer_len - checkcode_len - 1)
-	{
-		uint16_t caid;
-		uint32_t provid;
-		uint32_t provid1;
-
 		switch(ptr[0])
 		{
 			//Viaccess
@@ -742,7 +688,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 
 		ncards_in_msg += ptr[4];
 		//caid check
-		if(chk_ctab(caid, &cli->reader->ctab))
+		if(chk_ctab(caid, ctab))
 		{
 			provid1 =  ptr[0] << 24 | ptr[1] << 16 | ptr[2] << 8 | ptr[3];
 	
@@ -752,11 +698,11 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 			// for all cards of current caid/provid,
 			while (ptr < current_ptr + 5 + current_ptr[4] * 4)
 			{
-				if ((ptr[1] & 0xf) <= cli->reader->gbox_maxdist)
+				if ((ptr[1] & 0xf) <= maxdist)
 				{
 					previous_it = it;
 					card_s = ll_iter_next(&it);
-					switch (get_card_action(card_s,provid1,ptr[2] << 8 | ptr[3],ptr[0],peer))
+					switch (get_card_action(card_s, provid1, ptr[2] << 8 | ptr[3], ptr[0], cards))
 					{
 					case -1:
 						//IDEA: Later put card to a list of temporary not available cards
@@ -780,7 +726,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 						}
 						gbox_init_card(card,caid,provid,provid1,ptr);
 						if (!card_s)
-							{ ll_append(peer->gbox.cards, card); }
+							{ ll_append(cards, card); }
 						else
 						{ 
 							ll_iter_insert(&previous_it, card); 
@@ -801,10 +747,90 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 			} // end while cards for provider
 		}
 		else
-		{
-			ptr += 5 + ptr[4] * 4; //skip cards because caid
-		}
+			{ ptr += 5 + ptr[4] * 4; } //skip cards because caid
 	} // end while caid/provid
+
+	if (last_packet)
+	{
+		//delete cards at the end of the list if there are some
+		while ((card_s = ll_iter_next(&it)))
+		{
+			cs_log_dbg(D_READER, "delete card: caid=%04X, provid=%06X, slot=%d, level=%d, dist=%d, peer=%04X",
+						  card_s->caid, card_s->provid, card_s->id.slot, card_s->lvl, card_s->dist, card_s->id.peer);
+			//delete card because not send anymore 
+			ll_iter_remove(&it);
+			gbox_free_card(card_s);									
+		}
+	}
+
+	return ncards_in_msg;
+}
+
+int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
+{
+	if (!cli || !cli->gbox || !cli->reader || !data) { return -1; };
+
+	struct gbox_peer *peer = cli->gbox;
+	int16_t cards_number = 0;
+	int32_t payload_len = n;
+	int32_t hostname_len = 0;
+	int32_t footer_len = 0;
+	uint8_t *ptr = 0;
+	LL_ITER it;
+
+	if(!(gbox_decode_cmd(data) == MSG_HELLO1)) 
+	{
+		gbox_decompress(data, &payload_len);
+		ptr = data + 12;
+	}
+	else
+		{ ptr = data + 11; }		
+	cs_log_dump_dbg(D_READER, data, payload_len, "decompressed data (%d bytes):", payload_len);
+
+	if ((data[11] & 0xf) != peer->next_hello) //out of sync hellos
+	{
+		cs_log("-> out of sync hello from %s %s, expected: %02X, received: %02X"
+			,username(cli), cli->reader->device, peer->next_hello, data[11] & 0xf);
+		peer->next_hello = 0;
+		peer->hello_stat = GBOX_STAT_HELLOL;
+		gbox_send_hello(cli);
+		return 0;
+	}
+	
+	if (!(data[11] & 0xf)) //is first packet 
+	{
+		if(!peer->gbox.cards)
+			{ peer->gbox.cards = ll_create("peer.cards"); }
+		it = ll_iter_create(peer->gbox.cards);	
+		hostname_len = data[payload_len - 1];
+		footer_len = hostname_len + 2 + 7;
+		if(!peer->hostname || memcmp(peer->hostname, data + payload_len - 1 - hostname_len, hostname_len))
+		{	
+			NULLFREE(peer->hostname);
+			if(!cs_malloc(&peer->hostname, hostname_len + 1))
+			{
+				cs_writeunlock(&peer->lock);
+				return -1;
+			}
+			memcpy(peer->hostname, data + payload_len - 1 - hostname_len, hostname_len);
+			peer->hostname[hostname_len] = '\0';
+		}
+		gbox_checkcode_recv(cli, data + payload_len - footer_len - 1);
+		peer->gbox.minor_version = data[payload_len - footer_len - 1 + 7];
+		peer->gbox.cpu_api = data[payload_len - footer_len + 7];
+		peer->total_cards = 0;
+	}
+	else
+		{ it = peer->last_it; }
+
+	cs_log_dbg(D_READER, "-> Hello packet no. %d received", (data[11] & 0xF) + 1);
+
+	// read cards from hello
+	cards_number = read_cards_from_hello(ptr, data + payload_len - footer_len - 1, &cli->reader->ctab, cli->reader->gbox_maxdist, it, peer->gbox.cards, data[11] & 0x80);
+	if (cards_number < 0)
+		{ return -1; }
+	else
+		{ peer->total_cards += cards_number; }
 
 	if(data[11] & 0x80)   //last packet
 	{
@@ -819,25 +845,16 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		}
 		else	//last packet of Hello
 		{
-			//delete cards at the end of the list if there are some
-			while ((card_s = ll_iter_next(&it)))
-			{
-				cs_log_dbg(D_READER, "delete card: caid=%04X, provid=%06X, slot=%d, level=%d, dist=%d, peer=%04X",
-							  card_s->caid, card_s->provid, card_s->id.slot, card_s->lvl, card_s->dist, card_s->id.peer);
-				//delete card because not send anymore 
-				ll_iter_remove(&it);
-				gbox_free_card(card_s);									
-			}
 			peer->online = 1;
 			if(!data[0xA])
 			{
-				cs_log("-> HelloS in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, ncards_in_msg,ll_count(peer->gbox.cards));
+				cs_log("-> HelloS in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, peer->total_cards, ll_count(peer->gbox.cards));
 				peer->hello_stat = GBOX_STAT_HELLOR;
 				gbox_send_hello(cli);
 			}
 			else
 			{
-				cs_log("-> HelloR in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, ncards_in_msg,ll_count(peer->gbox.cards));
+				cs_log("-> HelloR in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, peer->total_cards, ll_count(peer->gbox.cards));
 				gbox_send_checkcode(cli);
 			}
 			if(peer->hello_stat == GBOX_STAT_HELLOS)
@@ -845,9 +862,10 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 				gbox_send_hello(cli);
 			}
 			cli->reader->tcp_connected = 2; //we have card
-			cli->reader->card_status = CARD_INSERTED;
 			if(ll_count(peer->gbox.cards) == 0)
 				{ cli->reader->card_status = NO_CARD; }
+			else	
+				{ cli->reader->card_status = CARD_INSERTED; }
 			
 			peer->next_hello = 0;
 			gbox_write_local_cards_info();
@@ -1062,14 +1080,14 @@ static int8_t gbox_check_header(struct s_client *cli, struct s_client *proxy, uc
 	uint8_t authentication_done = 0;
 	uint32_t my_received_pw = 0;
 	uint32_t peer_received_pw = 0;
-	cs_log_dump_dbg(D_READER, data, n, "encrypted data received (%d bytes):", n);
+	cs_log_dump_dbg(D_READER, data, n, "-> encrypted data (%d bytes):", n);
 
 	if(gbox_decode_cmd(data) == MSG_HELLO1)
 		{ cs_log("test cs2gbox"); }
 	else
 		{ gbox_decrypt(data, n, local_gbox.password); }
 
-	cs_log_dump_dbg(D_READER, data, n, "decrypted received data (%d bytes):", n);
+	cs_log_dump_dbg(D_READER, data, n, "-> decrypted data (%d bytes):", n);
 	//verify my pass received
 	my_received_pw = gbox_get_pw(&data[2]);
 	if (my_received_pw == local_gbox.password)
