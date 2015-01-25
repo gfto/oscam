@@ -655,7 +655,7 @@ static int8_t gbox_init_card(struct gbox_card *card, uint16_t caid, uint32_t pro
 }
 
 //returns number of cards in a hello packet or -1 in case of error
-int16_t read_cards_from_hello(uint8_t *ptr, uint8_t *len, CAIDTAB *ctab, uint8_t maxdist, LL_ITER it, LLIST *cards, uint8_t last_packet)
+int16_t read_cards_from_hello(uint8_t *ptr, uint8_t *len, CAIDTAB *ctab, uint8_t maxdist, LL_ITER *it, LLIST *cards, uint8_t last_packet)
 {	
 	uint8_t *current_ptr = 0;
 	uint16_t caid;
@@ -664,7 +664,7 @@ int16_t read_cards_from_hello(uint8_t *ptr, uint8_t *len, CAIDTAB *ctab, uint8_t
 	struct gbox_card *card_s;
 	struct gbox_card *card;
 	int16_t ncards_in_msg = 0;
-	LL_ITER previous_it;
+	LL_ITER *previous_it;
 
 	while(ptr < len)
 	{
@@ -701,7 +701,7 @@ int16_t read_cards_from_hello(uint8_t *ptr, uint8_t *len, CAIDTAB *ctab, uint8_t
 				if ((ptr[1] & 0xf) <= maxdist)
 				{
 					previous_it = it;
-					card_s = ll_iter_next(&it);
+					card_s = ll_iter_next(it);
 					switch (get_card_action(card_s, provid1, ptr[2] << 8 | ptr[3], ptr[0], cards))
 					{
 					case -1:
@@ -729,10 +729,10 @@ int16_t read_cards_from_hello(uint8_t *ptr, uint8_t *len, CAIDTAB *ctab, uint8_t
 							{ ll_append(cards, card); }
 						else
 						{ 
-							ll_iter_insert(&previous_it, card); 
+							ll_iter_insert(previous_it, card); 
 							it = previous_it;
 						}
-						ll_iter_next(&it);
+						ll_iter_next(it);
 						cs_log_dbg(D_READER, "new card: caid=%04X, provid=%06X, slot=%d, level=%d, dist=%d, peer=%04X",
 									  card->caid, card->provid, card->id.slot, card->lvl, card->dist, card->id.peer);			
 						ptr += 4;
@@ -753,12 +753,12 @@ int16_t read_cards_from_hello(uint8_t *ptr, uint8_t *len, CAIDTAB *ctab, uint8_t
 	if (last_packet)
 	{
 		//delete cards at the end of the list if there are some
-		while ((card_s = ll_iter_next(&it)))
+		while ((card_s = ll_iter_next(it)))
 		{
 			cs_log_dbg(D_READER, "delete card: caid=%04X, provid=%06X, slot=%d, level=%d, dist=%d, peer=%04X",
 						  card_s->caid, card_s->provid, card_s->id.slot, card_s->lvl, card_s->dist, card_s->id.peer);
 			//delete card because not send anymore 
-			ll_iter_remove(&it);
+			ll_iter_remove(it);
 			gbox_free_card(card_s);									
 		}
 	}
@@ -826,7 +826,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 	cs_log_dbg(D_READER, "-> Hello packet no. %d received", (data[11] & 0xF) + 1);
 
 	// read cards from hello
-	cards_number = read_cards_from_hello(ptr, data + payload_len - footer_len - 1, &cli->reader->ctab, cli->reader->gbox_maxdist, it, peer->gbox.cards, data[11] & 0x80);
+	cards_number = read_cards_from_hello(ptr, data + payload_len - footer_len - 1, &cli->reader->ctab, cli->reader->gbox_maxdist, &it, peer->gbox.cards, data[11] & 0x80);
 	if (cards_number < 0)
 		{ return -1; }
 	else
