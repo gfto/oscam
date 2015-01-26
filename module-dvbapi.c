@@ -121,6 +121,7 @@ static const struct box_devices devices[BOX_COUNT] =
 
 static int32_t selected_box = -1;
 static int32_t selected_api = -1;
+static int32_t maxfilter = MAX_FILTER;
 static int32_t dir_fd = -1;
 char *client_name = NULL;
 static uint16_t client_proto_version = 0;
@@ -461,9 +462,9 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 
 	int32_t ret = -1, n = -1, i;
 
-	for(i = 0; i < MAX_FILTER && demux[demux_id].demux_fd[i].fd > 0; i++) { ; }
+	for(i = 0; i < maxfilter && demux[demux_id].demux_fd[i].fd > 0; i++) { ; }
 
-	if(i >= MAX_FILTER)
+	if(i >= maxfilter)
 	{
 		cs_log_dbg(D_DVBAPI, "no free filter");
 		return -1;
@@ -765,7 +766,7 @@ int32_t dvbapi_stop_filter(int32_t demux_index, int32_t type)
 {
 	int32_t g, ret = -1;
 
-	for(g = 0; g < MAX_FILTER; g++)
+	for(g = 0; g < maxfilter; g++)
 	{
 		if(demux[demux_index].demux_fd[g].type == type)
 		{
@@ -1128,14 +1129,14 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len)
 			if(demux[demux_id].ECMpids[n].status > -1)
 				{ ecm_filter_needed++; }
 		}
-		if(MAX_FILTER - ecm_filter_needed <= 0)
+		if(maxfilter - ecm_filter_needed <= 0)
 			{ demux[demux_id].max_emm_filter = 0; }
 		else
-			{ demux[demux_id].max_emm_filter = MAX_FILTER - ecm_filter_needed; }
+			{ demux[demux_id].max_emm_filter = maxfilter - ecm_filter_needed; }
 	}
 	else
 	{
-		demux[demux_id].max_emm_filter = MAX_FILTER - 1;
+		demux[demux_id].max_emm_filter = maxfilter - 1;
 	}
 #endif
 	uint16_t i, k;
@@ -2168,7 +2169,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 				demux[demux_index].ECMpids[n].status = 1;
 			}
 		}
-		demux[demux_index].max_emm_filter = MAX_FILTER - 1;
+		demux[demux_index].max_emm_filter = maxfilter - 1;
 		demux[demux_index].max_status = 1;
 		cs_log("Demuxer #%d found channel in cache and matching prio -> start descrambling ecmpid #%d ", demux_index, found);
 	}
@@ -3395,7 +3396,7 @@ static void *dvbapi_main_local(void *cli)
 
 	dvbapi_client = cli;
 
-	int32_t maxpfdsize = (MAX_DEMUX * MAX_FILTER) + MAX_DEMUX + 2;
+	int32_t maxpfdsize = (MAX_DEMUX * maxfilter) + MAX_DEMUX + 2;
 	struct pollfd pfd2[maxpfdsize];
 	struct timeb start, end;  // start time poll, end time poll
 #define PMT_SERVER_SOCKET "/tmp/.listen.camd.socket"
@@ -3545,7 +3546,7 @@ static void *dvbapi_main_local(void *cli)
 			if(demux[i].program_number == 0) { continue; }  // only evalutate demuxers that have channels assigned
 
 			uint32_t ecmcounter = 0, emmcounter = 0;
-			for(g = 0; g < MAX_FILTER; g++)
+			for(g = 0; g < maxfilter; g++)
 			{
 				if(demux[i].demux_fd[g].fd <= 0) continue; // deny obvious invalid fd!
 				
@@ -3562,8 +3563,8 @@ static void *dvbapi_main_local(void *cli)
 			}
 			if(ecmcounter != demux[i].old_ecmfiltercount || emmcounter != demux[i].old_emmfiltercount)   // only produce log if something changed
 			{
-				cs_log_dbg(D_DVBAPI, "Demuxer #%d has %d ecmpids, %d streampids, %d ecmfilters and %d emmfilters", i, demux[i].ECMpidcount,
-							  demux[i].STREAMpidcount-1, ecmcounter, emmcounter);
+				cs_log_dbg(D_DVBAPI, "Demuxer #%d has %d ecmpids, %d streampids, %d ecmfilters and %d of max %d emmfilters", i, demux[i].ECMpidcount,
+							  demux[i].STREAMpidcount-1, ecmcounter, emmcounter, demux[i].max_emm_filter);
 				demux[i].old_ecmfiltercount = ecmcounter; // save new amount of ecmfilters
 				demux[i].old_emmfiltercount = emmcounter; // save new amount of emmfilters
 			}
@@ -3998,6 +3999,7 @@ static void *dvbapi_main_local(void *cli)
 					if((len = dvbapi_read_device(pfd2[i].fd, mbuf, sizeof(mbuf))) <= 0)
 					{
 						dvbapi_stop_filternum(demux_index, n); // stop filter since its giving errors and wont return anything good.
+						maxfilter--; // lower maxfilters to avoid this with new filter setups!
 						continue;
 					}
 
@@ -4209,7 +4211,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 #endif
 						demux[i].ECMpids[t].checked = 4; // mark index t as low status
 
-						for(o = 0; o < MAX_FILTER; o++)    // check if ecmfilter is in use & stop all ecmfilters of lower status pids
+						for(o = 0; o < maxfilter; o++)    // check if ecmfilter is in use & stop all ecmfilters of lower status pids
 						{
 							if(demux[i].demux_fd[o].fd > 0 && demux[i].demux_fd[o].type == TYPE_ECM && demux[i].demux_fd[o].pidindex == t)
 							{
@@ -4220,7 +4222,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				}
 	
 
-				for(o = 0; o < MAX_FILTER; o++) if(demux[i].demux_fd[o].type == TYPE_ECM) { ecmcounter++; }   // count all ecmfilters
+				for(o = 0; o < maxfilter; o++) if(demux[i].demux_fd[o].type == TYPE_ECM) { ecmcounter++; }   // count all ecmfilters
 
 				demux[i].ECMpids[j].tries = 0xFE; // reset timeout retry flag
 				demux[i].ECMpids[j].irdeto_cycle = 0xFE; // reset irdetocycle
@@ -4688,7 +4690,7 @@ int32_t dvbapi_get_filternum(int32_t demux_index, ECM_REQUEST *er, int32_t type)
 	int32_t n;
 	int32_t fd = -1;
 
-	for(n = 0; n < MAX_FILTER; n++)    // determine fd
+	for(n = 0; n < maxfilter; n++)    // determine fd
 	{
 		if(demux[demux_index].demux_fd[n].fd > 0 && demux[demux_index].demux_fd[n].type == type)     // check for valid and right type (ecm or emm)
 		{
