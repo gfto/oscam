@@ -1395,17 +1395,8 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 		}
 		if(p && p->force) { match = 1; }  // forced pid always started!
 
-		if(config_enabled(WITH_LB) && (!match && cfg.lb_auto_betatunnel))    //if this reader does not match, check betatunnel for it
-		{
-			uint16_t caid = lb_get_betatunnel_caid_to(er->caid);
-			if(caid)
-			{
-				uint16_t save_caid = er->caid;
-				er->caid = caid;
-				match = matching_reader(er, rdr); // check for matching reader
-				er->caid = save_caid;
-			}
-		}
+		if(!match) // if this reader does not match, check betatunnel for it
+			match = lb_check_auto_betatunnel(er, rdr);
 
 		if(!match && chk_is_betatunnel_caid(er->caid))  // these caids might be tunneled invisible by peers
 			{ match = 1; } // so make it a match to try it!

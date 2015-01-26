@@ -2063,7 +2063,6 @@ void write_ecm_answer_fromcache(struct s_write_from_cache *wfc)
 	}
 }
 
-
 void get_cw(struct s_client *client, ECM_REQUEST *er)
 {
 	cs_log_dbg(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [get_cw] NEW REQUEST!", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
@@ -2427,22 +2426,11 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 	for(rdr = first_active_reader; rdr; rdr = rdr->next)
 	{
 		uint8_t is_fallback = chk_is_fixed_fallback(rdr, er);
-
 		int8_t match = matching_reader(er, rdr);
-#ifdef WITH_LB
-		//if this reader does not match, check betatunnel for it
-		if(!match && cfg.lb_auto_betatunnel)
-		{
-			uint16_t caid = lb_get_betatunnel_caid_to(er->caid);
-			if(caid)
-			{
-				uint16_t save_caid = er->caid;
-				er->caid = caid;
-				match = matching_reader(er, rdr); //matching
-				er->caid = save_caid;
-			}
-		}
-#endif
+
+		if(!match) // if this reader does not match, check betatunnel for it
+			match = lb_check_auto_betatunnel(er, rdr);
+
 		if(match)
 		{
 			er->reader_avail++;

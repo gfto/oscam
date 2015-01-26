@@ -2013,6 +2013,23 @@ uint32_t lb_auto_timeout(ECM_REQUEST *er, uint32_t timeout)
 	return timeout;
 }
 
+bool lb_check_auto_betatunnel(ECM_REQUEST *er, struct s_reader *rdr)
+{
+	if(!cfg.lb_auto_betatunnel)
+		return 0;
+
+	bool match = 0;
+	uint16_t caid = lb_get_betatunnel_caid_to(er->caid);
+	if(caid)
+	{
+		uint16_t save_caid = er->caid;
+		er->caid = caid;
+		match = matching_reader(er, rdr); //matching
+		er->caid = save_caid;
+	}
+	return match;
+}
+
 void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer *ea, int8_t rc)
 {
 	if(rc >= E_99 || cacheex_reader(rdr))
