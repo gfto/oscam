@@ -2127,6 +2127,14 @@ void lb_set_best_reader(ECM_REQUEST *er)
 	}
 }
 
+void lb_update_last(struct s_ecm_answer *ea_er, struct s_reader *reader)
+{
+	// for lb oldest reader mode - not use for fallback readers
+	if (!(ea_er->status & READER_FALLBACK))
+		cs_ftime(&reader->lb_last);
+}
+
+
 void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer *ea, int8_t rc)
 {
 	if(rc >= E_99 || cacheex_reader(rdr))

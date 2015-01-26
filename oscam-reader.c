@@ -1053,9 +1053,7 @@ void reader_get_ecm(struct s_reader *reader, ECM_REQUEST *er)
 		return;
 	}
 
-#ifdef WITH_LB
-	if(!(ea_er->status & READER_FALLBACK)) { cs_ftime(&reader->lb_last); }  //for lb oldest reader mode - not use for fallback readers
-#endif
+	lb_update_last(ea_er, reader);
 
 	if(ecm_ratelimit_check(reader, er, 1) != OK)
 	{

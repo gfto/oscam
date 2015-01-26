@@ -23,6 +23,7 @@ void check_lb_auto_betatunnel_mode(ECM_REQUEST *er);
 uint32_t lb_auto_timeout(ECM_REQUEST *er, uint32_t ctimeout);
 bool lb_check_auto_betatunnel(ECM_REQUEST *er, struct s_reader *rdr);
 void lb_set_best_reader(ECM_REQUEST *er);
+void lb_update_last(struct s_ecm_answer *ea_er, struct s_reader *reader);
 #else
 static inline void init_stat(void) { }
 static inline void stat_finish(void) { }
@@ -34,6 +35,7 @@ static inline void check_lb_auto_betatunnel_mode(ECM_REQUEST *UNUSED(er)) { }
 static inline uint32_t lb_auto_timeout(ECM_REQUEST *UNUSED(er), uint32_t ctimeout) { return ctimeout; }
 static inline bool lb_check_auto_betatunnel(ECM_REQUEST *UNUSED(er), struct s_reader *UNUSED(rdr)) { return 0; }
 static inline void lb_set_best_reader(ECM_REQUEST *UNUSED(er)) { }
+static inline void lb_update_last(struct s_ecm_answer *UNUSED(ea_er), struct s_reader *UNUSED(reader)) { }
 #endif
 
 #endif
