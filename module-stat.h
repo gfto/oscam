@@ -14,6 +14,7 @@ void update_ecmlen_from_stat(struct s_reader *rdr);
 void init_stat(void);
 void stat_finish(void);
 void load_stat_from_file(void);
+void lb_destroy_stats(struct s_reader *rdr);
 void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer *ea, int8_t rc);
 void stat_get_best_reader(ECM_REQUEST *er);
 void lb_mark_last_reader(ECM_REQUEST *er);
@@ -27,6 +28,7 @@ uint16_t lb_get_betatunnel_caid_to(ECM_REQUEST *er);
 static inline void init_stat(void) { }
 static inline void stat_finish(void) { }
 static inline void load_stat_from_file(void) { }
+static inline void lb_destroy_stats(struct s_reader *UNUSED(rdr)) { }
 static inline void send_reader_stat(struct s_reader *UNUSED(rdr), ECM_REQUEST *UNUSED(er), struct s_ecm_answer *UNUSED(ea), int8_t UNUSED(rc)) { }
 static inline void stat_get_best_reader(ECM_REQUEST *UNUSED(er)) { }
 static inline void lb_mark_last_reader(ECM_REQUEST *UNUSED(er)) { }

@@ -2,6 +2,7 @@
 
 #include "globals.h"
 #include "module-gbox.h"
+#include "module-stat.h"
 #include "oscam-aes.h"
 #include "oscam-conf.h"
 #include "oscam-conf-chk.h"
@@ -1309,15 +1310,8 @@ void free_reader(struct s_reader *rdr)
 
 	clear_ftab(&rdr->ftab);
 
-#ifdef WITH_LB
-	if(rdr->lb_stat)
-	{
-		cs_lock_destroy(&rdr->lb_stat_lock);
-		ll_destroy_data(rdr->lb_stat);
-		rdr->lb_stat = NULL;
-	}
+	lb_destroy_stats(rdr);
 
-#endif
 	cs_clear_entitlement(rdr);
 	if(rdr->ll_entitlements)
 	{
