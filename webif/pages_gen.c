@@ -101,6 +101,7 @@ static void readfile(const char *filename, uint8_t **data, size_t *data_len)
 		{ die("%s(%s): can't alloc %zd bytes\n", __func__, filename, *data_len); }
 	if(read(fd, *data, *data_len) < 0)
 		{ die("read(%d, %zd): %s\n", fd, *data_len, strerror(errno)); }
+	close(fd);
 }
 
 static bool is_text(char *filename)
