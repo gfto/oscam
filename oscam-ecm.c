@@ -449,7 +449,7 @@ void cw_process_thread_wakeup(void)
 /**
  * search for same ecm hash with same readers
  **/
-struct ecm_request_t *check_same_ecm(ECM_REQUEST *er)
+static struct ecm_request_t *check_same_ecm(ECM_REQUEST *er)
 {
 	struct ecm_request_t *ecm;
 	time_t timeout;
@@ -496,8 +496,7 @@ struct ecm_request_t *check_same_ecm(ECM_REQUEST *er)
 	return NULL; // nothing found so return null
 }
 
-
-void use_same_readers(ECM_REQUEST *er_new, ECM_REQUEST *er_cache)
+static void use_same_readers(ECM_REQUEST *er_new, ECM_REQUEST *er_cache)
 {
 	struct s_ecm_answer *ea_new = er_new->matching_rdr;
 	struct s_ecm_answer *ea_cache = er_cache->matching_rdr;
@@ -523,8 +522,24 @@ void use_same_readers(ECM_REQUEST *er_new, ECM_REQUEST *er_cache)
 	}
 }
 
+static void lb_set_best_reader(ECM_REQUEST *er)
+{
+	if (!cfg.lb_mode)
+		return;
+	// cache2 is handled by readers queue, so, if a same ecm hash with same readers, use these same readers to get cache2 from them! Not ask other readers!
+	struct ecm_request_t *ecm_eq = NULL;
+	ecm_eq = check_same_ecm(er);
+	if(ecm_eq)
+	{
+		// set all readers used by ecm_eq, so we get cache2 from them!
+		use_same_readers(er, ecm_eq);
+		cs_log_dbg(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [get_cw] found same ecm with same readers from client %s, use them!", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid, (check_client(ecm_eq->client) ? ecm_eq->client->account->usr : "-"));
+	}else{
+		// FILTER readers by loadbalancing
+		stat_get_best_reader(er);
+	}
+}
 #endif
-
 
 
 void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
@@ -2473,24 +2488,7 @@ OUT:
 	cs_readunlock(&clientlist_lock);
 	cs_readunlock(&readerlist_lock);
 
-
-#ifdef WITH_LB
-	if(cfg.lb_mode){
-		//cache2 is handled by readers queue, so, if a same ecm hash with same readers, use these same readers to get cache2 from them! Not ask other readers!
-		struct ecm_request_t *ecm_eq = NULL;
-		ecm_eq = check_same_ecm(er);
-		if(ecm_eq)
-		{
-			//set all readers used by ecm_eq, so we get cache2 from them!
-			use_same_readers(er, ecm_eq);
-			cs_log_dbg(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [get_cw] found same ecm with same readers from client %s, use them!", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid, (check_client(ecm_eq->client) ? ecm_eq->client->account->usr : "-"));
-		}else{
-
-			//FILTER readers by loadbalancing
-			stat_get_best_reader(er);
-		}
-    }
-#endif
+	lb_set_best_reader(er);
 
 	//set reader_count and fallback_reader_count
 	set_readers_counter(er);
