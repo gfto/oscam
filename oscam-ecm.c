@@ -1621,26 +1621,7 @@ uint32_t chk_provid(uint8_t *ecm, uint16_t caid)
 			provid = b2i(2, ecm + 5);
 		break;
 	}
-#ifdef WITH_LB
-	if (!provid)
-	{
-		for(i = 0; i < CS_MAXCAIDTAB; i++)
-		{
-			uint16_t tcaid = cfg.lb_noproviderforcaid.caid[i];
-			if(!tcaid) { break; }
-			if(tcaid == caid)
-			{
-				provid = 0;
-				break;
-			}
-			if(tcaid < 0x0100 && (caid >> 8) == tcaid)
-			{
-				provid = 0;
-				break;
-			}
-		}
-	}
-#endif
+
 	return provid;
 }
 
