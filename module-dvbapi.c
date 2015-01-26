@@ -2978,7 +2978,7 @@ void event_handler(int32_t UNUSED(signal))
 		}
 
 		cs_log_dbg(D_DVBAPI, "found pmt file %s", dest);
-		cs_sleepms(100);
+		//cs_sleepms(100); why wait?
 
 		uint32_t len = read(pmt_fd, mbuf, sizeof(mbuf));
 		int32_t ret = close(pmt_fd);
@@ -3726,6 +3726,7 @@ static void *dvbapi_main_local(void *cli)
 
 		for(i = 0; i < pfdcount && rc > 0; i++)
 		{
+			cs_sleepms(1); // give time to other processes!
 			if(pfd2[i].revents == 0) { continue; }  // skip sockets with no changes
 			rc--; //event handled!
 			cs_log_dbg(D_TRACE, "Now handling fd %d that reported event %d", pfd2[i].fd, pfd2[i].revents);
@@ -4005,7 +4006,6 @@ static void *dvbapi_main_local(void *cli)
 				continue; // continue with other events!
 			}
 		}
-	cs_sleepms(300); // give time to other processes!
 	}
 	return NULL;
 }
