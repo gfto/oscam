@@ -790,7 +790,33 @@ static void convert_to_nagra_int(ECM_REQUEST *er, uint16_t caid_to)
 	er->btun = 2; //marked as auto-betatunnel converted. Also for fixing recursive lock in get_cw
 }
 
-uint16_t lb_get_betatunnel_caid_to(uint16_t caid)
+static int32_t lb_valid_btun(ECM_REQUEST *er, uint16_t caidto)
+{
+	STAT_QUERY q;
+	READER_STAT *s;
+	struct s_reader *rdr;
+
+	get_stat_query(er, &q);
+	q.caid = caidto;
+
+	cs_readlock(&readerlist_lock);
+	for(rdr = first_active_reader; rdr ; rdr = rdr->next)
+	{
+		if(rdr->lb_stat && rdr->client)
+		{
+			s = get_stat(rdr, &q);
+			if(s && s->rc == E_FOUND)
+			{
+				cs_readunlock(&readerlist_lock);
+				return 1;
+			}
+		}
+	}
+	cs_readunlock(&readerlist_lock);
+	return 0;
+}
+
+static uint16_t __lb_get_betatunnel_caid_to(uint16_t caid)
 {
 	int32_t lbbm = cfg.lb_auto_betatunnel_mode;
 	if(lbbm <= 3)
@@ -818,6 +844,17 @@ uint16_t lb_get_betatunnel_caid_to(uint16_t caid)
 	}
 	return 0;
 }
+
+uint16_t lb_get_betatunnel_caid_to(ECM_REQUEST *er)
+{
+	if(!cfg.lb_auto_betatunnel)
+		return 0;
+	uint16_t caidto = __lb_get_betatunnel_caid_to(er->caid);
+	if(lb_valid_btun(er, caidto))
+		return caidto;
+	return 0;
+}
+
 
 void check_lb_auto_betatunnel_mode(ECM_REQUEST *er)
 {
@@ -971,7 +1008,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 	//auto-betatunnel: The trick is: "let the loadbalancer decide"!
 	if(cfg.lb_auto_betatunnel && er->caid >> 8 == 0x18 && er->ecmlen)    //nagra
 	{
-		uint16_t caid_to = lb_get_betatunnel_caid_to(er->caid);
+		uint16_t caid_to = __lb_get_betatunnel_caid_to(er->caid);
 		if(caid_to)
 		{
 			int8_t needs_stats_nagra = 1, needs_stats_beta = 1;
@@ -1100,7 +1137,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 
 		if(cfg.lb_auto_betatunnel && (er->caid == 0x1702 || er->caid == 0x1722) && er->ocaid == 0x0000 && er->ecmlen)    //beta
 		{
-			uint16_t caid_to = lb_get_betatunnel_caid_to(er->caid);
+			uint16_t caid_to = __lb_get_betatunnel_caid_to(er->caid);
 			if(caid_to)
 			{
 				int8_t needs_stats_nagra = 1, needs_stats_beta = 1;
@@ -1923,32 +1960,6 @@ void update_ecmlen_from_stat(struct s_reader *rdr)
 	cs_readunlock(&rdr->lb_stat_lock);
 }
 
-int32_t lb_valid_btun(ECM_REQUEST *er, uint16_t caidto)
-{
-	STAT_QUERY q;
-	READER_STAT *s;
-	struct s_reader *rdr;
-
-	get_stat_query(er, &q);
-	q.caid = caidto;
-
-	cs_readlock(&readerlist_lock);
-	for(rdr = first_active_reader; rdr ; rdr = rdr->next)
-	{
-		if(rdr->lb_stat && rdr->client)
-		{
-			s = get_stat(rdr, &q);
-			if(s && s->rc == E_FOUND)
-			{
-				cs_readunlock(&readerlist_lock);
-				return 1;
-			}
-		}
-	}
-	cs_readunlock(&readerlist_lock);
-	return 0;
-}
-
 /**
  * mark as last reader after checked for cache requests:
  **/
@@ -2022,7 +2033,7 @@ bool lb_check_auto_betatunnel(ECM_REQUEST *er, struct s_reader *rdr)
 		return 0;
 
 	bool match = 0;
-	uint16_t caid = lb_get_betatunnel_caid_to(er->caid);
+	uint16_t caid = __lb_get_betatunnel_caid_to(er->caid);
 	if(caid)
 	{
 		uint16_t save_caid = er->caid;

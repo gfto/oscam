@@ -277,14 +277,8 @@ uint16_t chk_on_btun(uint8_t chk_sx, struct s_client *cl, ECM_REQUEST *er)
 				}
 			}
 		}
-#ifdef WITH_LB
 		if(chk_sx)
-		{
-			uint16_t caidto = lb_get_betatunnel_caid_to(er->caid);
-			if(cfg.lb_auto_betatunnel && lb_valid_btun(er, caidto))
-				{ return caidto; }
-		}
-#endif
+			return lb_get_betatunnel_caid_to(er);
 	}
 	return 0;
 }
