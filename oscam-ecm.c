@@ -37,17 +37,6 @@ static pthread_mutex_t cw_process_sleep_cond_mutex;
 static pthread_cond_t cw_process_sleep_cond;
 static int cw_process_wakeups;
 
-static uint32_t auto_timeout(ECM_REQUEST *er, uint32_t timeout)
-{
-	(void)er; // Prevent warning about unused er, when WITH_LB is disabled
-#ifdef WITH_LB
-	if(cfg.lb_auto_timeout)
-		{ return lb_auto_timeout(er, timeout); }
-#endif
-	return timeout;
-}
-
-
 #ifdef CS_CACHEEX
 void cacheex_mode1_delay(ECM_REQUEST *er){
   if(!er->cacheex_wait_time_expired
@@ -271,7 +260,7 @@ static void *cw_process(void)
 				{
 					tbc = er->tps;
 					time_to_check_cacheex_mode1_delay = 0;
-					time_to_check_cacheex_wait_time = add_ms_to_timeb_diff(&tbc, auto_timeout(er, er->cacheex_wait_time));
+					time_to_check_cacheex_wait_time = add_ms_to_timeb_diff(&tbc, lb_auto_timeout(er, er->cacheex_wait_time));
 					if(comp_timeb(&t_now, &tbc) >= 0)
 					{
 						add_job(er->client, ACTION_CACHEEX_TIMEOUT, (void *)er, 0);
@@ -280,7 +269,7 @@ static void *cw_process(void)
 					}else if(er->cacheex_mode1_delay && !er->stage && er->cacheex_reader_count>0){
 						//check for cacheex_mode1_delay
 						tbc = er->tps;
-						time_to_check_cacheex_mode1_delay = add_ms_to_timeb_diff(&tbc, auto_timeout(er, er->cacheex_mode1_delay));
+						time_to_check_cacheex_mode1_delay = add_ms_to_timeb_diff(&tbc, lb_auto_timeout(er, er->cacheex_mode1_delay));
 						if(comp_timeb(&t_now, &tbc) >= 0)
 						{
 							add_job(er->client, ACTION_CACHEEX1_DELAY, (void *)er, 0);
@@ -297,7 +286,7 @@ static void *cw_process(void)
 				{
 					//fbtimeout
 					tbc = er->tps;
-					time_to_check_fbtimeout = add_ms_to_timeb_diff(&tbc, auto_timeout(er, get_fallbacktimeout(er->caid)));
+					time_to_check_fbtimeout = add_ms_to_timeb_diff(&tbc, lb_auto_timeout(er, get_fallbacktimeout(er->caid)));
 					if(comp_timeb(&t_now, &tbc) >= 0)
 					{
 						add_job(er->client, ACTION_FALLBACK_TIMEOUT, (void *)er, 0);
@@ -313,7 +302,7 @@ static void *cw_process(void)
 			if(!er->readers_timeout_check)  //ecm stays in cache at least ctimeout+2seconds!
 			{
 				tbc = er->tps;
-				time_to_check_ctimeout = add_ms_to_timeb_diff(&tbc, auto_timeout(er, cfg.ctimeout));
+				time_to_check_ctimeout = add_ms_to_timeb_diff(&tbc, lb_auto_timeout(er, cfg.ctimeout));
 				if(comp_timeb(&t_now, &tbc) >= 0)
 				{
 					add_job(er->client, ACTION_CLIENT_TIMEOUT, (void *)er, 0);

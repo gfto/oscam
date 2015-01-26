@@ -1964,7 +1964,7 @@ void lb_mark_last_reader(ECM_REQUEST *er)
 /**
  * Automatic timeout feature depending on statistik values
  **/
-uint32_t lb_auto_timeout(ECM_REQUEST *er, uint32_t ctimeout)
+static uint32_t __lb_auto_timeout(ECM_REQUEST *er, uint32_t ctimeout)
 {
 	STAT_QUERY q;
 	READER_STAT *s = NULL;
@@ -2006,6 +2006,12 @@ uint32_t lb_auto_timeout(ECM_REQUEST *er, uint32_t ctimeout)
 	return t;
 }
 
+uint32_t lb_auto_timeout(ECM_REQUEST *er, uint32_t timeout)
+{
+	if(cfg.lb_auto_timeout)
+		return __lb_auto_timeout(er, timeout);
+	return timeout;
+}
 
 void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer *ea, int8_t rc)
 {

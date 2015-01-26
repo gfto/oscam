@@ -10,7 +10,6 @@ void clear_all_stat(void);
 READER_STAT **get_sorted_stat_copy(struct s_reader *rdr, int32_t reverse, int32_t *size);
 void update_ecmlen_from_stat(struct s_reader *rdr);
 int32_t lb_valid_btun(ECM_REQUEST *er, uint16_t caidto);
-uint32_t lb_auto_timeout(ECM_REQUEST *er, uint32_t ctimeout);
 uint16_t lb_get_betatunnel_caid_to(uint16_t caid);
 
 #ifdef WITH_LB
@@ -21,6 +20,7 @@ void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer
 void stat_get_best_reader(ECM_REQUEST *er);
 void lb_mark_last_reader(ECM_REQUEST *er);
 void check_lb_auto_betatunnel_mode(ECM_REQUEST *er);
+uint32_t lb_auto_timeout(ECM_REQUEST *er, uint32_t ctimeout);
 #else
 static inline void init_stat(void) { }
 static inline void stat_finish(void) { }
@@ -29,6 +29,7 @@ static inline void send_reader_stat(struct s_reader *UNUSED(rdr), ECM_REQUEST *U
 static inline void stat_get_best_reader(ECM_REQUEST *UNUSED(er)) { }
 static inline void lb_mark_last_reader(ECM_REQUEST *UNUSED(er)) { }
 static inline void check_lb_auto_betatunnel_mode(ECM_REQUEST *UNUSED(er)) { }
+static inline uint32_t lb_auto_timeout(ECM_REQUEST *UNUSED(er), uint32_t ctimeout) { return ctimeout; }
 #endif
 
 #endif
