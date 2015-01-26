@@ -25,6 +25,9 @@
 
 #define DEFAULT_LOCK_TIMEOUT 1000000
 
+extern CS_MUTEX_LOCK ecmcache_lock;
+extern struct ecm_request_t *ecmcwcache;
+
 static int32_t stat_load_save;
 static struct timeb last_housekeeping;
 
@@ -2028,6 +2031,100 @@ bool lb_check_auto_betatunnel(ECM_REQUEST *er, struct s_reader *rdr)
 		er->caid = save_caid;
 	}
 	return match;
+}
+
+/**
+ * search for same ecm hash with same readers
+ **/
+static struct ecm_request_t *check_same_ecm(ECM_REQUEST *er)
+{
+	struct ecm_request_t *ecm;
+	time_t timeout;
+	struct s_ecm_answer *ea_ecm = NULL, *ea_er = NULL;
+	uint8_t rdrs = 0;
+
+
+	cs_readlock(&ecmcache_lock);
+	for(ecm = ecmcwcache; ecm; ecm = ecm->next)
+	{
+		timeout = time(NULL) - ((cfg.ctimeout + 500) / 1000);
+
+		if(ecm->tps.time <= timeout)
+			{ break; }
+
+		if(ecm == er) { continue; }
+
+		if(er->caid != ecm->caid || memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
+			{ continue; }
+
+		if(!er->readers || !ecm->readers || er->readers != ecm->readers)
+			{ continue; }
+
+		ea_ecm = ecm->matching_rdr;
+		ea_er = er->matching_rdr;
+		rdrs = er->readers;
+
+		while(rdrs && ea_ecm && ea_er)
+		{
+			if(ea_ecm->reader != ea_er->reader)
+				{ break; }
+			ea_ecm = ea_ecm->next;
+			ea_er = ea_er->next;
+			rdrs--;
+		}
+
+		if(!rdrs)
+		{
+			cs_readunlock(&ecmcache_lock);
+			return ecm;
+		}
+	}
+	cs_readunlock(&ecmcache_lock);
+	return NULL; // nothing found so return null
+}
+
+static void use_same_readers(ECM_REQUEST *er_new, ECM_REQUEST *er_cache)
+{
+	struct s_ecm_answer *ea_new = er_new->matching_rdr;
+	struct s_ecm_answer *ea_cache = er_cache->matching_rdr;
+	uint8_t rdrs = er_new->readers;
+	while(rdrs)
+	{
+		ea_new->status &= ~(READER_ACTIVE | READER_FALLBACK);
+		if((ea_cache->status & READER_ACTIVE))
+		{
+			if(!(ea_cache->status & READER_FALLBACK))
+			{
+				ea_new->status |= READER_ACTIVE;
+			}
+			else
+			{
+				ea_new->status |= (READER_ACTIVE | READER_FALLBACK);
+			}
+		}
+
+		ea_new = ea_new->next;
+		ea_cache = ea_cache->next;
+		rdrs--;
+	}
+}
+
+void lb_set_best_reader(ECM_REQUEST *er)
+{
+	if (!cfg.lb_mode)
+		return;
+	// cache2 is handled by readers queue, so, if a same ecm hash with same readers, use these same readers to get cache2 from them! Not ask other readers!
+	struct ecm_request_t *ecm_eq = NULL;
+	ecm_eq = check_same_ecm(er);
+	if(ecm_eq)
+	{
+		// set all readers used by ecm_eq, so we get cache2 from them!
+		use_same_readers(er, ecm_eq);
+		cs_log_dbg(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [get_cw] found same ecm with same readers from client %s, use them!", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid, (check_client(ecm_eq->client) ? ecm_eq->client->account->usr : "-"));
+	}else{
+		// FILTER readers by loadbalancing
+		stat_get_best_reader(er);
+	}
 }
 
 void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer *ea, int8_t rc)
