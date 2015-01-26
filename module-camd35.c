@@ -1375,17 +1375,13 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 		}
 		else
 		{
-#ifdef WITH_LB
-			if(cfg.lb_mode)
+			if(config_enabled(WITH_LB) && cfg.lb_mode)
 			{
 				rc_invalid = 1;
 			}else{
-#endif
 				client->stopped = 1; // server says invalid
 				rdr->card_status = CARD_FAILURE;
-#ifdef WITH_LB
 			}
-#endif
 		}
 
 		cs_log("%s CMD08 (%02X - %d) stop request by server (%s)", rdr->label, buf[21], buf[21], typtext[client->stopped]);
