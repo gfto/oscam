@@ -149,7 +149,7 @@ void check_caidtab_fn(const char *token, char *value, void *setting, FILE *f)
 }
 
 
-static void caidvaluetab_fn(const char *token, char *value, void *setting, FILE *f)
+void caidvaluetab_fn(const char *token, char *value, void *setting, FILE *f)
 {
 	CAIDVALUETAB *caid_value_table = setting;
 	int limit = streq(token, "lb_retrylimits") ? 50 : 1;

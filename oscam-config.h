@@ -40,6 +40,7 @@ void    init_len4caid(void);
 
 /* Shared parser functions */
 void check_caidtab_fn(const char *token, char *value, void *setting, FILE *f);
+void caidvaluetab_fn(const char *token, char *value, void *setting, FILE *f);
 void cacheex_valuetab_fn(const char *token, char *value, void *setting, FILE *f);
 void cacheex_hitvaluetab_fn(const char *token, char *value, void *setting, FILE *f);
 void class_fn(const char *token, char *value, void *setting, FILE *f);
