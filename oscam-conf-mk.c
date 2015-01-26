@@ -717,7 +717,6 @@ char *mk_t_caidvaluetab(CAIDVALUETAB *tab)
 	return buf;
 }
 
-#ifdef CS_CACHEEX
 char *mk_t_cacheex_valuetab(CECSPVALUETAB *tab)
 {
 	if(!tab->n) { return ""; }
@@ -830,7 +829,6 @@ char *mk_t_cacheex_hitvaluetab(CECSPVALUETAB *tab)
 	*ptr = 0;
 	return buf;
 }
-#endif
 
 /*
  * returns string of comma separated values

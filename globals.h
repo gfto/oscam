@@ -1175,7 +1175,6 @@ struct ecmrl
 };
 #define MAXECMRATELIMIT 20
 
-#ifdef CS_CACHEEX
 typedef struct ce_csp_tab
 {
 	uint16_t    n;
@@ -1214,7 +1213,6 @@ typedef struct ce_csp_t
 	uint8_t         drop_csp;
 	uint8_t         allow_filter;
 } CECSP;
-#endif
 
 struct s_emmlen_range
 {

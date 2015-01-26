@@ -103,7 +103,6 @@ void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab, int32_t minvalue)
 	memcpy(tab, &newtab, sizeof(CAIDVALUETAB));
 }
 
-#ifdef CS_CACHEEX
 void chk_cacheex_valuetab(char *lbrlt, CECSPVALUETAB *tab)
 {
 	//[caid][&mask][@provid][$servid][:awtime][:]dwtime
@@ -270,7 +269,6 @@ void chk_cacheex_hitvaluetab(char *lbrlt, CECSPVALUETAB *tab)
 	}
 	memcpy(tab, &newtab, sizeof(CECSPVALUETAB));
 }
-#endif
 
 void chk_tuntab(char *tunasc, TUNTAB *ttab)
 {
@@ -510,14 +508,12 @@ void clear_caidtab(struct s_caidtab *ctab)
 	for(i = 1; i < CS_MAXCAIDTAB; ctab->mask[i++] = 0xffff) { ; }
 }
 
-#ifdef CS_CACHEEX
 /* Clears given csptab */
 void clear_cacheextab(CECSPVALUETAB *ctab)
 {
 	memset(ctab, -1, sizeof(CECSPVALUETAB));
 	ctab->n = 0;
 }
-#endif
 
 /* Clears given tuntab */
 void clear_tuntab(struct s_tuntab *ttab)
