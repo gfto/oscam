@@ -97,6 +97,8 @@ else
 DEFAULT_LIBUSB_LIB = -lusb-1.0
 endif
 ifeq ($(uname_S),Darwin)
+DEFAULT_LIBUSB_FLAGS = -I/opt/local/include
+DEFAULT_LIBUSB_LIB = -L/opt/local/lib -lusb-1.0
 DEFAULT_PCSC_FLAGS = -isysroot $(OSX_SDK)
 DEFAULT_PCSC_LIB = -isysroot $(OSX_SDK) -framework IOKit -framework CoreFoundation -framework PCSC
 else
