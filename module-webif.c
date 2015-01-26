@@ -1398,11 +1398,8 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 			clear_all_rdr_stats();
 		}
 	}
-#ifdef WITH_LB
-				tpl_addVar(vars, TPLADD, "READERACTIONCOLS", "6");
-#else
-				tpl_addVar(vars, TPLADD, "READERACTIONCOLS", "5");
-#endif
+
+	tpl_addVar(vars, TPLADD, "READERACTIONCOLS", config_enabled(WITH_LB) ? "6" : "5");
 
 	if(strcmp(getParam(params, "action"), "resetserverstats") == 0)
 	{
@@ -4260,9 +4257,8 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	if(!apicall)
 	{
 		setActiveMenu(vars, MNU_STATUS);
-#ifdef WITH_LB
-		tpl_addVar(vars, TPLADD, "STATUSCOL14HEAD","LB Value/");
-#endif
+		if (config_enabled(WITH_LB))
+			tpl_addVar(vars, TPLADD, "STATUSCOL14HEAD","LB Value/");
 	}
 	if(strcmp(getParam(params, "action"), "kill") == 0)
 	{
@@ -7539,9 +7535,9 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 
 			}
 
-#ifdef WITH_LB
-			tpl_addVar(vars, TPLADD, "LBISDEFINED", "1");
-#endif
+			if (config_enabled(WITH_LB))
+				tpl_addVar(vars, TPLADD, "LBISDEFINED", "1");
+
 			// language code in helplink
 			tpl_addVar(vars, TPLADD, "LANGUAGE", cfg.http_help_lang);
 			tpl_addVar(vars, TPLADD, "RUNTIME", sec2timeformat(vars, (now - first_client->login)));
