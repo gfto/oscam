@@ -305,7 +305,7 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 	(void)log; // Prevent warning when WEBIF, MODULE_MONITOR and CS_ANTICASC are disabled
 
 	// anticascading messages go to their own log
-	if (!anticasc_logging(txt + log->header_len))
+	if (!anticasc_logging(txt + 8))
 	{
 		if(cfg.logtosyslog)
 			{ syslog(LOG_INFO, "%s", txt + 29); }
