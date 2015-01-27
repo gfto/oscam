@@ -1174,7 +1174,7 @@ static inline void camd35_cacheex_module_init(struct s_module *UNUSED(ph)) { }
 /*
  *	client functions
  */
-void send_keepalive(struct s_client *cl)
+static void send_keepalive(struct s_client *cl)
 {
 
 	if(cl->reader)
@@ -1197,7 +1197,7 @@ void send_keepalive(struct s_client *cl)
 }
 
 
-void send_keepalive_answer(struct s_client *cl)
+static void send_keepalive_answer(struct s_client *cl)
 {
 	if(check_client(cl) && cl->account)
 	{
@@ -1211,7 +1211,7 @@ void send_keepalive_answer(struct s_client *cl)
 }
 
 
-int32_t camd35_client_init(struct s_client *cl)
+static int32_t camd35_client_init(struct s_client *cl)
 {
 
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
@@ -1232,7 +1232,7 @@ int32_t camd35_client_init(struct s_client *cl)
 }
 
 
-void camd35_idle(void)
+static void camd35_idle(void)
 {
 	struct s_client *cl = cur_client();
 
