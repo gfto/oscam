@@ -1128,6 +1128,32 @@ bool camd35_cacheex_server(struct s_client *client, uint8_t *mbuf)
 	return 1; // Processed by cacheex
 }
 
+bool camd35_cacheex_recv_chk(struct s_client *client, uint8_t *buf)
+{
+	struct s_reader *rdr = client->reader;
+	switch(buf[0])
+	{
+	case 0x3c:    // Cache-push filter request
+		if(rdr->cacheex.mode==3){
+			camd35_cache_push_filter(client, buf, 3);
+		}
+		break;
+	case 0x3d:    // Cache-push id request
+		camd35_cache_push_receive_remote_id(client, buf); //client send request id with its nodeid, so we save it!
+		camd35_cache_push_send_own_id(client, buf);
+		break;
+	case 0x3e:     // Cache-push id answer
+		camd35_cache_push_receive_remote_id(client, buf);
+		break;
+	case 0x3f:    //cache-push
+		camd35_cache_push_in(client, buf);
+		break;
+	default:
+		return 0; // Not processed by cacheex
+	}
+	return 1; // Processed by cacheex
+}
+
 void camd35_cacheex_module_init(struct s_module *ph)
 {
 	ph->c_cache_push = camd35_cache_push_out;
@@ -1140,6 +1166,7 @@ static inline void camd35_cacheex_recv_ce1_cwc_info(struct s_client *UNUSED(cl),
 static inline void camd35_cache_push_request_remote_id(struct s_client *UNUSED(cl)) { }
 static inline void camd35_cache_send_push_filter(struct s_client *UNUSED(cl), uint8_t UNUSED(mode)) { }
 static inline bool camd35_cacheex_server(struct s_client *UNUSED(client), uint8_t *UNUSED(mbuf)) { return 0; }
+static inline bool camd35_cacheex_recv_chk(struct s_client *UNUSED(client), uint8_t *UNUSED(buf)) { return 0; }
 static inline void camd35_cacheex_module_init(struct s_module *UNUSED(ph)) { }
 #endif
 
@@ -1411,31 +1438,8 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 		cs_log("%s CMD08 (%02X - %d) stop request by server (%s)", rdr->label, buf[21], buf[21], typtext[client->stopped]);
 	}
 
-#ifdef CS_CACHEEX
-	if(buf[0] == 0x3c)    // Cache-push filter request
-	{
-		if(rdr->cacheex.mode==3){
-			camd35_cache_push_filter(client, buf, 3);
-		}
-		return -1;
-	}
-	if(buf[0] == 0x3d)    // Cache-push id request
-	{
-		camd35_cache_push_receive_remote_id(client, buf); //client send request id with its nodeid, so we save it!
-		camd35_cache_push_send_own_id(client, buf);
-		return -1;
-	}
-	if(buf[0] == 0x3e)     // Cache-push id answer
-	{
-		camd35_cache_push_receive_remote_id(client, buf);
-		return -1;
-	}
-	if(buf[0] == 0x3f)    //cache-push
-	{
-		camd35_cache_push_in(client, buf);
-		return -1;
-	}
-#endif
+	if (camd35_cacheex_recv_chk(client, buf))
+		{ return -1; }
 
 	if(buf[0] == 55)  //keepalive answer
 		{ return -1; }
