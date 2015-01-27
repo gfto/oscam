@@ -36,13 +36,11 @@ static void *chkcache_process(void)
 
 	time_t timeout;
 	struct ecm_request_t *er, *ecm;
-#ifdef CS_CACHEEX
 	uint8_t add_hitcache_er;
 	struct s_reader *cl_rdr;
 	struct s_reader *rdr;
 	struct s_ecm_answer *ea;
 	struct s_client *cex_src=NULL;
-#endif
 	struct s_write_from_cache *wfc=NULL;
 
 	while(1)
@@ -61,8 +59,6 @@ static void *chkcache_process(void)
 			ecm = check_cache(er, er->client);
 			if(ecm)     //found in cache
 			{
-
-#ifdef CS_CACHEEX
 				//check for add_hitcache
 				if(ecm->cacheex_src)   //cw from cacheex
 				{
@@ -103,11 +99,9 @@ static void *chkcache_process(void)
 					}
 				}
 				//END check for add_hitcache
-#endif
 
 				if(check_client(er->client))
 				{
-
 					wfc=NULL;
 					if(!cs_malloc(&wfc, sizeof(struct s_write_from_cache)))
 					{
