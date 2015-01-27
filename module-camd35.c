@@ -523,7 +523,7 @@ static void camd35_process_emm(uchar *buf, int buflen, int emmlen)
 	do_emm(cur_client(), &epg);
 }
 
-static int32_t tcp_connect(struct s_client *cl)
+static int32_t camd35_tcp_connect(struct s_client *cl)
 {
 	if(cl->is_udp)    // check for udp client
 	{
@@ -574,7 +574,7 @@ uint8_t camd35_node_id[8];
 /**
  * send own id
  */
-void camd35_cache_push_send_own_id(struct s_client *cl, uint8_t *mbuf)
+void camd35_cacheex_push_send_own_id(struct s_client *cl, uint8_t *mbuf)
 {
 	uint8_t rbuf[32]; //minimal size
 
@@ -594,7 +594,7 @@ void camd35_cache_push_send_own_id(struct s_client *cl, uint8_t *mbuf)
 /**
  * request remote id
  */
-void camd35_cache_push_request_remote_id(struct s_client *cl)
+void camd35_cacheex_push_request_remote_id(struct s_client *cl)
 {
 	uint8_t rbuf[32];//minimal size
 
@@ -610,7 +610,7 @@ void camd35_cache_push_request_remote_id(struct s_client *cl)
 /**
  * send push filter
  */
-void camd35_cache_send_push_filter(struct s_client *cl, uint8_t mode)
+void camd35_cacheex_send_push_filter(struct s_client *cl, uint8_t mode)
 {	
 	struct s_reader *rdr = cl->reader;
 	int i = 20, j;
@@ -681,7 +681,7 @@ void camd35_cache_send_push_filter(struct s_client *cl, uint8_t mode)
 /**
  * store received push filter
  */
-void camd35_cache_push_filter(struct s_client *cl, uint8_t *buf, uint8_t mode)
+void camd35_cacheex_push_filter(struct s_client *cl, uint8_t *buf, uint8_t mode)
 {
 	struct s_reader *rdr = cl->reader;
 	int i = 20, j;
@@ -762,7 +762,7 @@ static void camd35_server_client_init(struct s_client *cl)
 /**
  * store received remote id
  */
-void camd35_cache_push_receive_remote_id(struct s_client *cl, uint8_t *buf)
+void camd35_cacheex_push_receive_remote_id(struct s_client *cl, uint8_t *buf)
 {
 
 	memcpy(cl->ncd_skey, buf + 20, 8);
@@ -771,7 +771,7 @@ void camd35_cache_push_receive_remote_id(struct s_client *cl, uint8_t *buf)
 }
 
 
-static int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
+static int32_t camd35_cacheex_push_chk(struct s_client *cl, ECM_REQUEST *er)
 {
 	if(ll_count(er->csp_lastnodes) >= cacheex_maxhop(cl))    //check max 10 nodes to push:
 	{
@@ -827,7 +827,7 @@ static int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 	return 1;
 }
 
-static int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
+static int32_t camd35_cacheex_push_out(struct s_client *cl, struct ecm_request_t *er)
 {
 	int8_t rc = (er->rc < E_NOTFOUND) ? E_FOUND : er->rc;
 	if(rc != E_FOUND && rc != E_UNHANDLED) { return -1; }  //Maybe later we could support other rcs
@@ -837,7 +837,7 @@ static int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *
 
 	if(cl->reader)
 	{
-		if(!tcp_connect(cl))
+		if(!camd35_tcp_connect(cl))
 		{
 			cs_log_dbg(D_CACHEEX, "cacheex: not connected %s -> no push", username(cl));
 			return (-1);
@@ -964,7 +964,7 @@ void camd35_cacheex_recv_ce1_cwc_info(struct s_client *cl, uchar *buf, int32_t i
 
 }
 
-void camd35_cache_push_in(struct s_client *cl, uchar *buf)
+void camd35_cacheex_push_in(struct s_client *cl, uchar *buf)
 {
 	int8_t rc = buf[3];
 	if(rc != E_FOUND && rc != E_UNHANDLED)  //Maybe later we could support other rcs
@@ -1105,22 +1105,22 @@ bool camd35_cacheex_server(struct s_client *client, uint8_t *mbuf)
 	{
 	case 0x3c:  // Cache-push filter request
 		if(client->account && client->account->cacheex.mode==2){
-			camd35_cache_push_filter(client, mbuf, 2);
+			camd35_cacheex_push_filter(client, mbuf, 2);
 		}
 		break;
 	case 0x3d:  // Cache-push id request
-		camd35_cache_push_receive_remote_id(client, mbuf); //reader send request id with its nodeid, so we save it!
-		camd35_cache_push_send_own_id(client, mbuf);
+		camd35_cacheex_push_receive_remote_id(client, mbuf); //reader send request id with its nodeid, so we save it!
+		camd35_cacheex_push_send_own_id(client, mbuf);
 		if(client->cacheex_needfilter && client->account && client->account->cacheex.mode==3){
-			camd35_cache_send_push_filter(client, 3);
+			camd35_cacheex_send_push_filter(client, 3);
 			client->cacheex_needfilter = 0;
 		}
 		break;
 	case 0x3e:  // Cache-push id answer
-		camd35_cache_push_receive_remote_id(client, mbuf);
+		camd35_cacheex_push_receive_remote_id(client, mbuf);
 		break;
 	case 0x3f:  // Cache-push
-		camd35_cache_push_in(client, mbuf);
+		camd35_cacheex_push_in(client, mbuf);
 		break;
 	default:
 		return 0; // Not processed by cacheex
@@ -1135,18 +1135,18 @@ bool camd35_cacheex_recv_chk(struct s_client *client, uint8_t *buf)
 	{
 	case 0x3c:    // Cache-push filter request
 		if(rdr->cacheex.mode==3){
-			camd35_cache_push_filter(client, buf, 3);
+			camd35_cacheex_push_filter(client, buf, 3);
 		}
 		break;
 	case 0x3d:    // Cache-push id request
-		camd35_cache_push_receive_remote_id(client, buf); //client send request id with its nodeid, so we save it!
-		camd35_cache_push_send_own_id(client, buf);
+		camd35_cacheex_push_receive_remote_id(client, buf); //client send request id with its nodeid, so we save it!
+		camd35_cacheex_push_send_own_id(client, buf);
 		break;
 	case 0x3e:     // Cache-push id answer
-		camd35_cache_push_receive_remote_id(client, buf);
+		camd35_cacheex_push_receive_remote_id(client, buf);
 		break;
 	case 0x3f:    //cache-push
-		camd35_cache_push_in(client, buf);
+		camd35_cacheex_push_in(client, buf);
 		break;
 	default:
 		return 0; // Not processed by cacheex
@@ -1156,15 +1156,15 @@ bool camd35_cacheex_recv_chk(struct s_client *client, uint8_t *buf)
 
 void camd35_cacheex_module_init(struct s_module *ph)
 {
-	ph->c_cache_push = camd35_cache_push_out;
-	ph->c_cache_push_chk = camd35_cache_push_chk;
+	ph->c_cache_push = camd35_cacheex_push_out;
+	ph->c_cache_push_chk = camd35_cacheex_push_chk;
 	ph->s_init = camd35_server_client_init;
 }
 
 #else
 static inline void camd35_cacheex_recv_ce1_cwc_info(struct s_client *UNUSED(cl), uchar *UNUSED(buf), int32_t UNUSED(idx)) { }
-static inline void camd35_cache_push_request_remote_id(struct s_client *UNUSED(cl)) { }
-static inline void camd35_cache_send_push_filter(struct s_client *UNUSED(cl), uint8_t UNUSED(mode)) { }
+static inline void camd35_cacheex_push_request_remote_id(struct s_client *UNUSED(cl)) { }
+static inline void camd35_cacheex_send_push_filter(struct s_client *UNUSED(cl), uint8_t UNUSED(mode)) { }
 static inline bool camd35_cacheex_server(struct s_client *UNUSED(client), uint8_t *UNUSED(mbuf)) { return 0; }
 static inline bool camd35_cacheex_recv_chk(struct s_client *UNUSED(client), uint8_t *UNUSED(buf)) { return 0; }
 static inline void camd35_cacheex_module_init(struct s_module *UNUSED(ph)) { }
@@ -1174,16 +1174,16 @@ static inline void camd35_cacheex_module_init(struct s_module *UNUSED(ph)) { }
 /*
  *	client functions
  */
-static void send_keepalive(struct s_client *cl)
+static void camd35_send_keepalive(struct s_client *cl)
 {
 
 	if(cl->reader)
 	{
-		if(tcp_connect(cl))
+		if(camd35_tcp_connect(cl))
 		{
 			if(cacheex_get_rdr_mode(cl->reader) > 1)
 			{
-				camd35_cache_push_request_remote_id(cl);
+				camd35_cacheex_push_request_remote_id(cl);
 				return;
 			}
 			uint8_t rbuf[32];//minimal size
@@ -1197,7 +1197,7 @@ static void send_keepalive(struct s_client *cl)
 }
 
 
-static void send_keepalive_answer(struct s_client *cl)
+static void camd35_send_keepalive_answer(struct s_client *cl)
 {
 	if(check_client(cl) && cl->account)
 	{
@@ -1223,10 +1223,10 @@ static int32_t camd35_client_init(struct s_client *cl)
 	cs_log("%s proxy %s:%d", cl->reader->ph.desc, cl->reader->device, cl->reader->r_port);
 
 	if(cl->reader->keepalive)
-		send_keepalive(cl);
+		camd35_send_keepalive(cl);
 
 	if(cacheex_get_rdr_mode(cl->reader) == 2)
-		camd35_cache_send_push_filter(cl, 2);
+		camd35_cacheex_send_push_filter(cl, 2);
 
 	return(0);
 }
@@ -1241,7 +1241,7 @@ static void camd35_idle(void)
 
 	if(cl->reader->keepalive) 
 	{
-		send_keepalive(cl);
+		camd35_send_keepalive(cl);
 	}
 	else if(cl->reader->tcp_ito>0) // only check if user added an inactivity timeout
 	{
@@ -1293,7 +1293,7 @@ static void *camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 		break;
 	case 55:
 		//keepalive msg
-		send_keepalive_answer(client);
+		camd35_send_keepalive_answer(client);
 		break;
 	default:
 		if (!camd35_cacheex_server(client, mbuf))
@@ -1326,7 +1326,7 @@ static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *
 	client->lastpid = er->pid;
 
 
-	if(!tcp_connect(client)) { return -1; }
+	if(!camd35_tcp_connect(client)) { return -1; }
 
 	client->reader->card_status = CARD_INSERTED; //for udp
 
@@ -1349,7 +1349,7 @@ static int32_t camd35_send_emm(EMM_PACKET *ep)
 	struct s_client *cl = cur_client();
 
 
-	if(!tcp_connect(cl)) { return 0; }
+	if(!camd35_tcp_connect(cl)) { return 0; }
 	cl->reader->card_status = CARD_INSERTED; //for udp
 	
 	memset(buf, 0, 20);
