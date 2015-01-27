@@ -771,7 +771,7 @@ void camd35_cache_push_receive_remote_id(struct s_client *cl, uint8_t *buf)
 }
 
 
-int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
+static int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 {
 	if(ll_count(er->csp_lastnodes) >= cacheex_maxhop(cl))    //check max 10 nodes to push:
 	{
@@ -826,7 +826,8 @@ int32_t camd35_cache_push_chk(struct s_client *cl, ECM_REQUEST *er)
 
 	return 1;
 }
-int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
+
+static int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 {
 	int8_t rc = (er->rc < E_NOTFOUND) ? E_FOUND : er->rc;
 	if(rc != E_FOUND && rc != E_UNHANDLED) { return -1; }  //Maybe later we could support other rcs
@@ -1095,9 +1096,17 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 	cacheex_add_to_cache(cl, er);
 }
 
+void camd35_cacheex_module_init(struct s_module *ph)
+{
+	ph->c_cache_push = camd35_cache_push_out;
+	ph->c_cache_push_chk = camd35_cache_push_chk;
+	ph->s_init = camd35_server_client_init;
+}
+
 #else
 static inline void camd35_cache_push_request_remote_id(struct s_client *UNUSED(cl)) { }
 static inline void camd35_cache_send_push_filter(struct s_client *UNUSED(cl), uint8_t UNUSED(mode)) { }
+static inline void camd35_cacheex_module_init(struct s_module *UNUSED(ph)) { }
 #endif
 
 
@@ -1464,11 +1473,7 @@ void module_camd35(struct s_module *ph)
 	ph->c_send_ecm = camd35_send_ecm;
 	ph->c_send_emm = camd35_send_emm;
 	ph->c_idle = camd35_idle;
-#ifdef CS_CACHEEX
-	ph->c_cache_push = camd35_cache_push_out;
-	ph->c_cache_push_chk = camd35_cache_push_chk;
-	ph->s_init = camd35_server_client_init;	
-#endif
+	camd35_cacheex_module_init(ph);
 	ph->num = R_CAMD35;
 }
 #endif
@@ -1490,12 +1495,9 @@ void module_camd35_tcp(struct s_module *ph)
 	ph->c_send_ecm = camd35_send_ecm;
 	ph->c_send_emm = camd35_send_emm;
 	ph->c_idle = camd35_idle;
-#ifdef CS_CACHEEX
-	ph->c_cache_push = camd35_cache_push_out;
-	ph->c_cache_push_chk = camd35_cache_push_chk;
-	ph->s_init = camd35_server_client_init;
-#endif
+	camd35_cacheex_module_init(ph);
 	ph->num = R_CS378X;
 }
 #endif
+
 #endif
