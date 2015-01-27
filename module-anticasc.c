@@ -19,13 +19,11 @@ static uchar  ac_ecmd5[CS_ECMSTORESIZE];
 
 bool anticasc_logging(char *txt)
 {
-	const char acasc_ident[] = "acasc: ";
 	if (!ac_log)
 		return false;
-	char *acasc_found = strstr(txt, acasc_ident);
-	if (acasc_found)
+	if (strstr(txt, "acasc: "))
 	{
-		fprintf(ac_log, "%s\n", acasc_found + strlen(acasc_ident) + 1);
+		fprintf(ac_log, "%s\n", txt);
 		fflush(ac_log);
 		return true;
 	}
