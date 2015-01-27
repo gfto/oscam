@@ -1099,6 +1099,35 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 	cacheex_add_to_cache(cl, er);
 }
 
+bool camd35_cacheex_server(struct s_client *client, uint8_t *mbuf)
+{
+	switch(mbuf[0])
+	{
+	case 0x3c:  // Cache-push filter request
+		if(client->account && client->account->cacheex.mode==2){
+			camd35_cache_push_filter(client, mbuf, 2);
+		}
+		break;
+	case 0x3d:  // Cache-push id request
+		camd35_cache_push_receive_remote_id(client, mbuf); //reader send request id with its nodeid, so we save it!
+		camd35_cache_push_send_own_id(client, mbuf);
+		if(client->cacheex_needfilter && client->account && client->account->cacheex.mode==3){
+			camd35_cache_send_push_filter(client, 3);
+			client->cacheex_needfilter = 0;
+		}
+		break;
+	case 0x3e:  // Cache-push id answer
+		camd35_cache_push_receive_remote_id(client, mbuf);
+		break;
+	case 0x3f:  // Cache-push
+		camd35_cache_push_in(client, mbuf);
+		break;
+	default:
+		return 0; // Not processed by cacheex
+	}
+	return 1; // Processed by cacheex
+}
+
 void camd35_cacheex_module_init(struct s_module *ph)
 {
 	ph->c_cache_push = camd35_cache_push_out;
@@ -1110,6 +1139,7 @@ void camd35_cacheex_module_init(struct s_module *ph)
 static inline void camd35_cacheex_recv_ce1_cwc_info(struct s_client *UNUSED(cl), uchar *UNUSED(buf), int32_t UNUSED(idx)) { }
 static inline void camd35_cache_push_request_remote_id(struct s_client *UNUSED(cl)) { }
 static inline void camd35_cache_send_push_filter(struct s_client *UNUSED(cl), uint8_t UNUSED(mode)) { }
+static inline bool camd35_cacheex_server(struct s_client *UNUSED(client), uint8_t *UNUSED(mbuf)) { return 0; }
 static inline void camd35_cacheex_module_init(struct s_module *UNUSED(ph)) { }
 #endif
 
@@ -1206,7 +1236,6 @@ void camd35_idle(void)
 	}
 }
 
-
 static void *camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 {
 	if(!client || !mbuf)
@@ -1230,28 +1259,6 @@ static void *camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 	case  3:    // ECM (cascading)
 		camd35_process_ecm(mbuf, n);
 		break;
-#ifdef CS_CACHEEX
-	case 0x3c:  // Cache-push filter request
-		if(client->account && client->account->cacheex.mode==2){
-			camd35_cache_push_filter(client, mbuf, 2);
-		}
-		break;	
-	case 0x3d:  // Cache-push id request
-		camd35_cache_push_receive_remote_id(client, mbuf); //reader send request id with its nodeid, so we save it!
-		camd35_cache_push_send_own_id(client, mbuf);
-		
-		if(client->cacheex_needfilter && client->account && client->account->cacheex.mode==3){
-			camd35_cache_send_push_filter(client, 3);
-			client->cacheex_needfilter = 0;
-		}
-		break;
-	case 0x3e:  // Cache-push id answer
-		camd35_cache_push_receive_remote_id(client, mbuf);
-		break;
-	case 0x3f:  // Cache-push
-		camd35_cache_push_in(client, mbuf);
-		break;
-#endif
 	case  6:    // EMM
 	case 19:  // EMM
 		if(n > 2)
@@ -1262,7 +1269,8 @@ static void *camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 		send_keepalive_answer(client);
 		break;
 	default:
-		cs_log("unknown [cs357x/cs378x] command from %s! (%d) n=%d", username(client), mbuf[0], n);
+		if (!camd35_cacheex_server(client, mbuf))
+			cs_log("unknown [cs357x/cs378x] command from %s! (%d) n=%d", username(client), mbuf[0], n);
 	}
 
 	return NULL; //to prevent compiler message
