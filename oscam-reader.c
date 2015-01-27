@@ -782,7 +782,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 
 	if(client->reader->l_port)
 		{ SIN_GET_PORT(loc_sa) = htons(client->reader->l_port); }
-	if(bind(client->udp_fd, (struct sockaddr *)&loc_sa, sizeof(loc_sa)) < 0)
+	if(client->is_udp && bind(client->udp_fd, (struct sockaddr *)&loc_sa, sizeof(loc_sa)) < 0)
 	{
 		rdr_log(rdr, "bind failed (errno=%d %s)", errno, strerror(errno));
 		close(client->udp_fd);
