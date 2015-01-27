@@ -309,8 +309,8 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 	{
 		if(cfg.logtosyslog)
 			{ syslog(LOG_INFO, "%s", txt + 29); }
-		strcat(txt, "\n");
 	}
+	strcat(txt, "\n");
 	cs_write_log(txt + 8, do_flush);
 
 #if defined(WEBIF) || defined(MODULE_MONITOR)
