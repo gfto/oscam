@@ -913,8 +913,11 @@ static int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *
 	return res;
 }
 
-void camd35_recv_ce1_cwc_info(struct s_client *cl, uchar *buf, int32_t idx)
+void camd35_cacheex_recv_ce1_cwc_info(struct s_client *cl, uchar *buf, int32_t idx)
 {
+	if(!(buf[0] == 0x01 && buf[18] < 0xFF && buf[18] > 0x00)) // cwc info ; normal camd3 ecms send 0xFF but we need no cycletime of 255 ;)
+		return;
+
 	ECM_REQUEST *er = NULL;
 	int32_t i;
 
@@ -1104,6 +1107,7 @@ void camd35_cacheex_module_init(struct s_module *ph)
 }
 
 #else
+static inline void camd35_cacheex_recv_ce1_cwc_info(struct s_client *UNUSED(cl), uchar *UNUSED(buf), int32_t UNUSED(idx)) { }
 static inline void camd35_cache_push_request_remote_id(struct s_client *UNUSED(cl)) { }
 static inline void camd35_cache_send_push_filter(struct s_client *UNUSED(cl), uint8_t UNUSED(mode)) { }
 static inline void camd35_cacheex_module_init(struct s_module *UNUSED(ph)) { }
@@ -1435,12 +1439,7 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 
 	idx = b2i(2, buf + 16);
 
-#ifdef CS_CACHEEX
-	if(buf[0] == 0x01 && buf[18] < 0xFF && buf[18] > 0x00) // cwc info ; normal camd3 ecms send 0xFF but we need no cycletime of 255 ;)
-	{
-		camd35_recv_ce1_cwc_info(client, buf, idx);
-	}
-#endif
+	camd35_cacheex_recv_ce1_cwc_info(client, buf, idx);
 
 	*rc = ((buf[0] != 0x44) && (buf[0] != 0x08));
 	if(rc_invalid){
