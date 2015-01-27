@@ -851,7 +851,6 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 	i2b_buf(4, er->prid, buf + 12);
 	//i2b_buf(2, er->idx, buf + 16); // Not relevant...?
 
-#ifdef CS_CACHEEX
 	if(er->cwc_cycletime && er->cwc_next_cw_cycle < 2)
 	{
 		buf[18] = er->cwc_cycletime; // contains cwc stage3 cycletime
@@ -862,7 +861,7 @@ int32_t camd35_cache_push_out(struct s_client *cl, struct ecm_request_t *er)
 			{ cl->account->cwc_info++; }
 		else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
 			{ cl->cwc_info++; }
-#endif
+
 		cs_log_dbg(D_CWC, "CWC (CE) push to %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
 	}
 
@@ -979,7 +978,6 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 
 	er->ecmlen = 0;
 
-#ifdef CS_CACHEEX
 	if(buf[18])
 	{
 		if(buf[18] & (0x01 << 7))
@@ -1002,8 +1000,6 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 			{ cl->cwc_info++; }
 		cs_log_dbg(D_CWC, "CWC (CE) received from %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
 	}
-#endif
-
 
 	uint8_t *ofs = buf + 20;
 
