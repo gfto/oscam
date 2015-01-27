@@ -64,6 +64,7 @@ CWCHECK get_cwcheck(ECM_REQUEST *er);
 uint16_t get_cacheex_mode1_delay(ECM_REQUEST *er);
 void cacheex_push_out(struct s_client *cl, ECM_REQUEST *er);
 bool cacheex_check_queue_length(struct s_client *cl);
+static inline int8_t cacheex_get_rdr_mode(struct s_reader *reader) { return reader->cacheex.mode; }
 
 #else
 static inline void cacheex_init(void) { };
@@ -86,6 +87,7 @@ static inline void cleanup_hitcache(void) { }
 static inline void checkcache_process_thread_start(void) { }
 static inline void cacheex_push_out(struct s_client *UNUSED(cl), ECM_REQUEST *UNUSED(er)) { }
 static inline bool cacheex_check_queue_length(struct s_client *UNUSED(cl)) { return 0; }
+static inline int8_t cacheex_get_rdr_mode(struct s_reader *UNUSED(reader)) { return 0; }
 #endif
 
 #endif

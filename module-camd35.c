@@ -1095,6 +1095,9 @@ void camd35_cache_push_in(struct s_client *cl, uchar *buf)
 	cacheex_add_to_cache(cl, er);
 }
 
+#else
+static inline void camd35_cache_push_request_remote_id(struct s_client *UNUSED(cl)) { }
+static inline void camd35_cache_send_push_filter(struct s_client *UNUSED(cl), uint8_t UNUSED(mode)) { }
 #endif
 
 
@@ -1108,13 +1111,11 @@ void send_keepalive(struct s_client *cl)
 	{
 		if(tcp_connect(cl))
 		{
-#ifdef CS_CACHEEX
-			if(cl->reader->cacheex.mode>1){
+			if(cacheex_get_rdr_mode(cl->reader) > 1)
+			{
 				camd35_cache_push_request_remote_id(cl);
 				return;
 			}
-#endif
-
 			uint8_t rbuf[32];//minimal size
 			memset(rbuf, 0, sizeof(rbuf));
 			rbuf[0] = 55;
@@ -1154,10 +1155,8 @@ int32_t camd35_client_init(struct s_client *cl)
 	if(cl->reader->keepalive)
 		send_keepalive(cl);
 
-#ifdef CS_CACHEEX
-	if(cl->reader->cacheex.mode==2)
+	if(cacheex_get_rdr_mode(cl->reader) == 2)
 		camd35_cache_send_push_filter(cl, 2);
-#endif
 
 	return(0);
 }
