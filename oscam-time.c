@@ -158,11 +158,11 @@ void cs_sleepms(uint32_t msec)
 		signal, place the remaining time left to sleep back into req_ts. */
 		int rval = nanosleep (&req_ts, &req_ts);
 		if (rval == 0)
-			return; // Completed the entire sleep time; all done.
+			break; // Completed the entire sleep time; all done.
 		else if (errno == EINTR)
 			continue; // Interrupted by a signal. Try again.
 		else 
-			return; // Some other error; bail out.
+			break; // Some other error; bail out.
 	}
 	errno = olderrno;
 }
