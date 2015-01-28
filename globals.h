@@ -1776,7 +1776,6 @@ struct s_config
 	char		gbox_my_cpu_api[3];
 	uint8_t		gsms_dis;
 	char            *gbox_tmp_dir;      
-	uint8_t		ccc_reshare;	
 #endif
 #ifdef MODULE_SERIAL
 	char            *ser_device;

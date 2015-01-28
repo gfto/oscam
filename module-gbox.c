@@ -39,7 +39,6 @@
 #define MIN_GBOX_MESSAGE_LENGTH	10 //CMD + pw + pw. TODO: Check if is really min
 #define MIN_ECM_LENGTH		8
 #define HELLO_KEEPALIVE_TIME	120 //send hello to peer every 2 min in case no ecm received
-#define ECM_BROADCAST_PAUSE	3600
 #define STATS_WRITE_TIME	300 //write stats file every 5 min
 
 #define LOCAL_GBOX_MAJOR_VERSION	0x02
@@ -890,7 +889,7 @@ static int8_t is_blocked_peer(uint16_t peer)
 
 static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 {
-	if (!cli || !cli->gbox || !data) { return -1; }
+	if (!cli || !cli->gbox || !data || !cli->reader) { return -1; }
 
 	struct gbox_peer *peer;
 	struct s_client *cl;
@@ -905,6 +904,13 @@ static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 
 	// GBOX_MAX_HOPS not violated
 	if (data[n - 15] + 1 > GBOX_MAXHOPS) { return -1; }
+
+	// ECM must not take more hops than allowed by gbox_reshare
+	if (data[n - 15] + 1 > cli->reader->gbox_reshare) 
+	{
+		cs_log("-> ECM took more hops than allowed from gbox_reshare. Hops stealing detected!");	
+		return -1;
+	}
 
 	//Check for blocked peers
 	uint16_t requesting_peer = data[(((data[19] & 0x0f) << 8) | data[20]) + 21] << 8 | 
@@ -1570,7 +1576,6 @@ static void gbox_local_cards(struct s_client *cli)
 	int32_t i;
 	uint32_t prid = 0;
 	int8_t slot = 0;
-	char card_reshare;
 #ifdef MODULE_CCCAM
 	LL_ITER it, it2;
 	struct cc_card *card = NULL;
@@ -1579,19 +1584,12 @@ static void gbox_local_cards(struct s_client *cli)
 	uint16_t cc_peer_id = 0;
 	struct cc_provider *provider;
 	uint8_t *node1 = NULL;
+	uint8_t min_reshare = 0;
 #endif
 
 	if(!local_gbox.cards)
-	{
-		gbox_free_cardlist(local_gbox.cards);
-	}
+		{ gbox_free_cardlist(local_gbox.cards); }
 	local_gbox.cards = ll_create("local_cards");
-
-	//value >5 not allowed in gbox network
-	if(cli->reader->gbox_reshare > 5)
-		{ card_reshare = 5; }
-	else
-		{ card_reshare = cli->reader->gbox_reshare; }
 
 	struct s_client *cl;
 	for(cl = first_client; cl; cl = cl->next)
@@ -1607,25 +1605,25 @@ static void gbox_local_cards(struct s_client *cli)
 				{
 					prid = cl->reader->prid[i][1] << 16 |
 						   cl->reader->prid[i][2] << 8 | cl->reader->prid[i][3];
-					gbox_add_local_card(local_gbox.id, cl->reader->caid, prid, slot, card_reshare, 0, 1);
+					gbox_add_local_card(local_gbox.id, cl->reader->caid, prid, slot, cli->reader->gbox_reshare, 0, 1);
 				}
 			}
 			else
 			{ 
-				gbox_add_local_card(local_gbox.id, cl->reader->caid, 0, slot, card_reshare, 0, 1); 
+				gbox_add_local_card(local_gbox.id, cl->reader->caid, 0, slot, cli->reader->gbox_reshare, 0, 1); 
 				
 				//Check for Betatunnel on gbox account in oscam.user
 				if (chk_is_betatunnel_caid(cl->reader->caid) == 1 && cli->ttab.n && cl->reader->caid == cli->ttab.bt_caidto[0])
 					{
 						//For now only first entry in tunnel tab. No sense in iteration?
 						//Add betatunnel card to transmitted list
-						gbox_add_local_card(local_gbox.id, cli->ttab.bt_caidfrom[0], 0, slot, card_reshare, 0, 2);
+						gbox_add_local_card(local_gbox.id, cli->ttab.bt_caidfrom[0], 0, slot, cli->reader->gbox_reshare, 0, 2);
 						cs_log_dbg(D_READER, "gbox created betatunnel card for caid: %04X->%04X",cli->ttab.bt_caidfrom[0],cl->reader->caid);
 					}
 			}
 		}   //end local readers
 #ifdef MODULE_CCCAM
-		if(cfg.ccc_reshare && cl->typ == 'p' && cl->reader && cl->reader->typ == R_CCCAM && cl->cc)
+		if((cfg.cc_reshare > -1) && cl->typ == 'p' && cl->reader && cl->reader->typ == R_CCCAM && cl->cc)
 		{
 			cc = cl->cc;
 			it = ll_iter_create(cc->cards);
@@ -1638,17 +1636,19 @@ static void gbox_local_cards(struct s_client *cli)
 				cc_peer_id = ((((checksum >> 24) & 0xFF) ^((checksum >> 8) & 0xFF)) << 8 |
 							  (((checksum >> 16) & 0xFF) ^(checksum & 0xFF)));
 				slot = gbox_next_free_slot(cc_peer_id);
+				min_reshare = cfg.cc_reshare;
+				if (card->reshare < min_reshare)
+					{ min_reshare = card->reshare; }
+				min_reshare++; //strange CCCam logic. 0 means direct peers
 				if((card->caid >> 8 == 0x01) || (card->caid >> 8 == 0x05) ||
 						(card->caid >> 8 == 0x0D))
 				{
 					it2 = ll_iter_create(card->providers);
 					while((provider = ll_iter_next(&it2)))
-					{
-						gbox_add_local_card(cc_peer_id, card->caid, provider->prov, slot, card->reshare, card->hop, 3);
-					}
+						{ gbox_add_local_card(cc_peer_id, card->caid, provider->prov, slot, min_reshare, card->hop, 3); }
 				}
 				else
-					{ gbox_add_local_card(cc_peer_id, card->caid, 0, slot, card->reshare, card->hop, 3); }
+					{ gbox_add_local_card(cc_peer_id, card->caid, 0, slot, min_reshare, card->hop, 3); }
 			}
 		}   //end cccam
 #endif
@@ -1661,13 +1661,13 @@ static void gbox_local_cards(struct s_client *cli)
 			if ((cfg.gbox_proxy_card[i] >> 24) == 0x05)
 			{ 
 				slot = gbox_next_free_slot(local_gbox.id);
-				gbox_add_local_card(local_gbox.id, (cfg.gbox_proxy_card[i] >> 16) & 0xFFF0, cfg.gbox_proxy_card[i] & 0xFFFFF, slot, card_reshare, 0, 4);
+				gbox_add_local_card(local_gbox.id, (cfg.gbox_proxy_card[i] >> 16) & 0xFFF0, cfg.gbox_proxy_card[i] & 0xFFFFF, slot, cli->reader->gbox_reshare, 0, 4);
 				cs_log_dbg(D_READER,"add proxy card:  slot %d %04lX:%06lX",slot, (cfg.gbox_proxy_card[i] >> 16) & 0xFFF0, cfg.gbox_proxy_card[i] & 0xFFFFF);
 			}	
 			else 
 			{	
 				slot = gbox_next_free_slot(local_gbox.id);
-				gbox_add_local_card(local_gbox.id, cfg.gbox_proxy_card[i] >> 16, cfg.gbox_proxy_card[i] & 0xFFFF, slot, card_reshare, 0, 4);
+				gbox_add_local_card(local_gbox.id, cfg.gbox_proxy_card[i] >> 16, cfg.gbox_proxy_card[i] & 0xFFFF, slot, cli->reader->gbox_reshare, 0, 4);
 				cs_log_dbg(D_READER,"add proxy card:  slot %d %04lX:%06lX",slot, cfg.gbox_proxy_card[i] >> 16, cfg.gbox_proxy_card[i] & 0xFFFF);
 			}
 		}
@@ -1764,6 +1764,10 @@ static int32_t gbox_client_init(struct s_client *cli)
 
 	if(!cli->reader->gbox_maxdist)
 		{ cli->reader->gbox_maxdist = DEFAULT_GBOX_MAX_DIST; }
+
+	//value > 5 not allowed in gbox network
+	if(!cli->reader->gbox_reshare || cli->reader->gbox_reshare > 5)
+		{ cli->reader->gbox_reshare = 5; }
 
 	return 0;
 }
