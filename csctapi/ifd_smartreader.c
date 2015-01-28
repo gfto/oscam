@@ -1667,9 +1667,9 @@ static int32_t SR_Close(struct s_reader *reader)
 	struct sr_data *crdr_data = reader->crdr_data;
 	if(!crdr_data) { return OK; }
 	crdr_data->running = 0;
-	crdr_data->closing = 1;
 	if(crdr_data->usb_dev_handle)
 	{
+		crdr_data->closing = 1;
 		if (init_count >= 2)
 		{
 			init_count--;
@@ -1689,7 +1689,9 @@ static int32_t SR_Close(struct s_reader *reader)
 //		libusb_attach_kernel_driver(crdr_data->usb_dev_handle, crdr_data->interface); // attaching kernel drive
 #endif
 		libusb_close(crdr_data->usb_dev_handle);
+		crdr_data->usb_dev_handle = NULL;
 		cs_writeunlock(&sr_lock);
+		crdr_data->closing = 0;
 		NULLFREE(reader->crdr_data); //clearing allocated mem
 		NULLFREE(reader->csystem_data); //clearing allocated mem
 		current_count--; // this reader may be restarted now
@@ -1700,7 +1702,6 @@ static int32_t SR_Close(struct s_reader *reader)
 	}
 
 	rdr_log(reader,"SR: smartreader closed");
-	crdr_data->closing = 0;
 
 	return OK;
 }
