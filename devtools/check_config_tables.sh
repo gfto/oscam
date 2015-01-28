@@ -14,9 +14,16 @@ check_int() {
 	DEF=$1
 	TYPE=$2
 	echo "== Checking $DEF -> Var type must be $TYPE"
-	for VAR in `cat $FILES | grep $DEF | grep OFS | awk '{print $3}' | sed "s|OFS(||;s|)||;s|,||"`
+	for VAR in `cat $FILES | grep $DEF | grep -w OFS | tr -d ' \t' | cut -d\( -f3 | cut -d\) -f1`
 	do
-		grep -w $VAR globals.h | grep -vw $TYPE | grep -w --color $VAR
+		[ $VAR = "cacheex.maxhop" ] && continue
+		awk '{print $1 " " $2 }' globals.h | grep -vE "^[#/]" | sed -e 's|;||g' | grep -w $VAR | while read Z
+		do
+			if [ "$TYPE $VAR" != "$Z" ]
+			then
+				echo "REQ: $TYPE $VAR  FOUND: $Z"
+			fi
+		done
 	done
 }
 
