@@ -2161,7 +2161,7 @@ void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, struct s_ecm_answer
 		{ return; }
 
 	int32_t ecm_time = cfg.ctimeout;
-	if(ea && ea->ecm_time && ea->rc <= E_NOTFOUND)
+	if(ea->ecm_time && ea->rc <= E_NOTFOUND)
 		{ ecm_time = ea->ecm_time; }
 
 	add_stat(rdr, er, ecm_time, rc, ea->rcEx);
