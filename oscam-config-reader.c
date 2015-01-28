@@ -1011,7 +1011,7 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_INT32("resetcycle"          , OFS(resetcycle),              0),
 	DEF_OPT_INT8("disableserverfilter"  , OFS(ncd_disable_server_filt), 0),
 	DEF_OPT_INT8("connectoninit"        , OFS(ncd_connect_on_init),     0),
-	DEF_OPT_INT8("keepalive"			, OFS(keepalive),				0),
+	DEF_OPT_UINT8("keepalive"           , OFS(keepalive),               0),
 	DEF_OPT_INT8("smargopatch"          , OFS(smargopatch),             0),
 	DEF_OPT_INT8("autospeed"            , OFS(autospeed),               1),
 	DEF_OPT_UINT8("sc8in1_dtrrts_patch" , OFS(sc8in1_dtrrts_patch),     0),
@@ -1065,7 +1065,7 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC("blockemm-bylen"       , 0,                            blockemm_bylen_fn),
 #ifdef WITH_LB
 	DEF_OPT_INT32("lb_weight"           , OFS(lb_weight),               100),
-	DEF_OPT_INT32("lb_force_fallback"   , OFS(lb_force_fallback),       0),
+	DEF_OPT_INT8("lb_force_fallback"    , OFS(lb_force_fallback),       0),
 #endif
 	DEF_OPT_FUNC("savenano"             , OFS(s_nano),                  nano_fn),
 	DEF_OPT_FUNC("blocknano"            , OFS(b_nano),                  nano_fn),
