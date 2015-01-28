@@ -13,7 +13,7 @@ fi
 check_int() {
 	DEF=$1
 	TYPE=$2
-	echo "== Checking $DEF -> Var type must be $TYPE"
+	echo "== Checking $DEF -> config parser expects '$TYPE' type but globals.h is THE CORRECT ONE"
 	for VAR in `cat $FILES | grep $DEF | grep -w OFS | tr -d ' \t' | cut -d\( -f3 | cut -d\) -f1`
 	do
 		[ $VAR = "cacheex.maxhop" ] && continue
@@ -21,7 +21,7 @@ check_int() {
 		do
 			if [ "$TYPE $VAR" != "$Z" ]
 			then
-				echo "REQ: $TYPE $VAR  FOUND: $Z"
+				printf "globals.h: %-32s | config: $TYPE $VAR\n" "$Z"
 			fi
 		done
 	done
@@ -32,19 +32,19 @@ check_int DEF_OPT_UINT8  uint8_t
 check_int DEF_OPT_INT32  int32_t
 check_int DEF_OPT_UINT32 uint32_t
 
-echo "== Checking DEF_OPT_STR (strings) -> Var type must be char *"
+echo "== Checking DEF_OPT_STR (strings) -> config parser expects 'char *' type"
 for VAR in `cat $FILES | grep DEF_OPT_STR | grep OFS | awk '{print $3}' | sed "s|OFS(||;s|)||;s|,||"`
 do
 	grep -w $VAR globals.h | grep -vwE "(\*$VAR|#include)" | grep -w --color $VAR
 done
 
-echo "== Checking DEF_OPT_SSTR (static strings) -> Var type must be char[x]"
+echo "== Checking DEF_OPT_SSTR (static strings) -> config parser expects 'char[x]'"
 for VAR in `cat $FILES | grep DEF_OPT_SSTR | grep OFS | awk '{print $3}' | sed "s|OFS(||;s|)||;s|,||"`
 do
 	grep -w $VAR globals.h | grep -vE "(\[|#define)" | grep -w --color $VAR
 done
 
-echo "== Checking DEF_OPT_HEX (arrays) -> Var type must be uint8_t[x]"
+echo "== Checking DEF_OPT_HEX (arrays) -> config parser expects 'uint8_t[x]' type"
 for VAR in `cat $FILES | grep DEF_OPT_HEX | grep OFS | awk '{print $3}' | sed "s|OFS(||;s|)||;s|,||"`
 do
 	grep -w $VAR globals.h | grep -vw uint8_t | grep -w --color $VAR
