@@ -52,8 +52,10 @@ pthread_key_t getssl;
 static CS_MUTEX_LOCK http_lock;
 CS_MUTEX_LOCK *lock_cs;
 
-static uint8_t useLocalD = 1;
-#define PRINTF_LOCAL_D useLocalD ? "%'d" : "%d"
+static uint8_t useLocal = 1;
+#define PRINTF_LOCAL_D useLocal ? "%'d" : "%d"
+#define PRINTF_LOCAL_F useLocal ? "%'.0f" : "%.0f"
+#define PRINTF_LOCAL_MB useLocal ? "%'.2f MB" : "%.2f MB"
 
 static pthread_t httpthread;
 static int32_t sock;
@@ -131,25 +133,25 @@ static void set_status_info_var(struct templatevars *vars, char *varname, int no
 * unused 13 - 15
 */
 static void set_status_info(struct templatevars *vars, struct pstat stats){
-	set_status_info_var(vars, "MEM_CUR_TOTAL",  stats.check_available & (1 << 0), "%'.2f MB" , (double)stats.mem_total/(1024.0*1024.0));
-	set_status_info_var(vars, "MEM_CUR_FREE",   stats.check_available & (1 << 1), "%'.2f MB" , (double)stats.mem_free/(1024.0*1024.0));
-	set_status_info_var(vars, "MEM_CUR_USED",   stats.check_available & (1 << 1), "%'.2f MB" , (double)stats.mem_used/(1024.0*1024.0));
-	set_status_info_var(vars, "MEM_CUR_BUFF",   stats.check_available & (1 << 2), "%'.2f MB" , (double)stats.mem_buff/(1024.0*1024.0));
-	set_status_info_var(vars, "MEM_CUR_CACHED", stats.check_available & (1 << 2), "%'.2f MB" , (double)stats.mem_cached/(1024.0*1024.0));
-	set_status_info_var(vars, "MEM_CUR_FREEM",  stats.check_available & (1 << 2), "%'.2f MB" , (double)stats.mem_freem/(1024.0*1024.0));
-	set_status_info_var(vars, "MEM_CUR_SHARE",  stats.check_available & (1 << 3), "%'.2f MB" , (double)stats.mem_share/(1024.0*1024.0));
-	set_status_info_var(vars, "MEM_CUR_TOTSW",  stats.check_available & (1 << 4), "%'.2f MB" , (double)stats.mem_total_swap/(1024.0*1024.0));
-	set_status_info_var(vars, "MEM_CUR_FRESW",  stats.check_available & (1 << 5), "%'.2f MB" , (double)stats.mem_free_swap/(1024.0*1024.0));
-	set_status_info_var(vars, "MEM_CUR_USESW",  stats.check_available & (1 << 5), "%'.2f MB" , (double)stats.mem_used_swap/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_TOTAL",  stats.check_available & (1 << 0), PRINTF_LOCAL_MB , (double)stats.mem_total/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_FREE",   stats.check_available & (1 << 1), PRINTF_LOCAL_MB , (double)stats.mem_free/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_USED",   stats.check_available & (1 << 1), PRINTF_LOCAL_MB , (double)stats.mem_used/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_BUFF",   stats.check_available & (1 << 2), PRINTF_LOCAL_MB , (double)stats.mem_buff/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_CACHED", stats.check_available & (1 << 2), PRINTF_LOCAL_MB , (double)stats.mem_cached/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_FREEM",  stats.check_available & (1 << 2), PRINTF_LOCAL_MB , (double)stats.mem_freem/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_SHARE",  stats.check_available & (1 << 3), PRINTF_LOCAL_MB , (double)stats.mem_share/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_TOTSW",  stats.check_available & (1 << 4), PRINTF_LOCAL_MB , (double)stats.mem_total_swap/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_FRESW",  stats.check_available & (1 << 5), PRINTF_LOCAL_MB , (double)stats.mem_free_swap/(1024.0*1024.0));
+	set_status_info_var(vars, "MEM_CUR_USESW",  stats.check_available & (1 << 5), PRINTF_LOCAL_MB , (double)stats.mem_used_swap/(1024.0*1024.0));
 
-	set_status_info_var(vars, "SERVER_PROCS",   stats.check_available & (1 << 6), "%'.0f"    , stats.info_procs);
+	set_status_info_var(vars, "SERVER_PROCS",   stats.check_available & (1 << 6), PRINTF_LOCAL_F , stats.info_procs);
 
 	set_status_info_var(vars, "CPU_LOAD_0",     stats.check_available & (1 << 7), "%.2f"     , stats.cpu_avg[0]);
 	set_status_info_var(vars, "CPU_LOAD_1",     stats.check_available & (1 << 7), "%.2f"     , stats.cpu_avg[1]);
 	set_status_info_var(vars, "CPU_LOAD_2",     stats.check_available & (1 << 7), "%.2f"     , stats.cpu_avg[2]);
 
-	set_status_info_var(vars, "OSCAM_VMSIZE",   stats.check_available & (1 << 8), "%'.2f MB" , (double)stats.vsize/(1024.0*1024.0));
-	set_status_info_var(vars, "OSCAM_RSSSIZE",  stats.check_available & (1 << 8), "%'.2f MB" , (double)stats.rss/(1024.0*1024.0));
+	set_status_info_var(vars, "OSCAM_VMSIZE",   stats.check_available & (1 << 8), PRINTF_LOCAL_MB , (double)stats.vsize/(1024.0*1024.0));
+	set_status_info_var(vars, "OSCAM_RSSSIZE",  stats.check_available & (1 << 8), PRINTF_LOCAL_MB , (double)stats.rss/(1024.0*1024.0));
 	set_status_info_var(vars, "OSCAM_CPU_USER", stats.check_available & (1 << 9), "%.2f %%" , stats.cpu_usage_user);
 	set_status_info_var(vars, "OSCAM_CPU_SYS",  stats.check_available & (1 << 10), "%.2f %%" , stats.cpu_usage_sys);
 	double sum_cpu = stats.cpu_usage_sys + stats.cpu_usage_user;
@@ -258,18 +260,18 @@ static void set_ecm_info(struct templatevars * vars)
 	if(emmsum < 1) {emmsum = 1; emm = 1;}
 
 	tpl_printf(vars, TPLADD, "TOTAL_ECM_MIN", "%d", first_client->n_request[0]);
-	tpl_printf(vars, TPLADD, "TOTAL_CW", PRINTF_LOCAL_D, !ecm ? (int)ecmsum : 0);
-	tpl_printf(vars, TPLADD, "TOTAL_CWOK", PRINTF_LOCAL_D, first_client->cwfound);
-	tpl_printf(vars, TPLADD, "TOTAL_CWNOK", PRINTF_LOCAL_D, first_client->cwnot);
-	tpl_printf(vars, TPLADD, "TOTAL_CWIGN", PRINTF_LOCAL_D, first_client->cwignored);
-	tpl_printf(vars, TPLADD, "TOTAL_CWTOUT", PRINTF_LOCAL_D, first_client->cwtout);
-	tpl_printf(vars, TPLADD, "TOTAL_CWCACHE", PRINTF_LOCAL_D, first_client->cwcache);
-	tpl_printf(vars, TPLADD, "TOTAL_CWTUN", PRINTF_LOCAL_D, first_client->cwtun);
-	tpl_printf(vars, TPLADD, "TOTAL_CWPOS", PRINTF_LOCAL_D, first_client->cwfound + first_client->cwcache);
-	tpl_printf(vars, TPLADD, "TOTAL_CWNEG", PRINTF_LOCAL_D, first_client->cwnot + first_client->cwtout);
-	tpl_printf(vars, TPLADD, "TOTAL_EM", PRINTF_LOCAL_D, !emm ? (int)emmsum : 0);
-	tpl_printf(vars, TPLADD, "TOTAL_EMOK", PRINTF_LOCAL_D, first_client->emmok);
-	tpl_printf(vars, TPLADD, "TOTAL_EMNOK", PRINTF_LOCAL_D, first_client->emmnok);
+	tpl_printf(vars, TPLADD, "TOTAL_CW", PRINTF_LOCAL_F, !ecm ? ecmsum : 0);
+	tpl_printf(vars, TPLADD, "TOTAL_CWOK", PRINTF_LOCAL_F, (double)first_client->cwfound);
+	tpl_printf(vars, TPLADD, "TOTAL_CWNOK", PRINTF_LOCAL_F, (double)first_client->cwnot);
+	tpl_printf(vars, TPLADD, "TOTAL_CWIGN", PRINTF_LOCAL_F, (double)first_client->cwignored);
+	tpl_printf(vars, TPLADD, "TOTAL_CWTOUT", PRINTF_LOCAL_F, (double)first_client->cwtout);
+	tpl_printf(vars, TPLADD, "TOTAL_CWCACHE", PRINTF_LOCAL_F, (double)first_client->cwcache);
+	tpl_printf(vars, TPLADD, "TOTAL_CWTUN", PRINTF_LOCAL_F, (double)first_client->cwtun);
+	tpl_printf(vars, TPLADD, "TOTAL_CWPOS", PRINTF_LOCAL_F, (double)first_client->cwfound + (double)first_client->cwcache);
+	tpl_printf(vars, TPLADD, "TOTAL_CWNEG", PRINTF_LOCAL_F, (double)first_client->cwnot + (double)first_client->cwtout);
+	tpl_printf(vars, TPLADD, "TOTAL_EM", PRINTF_LOCAL_F, !emm ? emmsum : 0);
+	tpl_printf(vars, TPLADD, "TOTAL_EMOK", PRINTF_LOCAL_F, (double)first_client->emmok);
+	tpl_printf(vars, TPLADD, "TOTAL_EMNOK", PRINTF_LOCAL_F, (double)first_client->emmnok);
 	tpl_printf(vars, TPLADD, "REL_CWOK", "%.2f", (double)first_client->cwfound * 100 / ecmsum);
 	tpl_printf(vars, TPLADD, "REL_CWNOK", "%.2f", (double)first_client->cwnot * 100 / ecmsum);
 	//tpl_printf(vars, TPLADD, "REL_CWIGN", "%.2f", (double)first_client->cwignored * 100 / ecmsum);
@@ -6283,41 +6285,85 @@ static char *send_oscam_EMM(struct templatevars * vars, struct uriparams * param
 	}
 
 	FILE *fp;
-	char buffer[256];
+	char buffer[512];
 	char targetfile[256];
 	const char *slash = "/";
 	struct dirent **namelist;
 	int count = -1, i;
-	if (cfg.emmlogdir)
+	char *emm_path;
+
+	emm_path = cfg.emmlogdir ? cfg.emmlogdir : cs_confdir;
+
+	if (emm_path)
 	{
-		count = scandir(cfg.emmlogdir, &namelist, 0, alphasort );
+		count = scandir(emm_path, &namelist, 0, alphasort );
 	}
-	
+
 	if( count >= 0 )
 	{
 		for( i = 0 ; i < count; i++ )
 		{
 			if(strstr(namelist[i]->d_name, getParam(params, "label")) && is_ext(namelist[i]->d_name, ".log"))
 			{
-				if(cfg.emmlogdir[strlen(cfg.emmlogdir) - 1] == '/') { slash = ""; }
-				snprintf(targetfile, sizeof(targetfile), "%s%s%s", cfg.emmlogdir, slash, namelist[i]->d_name);
+				if(emm_path[strlen(emm_path) - 1] == '/') { slash = ""; }
+				snprintf(targetfile, sizeof(targetfile), "%s%s%s", emm_path, slash, namelist[i]->d_name);
 
 				if((fp = fopen(targetfile, "r")) == NULL) { continue; }
 
+				char emm_date[11],emm_time[9],emm_hex[512];
+				int emms=0, emm_d;
+
 				while(fgets(buffer, sizeof(buffer), fp) != NULL)
 				{
+					emms++;
+					tpl_printf(vars, TPLADD, "TMP_LINE", "LINE_%d", emms);
+					tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP_LINE"), buffer);
+				}
+				tpl_addVar(vars, TPLADD, "EMM_TMP","");
+				tpl_addVar(vars, TPLADD, "EMM_DATE","");
+				for(emm_d=emms;emm_d>0;--emm_d) 
+				{
+					tpl_printf(vars, TPLADD, "TMP_LINE", "LINE_%d", emm_d);
+					if(sscanf(tpl_getVar(vars, tpl_getVar(vars, "TMP_LINE")), "%s %s %*s %s",&emm_date[0],&emm_time[0],&emm_hex[0])==3)
+					{
+						if(emm_d==1)
+							tpl_printf(vars, TPLADD, "EMM_DATE", "%s %s", emm_date,emm_time);
+						if(strstr(tpl_getVar(vars, "EMM_TMP"),emm_hex)==0)
+							tpl_addVar(vars, TPLAPPEND, "EMM_TMP", tpl_getVar(vars, tpl_getVar(vars, "TMP_LINE")));
+					}
+				}
+
+				char *ptr, *saveptr1 = NULL;
+				char emm_tmp[strlen(tpl_getVar(vars, "EMM_TMP"))];
+				cs_strncpy(emm_tmp, tpl_getVar(vars, "EMM_TMP"), sizeof(emm_tmp));
+				int emmrs=0;
+				for(ptr = strtok_r(emm_tmp,"\n", &saveptr1); ptr; ptr = strtok_r(NULL,"\n", &saveptr1))
+				{
+					emmrs++;
+					tpl_printf(vars, TPLADD, "TMP_LINE", "LINE_%d", emmrs);
+					tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP_LINE"), ptr);
+				}
+				for(emm_d=emmrs;emm_d>0;--emm_d) 
+				{
+					tpl_printf(vars, TPLADD, "TMP_LINE", "LINE_%d", emm_d);
 					if (strstr(namelist[i]->d_name, "unique_emm"))
-						{
-							tpl_addVar(vars, TPLAPPEND, "RDREMMUNIQUE", buffer);
-						}
-					else if (strstr(namelist[i]->d_name, "global_emm"))
-						{
-							tpl_addVar(vars, TPLAPPEND, "RDREMMGLOBAL", buffer);
-						}
+					{
+						if(emm_d==1)
+							tpl_printf(vars, TPLADD, "RDREMMUNIQUE_TXT", "First Entry: %s; %d different EMMs from a total off %d Entrys", tpl_getVar(vars, "EMM_DATE"),emmrs,emms);
+						tpl_printf(vars, TPLAPPEND, "RDREMMUNIQUE", "%s\n", tpl_getVar(vars, tpl_getVar(vars, "TMP_LINE")));
+					}
 					else if (strstr(namelist[i]->d_name, "shared_emm"))
-						{
-							tpl_addVar(vars, TPLAPPEND, "RDREMMSHARED", buffer);
-						}
+					{
+						if(emm_d==1)
+							tpl_printf(vars, TPLADD, "RDREMMSHARED_TXT", "First Entry: %s; %d different EMMs from a total off %d Entrys", tpl_getVar(vars, "EMM_DATE"),emmrs,emms);
+						tpl_printf(vars, TPLAPPEND, "RDREMMSHARED", "%s\n", tpl_getVar(vars, tpl_getVar(vars, "TMP_LINE")));
+					}
+					else if (strstr(namelist[i]->d_name, "global_emm"))
+					{
+						if(emm_d==1)
+							tpl_printf(vars, TPLADD, "RDREMMGLOBAL_TXT", "First Entry: %s; %d different EMMs from a total off %d Entrys", tpl_getVar(vars, "EMM_DATE"),emmrs,emms);
+						tpl_printf(vars, TPLAPPEND, "RDREMMGLOBAL", "%s\n", tpl_getVar(vars, tpl_getVar(vars, "TMP_LINE")));
+					}
 				}
 				fclose(fp);
 			}
@@ -6325,6 +6371,10 @@ static char *send_oscam_EMM(struct templatevars * vars, struct uriparams * param
 		}
 		free(namelist);
 	}
+	if(strcmp(tpl_getVar(vars, "RDREMMUNIQUE"),"")==0) tpl_addVar(vars, TPLADD, "RDREMMUNIQUE","no saved EMMs");
+	if(strcmp(tpl_getVar(vars, "RDREMMSHARED"),"")==0) tpl_addVar(vars, TPLADD, "RDREMMSHARED","no saved EMMs");
+	if(strcmp(tpl_getVar(vars, "RDREMMGLOBAL"),"")==0) tpl_addVar(vars, TPLADD, "RDREMMGLOBAL","no saved EMMs");
+
 	return tpl_getTpl(vars, "ASKEMM");
 }
 
@@ -8063,7 +8113,7 @@ void webif_init(void)
 	snprintf(buf, 8, "%'d", 7);
 	if(strcmp(buf, "7"))
 	{
-		useLocalD = 0;
+		useLocal = 0;
 	}
 
 	if(cfg.http_port == 0)

@@ -681,18 +681,28 @@ td.configcolsave {
 }
 /* for extract in script.html */ 
 div.extract {
-	width: 750px;
-	margin: 10px auto;
-	text-align: left
+	width:750px;
+	margin:10px auto;
+	text-align:left
+}
+div.extract p {
+	font-weight:700;
+	margin:10px 6px 0 6px
+}
+div.extract p.emmhead {
+	font-size:13px;
+	text-align:center
+}
+div.extract p .emminfo {
+	font-weight:normal
 }
 div.extract pre {
-	overflow: auto;
-	min-height: 100px;
-	margin: 10px 0;
-	padding: 10px;
-	font-family: courier,monospace;
+	overflow:auto;
+	margin:5px 0;
+	padding:5px;
+	font-family:courier,monospace;
 	border:1px dotted #AAA;
-	white-space: pre
+	white-space:pre
 }
 
 /* **************** 13. IMAGE */
