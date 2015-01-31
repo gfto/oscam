@@ -21,6 +21,9 @@
 #define OK      0
 #define ERROR 1
 
+// extern variables
+extern char *stb_boxtype;
+
 struct sr_data
 {
 	uint8_t old_reset;
@@ -34,9 +37,6 @@ struct sr_data
 	unsigned char P; 
 	unsigned char I;
 };
-
-static int32_t init_count;
-static int32_t current_count; 
 
 static int32_t Sci_GetStatus(struct s_reader *reader, int32_t *status)
 {
@@ -57,7 +57,11 @@ static int32_t Sci_Deactivate(struct s_reader *reader)
 
 	if(in)
 	{
-		call (ioctl(reader->handle, IOCTL_SET_DEACTIVATE)<0);
+		if((ioctl(reader->handle, IOCTL_SET_DEACTIVATE)<0))
+		{
+			rdr_log(reader,"ioctl(IOCTL_SET_DEACTIVATE) not supported on %s",stb_boxtype ? stb_boxtype : "generic" );
+			return ERROR;
+		}
 	}
 		
 	return OK;
@@ -78,7 +82,6 @@ static int32_t Sci_Activate(struct s_reader *reader)
 
 	if (in)
 	{
-//		rdr_log(reader, "Card is present in readerslot!");
 		cs_sleepms(50);
 		return OK;
 	}
@@ -467,12 +470,14 @@ static int32_t Sci_FastReset(struct s_reader *reader, ATR *atr)
 
 static int32_t Sci_Init(struct s_reader *reader)
 {
-	if(!init_count) {init_count = 0;}
-	if(init_count < current_count) {rdr_log(reader,"Waiting on reader_closed before restarting");}
-	while (init_count < current_count) // Restarting the reader while it was not closed does cause segfault.
+	uint8_t i = 0;
+	while(reader->handle_nr > 0 && i < 5)
 	{
+		i++;
+		rdr_log(reader," Wait On closing before restart %u", i);
 		cs_sleepms(1000);
 	}
+	
 	int flags = O_RDWR | O_NOCTTY;
 #if defined(__SH4__) || defined(STB04SCI)
 	flags |= O_NONBLOCK;
@@ -489,9 +494,7 @@ static int32_t Sci_Init(struct s_reader *reader)
 		{ return ERROR; }
 	struct sr_data *crdr_data = reader->crdr_data;
 	crdr_data->old_reset = 1;	
-	init_count++;
-	current_count++;
-
+	reader->handle_nr = reader->handle + 1;
 	return OK;
 }
 
@@ -512,11 +515,10 @@ static int32_t sci_activate(struct s_reader *reader, ATR *atr)
 
 static int32_t Sci_Close(struct s_reader *reader)
 {
-	--init_count;
 	Sci_Deactivate(reader);
 	IO_Serial_Close(reader);
 	cs_sleepms(300); // some stb's needs small extra time even after close procedure seems to be ok.
-	--current_count;
+	reader->handle_nr = 0;
 	return OK;
 }
 
