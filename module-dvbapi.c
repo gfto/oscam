@@ -25,6 +25,15 @@
 #include "oscam-work.h"
 #include "reader-irdeto.h"
 
+#if defined (__CYGWIN__)
+#define F_NOTIFY 0
+#define F_SETSIG 0
+#define DN_MODIFY 0
+#define DN_CREATE 0
+#define DN_DELETE 0
+#define DN_MULTISHOT 0
+#endif
+
 static int is_samygo;
 extern char *stb_boxtype;
 
