@@ -428,6 +428,7 @@ int32_t accept_connection(struct s_module *module, int8_t module_idx, int8_t por
 	struct s_client *cl;
 	struct s_port *port = &module->ptab.ports[port_idx];
 
+	memset(&cad, 0, sizeof(struct SOCKADDR));
 	if(module->type == MOD_CONN_UDP)
 	{
 		uchar *buf;
