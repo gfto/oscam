@@ -240,7 +240,7 @@ void cs_reinit_loghist(uint32_t size)
 	char *tmp = NULL, *tmp2, *tmp3 = NULL, *tmp4;
 	if(size != cfg.loghistorysize)
 	{
-		if(size == 0 || (cs_malloc(&tmp, size) && cs_malloc(&tmp3, size/3+8)))
+		if(cs_malloc(&tmp, size) && cs_malloc(&tmp3, size/3+8))
 		{
 			cs_writelock(&loghistory_lock);
 			tmp2 = loghist;
