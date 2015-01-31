@@ -257,7 +257,9 @@ table.writeemm {
 	width:750px
 }
 /* emm_running.html */
-table.emmrunning {}
+table.emmrunning {
+	width:750px
+}
 /* readerstats.html */
 table.statsbalance td:last-child {
 	line-height:20px;
