@@ -2271,7 +2271,7 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 
 	//set preferlocalcards for this ecm request (actually, paramter is per user based, maybe in fiture it will be caid based too)
 	er->preferlocalcards = cfg.preferlocalcards;
-	if(client->account->preferlocalcards > -1){
+	if(client->account && client->account->preferlocalcards > -1){
 		er->preferlocalcards = client->account->preferlocalcards;
 	}
 	if(er->preferlocalcards <0 || er->preferlocalcards >2) {er->preferlocalcards=0;}
