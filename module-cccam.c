@@ -1723,6 +1723,8 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf)
 int32_t cc_send_pending_emms(struct s_client *cl)
 {
 	struct cc_data *cc = cl->cc;
+	if (!cc)
+		return 0;
 
 	LL_ITER it = ll_iter_create(cc->pending_emms);
 	uint8_t *emmbuf;
