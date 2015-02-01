@@ -55,7 +55,7 @@ static int32_t Sci_Deactivate(struct s_reader *reader)
 	}
 	if (in != 1) {ioctl(reader->handle, IOCTL_GET_IS_CARD_ACTIVATED, &in);}
 
-	if(in)
+	if(in && strcasecmp(stb_boxtype, "dm8000"))
 	{
 		if((ioctl(reader->handle, IOCTL_SET_DEACTIVATE)<0))
 		{
@@ -63,6 +63,7 @@ static int32_t Sci_Deactivate(struct s_reader *reader)
 			return ERROR;
 		}
 	}
+	else {return ERROR;}
 		
 	return OK;
 	
@@ -517,7 +518,9 @@ static int32_t Sci_Close(struct s_reader *reader)
 {
 	Sci_Deactivate(reader);
 	IO_Serial_Close(reader);
-	cs_sleepms(300); // some stb's needs small extra time even after close procedure seems to be ok.
+	NULLFREE(reader->crdr_data); //clearing allocated module mem
+	NULLFREE(reader->csystem_data); //clearing allocated card system mem
+	cs_sleepms(150); // some stb's needs small extra time even after close procedure seems to be ok.
 	reader->handle_nr = 0;
 	return OK;
 }
