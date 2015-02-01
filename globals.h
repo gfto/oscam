@@ -1434,10 +1434,11 @@ struct s_reader                                     //contains device info, read
 	int8_t          ins7e11_fast_reset;
 	uint8_t         sc8in1_dtrrts_patch; // fix for kernel commit 6a1a82df91fa0eb1cc76069a9efe5714d087eccd
 #ifdef MODULE_GBOX
-	int8_t          gbox_maxdist;
-	int8_t          gbox_maxecmsend;
-	int8_t          gbox_reshare;
-	char            last_gsms[128];	
+	uint8_t		gbox_maxdist;
+	uint8_t		gbox_maxecmsend;
+	uint8_t		gbox_reshare;
+	uint8_t		gbox_cccam_reshare;
+	char		last_gsms[128];
 #endif
 
 #ifdef MODULE_PANDORA
