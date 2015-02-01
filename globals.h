@@ -1264,7 +1264,7 @@ struct s_reader                                     //contains device info, read
 	char            device[128];
 	uint16_t        slot;                           // in case of multiple slots like sc8in1; first slot = 1
 	int32_t         handle;                         // device handle
-	int32_t         handle_nr;                      // device handle_nr for mutiple readers same driver
+	int64_t         handle_nr;                      // device handle_nr for mutiple readers same driver
 	int32_t         fdmc;                           // device handle for multicam
 	int32_t         detect;
 	int32_t         mhz;                            // actual clock rate of reader in 10khz steps
