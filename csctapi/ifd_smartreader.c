@@ -1267,7 +1267,7 @@ static int32_t SR_Init(struct s_reader *reader)
 	while(reader->handle_nr > 0 && i < 10) // Restarting the reader while it was not closed does cause segfault.
 	{
 		i++;
-		rdr_log(reader," Wait on close before restart second %d", i);
+		rdr_log(reader," Wait on close before restart second %u", i);
 		cs_sleepms(1000);
 	}
 
@@ -1405,7 +1405,7 @@ static int32_t SR_Init(struct s_reader *reader)
 		return ERROR;
 	}
 
-	reader->handle_nr = (int64_t)crdr_data->usb_dev_handle + 1;
+	reader->handle_nr = (long)crdr_data->usb_dev_handle + 1;
 
 	return OK;
 }
