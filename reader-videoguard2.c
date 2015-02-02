@@ -270,7 +270,7 @@ static void vg2_read_tiers(struct s_reader *reader)
 					uint32_t tier_id;
 					struct tm timeinfo;
 					memset(&timeinfo, 0, sizeof(struct tm));
-					time_t start_t, end_t;
+					time_t start_t = 0, end_t;
 					if (cta_res[1] > 0x23)
 					{
 						rev_date_calc_tm(&cta_res[38], &timeinfo, csystem_data->card_baseyear);
@@ -330,7 +330,6 @@ static void vg2_read_tiers(struct s_reader *reader)
 
 		int32_t i;
 		unsigned char ins76[5] = { 0xD0, 0x76, 0x00, 0x00, 0x00 };
-		struct videoguard_data *csystem_data = reader->csystem_data;
 
 		// some cards start real tiers info in middle of tier info
 		// and have blank tiers between old tiers and real tiers eg 09AC
@@ -432,19 +431,19 @@ void videoguard2_poll_status(struct s_reader *reader)
 					}
 				}
 				static const unsigned char ins58a[5] = { 0xD1, 0x58, 0x00, 0x00, 0x00 };
-				if (do_cmd(reader, ins58a, NULL, NULL, cta_res) < 0);
+				if ((do_cmd(reader, ins58a, NULL, NULL, cta_res) < 0))
 				{
 					rdr_log(reader, "classD1 ins58: failed");
 				}
 				reader->VgFuse = cta_res[2];
 				static const unsigned char ins7403[5] = { 0xD0, 0x74, 0x03, 0x00, 0x00 };
-				if (do_cmd(reader, ins7403, NULL, NULL, cta_res) < 0)
+				if ((do_cmd(reader, ins7403, NULL, NULL, cta_res) < 0))
 				{
 					rdr_log(reader, "classD0 ins7403: failed");
 				}
 				else
 				{
-					if ((cta_res[2]>>5) & 1);
+					if (((cta_res[2]>>5) & 1))
 					{
 						static const unsigned char ins7423[5] = { 0xD3, 0x74, 0x23, 0x00, 0x00 };
 						if (do_cmd(reader, ins7423, NULL, NULL, cta_res) < 0)
