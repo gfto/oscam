@@ -51,6 +51,7 @@ void cardreader_checkhealth(struct s_client *cl, struct s_reader *rdr);
 int32_t cardreader_do_emm(struct s_reader *reader, EMM_PACKET *ep);
 void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_REQUEST *er);
 void cardreader_get_card_info(struct s_reader *reader);
+void cardreader_poll_status(struct s_reader *reader);
 int32_t check_sct_len(const unsigned char *data, int32_t off);
 #else
 static inline void cardreader_init_locks(void) { }
@@ -75,6 +76,7 @@ static inline int32_t cardreader_do_emm(struct s_reader *UNUSED(reader), EMM_PAC
 }
 static inline void cardreader_process_ecm(struct s_reader *UNUSED(reader), struct s_client *UNUSED(cl), ECM_REQUEST *UNUSED(er)) { }
 static inline void cardreader_get_card_info(struct s_reader *UNUSED(reader)) { }
+static inline void cardreader_poll_status(struct s_reader *UNUSED(reader)) { }
 #endif
 
 #endif

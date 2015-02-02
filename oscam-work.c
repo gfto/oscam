@@ -277,6 +277,9 @@ void *work_thread(void *ptr)
 			case ACTION_READER_CARDINFO:
 				reader_do_card_info(reader);
 				break;
+			case ACTION_READER_POLL_STATUS:
+				cardreader_poll_status(reader);
+				break;
 			case ACTION_READER_INIT:
 				if(!cl->init_done)
 					{ reader_init(reader); }

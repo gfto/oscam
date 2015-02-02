@@ -1037,6 +1037,7 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC_X("ins2e06"            , OFS(ins2e06),                 ins7E_fn, SIZEOF(ins2e06)),
 	DEF_OPT_INT8("fix07"                , OFS(fix_07),                  1),
 	DEF_OPT_INT8("fix9993"              , OFS(fix_9993),                0),
+	DEF_OPT_INT8("readtiers"           	, OFS(readtiers),              	1),
 	DEF_OPT_INT8("force_irdeto"         , OFS(force_irdeto),            0),
 	DEF_OPT_INT8("needsemmfirst"        , OFS(needsemmfirst),           0),
 	DEF_OPT_UINT32("ecmnotfoundlimit"   , OFS(ecmnotfoundlimit),        0),
@@ -1125,7 +1126,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	{
 		"readnano", "resetcycle", "smargopatch", "autospeed", "sc8in1_dtrrts_patch", "boxid","fix07",
 		"fix9993", "rsakey", "ins7e", "ins7e11", "ins2e06", "force_irdeto", "needsemmfirst", "boxkey",
-		"atr", "detect", "nagra_read", "mhz", "cardmhz",
+		"atr", "detect", "nagra_read", "mhz", "cardmhz", "readtiers",
 #ifdef WITH_AZBOX
 		"mode",
 #endif

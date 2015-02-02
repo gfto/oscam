@@ -124,6 +124,15 @@ void cardreader_get_card_info(struct s_reader *reader)
 	}
 }
 
+void cardreader_poll_status(struct s_reader *reader)
+{
+	if (reader && reader->card_status == CARD_INSERTED)
+	{
+		if (reader->csystem.active && reader->csystem.poll_status)
+			{ reader->csystem.poll_status(reader); }
+	}
+}
+
 static int32_t reader_get_cardsystem(struct s_reader *reader, ATR *atr)
 {
 	int32_t i;

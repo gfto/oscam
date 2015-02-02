@@ -1154,6 +1154,38 @@ static void *reader_check(void)
 	return NULL;
 }
 
+static pthread_cond_t card_poll_sleep_cond;
+
+static void * card_poll(void) {
+	struct s_client *cl;
+	struct s_reader *rdr;
+	pthread_mutex_t card_poll_sleep_cond_mutex;
+	pthread_mutex_init(&card_poll_sleep_cond_mutex, NULL);
+	pthread_cond_init(&card_poll_sleep_cond, NULL);
+	set_thread_name(__func__);
+	while (!exit_oscam) {
+		cs_readlock(&readerlist_lock);
+		for (rdr=first_active_reader; rdr; rdr=rdr->next) {
+			if (rdr->enable && rdr->card_status == CARD_INSERTED) {
+				cl = rdr->client;
+				if (cl && !cl->kill)
+					{ add_job(cl, ACTION_READER_POLL_STATUS, 0, 0); }
+			}
+		}
+		cs_readunlock(&readerlist_lock);
+		struct timespec ts;
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		ts.tv_sec = tv.tv_sec;
+		ts.tv_nsec = tv.tv_usec * 1000;
+		ts.tv_sec += 1;
+		pthread_mutex_lock(&card_poll_sleep_cond_mutex);
+		pthread_cond_timedwait(&card_poll_sleep_cond, &card_poll_sleep_cond_mutex, &ts); // sleep on card_poll_sleep_cond
+		pthread_mutex_unlock(&card_poll_sleep_cond_mutex);
+	}
+	return NULL;
+}
+
 #ifdef WEBIF
 static pid_t pid;
 
@@ -1518,6 +1550,8 @@ int32_t main(int32_t argc, char *argv[])
 
 	ac_init();
 
+	start_thread((void *) &card_poll, "card poll");
+
 	for(i = 0; i < CS_MAX_MOD; i++)
 	{
 		struct s_module *module = &modules[i];
@@ -1528,6 +1562,7 @@ int32_t main(int32_t argc, char *argv[])
 	// main loop function
 	process_clients();
 
+	pthread_cond_signal(&card_poll_sleep_cond); // Stop card_poll thread
 	cw_process_thread_wakeup(); // Stop cw_process thread
 	pthread_cond_signal(&reader_check_sleep_cond); // Stop reader_check thread
 

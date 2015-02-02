@@ -842,7 +842,7 @@ int32_t do_cmd(struct s_reader *reader, const unsigned char *ins, const unsigned
 				if (len == 0xFF) return -1;
 			}
 		}
-		else if(mode != 0) { ins2[4] = len; }
+		else if((mode != 0)&&((ins2[3]!=0x7f)&&(ins2[4]!=0x02))) { ins2[4] = len; }
 	}
 	if(ins2[0] == 0xd3)
 	{

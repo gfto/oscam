@@ -800,6 +800,7 @@ struct s_cardsystem
 	char            *desc;
 	int32_t (*card_init)(struct s_reader *reader, struct s_ATR *);
 	int32_t (*card_info)(struct s_reader *);
+	void	(*poll_status)(struct s_reader *);
 	int32_t (*do_ecm)(struct s_reader *, const struct ecm_request_t *, struct s_ecm_answer *);
 	int32_t (*do_emm_reassembly)(struct s_client *, struct emm_packet_t *);     // Returns 1/true if the EMM is ready to be written in the card
 	int32_t (*do_emm)(struct s_reader *, struct emm_packet_t *);
@@ -1340,6 +1341,7 @@ struct s_reader                                     //contains device info, read
 	time_t          last_g;                         // get (if last_s-last_g>tcp_rto - reconnect )
 	time_t          last_s;                         // send
 	time_t          last_check;                     // last checked
+	time_t			last_poll;						// last poll
 	FTAB            fchid;
 	FTAB            ftab;
 	CLASSTAB        cltab;
@@ -1389,6 +1391,7 @@ struct s_reader                                     //contains device info, read
 #endif
 	unsigned char   rom[15];
 	unsigned char   irdId[4];
+	unsigned char	payload4C[15];
 	uint16_t		VgCredit;
 	uint16_t        VgPin;
 	unsigned char   VgFuse;
@@ -1428,6 +1431,7 @@ struct s_reader                                     //contains device info, read
 	struct ecmrl    rlecmh[MAXECMRATELIMIT];
 	int8_t          fix_07;
 	int8_t          fix_9993;
+	int8_t			readtiers;							// method to get videoguard tiers
 	uint8_t         ins7E[0x1A + 1];
 	uint8_t         ins7E11[0x01 + 1];
 	uint8_t         ins2e06[0x04 + 1];

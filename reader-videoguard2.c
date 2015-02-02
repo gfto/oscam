@@ -235,75 +235,302 @@ static void do_post_dw_hash(struct s_reader *reader, unsigned char *cw, const un
 static void vg2_read_tiers(struct s_reader *reader)
 {
 	def_resp;
-	int32_t l;
-
-	/* ins2a is not needed and causes an error on some cards eg Sky Italy 09CD
-	   check if ins2a is in command table before running it
-	*/
-	static const unsigned char ins2a[5] = { 0xD0, 0x2a, 0x00, 0x00, 0x00 };
-	if(cmd_exists(reader, ins2a))
+	struct videoguard_data *csystem_data = reader->csystem_data;
+	if (reader->readtiers == 1)
 	{
-		l = do_cmd(reader, ins2a, NULL, NULL, cta_res);
-		if(l < 0 || !status_ok(cta_res + l))
+		uint8_t ins707f[5] = { 0xD1, 0x70, 0x00, 0x7f, 0x02 };
+		if(do_cmd(reader, ins707f, NULL, NULL, cta_res) < 0)
 		{
-			rdr_log(reader, "classD0 ins2a: failed");
+			rdr_log(reader, "classD1 ins707f: failed to get number of classes supported");
+		}
+		else
+		{
+			rdr_log(reader, "------------------------------------------------------------------");
+			rdr_log(reader, "|- class -|-- tier --|----- valid to ------|--- package name ----|");
+			rdr_log(reader, "+---------+----------+---------------------+---------------------+");
+			if ((reader->VgFuse&5) == 0)
+			{
+				rdr_log(reader, "|------- This card is not active, so no package available! ------|");
+			}
+			uint32_t TierClass, ClassSupported;
+			ClassSupported = cta_res[1];
+			uint8_t ins70[5] = { 0xD1, 0x70, 0x00, 0x00, 0x00 };
+			for( TierClass=0; TierClass<ClassSupported; TierClass++)
+			{
+				ins70[2] = TierClass;
+				if(do_cmd(reader, ins70, NULL, NULL, cta_res) < 0)
+				{
+					rdr_log(reader, "classD1 ins70: failed to get tiers for class %02X",TierClass);
+				}
+				else
+				{
+					char tiername[83];
+					uint32_t word;
+					uint32_t bitnum;
+					uint32_t tier_id;
+					struct tm timeinfo;
+					memset(&timeinfo, 0, sizeof(struct tm));
+					time_t start_t, end_t;
+					if (cta_res[1] > 0x23)
+					{
+						rev_date_calc_tm(&cta_res[38], &timeinfo, csystem_data->card_baseyear);
+						start_t = mktime(&timeinfo);
+					}
+					rev_date_calc_tm(&cta_res[34], &timeinfo, csystem_data->card_baseyear);
+					end_t = mktime(&timeinfo);
+					for( word=0; word<32; word+=2)
+					{
+						for (bitnum=0; bitnum<8; bitnum++)
+						{
+							if((cta_res[word+2] >> bitnum) & 1)
+							{
+								tier_id = 0;
+								tier_id = ((TierClass<<8) + (word<<3) + bitnum);
+								cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), tier_id, TierClass, start_t, end_t, 4);
+								rdr_log(reader, "|-- %02x ---|-- %04x --| %04d/%02d/%02d-%02d:%02d:%02d | %s", TierClass, tier_id, timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, get_tiername(tier_id, reader->caid, tiername));
+							}
+							if((cta_res[word+1+2] >> bitnum) & 1)
+							{
+								tier_id = 0;
+								tier_id = ((TierClass<<8) + (word<<3) + bitnum + 8);
+								cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), tier_id, TierClass, start_t, end_t, 4);
+								rdr_log(reader, "|-- %02x ---|-- %04x --| %04d/%02d/%02d-%02d:%02d:%02d | %s", TierClass, tier_id, timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, get_tiername(tier_id, reader->caid, tiername));
+							}
+						}
+					}
+				}
+			}
+		}
+		rdr_log(reader, "------------------------------------------------------from-ins70--");
+	}
+	else if (reader->readtiers == 2)
+	{
+		int32_t l;
+		//ins2a is not needed and causes an error on some cards eg Sky Italy 09CD
+		//check if ins2a is in command table before running it
+
+		static const unsigned char ins2a[5] = { 0xD0, 0x2a, 0x00, 0x00, 0x00 };
+		if(cmd_exists(reader, ins2a))
+		{
+			l = do_cmd(reader, ins2a, NULL, NULL, cta_res);
+			if(l < 0 || !status_ok(cta_res + l))
+			{
+				rdr_log(reader, "classD0 ins2a: failed");
+				return;
+			}
+		}
+
+		static const unsigned char ins76007f[5] = { 0xD0, 0x76, 0x00, 0x7f, 0x02 };
+		if(!write_cmd_vg(ins76007f, NULL) || !status_ok(cta_res + 2))
+		{
+			rdr_log(reader, "classD0 ins76007f: failed");
 			return;
 		}
-	}
+		int32_t num = cta_res[1];
 
-	static const unsigned char ins76007f[5] = { 0xD0, 0x76, 0x00, 0x7f, 0x02 };
-	if(!write_cmd_vg(ins76007f, NULL) || !status_ok(cta_res + 2))
-	{
-		rdr_log(reader, "classD0 ins76007f: failed");
-		return;
-	}
-	int32_t num = cta_res[1];
+		int32_t i;
+		unsigned char ins76[5] = { 0xD0, 0x76, 0x00, 0x00, 0x00 };
+		struct videoguard_data *csystem_data = reader->csystem_data;
 
-	int32_t i;
-	unsigned char ins76[5] = { 0xD0, 0x76, 0x00, 0x00, 0x00 };
-	struct videoguard_data *csystem_data = reader->csystem_data;
+		// some cards start real tiers info in middle of tier info
+		// and have blank tiers between old tiers and real tiers eg 09AC
+		int32_t starttier = csystem_data->card_tierstart;
+		bool stopemptytier = 1;
+		if(!starttier)
+			{ stopemptytier = 0; }
 
-	// some cards start real tiers info in middle of tier info
-	// and have blank tiers between old tiers and real tiers eg 09AC
-	int32_t starttier = csystem_data->card_tierstart;
-	bool stopemptytier = 1;
-	if(!starttier)
-		{ stopemptytier = 0; }
-
-	// check to see if specified start tier is blank and if blank, start at 0 and ignore blank tiers
-	ins76[2] = starttier;
-	l = do_cmd(reader, ins76, NULL, NULL, cta_res);
-	if(l < 0 || !status_ok(cta_res + l)) { return; }
-	if(cta_res[2] == 0 && cta_res[3] == 0)
-	{
-		stopemptytier = 0;
-		starttier = 0;
-	}
-
-	cs_clear_entitlement(reader); // reset the entitlements
-
-	for(i = starttier; i < num; i++)
-	{
-		ins76[2] = i;
+		// check to see if specified start tier is blank and if blank, start at 0 and ignore blank tiers
+		ins76[2] = starttier;
 		l = do_cmd(reader, ins76, NULL, NULL, cta_res);
 		if(l < 0 || !status_ok(cta_res + l)) { return; }
-		if(cta_res[2] == 0 && cta_res[3] == 0 && stopemptytier) { return; }
-		if(cta_res[2] != 0 || cta_res[3] != 0)
+		if(cta_res[2] == 0 && cta_res[3] == 0)
 		{
-			char tiername[83];
-			uint16_t tier_id = (cta_res[2] << 8) | cta_res[3];
-			// add entitlements to list
-			struct tm timeinfo;
-			memset(&timeinfo, 0, sizeof(struct tm));
-			rev_date_calc_tm(&cta_res[4], &timeinfo, csystem_data->card_baseyear);
-			cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), tier_id, 0, 0, mktime(&timeinfo), 4);
-
-			if(!stopemptytier)
-			{
-				rdr_log_dbg(reader, D_READER, "tier: %04x, tier-number: 0x%02x", tier_id, i);
-			}
-			rdr_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, get_tiername(tier_id, reader->caid, tiername));
+			stopemptytier = 0;
+			starttier = 0;
 		}
+
+		cs_clear_entitlement(reader); // reset the entitlements
+		rdr_log(reader, "------------------------------------------------------------------");
+		rdr_log(reader, "|- class -|-- tier --|----- valid to ------|--- package name ----|");
+		rdr_log(reader, "+---------+----------+---------------------+---------------------+");
+		if ((reader->VgFuse&5) == 0)
+		{
+			rdr_log(reader, "|------- This card is not active, so no package available! ------|");
+		}
+		for(i = starttier; i < num; i++)
+		{
+			ins76[2] = i;
+			l = do_cmd(reader, ins76, NULL, NULL, cta_res);
+			if(l < 0 || !status_ok(cta_res + l)) { return; }
+			if(cta_res[2] == 0 && cta_res[3] == 0 && stopemptytier) { return; }
+			if(cta_res[2] != 0 || cta_res[3] != 0)
+			{
+				char tiername[83];
+				uint16_t tier_id = (cta_res[2] << 8) | cta_res[3];
+				// add entitlements to list
+				struct tm timeinfo;
+				memset(&timeinfo, 0, sizeof(struct tm));
+				rev_date_calc_tm(&cta_res[4], &timeinfo, csystem_data->card_baseyear);
+				cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), tier_id, 0, 0, mktime(&timeinfo), 4);
+
+				if(!stopemptytier)
+				{
+					rdr_log_dbg(reader, D_READER, "tier: %04x, tier-number: 0x%02x", tier_id, i);
+				}
+				rdr_log(reader, "|-- %02x ---|-- %04x --| %04d/%02d/%02d-%02d:%02d:%02d | %s", cta_res[2], tier_id, timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, get_tiername(tier_id, reader->caid, tiername));
+			}
+		}
+		rdr_log(reader, "------------------------------------------------------from-ins76--");
+	}
+	else if (reader->readtiers == 0)
+	{
+		rdr_log(reader, "------------------------------------------------------------------");
+		rdr_log(reader, "|--- The reading of the tiers is disabled by the configuration --|");
+		rdr_log(reader, "------------------------------------------------------------------");
+	}
+}
+
+void videoguard2_poll_status(struct s_reader *reader)
+{
+	const time_t poll_interval = 12;    // less is better
+	time_t now = time(0);
+	int32_t i;
+	if (now >= reader->last_poll + poll_interval)
+	{
+		static const unsigned char ins5C[5] = { 0xD1, 0x5C, 0x00, 0x00, 0x04 };
+		unsigned char cta_res[CTA_RES_LEN];
+		int32_t l;
+		l = do_cmd(reader, ins5C, NULL, NULL, cta_res);
+		if (l < 0 || !status_ok(cta_res + l))
+		{
+			rdr_log(reader, "classD1 ins5C: failed");
+		} else switch (cta_res[1]) {
+			case 0x14:									//loc_43C250
+            {
+				static const unsigned char ins4Ca[5] = { 0xD1, 0x4C, 0x00, 0x00, 0x00 };
+				l = do_cmd(reader, ins4Ca, reader->payload4C, NULL, cta_res);
+				if (l < 0 || !status_ok(cta_res))
+				{
+					rdr_log(reader, "classD1 ins4Ca: failed");
+				}
+				if (reader->ins7E[0x1A])
+				{
+					static const uint8_t ins7E[5] = { 0xD1, 0x7E, 0x10, 0x00, 0x1A };
+					l = do_cmd(reader, ins7E, reader->ins7E, NULL, cta_res);
+					if (l < 0 || !status_ok(cta_res))
+					{
+						rdr_log(reader, "classD1 ins7E: failed");
+					}
+				}
+				if (reader->ins2e06[4])
+				{
+					static const unsigned char ins2e06[5] = { 0xD1, 0x2E, 0x06, 0x00, 0x04 };
+					l = do_cmd(reader, ins2e06, reader->ins2e06, NULL, cta_res);
+					if(l < 0 || !status_ok(cta_res))
+					{
+						rdr_log(reader, "classD1 ins2E: failed");
+					}
+				}
+				static const unsigned char ins58a[5] = { 0xD1, 0x58, 0x00, 0x00, 0x00 };
+				if (do_cmd(reader, ins58a, NULL, NULL, cta_res) < 0);
+				{
+					rdr_log(reader, "classD1 ins58: failed");
+				}
+				reader->VgFuse = cta_res[2];
+				static const unsigned char ins7403[5] = { 0xD0, 0x74, 0x03, 0x00, 0x00 };
+				if (do_cmd(reader, ins7403, NULL, NULL, cta_res) < 0)
+				{
+					rdr_log(reader, "classD0 ins7403: failed");
+				}
+				else
+				{
+					if ((cta_res[2]>>5) & 1);
+					{
+						static const unsigned char ins7423[5] = { 0xD3, 0x74, 0x23, 0x00, 0x00 };
+						if (do_cmd(reader, ins7423, NULL, NULL, cta_res) < 0)
+							{
+								rdr_log(reader, "classD1 ins7423: failed");
+							}
+					}
+				}
+				break;
+            }
+			case 0xB:									//.text:000000000043C050
+            {
+				unsigned char ins5E[5] = { 0xD1,0x5E,0x00,0x00,0x00 };
+				ins5E[2] = cta_res[2];
+				ins5E[3] = cta_res[1];
+				ins5E[4] = cta_res[3];
+				l = do_cmd(reader, ins5E, NULL, NULL, cta_res);
+				if (l < 0 || !status_ok(cta_res + l))
+				{
+				rdr_log(reader, "Ins5E: failed");
+				}
+				unsigned char ins78[5] = { 0xD1, 0x78, 0x00, 0x00, 0x18 };
+				ins78[2] = cta_res[0];
+				l = do_cmd(reader, ins78, NULL, NULL, cta_res);
+				if (l < 0 || !status_ok(cta_res + l))
+				{
+					rdr_log(reader, "classD1 ins78: failed");
+				}
+				unsigned char ins32[5] = { 0xD1, 0x32, 0x00, 0x00, 0x01 };
+				const unsigned char payload32[1] = { 0x25 };
+				l = do_cmd(reader, ins32, payload32, NULL, cta_res);
+				if (l < 0 || !status_ok(cta_res + l))
+				{
+					rdr_log(reader, "classD1 ins32: failed");
+				}
+				break;
+            }
+			case 0x0C:									//loc_43C13F
+            {
+				unsigned char ins5E[5] = { 0xD1,0x5E,0x00,0x00,0x00 };
+				ins5E[2] = cta_res[2];
+				ins5E[3] = cta_res[1];
+				ins5E[4] = cta_res[3];
+				l = do_cmd(reader, ins5E, NULL, NULL, cta_res);
+				if (l < 0 || !status_ok(cta_res + l))
+				{
+				rdr_log(reader, "Ins5E: failed");
+				} else {
+				unsigned char ins36[5] = { 0xD1, 0x36, 0x00, 0x00, 0x00 };
+				ins36[4] = cta_res[1];
+				for (i = 0; i <= cta_res[0]; i++)
+					{
+						ins36[3] = i;
+						l = do_cmd(reader, ins36, NULL, NULL, cta_res);
+						if (l < 0 || !status_ok(cta_res + l))
+						{
+							rdr_log(reader, "Ins36: failed");
+						}
+
+					}
+				}
+                break;
+			}
+			case 0x10: 									//loc_43C203
+            {
+				unsigned char ins7411[5] = { 0xD3,0x74,0x11,0x00,0x00 };
+			l = read_cmd_len(reader, ins7411);
+			ins7411[4] = l + 0x10;
+			l = do_cmd(reader, ins7411, NULL, NULL, cta_res);
+			if (l < 0 || !status_ok(cta_res))
+				{
+				rdr_log(reader, "classD3 ins7411: failed");
+			}
+                break;
+            }
+			case 0x00: // normal state
+            {
+                break;
+            }
+			default:
+            {
+                rdr_log(reader, "unknown ins5C state: %02X %02X %02X %02X", cta_res[0], cta_res[1], cta_res[2], cta_res[3]);
+				break;
+            }
+		}
+		reader->last_poll = now;
 	}
 }
 
