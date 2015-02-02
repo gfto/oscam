@@ -1271,7 +1271,7 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 {
 	struct cc_data *cc = cl->cc;
 	struct s_reader *rdr = cl->reader;
-	if(cl->kill || !rdr)
+	if(cl->kill || !rdr || !cc)
 		{ return NULL; }
 
 	struct cc_srvid cur_srvid;
