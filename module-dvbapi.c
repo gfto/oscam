@@ -1654,7 +1654,7 @@ void dvbapi_read_priority(void)
 #else
 		ret = sscanf(trim(token), "%c: %63s %63s", &type, str1, str1 + 64);
 #endif
-		type = tolower(type);
+		type = tolower((uchar)type);
 
 		if(ret < 1 || (type != 'p' && type != 'i' && type != 'm' && type != 'd' && type != 's' && type != 'l'
 					   && type != 'j' && type != 'a' && type != 'x'))

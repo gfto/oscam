@@ -723,7 +723,7 @@ char *urlencode(struct templatevars *vars, char *str)
 	char *pstr = str, *pbuf = buf;
 	while(*pstr)
 	{
-		if(isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~') { *pbuf++ = *pstr; }
+		if(isalnum((uchar)*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~') { *pbuf++ = *pstr; }
 		else if(*pstr == ' ') { *pbuf++ = '+'; }
 		else
 		{

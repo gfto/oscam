@@ -239,7 +239,7 @@ static int32_t bulcrypt_card_init(struct s_reader *reader, ATR *newatr)
 		if(card_serial[i] == ' ')
 			{ continue; }
 		// Sanity check
-		if(!isdigit(card_serial[i]))
+		if(!isdigit((uchar)card_serial[i]))
 			{ card_serial[i] = '*'; }
 	}
 

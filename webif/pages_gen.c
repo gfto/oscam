@@ -158,7 +158,7 @@ static void parse_index_file(char *filename)
 		int field = 0, pos = 0;
 		char *ident = "", *file = "", *deps = "";
 		int len = strlen(line);
-		if(!len || !isalnum(line[0]))  // Skip comments and junk
+		if(!len || !isalnum((unsigned char)line[0]))  // Skip comments and junk
 			{ continue; }
 		// Parse text[   ]text[   ]text
 		do
