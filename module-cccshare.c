@@ -825,6 +825,56 @@ int32_t is_au_card(struct cc_card *card)
 	return 0;
 }
 
+void merge_sids(struct cc_card *carddst, struct cc_card *cardsrc)
+{
+	LL_ITER it;
+	struct cc_srvid *srvid;
+	struct cc_srvid_block *srvidb;
+	
+	int32_t goodSidCountSrc = ll_count(cardsrc->goodsids);	
+	int32_t goodSidCountDst = ll_count(carddst->goodsids);	
+	
+	if(goodSidCountDst == 0) 
+	{
+		// remove sid blocks good+notbad from src
+		it = ll_iter_create(cardsrc->goodsids);
+		while((srvid = ll_iter_next(&it)))
+		{
+			if(!is_sid_blocked(cardsrc, srvid))
+				{ remove_sid_block(carddst, srvid); }
+		}
+	}
+	else
+	{
+		if(goodSidCountSrc == 0)
+		{
+			// del goods from dst
+			ll_clear(carddst->goodsids);
+
+			// del bads from dst
+			ll_clear(carddst->badsids);
+			
+			// add bads from src
+			it = ll_iter_create(cardsrc->badsids);
+			while((srvidb = ll_iter_next(&it)))
+			{
+				{ add_sid_block(carddst, (struct cc_srvid*)srvidb, false); }
+			}			
+		}
+		else
+		{
+			// add good sid good+notbad from src
+			it = ll_iter_create(cardsrc->goodsids);
+			while((srvid = ll_iter_next(&it)))
+			{
+				if(!is_sid_blocked(cardsrc, srvid))
+					{ add_good_sid(carddst, srvid); }
+			}			
+		}
+	}
+	
+}
+
 /**
  * Adds a new card to a cardlist.
  */
@@ -899,9 +949,8 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
 			card_dup_count++;
 			card2->grp |= card->grp; //add group to the card
 			add_card_providers(card2, card, 0); //merge all providers
-			ll_clear_data(card2->remote_nodes); //clear remote nodes
-			if(!card2->sidtab)
-				{ ll_clear_data(card2->badsids); }
+			ll_clear_data(card2->remote_nodes); //clear remote nodes		
+			merge_sids(card2, card);
 		}
 	}
 
@@ -947,8 +996,7 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
 			card_dup_count++;
 			card2->grp |= card->grp; //add group to the card
 			add_card_providers(card2, card, 0);
-			if(!card2->sidtab)
-				{ ll_clear_data(card2->badsids); }
+			merge_sids(card2, card);
 		}
 
 	}

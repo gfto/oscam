@@ -25,4 +25,14 @@ void cc_UA_oscam2cccam(uint8_t *in, uint8_t *out, uint16_t caid);
 void cc_SA_oscam2cccam(uint8_t *in, uint8_t *out);
 void set_card_timeout(struct cc_card *card);
 
+struct cc_srvid *is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good);
+struct cc_srvid_block *is_sid_blocked(struct cc_card *card, struct cc_srvid *srvid_blocked);
+
+void add_good_sid(struct cc_card *card, struct cc_srvid *srvid_good);
+void remove_good_sid(struct cc_card *card, struct cc_srvid *srvid_good);
+void add_sid_block(struct cc_card *card, struct cc_srvid *srvid_blocked, bool temporary);
+void remove_sid_block(struct cc_card *card, struct cc_srvid *srvid_blocked);
+
+void merge_sids(struct cc_card *carddst, struct cc_card *cardsrc);
+
 #endif

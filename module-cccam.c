@@ -339,7 +339,7 @@ uint32_t has_perm_blocked_sid(struct cc_card *card)
 	return srvid != NULL;
 }
 
-struct cc_srvid   *is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good)
+struct cc_srvid *is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good)
 {
 	LL_ITER it = ll_iter_create(card->goodsids);
 	struct cc_srvid *srvid;
@@ -355,8 +355,7 @@ struct cc_srvid   *is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good
 
 #define BLOCKING_SECONDS 60
 
-void add_sid_block(struct s_client *cl __attribute__((unused)), struct cc_card *card,
-				   struct cc_srvid *srvid_blocked)
+void add_sid_block(struct cc_card *card, struct cc_srvid *srvid_blocked, bool temporary)
 {
 	if(is_sid_blocked(card, srvid_blocked))
 		{ return; }
@@ -365,11 +364,13 @@ void add_sid_block(struct s_client *cl __attribute__((unused)), struct cc_card *
 	if(!cs_malloc(&srvid, sizeof(struct cc_srvid_block)))
 		{ return; }
 	memcpy(srvid, srvid_blocked, sizeof(struct cc_srvid));
-	srvid->blocked_till = time(NULL) + BLOCKING_SECONDS;
+	
+	if(temporary)	
+		{ srvid->blocked_till = time(NULL) + BLOCKING_SECONDS; }
+	
 	ll_append(card->badsids, srvid);
-	cs_log_dbg(D_READER, "%s added sid block %04X(CHID %04X, length %d) for card %08x",
-				  getprefix(), srvid_blocked->sid, srvid_blocked->chid, srvid_blocked->ecmlen,
-				  card->id);
+	cs_log_dbg(D_READER, "added sid block %04X(CHID %04X, length %d) for card %08x",
+				  srvid_blocked->sid, srvid_blocked->chid, srvid_blocked->ecmlen, card->id);
 }
 
 void remove_sid_block(struct cc_card *card, struct cc_srvid *srvid_blocked)
@@ -379,19 +380,12 @@ void remove_sid_block(struct cc_card *card, struct cc_srvid *srvid_blocked)
 	while((srvid = ll_iter_next(&it)))
 		if(sid_eq_nb(srvid_blocked, srvid))
 			{ ll_iter_remove_data(&it); }
+			
+	cs_log_dbg(D_READER, "removed sid block %04X(CHID %04X, length %d) for card %08x",
+				 srvid_blocked->sid, srvid_blocked->chid, srvid_blocked->ecmlen, card->id);			
 }
 
-void remove_good_sid(struct cc_card *card, struct cc_srvid *srvid_good)
-{
-	LL_ITER it = ll_iter_create(card->goodsids);
-	struct cc_srvid *srvid;
-	while((srvid = ll_iter_next(&it)))
-		if(sid_eq(srvid, srvid_good))
-			{ ll_iter_remove_data(&it); }
-}
-
-void add_good_sid(struct s_client *cl __attribute__((unused)), struct cc_card *card,
-				  struct cc_srvid *srvid_good)
+void add_good_sid(struct cc_card *card, struct cc_srvid *srvid_good)
 {
 	if(is_good_sid(card, srvid_good))
 		{ return; }
@@ -402,8 +396,18 @@ void add_good_sid(struct s_client *cl __attribute__((unused)), struct cc_card *c
 		{ return; }
 	memcpy(srvid, srvid_good, sizeof(struct cc_srvid));
 	ll_append(card->goodsids, srvid);
-	cs_log_dbg(D_READER, "%s added good sid %04X(%d) for card %08x",
-				  getprefix(), srvid_good->sid, srvid_good->ecmlen, card->id);
+	cs_log_dbg(D_READER, "added good sid %04X(%d) for card %08x", srvid_good->sid, srvid_good->ecmlen, card->id);
+}
+
+void remove_good_sid(struct cc_card *card, struct cc_srvid *srvid_good)
+{
+	LL_ITER it = ll_iter_create(card->goodsids);
+	struct cc_srvid *srvid;
+	while((srvid = ll_iter_next(&it)))
+		if(sid_eq(srvid, srvid_good))
+			{ ll_iter_remove_data(&it); }
+			
+	cs_log_dbg(D_READER, "removed good sid %04X(%d) for card %08x", srvid_good->sid, srvid_good->ecmlen, card->id);			
 }
 
 /**
@@ -2655,7 +2659,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 				{
 					move_card_to_end(cl, card);
 					if(cwlastresptime < 5000)
-						{ add_sid_block(cl, card, &srvid); }
+						{ add_sid_block(card, &srvid, true); }
 					else
 						{ card->rating--; }
 				}
@@ -2665,14 +2669,14 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 					{
 						move_card_to_end(cl, card);
 						if(cwlastresptime < 5000)
-							{ add_sid_block(cl, card, &srvid); }
+							{ add_sid_block(card, &srvid, true); }
 						else
 							{ card->rating--; }
 					}
 					else
 					{
 						move_card_to_end(cl, card);
-						add_sid_block(cl, card, &srvid);
+						add_sid_block(card, &srvid, true);
 					}
 
 					if(card->rating < MIN_RATING)
@@ -2887,7 +2891,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 						cs_log_dbg(D_READER, "%s null dcw received! sid=%04X(%d)", getprefix(),
 									  srvid.sid, srvid.ecmlen);
 						move_card_to_end(cl, card);
-						add_sid_block(cl, card, &srvid);
+						add_sid_block(card, &srvid, true);
 						//ecm retry:
 						cc_reset_pending(cl, ecm_idx);
 						buf[1] = MSG_CW_NOK2; //So it's really handled like a nok!
