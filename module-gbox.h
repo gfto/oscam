@@ -1,6 +1,14 @@
 #ifndef MODULE_GBOX_H_
 #define MODULE_GBOX_H_
 
+/*
+ * WARNING! Enabling this will make gbox call external programs for OSD with parameters
+ * received from the network. this means that a rogue server that sends you SMS messages
+ * may execute code on your machine. do not enable this unless you know what you are
+ * doing and accept the posssible *BAD* consequences
+*/
+//#define GBOX_ENABLE_UNSAFE_OSD 1
+
 #ifdef MODULE_GBOX
 
 #define NO_GBOX_ID			0
