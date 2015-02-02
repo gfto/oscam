@@ -194,6 +194,30 @@ void cacheex_update_hash(ECM_REQUEST *er)
 	er->csp_hash = cacheex_ecm_hash_calc(er->ecm + 3, er->ecmlen - 3);
 }
 
+void cacheex_free_csp_lastnodes(ECM_REQUEST *er)
+{
+	LLIST *l = er->csp_lastnodes;
+	er->csp_lastnodes = NULL;
+	ll_destroy_free_data(l);
+}
+
+void cacheex_set_csp_lastnode(ECM_REQUEST *er)
+{
+	er->csp_lastnodes = NULL;
+}
+
+void cacheex_set_cacheex_src(ECM_REQUEST *ecm, struct s_client *cl)
+{
+	if(ecm->cacheex_src == cl)
+		ecm->cacheex_src = NULL;
+}
+
+void cacheex_init_cacheex_src(ECM_REQUEST *ecm, ECM_REQUEST *er)
+{
+	if(!ecm->cacheex_src)
+		ecm->cacheex_src = er->cacheex_src;
+}
+
 static void *chkcache_process(void)
 {
 	set_thread_name(__func__);
@@ -385,6 +409,17 @@ static void cacheex_cache_push_to_client(struct s_client *cl, ECM_REQUEST *er)
 }
 
 /**
+ * Check for NULL ecmd5
+ **/
+static inline uint8_t checkECMD5(ECM_REQUEST *er)
+{
+	int8_t i;
+	for(i = 0; i < CS_ECMSTORESIZE; i++)
+		if(er->ecmd5[i]) { return 1; }
+	return 0;
+}
+
+/**
  * cacheex modes:
  *
  * cacheex=1 CACHE PULL:
@@ -570,6 +605,19 @@ inline int8_t cacheex_match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQU
 	return 0;
 }
 
+static void log_cacheex_cw(ECM_REQUEST *er, char *reason)
+{
+	uint8_t *data;
+	uchar remotenodeid[16];
+	data = ll_last_element(er->csp_lastnodes);
+	if(data)
+		memcpy(remotenodeid, data, 8);
+	char buf_ecm[109];
+	format_ecm(er, buf_ecm, 109);
+	cs_log_dbg(D_CACHEEX,"got pushed ecm [%s]: %s - odd/even 0x%x - CSP cw: %s - pushed from %s, at hop %d, origin node-id %" PRIu64 "X",
+			reason, buf_ecm, er->ecm[0], (checkECMD5(er)?"NO":"YES"), er->from_csp ? "csp" : username((er->cacheex_src?er->cacheex_src:er->client)), ll_count(er->csp_lastnodes), er->csp_lastnodes ? cacheex_node_id(remotenodeid): 0);
+}
+
 static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, int8_t csp)
 {
 	if(er->rc >= E_NOTFOUND) { return 0; }
@@ -677,21 +725,6 @@ void cacheex_add_to_cache_from_csp(struct s_client *cl, ECM_REQUEST *er)
 		{ free_push_in_ecm(er); }
 }
 
-
-void log_cacheex_cw(ECM_REQUEST *er, char *reason){
-	uint8_t *data;
-	uchar remotenodeid[16];
-	data = ll_last_element(er->csp_lastnodes);
-	if(data)
-	{
-		memcpy(remotenodeid, data, 8);
-	}
-
-	char buf_ecm[109];
-	format_ecm(er, buf_ecm, 109);
-	cs_log_dbg(D_CACHEEX,"got pushed ecm [%s]: %s - odd/even 0x%x - CSP cw: %s - pushed from %s, at hop %d, origin node-id %" PRIu64 "X",
-			reason, buf_ecm, er->ecm[0], (checkECMD5(er)?"NO":"YES"), er->from_csp ? "csp" : username((er->cacheex_src?er->cacheex_src:er->client)), ll_count(er->csp_lastnodes), er->csp_lastnodes ? cacheex_node_id(remotenodeid): 0);
-}
 
 //Format:
 //caid:prov:srvid:pid:chid:ecmlen=caid:prov:srvid:pid:chid:ecmlen[,validfrom,validto]

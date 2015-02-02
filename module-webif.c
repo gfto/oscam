@@ -37,6 +37,7 @@ extern uint32_t ecmcwcache_size;
 extern uint8_t cs_http_use_utf8;
 extern uint32_t cfg_sidtab_generation;
 extern int32_t exit_oscam;
+extern uint8_t cacheex_peer_id[8];
 
 extern char *entitlement_type[];
 extern char *RDR_CD_TXT[];
