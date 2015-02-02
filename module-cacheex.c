@@ -12,6 +12,7 @@
 #include "oscam-client.h"
 #include "oscam-conf.h"
 #include "oscam-ecm.h"
+#include "oscam-hashtable.h"
 #include "oscam-lock.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
@@ -29,6 +30,169 @@ extern CS_MUTEX_LOCK ecm_pushed_deleted_lock;
 extern struct ecm_request_t	*ecm_pushed_deleted;
 extern CS_MUTEX_LOCK ecmcache_lock;
 extern struct ecm_request_t *ecmcwcache;
+
+// HIT CACHE functions **************************************************************
+
+typedef struct hit_key_t {
+	uint16_t		caid;
+	uint32_t		prid;
+	uint16_t		srvid;
+} HIT_KEY;
+
+typedef struct cache_hit_t {
+	HIT_KEY			key;
+	struct timeb	time;
+	uint64_t		grp;
+	node			ht_node;
+	node			ll_node;
+} CACHE_HIT;
+
+static pthread_rwlock_t hitcache_lock;
+static hash_table ht_hitcache;
+static list ll_hitcache;
+
+void cacheex_init_hitcache(void)
+{
+	init_hash_table(&ht_hitcache, &ll_hitcache);
+	if (pthread_rwlock_init(&hitcache_lock,NULL) != 0)
+		cs_log("Error creating lock hitcache_lock!");
+}
+
+static int cacheex_compare_hitkey(const void *arg, const void *obj)
+{
+	if(((const HIT_KEY*)arg)->caid==((const CACHE_HIT*)obj)->key.caid
+		&& ((const HIT_KEY*)arg)->prid==((const CACHE_HIT*)obj)->key.prid
+		&& ((const HIT_KEY*)arg)->srvid==((const CACHE_HIT*)obj)->key.srvid)
+	{
+		return 0;
+	}
+	return 1;
+}
+
+static int32_t cacheex_check_hitcache(ECM_REQUEST *er, struct s_client *cl)
+{
+	CACHE_HIT *result;
+	HIT_KEY search;
+	memset(&search, 0, sizeof(HIT_KEY));
+	search.caid = er->caid;
+	search.prid = er->prid;
+	search.srvid = er->srvid;
+	pthread_rwlock_rdlock(&hitcache_lock);
+	result = find_hash_table(&ht_hitcache, &search, sizeof(HIT_KEY), &cacheex_compare_hitkey);
+	if(result){
+		struct timeb now;
+		cs_ftime(&now);
+		int64_t gone = comp_timeb(&now, &result->time);
+		uint64_t grp = cl?cl->grp:0;
+		if(
+			gone <= (cfg.max_hitcache_time*1000)
+			&&
+			(!grp || !result->grp || (grp & result->grp))
+		)
+		{
+			pthread_rwlock_unlock(&hitcache_lock);
+			return 1;
+		}
+	}
+	pthread_rwlock_unlock(&hitcache_lock);
+	return 0;
+}
+
+static void cacheex_add_hitcache(struct s_client *cl, ECM_REQUEST *er)
+{
+	if (!cfg.max_hitcache_time)  //we don't want check/save hitcache
+		return;
+	if (!cfg.cacheex_wait_timetab.n)
+		return;
+	uint32_t cacheex_wait_time = get_cacheex_wait_time(er,NULL);
+	if (!cacheex_wait_time)
+		return;
+
+	CACHE_HIT *result;
+	HIT_KEY search;
+
+	memset(&search, 0, sizeof(HIT_KEY));
+	search.caid = er->caid;
+	search.prid = er->prid;
+	search.srvid = er->srvid;
+
+	pthread_rwlock_wrlock(&hitcache_lock);
+
+	result = find_hash_table(&ht_hitcache, &search, sizeof(HIT_KEY), &cacheex_compare_hitkey);
+	if(!result) {  //not found, add it!
+		if(cs_malloc(&result, sizeof(CACHE_HIT)))
+		{
+			memset(result, 0, sizeof(CACHE_HIT));
+			result->key.caid = er->caid;
+			result->key.prid = er->prid;
+			result->key.srvid = er->srvid;
+			add_hash_table(&ht_hitcache, &result->ht_node, &ll_hitcache, &result->ll_node, result, &result->key, sizeof(HIT_KEY));
+		}
+	}
+
+	if(result)
+	{
+		if(cl) result->grp |= cl->grp;
+		cs_ftime(&result->time); //always update time;
+	}
+
+	pthread_rwlock_unlock(&hitcache_lock);
+}
+
+static void cacheex_del_hitcache(ECM_REQUEST *er)
+{
+	HIT_KEY search;
+
+	memset(&search, 0, sizeof(HIT_KEY));
+	search.caid = er->caid;
+	search.prid = er->prid;
+	search.srvid = er->srvid;
+
+	pthread_rwlock_wrlock(&hitcache_lock);
+	search_remove_elem_hash_table(&ht_hitcache, &search, sizeof(HIT_KEY), &cacheex_compare_hitkey);
+    pthread_rwlock_unlock(&hitcache_lock);
+}
+
+void cacheex_cleanup_hitcache(void)
+{
+	CACHE_HIT *cachehit;
+	node *i,*i_next;
+	struct timeb now;
+	int64_t gone;
+	int32_t timeout = (cfg.max_hitcache_time + (cfg.max_hitcache_time / 2))*1000;  //1,5
+	pthread_rwlock_wrlock(&hitcache_lock);
+	i = get_first_node_list(&ll_hitcache);
+	while (i)
+	{
+		i_next = i->next;
+		cachehit = get_data_from_node(i);
+		cs_ftime(&now);
+		gone = comp_timeb(&now, &cachehit->time);
+		if(cachehit && gone>timeout)
+		{
+			remove_elem_list(&ll_hitcache, &cachehit->ll_node);
+			remove_elem_hash_table(&ht_hitcache, &cachehit->ht_node);
+			NULLFREE(cachehit);
+		}
+		i = i_next;
+	}
+	pthread_rwlock_unlock(&hitcache_lock);
+}
+
+static int32_t cacheex_ecm_hash_calc(uchar *buf, int32_t n)
+{
+	int32_t i, h = 0;
+	for(i = 0; i < n; i++)
+	{
+		h = 31 * h + buf[i];
+	}
+	return h;
+}
+
+void cacheex_update_hash(ECM_REQUEST *er)
+{
+	er->csp_hash = cacheex_ecm_hash_calc(er->ecm + 3, er->ecmlen - 3);
+}
 
 static void *chkcache_process(void)
 {
@@ -86,7 +250,7 @@ static void *chkcache_process(void)
 								}
 
 								if(add_hitcache_er)
-									{ add_hitcache(cex_src, er); }  //USE cacheex client (to get correct group) and ecm from requesting client (to get correct caid|prid|srvid)!!!
+									{ cacheex_add_hitcache(cex_src, er); }  //USE cacheex client (to get correct group) and ecm from requesting client (to get correct caid|prid|srvid)!!!
 							}
 						}
 
@@ -95,7 +259,7 @@ static void *chkcache_process(void)
 					{
 						//add_hitcache already called, but we have to remove it because cacheex not coming before wait_time
 						if(ecm->prid==er->prid && ecm->srvid==er->srvid)
-							{ del_hitcache(ecm); }
+							{ cacheex_del_hitcache(ecm); }
 					}
 				}
 				//END check for add_hitcache
@@ -487,7 +651,7 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 		first_client->cwcacheexgot++;
 	}
 
-	add_hitcache(cl, er);  //we have to call it before add_cache, because in chk_process we could remove it!
+	cacheex_add_hitcache(cl, er);  //we have to call it before add_cache, because in chk_process we could remove it!
 	add_cache(er);
 	cacheex_add_stats(cl, er->caid, er->srvid, er->prid, 1);
 
@@ -759,7 +923,7 @@ uint32_t get_cacheex_wait_time(ECM_REQUEST *er, struct s_client *cl)
 	if(awtime > 0 || dwtime > 0)
 	{
 		//if found last in cache return dynwaittime else alwayswaittime
-		if(check_hitcache(er,cl))
+		if(cacheex_check_hitcache(er,cl))
 			{ return dwtime >= awtime ? dwtime : awtime; }
 		else
 			{ return awtime > 0 ? awtime : 0; }

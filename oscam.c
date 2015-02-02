@@ -1423,7 +1423,7 @@ int32_t main(int32_t argc, char *argv[])
 	cs_lock_create(&readdir_lock, "readdir_lock", 5000);
 	cs_lock_create(&cwcycle_lock, "cwcycle_lock", 5000);
 	init_cache();
-	init_hitcache();
+	cacheex_init_hitcache();
 	init_config();
 	cs_init_log();
 	init_machine_info();

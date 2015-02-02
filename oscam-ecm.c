@@ -395,9 +395,7 @@ static void *cw_process(void)
 
 
 			cleanup_cache();
-#ifdef CS_CACHEEX
-			cleanup_hitcache();
-#endif
+			cacheex_cleanup_hitcache();
 
 			cs_ftime(&cache_time);
 			cache_next = add_ms_to_timeb_diff(&cache_time, 3000);
