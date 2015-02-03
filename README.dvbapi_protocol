@@ -177,6 +177,8 @@ uint8_t                  filter number
 uint16_t                 PID to stop filtering
 
 When the client closes connection, all associated channels are stopped in the OSCam.
-Alternatively when there is a need to stop decoding channels on specified demux while
-having the connection still open, the following CA_PMT data could be sent to OSCam:
+
+Alternatively when there is a need to stop decoding channels, while having the connection still open you can send a special
+'3f' packed to OSCam. To stop decoding specified demux the following CA_PMT data should be sent to OSCam:
 9F 80 3f 04 83 02 00 <demux index>
+If <demux index> is 0xff, then it is parsed as a wildcard and all demuxers associated with the connection are stopped.

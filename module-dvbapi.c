@@ -2754,7 +2754,13 @@ void dvbapi_handlesockmsg(unsigned char *buffer, uint32_t len, int32_t connfd)
 				int32_t demux_index = buffer[7 + k];
 				for(i = 0; i < MAX_DEMUX; i++)
 				{
-					if(demux[i].demux_index == demux_index)
+					// 0xff demux_index is a wildcard => close all related demuxers
+					if (demux_index == 0xff)
+					{
+						if (demux[i].socket_fd == connfd)
+							dvbapi_stop_descrambling(i);
+					}
+					else if (demux[i].demux_index == demux_index)
 					{
 						dvbapi_stop_descrambling(i);
 						break;
