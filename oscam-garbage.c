@@ -5,11 +5,6 @@
 #include "oscam-lock.h"
 #include "oscam-string.h"
 #include "oscam-time.h"
-#ifdef MODULE_GBOX
-#include "oscam-files.h"
-#include "module-gbox-sms.h"
-#include "module-gbox.h"
-#endif
 
 #define HASH_BUCKETS 16
 
@@ -136,14 +131,6 @@ static void garbage_collector(void)
 				garbage = next;
 			}
 		}
-#ifdef MODULE_GBOX 
-		char *fext= FILE_GSMS_TXT; 
-		char *fname = get_gbox_tmp_fname(fext); 
-		if (file_exists(fname))
-		{
-			gbox_init_send_gsms();
-		}
-#endif		
 		sleepms_on_cond(&sleep_cond_mutex, &sleep_cond, 1000);
 	}
 	pthread_exit(NULL);
