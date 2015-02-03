@@ -608,11 +608,6 @@ ECM_REQUEST *get_ecmtask(void)
 	if(!cs_malloc(&er, sizeof(ECM_REQUEST)))
 		{ return NULL; }
 	cs_ftime(&er->tps);
-
-#ifdef MODULE_GBOX
-	er->gbox_ecm_id = 0;
-	er->gbox_ecm_status = GBOX_ECM_NOT_ASKED;
-#endif
 	er->rc     = E_UNHANDLED;
 	er->client = cl;
 	er->grp    = 0;  //no readers/cacheex-clients answers yet
