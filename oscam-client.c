@@ -270,9 +270,6 @@ struct s_client *create_client(IN_ADDR_T ip)
 	int32_t bucket = (uintptr_t)cl / 16 % CS_CLIENT_HASHBUCKETS;
 	cl->nexthashed = first_client_hashed[bucket];
 	first_client_hashed[bucket] = cl;
-#ifdef MODULE_GBOX
-	cl->gbox_peer_id = 0;
-#endif
 	cs_writeunlock(&clientlist_lock);
 	return cl;
 }
