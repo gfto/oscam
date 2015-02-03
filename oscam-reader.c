@@ -9,6 +9,7 @@
 #include "oscam-chk.h"
 #include "oscam-client.h"
 #include "oscam-ecm.h"
+#include "oscam-garbage.h"
 #include "oscam-lock.h"
 #include "oscam-net.h"
 #include "oscam-reader.h"
@@ -1145,8 +1146,8 @@ int32_t reader_init(struct s_reader *reader)
 
 	if(reader->emmcache)
 	{
-		add_garbage(rdr->emmcache);
-		rdr->emmcache = NULL;
+		add_garbage(reader->emmcache);
+		reader->emmcache = NULL;
 	}
 	
 	if(!cs_malloc(&reader->emmcache, CS_EMMCACHESIZE * sizeof(struct s_emm)))
