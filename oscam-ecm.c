@@ -1920,7 +1920,6 @@ void write_ecm_answer_fromcache(struct s_write_from_cache *wfc)
 
 	er = wfc->er_new;
 	ecm = wfc->er_cache;
-	NULLFREE(wfc);
 
 	int8_t rc_orig = er->rc;
 
@@ -2313,6 +2312,7 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 		wfc->er_new = er;
 		wfc->er_cache = ecm;
 		write_ecm_answer_fromcache(wfc);
+		NULLFREE(wfc);
 		NULLFREE(ecm);
 	  	free_ecm(er);
 

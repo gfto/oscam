@@ -7811,8 +7811,6 @@ static void *serve_process(void *conn)
 							ptr = strchr(host, '\r');
 							if(ptr) { ptr[0] = '\0'; }
 						}
-						
-						NULLFREE(filebuf);
 					}
 					if(host)
 					{
@@ -7824,6 +7822,7 @@ static void *serve_process(void *conn)
 						{ send_error(f, 200, "Bad Request", NULL, "This web server is running in SSL mode.", 1); }
 					fflush(f);
 					fclose(f);
+					NULLFREE(filebuf);
 				}
 				else
 				{

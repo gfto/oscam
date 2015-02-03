@@ -679,6 +679,8 @@ void free_client(struct s_client *cl)
 	if(rdr)
 	{
 		add_garbage(rdr->emmcache);
+		rdr->emmcache = NULL;
+		
 		remove_reader_from_active(rdr);
 
 		cs_sleepms(1000); //just wait a bit that really really nobody is accessing client data
