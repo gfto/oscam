@@ -1920,6 +1920,7 @@ void write_ecm_answer_fromcache(struct s_write_from_cache *wfc)
 
 	er = wfc->er_new;
 	ecm = wfc->er_cache;
+	NULLFREE(wfc);
 
 	int8_t rc_orig = er->rc;
 

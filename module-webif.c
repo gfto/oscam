@@ -7206,6 +7206,7 @@ static int32_t readRequest(FILE * f, IN_ADDR_T in, char **result, int8_t forcePl
 		if(!cs_realloc(result, bufsize + n + 1))
 		{
 			send_error500(f);
+			NULLFREE(*result);
 			return -1;
 		}
 
@@ -7810,6 +7811,8 @@ static void *serve_process(void *conn)
 							ptr = strchr(host, '\r');
 							if(ptr) { ptr[0] = '\0'; }
 						}
+						
+						NULLFREE(filebuf);
 					}
 					if(host)
 					{

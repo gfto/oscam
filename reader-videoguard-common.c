@@ -769,6 +769,7 @@ int32_t checksum_ok(const unsigned char *ird_payload)		/*checksum for precam dat
 void memorize_cmd_table(struct s_reader *reader, const unsigned char *mem, int32_t size)
 {
 	struct videoguard_data *csystem_data = reader->csystem_data;
+	NULLFREE(csystem_data->cmd_table);
 	if(cs_malloc(&csystem_data->cmd_table, size))
 		{ memcpy(csystem_data->cmd_table, mem, size); }
 }

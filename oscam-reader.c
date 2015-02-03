@@ -1126,6 +1126,12 @@ int32_t reader_init(struct s_reader *reader)
 			return 0;
 		}
 
+		if(client->ecmtask)
+		{
+			add_garbage(client->ecmtask);
+			client->ecmtask = NULL;
+		}
+
 		if(!cs_malloc(&client->ecmtask, cfg.max_pending * sizeof(ECM_REQUEST)))
 			{ return 0; }
 
@@ -1137,6 +1143,12 @@ int32_t reader_init(struct s_reader *reader)
 			{ return 0; }
 	}
 
+	if(reader->emmcache)
+	{
+		add_garbage(rdr->emmcache);
+		rdr->emmcache = NULL;
+	}
+	
 	if(!cs_malloc(&reader->emmcache, CS_EMMCACHESIZE * sizeof(struct s_emm)))
 	{
 		NULLFREE(client->ecmtask);
