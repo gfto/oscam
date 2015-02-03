@@ -172,6 +172,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 							break;
 						}
 						if (readed == 0){ // nothing to read left!
+							rc = -5;
 							break;
 						}
 						if (readed > 0){ // received something, add it!
@@ -184,8 +185,9 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 
 			}
 			if(rs < 36)
-			{
-				rc = -1;
+			{	
+				if(rc != -5)
+					{ rc = -1; }
 				goto out;
 			}
 			break;
@@ -295,6 +297,9 @@ out:
 	case -4:
 		cs_log("checksum error (wrong password ?)");
 		break;
+	case -5:
+		cs_log_dbg(client->typ == 'c' ? D_CLIENT : D_READER, "connection closed");
+		break;		
 		//default:  cs_log_dbg(D_TRACE, "camd35_recv returns rc=%d", rc); break;
 	}
 
