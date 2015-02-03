@@ -36,6 +36,8 @@ static inline int8_t cacheex_get_rdr_mode(struct s_reader *reader) { return read
 void cacheex_init_hitcache(void);
 void cacheex_cleanup_hitcache(void);
 void cacheex_update_hash(ECM_REQUEST *er);
+void cacheex_mode1_delay(ECM_REQUEST *er);
+void cacheex_timeout(ECM_REQUEST *er);
 #else
 static inline void cacheex_init(void) { }
 static inline void cacheex_clear_account_stats(struct s_auth *UNUSED(account)) { }
@@ -54,6 +56,8 @@ static inline int8_t cacheex_get_rdr_mode(struct s_reader *UNUSED(reader)) { ret
 static inline void cacheex_init_hitcache(void) { }
 static inline void cacheex_cleanup_hitcache(void) { }
 static inline void cacheex_update_hash(ECM_REQUEST *UNUSED(er)) { }
+static inline void cacheex_mode1_delay(ECM_REQUEST *UNUSED(er)) { }
+static inline void cacheex_timeout(ECM_REQUEST *UNUSED(er)) { }
 #endif
 
 #endif

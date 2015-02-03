@@ -1040,4 +1040,69 @@ bool cacheex_check_queue_length(struct s_client *cl)
 	return 1;
 }
 
+void cacheex_mode1_delay(ECM_REQUEST *er)
+{
+	if(!er->cacheex_wait_time_expired
+	   && er->cacheex_mode1_delay
+	   && er->cacheex_reader_count > 0
+	   && !er->stage
+	   && er->rc >= E_UNHANDLED)
+	{
+		cs_log_dbg(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} cacheex_mode1_delay timeout! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
+		request_cw_from_readers(er, 1); // setting stop_stage=1, we request only cacheex mode 1 readers. Others are requested at cacheex timeout!
+	}
+}
+
+void cacheex_timeout(ECM_REQUEST *er)
+{
+	if(er->cacheex_wait_time_expired)
+		return;
+	er->cacheex_wait_time_expired = 1;
+	if(er->rc >= E_UNHANDLED)
+	{
+		cs_log_dbg(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} cacheex timeout! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
+		//if check_cw mode=0, first try to get cw from cache without check counter!
+		CWCHECK check_cw = get_cwcheck(er);
+		if(!check_cw.mode)
+		{
+			struct ecm_request_t *ecm=NULL;
+			ecm = check_cache(er, er->client);
+			if(ecm)     //found in cache
+			{
+				struct s_write_from_cache *wfc=NULL;
+				if(!cs_malloc(&wfc, sizeof(struct s_write_from_cache)))
+				{
+					NULLFREE(ecm);
+					return;
+				}
+				wfc->er_new=er;
+				wfc->er_cache=ecm;
+				if(!add_job(er->client, ACTION_ECM_ANSWER_CACHE, wfc, sizeof(struct s_write_from_cache)))  //write_ecm_answer_fromcache
+					{ NULLFREE(ecm); }
+				return;
+			}
+		}
+		//check if "normal" readers selected, if not send NOT FOUND!
+		//cacheex1-client (having always no "normal" reader), or not-cacheex-1 client with no normal readers available (or filtered by LB)
+		if( (er->reader_count + er->fallback_reader_count - er->cacheex_reader_count) <= 0 )
+		{
+			if(!cfg.wait_until_ctimeout){
+				er->rc = E_NOTFOUND;
+				er->selected_reader = NULL;
+				er->rcEx = 0;
+				cs_log_dbg(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} cacheex timeout: NO \"normal\" readers... not_found! ", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
+				send_dcw(er->client, er);
+				return;
+			}
+		}
+		else
+		{
+			if(er->stage < 2){
+				debug_ecm(D_TRACE, "request for %s %s", username(er->client), buf);
+				request_cw_from_readers(er, 0);
+			}
+		}
+	}
+}
+
 #endif

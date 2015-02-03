@@ -45,12 +45,4 @@ uint8_t checkCWpart(uchar *cw, int8_t part);
 int32_t ecmfmt(uint16_t caid, uint16_t onid, uint32_t prid, uint16_t chid, uint16_t pid, uint16_t srvid, uint16_t l, char *ecmd5hex, char *csphash, char *cw, char *result, size_t size, uint16_t origin_peer, uint8_t distance);
 int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size);
 
-#ifdef CS_CACHEEX
-void cacheex_mode1_delay(ECM_REQUEST *er);
-void cacheex_timeout(ECM_REQUEST *er);
-#else
-static inline void cacheex_mode1_delay(ECM_REQUEST *UNUSED(er)) { }
-static inline void cacheex_timeout(ECM_REQUEST *UNUSED(er)) { }
-#endif
-
 #endif
