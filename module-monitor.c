@@ -121,11 +121,15 @@ int32_t monitor_send_idx(struct s_client *cl, char *txt)
 	nanosleep(&req_ts, NULL); //avoid lost udp-pakkets
 	if(!cl->crypted)
 		{ return sendto(cl->udp_fd, txt, strlen(txt), 0, (struct sockaddr *)&cl->udp_sa, cl->udp_sa_len); }
+	l = strlen(txt);
+	if(l > 255)
+		{ l = 255; }
 	buf[0] = '&';
-	buf[9] = l = strlen(txt);
+	buf[9] = l;
 	l = boundary(4, l + 5) + 5;
 	memcpy(buf + 1, module_data->ucrc, 4);
 	cs_strncpy((char *)buf + 10, txt, sizeof(buf) - 10);
+	memset(buf+10+buf[9], 0, l-10-buf[9]);
 	uchar tmp[10];
 	memcpy(buf + 5, i2b_buf(4, crc32(0L, buf + 10, l - 10), tmp), 4);
 	aes_encrypt_idx(&module_data->aes_keys, buf + 5, l - 5);
