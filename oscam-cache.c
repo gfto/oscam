@@ -71,6 +71,11 @@ void init_cache(void){
 		cs_log("Error creating lock cache_lock!");
 }
 
+void free_cache(void){
+	deinitialize_hash_table(&ht_cache);
+	pthread_rwlock_destroy(&cache_lock);
+}
+
 uint32_t cache_size(void){
 	return count_hash_table(&ht_cache);
 }

@@ -1607,6 +1607,8 @@ int32_t main(int32_t argc, char *argv[])
 	if(oscam_pidfile)
 		{ unlink(oscam_pidfile); }
 
+	free_cache();
+	cacheex_free_hitcache();
 	webif_tpls_free();
 	init_free_userdb(cfg.account);
 	cfg.account = NULL;

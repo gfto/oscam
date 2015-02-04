@@ -50,12 +50,21 @@ typedef struct cache_hit_t {
 static pthread_rwlock_t hitcache_lock;
 static hash_table ht_hitcache;
 static list ll_hitcache;
+static bool cacheex_running;
 
 void cacheex_init_hitcache(void)
 {
 	init_hash_table(&ht_hitcache, &ll_hitcache);
 	if (pthread_rwlock_init(&hitcache_lock,NULL) != 0)
 		cs_log("Error creating lock hitcache_lock!");
+	cacheex_running = true;
+}
+
+void cacheex_free_hitcache(void)
+{
+	cacheex_running = false;
+	deinitialize_hash_table(&ht_hitcache);
+	pthread_rwlock_destroy(&hitcache_lock);
 }
 
 static int cacheex_compare_hitkey(const void *arg, const void *obj)
@@ -231,7 +240,7 @@ static void *chkcache_process(void)
 	struct s_client *cex_src=NULL;
 	struct s_write_from_cache *wfc=NULL;
 
-	while(1)
+	while(cacheex_running)
 	{
 		cs_readlock(&ecmcache_lock);
 		for(er = ecmcwcache; er; er = er->next)
