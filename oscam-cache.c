@@ -192,8 +192,7 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 
 		//if preferlocalcards=2 for this ecm request, we can server ONLY cw from localcards readers until stage<3
 		if(er->preferlocalcards==2 && !cw->localcards && er->stage<3){
-		    pthread_rwlock_unlock(&cache_lock);
-		    return NULL;
+			goto out_err;
 		}
 
 		CWCHECK check_cw = get_cwcheck(er);
@@ -202,8 +201,7 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 		   && cw->count < check_cw.counter
 		   && (check_cw.mode || !er->cacheex_wait_time_expired)
 		){
-		    pthread_rwlock_unlock(&cache_lock);
-		    return NULL;
+			goto out_err;
 		}
 #endif
 
@@ -213,16 +211,14 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 		uint8_t cwc_ncwc = cw->cwc_next_cw_cycle < 2 ? cw->cwc_next_cw_cycle : 2;
 		if(cw->got_bad_cwc)
 		{
-			pthread_rwlock_unlock(&cache_lock);
-			return NULL;
+			goto out_err;
 		}
 		if(checkcwcycle(cl, er, NULL, cw->cw, 0, cwc_ct, cwc_ncwc) != 0){
 			cs_log_dbg(D_CWC | D_LB, "{client %s, caid %04X, srvid %04X} [check_cache] cyclecheck passed ecm in INT. cache, ecm->rc %d", (cl ? cl->account->usr : "-"), er->caid, er->srvid, ecm ? ecm->rc : -1);
 		}else{
 			cs_log_dbg(D_CWC, "cyclecheck [BAD CW Cycle] from Int. Cache detected.. {client %s, caid %04X, srvid %04X} [check_cache] -> skip cache answer", (cl ? cl->account->usr : "-"), er->caid, er->srvid);
 			cw->got_bad_cwc = 1; // no need to check it again
-			pthread_rwlock_unlock(&cache_lock);
-			return NULL;
+			goto out_err;
 		}
 #endif
 
@@ -239,8 +235,9 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 		}
 	}
 
-    pthread_rwlock_unlock(&cache_lock);
-    return ecm;
+out_err:
+	pthread_rwlock_unlock(&cache_lock);
+	return ecm;
 }
 
 
