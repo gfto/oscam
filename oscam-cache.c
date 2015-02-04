@@ -243,15 +243,64 @@ out_err:
 	return ecm;
 }
 
+void cacheex_cache_add(ECM_REQUEST *er, ECMHASH *result, CW *cw, bool add_new_cw)
+{
+	(void)er; (void)result; (void)cw; (void)add_new_cw;
+#ifdef CS_CACHEEX
+	er->cw_cache = cw;
+	cacheex_cache_push(er);
+
+	//cacheex debug log lines and cw diff stuff
+	if(!check_client(er->cacheex_src))
+		return;
+
+	if(!add_new_cw)
+	{
+		debug_ecm(D_CACHEEX| D_CSP, "got duplicate pushed ECM %s from %s", buf, er->from_csp ? "csp" : username(er->cacheex_src));
+		return;
+	}
+
+	debug_ecm(D_CACHEEX|D_CSP, "got pushed ECM %s from %s", buf, er->from_csp ? "csp" : username(er->cacheex_src));
+	CW *cw_first = get_first_cw(result, er);
+	if(!cw_first)
+		return;
+
+	//compare er cw with mostly counted cached cw
+	if(memcmp(er->cw, cw_first->cw, sizeof(er->cw)) != 0)
+	{
+		er->cacheex_src->cwcacheexerrcw++;
+		if (er->cacheex_src->account)
+			er->cacheex_src->account->cwcacheexerrcw++;
+
+		if (((0x0200| 0x0800) & cs_dblevel)) //avoid useless operations if debug is not enabled
+		{
+			char cw1[16*3+2], cw2[16*3+2];
+			cs_hexdump(0, er->cw, 16, cw1, sizeof(cw1));
+			cs_hexdump(0, cw_first->cw, 16, cw2, sizeof(cw2));
+
+			char ip1[20]="", ip2[20]="";
+			if (check_client(er->cacheex_src))
+				cs_strncpy(ip1, cs_inet_ntoa(er->cacheex_src->ip), sizeof(ip1));
+			if (check_client(cw_first->cacheex_src))
+				cs_strncpy(ip2, cs_inet_ntoa(cw_first->cacheex_src->ip), sizeof(ip2));
+			else if (cw_first->selected_reader && check_client(cw_first->selected_reader->client))
+				cs_strncpy(ip2, cs_inet_ntoa(cw_first->selected_reader->client->ip), sizeof(ip2));
+
+			debug_ecm(D_CACHEEX| D_CSP, "WARNING: Different CWs %s from %s(%s)<>%s(%s): %s<>%s ", buf,
+				er->from_csp ? "csp" : username(er->cacheex_src), ip1,
+				check_client(cw_first->cacheex_src)?username(cw_first->cacheex_src):(cw_first->selected_reader?cw_first->selected_reader->label:"unknown/csp"), ip2,
+				cw1, cw2);
+		}
+	}
+#endif
+}
 
 void add_cache(ECM_REQUEST *er){
 	if(!er->csp_hash) return;
 
 	ECMHASH *result = NULL;
 	CW *cw = NULL;
-#ifdef CS_CACHEEX
 	bool add_new_cw=false;
-#endif
 
 	pthread_rwlock_wrlock(&cache_lock);
 
@@ -315,9 +364,7 @@ void add_cache(ECM_REQUEST *er){
 
 				add_hash_table(&result->ht_cw, &cw->ht_node, &result->ll_cw, &cw->ll_node, cw, cw->cw, sizeof(er->cw));
 
-	#ifdef CS_CACHEEX
 				add_new_cw=true;
-	#endif
 				break;
 			}
 
@@ -344,54 +391,7 @@ void add_cache(ECM_REQUEST *er){
 
 	pthread_rwlock_unlock(&cache_lock);
 
-
-#ifdef CS_CACHEEX
-
-	er->cw_cache=cw;
-	cacheex_cache_push(er);
-
-
-	//cacheex debug log lines and cw diff stuff
-	if(check_client(er->cacheex_src)){
-		if(add_new_cw){
-			debug_ecm(D_CACHEEX|D_CSP, "got pushed ECM %s from %s", buf, er->from_csp ? "csp" : username(er->cacheex_src));
-
-			CW *cw_first = get_first_cw(result, er);
-
-			if(er && cw_first){
-			
-			//compare er cw with mostly counted cached cw
-			if(memcmp(er->cw, cw_first->cw, sizeof(er->cw)) != 0) {
-				er->cacheex_src->cwcacheexerrcw++;
-				if (er->cacheex_src->account)
-					er->cacheex_src->account->cwcacheexerrcw++;
-
-				if (((0x0200| 0x0800) & cs_dblevel)) { //avoid useless operations if debug is not enabled
-					char cw1[16*3+2], cw2[16*3+2];
-					cs_hexdump(0, er->cw, 16, cw1, sizeof(cw1));
-					cs_hexdump(0, cw_first->cw, 16, cw2, sizeof(cw2));
-
-					char ip1[20]="", ip2[20]="";
-					if (check_client(er->cacheex_src))
-						cs_strncpy(ip1, cs_inet_ntoa(er->cacheex_src->ip), sizeof(ip1));
-					if (check_client(cw_first->cacheex_src))
-						cs_strncpy(ip2, cs_inet_ntoa(cw_first->cacheex_src->ip), sizeof(ip2));
-					else if (cw_first->selected_reader && check_client(cw_first->selected_reader->client))
-						cs_strncpy(ip2, cs_inet_ntoa(cw_first->selected_reader->client->ip), sizeof(ip2));
-
-					debug_ecm(D_CACHEEX| D_CSP, "WARNING: Different CWs %s from %s(%s)<>%s(%s): %s<>%s ", buf,
-						er->from_csp ? "csp" : username(er->cacheex_src), ip1,
-						check_client(cw_first->cacheex_src)?username(cw_first->cacheex_src):(cw_first->selected_reader?cw_first->selected_reader->label:"unknown/csp"), ip2,
-						cw1, cw2);
-				}
-			}
-
-		}
-		}else
-			debug_ecm(D_CACHEEX| D_CSP, "got duplicate pushed ECM %s from %s", buf, er->from_csp ? "csp" : username(er->cacheex_src));
-	}
-
-#endif
+	cacheex_cache_add(er, result, cw, add_new_cw);
 }
 
 void cleanup_cache(void){
