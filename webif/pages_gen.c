@@ -462,6 +462,8 @@ int main(void)
 	{
 		fprintf(stderr, "internal error - lzo_init() failed !!!\n");
 		fprintf(stderr, "(this usually indicates a compiler bug - try recompiling\nwithout optimizations, and enable '-DLZO_DEBUG' for diagnostics)\n");
+		free(out);
+		free(data);
 		return 3;
 	}
 
@@ -476,6 +478,8 @@ int main(void)
 	{
 		/* this should NEVER happen */
 		printf("internal error - compression failed: %d\n", r);
+		free(out);
+		free(data);
 		return 2;
 	}
 
