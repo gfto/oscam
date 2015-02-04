@@ -1,7 +1,6 @@
 ##JSONARRAYDELIMITER##{
 "thid": "##CSIDX##",
 "type": "##CLIENTTYPE##",
-"name": "##CLIENTUSER##",
 "name_enc": "##USERENC##",
 "rname_enc": "##READERNAMEENC##",
 "upicmissing": "##UPICMISSING##",

@@ -253,13 +253,13 @@ $(function () {
 		var img = $(this).children("img");
 		waitForMsg();
 		if ($(this).data('next-action') == 'enable') {
-			$(this).data('next-action', 'disable').attr('title', 'Disable this reader');
+			$(this).data('next-action', 'disable').attr('title', 'Disable Reader: ' + $(this).data('reader-name') + $(this).data('desc'));
 			$(rowid).attr('class', 'enabledreader');
-			img.attr('src', 'image?i=ICDIS').attr('alt', 'Disable this reader');
+			img.attr('src', 'image?i=ICDIS').attr('alt', 'Disable');
 		} else {
-			$(this).data('next-action', 'enable').attr('title', 'Enable this reader');
+			$(this).data('next-action', 'enable').attr('title', 'Enable Reader: ' + $(this).data('reader-name') + $(this).data('desc'));
 			$(rowid).attr('class', 'disabledreader');
-			img.attr('src', 'image?i=ICENA').attr('alt', 'Enable this reader');
+			img.attr('src', 'image?i=ICENA').attr('alt', 'Enable');
 		}
 		parameters = parameters_old;
 	});
@@ -286,15 +286,15 @@ $(function () {
 		var img = $(this).children("img");
 		waitForMsg();
 		if ($(this).data('next-action') == 'enable') {
-			$(this).data('next-action', 'disable').attr('title', 'Disable this user');
+			$(this).data('next-action', 'disable').attr('title', 'Disable User: ' + $(this).data('user-name') + $(this).data('desc'));
 			$(rowid).attr('class', 'offline');
 			$(rowid + ' > td.usercol2').text('offline');
-			img.attr('src', 'image?i=ICDIS').attr('alt', 'Disable this user');
+			img.attr('src', 'image?i=ICDIS').attr('alt', 'Disable');
 		} else {
-			$(this).data('next-action', 'enable').attr('title', 'Enable this user');
+			$(this).data('next-action', 'enable').attr('title', 'Enable User: ' + $(this).data('user-name') + $(this).data('desc'));
 			$(rowid).attr('class', 'disabled');
 			$(rowid + ' > td.usercol2').text('offline (disabled)');
-			img.attr('src', 'image?i=ICENA').attr('alt', 'Enable this user');
+			img.attr('src', 'image?i=ICENA').attr('alt', 'Enable');
 		}
 		parameters = parameters_old;
 	});
@@ -836,7 +836,7 @@ function updateLogpage(data) {
 
 		if (isWhitelisted(item.line)) {
 			var newcolor = getLogColor(item.line);
-			var newline = $('<li class="' + item.usr + '">' + item.line + '</li>\n');
+			var newline = $('<li class="' + decodeURI(item.usr) + '">' + Base64.decode(item.line) + '</li>\n');
 			var hiddenline = 0;
 			if (newcolor) {
 				if (newcolor.hidden != '1') {
@@ -1056,14 +1056,14 @@ function updateStatuspage(data) {
 			}
 			$(container).append(newrow);
 
-			var name1, name2, kill1, kill2, kill3, edit1;
+			var name1, name2, name3, kill1, kill2, kill3, edit1;
 			switch (item.type) {
 			case 'c':
 			case 'm':
 				name1 = 'User';
 				name2 = item.name_enc;
 				kill1 = '" href="status.html?action=kill&threadid=' + item.thid.substring(3, item.thid.length);
-				kill2 = 'Kill the '
+				kill2 = 'Kill'
 				kill3 = 'ICKIL';
 				edit1 = 'user_edit.html?user=';
 				break;
@@ -1072,34 +1072,37 @@ function updateStatuspage(data) {
 			case 'x':
 				name1 = (item.type == 'r') ? 'Reader' : 'Proxy';
 				name2 = item.rname_enc;
-				kill1 = '" href="status.html?action=restart&label=' + item.name;
-				kill2 = 'Restart the ';
+				kill1 = '" href="status.html?action=restart&label=' + name2;
+				kill2 = 'Restart';
 				kill3 = 'ICRES';
 				edit1 = 'readerconfig.html?label=';
 				break;
 			}
+			name3 = decodeURI(name2);
 
 			if (!is_nopoll('statuscol0')) {
-				$(uid + " > td.statuscol0").append('<a title="Hide the ' +
-					name1 + ' ' + item.name + '" href="status.html?hide=' +
+				$(uid + " > td.statuscol0").append('<a title="Hide ' +
+					name1 + ': ' + name3 + (item.desc ? '\n' + item.desc.replace('&#13;', '') : '') +
+					'" href="status.html?hide=' +
 					item.thid.substring(3, item.thid.length) +
-					'"><img class="icon" alt="Hide the' +
-					name1 + ' ' + item.name + '" src="image?i=ICHID"></img>');
+					'"><img class="icon" alt="Hide"' +
+					'" src="image?i=ICHID"></img>');
 			}
 
 			if (!is_nopoll('statuscol1')) {
-				$(uid + " > td.statuscol1").append('<a title="' + kill2 +
-					name1 + ' ' + item.name + kill1 + '"><img class="icon" alt="' +
-					kill2 + name1 + ' ' + item.name + '" src="image?i=' + kill3 + '"></img>');
+				$(uid + " > td.statuscol1").append('<a title="' + kill2 + ' ' +
+					name1 + ': ' + name3 + (item.desc ? '\n' + item.desc.replace('&#13;', '') : '') +
+					kill1 + '"><img class="icon" alt="' + kill2 + 
+					'" src="image?i=' + kill3 + '"></img>');
 			}
 
 			if (!is_nopoll('statuscol4')) {
 				if (data.oscam.piconenabled == "1" && !item.upicmissing) {
 					$(uid + " > td.statuscol4").append('<a href="' + edit1 + name2 + '"><img class="statususericon" title="Edit ' +
-						name1 + ': ' + item.name + '\n' + item.desc + '" src="image?i=IC_' + name2 + '"></img></a>');
+						name1 + ': ' + name3 + (item.desc ? '\n' + item.desc.replace('&#13;', '') : '') + '" src="image?i=IC_' + name2 + '"></img></a>');
 				} else {
 					$(uid + " > td.statuscol4").append('<a href="' + edit1 + name2 + '" title="Edit ' + name1 + ': ' +
-						item.name + '\n' + item.desc + '\n' + item.upicmissing + '">' + item.name + '</a>');
+						name3 + (item.desc ? '\n' + item.desc.replace('&#13;', '') : '') + '\n' + item.upicmissing + '">' + name3 + '</a>');
 				}
 			}
 
@@ -1133,11 +1136,11 @@ function updateStatuspage(data) {
 			if (!is_nopoll('statuscol4')) {
 				if (data.oscam.piconenabled == "1" && !item.upicmissing) {
 					$(uid + " > td.statuscol4").html('<a href="user_edit.html?user=' + item.name_enc +
-						'"><img class="statususericon" title="Edit User: ' + item.name + item.desc +
+						'"><img class="statususericon" title="Edit User: ' + decodeURI(item.name_enc) + item.desc +
 						'" src="image?i=IC_' + item.name_enc + '"></img></a>');
 				} else {
 					$(uid + " > td.statuscol4").html('<a href="user_edit.html?user=' + item.name_enc + '" title="Edit User: ' +
-						item.name + item.desc + item.upicmissing + '">' + item.name + '</a>');
+						decodeURI(item.name_enc) + item.desc + item.upicmissing + '">' + decodeURI(item.name_enc) + '</a>');
 				}
 			}
 		}
@@ -1157,7 +1160,7 @@ function updateStatuspage(data) {
 		}
 
 		if (!is_nopoll('statuscol4')) {
-			$(uid + " > td.statuscol4").attr('title', item.name + (item.desc ? '\n' + item.desc.replace('&#013;', '') : ''));
+			$(uid + " > td.statuscol4").attr('title', decodeURI(item.type == 'c' ? item.name_enc : item.rname_enc) + (item.desc ? '\n' + item.desc.replace('&#13;', '') : ''));
 		}
 		if (!is_nopoll('statuscol7')) {
 			$(uid + " > td.statuscol7").text(item.connection.ip);
@@ -1229,7 +1232,7 @@ function updateStatuspage(data) {
 				var value = item.type == 'c' ? (item.request.answered ? item.request.answered + ' (' + item.request.msvalue + ' ms)' : '') : item.request.lbvalue;
 				if (data.oscam.lbdefined) {
 					var label = item.rname_enc.replace('+%28cache%29', '');
-					var name = item.type == 'c' ? item.request.answered.replace(' (cache)', '') : item.name;
+					var name = item.type == 'c' ? item.request.answered.replace(' (cache)', '') : decodeURI(label);
 					if (!$(uid + " > td.statuscol14 > a").length) {
 						$(uid + " > td.statuscol14")
 							.text('')
@@ -1359,10 +1362,38 @@ function updateStatuspage(data) {
 	}
 
 	//update reader-headline
-	$("#rcc").text(data.oscam.status.rcc);
+	if(data.oscam.status.rco != '0') {
+		var rcon = (data.oscam.status.rca - data.oscam.status.rco);
+		if($("#rco").length) {
+			$("#rcc").text(data.oscam.status.rcc);
+			$("#rca").text(data.oscam.status.rca);	
+			$("#rco").text(rcon);
+		} else {
+			$("#rhead").html('Readers <span id="rcc">' + data.oscam.status.rcc + '</span>/' + data.oscam.status.rca + ' (<span id="rco">' + rcon + '</span> of ' + data.oscam.status.rca + ' CARDOK)');
+		}
+	} else if($("#rco").length) {
+		$("#rhead").html('Readers <span id="rcc">' + data.oscam.status.rcc + '</span>/' + data.oscam.status.rca);
+	} else {
+		$("#rcc").text(data.oscam.status.rcc);
+		$("#rca").text(data.oscam.status.rca);	
+	}
 
 	//update proxy-headline
-	$("#pcc").text(data.oscam.status.pcc);
+	if(data.oscam.status.pco != '0') {
+		var pcon = (data.oscam.status.pca - data.oscam.status.pco);
+		if($("#pco").length) {
+			$("#pcc").text(data.oscam.status.pcc);
+			$("#pca").text(data.oscam.status.pca);	
+			$("#pco").text(pcon);
+		} else {
+			$("#phead").html('Proxies <span id="pcc">' + data.oscam.status.pcc + '</span>/' + data.oscam.status.pca + ' (<span id="pco">' + pcon + '</span> of ' + data.oscam.status.pca + ' online)');
+		}
+	} else if($("#pco").length) {
+		$("#phead").html('Proxies <span id="pcc">' + data.oscam.status.pcc + '</span>/' + data.oscam.status.pca);
+	} else {
+		$("#pcc").text(data.oscam.status.pcc);
+		$("#pca").text(data.oscam.status.pca);	
+	}
 
 	// update footer
 	updateFooter(data);
@@ -1916,3 +1947,6 @@ $(document).ready(function () {
 		}
 	}
 })(jQuery)
+
+// Create Base64 Object
+var Base64={_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",encode:function(e){var t="";var n,r,i,s,o,u,a;var f=0;e=Base64._utf8_encode(e);while(f<e.length){n=e.charCodeAt(f++);r=e.charCodeAt(f++);i=e.charCodeAt(f++);s=n>>2;o=(n&3)<<4|r>>4;u=(r&15)<<2|i>>6;a=i&63;if(isNaN(r)){u=a=64}else if(isNaN(i)){a=64}t=t+this._keyStr.charAt(s)+this._keyStr.charAt(o)+this._keyStr.charAt(u)+this._keyStr.charAt(a)}return t},decode:function(e){var t="";var n,r,i;var s,o,u,a;var f=0;e=e.replace(/[^A-Za-z0-9\+\/\=]/g,"");while(f<e.length){s=this._keyStr.indexOf(e.charAt(f++));o=this._keyStr.indexOf(e.charAt(f++));u=this._keyStr.indexOf(e.charAt(f++));a=this._keyStr.indexOf(e.charAt(f++));n=s<<2|o>>4;r=(o&15)<<4|u>>2;i=(u&3)<<6|a;t=t+String.fromCharCode(n);if(u!=64){t=t+String.fromCharCode(r)}if(a!=64){t=t+String.fromCharCode(i)}}t=Base64._utf8_decode(t);return t},_utf8_encode:function(e){e=e.replace(/\r\n/g,"\n");var t="";for(var n=0;n<e.length;n++){var r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r)}else if(r>127&&r<2048){t+=String.fromCharCode(r>>6|192);t+=String.fromCharCode(r&63|128)}else{t+=String.fromCharCode(r>>12|224);t+=String.fromCharCode(r>>6&63|128);t+=String.fromCharCode(r&63|128)}}return t},_utf8_decode:function(e){var t="";var n=0;var r=c1=c2=0;while(n<e.length){r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r);n++}else if(r>191&&r<224){c2=e.charCodeAt(n+1);t+=String.fromCharCode((r&31)<<6|c2&63);n+=2}else{c2=e.charCodeAt(n+1);c3=e.charCodeAt(n+2);t+=String.fromCharCode((r&15)<<12|(c2&63)<<6|c3&63);n+=3}}return t}}

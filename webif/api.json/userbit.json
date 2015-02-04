@@ -1,6 +1,5 @@
 ##JSONDELIMITER##{
 	"user":{
-		"name":"##USERNAME##",
 		"usermd5":"##USERMD5##",
 		"status":"##STATUS##",
 		"classname":"##CLASSNAME##",

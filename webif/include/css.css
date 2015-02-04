@@ -849,7 +849,9 @@ path.graph_curve {stroke-opacity:0.8;stroke-width:0.7px;fill:none}
 	margin:1px auto 15px;
 	padding:0px 4px
 }
-#livelogdata {}
+#livelogdata {
+	white-space:pre
+}
 li.regex, li.regexdata_nav, li.regexdata_save{
 	white-space:nowrap
 }

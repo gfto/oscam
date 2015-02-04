@@ -10,7 +10,11 @@
 	"mcs":"##MCS##",
 	"mca":"##MCA##",
 	"rcc":"##RCC##",
+	"rca":"##RCA##",
+	"rco":"##RCO##",
 	"pcc":"##PCC##",
+	"pca":"##PCA##",
+	"pco":"##PCO##",
 	"client":[
 	                          ##JSONSTATUSBITS##
 								]}

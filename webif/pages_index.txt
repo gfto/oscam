@@ -238,7 +238,7 @@ SHUTDOWN                      shutdown/shutdown.html
 STATUS                        status/status.html
 CACHEEXINFOBIT                status/status_cacheexinfo.html                              CS_CACHEEX
 CLIENTHEADLINE                status/status_cheadline.html
-CLIENTHEADLINEWITH            status/status_cheadlineadd.html
+CLIENTHEADLINEADD             status/status_cheadlineadd.html
 CLIENTHEADLINEBIT             status/status_clientheadlinebit.html
 CLIENTSTATUSBIT               status/status_clientstatusbit.html
 CLIENTCURRENTCHANNEL          status/status_currentchannel.html
@@ -252,10 +252,12 @@ CLIENTLBLVALUERP              status/status_lbvaluereaderproxy.html             
 LOGHISTORYBIT                 status/status_loghistory.html
 CLIENTMHEADLINE               status/status_mheadline.html                                MODULE_MONITOR
 CLIENTPHEADLINE               status/status_pheadline.html
+CLIENTPHEADLINEADD            status/status_pheadlineadd.html
 SREADER                       status/status_reader.html
 SREADERICON                   status/status_readericon.html
 STATUSRBUTTON                 status/status_restartbutton.html
 CLIENTRHEADLINE               status/status_rheadline.html
+CLIENTRHEADLINEADD            status/status_rheadlineadd.html
 DEBUGSELECT                   status/status_sdebug.html                                   WITH_DEBUG
 CLIENTSHEADLINE               status/status_sheadline.html
 SYSTEMINFOBIT                 status/status_systeminfo.html
