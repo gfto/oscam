@@ -264,9 +264,10 @@ struct s_client *create_client(IN_ADDR_T ip)
 		}
 		while(found || cl->tid == 0);
 	}
-	for(last = first_client; last->next != NULL; last = last->next)
+	for(last = first_client; last && last->next; last = last->next)
 		{ ; } //ends with cl on last client
-	last->next = cl;
+	if (last)
+		last->next = cl;
 	int32_t bucket = (uintptr_t)cl / 16 % CS_CLIENT_HASHBUCKETS;
 	cl->nexthashed = first_client_hashed[bucket];
 	first_client_hashed[bucket] = cl;
