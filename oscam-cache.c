@@ -25,9 +25,7 @@ typedef struct cw_t {
 	uint8_t			odd_even;			//odd/even byte (0x80 0x81)
 	uint8_t			cwc_cycletime;
 	uint8_t			cwc_next_cw_cycle;
-#ifdef CW_CYCLE_CHECK
-	uint8_t			got_bad_cwc;
-#endif
+	uint8_t			got_bad_cwc;		//used by cycle check
 	uint16_t		caid;				//first caid received
 	uint32_t		prid;				//first prid received
 	uint16_t		srvid;				//first srvid received
@@ -130,14 +128,8 @@ CW *get_first_cw(ECMHASH *ecmhash, ECM_REQUEST *er){
 	while (j) {
 		cw = get_data_from_node(j);
 
-		if(cw
-		   && cw->odd_even==get_odd_even(er)
-#ifdef CW_CYCLE_CHECK
-	       && !cw->got_bad_cwc
-#endif
-		){
+		if(cw && cw->odd_even == get_odd_even(er) && !cw->got_bad_cwc)
 			return cw;
-		}
 
 		j = j->next;
 	}
