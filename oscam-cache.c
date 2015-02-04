@@ -146,6 +146,25 @@ int compare_cw(const void *arg, const void *obj){
 	return memcmp(arg, ((const CW*)obj)->cw, 16);
 }
 
+static bool cwcycle_check_cache(struct s_client *cl, ECM_REQUEST *er, CW *cw)
+{
+	(void)cl; (void)er; (void)cw;
+#ifdef CW_CYCLE_CHECK
+	if(cw->got_bad_cwc)
+		return 0;
+	uint8_t cwc_ct   = cw->cwc_cycletime > 0 ? cw->cwc_cycletime : 0;
+	uint8_t cwc_ncwc = cw->cwc_next_cw_cycle < 2 ? cw->cwc_next_cw_cycle : 2;
+	if(checkcwcycle(cl, er, NULL, cw->cw, 0, cwc_ct, cwc_ncwc) != 0)
+	{
+		cs_log_dbg(D_CWC | D_LB, "{client %s, caid %04X, srvid %04X} [check_cache] cyclecheck passed ecm in INT. cache.", (cl ? cl->account->usr : "-"), er->caid, er->srvid);
+	}else{
+		cs_log_dbg(D_CWC, "cyclecheck [BAD CW Cycle] from Int. Cache detected.. {client %s, caid %04X, srvid %04X} [check_cache] -> skip cache answer", (cl ? cl->account->usr : "-"), er->caid, er->srvid);
+		cw->got_bad_cwc = 1; // no need to check it again
+		return 0;
+	}
+#endif
+	return 1;
+}
 
 /*
  * This function returns cw (mostly received) in cache for er, or NULL if not found.
@@ -203,22 +222,8 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 		}
 #endif
 
-
-#ifdef CW_CYCLE_CHECK
-		uint8_t cwc_ct = cw->cwc_cycletime > 0 ? cw->cwc_cycletime : 0;
-		uint8_t cwc_ncwc = cw->cwc_next_cw_cycle < 2 ? cw->cwc_next_cw_cycle : 2;
-		if(cw->got_bad_cwc)
-		{
+		if (!cwcycle_check_cache(cl, er, cw))
 			goto out_err;
-		}
-		if(checkcwcycle(cl, er, NULL, cw->cw, 0, cwc_ct, cwc_ncwc) != 0){
-			cs_log_dbg(D_CWC | D_LB, "{client %s, caid %04X, srvid %04X} [check_cache] cyclecheck passed ecm in INT. cache, ecm->rc %d", (cl ? cl->account->usr : "-"), er->caid, er->srvid, ecm ? ecm->rc : -1);
-		}else{
-			cs_log_dbg(D_CWC, "cyclecheck [BAD CW Cycle] from Int. Cache detected.. {client %s, caid %04X, srvid %04X} [check_cache] -> skip cache answer", (cl ? cl->account->usr : "-"), er->caid, er->srvid);
-			cw->got_bad_cwc = 1; // no need to check it again
-			goto out_err;
-		}
-#endif
 
 		if (cs_malloc(&ecm, sizeof(ECM_REQUEST))){
 			ecm->rc = E_FOUND;
