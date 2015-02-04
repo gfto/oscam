@@ -169,11 +169,10 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 
 	result = find_hash_table(&ht_cache, &er->csp_hash, sizeof(int32_t),&compare_csp_hash);
 	cw = get_first_cw(result, er);
+	if (!cw)
+		goto out_err;
 
 	if(
-		cw
-		&&
-	    (
 			cw->csp    //csp have no grp!
 			||
 			!grp		   			     //csp client(no grp) searching for cache
@@ -184,7 +183,6 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 			  cw->grp  //ecm group --> only when readers/ex-clients answer (e_found) it
 			  && (grp & cw->grp)
 			)
-		 )
 	){
 
 
