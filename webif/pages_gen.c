@@ -67,7 +67,7 @@ struct templates
 static struct templates templates;
 static FILE *output_file;
 
-static void die(const char *s, ...)
+__attribute__ ((noreturn)) static void die(const char *s, ...)
 {
 	va_list args;
 	va_start(args, s);
@@ -432,6 +432,8 @@ int main(void)
 
 	// Allocate template data and populate it
 #define data_len cur_pos
+	if(!data_len)
+		die("No defined templates");
 	uint8_t *data = calloc(1, data_len);
 	if(!data)
 		{ die("Can't alloc %u bytes", data_len); }
