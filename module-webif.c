@@ -4241,7 +4241,7 @@ static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * p
 		size_t b64_str_out = 32 + BASE64_LENGTH(b64_str_in);
 		char *b64_str_out_buf;
 		if(!cs_malloc(&b64_str_out_buf, b64_str_out))
-		{ continue; }
+			{ continue; }
 		base64_encode(xml_encode(vars, str_out), b64_str_in, b64_str_out_buf, b64_str_out);
 
 		if(id > lastid){
@@ -4252,6 +4252,7 @@ static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * p
 									b64_str_out_buf);
 			dot = ","; // next in Array with leading delimiter
 		}
+		NULLFREE(b64_str_out_buf);
 	}
 	tpl_addVar(vars, TPLAPPEND, "DATA", "]");
 	return tpl_getTpl(vars, "POLL");
