@@ -61,9 +61,9 @@ typedef struct cache_t {
 } ECMHASH;
 
 
-pthread_rwlock_t cache_lock;
-hash_table ht_cache;
-list ll_cache;
+static pthread_rwlock_t cache_lock;
+static hash_table ht_cache;
+static list ll_cache;
 
 void init_cache(void){
 	init_hash_table(&ht_cache, &ll_cache);
@@ -75,7 +75,7 @@ uint32_t cache_size(void){
 	return count_hash_table(&ht_cache);
 }
 
-uint8_t count_sort(CW *a, CW *b){
+static uint8_t count_sort(CW *a, CW *b){
 	if (a->count == b->count) return 0;
 	return (a->count > b->count) ? -1 : 1; 	//DESC order by count
 }
@@ -137,12 +137,12 @@ CW *get_first_cw(ECMHASH *ecmhash, ECM_REQUEST *er){
 	return NULL;
 }
 
-int compare_csp_hash(const void *arg, const void *obj){
+static int compare_csp_hash(const void *arg, const void *obj){
 	int32_t h = ((const ECMHASH*)obj)->csp_hash;
 	return memcmp(arg, &h, 4);
 }
 
-int compare_cw(const void *arg, const void *obj){
+static int compare_cw(const void *arg, const void *obj){
 	return memcmp(arg, ((const CW*)obj)->cw, 16);
 }
 
@@ -243,7 +243,7 @@ out_err:
 	return ecm;
 }
 
-void cacheex_cache_add(ECM_REQUEST *er, ECMHASH *result, CW *cw, bool add_new_cw)
+static void cacheex_cache_add(ECM_REQUEST *er, ECMHASH *result, CW *cw, bool add_new_cw)
 {
 	(void)er; (void)result; (void)cw; (void)add_new_cw;
 #ifdef CS_CACHEEX
