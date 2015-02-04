@@ -834,8 +834,8 @@ function updateLogpage(data) {
 
 	$.each(data.oscam.lines, function (i, item) {
 
-		if (isWhitelisted(item.line)) {
-			var newcolor = getLogColor(item.line);
+		if (isWhitelisted(Base64.decode(item.line))) {
+			var newcolor = getLogColor(Base64.decode(item.line));
 			var newline = $('<li class="' + decodeURI(item.usr) + '">' + Base64.decode(item.line) + '</li>\n');
 			var hiddenline = 0;
 			if (newcolor) {
