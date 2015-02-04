@@ -249,6 +249,17 @@ static int32_t Sci_Read_ATR(struct s_reader *reader, ATR *atr)   // reads ATR on
 
 	statusreturn = ATR_InitFromArray(atr, buf, n);  // n should be same as atrlength but in case of atr read error its less so do not use atrlenght here!
 
+	if(buf[7] == 0x70 && buf[8] == 0x70 && (buf[9]&0x0F) >= 10)
+	{
+		int8_t nxtr = 0;
+		reader->crdr.flush = 0;
+		while(nxtr < 2)
+		{
+			if(IO_Serial_Read(reader, 0, 75000, 1, buf + n + nxtr)) { break; }
+			nxtr++;
+		}
+	}
+
 	if(statusreturn == ATR_MALFORMED) { rdr_log(reader, "WARNING: ATR is malformed, you better inspect it with a -d2 log!"); }
 
 	if(statusreturn == ERROR)
