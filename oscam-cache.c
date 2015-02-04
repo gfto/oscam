@@ -234,9 +234,7 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 			ecm->selected_reader = cw->selected_reader;
 			ecm->cwc_cycletime = cw->cwc_cycletime;
 			ecm->cwc_next_cw_cycle = cw->cwc_next_cw_cycle;
-#ifdef CS_CACHEEX
 			ecm->cacheex_src = cw->cacheex_src;
-#endif
 			ecm->cw_count = cw->count;
 		}
 	}
@@ -303,9 +301,7 @@ void add_cache(ECM_REQUEST *er){
 				cw->prid = er->prid;
 				cw->srvid = er->srvid;
 				cw->selected_reader=er->selected_reader;
-	#ifdef CS_CACHEEX
 				cw->cacheex_src=er->cacheex_src;
-	#endif
 				cw->pushout_client = NULL;
 
 				while(1){
@@ -333,14 +329,10 @@ void add_cache(ECM_REQUEST *er){
 	//update if answered from csp/cacheex/local_proxy
 	if(er->from_cacheex) cw->cacheex = 1;
 	if(er->from_csp) cw->csp = 1;
-#ifdef CS_CACHEEX
 	if(!er->cacheex_src){
-#endif
 		if(is_localreader(er->selected_reader, er)) cw->localcards=1;
 		else cw->proxy = 1;
-#ifdef CS_CACHEEX
 	}
-#endif
 
 	//always update group and counter
 	cw->grp |= er->grp;

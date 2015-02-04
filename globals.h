@@ -869,8 +869,8 @@ typedef struct ecm_request_t
 	void            *src_data;
 	int32_t         csp_hash; 					// csp has its own hash
 
-#ifdef CS_CACHEEX
 	struct s_client *cacheex_src;               // Cacheex origin
+#ifdef CS_CACHEEX
 	int8_t          cacheex_pushed;             // to avoid duplicate pushs
 	uint8_t         csp_answered;               // =1 if er get answer by csp
 	LLIST           *csp_lastnodes;             // last 10 Cacheex nodes atm cc-proto-only
