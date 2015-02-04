@@ -137,19 +137,10 @@ static uint8_t mime_type_from_filename(char *filename)
 
 static void parse_index_file(char *filename)
 {
-	unsigned long defined_file_exist=0,def_size=0;
-	struct stat sb;
-	if(stat(defined_file, &sb) == 0){
-		defined_file_exist=1;
-		def_size = sb.st_size;
-	}
-	char is_defined[def_size];
-	if(defined_file_exist){
-		FILE *def = xfopen(defined_file, "r");
-		if(!fread (is_defined, sizeof(is_defined), def_size, def))
-			{defined_file_exist=0;}
-		fclose(def);
-	}
+	char *is_defined = NULL;
+	size_t is_defined_len = 0;
+	if(access(defined_file, R_OK) != -1)
+		readfile(defined_file, (uint8_t **)&is_defined, &is_defined_len);
 	FILE *f = xfopen(filename, "r");
 	int max_fields = 3;
 	char line[1024];
@@ -191,7 +182,7 @@ static void parse_index_file(char *filename)
 		}
 		while(pos < len);
 
-		if(deps && strlen(deps) && defined_file_exist){
+		if(deps && strlen(deps) && is_defined){
 			if(strstr(deps, ",")){
 				int i,def_found=0;
 				char *ptr, *saveptr1 = NULL;
