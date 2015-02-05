@@ -1334,6 +1334,11 @@ void free_reader(struct s_reader *rdr)
 		rdr->emmcache = NULL;
 	}
 
+	if(rdr->aes_list)
+	{
+		aes_clear_entries(&rdr->aes_list);
+	}
+	
 	add_garbage(rdr);
 }
 
