@@ -1328,6 +1328,12 @@ void free_reader(struct s_reader *rdr)
 		rdr->blockemmbylen = NULL;
 	}
 
+	if(rdr->emmcache)
+	{
+		add_garbage(rdr->emmcache);
+		rdr->emmcache = NULL;
+	}
+
 	add_garbage(rdr);
 }
 
