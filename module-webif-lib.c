@@ -375,7 +375,7 @@ void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime,
 		{ pos += snprintf(pos, sizeof(buf) - (pos - buf), "Connection: Keep-Alive\r\n"); }
 	else
 		{ pos += snprintf(pos, sizeof(buf) - (pos - buf), "Connection: close\r\n"); }
-	pos += snprintf(pos, sizeof(buf) - (pos - buf), "\r\n");
+	snprintf(pos, sizeof(buf) - (pos - buf), "\r\n");
 	if(forcePlain == 1) { fwrite(buf, 1, strlen(buf), f); }
 	else { webif_write(buf, f); }
 }
@@ -387,7 +387,7 @@ void send_error(FILE *f, int32_t status, char *title, char *extra, char *text, i
 	pos += snprintf(pos, sizeof(buf) - (pos - buf), "<HTML><HEAD><TITLE>%d %s</TITLE></HEAD>\r\n", status, title);
 	pos += snprintf(pos, sizeof(buf) - (pos - buf), "<BODY><H4>%d %s</H4>\r\n", status, title);
 	pos += snprintf(pos, sizeof(buf) - (pos - buf), "%s\r\n", text);
-	pos += snprintf(pos, sizeof(buf) - (pos - buf), "</BODY></HTML>\r\n");
+	snprintf(pos, sizeof(buf) - (pos - buf), "</BODY></HTML>\r\n");
 	send_headers(f, status, title, extra, "text/html", 0, strlen(buf), NULL, forcePlain);
 	if(forcePlain == 1) { fwrite(buf, 1, strlen(buf), f); }
 	else { webif_write(buf, f); }

@@ -746,7 +746,7 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 			}
 		}
 		if(er->ocaid && ofs < (int32_t)sizeof(sby))
-			{ ofs += snprintf(sby + ofs, sizeof(sby) - ofs - 1, "(btun %04X)", er->ocaid); }
+			{ snprintf(sby + ofs, sizeof(sby) - ofs - 1, "(btun %04X)", er->ocaid); }
 
 #ifdef CS_CACHEEX
 		}
