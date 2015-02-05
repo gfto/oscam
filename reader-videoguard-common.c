@@ -425,7 +425,7 @@ static void swap_lb(unsigned char *buff, int32_t len)
 	}
 }
 
-inline void __xxor(unsigned char *data, int32_t len, const unsigned char *v1, const unsigned char *v2)
+void __xxor(unsigned char *data, int32_t len, const unsigned char *v1, const unsigned char *v2)
 {
 	uint32_t i;
 	switch(len)   // looks ugly but the cpu don't crash!
