@@ -420,7 +420,7 @@ static void cacheex_cache_push_to_client(struct s_client *cl, ECM_REQUEST *er)
 /**
  * Check for NULL ecmd5
  **/
-static inline uint8_t checkECMD5(ECM_REQUEST *er)
+static uint8_t checkECMD5(ECM_REQUEST *er)
 {
 	int8_t i;
 	for(i = 0; i < CS_ECMSTORESIZE; i++)
@@ -545,7 +545,7 @@ uint8_t check_cacheex_filter(struct s_client *cl, ECM_REQUEST *er)
 
 
 
-static inline struct s_cacheex_matcher *is_cacheex_matcher_matching(ECM_REQUEST *from_er, ECM_REQUEST *to_er)
+static struct s_cacheex_matcher *is_cacheex_matcher_matching(ECM_REQUEST *from_er, ECM_REQUEST *to_er)
 {
 	struct s_cacheex_matcher *entry = cfg.cacheex_matcher;
 	int8_t v_ok = (from_er && to_er) ? 2 : 1;
@@ -583,35 +583,6 @@ static inline struct s_cacheex_matcher *is_cacheex_matcher_matching(ECM_REQUEST 
 bool cacheex_is_match_alias(struct s_client *cl, ECM_REQUEST *er)
 {
 	return check_client(cl) && cl->account && cl->account->cacheex.mode == 1 && is_cacheex_matcher_matching(NULL, er);
-}
-
-inline int8_t cacheex_match_alias(struct s_client *cl, ECM_REQUEST *er, ECM_REQUEST *ecm)
-{
-	if(check_client(cl) && cl->account && cl->account->cacheex.mode == 1)
-	{
-		struct s_cacheex_matcher *entry = is_cacheex_matcher_matching(ecm, er);
-		if(entry)
-		{
-			int64_t diff = comp_timeb(&er->tps, &ecm->tps);
-			if(diff > entry->valid_from && diff < entry->valid_to)
-			{
-#ifdef WITH_DEBUG
-				if(D_CACHEEX & cs_dblevel)
-				{
-					char result[CXM_FMT_LEN] = { 0 };
-					int32_t s, size = CXM_FMT_LEN;
-					s = ecmfmt(entry->caid, 0, entry->provid, entry->chid, entry->pid, entry->srvid, entry->ecmlen, 0, 0, 0, result, size, 0, 0);
-					s += snprintf(result + s, size - s, " = ");
-					s += ecmfmt(entry->to_caid, 0, entry->to_provid, entry->to_chid, entry->to_pid, entry->to_srvid, entry->to_ecmlen, 0, 0, 0, result + s, size - s, 0, 0);
-					s += snprintf(result + s, size - s, " valid %d/%d", entry->valid_from, entry->valid_to);
-					cs_log_dbg(D_CACHEEX, "cacheex-matching for: %s", result);
-				}
-#endif
-				return 1;
-			}
-		}
-	}
-	return 0;
 }
 
 static void log_cacheex_cw(ECM_REQUEST *er, char *reason)
