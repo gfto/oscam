@@ -35,7 +35,7 @@ bool cacheex_check_queue_length(struct s_client *cl);
 static inline int8_t cacheex_get_rdr_mode(struct s_reader *reader) { return reader->cacheex.mode; }
 void cacheex_init_hitcache(void);
 void cacheex_free_hitcache(void);
-void cacheex_cleanup_hitcache(void);
+void cacheex_cleanup_hitcache(bool force);
 void cacheex_update_hash(ECM_REQUEST *er);
 void cacheex_mode1_delay(ECM_REQUEST *er);
 void cacheex_timeout(ECM_REQUEST *er);
@@ -56,7 +56,7 @@ static inline bool cacheex_check_queue_length(struct s_client *UNUSED(cl)) { ret
 static inline int8_t cacheex_get_rdr_mode(struct s_reader *UNUSED(reader)) { return 0; }
 static inline void cacheex_init_hitcache(void) { }
 static inline void cacheex_free_hitcache(void) { }
-static inline void cacheex_cleanup_hitcache(void) { }
+static inline void cacheex_cleanup_hitcache(bool UNUSED(force)) { }
 static inline void cacheex_update_hash(ECM_REQUEST *UNUSED(er)) { }
 static inline void cacheex_mode1_delay(ECM_REQUEST *UNUSED(er)) { }
 static inline void cacheex_timeout(ECM_REQUEST *UNUSED(er)) { }

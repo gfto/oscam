@@ -63,6 +63,7 @@ void cacheex_init_hitcache(void)
 void cacheex_free_hitcache(void)
 {
 	cacheex_running = false;
+	cacheex_cleanup_hitcache(true);
 	deinitialize_hash_table(&ht_hitcache);
 	pthread_rwlock_destroy(&hitcache_lock);
 }
@@ -162,7 +163,7 @@ static void cacheex_del_hitcache(ECM_REQUEST *er)
     pthread_rwlock_unlock(&hitcache_lock);
 }
 
-void cacheex_cleanup_hitcache(void)
+void cacheex_cleanup_hitcache(bool force)
 {
 	CACHE_HIT *cachehit;
 	node *i,*i_next;
@@ -175,9 +176,16 @@ void cacheex_cleanup_hitcache(void)
 	{
 		i_next = i->next;
 		cachehit = get_data_from_node(i);
+		
+		if(!cachehit)
+		{ 
+			i = i_next;
+			continue;
+		}
+		
 		cs_ftime(&now);
 		gone = comp_timeb(&now, &cachehit->time);
-		if(cachehit && gone>timeout)
+		if(force || gone>timeout)
 		{
 			remove_elem_list(&ll_hitcache, &cachehit->ll_node);
 			remove_elem_hash_table(&ht_hitcache, &cachehit->ht_node);

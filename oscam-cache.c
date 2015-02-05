@@ -3,6 +3,7 @@
 #include "globals.h"
 #include "module-cacheex.h"
 #include "module-cw-cycle-check.h"
+#include "oscam-cache.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
 #include "oscam-ecm.h"
@@ -72,6 +73,7 @@ void init_cache(void){
 }
 
 void free_cache(void){
+	cleanup_cache(true);
 	deinitialize_hash_table(&ht_cache);
 	pthread_rwlock_destroy(&cache_lock);
 }
@@ -85,9 +87,10 @@ static uint8_t count_sort(CW *a, CW *b){
 	return (a->count > b->count) ? -1 : 1; 	//DESC order by count
 }
 
-uint8_t check_is_pushed(CW *cw, struct s_client *cl){
+uint8_t check_is_pushed(void *cwp, struct s_client *cl){
 
 	struct s_pushclient *cl_tmp;
+	CW* cw = (CW*)cwp;
 	bool pushed=false;
 
 	pthread_rwlock_rdlock(&cw->pushout_client_lock);
@@ -399,7 +402,7 @@ void add_cache(ECM_REQUEST *er){
 	cacheex_cache_add(er, result, cw, add_new_cw);
 }
 
-void cleanup_cache(void){
+void cleanup_cache(bool force){
 	ECMHASH *ecmhash;
 	CW *cw;
 	struct s_pushclient *pc, *nxt;
@@ -416,15 +419,20 @@ void cleanup_cache(void){
 	    i_next = i->next;
 	    ecmhash = get_data_from_node(i);
 
+		if(!ecmhash){
+			i = i_next;
+			continue;	
+		}
+		
 	    cs_ftime(&now);
 	    gone_first = comp_timeb(&now, &ecmhash->first_recv_time);
 	    gone_upd = comp_timeb(&now, &ecmhash->upd_time);
 
-    	if(ecmhash && gone_first<=(cfg.max_cache_time*1000)){ //not continue, useless check for nexts one!
+    	if(!force && gone_first<=(cfg.max_cache_time*1000)){ //not continue, useless check for nexts one!
     		break;
     	}
 
-    	if(ecmhash && gone_upd>(cfg.max_cache_time*1000)){
+    	if(force || gone_upd>(cfg.max_cache_time*1000)){
 
     		j = get_first_node_list(&ecmhash->ll_cw);
     		while (j) {
@@ -452,7 +460,7 @@ void cleanup_cache(void){
     		deinitialize_hash_table(&ecmhash->ht_cw);
     		remove_elem_list(&ll_cache, &ecmhash->ll_node);
     		remove_elem_hash_table(&ht_cache, &ecmhash->ht_node);
-	    NULLFREE(ecmhash);
+	    	NULLFREE(ecmhash);
     	}
 
 	    i = i_next;

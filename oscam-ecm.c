@@ -317,8 +317,8 @@ static void *cw_process(void)
 		{
 
 
-			cleanup_cache();
-			cacheex_cleanup_hitcache();
+			cleanup_cache(false);
+			cacheex_cleanup_hitcache(false);
 
 			cs_ftime(&cache_time);
 			cache_next = add_ms_to_timeb_diff(&cache_time, 3000);
