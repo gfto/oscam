@@ -496,6 +496,8 @@ int32_t init_free_userdb(struct s_auth *ptr)
 		ll_destroy(ptr->aureader_list);
 		ptr->next = NULL;
 		config_list_gc_values(account_opts, ptr);
+		clear_ftab(&ptr->ftab);
+		clear_ftab(&ptr->fchid);
 		add_garbage(ptr);
 		ptr = ptr_next;
 	}

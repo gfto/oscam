@@ -249,7 +249,6 @@ typedef unsigned char uchar;
 #define CS_MAXTUNTAB  100  // max. betatunnel mappings
 #define CS_MAXPROV    32
 #define CS_MAXPORTS   32  // max server ports
-#define CS_MAXFILTERS   16
 #define CS_MAX_CAIDVALUETAB 16
 #define CS_CLIENT_HASHBUCKETS 32
 
@@ -591,14 +590,20 @@ typedef struct s_filter
 typedef struct s_ftab
 {
 	int32_t         nfilts;
-	FILTER          filts[CS_MAXFILTERS];
+	FILTER          *filts;
 } FTAB;
+
+typedef struct s_ncd_ftab
+{
+	int32_t         nfilts;
+	FILTER          filts[16];
+} NCD_FTAB;
 
 struct ncd_port
 {
 	bool            ncd_key_is_set;
 	uint8_t         ncd_key[14];
-	FTAB            ncd_ftab;
+	NCD_FTAB        ncd_ftab;
 };
 
 typedef struct s_port

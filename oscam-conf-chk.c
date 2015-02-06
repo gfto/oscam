@@ -324,11 +324,37 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName
 {
 	int32_t i, j;
 	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;
-	char *ptr[CS_MAXFILTERS] = {0};
-	FTAB newftab;
-	memset(&newftab, 0, sizeof(FTAB));
+	int32_t nfilts = 0;
 
-	for(i = 0, ptr1 = strtok_r(zFilterAsc, ";", &saveptr1); (i < CS_MAXFILTERS) && (ptr1); ptr1 = strtok_r(NULL, ";", &saveptr1), i++)
+	// Count filters
+	char *in_filter = cs_strdup(zFilterAsc);
+	if (!in_filter)
+		return;
+	for(i = 0, ptr1 = strtok_r(in_filter, ";", &saveptr1); (ptr1); ptr1 = strtok_r(NULL, ";", &saveptr1), i++)
+	{
+		if((zFiltName && zFiltName[0] == 'c') && !strchr(trim(ptr1), ':'))
+		{
+			cs_log("PANIC: CAID field not found in CHID parameter!");
+			free(in_filter);
+			return;
+		}
+		nfilts++;
+	}
+	free(in_filter);
+
+	// Pointer to filter values
+	char **ptr;
+	if (!cs_malloc(&ptr, nfilts * sizeof(char *)))
+		return;
+
+	FTAB newftab = { .nfilts = nfilts };
+	if (!cs_malloc(&newftab.filts, newftab.nfilts * sizeof(*newftab.filts)))
+	{
+		free(ptr);
+		return;
+	}
+
+	for(i = 0, ptr1 = strtok_r(zFilterAsc, ";", &saveptr1); (i < newftab.nfilts) && (ptr1); ptr1 = strtok_r(NULL, ";", &saveptr1), i++)
 	{
 		ptr[i] = ptr1;
 		if((ptr2 = strchr(trim(ptr1), ':')))
@@ -340,6 +366,7 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName
 		else if(zFiltName && zFiltName[0] == 'c')
 		{
 			cs_log("PANIC: CAID field not found in CHID parameter!");
+			free(ptr);
 			return;
 		}
 		else if(zFiltName && (zFiltName[0] == 'f' || zFiltName[0] == 'l') )
@@ -347,7 +374,6 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName
 			newftab.filts[i].caid = (uint16_t)a2i(ptr1, 4);
 			ptr[i] = NULL;
 		}
-		newftab.nfilts++;
 	}
 
 	if(newftab.nfilts)
@@ -366,7 +392,8 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName
 		}
 	}
 
-	memcpy(ftab, &newftab, sizeof(FTAB));
+	free(ptr);
+	*ftab = newftab;
 }
 
 void chk_cltab(char *classasc, CLASSTAB *clstab)
@@ -472,15 +499,12 @@ void clear_sip(struct s_ip **sip)
 /* Clears the s_ftab struct provided by setting nfilts and nprids to zero. */
 void clear_ftab(struct s_ftab *ftab)
 {
-	int32_t i, j;
-	for(i = 0; i < CS_MAXFILTERS; i++)
-	{
-		ftab->filts[i].caid = 0;
-		for(j = 0; j < CS_MAXPROV; j++)
-			{ ftab->filts[i].prids[j] = 0; }
-		ftab->filts[i].nprids = 0;
+	int32_t nfilts = ftab->nfilts;
+	ftab->nfilts = 0; // Reset nfilts ASAP
+	if (ftab->filts) {
+		memset(ftab->filts, 0, nfilts * sizeof(*ftab->filts));
+		NULLFREE(ftab->filts);
 	}
-	ftab->nfilts = 0;
 }
 
 /* Clears the s_ptab struct provided by setting nfilts and nprids to zero. */
@@ -519,4 +543,28 @@ void clear_cacheextab(CECSPVALUETAB *ctab)
 void clear_tuntab(struct s_tuntab *ttab)
 {
 	memset(ttab, 0, sizeof(struct s_tuntab));
+}
+
+/* Initializes dst_ftab with src_ftab data. If allocation fails clears dts_ftab */
+void clone_ftab(FTAB *src_ftab, FTAB *dst_ftab)
+{
+	dst_ftab->nfilts = src_ftab->nfilts;
+	dst_ftab->filts  = NULL;
+	if (src_ftab->filts)
+	{
+		if (!cs_malloc(&dst_ftab->filts, src_ftab->nfilts * sizeof(*src_ftab->filts)))
+		{
+			dst_ftab->nfilts = 0;
+			return;
+		}
+		memcpy(dst_ftab->filts, src_ftab->filts, src_ftab->nfilts * sizeof(*src_ftab->filts));
+	}
+}
+
+void ftab_add_filter(FTAB *ftab, FILTER *filter)
+{
+	ftab->nfilts++;
+	if (!cs_malloc(&ftab->filts, ftab->nfilts * sizeof(*ftab->filts)))
+		return;
+	ftab->filts[ftab->nfilts - 1] = *filter;
 }

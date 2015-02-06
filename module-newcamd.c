@@ -5,6 +5,7 @@
 #include "cscrypt/des.h"
 #include "cscrypt/md5.h"
 #include "module-newcamd.h"
+#include "oscam-conf-chk.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
 #include "oscam-ecm.h"
@@ -577,13 +578,17 @@ static FILTER mk_user_au_ftab(struct s_reader *aureader)
 	int32_t i, j, found;
 	struct s_client *cl = cur_client();
 	FILTER filt;
-	FILTER *pufilt;
+	FILTER client_filter;
+	FILTER *pufilt = &client_filter;
+
+	memset(&filt, 0, sizeof(filt));
+	memset(&client_filter, 0, sizeof(client_filter));
+
+	if(cl->ftab.filts) client_filter = cl->ftab.filts[0];
 
 	filt.caid = aureader->caid;
-	if(filt.caid == 0) { filt.caid = cl->ftab.filts[0].caid; }
-	filt.nprids = 0;
-	memset(&filt.prids, 0, sizeof(filt.prids));
-	pufilt = &cl->ftab.filts[0];
+	if(filt.caid == 0)
+		filt.caid = client_filter.caid;
 
 	for(i = 0; i < aureader->nprov; i++)
 		{ filt.prids[filt.nprids++] = b2i(3, &aureader->prid[i][1]); }
@@ -639,7 +644,7 @@ static FILTER mk_user_ftab(void)
 	cs_log_dbg(D_CLIENT, "client[%8lX].%s nfilts=%d, filt.caid=%04X", (unsigned long)pthread_self(),
 				  cl->account->usr, cl->ftab.nfilts, filt.caid);
 
-	if(!filt.caid && cl->ftab.nfilts)
+	if(!filt.caid && cl->ftab.filts)
 	{
 		int32_t fcaids;
 		for(i = fcaids = 0; i < cl->ftab.nfilts; i++)
@@ -894,7 +899,8 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 
 	if(ok)
 	{
-		FILTER *pufilt = 0;
+		FILTER usr_filter;
+		FILTER *pufilt = &usr_filter;
 
 		des_login_key_get(deskey, passwdcrypt, strlen((char *)passwdcrypt), key);
 		memcpy(cl->ncd_skey, key, 16);
@@ -910,18 +916,17 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 				return -1;
 			}
 
-			// set userfilter
-			cl->ftab.filts[0] = mk_user_ftab();
-
 			// set userfilter for au enabled clients
 			if(aureader)
-				{ cl->ftab.filts[0] = mk_user_au_ftab(aureader); }
-
-			pufilt = &cl->ftab.filts[0];
-			if(cfg.ncd_mgclient)
-				{ cl->ftab.nfilts = 0; } //We cannot filter all cards!
+				usr_filter = mk_user_au_ftab(aureader);
 			else
-				{ cl->ftab.nfilts = 1; }
+				usr_filter = mk_user_ftab();
+
+			clear_ftab(&cl->ftab);
+			ftab_add_filter(&cl->ftab, &usr_filter);
+
+			if(cfg.ncd_mgclient)
+				clear_ftab(&cl->ftab); //We cannot filter all cards!
 
 			mbuf[0] = MSG_CARD_DATA;
 			mbuf[1] = 0x00;
@@ -1067,7 +1072,7 @@ static void newcamd_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 	cl_msgid = er->msgid;
 	mbuf[0] = er->ecm[0];
-	if(client->ftab.filts[0].nprids == 0 || er->rc >= E_NOTFOUND /*not found*/)
+	if(client->ftab.filts && (client->ftab.filts[0].nprids == 0 || er->rc >= E_NOTFOUND /*not found*/))
 	{
 		len = 3;
 		mbuf[1] = mbuf[2] = 0x00;
@@ -1114,14 +1119,15 @@ static void newcamd_process_ecm(struct s_client *cl, uchar *buf, int32_t len)
 static void newcamd_process_emm(uchar *buf)
 {
 	int32_t ok = 1;
-	uint16_t caid;
+	uint16_t caid = 0;
 	struct s_client *cl = cur_client();
 	EMM_PACKET epg;
 
 	memset(&epg, 0, sizeof(epg));
 
 	epg.emmlen = buf[2] + 3;
-	caid = cl->ftab.filts[0].caid;
+	if (cl->ftab.filts)
+		caid = cl->ftab.filts[0].caid;
 	epg.caid[0] = (uchar)(caid >> 8);
 	epg.caid[1] = (uchar)(caid);
 
@@ -1183,7 +1189,7 @@ static void newcamd_report_cards(struct s_client *client)
 		if(!(rdr->grp & client->grp)) { continue; }  //test - skip unaccesible readers
 		if(rdr->ftab.filts)
 		{
-			for(j = 0; j < CS_MAXFILTERS; j++)
+			for(j = 0; j < rdr->ftab.nfilts; j++)
 			{
 				if(rdr->ftab.filts[j].caid)
 				{

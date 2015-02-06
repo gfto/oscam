@@ -1240,7 +1240,7 @@ void update_card_list(void)
 			//Filts by Hardware readers:
 			if((rdr->typ != R_CCCAM) && rdr->ftab.filts && !flt)
 			{
-				for(j = 0; j < CS_MAXFILTERS; j++)
+				for(j = 0; j < rdr->ftab.nfilts; j++)
 				{
 					uint16_t caid = rdr->ftab.filts[j].caid;
 					if(caid)

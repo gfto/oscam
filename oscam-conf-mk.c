@@ -164,7 +164,7 @@ char *mk_t_ftab(FTAB *ftab)
 	if(ftab->nfilts != 0)
 	{
 		needed = ftab->nfilts * 5;
-		for(i = 0; i < ftab->nfilts && i < CS_MAXFILTERS; ++i)
+		for(i = 0; i < ftab->nfilts; ++i)
 			{ needed += ftab->filts[i].nprids * 7; }
 	}
 
@@ -172,7 +172,7 @@ char *mk_t_ftab(FTAB *ftab)
 	if(needed == 1 || !cs_malloc(&value, needed)) { return ""; }
 	char *saveptr = value;
 	char *dot = "";
-	for(i = 0; i < ftab->nfilts && i < CS_MAXFILTERS; ++i)
+	for(i = 0; i < ftab->nfilts; i++)
 	{
 		snprintf(value + pos, needed - (value - saveptr), "%s%04X", dot, ftab->filts[i].caid);
 		pos += 4;

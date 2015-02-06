@@ -1310,6 +1310,9 @@ void free_reader(struct s_reader *rdr)
 	}
 	rdr->ecmHeaderwhitelist = NULL;
 
+	clear_ftab(&rdr->fallback_percaid);
+	clear_ftab(&rdr->localcards);
+	clear_ftab(&rdr->fchid);
 	clear_ftab(&rdr->ftab);
 
 	lb_destroy_stats(rdr);

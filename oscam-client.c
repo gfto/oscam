@@ -6,6 +6,7 @@
 #include "module-anticasc.h"
 #include "module-cccam.h"
 #include "module-webif.h"
+#include "oscam-conf-chk.h"
 #include "oscam-client.h"
 #include "oscam-ecm.h"
 #include "oscam-failban.h"
@@ -421,9 +422,9 @@ int32_t cs_auth_client(struct s_client *client, struct s_auth *account, const ch
 				memcpy(&client->ctab, &account->ctab, sizeof(client->ctab));
 				if(account->uniq)
 					{ cs_fake_client(client, account->usr, account->uniq, client->ip); }
-				client->ftab  = account->ftab;   // IDENT filter
 				client->cltab = account->cltab;  // CLASS filter
-				client->fchid = account->fchid;  // CHID filter
+				clone_ftab(&account->ftab, &client->ftab);   // IDENT filter
+				clone_ftab(&account->fchid, &client->fchid);  // CHID filter
 				client->sidtabs.ok = account->sidtabs.ok;  // services
 				client->sidtabs.no = account->sidtabs.no;  // services
 				memcpy(&client->ttab, &account->ttab, sizeof(client->ttab));
@@ -724,6 +725,9 @@ void free_client(struct s_client *cl)
 		ll_destroy_data(cl->cascadeusers);
 		cl->cascadeusers = NULL;
 	}
+
+	clear_ftab(&cl->ftab);
+	clear_ftab(&cl->fchid);
 
 #ifdef MODULE_CCCAM
 	add_garbage(cl->cc);
