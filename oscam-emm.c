@@ -387,7 +387,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 		{
 			if(assemble)
 			{
-				if(!cs->do_emm_reassembly(client, ep))
+				if(!cs->do_emm_reassembly(aureader, client, ep))
 					{ continue; } // skip this reader
 			}
 			else

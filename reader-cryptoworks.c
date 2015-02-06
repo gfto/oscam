@@ -743,7 +743,7 @@ static int32_t cryptoworks_card_info(struct s_reader *reader)
 	return OK;
 }
 
-static int32_t cryptoworks_reassemble_emm(struct s_client *client, EMM_PACKET *ep)
+static int32_t cryptoworks_reassemble_emm(struct s_reader *rdr, struct s_client *client, EMM_PACKET *ep)
 {
 	uchar *buffer = ep->emm;
 	int16_t *len = &ep->emmlen;
@@ -760,27 +760,27 @@ static int32_t cryptoworks_reassemble_emm(struct s_client *client, EMM_PACKET *e
 	switch(buffer[0])
 	{
 	case 0x82 : // emm-u
-		cs_log_dbg(D_EMM, "[cryptoworks] unique emm (EMM-U)");
+		rdr_log_dbg(rdr, D_EMM, "unique emm (EMM-U)");
 		break;
 
 	case 0x84: // emm-sh
-		cs_log_dbg(D_EMM, "[cryptoworks] shared emm (EMM-SH)");
+		rdr_log_dbg(rdr, D_EMM, "shared emm (EMM-SH)");
 		if(!memcmp(client->cw_rass_emm, buffer, *len))
 			{ return 0; }
 
 		if(ep->emm[11] == ep->emm[2] - 9)
 		{
-			cs_log_dbg(D_EMM, "[cryptoworks] received assembled EMM-S");
+			rdr_log_dbg(rdr, D_EMM, "received assembled EMM-S");
 			return 1;
 		}
 
 		memcpy(client->cw_rass_emm, buffer, *len);
 		client->cw_rass_emmlen = *len;
-		cs_log_dbg(D_EMM, "[cryptoworks] EMM-SH only in memcpy");
+		rdr_log_dbg(rdr, D_EMM, "EMM-SH only in memcpy");
 		return 0;
 
 	case 0x86: // emm-sb
-		cs_log_dbg(D_EMM, "[cryptoworks] shared emm (EMM-SB)");
+		rdr_log_dbg(rdr, D_EMM, "shared emm (EMM-SB)");
 		if(!client->cw_rass_emmlen)
 			{ return 0; }
 
@@ -826,11 +826,11 @@ static int32_t cryptoworks_reassemble_emm(struct s_client *client, EMM_PACKET *e
 
 		client->cw_rass_emmlen = 0;
 
-		cs_log_dump_dbg(D_EMM, buffer, *len, "[cryptoworks] shared emm (assembled):");
+		rdr_log_dump_dbg(rdr, D_EMM, buffer, *len, "shared emm (assembled):");
 		if(assembled_EMM[11] != emm_len)  // sanity check
 		{
 			// error in emm assembly
-			cs_log_dbg(D_EMM, "[cryptoworks] Error assembling Cryptoworks EMM-S");
+			rdr_log_dbg(rdr, D_EMM, "Error assembling EMM-S");
 			free(assembled_EMM);
 			return 0;
 		}
@@ -839,7 +839,7 @@ static int32_t cryptoworks_reassemble_emm(struct s_client *client, EMM_PACKET *e
 
 	case 0x88: // emm-g
 	case 0x89: // emm-g
-		cs_log_dbg(D_EMM, "[cryptoworks] global emm (EMM-G)");
+		rdr_log_dbg(rdr, D_EMM, "global emm (EMM-G)");
 		break;
 	}
 	return 1;

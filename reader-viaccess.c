@@ -1782,7 +1782,7 @@ static int32_t viaccess_card_info(struct s_reader *reader)
 	return OK;
 }
 
-static int32_t viaccess_reassemble_emm(struct s_client *client, EMM_PACKET *ep)
+static int32_t viaccess_reassemble_emm(struct s_reader *rdr, struct s_client *client, EMM_PACKET *ep)
 {
 	uint8_t *buffer = ep->emm;
 	int16_t *len = &ep->emmlen;
@@ -1803,7 +1803,7 @@ static int32_t viaccess_reassemble_emm(struct s_client *client, EMM_PACKET *ep)
 		// copy first part of the emm-s
 		memcpy(client->via_rass_emm, buffer, *len);
 		client->via_rass_emmlen = *len;
-		//cs_log_dump_dbg(D_READER, buffer, len, "viaccess global emm:");
+		//rdr_log_dump_dbg(rdr, D_READER, buffer, len, "global emm:");
 		return 0;
 
 	case 0x8e:
@@ -1813,7 +1813,7 @@ static int32_t viaccess_reassemble_emm(struct s_client *client, EMM_PACKET *ep)
 		//extract nanos from emm-gh and emm-s
 		uchar emmbuf[512];
 
-		cs_log_dbg(D_EMM, "[viaccess] %s: start extracting nanos", __func__);
+		rdr_log_dbg(rdr, D_EMM, "%s: start extracting nanos", __func__);
 		//extract from emm-gh
 		for(i = 3; i < client->via_rass_emmlen; i += client->via_rass_emm[i + 1] + 2)
 		{
@@ -1845,7 +1845,7 @@ static int32_t viaccess_reassemble_emm(struct s_client *client, EMM_PACKET *ep)
 			}
 		}
 
-		cs_log_dump_dbg(D_EMM, buffer, *len, "[viaccess] %s: %s emm-s", __func__, (buffer[2] == 0x2c) ? "fixed" : "variable");
+		rdr_log_dump_dbg(rdr, D_EMM, buffer, *len, "%s: %s emm-s", __func__, (buffer[2] == 0x2c) ? "fixed" : "variable");
 
 		emm_sort_nanos(buffer + 7, emmbuf, pos);
 		pos += 7;
@@ -1853,8 +1853,8 @@ static int32_t viaccess_reassemble_emm(struct s_client *client, EMM_PACKET *ep)
 		//calculate emm length and set it on position 2
 		buffer[2] = pos - 3;
 
-		cs_log_dump_dbg(D_EMM, client->via_rass_emm, client->via_rass_emmlen, "[viaccess] %s: emm-gh", __func__);
-		cs_log_dump_dbg(D_EMM, buffer, pos, "[viaccess] %s: assembled emm", __func__);
+		rdr_log_dump_dbg(rdr, D_EMM, client->via_rass_emm, client->via_rass_emmlen, "%s: emm-gh", __func__);
+		rdr_log_dump_dbg(rdr, D_EMM, buffer, pos, "%s: assembled emm", __func__);
 
 		*len = pos;
 		break;

@@ -816,7 +816,7 @@ struct s_cardsystem
 	int32_t (*card_info)(struct s_reader *);
 	void	(*poll_status)(struct s_reader *);
 	int32_t (*do_ecm)(struct s_reader *, const struct ecm_request_t *, struct s_ecm_answer *);
-	int32_t (*do_emm_reassembly)(struct s_client *, struct emm_packet_t *);     // Returns 1/true if the EMM is ready to be written in the card
+	int32_t (*do_emm_reassembly)(struct s_reader *, struct s_client *, struct emm_packet_t *);     // Returns 1/true if the EMM is ready to be written in the card
 	int32_t (*do_emm)(struct s_reader *, struct emm_packet_t *);
 	void (*post_process)(struct s_reader *);
 	int32_t (*get_emm_type)(struct emm_packet_t *, struct s_reader *);
