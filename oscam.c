@@ -1280,6 +1280,27 @@ static void pidfile_create(char *pidfile)
 	}
 }
 
+static bool running_under_valgrind;
+
+static void detect_valgrind(void)
+{
+#ifdef __linux__
+	char fname[32];
+	snprintf(fname, sizeof(fname), "/proc/%d/maps", getpid());
+	FILE *f = fopen(fname, "r");
+	if (f) {
+		char line[256];
+		while (fgets(line, sizeof(line), f)) {
+			if (strstr(line, "/valgrind/")) {
+				running_under_valgrind = true;
+				break;
+			}
+		}
+	}
+	fclose(f);
+#endif
+}
+
 int32_t main(int32_t argc, char *argv[])
 {
 	int32_t i, j;
@@ -1623,8 +1644,14 @@ int32_t main(int32_t argc, char *argv[])
 	free_irdeto_guess_tab();
 	config_free();
 
-	cs_log("cardserver down");
+	detect_valgrind();
+	if (!running_under_valgrind)
+		cs_log("cardserver down");
+	else
+		cs_log("running under valgrind, waiting 5 seconds before stopping cardserver");
 	log_free();
+
+	if (running_under_valgrind) sleep(5); // HACK: Wait a bit for things to settle
 
 	stop_garbage_collector();
 
