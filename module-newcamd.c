@@ -573,52 +573,45 @@ static int32_t newcamd_recv(struct s_client *client, uchar *buf, int32_t UNUSED(
 	return (rc);
 }
 
-static FILTER mk_user_au_ftab(struct s_reader *aureader)
+static void mk_user_au_ftab(struct s_reader *aureader, FILTER *filt)
 {
 	int32_t i, j, found;
 	struct s_client *cl = cur_client();
-	FILTER filt;
 	FILTER client_filter;
 	FILTER *pufilt = &client_filter;
 
-	memset(&filt, 0, sizeof(filt));
+	memset(filt, 0, sizeof(*filt));
 	memset(&client_filter, 0, sizeof(client_filter));
 
 	if(cl->ftab.filts) client_filter = cl->ftab.filts[0];
 
-	filt.caid = aureader->caid;
-	if(filt.caid == 0)
-		filt.caid = client_filter.caid;
+	filt->caid = aureader->caid;
+	if(filt->caid == 0)
+		filt->caid = client_filter.caid;
 
 	for(i = 0; i < aureader->nprov; i++)
-		{ filt.prids[filt.nprids++] = b2i(3, &aureader->prid[i][1]); }
+		{ filt->prids[filt->nprids++] = b2i(3, &aureader->prid[i][1]); }
 
 	for(i = 0; i < pufilt->nprids; i++)
 	{
-		for(j = found = 0; (!found) && (j < filt.nprids); j++)
-			if(pufilt->prids[i] == filt.prids[j]) { found = 1; }
+		for(j = found = 0; (!found) && (j < filt->nprids); j++)
+			if(pufilt->prids[i] == filt->prids[j]) { found = 1; }
 		if(!found)
-			{ filt.prids[filt.nprids++] = pufilt->prids[i]; }
+			{ filt->prids[filt->nprids++] = pufilt->prids[i]; }
 	}
-
-	return filt;
 }
 
-static FILTER mk_user_ftab(void)
+static void mk_user_ftab(FILTER *filt)
 {
-	FILTER *psfilt = 0;
-	FILTER filt;
 	int32_t port_idx, i, j, k, c;
 	struct s_client *cl = cur_client();
 
-	filt.caid = 0;
-	filt.nprids = 0;
-	memset(&filt.prids, 0, sizeof(filt.prids));
+	memset(filt, 0, sizeof(*filt));
 
 	port_idx = cl->port_idx;
 	if(!cfg.ncd_ptab.ports[port_idx].ncd)
-		{ return filt; }
-	psfilt = &cfg.ncd_ptab.ports[port_idx].ncd->ncd_ftab.filts[0];
+		return;
+	FILTER *psfilt = &cfg.ncd_ptab.ports[port_idx].ncd->ncd_ftab.filts[0];
 
 	// 1. CAID
 	// search server CAID in client CAID
@@ -630,21 +623,21 @@ static FILTER mk_user_ftab(void)
 
 		if(psfilt->caid == ctab_caid)
 		{
-			filt.caid = ctab_caid;
+			filt->caid = ctab_caid;
 			break;
 		}
 	}
-	if(c && !filt.caid)
+	if(c && !filt->caid)
 	{
 		cs_log("no valid CAID found in CAID for user '%s'", cl->account->usr);
-		return filt;
+		return;
 	}
 
 	// search CAID in client IDENT
 	cs_log_dbg(D_CLIENT, "client[%8lX].%s nfilts=%d, filt.caid=%04X", (unsigned long)pthread_self(),
-				  cl->account->usr, cl->ftab.nfilts, filt.caid);
+				  cl->account->usr, cl->ftab.nfilts, filt->caid);
 
-	if(!filt.caid && cl->ftab.filts)
+	if(!filt->caid && cl->ftab.filts)
 	{
 		int32_t fcaids;
 		for(i = fcaids = 0; i < cl->ftab.nfilts; i++)
@@ -653,19 +646,19 @@ static FILTER mk_user_ftab(void)
 			if(ucaid) { fcaids++; }
 			if(ucaid && psfilt->caid == ucaid)
 			{
-				filt.caid = ucaid;
+				filt->caid = ucaid;
 				break;
 			}
 		}
-		if(fcaids == cl->ftab.nfilts && !filt.caid)
+		if(fcaids == cl->ftab.nfilts && !filt->caid)
 		{
 			cs_log("no valid CAID found in IDENT for user '%s'", cl->account->usr);
 			//cs_disconnect_client();
-			return filt;
+			return;
 		}
 	}
 	// empty client CAID - use server CAID
-	if(!filt.caid) { filt.caid = psfilt->caid; }
+	if(!filt->caid) { filt->caid = psfilt->caid; }
 
 	// 2. PROVID
 	if(!cl->ftab.nfilts)
@@ -690,7 +683,7 @@ static FILTER mk_user_ftab(void)
 						for(j = 0; !add && j < rdr->ftab.nfilts; j++)
 						{
 							uint32_t rcaid = rdr->ftab.filts[j].caid;
-							if(!rcaid || rcaid == filt.caid)
+							if(!rcaid || rcaid == filt->caid)
 							{
 								for(k = 0; !add && k < rdr->ftab.filts[j].nprids; k++)
 									if(rdr->ftab.filts[j].prids[k] == psfilt->prids[i]) { add = 1; }
@@ -698,10 +691,10 @@ static FILTER mk_user_ftab(void)
 						}
 					}
 				}
-			if(add) { filt.prids[filt.nprids++] = psfilt->prids[i]; }
+			if(add) { filt->prids[filt->nprids++] = psfilt->prids[i]; }
 		}
-		memcpy(&filt, psfilt, sizeof(filt));
-		return filt;
+		memcpy(filt, psfilt, sizeof(*filt));
+		return;
 	}
 
 	// search in client IDENT
@@ -709,7 +702,7 @@ static FILTER mk_user_ftab(void)
 	{
 		uint32_t ucaid = cl->ftab.filts[j].caid;
 		cs_log_dbg(D_CLIENT, "client caid #%d: %04X", j, ucaid);
-		if(!ucaid || ucaid == filt.caid)
+		if(!ucaid || ucaid == filt->caid)
 		{
 			for(i = 0; i < psfilt->nprids; i++)
 			{
@@ -718,24 +711,22 @@ static FILTER mk_user_ftab(void)
 				{
 					for(k = 0; k < cl->ftab.filts[j].nprids; k++)
 						if(cl->ftab.filts[j].prids[k] == psfilt->prids[i])
-							{ filt.prids[filt.nprids++] = cl->ftab.filts[j].prids[k]; }
+							{ filt->prids[filt->nprids++] = cl->ftab.filts[j].prids[k]; }
 				}
 				else
 				{
-					filt.prids[filt.nprids++] = psfilt->prids[i];
+					filt->prids[filt->nprids++] = psfilt->prids[i];
 					// allow server PROVID(s) if no PROVID(s) specified in IDENT
 				}
 			}
 		}
 	}
 
-	if(!filt.nprids)
+	if(!filt->nprids)
 	{
 		cs_log("no valid PROVID(s) found in CAID for user '%s'", cl->account->usr);
 		//cs_disconnect_client();
 	}
-
-	return filt;
 }
 
 static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
@@ -918,9 +909,9 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 
 			// set userfilter for au enabled clients
 			if(aureader)
-				usr_filter = mk_user_au_ftab(aureader);
+				mk_user_au_ftab(aureader, &usr_filter);
 			else
-				usr_filter = mk_user_ftab();
+				mk_user_ftab(&usr_filter);
 
 			clear_ftab(&cl->ftab);
 			ftab_add_filter(&cl->ftab, &usr_filter);
