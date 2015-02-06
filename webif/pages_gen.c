@@ -137,10 +137,10 @@ static uint8_t mime_type_from_filename(char *filename)
 
 static void parse_index_file(char *filename)
 {
-	char *is_defined = NULL;
+	uint8_t *is_defined = NULL;
 	size_t is_defined_len = 0;
 	if(access(defined_file, R_OK) != -1)
-		readfile(defined_file, (uint8_t **)&is_defined, &is_defined_len);
+		readfile(defined_file, &is_defined, &is_defined_len);
 	FILE *f = xfopen(filename, "r");
 	int max_fields = 3;
 	char line[1024];
@@ -189,14 +189,14 @@ static void parse_index_file(char *filename)
 				char *deps_sep = strdup(deps);
 	 			for(i = 0, ptr = strtok_r(deps_sep, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1), i++)
 	 			{
-	 				if(strstr(is_defined, ptr))
+					if(strstr((char *)is_defined, ptr))
 	 					{ def_found = 1; }
 	 			}
 				free(deps_sep);
 				if(!def_found)
 					{ continue; }
 			}
-			else if( !strstr(is_defined, deps))
+			else if( !strstr((char *)is_defined, deps))
 				{ continue; }
 		}
 		if(!strlen(ident) || !strlen(file))
