@@ -1323,6 +1323,8 @@ void free_reader(struct s_reader *rdr)
 		ll_destroy(rdr->ll_entitlements);
 		rdr->ll_entitlements = NULL;
 	}
+	if(rdr->csystem.card_done)
+		rdr->csystem.card_done(rdr);
 	NULLFREE(rdr->csystem_data);
 
 	if(rdr->blockemmbylen)
