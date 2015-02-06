@@ -1341,6 +1341,7 @@ void free_reader(struct s_reader *rdr)
 		aes_clear_entries(&rdr->aes_list);
 	}
 	
+	config_list_gc_values(reader_opts, rdr);
 	add_garbage(rdr);
 }
 
