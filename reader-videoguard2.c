@@ -1302,12 +1302,22 @@ static int32_t videoguard2_card_info(struct s_reader *reader)
 	return OK;
 }
 
+static void videoguard2_card_done(struct s_reader *reader)
+{
+	struct videoguard_data *csystem_data = reader->csystem_data;
+	if (csystem_data)
+	{
+		NULLFREE(csystem_data->cmd_table);
+	}
+}
+
 void reader_videoguard2(struct s_cardsystem *ph)
 {
 	ph->do_emm = videoguard2_do_emm;
 	ph->do_ecm = videoguard2_do_ecm;
 	ph->card_info = videoguard2_card_info;
 	ph->card_init = videoguard2_card_init;
+	ph->card_done = videoguard2_card_done;
 	ph->get_emm_type = videoguard_get_emm_type;
 	ph->get_emm_filter = videoguard_get_emm_filter;
 	ph->caids[0] = 0x09;

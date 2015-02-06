@@ -812,6 +812,7 @@ struct s_cardsystem
 	int8_t          active;
 	char            *desc;
 	int32_t (*card_init)(struct s_reader *reader, struct s_ATR *);
+	void    (*card_done)(struct s_reader *reader);
 	int32_t (*card_info)(struct s_reader *);
 	void	(*poll_status)(struct s_reader *);
 	int32_t (*do_ecm)(struct s_reader *, const struct ecm_request_t *, struct s_ecm_answer *);

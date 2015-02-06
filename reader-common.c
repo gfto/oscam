@@ -152,6 +152,8 @@ static int32_t reader_get_cardsystem(struct s_reader *reader, ATR *atr)
 			else
 			{
 				// On error free allocated card system data if any
+				if(cardsystems[i].card_done)
+					cardsystems[i].card_done(reader);
 				NULLFREE(reader->csystem_data);
 			}
 		}
@@ -254,6 +256,8 @@ int32_t cardreader_do_checkhealth(struct s_reader *reader)
 		{
 			rdr_log(reader, "card ejected");
 			reader_nullcard(reader);
+			if(reader->csystem.card_done)
+				reader->csystem.card_done(reader);
 			NULLFREE(reader->csystem_data);
 			if(cl)
 			{
