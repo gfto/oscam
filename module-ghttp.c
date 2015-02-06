@@ -84,6 +84,14 @@ int32_t ghttp_client_init(struct s_client *cl)
 	int32_t handle;
 	char *str = NULL;
 
+	ghttp_ignored_contexts = ll_create("ignored contexts");
+#ifdef WITH_SSL
+	SSL_load_error_strings();
+	SSL_library_init();
+	ghttp_ssl_context = SSL_CTX_new(SSLv23_client_method());
+	if(ghttp_ssl_context == NULL) { ERR_print_errors_fp(stderr); }
+#endif
+
 	if(cl->reader->r_port == 0)
 		{ cl->reader->r_port = cl->reader->ghttp_use_ssl ? 443 : 80; }
 
@@ -651,6 +659,8 @@ static void ghttp_cleanup(struct s_client *client)
 {
 	s_ghttp *context = (s_ghttp *)client->ghttp;
 
+	ll_destroy_data(ghttp_ignored_contexts);
+
 	if(context)
 	{
 		NULLFREE(context->session_id);
@@ -659,6 +669,7 @@ static void ghttp_cleanup(struct s_client *client)
 		if(context->ecm_q) { ll_destroy(context->ecm_q); }
 		if(context->post_contexts) { ll_destroy_data(context->post_contexts); }
 #ifdef WITH_SSL
+		ERR_free_strings();
 		if(context->ssl_handle)
 		{
 			SSL_shutdown(context->ssl_handle);
@@ -755,12 +766,5 @@ void module_ghttp(struct s_module *ph)
 	ph->c_capmt = ghttp_capmt_notify;
 #endif
 	ph->num = R_GHTTP;
-	ghttp_ignored_contexts = ll_create("ignored contexts");
-#ifdef WITH_SSL
-	SSL_load_error_strings();
-	SSL_library_init();
-	ghttp_ssl_context = SSL_CTX_new(SSLv23_client_method());
-	if(ghttp_ssl_context == NULL) { ERR_print_errors_fp(stderr); }
-#endif
 }
 #endif
