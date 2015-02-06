@@ -731,6 +731,7 @@ void free_client(struct s_client *cl)
 
 	NULLFREE(cl->cw_rass);
 	NULLFREE(cl->via_rass);
+	NULLFREE(cl->aes_keys);
 
 #ifdef MODULE_CCCAM
 	add_garbage(cl->cc);

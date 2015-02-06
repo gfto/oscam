@@ -2,6 +2,7 @@
 #define OSCAM_AES_H_
 
 void aes_set_key(struct aes_keys *aes, char *key);
+bool aes_set_key_alloc(struct aes_keys **aes, char *key);
 void aes_decrypt(struct aes_keys *aes, uchar *buf, int32_t n);
 void aes_encrypt_idx(struct aes_keys *aes, uchar *buf, int32_t n);
 

@@ -1074,7 +1074,7 @@ struct s_client
 
 	uchar           ucrc[4];            // needed by monitor and used by camd35
 	uint32_t        pcrc;               // password crc
-	struct aes_keys aes_keys;
+	struct aes_keys *aes_keys;          // used by camd33 and camd35
 	uint16_t        ncd_msgid;
 	uint16_t        ncd_client_id;
 	uchar           ncd_skey[16];       //Also used for camd35 Cacheex to store remote node id
