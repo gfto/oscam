@@ -1792,34 +1792,41 @@ static int32_t viaccess_reassemble_emm(struct s_reader *rdr, struct s_client *cl
 	// Viaccess
 	if(*len > 500) { return 0; }
 
+	if (!client->via_rass && !cs_malloc(&client->via_rass, sizeof(*client->via_rass)))
+	{
+		cs_log("[viaccess] ERROR: Can't allocate EMM reassembly buffer.");
+		return 0;
+	}
+	struct emm_rass *r_emm = client->via_rass;
+
 	switch(buffer[0])
 	{
 	case 0x8c:
 	case 0x8d:
 		// emm-s part 1
-		if(!memcmp(client->via_rass_emm, buffer, *len))
+		if(!memcmp(r_emm->emm, buffer, *len))
 			{ return 0; }
 
 		// copy first part of the emm-s
-		memcpy(client->via_rass_emm, buffer, *len);
-		client->via_rass_emmlen = *len;
+		memcpy(r_emm->emm, buffer, *len);
+		r_emm->emmlen = *len;
 		//rdr_log_dump_dbg(rdr, D_READER, buffer, len, "global emm:");
 		return 0;
 
 	case 0x8e:
 		// emm-s part 2
-		if(!client->via_rass_emmlen) { return 0; }
+		if(!r_emm->emmlen) { return 0; }
 
 		//extract nanos from emm-gh and emm-s
 		uchar emmbuf[512];
 
 		rdr_log_dbg(rdr, D_EMM, "%s: start extracting nanos", __func__);
 		//extract from emm-gh
-		for(i = 3; i < client->via_rass_emmlen; i += client->via_rass_emm[i + 1] + 2)
+		for(i = 3; i < r_emm->emmlen; i += r_emm->emm[i + 1] + 2)
 		{
 			//copy nano (length determined by i+1)
-			memcpy(emmbuf + pos, client->via_rass_emm + i, client->via_rass_emm[i + 1] + 2);
-			pos += client->via_rass_emm[i + 1] + 2;
+			memcpy(emmbuf + pos, r_emm->emm + i, r_emm->emm[i + 1] + 2);
+			pos += r_emm->emm[i + 1] + 2;
 		}
 
 		if(buffer[2] == 0x2c)
@@ -1853,7 +1860,7 @@ static int32_t viaccess_reassemble_emm(struct s_reader *rdr, struct s_client *cl
 		//calculate emm length and set it on position 2
 		buffer[2] = pos - 3;
 
-		rdr_log_dump_dbg(rdr, D_EMM, client->via_rass_emm, client->via_rass_emmlen, "%s: emm-gh", __func__);
+		rdr_log_dump_dbg(rdr, D_EMM, r_emm->emm, r_emm->emmlen, "%s: emm-gh", __func__);
 		rdr_log_dump_dbg(rdr, D_EMM, buffer, pos, "%s: assembled emm", __func__);
 
 		*len = pos;

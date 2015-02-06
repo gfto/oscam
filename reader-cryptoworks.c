@@ -757,6 +757,13 @@ static int32_t cryptoworks_reassemble_emm(struct s_reader *rdr, struct s_client 
 	//
 	if(*len > 500) { return 0; }
 
+	if (!client->cw_rass && !cs_malloc(&client->cw_rass, sizeof(*client->cw_rass)))
+	{
+		cs_log("[cryptoworks] ERROR: Can't allocate EMM reassembly buffer.");
+		return 0;
+	}
+	struct emm_rass *r_emm = client->cw_rass;
+
 	switch(buffer[0])
 	{
 	case 0x82 : // emm-u
@@ -765,7 +772,7 @@ static int32_t cryptoworks_reassemble_emm(struct s_reader *rdr, struct s_client 
 
 	case 0x84: // emm-sh
 		rdr_log_dbg(rdr, D_EMM, "shared emm (EMM-SH)");
-		if(!memcmp(client->cw_rass_emm, buffer, *len))
+		if(!memcmp(r_emm->emm, buffer, *len))
 			{ return 0; }
 
 		if(ep->emm[11] == ep->emm[2] - 9)
@@ -774,14 +781,14 @@ static int32_t cryptoworks_reassemble_emm(struct s_reader *rdr, struct s_client 
 			return 1;
 		}
 
-		memcpy(client->cw_rass_emm, buffer, *len);
-		client->cw_rass_emmlen = *len;
+		memcpy(r_emm->emm, buffer, *len);
+		r_emm->emmlen = *len;
 		rdr_log_dbg(rdr, D_EMM, "EMM-SH only in memcpy");
 		return 0;
 
 	case 0x86: // emm-sb
 		rdr_log_dbg(rdr, D_EMM, "shared emm (EMM-SB)");
-		if(!client->cw_rass_emmlen)
+		if(!r_emm->emmlen)
 			{ return 0; }
 
 		// we keep the first 12 bytes of the 0x84 emm (EMM-SH)
@@ -794,7 +801,7 @@ static int32_t cryptoworks_reassemble_emm(struct s_reader *rdr, struct s_client 
 		// update the emm len (emmBuf[1:2])
 		//
 
-		emm_len = *len - 5 + client->cw_rass_emmlen - 12;
+		emm_len = *len - 5 + r_emm->emmlen - 12;
 		unsigned char *tmp, *assembled;
 		if(!cs_malloc(&tmp, emm_len))
 			{ return 0; }
@@ -811,8 +818,8 @@ static int32_t cryptoworks_reassemble_emm(struct s_reader *rdr, struct s_client 
 			return 0;
 		}
 		memcpy(tmp, &buffer[5], *len - 5);
-		memcpy(tmp + *len - 5, &client->cw_rass_emm[12], client->cw_rass_emmlen - 12);
-		memcpy(assembled_EMM, client->cw_rass_emm, 12);
+		memcpy(tmp + *len - 5, &r_emm->emm[12], r_emm->emmlen - 12);
+		memcpy(assembled_EMM, r_emm->emm, 12);
 		emm_sort_nanos(assembled_EMM + 12, tmp, emm_len);
 
 		assembled_EMM[1] = ((emm_len + 9) >> 8) | 0x70;
@@ -824,7 +831,7 @@ static int32_t cryptoworks_reassemble_emm(struct s_reader *rdr, struct s_client 
 		free(tmp);
 		free(assembled);
 
-		client->cw_rass_emmlen = 0;
+		r_emm->emmlen = 0;
 
 		rdr_log_dump_dbg(rdr, D_EMM, buffer, *len, "shared emm (assembled):");
 		if(assembled_EMM[11] != emm_len)  // sanity check

@@ -729,6 +729,9 @@ void free_client(struct s_client *cl)
 	clear_ftab(&cl->ftab);
 	clear_ftab(&cl->fchid);
 
+	NULLFREE(cl->cw_rass);
+	NULLFREE(cl->via_rass);
+
 #ifdef MODULE_CCCAM
 	add_garbage(cl->cc);
 #endif

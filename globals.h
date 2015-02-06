@@ -980,6 +980,13 @@ struct s_zap_list
 	time_t		lasttime;
 };
 
+// EMM reassemply
+struct emm_rass
+{
+	int16_t         emmlen;
+	uint8_t         emm[512];
+};
+
 struct s_client
 {
 	uint32_t        tid;
@@ -1008,14 +1015,8 @@ struct s_client
 	int8_t          dup;
 	LLIST           *aureader_list;
 	int8_t          autoau;
-#ifdef READER_VIACCESS
-	int16_t         via_rass_emmlen;
-	uint8_t         via_rass_emm[512];
-#endif
-#ifdef READER_CRYPTOWORKS
-	int16_t         cw_rass_emmlen;
-	uint8_t         cw_rass_emm[512];
-#endif
+	struct emm_rass *via_rass;         // EMM reassembly buffer for viaccess
+	struct emm_rass *cw_rass;          // EMM reassembly buffer for cryptoworks
 	int8_t          monlvl;
 	CAIDTAB         ctab;
 	TUNTAB          ttab;
