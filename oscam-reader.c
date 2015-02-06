@@ -1144,17 +1144,7 @@ int32_t reader_init(struct s_reader *reader)
 			{ return 0; }
 	}
 
-	if(reader->emmcache)
-	{
-		add_garbage(reader->emmcache);
-		reader->emmcache = NULL;
-	}
-	
-	if(!cs_malloc(&reader->emmcache, CS_EMMCACHESIZE * sizeof(struct s_emm)))
-	{
-		NULLFREE(client->ecmtask);
-		return 0;
-	}
+	ll_destroy_data_NULL(reader->emmstat);
 
 	client->login = time((time_t *)0);
 	client->init_done = 1;

@@ -28,6 +28,7 @@
 #include "oscam-config.h"
 #include "oscam-ecm.h"
 #include "oscam-emm.h"
+#include "oscam-emm-cache.h"
 #include "oscam-files.h"
 #include "oscam-garbage.h"
 #include "oscam-lock.h"
@@ -1545,6 +1546,9 @@ int32_t main(int32_t argc, char *argv[])
 	init_cardreader();
 
 	cs_waitforcardinit();
+	
+	emm_load_cache();
+	load_emmstat_from_file();
 
 	led_status_starting();
 
@@ -1581,6 +1585,8 @@ int32_t main(int32_t argc, char *argv[])
 	stat_finish();
 	
 	dvbapi_save_channel_cache();
+	emm_save_cache();
+	save_emmstat_to_file();
 	
 	cccam_done_share();
 

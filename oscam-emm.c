@@ -12,6 +12,7 @@
 #include "oscam-work.h"
 #include "reader-common.h"
 #include "oscam-chk.h"
+#include "oscam-emm-cache.h"
 
 const char *entitlement_type[] = { "", "package", "PPV-Event", "chid", "tier", "class", "PBM", "admin" };
 
@@ -96,7 +97,7 @@ static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs
 	return 0; //emm filter does not match, illegal emm, return
 }
 
-static void reader_log_emm(struct s_reader *reader, EMM_PACKET *ep, int32_t i, int32_t rc, struct timeb *tps)
+static void reader_log_emm(struct s_reader *reader, EMM_PACKET *ep, int32_t count, int32_t rc, struct timeb *tps)
 {
 	char *rtxt[] =
 	{
@@ -115,9 +116,8 @@ static void reader_log_emm(struct s_reader *reader, EMM_PACKET *ep, int32_t i, i
 		if(!tps)
 			{ tps = &tpe; }
 
-		rdr_log(reader, "%s emmtype=%s, len=%d, idx=%d, cnt=%d: %s (%"PRId64" ms)",
-				username(ep->client), typedesc[reader->emmcache[i].type], ep->emm[2],
-				i, reader->emmcache[i].count, rtxt[rc], comp_timeb(&tpe, tps));
+		rdr_log(reader, "%s emmtype=%s, len=%d, cnt=%d: %s (%"PRId64" ms)",
+				username(ep->client), typedesc[ep->type], ep->emm[2], count, rtxt[rc], comp_timeb(&tpe, tps));
 	}
 
 	if(rc)
@@ -144,18 +144,6 @@ static void reader_log_emm(struct s_reader *reader, EMM_PACKET *ep, int32_t i, i
 		break;
 	}
 #endif
-}
-
-static int32_t reader_store_emm(struct s_reader *reader, uint8_t type, uint8_t *emmd5)
-{
-	int32_t rc;
-	memcpy(reader->emmcache[reader->rotate].emmd5, emmd5, CS_EMMSTORESIZE);
-	reader->emmcache[reader->rotate].type = type;
-	reader->emmcache[reader->rotate].count = 1;
-	//  cs_log_dbg(D_READER, "EMM stored (index %d)", rotate);
-	rc = reader->rotate;
-	reader->rotate = (++reader->rotate < CS_EMMCACHESIZE) ? reader->rotate : 0;
-	return rc;
 }
 
 int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid)
@@ -492,33 +480,34 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 		first_client->emmok++;
 
 		//Check emmcache early:
-		int32_t i;
-		unsigned char md5tmp[CS_EMMSTORESIZE];
+		unsigned char md5tmp[MD5_DIGEST_LENGTH];
 
 		MD5(ep->emm, ep->emm[2], md5tmp);
 		ep->client = client;
 
 		int32_t writeemm = 1; // 0= dont write emm, 1=write emm, default = write
 
-		for(i = 0; i < CS_EMMCACHESIZE; i++)  //check emm cache hits
+		struct s_emmstat *emmstat = get_emm_stat(aureader, md5tmp, ep->type);
+		if(emmstat)
 		{
-			if(!memcmp(aureader->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE))
+			if(!aureader->cachemm)
 			{
-				rdr_log_dbg(aureader, D_EMM, "emm found in cache: count %d rewrite %d",
-							   aureader->emmcache[i].count, aureader->rewritemm);
-				if(aureader->cachemm && (aureader->emmcache[i].count > aureader->rewritemm))
-				{
-					aureader->emmcache[i].count++;
-					reader_log_emm(aureader, ep, i, 2, NULL);
-					writeemm = 0; // dont write emm!
-					saveemm(aureader, ep, "emmcache");
-					break; // found emm match needs no further handling, stop searching and proceed with next reader!
-				}
-				writeemm = 1; // found emm match but rewrite counter not reached: write emm!
-				break;
+				rdr_log_dbg(aureader, D_EMM, "emm count %d rewrite always (emmcache disabled!)", emmstat->count);
 			}
+			else
+			{
+				rdr_log_dbg(aureader, D_EMM, "emm count %d rewrite %d", emmstat->count, aureader->rewritemm);
+			}
+			if(aureader->cachemm && (emmstat->count >= aureader->rewritemm))
+			{
+				reader_log_emm(aureader, ep, emmstat->count, 2, NULL);
+				writeemm = 0; // dont write emm!
+				saveemm(aureader, ep, "emmcache");
+				continue; // found emm match needs no further handling, proceed with next reader!
+			}
+			writeemm = 1; // found emm match but rewrite counter not reached: write emm!
 		}
-
+		
 		if(writeemm)   // only write on no cache hit or cache hit that needs further rewrite
 		{
 			EMM_PACKET *emm_pack;
@@ -545,7 +534,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 
 int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 {
-	int32_t i, rc, ecs;
+	int32_t rc, ecs = 0;
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 	struct timeb tps;
 
@@ -553,24 +542,27 @@ int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 
 	MD5(ep->emm, ep->emm[2], md5tmp);
 
-	for(i = ecs = 0; i < CS_EMMCACHESIZE; i++)
+	struct s_emmstat *emmstat = get_emm_stat(reader, md5tmp, ep->type);
+	if(emmstat)
 	{
-		if(!memcmp(reader->emmcache[i].emmd5, md5tmp, CS_EMMSTORESIZE))
+		if(reader->cachemm && emmstat->count >= reader->rewritemm)
 		{
-			reader->emmcache[i].count++;
-			if(reader->cachemm)
-			{
-				if(reader->emmcache[i].count > reader->rewritemm)
-				{
-					ecs = 2; //skip emm
-				}
-				else
-				{
-					ecs = 1; //rewrite emm
-				}
-			}
-			break;
+			ecs = 2; //skip emm
 		}
+		else
+		{
+			ecs = 1; //rewrite emm
+		}
+	}
+	
+	struct s_emmcache *emmcache = find_emm_cache(md5tmp); // check emm cache
+	if(!emmcache)
+	{
+		emm_edit_cache(md5tmp, ep, true);
+	}
+	else
+	{
+		cs_ftime(&emmcache->lastseen);
 	}
 
 	// Ecs=0 not found in cache
@@ -578,6 +570,17 @@ int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	// Ecs=2 skip
 	if((rc = ecs) < 2)
 	{
+		if(!emmstat->count)
+		{
+			cs_ftime(&emmstat->firstwritten);
+			emmstat->lastwritten = emmstat->firstwritten;
+		}
+		else
+		{
+			cs_ftime(&emmstat->lastwritten);
+		}
+		emmstat->count++;
+		
 		if(is_network_reader(reader))
 		{
 			rdr_log_dbg(reader, D_READER, "network emm reader");
@@ -596,11 +599,9 @@ int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 			rdr_log_dbg(reader, D_READER, "local emm reader");
 			rc = cardreader_do_emm(reader, ep);
 		}
-		if(!ecs)
-			{ i = reader_store_emm(reader, ep->type, md5tmp); }
 	}
 
-	reader_log_emm(reader, ep, i, rc, &tps);
+	reader_log_emm(reader, ep, emmstat->count, rc, &tps);
 
 	return rc;
 }

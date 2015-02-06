@@ -1328,10 +1328,9 @@ void free_reader(struct s_reader *rdr)
 		rdr->blockemmbylen = NULL;
 	}
 
-	if(rdr->emmcache)
+	if(rdr->emmstat)
 	{
-		add_garbage(rdr->emmcache);
-		rdr->emmcache = NULL;
+		ll_destroy_data_NULL(rdr->emmstat);
 	}
 
 	if(rdr->aes_list)

@@ -641,11 +641,23 @@ struct s_ecm
 	time_t          time;
 };
 
-struct s_emm
+struct s_emmstat
 {
 	uchar           emmd5[CS_EMMSTORESIZE];
 	uchar           type;
 	int32_t         count;
+	struct timeb    firstwritten;
+	struct timeb    lastwritten;
+};
+
+struct s_emmcache
+{
+	uchar			emmd5[CS_EMMSTORESIZE];
+	uchar			type;
+	uchar			len;
+	uchar			emm[258];
+	struct timeb    firstseen;
+	struct timeb    lastseen;
 };
 
 struct s_csystem_emm_filter
@@ -1453,8 +1465,8 @@ struct s_reader                                     //contains device info, read
 	uint8_t         ghttp_use_ssl;
 #endif
 	uint8_t cnxlastecm; // == 0 - las ecm has not been paired ecm, > 0 last ecm has been paired ecm
-	int16_t          rotate;
-	struct s_emm    *emmcache;
+	LLIST           *emmstat; //emm stats
+	CS_MUTEX_LOCK   emmstat_lock;
 	struct s_reader *next;
 };
 
