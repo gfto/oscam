@@ -224,8 +224,7 @@ void lb_destroy_stats(struct s_reader *rdr)
 	if(!rdr->lb_stat)
 		return;
 	cs_lock_destroy(&rdr->lb_stat_lock);
-	ll_destroy_data(rdr->lb_stat);
-	rdr->lb_stat = NULL;
+	ll_destroy_data(&rdr->lb_stat);
 }
 
 /**

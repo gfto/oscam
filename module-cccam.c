@@ -1873,10 +1873,10 @@ void cc_free_card(struct cc_card *card)
 	if(!card)
 		{ return; }
 
-	ll_destroy_data_NULL(card->providers);
-	ll_destroy_data_NULL(card->badsids);
-	ll_destroy_data_NULL(card->goodsids);
-	ll_destroy_data_NULL(card->remote_nodes);
+	ll_destroy_data(&card->providers);
+	ll_destroy_data(&card->badsids);
+	ll_destroy_data(&card->goodsids);
+	ll_destroy_data(&card->remote_nodes);
 
 	add_garbage(card);
 }
@@ -1908,7 +1908,7 @@ void cc_free_cardlist(LLIST *card_list, int32_t destroy_list)
 			cc_free_card(card);
 		}
 		if(destroy_list)
-			{ ll_destroy_NULL(card_list); }
+			ll_destroy(&card_list);
 	}
 }
 
@@ -1926,9 +1926,9 @@ void cc_free(struct s_client *cl)
 
 	cs_log_dbg(D_TRACE, "exit cccam1/3");
 	cc_free_cardlist(cc->cards, 1);
-	ll_destroy_data_NULL(cc->pending_emms);
+	ll_destroy_data(&cc->pending_emms);
 	free_extended_ecm_idx(cc);
-	ll_destroy_data_NULL(cc->extended_ecm_idx);
+	ll_destroy_data(&cc->extended_ecm_idx);
 
 	cs_writeunlock(&cc->lockcmd);
 

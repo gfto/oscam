@@ -639,8 +639,7 @@ void log_list_thread(void)
 			sleepms_on_cond(&log_thread_sleep_cond_mutex, &log_thread_sleep_cond, 60 * 1000);
 	}
 	while(log_running);
-	ll_destroy(log_list);
-	log_list = NULL;
+	ll_destroy(&log_list);
 }
 
 int32_t cs_init_log(void)

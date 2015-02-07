@@ -404,8 +404,8 @@ void gbox_add_good_card(struct s_client *cl, uint16_t id_card, uint16_t caid, ui
 
 void gbox_free_card(struct gbox_card *card)
 {
-	ll_destroy_data_NULL(card->badsids);
-	ll_destroy_data_NULL(card->goodsids);
+	ll_destroy_data(&card->badsids);
+	ll_destroy_data(&card->goodsids);
 	add_garbage(card);
 	return;
 }
@@ -420,9 +420,14 @@ void gbox_free_cardlist(LLIST *card_list)
 		{
 			gbox_free_card(card);
 		}
-		ll_destroy_NULL(card_list);
+		ll_destroy(&card_list);
 	}
 	return;
+}
+
+void gbox_free_cards_pending(ECM_REQUEST *er)
+{
+	ll_destroy_free_data(&er->gbox_cards_pending);
 }
 
 void gbox_init_ecm_request_ext(struct gbox_ecm_request_ext *ere)

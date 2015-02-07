@@ -493,7 +493,7 @@ int32_t init_free_userdb(struct s_auth *ptr)
 	{
 		struct s_auth *ptr_next;
 		ptr_next = ptr->next;
-		ll_destroy(ptr->aureader_list);
+		ll_destroy(&ptr->aureader_list);
 		ptr->next = NULL;
 		config_list_gc_values(account_opts, ptr);
 		clear_ftab(&ptr->ftab);

@@ -3958,7 +3958,7 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				}
 				unlock_sharelist();
 				struct cc_card **cardarray = get_sorted_card_copy(sharelist2, 0, &cardsize);
-				ll_destroy(sharelist2);
+				ll_destroy(&sharelist2);
 				print_cards(vars, params, cardarray, cardsize, 1, NULL, offset, apicall);
 				NULLFREE(cardarray);
 			}

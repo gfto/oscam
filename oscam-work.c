@@ -54,8 +54,7 @@ void free_joblist(struct s_client *cl)
 	{
 		free_job_data(data);
 	}
-	ll_destroy(cl->joblist);
-	cl->joblist = NULL;
+	ll_destroy(&cl->joblist);
 	cl->account = NULL;
 	if(cl->work_job_data)  // Free job_data that was not freed by work_thread
 		{ free_job_data(cl->work_job_data); }

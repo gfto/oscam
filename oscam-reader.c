@@ -1144,7 +1144,7 @@ int32_t reader_init(struct s_reader *reader)
 			{ return 0; }
 	}
 
-	ll_destroy_data_NULL(reader->emmstat);
+	ll_destroy_data(&reader->emmstat);
 
 	client->login = time((time_t *)0);
 	client->init_done = 1;

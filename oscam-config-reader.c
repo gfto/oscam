@@ -738,11 +738,7 @@ static void blockemm_bylen_fn(const char *token, char *value, void *setting, FIL
 
 		if(!strlen(value))
 		{
-			if(rdr->blockemmbylen)
-			{
-				ll_destroy_data(rdr->blockemmbylen);
-				rdr->blockemmbylen = NULL;
-			}
+			ll_destroy_data(&rdr->blockemmbylen);
 			return;
 		}
 
@@ -1310,30 +1306,17 @@ void free_reader(struct s_reader *rdr)
 	lb_destroy_stats(rdr);
 
 	cs_clear_entitlement(rdr);
-	if(rdr->ll_entitlements)
-	{
-		ll_destroy(rdr->ll_entitlements);
-		rdr->ll_entitlements = NULL;
-	}
+	ll_destroy(&rdr->ll_entitlements);
+
 	if(rdr->csystem.card_done)
 		rdr->csystem.card_done(rdr);
 	NULLFREE(rdr->csystem_data);
 
-	if(rdr->blockemmbylen)
-	{
-		ll_destroy_data(rdr->blockemmbylen);
-		rdr->blockemmbylen = NULL;
-	}
+	ll_destroy_data(&rdr->blockemmbylen);
 
-	if(rdr->emmstat)
-	{
-		ll_destroy_data_NULL(rdr->emmstat);
-	}
+	ll_destroy_data(&rdr->emmstat);
 
-	if(rdr->aes_list)
-	{
-		aes_clear_entries(&rdr->aes_list);
-	}
+	aes_clear_entries(&rdr->aes_list);
 	
 	config_list_gc_values(reader_opts, rdr);
 	add_garbage(rdr);
@@ -1350,8 +1333,7 @@ int32_t free_readerdb(void)
 		count++;
 	}
 	cs_log("readerdb %d readers freed", count);
-	ll_destroy(configured_readers);
-	configured_readers = NULL;
+	ll_destroy(&configured_readers);
 	return count;
 }
 

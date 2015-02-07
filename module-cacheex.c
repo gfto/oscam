@@ -213,9 +213,7 @@ void cacheex_update_hash(ECM_REQUEST *er)
 
 void cacheex_free_csp_lastnodes(ECM_REQUEST *er)
 {
-	LLIST *l = er->csp_lastnodes;
-	er->csp_lastnodes = NULL;
-	ll_destroy_free_data(l);
+	ll_destroy_free_data(&er->csp_lastnodes);
 }
 
 void cacheex_set_csp_lastnode(ECM_REQUEST *er)

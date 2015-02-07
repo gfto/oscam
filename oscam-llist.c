@@ -47,26 +47,32 @@ LLIST *ll_create(const char *name)
 	return l;
 }
 
-void ll_destroy(LLIST *l)
+void ll_destroy(LLIST **pl)
 {
+	LLIST *l = *pl;
 	if(!l || l->flag) { return; }
+	*pl = NULL;
 	ll_clear(l);
 
 	_destroy(l);
 }
 
-void ll_destroy_data(LLIST *l)
+void ll_destroy_data(LLIST **pl)
 {
+	LLIST *l = *pl;
 	if(!l) { return; }
+	*pl = NULL;
 	ll_clear_data(l);
 
 	_destroy(l);
 }
 
 
-void ll_destroy_free_data(LLIST *l)
+void ll_destroy_free_data(LLIST **pl)
 {
+	LLIST *l = *pl;
 	if(!l||l->flag) { return; }
+	*pl = NULL;
 
 	//*********************************
 	cs_writelock(&l->lock);

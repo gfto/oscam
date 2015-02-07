@@ -659,15 +659,15 @@ static void ghttp_cleanup(struct s_client *client)
 {
 	s_ghttp *context = (s_ghttp *)client->ghttp;
 
-	ll_destroy_data(ghttp_ignored_contexts);
+	ll_destroy_data(&ghttp_ignored_contexts);
 
 	if(context)
 	{
 		NULLFREE(context->session_id);
 		NULLFREE(context->host_id);
 		NULLFREE(context->fallback_id);
-		if(context->ecm_q) { ll_destroy(context->ecm_q); }
-		if(context->post_contexts) { ll_destroy_data(context->post_contexts); }
+		ll_destroy(&context->ecm_q);
+		ll_destroy_data(&context->post_contexts);
 #ifdef WITH_SSL
 		ERR_free_strings();
 		if(context->ssl_handle)
