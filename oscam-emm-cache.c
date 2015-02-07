@@ -217,7 +217,15 @@ void emm_load_cache(void)
 	FILE *file;
 	struct s_emmcache *c;
 
-	get_tmp_dir_filename(fname, sizeof(fname), "oscam.emmcache");
+	if(!cfg.emmlogdir)
+	{
+		get_tmp_dir_filename(fname, sizeof(fname), "oscam.emmcache");
+	}
+	else
+	{
+		get_config_filename(fname, sizeof(fname), "oscam.emmcache");
+	}
+	
 	file = fopen(fname, "r");
 	if(!file)
 	{
