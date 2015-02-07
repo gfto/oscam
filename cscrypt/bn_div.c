@@ -64,8 +64,6 @@
 #include "openssl_mods.h"
 #include "bn_lcl.h"
 
-#define NO_ASM 1
-
 /* The old slow way */
 #if 0
 int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
@@ -146,7 +144,7 @@ end:
  *                   <appro@fy.chalmers.se>
  */
 #  define bn_div_words(n0,n1,d0)        \
-    ({  asm volatile (          \
+    ({  __asm volatile (          \
                                     "divl	%4"           \
                                     : "=a"(q), "=d"(rem)        \
                                     : "a"(n1), "d"(n0), "g"(d0) \
