@@ -28,7 +28,7 @@ OSCam build system documentation
 
    CC_OPTS=text   - This variable holds compiler optimization parameters.
                     Default CC_OPTS value is:
-                    '-O2 -ggdb -pipe -ffunction-sections -fdata-sections '
+                    '-std=c99 -O2 -ggdb -pipe -ffunction-sections -fdata-sections '
                     To add text to this variable set EXTRA_CC_OPTS=text.
 
    CC_WARN=text   - This variable holds compiler warning parameters.

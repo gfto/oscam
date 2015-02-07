@@ -52,7 +52,7 @@ override STD_DEFS += -D'CS_CONFDIR="$(CONF_DIR)"'
 CC_WARN = -W -Wall -Wshadow -Wredundant-decls -Wstrict-prototypes -Wold-style-definition
 
 # Compiler optimizations
-CC_OPTS = -O2 -ggdb -pipe -ffunction-sections -fdata-sections
+CC_OPTS = -std=c99 -O2 -ggdb -pipe -ffunction-sections -fdata-sections
 
 CC = $(CROSS_DIR)$(CROSS)gcc
 STRIP = $(CROSS_DIR)$(CROSS)strip
