@@ -64,6 +64,8 @@
 #include "openssl_mods.h"
 #include "bn_lcl.h"
 
+#define NO_ASM 1
+
 /* The old slow way */
 #if 0
 int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
