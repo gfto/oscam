@@ -679,9 +679,19 @@ static int32_t dvbapi_read_device(int32_t dmx_fd, unsigned char *buf, int32_t le
 	}
 
 	len = read(dmx_fd, buf, length);
-
+		
 	if(len < 1)
-		{ cs_log("ERROR: Read error on fd %d (errno=%d %s)", dmx_fd, errno, strerror(errno)); }
+	{ 
+		if(errno == EOVERFLOW)
+		{
+			cs_log("fd %d no valid data present since receiver reported an internal bufferoverflow!", dmx_fd);
+			return 0;
+		}
+		else
+		{
+			cs_log("ERROR: Read error on fd %d (errno=%d %s)", dmx_fd, errno, strerror(errno));
+		}
+	}
 	else { cs_log_dump_dbg(D_TRACE, buf, len, "Readed:"); }
 	return len;
 }
@@ -4013,6 +4023,7 @@ static void *dvbapi_main_local(void *cli)
 
 					if((len = dvbapi_read_device(pfd2[i].fd, mbuf, sizeof(mbuf))) <= 0)
 					{
+						if(!len) continue; // no input to process -> skip!
 						dvbapi_stop_filternum(demux_index, n); // stop filter since its giving errors and wont return anything good.
 						maxfilter--; // lower maxfilters to avoid this with new filter setups!
 						continue;
