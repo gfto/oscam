@@ -144,7 +144,7 @@ end:
  *                   <appro@fy.chalmers.se>
  */
 #  define bn_div_words(n0,n1,d0)        \
-    ({  __asm volatile (          \
+    ({  __asm__ volatile (          \
                                     "divl	%4"           \
                                     : "=a"(q), "=d"(rem)        \
                                     : "a"(n1), "d"(n0), "g"(d0) \
