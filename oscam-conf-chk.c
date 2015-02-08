@@ -499,10 +499,8 @@ void clear_sip(struct s_ip **sip)
 /* Clears the s_ftab struct provided by setting nfilts and nprids to zero. */
 void clear_ftab(struct s_ftab *ftab)
 {
-	int32_t nfilts = ftab->nfilts;
 	ftab->nfilts = 0; // Reset nfilts ASAP
 	if (ftab->filts) {
-		memset(ftab->filts, 0, nfilts * sizeof(*ftab->filts));
 		NULLFREE(ftab->filts);
 	}
 }
@@ -548,23 +546,24 @@ void clear_tuntab(struct s_tuntab *ttab)
 /* Initializes dst_ftab with src_ftab data. If allocation fails clears dts_ftab */
 void clone_ftab(FTAB *src_ftab, FTAB *dst_ftab)
 {
-	dst_ftab->nfilts = src_ftab->nfilts;
-	dst_ftab->filts  = NULL;
+	dst_ftab->nfilts = 0;
+	NULLFREE(dst_ftab->filts);
+	
 	if (src_ftab->filts)
 	{
 		if (!cs_malloc(&dst_ftab->filts, src_ftab->nfilts * sizeof(*src_ftab->filts)))
 		{
-			dst_ftab->nfilts = 0;
 			return;
 		}
 		memcpy(dst_ftab->filts, src_ftab->filts, src_ftab->nfilts * sizeof(*src_ftab->filts));
+		dst_ftab->nfilts = src_ftab->nfilts;
 	}
 }
 
 void ftab_add_filter(FTAB *ftab, FILTER *filter)
 {
 	ftab->nfilts++;
-	if (!cs_malloc(&ftab->filts, ftab->nfilts * sizeof(*ftab->filts)))
+	if (!cs_realloc(&ftab->filts, ftab->nfilts * sizeof(*ftab->filts)))
 		return;
 	ftab->filts[ftab->nfilts - 1] = *filter;
 }
