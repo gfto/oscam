@@ -1113,6 +1113,7 @@ static const struct config_list reader_opts[] =
 #ifdef MODULE_CAMD35
 	DEF_OPT_INT8("via_emm_global"       , OFS(via_emm_global),          0),
 #endif
+	DEF_OPT_UINT8("read_old_classes"    , OFS(read_old_classes),        0),
 	DEF_LAST_OPT
 };
 
@@ -1135,7 +1136,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	{
 		"readnano", "resetcycle", "smargopatch", "autospeed", "sc8in1_dtrrts_patch", "boxid","fix07",
 		"fix9993", "rsakey", "ins7e", "ins7e11", "ins2e06", "force_irdeto", "needsemmfirst", "boxkey",
-		"atr", "detect", "nagra_read", "mhz", "cardmhz", "readtiers",
+		"atr", "detect", "nagra_read", "mhz", "cardmhz", "readtiers", "read_old_classes",
 #ifdef WITH_AZBOX
 		"mode",
 #endif

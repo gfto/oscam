@@ -2078,6 +2078,15 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		tpl_addVar(vars, TPLADD, "SC8IN1DTRRTSPATCHVALUE", (rdr->sc8in1_dtrrts_patch == 1) ? "1" : "0");
 	}
 
+	if(!apicall)
+	{
+		tpl_addVar(vars, TPLADD, "READOLDCLASSES", (rdr->read_old_classes == 1) ? "checked" : "");
+	}
+	else
+	{
+		tpl_addVar(vars, TPLADD, "READOLDCLASSES", (rdr->read_old_classes == 1) ? "1" : "0");
+	}
+
 	// Detect
 	if(rdr->detect & 0x80)
 		{ tpl_printf(vars, TPLADD, "DETECT", "!%s", RDR_CD_TXT[rdr->detect & 0x7f]); }

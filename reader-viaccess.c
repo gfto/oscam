@@ -1683,13 +1683,16 @@ static int32_t viaccess_card_info(struct s_reader *reader)
 {
 	def_resp;
 	int32_t i, l;
+	time_t now;
+	struct tm timeinfo;
+	uint16_t tmpdate;
 	uchar insac[] = { 0xca, 0xac, 0x00, 0x00, 0x00 }; // select data
 	uchar insb8[] = { 0xca, 0xb8, 0x00, 0x00, 0x00 }; // read selected data
 	uchar insa4[] = { 0xca, 0xa4, 0x00, 0x00, 0x00 }; // select issuer
 	uchar insc0[] = { 0xca, 0xc0, 0x00, 0x00, 0x00 }; // read data item
 	static const uchar ins24[] = { 0xca, 0x24, 0x00, 0x00, 0x09 }; // set pin
 
-	static const uchar cls[] = { 0x00, 0x21, 0xff, 0x9f};
+	uchar cls[] = { 0x00, 0x21, 0xff, 0x9f};
 	static const uchar pin[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04};
 	struct viaccess_data *csystem_data = reader->csystem_data;
 
@@ -1756,6 +1759,14 @@ static int32_t viaccess_card_info(struct s_reader *reader)
 		// read classes subscription
 		insac[2] = 0xa9;
 		insac[4] = 4;
+		if(!reader->read_old_classes)
+		{
+			now = time(NULL) - (24*60*60);
+			cs_gmtime_r(&now, &timeinfo);		
+			tmpdate = timeinfo.tm_mday | ((timeinfo.tm_mon + 1) << 5) | ((timeinfo.tm_year - 80) << 9);
+			cls[0] = tmpdate >> 8;
+			cls[1] = tmpdate & 0xff;
+		}
 		write_cmd(insac, cls); // request class subs
 		while((cta_res[cta_lr - 2] == 0x90) && (cta_res[cta_lr - 1] == 0))
 		{
