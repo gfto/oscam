@@ -194,7 +194,7 @@ DESCRIPTIONS
 	  user assingment to reader groups, default:none, required
 
        betatunnel = <CAID>.<ServiceID>:<target CAID>[,<CAID>.<ServiceID>: <target CAID>]...
-	  define  Betacrypt  tunneling	(maximum  see  CS_MAXTUNTAB in globals.h).  The ServiceID can also be used for wildcarded
+	  Define  Betacrypt  tunneling.  The ServiceID can also be used for wildcarded
 	  CAIDs.
 
 	   example: betatunnel = 0100.0001:0200,0300.0004:0500
