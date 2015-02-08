@@ -544,7 +544,7 @@ int32_t camd35_tcp_connect(struct s_client *cl)
 	}
 	if(!cl->udp_fd) { return (0); }  // Check if client has no handle -> error
 	// check if client reached timeout, if reached and reader is not udp type disconnect reader
-	if(cl->reader->tcp_rto && (cl->reader->last_s - cl->reader->last_g > cl->reader->tcp_rto))
+	if(cl->reader->tcp_rto && (cl->reader->last_s - cl->reader->last_g > cl->reader->tcp_rto) && !cl->is_udp)
 	{
 		network_tcp_connection_close(cl->reader, "rto");
 		return 0;
