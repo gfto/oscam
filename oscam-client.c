@@ -531,11 +531,13 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 					cl->c35_sleepsend = account->c35_sleepsend;
 					cl->monlvl = account->monlvl;
 					cl->disabled    = account->disabled;
-					cl->fchid   = account->fchid;  // CHID filters
 					cl->cltab   = account->cltab;  // Class
 					// newcamd module doesn't like ident reloading
 					if(!cl->ncd_server)
-						{ cl->ftab = account->ftab; }   // Ident
+					{
+						clone_ftab(&account->ftab, &cl->ftab);   // IDENT filter
+						clone_ftab(&account->fchid, &cl->fchid);  // CHID filter
+					}
 
 					cl->sidtabs.ok = account->sidtabs.ok;   // services
 					cl->sidtabs.no = account->sidtabs.no;   // services
