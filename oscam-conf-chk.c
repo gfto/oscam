@@ -500,9 +500,7 @@ void clear_sip(struct s_ip **sip)
 void clear_ftab(struct s_ftab *ftab)
 {
 	ftab->nfilts = 0; // Reset nfilts ASAP
-	if (ftab->filts) {
-		NULLFREE(ftab->filts);
-	}
+	NULLFREE(ftab->filts);
 }
 
 /* Clears the s_ptab struct provided by setting nfilts and nprids to zero. */
@@ -546,15 +544,11 @@ void clear_tuntab(struct s_tuntab *ttab)
 /* Initializes dst_ftab with src_ftab data. If allocation fails clears dts_ftab */
 void clone_ftab(FTAB *src_ftab, FTAB *dst_ftab)
 {
-	dst_ftab->nfilts = 0;
-	NULLFREE(dst_ftab->filts);
-	
+	clear_ftab(dst_ftab);
 	if (src_ftab->filts)
 	{
 		if (!cs_malloc(&dst_ftab->filts, src_ftab->nfilts * sizeof(*src_ftab->filts)))
-		{
 			return;
-		}
 		memcpy(dst_ftab->filts, src_ftab->filts, src_ftab->nfilts * sizeof(*src_ftab->filts));
 		dst_ftab->nfilts = src_ftab->nfilts;
 	}
