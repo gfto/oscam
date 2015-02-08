@@ -265,15 +265,15 @@ uint16_t chk_on_btun(uint8_t chk_sx, struct s_client *cl, ECM_REQUEST *er)
 		TUNTAB *ttab;
 		ttab = &cl->ttab;
 
-		if(ttab->n)
+		if(ttab->ttdata)
 		{
-			for(i = 0; i < ttab->n; i++)
+			for(i = 0; i < ttab->ttnum; i++)
 			{
-				if(er->caid == ttab->bt_caidfrom[i])
+				if(er->caid == ttab->ttdata[i].bt_caidfrom)
 				{
-					if(er->srvid == ttab->bt_srvid[i]) { return ttab->bt_caidto[i]; }
-					if(chk_sx && ttab->bt_srvid[i] == 0xFFFF) { return ttab->bt_caidto[i]; }
-					if(!chk_sx && !ttab->bt_srvid[i]) { return ttab->bt_caidto[i]; }
+					if(er->srvid == ttab->ttdata[i].bt_srvid) { return ttab->ttdata[i].bt_caidto; }
+					if(chk_sx && ttab->ttdata[i].bt_srvid == 0xFFFF) { return ttab->ttdata[i].bt_caidto; }
+					if(!chk_sx && !ttab->ttdata[i].bt_srvid) { return ttab->ttdata[i].bt_caidto; }
 				}
 			}
 		}

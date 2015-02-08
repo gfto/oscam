@@ -20,7 +20,9 @@ void clear_caidtab(struct s_caidtab *ctab);
 void clear_cacheextab(CECSPVALUETAB *ctab);
 void clear_tuntab(struct s_tuntab *ttab);
 
+void clone_ttab(TUNTAB *src_ttab, TUNTAB *dst_ttab);
 void clone_ftab(FTAB *src_ftab, FTAB *dst_ftab);
+
 void ftab_add_filter(FTAB *ftab, FILTER *filter);
 
 #endif

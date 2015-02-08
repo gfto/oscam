@@ -430,24 +430,22 @@ void convert_to_nagra(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
 
 void cs_betatunnel(ECM_REQUEST *er)
 {
-	int32_t n;
+	int32_t i;
 	struct s_client *cl = cur_client();
 	uint32_t mask_all = 0xFFFF;
+	TUNTAB *ttab = &cl->ttab;
 
-	TUNTAB *ttab;
-	ttab = &cl->ttab;
-
-	for(n = 0; n < ttab->n; n++)
+	for(i = 0; i < ttab->ttnum; i++)
 	{
-		if((er->caid == ttab->bt_caidfrom[n]) && ((er->srvid == ttab->bt_srvid[n]) || (ttab->bt_srvid[n]) == mask_all))
+		if((er->caid == ttab->ttdata[i].bt_caidfrom) && ((er->srvid == ttab->ttdata[i].bt_srvid) || (ttab->ttdata[i].bt_srvid) == mask_all))
 		{
 			if(chk_is_betatunnel_caid(er->caid) == 1 && er->ocaid == 0x0000)
 			{
-				convert_to_nagra(cl, er, ttab->bt_caidto[n]);
+				convert_to_nagra(cl, er, ttab->ttdata[i].bt_caidto);
 			}
 			else if(er->ocaid == 0x0000)
 			{
-				convert_to_beta(cl, er, ttab->bt_caidto[n]);
+				convert_to_beta(cl, er, ttab->ttdata[i].bt_caidto);
 			}
 			return;
 		}
@@ -2193,7 +2191,7 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 	if(er->preferlocalcards <0 || er->preferlocalcards >2) {er->preferlocalcards=0;}
 
 
-	if(chk_is_betatunnel_caid(er->caid) && client->ttab.n)
+	if(chk_is_betatunnel_caid(er->caid) && client->ttab.ttnum)
 	{
 		cs_log_dump_dbg(D_TRACE, er->ecm, 13, "betatunnel? ecmlen=%d", er->ecmlen);
 		cs_betatunnel(er);

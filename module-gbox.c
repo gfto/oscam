@@ -1600,12 +1600,12 @@ static void gbox_local_cards(struct s_client *cli)
 				gbox_add_local_card(local_gbox.id, cl->reader->caid, 0, slot, cli->reader->gbox_reshare, 0, 1); 
 				
 				//Check for Betatunnel on gbox account in oscam.user
-				if (chk_is_betatunnel_caid(cl->reader->caid) == 1 && cli->ttab.n && cl->reader->caid == cli->ttab.bt_caidto[0])
+				if (chk_is_betatunnel_caid(cl->reader->caid) == 1 && cli->ttab.ttdata && cl->reader->caid == cli->ttab.ttdata[0].bt_caidto)
 					{
 						//For now only first entry in tunnel tab. No sense in iteration?
 						//Add betatunnel card to transmitted list
-						gbox_add_local_card(local_gbox.id, cli->ttab.bt_caidfrom[0], 0, slot, cli->reader->gbox_reshare, 0, 2);
-						cs_log_dbg(D_READER, "gbox created betatunnel card for caid: %04X->%04X",cli->ttab.bt_caidfrom[0],cl->reader->caid);
+						gbox_add_local_card(local_gbox.id, cli->ttab.ttdata[0].bt_caidfrom, 0, slot, cli->reader->gbox_reshare, 0, 2);
+						cs_log_dbg(D_READER, "gbox created betatunnel card for caid: %04X->%04X",cli->ttab.ttdata[0].bt_caidfrom,cl->reader->caid);
 					}
 			}
 		}   //end local readers

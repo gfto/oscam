@@ -274,10 +274,22 @@ void chk_tuntab(char *tunasc, TUNTAB *ttab)
 {
 	int32_t i;
 	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;
-	TUNTAB newttab;
-	memset(&newttab, 0 , sizeof(TUNTAB));
 
-	for(i = 0, ptr1 = strtok_r(tunasc, ",", &saveptr1); (i < CS_MAXTUNTAB) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1))
+	clear_tuntab(ttab);
+	// Count entries
+	int32_t nttabs = 0;
+	char *in_ttab = cs_strdup(tunasc);
+	if (!in_ttab)
+		return;
+	for(i = 0, ptr1 = strtok_r(in_ttab, ",", &saveptr1); (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1), i++)
+		nttabs++;
+	free(in_ttab);
+
+	TUNTAB newttab = { .ttnum = nttabs };
+	if (!cs_malloc(&newttab.ttdata, newttab.ttnum * sizeof(*newttab.ttdata)))
+		return;
+
+	for(i = 0, ptr1 = strtok_r(tunasc, ",", &saveptr1); (i < newttab.ttnum) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1), i++)
 	{
 		uint32_t bt_caidfrom, bt_caidto, bt_srvid;
 		if((ptr3 = strchr(trim(ptr1), ':')))
@@ -292,13 +304,12 @@ void chk_tuntab(char *tunasc, TUNTAB *ttab)
 
 		if((bt_caidfrom = a2i(ptr1, 2)) | (bt_srvid = a2i(ptr2, -2)) | (bt_caidto = a2i(ptr3, 2)))
 		{
-			newttab.bt_caidfrom[i] = bt_caidfrom;
-			newttab.bt_caidto[i] = bt_caidto;
-			newttab.bt_srvid[i++] = bt_srvid;
-			newttab.n = i;
+			newttab.ttdata[i].bt_caidfrom = bt_caidfrom;
+			newttab.ttdata[i].bt_caidto   = bt_caidto;
+			newttab.ttdata[i].bt_srvid    = bt_srvid;
 		}
 	}
-	memcpy(ttab, &newttab, sizeof(TUNTAB));
+	*ttab = newttab;
 }
 
 void chk_services(char *labels, SIDTABS *sidtabs)
@@ -539,7 +550,21 @@ void clear_cacheextab(CECSPVALUETAB *ctab)
 /* Clears given tuntab */
 void clear_tuntab(struct s_tuntab *ttab)
 {
-	memset(ttab, 0, sizeof(struct s_tuntab));
+	ttab->ttnum = 0;
+	NULLFREE(ttab->ttdata);
+}
+
+/* Initializes dst_ttab with src_ttab data. If allocation fails clears dts_ttab */
+void clone_ttab(TUNTAB *src_ttab, TUNTAB *dst_ttab)
+{
+	clear_tuntab(dst_ttab);
+	if (src_ttab->ttdata)
+	{
+		if (!cs_malloc(&dst_ttab->ttdata, src_ttab->ttnum * sizeof(*src_ttab->ttdata)))
+			return;
+		memcpy(dst_ttab->ttdata, src_ttab->ttdata, src_ttab->ttnum * sizeof(*src_ttab->ttdata));
+		dst_ttab->ttnum = src_ttab->ttnum;
+	}
 }
 
 /* Initializes dst_ftab with src_ftab data. If allocation fails clears dts_ftab */

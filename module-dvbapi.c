@@ -757,25 +757,27 @@ uint16_t tunemm_caid_map(uint8_t direct, uint16_t caid, uint16_t srvid)
 {
 	int32_t i;
 	struct s_client *cl = cur_client();
-	TUNTAB *ttab;
-	ttab = &cl->ttab;
+	TUNTAB *ttab = &cl->ttab;
+
+	if (!ttab->ttnum)
+		return caid;
 
 	if(direct)
 	{
-		for(i = 0; i < ttab->n; i++)
+		for(i = 0; i < ttab->ttnum; i++)
 		{
-			if(caid == ttab->bt_caidto[i]
-					&& (srvid == ttab->bt_srvid[i] || ttab->bt_srvid[i] == 0xFFFF || !ttab->bt_srvid[i]))
-				{ return ttab->bt_caidfrom[i]; }
+			if(caid == ttab->ttdata[i].bt_caidto
+					&& (srvid == ttab->ttdata[i].bt_srvid || ttab->ttdata[i].bt_srvid == 0xFFFF || !ttab->ttdata[i].bt_srvid))
+				{ return ttab->ttdata[i].bt_caidfrom; }
 		}
 	}
 	else
 	{
-		for(i = 0; i < ttab->n; i++)
+		for(i = 0; i < ttab->ttnum; i++)
 		{
-			if(caid == ttab->bt_caidfrom[i]
-					&& (srvid == ttab->bt_srvid[i] || ttab->bt_srvid[i] == 0xFFFF || !ttab->bt_srvid[i]))
-				{ return ttab->bt_caidto[i]; }
+			if(caid == ttab->ttdata[i].bt_caidfrom
+					&& (srvid == ttab->ttdata[i].bt_srvid || ttab->ttdata[i].bt_srvid == 0xFFFF || !ttab->ttdata[i].bt_srvid))
+				{ return ttab->ttdata[i].bt_caidto; }
 		}
 	}
 	return caid;

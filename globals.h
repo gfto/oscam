@@ -246,7 +246,6 @@ typedef unsigned char uchar;
 #endif
 #define CS_QLEN       128 // size of request queue
 #define CS_MAXCAIDTAB 32  // max. caid-defs/user
-#define CS_MAXTUNTAB  100  // max. betatunnel mappings
 #define CS_MAXPROV    32
 #define CS_MAXPORTS   32  // max server ports
 #define CS_MAX_CAIDVALUETAB 16
@@ -560,12 +559,17 @@ typedef struct s_caidtab
 	uint16_t        cmap[CS_MAXCAIDTAB];
 } CAIDTAB;
 
+typedef struct s_tuntab_data
+{
+	uint16_t        bt_caidfrom;
+	uint16_t        bt_caidto;
+	uint16_t        bt_srvid;
+} TUNTAB_DATA;
+
 typedef struct s_tuntab
 {
-	uint16_t        n;
-	uint16_t        bt_caidfrom[CS_MAXTUNTAB];
-	uint16_t        bt_caidto[CS_MAXTUNTAB];
-	uint16_t        bt_srvid[CS_MAXTUNTAB];
+	int32_t         ttnum;
+	TUNTAB_DATA     *ttdata;
 } TUNTAB;
 
 typedef struct s_sidtab

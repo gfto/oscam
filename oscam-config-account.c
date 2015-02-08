@@ -248,7 +248,7 @@ static void account_tuntab_fn(const char *token, char *value, void *setting, FIL
 		}
 		return;
 	}
-	if(ttab->bt_caidfrom[0] || cfg.http_full_cfg)
+	if((ttab->ttdata && ttab->ttdata[0].bt_caidfrom) || cfg.http_full_cfg)
 	{
 		value = mk_t_tuntab(ttab);
 		fprintf_conf(f, token, "%s\n", value);
@@ -498,6 +498,7 @@ int32_t init_free_userdb(struct s_auth *ptr)
 		config_list_gc_values(account_opts, ptr);
 		clear_ftab(&ptr->ftab);
 		clear_ftab(&ptr->fchid);
+		clear_tuntab(&ptr->ttab);
 		add_garbage(ptr);
 		ptr = ptr_next;
 	}
