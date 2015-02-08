@@ -785,7 +785,7 @@ int32_t dvbapi_stop_filter(int32_t demux_index, int32_t type)
 {
 	int32_t g, ret = -1;
 
-	for(g = 0; g < maxfilter; g++)
+	for(g = 0; g < MAX_FILTER; g++) // just stop them all, we dont want to risk leaving any stale filters running due to lowering of maxfilters
 	{
 		if(demux[demux_index].demux_fd[g].type == type)
 		{
@@ -3752,7 +3752,7 @@ static void *dvbapi_main_local(void *cli)
 
 		for(i = 0; i < pfdcount && rc > 0; i++)
 		{
-			cs_sleepms(1); // give time to other processes!
+			cs_sleepus(1); // give time to other processes!
 			if(pfd2[i].revents == 0) { continue; }  // skip sockets with no changes
 			rc--; //event handled!
 			cs_log_dbg(D_TRACE, "Now handling fd %d that reported event %d", pfd2[i].fd, pfd2[i].revents);
