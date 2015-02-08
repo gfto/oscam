@@ -627,11 +627,21 @@ static int32_t bulcrypt_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 
 	// Write emm
 	write_cmd(emm_cmd, emm_cmd + 5);
-	if(cta_lr != 2 || cta_res[0] != 0x90 || (cta_res[1] != 0x00 && cta_res[1] != 0x0a))
+	if(cta_lr != 2 || cta_res[0] != 0x90 || (cta_res[1] != 0x00 && cta_res[1] != 0x0a && cta_res[1] != 0x12))
 	{
 		rdr_log(reader, "(emm_cmd) Unexpected card answer: %s",
 				cs_hexdump(1, cta_res, cta_lr, tmp, sizeof(tmp)));
 		return ERROR;
+	}
+
+	// V2 answers of 82 EMM
+	if(cta_res[0] == 0x90 && cta_res[1] == 0x12)
+	{
+		write_cmd(cmd_card_v2_key2, NULL);
+		if(cta_res[18] == 0x90 && cta_res[19] == 0x12)
+		{
+			write_cmd(cmd_card_v2_key2, NULL);
+		}
 	}
 
 	if(ep->emm[0] == BULCRYPT_EMM_UNIQUE_82 && cta_res[0] == 0x90 && cta_res[1] == 0x0a)
@@ -716,9 +726,9 @@ static int32_t bulcrypt_card_info(struct s_reader *reader)
 		// 5581:0002|Standard
 		// 5581:0004|Premium
 		// 5581:0008|HBO
-		// 5581:0010|Unknown Package 10
+		// 5581:0010|Cinemax
 		// 5581:0020|Unknown Package 20
-		// 5581:0040|Unknown Package 40
+		// 5581:0040|Film Plus - Sport Plus HD & Hobby TV HD
 		// 5581:0080|Unknown Package 80
 		for(i = 1; i < 256; i <<= 1)
 		{
