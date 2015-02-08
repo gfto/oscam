@@ -326,6 +326,7 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName
 	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;
 	int32_t nfilts = 0;
 
+	clear_ftab(ftab);
 	// Count filters
 	char *in_filter = cs_strdup(zFilterAsc);
 	if (!in_filter)
