@@ -644,7 +644,7 @@ static int32_t bulcrypt_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		}
 	}
 
-	if(ep->emm[0] == BULCRYPT_EMM_UNIQUE_82 && cta_res[0] == 0x90 && cta_res[1] == 0x0a)
+	if(ep->emm[0] == BULCRYPT_EMM_UNIQUE_82 && cta_res[0] == 0x90 && (cta_res[1] == 0x0a || cta_res[1] == 0x00))
 	{
 		rdr_log(reader, "Your subscription data was updated.");
 		add_job(reader->client, ACTION_READER_CARDINFO, NULL, 0);
