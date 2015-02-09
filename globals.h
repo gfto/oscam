@@ -1163,25 +1163,18 @@ struct s_client
 	struct s_client *nexthashed;
 };
 
-struct s_ecmWhitelist
+typedef struct s_ecm_whitelist_data
 {
-	uint16_t                    caid;
-	struct s_ecmWhitelistIdent  *idents;
-	struct s_ecmWhitelist       *next;
-};
+	uint16_t		len;
+	uint16_t		caid;
+	uint32_t		ident;
+} ECM_WHITELIST_DATA;
 
-struct s_ecmWhitelistIdent
+typedef struct s_ecm_whitelist
 {
-	uint32_t                    ident;
-	struct s_ecmWhitelistLen    *lengths;
-	struct s_ecmWhitelistIdent  *next;
-};
-
-struct s_ecmWhitelistLen
-{
-	int16_t                     len;
-	struct s_ecmWhitelistLen    *next;
-};
+	int32_t				ewnum;
+	ECM_WHITELIST_DATA	*ewdata;
+} ECM_WHITELIST;
 
 struct s_ecmHeaderwhitelist
 {
@@ -1370,7 +1363,7 @@ struct s_reader                                     //contains device info, read
 	FTAB            fchid;
 	FTAB            ftab;
 	CLASSTAB        cltab;
-	struct s_ecmWhitelist *ecmWhitelist;
+	ECM_WHITELIST   ecm_whitelist;
 	struct s_ecmHeaderwhitelist *ecmHeaderwhitelist;            // ECM Header Whitelist
 	int32_t         brk_pos;
 	int32_t         msg_idx;

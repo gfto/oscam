@@ -7,6 +7,7 @@
 #include "module-cacheex.h"
 #include "module-cccam.h"
 #include "oscam-cache.h"
+#include "oscam-conf-chk.h"
 #include "oscam-chk.h"
 #include "oscam-client.h"
 #include "oscam-ecm.h"
@@ -1863,89 +1864,27 @@ READER_STAT **get_sorted_stat_copy(struct s_reader *rdr, int32_t reverse, int32_
 
 static int8_t stat_in_ecmlen(struct s_reader *rdr, READER_STAT *s)
 {
-	struct s_ecmWhitelist *tmp;
-	struct s_ecmWhitelistIdent *tmpIdent;
-	struct s_ecmWhitelistLen *tmpLen;
-	for(tmp = rdr->ecmWhitelist; tmp; tmp = tmp->next)
+	int32_t i;
+	for (i = 0; i < rdr->ecm_whitelist.ewnum; i++)
 	{
-		if(tmp->caid == 0 || (tmp->caid == s->caid))
-		{
-			for(tmpIdent = tmp->idents; tmpIdent; tmpIdent = tmpIdent->next)
-			{
-				if(tmpIdent->ident == 0 || tmpIdent->ident == s->prid)
-				{
-					for(tmpLen = tmpIdent->lengths; tmpLen; tmpLen = tmpLen->next)
-					{
-						if(tmpLen->len == s->ecmlen)
-						{
-							return 1;
-						}
-					}
-				}
-			}
-		}
+		ECM_WHITELIST_DATA *d = &rdr->ecm_whitelist.ewdata[i];
+		if ((d->caid == 0 || d->caid == s->caid) && (d->ident == 0 || d->ident == s->prid) && (d->len == s->ecmlen))
+			return 1;
 	}
 	return 0;
 }
 
 static int8_t add_to_ecmlen(struct s_reader *rdr, READER_STAT *s)
 {
-	struct s_ecmWhitelist *tmp = NULL;
-	struct s_ecmWhitelistIdent *tmpIdent = NULL;
-	struct s_ecmWhitelistLen *tmpLen = NULL;
-
-	for(tmp = rdr->ecmWhitelist; tmp; tmp = tmp->next)
+	int32_t i;
+	for (i = 0; i < rdr->ecm_whitelist.ewnum; i++)
 	{
-		if(tmp->caid == s->caid)
-		{
-			for(tmpIdent = tmp->idents; tmpIdent; tmpIdent = tmpIdent->next)
-			{
-				if(tmpIdent->ident == s->prid)
-				{
-					for(tmpLen = tmpIdent->lengths; tmpLen; tmpLen = tmpLen->next)
-					{
-						if(tmpLen->len == s->ecmlen)
-						{
-							return 1;
-						}
-					}
-					break;
-				}
-			}
-			break;
-		}
+		ECM_WHITELIST_DATA *d = &rdr->ecm_whitelist.ewdata[i];
+		if ((d->caid == s->caid) && (d->ident == s->prid) && (d->len == s->ecmlen))
+			return 1;
 	}
-
-	if(!tmp)
-	{
-		if(cs_malloc(&tmp, sizeof(struct s_ecmWhitelist)))
-		{
-			tmp->caid = s->caid;
-			tmp->next = rdr->ecmWhitelist;
-			rdr->ecmWhitelist = tmp;
-		}
-	}
-
-	if(!tmpIdent && tmp)
-	{
-		if(cs_malloc(&tmpIdent, sizeof(struct s_ecmWhitelistIdent)))
-		{
-			tmpIdent->ident = s->prid;
-			tmpIdent->next = tmp->idents;
-			tmp->idents = tmpIdent;
-		}
-	}
-
-	if(!tmpLen && tmpIdent)
-	{
-		if(cs_malloc(&tmpLen, sizeof(struct s_ecmWhitelistLen)))
-		{
-			tmpLen->len = s->ecmlen;
-			tmpLen->next = tmpIdent->lengths;
-			tmpIdent->lengths =  tmpLen;
-		}
-	}
-
+	ECM_WHITELIST_DATA d = { .caid = s->caid, .ident = s->prid, .len = s->ecmlen };
+	ecm_whitelist_add(&rdr->ecm_whitelist, &d);
 	return 0;
 }
 

@@ -498,6 +498,40 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 	NULLFREE(newptab);
 }
 
+void chk_ecm_whitelist(char *value, ECM_WHITELIST *ecm_whitelist)
+{
+	clear_ecm_whitelist(ecm_whitelist);
+	ECM_WHITELIST new_ecm_whitelist = { 0 };
+	char *ptr, *saveptr1 = NULL;
+	for(ptr = strtok_r(value, ";", &saveptr1); ptr; ptr = strtok_r(NULL, ";", &saveptr1))
+	{
+		ECM_WHITELIST_DATA d = { 0 };
+		char *ptr2 = strchr(ptr, ':');
+		if(ptr2 != NULL)
+		{
+			ptr2[0] = '\0';
+			ptr2++;
+			char *ptr3 = strchr(ptr, '@');
+			if(ptr3 != NULL)
+			{
+				ptr3[0] = '\0';
+				ptr3++;
+				d.ident = (uint32_t)a2i(ptr3, 6);
+			}
+			d.caid = (int16_t)dyn_word_atob(ptr);
+		} else {
+			ptr2 = ptr;
+		}
+		char *saveptr2 = NULL;
+		for(ptr2 = strtok_r(ptr2, ",", &saveptr2); ptr2; ptr2 = strtok_r(NULL, ",", &saveptr2))
+		{
+			d.len = (int16_t)dyn_word_atob(ptr2);
+			ecm_whitelist_add(&new_ecm_whitelist, &d);
+		}
+	}
+	*ecm_whitelist = new_ecm_whitelist;
+}
+
 /* Clears the s_ip structure provided. The pointer will be set to NULL so everything is cleared.*/
 void clear_sip(struct s_ip **sip)
 {
@@ -554,6 +588,12 @@ void clear_tuntab(struct s_tuntab *ttab)
 	NULLFREE(ttab->ttdata);
 }
 
+void clear_ecm_whitelist(ECM_WHITELIST *ecm_whitelist)
+{
+	ecm_whitelist->ewnum = 0;
+	NULLFREE(ecm_whitelist->ewdata);
+}
+
 /* Initializes dst_ttab with src_ttab data. If allocation fails clears dts_ttab */
 void clone_ttab(TUNTAB *src_ttab, TUNTAB *dst_ttab)
 {
@@ -578,6 +618,14 @@ void clone_ftab(FTAB *src_ftab, FTAB *dst_ftab)
 		memcpy(dst_ftab->filts, src_ftab->filts, src_ftab->nfilts * sizeof(*src_ftab->filts));
 		dst_ftab->nfilts = src_ftab->nfilts;
 	}
+}
+
+void ecm_whitelist_add(ECM_WHITELIST *ecm_whitelist, ECM_WHITELIST_DATA *ew)
+{
+	ecm_whitelist->ewnum++;
+	if (!cs_realloc(&ecm_whitelist->ewdata, ecm_whitelist->ewnum * sizeof(*ecm_whitelist->ewdata)))
+		return;
+	ecm_whitelist->ewdata[ecm_whitelist->ewnum - 1] = *ew;
 }
 
 void ftab_add_filter(FTAB *ftab, FILTER *filter)

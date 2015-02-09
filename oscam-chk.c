@@ -819,30 +819,20 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 	}
 
 	//Checking ecmlength:
-	if(rdr->ecmWhitelist && er->ecmlen)
+	if(rdr->ecm_whitelist.ewnum && er->ecmlen)
 	{
-		struct s_ecmWhitelist *tmp;
-		struct s_ecmWhitelistIdent *tmpIdent;
-		struct s_ecmWhitelistLen *tmpLen;
+		int32_t i;
 		int8_t ok = 0, foundident = 0;
-		for(tmp = rdr->ecmWhitelist; tmp; tmp = tmp->next)
+		for (i = 0; i < rdr->ecm_whitelist.ewnum; i++)
 		{
-			if(tmp->caid == 0 || tmp->caid == er->caid)
+			ECM_WHITELIST_DATA *d = &rdr->ecm_whitelist.ewdata[i];
+			if ((d->caid == 0 || d->caid == er->caid) && (d->ident == 0 || d->ident == er->prid))
 			{
-				for(tmpIdent = tmp->idents; tmpIdent; tmpIdent = tmpIdent->next)
+				foundident = 1;
+				if (d->len == er->ecmlen)
 				{
-					if(tmpIdent->ident == 0 || tmpIdent->ident == er->prid)
-					{
-						foundident = 1;
-						for(tmpLen = tmpIdent->lengths; tmpLen; tmpLen = tmpLen->next)
-						{
-							if(tmpLen->len == er->ecmlen)
-							{
-								ok = 1;
-								break;
-							}
-						}
-					}
+					ok = 1;
+					break;
 				}
 			}
 		}

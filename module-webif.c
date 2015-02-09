@@ -2019,7 +2019,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 			{ tpl_printf(vars, TPLAPPEND, "ATR", "%02X", rdr->atr[i]); }
 
 	// ECM Whitelist
-	value = mk_t_ecmwhitelist(rdr->ecmWhitelist);
+	value = mk_t_ecm_whitelist(&rdr->ecm_whitelist);
 	tpl_addVar(vars, TPLADD, "ECMWHITELIST", value);
 	free_mk_t(value);
 

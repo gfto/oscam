@@ -538,52 +538,40 @@ char *mk_t_logfile(void)
 /*
  * Creates a string ready to write as a token into config or WebIf for the ecm whitelist. You must free the returned value through free_mk_t().
  */
-char *mk_t_ecmwhitelist(struct s_ecmWhitelist *whitelist)
+char *mk_t_ecm_whitelist(struct s_ecm_whitelist *ecm_whitelist)
 {
-	int32_t needed = 1, pos = 0;
-	struct s_ecmWhitelist *cip;
-	struct s_ecmWhitelistIdent *cip2;
-	struct s_ecmWhitelistLen *cip3;
-	char *value, *dot = "", *dot2 = "";
-	for(cip = whitelist; cip; cip = cip->next)
+	// Worst case scenario where each entry have different
+	// caid, ident and only one length in it is strlen("1234@123456:01;") == 15
+	int32_t i, maxlen = 16 * ecm_whitelist->ewnum, pos = 0;
+	char *ret;
+	if (!cs_malloc(&ret, maxlen))
+		return "";
+	char *sep1 = "", *sep2 = "";
+	ECM_WHITELIST_DATA *last = NULL;
+	for(i = 0; i < ecm_whitelist->ewnum; i++)
 	{
-		needed += 7;
-		for(cip2 = cip->idents; cip2; cip2 = cip2->next)
+		ECM_WHITELIST_DATA *cur = &ecm_whitelist->ewdata[i];
+		bool change = !last || last->caid != cur->caid || last->ident != cur->ident;
+		if (change)
 		{
-			needed += 7;
-			for(cip3 = cip2->lengths; cip3; cip3 = cip3->next) { needed += 3; }
+			if (cur->caid && cur->ident)
+				pos += snprintf(ret + pos, maxlen - pos, "%s%04X@%06X:", sep1, cur->caid, cur->ident);
+			else if (cur->caid)
+				pos += snprintf(ret + pos, maxlen - pos, "%s%04X:", sep1, cur->caid);
+			else
+				pos += snprintf(ret + pos, maxlen - pos, "%s", sep1);
+			sep1 = ";";
+			sep2 = "";
 		}
+		pos += snprintf(ret + pos, maxlen - pos, "%s%02X", sep2, cur->len);
+		sep2 = ",";
+		last = &ecm_whitelist->ewdata[i];
 	}
-
-	char tmp[needed];
-
-	for(cip = whitelist; cip; cip = cip->next)
-	{
-		for(cip2 = cip->idents; cip2; cip2 = cip2->next)
-		{
-			if(cip2->lengths != NULL)
-			{
-				if(cip->caid != 0)
-				{
-					if(cip2->ident == 0)
-						{ pos += snprintf(tmp + pos, needed - pos, "%s%04X:", dot, cip->caid); }
-					else
-						{ pos += snprintf(tmp + pos, needed - pos, "%s%04X@%06X:", dot, cip->caid, cip2->ident); }
-				}
-				else { pos += snprintf(tmp + pos, needed - pos, "%s", dot); }
-			}
-			dot2 = "";
-			for(cip3 = cip2->lengths; cip3; cip3 = cip3->next)
-			{
-				pos += snprintf(tmp + pos, needed - pos, "%s%02X", dot2, cip3->len);
-				dot2 = ",";
-			}
-			dot = ";";
-		}
+	if(pos == 0) {
+		free(ret);
+		return "";
 	}
-	if(pos == 0 || !cs_malloc(&value, pos + 1)) { return ""; }
-	memcpy(value, tmp, pos + 1);
-	return value;
+	return ret;
 }
 
 /*
