@@ -836,7 +836,7 @@ function updateLogpage(data) {
 
 		if (isWhitelisted(Base64.decode(item.line))) {
 			var newcolor = getLogColor(Base64.decode(item.line));
-			var newline = $('<li class="' + decodeURI(item.usr) + '">' + Base64.decode(item.line) + '</li>\n');
+			var newline = $('<li class="' + decodeURIComponent(item.usr) + '">' + Base64.decode(item.line) + '</li>\n');
 			var hiddenline = 0;
 			if (newcolor) {
 				if (newcolor.hidden != '1') {
@@ -1078,7 +1078,7 @@ function updateStatuspage(data) {
 				edit1 = 'readerconfig.html?label=';
 				break;
 			}
-			name3 = decodeURI(name2);
+			name3 = decodeURIComponent(name2);
 
 			if (!is_nopoll('statuscol0')) {
 				$(uid + " > td.statuscol0").append('<a title="Hide ' +
@@ -1136,11 +1136,11 @@ function updateStatuspage(data) {
 			if (!is_nopoll('statuscol4')) {
 				if (data.oscam.piconenabled == "1" && !item.upicmissing) {
 					$(uid + " > td.statuscol4").html('<a href="user_edit.html?user=' + item.name_enc +
-						'"><img class="statususericon" title="Edit User: ' + decodeURI(item.name_enc) + item.desc +
+						'"><img class="statususericon" title="Edit User: ' + decodeURIComponent(item.name_enc) + item.desc +
 						'" src="image?i=IC_' + item.name_enc + '"></img></a>');
 				} else {
 					$(uid + " > td.statuscol4").html('<a href="user_edit.html?user=' + item.name_enc + '" title="Edit User: ' +
-						decodeURI(item.name_enc) + item.desc + item.upicmissing + '">' + decodeURI(item.name_enc) + '</a>');
+						decodeURIComponent(item.name_enc) + item.desc + item.upicmissing + '">' + decodeURIComponent(item.name_enc) + '</a>');
 				}
 			}
 		}
@@ -1160,7 +1160,7 @@ function updateStatuspage(data) {
 		}
 
 		if (!is_nopoll('statuscol4')) {
-			$(uid + " > td.statuscol4").attr('title', decodeURI(item.type == 'c' ? item.name_enc : item.rname_enc) + (item.desc ? '\n' + item.desc.replace('&#13;', '') : ''));
+			$(uid + " > td.statuscol4").attr('title', decodeURIComponent(item.type == 'c' ? item.name_enc : item.rname_enc) + (item.desc ? '\n' + item.desc.replace('&#13;', '') : ''));
 		}
 		if (!is_nopoll('statuscol7')) {
 			$(uid + " > td.statuscol7").text(item.connection.ip);
@@ -1232,7 +1232,7 @@ function updateStatuspage(data) {
 				var value = item.type == 'c' ? (item.request.answered ? item.request.answered + ' (' + item.request.msvalue + ' ms)' : '') : item.request.lbvalue;
 				if (data.oscam.lbdefined) {
 					var label = item.rname_enc.replace('+%28cache%29', '');
-					var name = item.type == 'c' ? item.request.answered.replace(' (cache)', '') : decodeURI(label);
+					var name = item.type == 'c' ? item.request.answered.replace(' (cache)', '') : decodeURIComponent(label);
 					if (!$(uid + " > td.statuscol14 > a").length) {
 						$(uid + " > td.statuscol14")
 							.text('')

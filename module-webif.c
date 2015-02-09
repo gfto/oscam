@@ -6338,7 +6338,7 @@ static char *send_oscam_EMM(struct templatevars * vars, struct uriparams * param
 
 		if((fp = fopen(targetfile, "r")) != NULL) {
 
-			int emms=0, emm_d, emmrs=0;
+			uint32_t emms=0, emm_d, emmrs=0;
 			char *ptr, *saveptr1 = NULL;
 
 			snprintf(emm_txt, sizeof(emm_txt), "%s_TXT", emm_names[i]);
@@ -6362,16 +6362,13 @@ static char *send_oscam_EMM(struct templatevars * vars, struct uriparams * param
 				}
 			}
 
-			char emm_tmp[strlen(tpl_getVar(vars, "EMM_TMP"))];
-			cs_strncpy(emm_tmp, tpl_getVar(vars, "EMM_TMP"), sizeof(emm_tmp));
-			tpl_addVar(vars, TPLADD, "EMM_TMP","");
-
-			for(ptr = strtok_r(emm_tmp,"\n", &saveptr1); ptr; ptr = strtok_r(NULL,"\n", &saveptr1))
+			for(ptr = strtok_r(tpl_getVar(vars, "EMM_TMP"),"\n", &saveptr1); ptr; ptr = strtok_r(NULL,"\n", &saveptr1))
 			{
 				emmrs++;
 				snprintf(tmpstr, sizeof(tmpstr), "LINE_%d", emmrs);
 				tpl_addVar(vars, TPLADD, tmpstr, ptr);
 			}
+			tpl_addVar(vars, TPLAPPEND, "EMM_TMP", "");
 
 			tpl_printf(vars, TPLADD, emm_txt, "%'d different EMMs from a total off %'d Entrys (Size: %'.2f kB)", emmrs,emms,(double)sb.st_size/1024);
 			for(emm_d=emmrs;emm_d>0;--emm_d) 
