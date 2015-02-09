@@ -501,11 +501,14 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 void chk_ecm_whitelist(char *value, ECM_WHITELIST *ecm_whitelist)
 {
 	clear_ecm_whitelist(ecm_whitelist);
-	ECM_WHITELIST new_ecm_whitelist = { 0 };
+	ECM_WHITELIST new_ecm_whitelist;
+	ECM_WHITELIST_DATA d;
+	memset(&new_ecm_whitelist, 0, sizeof(new_ecm_whitelist));
 	char *ptr, *saveptr1 = NULL;
 	for(ptr = strtok_r(value, ";", &saveptr1); ptr; ptr = strtok_r(NULL, ";", &saveptr1))
 	{
-		ECM_WHITELIST_DATA d = { 0 };
+		d.caid = 0;
+		d.ident = 0;
 		char *ptr2 = strchr(ptr, ':');
 		if(ptr2 != NULL)
 		{
