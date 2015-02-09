@@ -3111,34 +3111,36 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 
 	if(demux[demux_id].demux_fd[filter_num].type == TYPE_ECM)
 	{
-		cs_log_dbg(D_DVBAPI, "Demuxer #%d Filter #%d fetched ECM data (ecmlength = %03X)", demux_id, filter_num + 1, ecmlen);
-		if((uint) len  < ecmlen) // invalid CAT length
+		if(len != 0)  // len = 0 receiver encountered an internal bufferoverflow!
 		{
-			cs_log_dbg(D_DVBAPI, "Received data with total length %03X but ECM length is %03X -> invalid CAT length!", len, ecmlen);
-			return;
-		}
-
-		if(!(buffer[0] == 0x80 || buffer[0] == 0x81))
-		{
-			cs_log_dbg(D_DVBAPI, "Received an ECM with invalid ecmtable ID %02X -> ignoring!", buffer[0]);
-			return;
-		}
-
-		if(curpid->table == buffer[0] && curpid->CAID >> 8 != 0x06)  // wait for odd / even ecm change (only not for irdeto!)
-			{ return; }
-
-		if(curpid->CAID >> 8 == 0x06)  //irdeto cas
-		{
-			// 80 70 39 53 04 05 00 88
-			// 81 70 41 41 01 06 00 13 00 06 80 38 1F 52 93 D2
-			//if (buffer[5]>20) return;
-			if(curpid->irdeto_maxindex != buffer[5])    //6, register max irdeto index
+			cs_log_dbg(D_DVBAPI, "Demuxer #%d Filter #%d fetched ECM data (ecmlength = %03X)", demux_id, filter_num + 1, ecmlen);
+			if((uint) len  < ecmlen) // invalid CAT length
 			{
-				cs_log_dbg(D_DVBAPI, "Found %d IRDETO ECM CHIDs", buffer[5] + 1);
-				curpid->irdeto_maxindex = buffer[5]; // numchids = 7 (0..6)
+				cs_log_dbg(D_DVBAPI, "Received data with total length %03X but ECM length is %03X -> invalid CAT length!", len, ecmlen);
+				return;
+			}
+
+			if(!(buffer[0] == 0x80 || buffer[0] == 0x81))
+			{
+				cs_log_dbg(D_DVBAPI, "Received an ECM with invalid ecmtable ID %02X -> ignoring!", buffer[0]);
+				return;
+			}
+
+			if(curpid->table == buffer[0] && curpid->CAID >> 8 != 0x06)  // wait for odd / even ecm change (only not for irdeto!)
+				{ return; }
+
+			if(curpid->CAID >> 8 == 0x06)  //irdeto cas
+			{
+				// 80 70 39 53 04 05 00 88
+				// 81 70 41 41 01 06 00 13 00 06 80 38 1F 52 93 D2
+				//if (buffer[5]>20) return;
+				if(curpid->irdeto_maxindex != buffer[5])    //6, register max irdeto index
+				{
+					cs_log_dbg(D_DVBAPI, "Found %d IRDETO ECM CHIDs", buffer[5] + 1);
+					curpid->irdeto_maxindex = buffer[5]; // numchids = 7 (0..6)
+				}
 			}
 		}
-
 		ECM_REQUEST *er;
 		if(!(er = get_ecmtask())) { return; }
 
@@ -3158,6 +3160,14 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 
 		chid = get_subid(er); // fetch chid or fake chid
 		er->chid = chid;
+		
+		if(len == 0) // only used on receiver internal bufferoverflow to get quickly fresh ecm filterdata otherwise freezing! 
+		{
+			curpid->table = 0;
+			dvbapi_set_section_filter(demux_id, er);
+			NULLFREE(er);
+			return;
+		}
 
 		if(curpid->CAID >> 8 == 0x06)  //irdeto cas
 		{
@@ -3320,6 +3330,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 			curpid->table = er->ecm[0];
 		}
 		request_cw(dvbapi_client, er, demux_id, 1); // register this ecm for delayed ecm response check
+		return; // end of ecm filterhandling!
 	}
 
 	if(demux[demux_id].demux_fd[filter_num].type == TYPE_EMM)
@@ -4025,10 +4036,16 @@ static void *dvbapi_main_local(void *cli)
 
 					if((len = dvbapi_read_device(pfd2[i].fd, mbuf, sizeof(mbuf))) <= 0)
 					{
-						if(!len) continue; // no input to process -> skip!
-						dvbapi_stop_filternum(demux_index, n); // stop filter since its giving errors and wont return anything good.
-						maxfilter--; // lower maxfilters to avoid this with new filter setups!
-						continue;
+						if(len < 0)
+						{
+							dvbapi_stop_filternum(demux_index, n); // stop filter since its giving errors and wont return anything good.
+							maxfilter--; // lower maxfilters to avoid this with new filter setups!
+							continue;
+						}
+						if(!len)
+						{
+							memset(mbuf, sizeof(mbuf),0);
+						}
 					}
 
 					dvbapi_process_input(demux_index, n, mbuf, len);
