@@ -534,7 +534,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 
 int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 {
-	int32_t rc, ecs = 0;
+	int32_t rc, ecs = 0,count;
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 	struct timeb tps;
 
@@ -542,6 +542,22 @@ int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 
 	MD5(ep->emm, ep->emm[2], md5tmp);
 
+	count = clean_stale_emm_cache_and_stat(md5tmp, (int64_t)1000*60*60*24*30); // clean after 30 days emm is last seen!
+	if(count)
+	{
+		cs_log_dbg(D_EMM, "Cleaned %d emm stale stats and cache entries", count);
+	}
+	
+	struct s_emmcache *emmcache = find_emm_cache(md5tmp); // check emm cache
+	if(!emmcache)
+	{
+		emm_edit_cache(md5tmp, ep, true);
+	}
+	else
+	{
+		cs_ftime(&emmcache->lastseen);
+	}
+	
 	struct s_emmstat *emmstat = get_emm_stat(reader, md5tmp, ep->type);
 	if(emmstat)
 	{
@@ -554,15 +570,10 @@ int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 			ecs = 1; //rewrite emm
 		}
 	}
-	
-	struct s_emmcache *emmcache = find_emm_cache(md5tmp); // check emm cache
-	if(!emmcache)
-	{
-		emm_edit_cache(md5tmp, ep, true);
-	}
 	else
 	{
-		cs_ftime(&emmcache->lastseen);
+		cs_log("abort: oscam seems out of resources!");
+		return 0;
 	}
 
 	// Ecs=0 not found in cache

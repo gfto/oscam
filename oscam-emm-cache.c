@@ -307,6 +307,40 @@ struct s_emmcache *find_emm_cache(uchar *emmd5)
 	return NULL;
 }
 
+int32_t clean_stale_emm_cache_and_stat(uchar *emmd5, int64_t gone)
+{
+	struct timeb now;
+	cs_ftime(&now);
+	int32_t count = 0;
+	
+	struct s_emmcache *c;
+	LL_ITER it;
+
+	if(!emm_cache)
+		{ emm_cache = ll_create("emm cache"); }
+
+	it = ll_iter_create(emm_cache);
+	while((c = ll_iter_next(&it)))
+	{ 
+		
+		if(comp_timeb(&now, &c->lastseen) > gone && memcmp(c->emmd5, emmd5, MD5_DIGEST_LENGTH)) // clean older than gone ms and dont clean if its the current emm!
+		{	
+			struct s_reader *rdr;
+			LL_ITER rdr_itr = ll_iter_create(configured_readers);
+			while((rdr = ll_iter_next(&rdr_itr)))
+			{
+				if(rdr->emmstat)
+				{
+					remove_emm_stat(rdr, c->emmd5); // clean stale entry from stats
+					count++;
+				}
+			}
+			ll_iter_remove_data(&it); // clean stale entry from emmcache
+		}
+	}
+	return count;
+}
+
 int32_t emm_edit_cache(uchar *emmd5, EMM_PACKET *ep, bool add)
 {
 	struct s_emmcache *c;
