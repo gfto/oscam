@@ -388,8 +388,9 @@ DESCRIPTIONS
        via_emm_global = 0|1
 	  1 = enable global EMM filter for Viaccess SCs, default:0, for camd35/cs357x  protocol only
 
-       read_old_classes = 0|1
-	  1 = read active entitlements/classes of Viaccess SCs only, default:0
+       read_old_classes = 0|1 (Viaccess SCs only)
+	  0 = read only active entitlements (default)
+	  1 = read all entitlements
 
        saveemm-u = 0|1
 	  1 = save unique EMMs to log file, default:0

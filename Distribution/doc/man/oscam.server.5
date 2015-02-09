@@ -524,9 +524,10 @@ block all types of EMMs by length, default:none
 1 = enable global EMM filter for Viaccess SCs, default:0, \fIfor camd35/cs357x  protocol only\fR
 .RE
 .PP
-\fBread_old_classes\fP = \fB0\fP|\fB1\fP
+\fBread_old_classes\fP = \fB0\fP|\fB1\fP \fI(Viaccess SCs only)\fR
 .RS 3n
-1 = read active entitlements/classes of Viaccess SCs only, default:0
+0 = read only active entitlements (default)
+1 = read all entitlements
 .RE
 .PP
 \fBsaveemm-u\fP = \fB0\fP|\fB1\fP
