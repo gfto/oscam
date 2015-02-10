@@ -313,6 +313,17 @@ bool cardreader_init(struct s_reader *reader)
 	}
 	else 
 	{
+		if(reader->typ == R_INTERNAL)
+		{
+			if(!strcasecmp(stb_boxtype, "dm8000") || !strcasecmp(stb_boxtype, "dm800") || !strcasecmp(stb_boxtype, "dm800se"))
+				{reader->cardmhz = 2700;}
+			if(!strcasecmp(stb_boxtype, "dm500") || !strcasecmp(stb_boxtype,"dm600pvr"))
+				{reader->cardmhz = 3150;}
+			if(!strcasecmp(stb_boxtype, "dm7025"))
+				{reader->cardmhz = 8300;}
+			if(!strcasecmp(stb_boxtype, "vuduo2"))
+				{reader->cardmhz = 2700; reader->mhz = 450;} // only one speed by vuduo2
+		}
 		if((reader->cardmhz > 2000) && (reader->typ != R_SMART))
 		{
 			rdr_log(reader, "Reader initialized (device=%s, detect=%s%s, pll max=%.2f MHz, wanted mhz=%.2f MHz)",
