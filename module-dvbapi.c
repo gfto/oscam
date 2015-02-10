@@ -4041,7 +4041,7 @@ static void *dvbapi_main_local(void *cli)
 						}
 						if(!len)
 						{
-							memset(mbuf, sizeof(mbuf),0);
+							memset(mbuf, 0, sizeof(mbuf));
 						}
 					}
 
