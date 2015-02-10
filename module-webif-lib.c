@@ -844,11 +844,6 @@ static void SSL_dyn_destroy_function(struct CRYPTO_dynlock_value *l, const char 
 /* Init necessary structures for SSL in WebIf*/
 SSL_CTX *SSL_Webif_Init(void)
 {
-	SSL_library_init();
-	SSL_load_error_strings();
-	ERR_load_BIO_strings();
-	ERR_load_SSL_strings();
-
 	SSL_CTX *ctx;
 
 	static const char *cs_cert = "oscam.pem";
@@ -896,30 +891,28 @@ SSL_CTX *SSL_Webif_Init(void)
 		{ cs_strncpy(path, cfg.http_cert, sizeof(path)); }
 
 	if(!ctx)
-	{
-		ERR_print_errors_fp(stderr);
-		return NULL;
-	}
+		goto out_err;
 
 	if(SSL_CTX_use_certificate_file(ctx, path, SSL_FILETYPE_PEM) <= 0)
-	{
-		ERR_print_errors_fp(stderr);
-		return NULL;
-	}
+		goto out_err;
 
 	if(SSL_CTX_use_PrivateKey_file(ctx, path, SSL_FILETYPE_PEM) <= 0)
-	{
-		ERR_print_errors_fp(stderr);
-		return NULL;
-	}
+		goto out_err;
 
 	if(!SSL_CTX_check_private_key(ctx))
 	{
 		cs_log("SSL: Private key does not match the certificate public key");
-		return NULL;
+		goto out_err;
 	}
+
 	cs_log("load ssl certificate file %s", path);
 	return ctx;
+
+out_err:
+	ERR_print_errors_fp(stderr);
+	ERR_remove_state(0);
+	SSL_CTX_free(ctx);
+	return NULL;
 }
 #endif
 

@@ -40,6 +40,32 @@
 #include "reader-common.h"
 #include "module-gbox.h"
 
+#ifdef WITH_SSL
+#include <openssl/crypto.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
+static void ssl_init(void)
+{
+	SSL_load_error_strings();
+	ERR_load_BIO_strings();
+	ERR_load_SSL_strings();
+	SSL_library_init();
+}
+
+static void ssl_done(void)
+{
+	ERR_remove_state(0);
+	ERR_free_strings();
+	EVP_cleanup();
+	CRYPTO_cleanup_all_ex_data();
+}
+
+#else
+static void ssl_init(void) { }
+static void ssl_done(void) { }
+#endif
+
 extern char *config_mak;
 
 /*****************************************************************************
@@ -1504,6 +1530,7 @@ int32_t main(int32_t argc, char *argv[])
 	cs_init_statistics();
 	coolapi_open_all();
 	init_stat();
+	ssl_init();
 
 	// These initializations *MUST* be called after init_config()
 	// because modules depend on config values.
@@ -1654,6 +1681,7 @@ int32_t main(int32_t argc, char *argv[])
 	free_readerdb();
 	free_irdeto_guess_tab();
 	config_free();
+	ssl_done();
 
 	detect_valgrind();
 	if (!running_under_valgrind)

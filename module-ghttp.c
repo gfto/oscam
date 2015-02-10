@@ -59,15 +59,20 @@ static bool _ssl_connect(struct s_client *client, int32_t fd)
 	if(context->ssl_handle == NULL)
 	{
 		ERR_print_errors_fp(stderr);
+		ERR_remove_state(0);
 		return false;
 	}
 	if(!SSL_set_fd(context->ssl_handle, fd))
 	{
 		ERR_print_errors_fp(stderr);
+		ERR_remove_state(0);
 		return false;
 	}
 	if(SSL_connect(context->ssl_handle) != 1)
-		{ ERR_print_errors_fp(stderr); }
+	{
+		ERR_print_errors_fp(stderr);
+		ERR_remove_state(0);
+	}
 
 	if(context->ssl_handle)
 	{
@@ -89,7 +94,11 @@ int32_t ghttp_client_init(struct s_client *cl)
 	SSL_load_error_strings();
 	SSL_library_init();
 	ghttp_ssl_context = SSL_CTX_new(SSLv23_client_method());
-	if(ghttp_ssl_context == NULL) { ERR_print_errors_fp(stderr); }
+	if(ghttp_ssl_context == NULL)
+	{
+		ERR_print_errors_fp(stderr);
+		ERR_remove_state(0);
+	}
 #endif
 
 	if(cl->reader->r_port == 0)
@@ -669,12 +678,12 @@ static void ghttp_cleanup(struct s_client *client)
 		ll_destroy(&context->ecm_q);
 		ll_destroy_data(&context->post_contexts);
 #ifdef WITH_SSL
-		ERR_free_strings();
 		if(context->ssl_handle)
 		{
 			SSL_shutdown(context->ssl_handle);
 			SSL_free(context->ssl_handle);
 		}
+		SSL_CTX_free(ghttp_ssl_context);
 #endif
 		NULLFREE(context);
 	}

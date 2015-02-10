@@ -8076,17 +8076,14 @@ static void *http_server(void *UNUSED(d))
 	// Wait a bit so that we don't close ressources while http threads are active
 	cs_sleepms(300);
 #ifdef WITH_SSL
-	if(ssl_active)
-	{
-		SSL_CTX_free(ctx);
-		CRYPTO_set_dynlock_create_callback(NULL);
-		CRYPTO_set_dynlock_lock_callback(NULL);
-		CRYPTO_set_dynlock_destroy_callback(NULL);
-		CRYPTO_set_locking_callback(NULL);
-		CRYPTO_set_id_callback(NULL);
-		OPENSSL_free(lock_cs);
-		lock_cs = NULL;
-	}
+	SSL_CTX_free(ctx);
+	CRYPTO_set_dynlock_create_callback(NULL);
+	CRYPTO_set_dynlock_lock_callback(NULL);
+	CRYPTO_set_dynlock_destroy_callback(NULL);
+	CRYPTO_set_locking_callback(NULL);
+	CRYPTO_set_id_callback(NULL);
+	OPENSSL_free(lock_cs);
+	lock_cs = NULL;
 #endif
 	cs_log("HTTP Server stopped");
 	free_client(cl);
