@@ -91,8 +91,6 @@ int32_t ghttp_client_init(struct s_client *cl)
 
 	ghttp_ignored_contexts = ll_create("ignored contexts");
 #ifdef WITH_SSL
-	SSL_load_error_strings();
-	SSL_library_init();
 	ghttp_ssl_context = SSL_CTX_new(SSLv23_client_method());
 	if(ghttp_ssl_context == NULL)
 	{
