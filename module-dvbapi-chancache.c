@@ -16,6 +16,8 @@ static LLIST *channel_cache;
 
 void dvbapi_save_channel_cache(void)
 {
+	if(boxtype_is("dbox2")) return; // dont save channelcache on these boxes, they lack resources and will crash!
+	
 	char fname[256];
 	get_config_filename(fname, sizeof(fname), "oscam.ccache");
 	FILE *file = fopen(fname, "w");
@@ -39,6 +41,8 @@ void dvbapi_save_channel_cache(void)
 
 void dvbapi_load_channel_cache(void)
 {
+	if(boxtype_is("dbox2")) return; // dont load channelcache on these boxes, they lack resources and will crash!
+	
 	if (USE_OPENXCAS) // Why?
 		return;
 
