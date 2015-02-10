@@ -3813,7 +3813,7 @@ static void *dvbapi_main_local(void *cli)
 							connfd = accept(listenfd, (struct sockaddr *)&servaddr, (socklen_t *)&clilen);
 							cs_log_dbg(D_DVBAPI, "new socket connection fd: %d", connfd);
 							if (cfg.dvbapi_listenport)
-							{;
+							{
 								//update webif data
 								client->ip = SIN_GET_ADDR(servaddr);
 								client->port = ntohs(SIN_GET_PORT(servaddr));
