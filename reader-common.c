@@ -314,14 +314,13 @@ bool cardreader_init(struct s_reader *reader)
 	{
 		if(reader->typ == R_INTERNAL)
 		{
-			const char *stb_boxtype = boxtype_get();
 			if(boxtype_is("dm8000") || boxtype_is("dm800") || boxtype_is("dm800se"))
 				{reader->cardmhz = 2700;}
 			if(boxtype_is("dm500") || boxtype_is("dm600pvr"))
 				{reader->cardmhz = 3150;}
 			if(boxtype_is("dm7025"))
 				{reader->cardmhz = 8300;}
-			if(!strncmp(stb_boxtype, "vu", 2 ))
+			if(!strncmp(boxtype_get(), "vu", 2 ))
 				{reader->cardmhz = 2700; reader->mhz = 450;} // only one speed by vu+
 		}
 		if((reader->cardmhz > 2000) && (reader->typ != R_SMART))
