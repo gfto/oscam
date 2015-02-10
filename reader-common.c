@@ -314,13 +314,13 @@ bool cardreader_init(struct s_reader *reader)
 	{
 		if(reader->typ == R_INTERNAL)
 		{
-			if(boxtype("dm8000") || boxtype("dm800") || boxtype("dm800se"))
+			if(boxtype_is("dm8000") || boxtype_is("dm800") || boxtype_is("dm800se"))
 				{reader->cardmhz = 2700;}
-			if(boxtype("dm500") || boxtype("dm600pvr"))
+			if(boxtype_is("dm500") || boxtype_is("dm600pvr"))
 				{reader->cardmhz = 3150;}
-			if(boxtype("dm7025"))
+			if(boxtype_is("dm7025"))
 				{reader->cardmhz = 8300;}
-			if(boxtype("vuduo2"))
+			if(boxtype_is("vuduo2"))
 				{reader->cardmhz = 2700; reader->mhz = 450;} // only one speed by vuduo2
 		}
 		if((reader->cardmhz > 2000) && (reader->typ != R_SMART))

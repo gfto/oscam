@@ -759,7 +759,7 @@ static void init_machine_info(void)
 		stb_boxtype = cs_strdup(model);
 }
 
-bool boxtype(const char *boxtype)
+bool boxtype_is(const char *boxtype)
 {
 	if (!stb_boxtype) return false;
 	return strcasecmp(stb_boxtype, boxtype) == 0;

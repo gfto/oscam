@@ -52,7 +52,7 @@ static int32_t Sci_Deactivate(struct s_reader *reader)
 	}
 	if (in != 1) {ioctl(reader->handle, IOCTL_GET_IS_CARD_ACTIVATED, &in);}
 
-	if(in && boxtype("dm8000"))
+	if(in && boxtype_is("dm8000"))
 	{
 		if((ioctl(reader->handle, IOCTL_SET_DEACTIVATE)<0))
 		{

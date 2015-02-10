@@ -98,7 +98,7 @@ static int dvbapi_ioctl(int fd, uint32_t request, ...)
 #endif
 	// FIXME: Workaround for su980 bug
 	// See: http://www.streamboard.tv/wbb2/thread.php?postid=533940
-	if(boxtype("su980"))
+	if(boxtype_is("su980"))
 		ret = 1;
 	va_end(args);
 	return ret;
