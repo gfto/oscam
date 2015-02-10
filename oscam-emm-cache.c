@@ -15,6 +15,8 @@ static LLIST *emm_cache;
 
 void emm_save_cache(void)
 {
+	if(boxtype_is("dbox2")) return; // dont save emmcache on these boxes, they lack resources and will crash!
+	
 	char fname[256];
 	struct timeb ts, te;
 	
@@ -56,6 +58,8 @@ void emm_save_cache(void)
 
 void load_emmstat_from_file(void)
 {
+	if(boxtype_is("dbox2")) return; // dont load emmstat on these boxes, they lack resources and will crash!
+	
 	char buf[256];
 	char fname[256];
 	char *line;
@@ -159,6 +163,8 @@ void load_emmstat_from_file(void)
 
 void save_emmstat_to_file(void)
 {
+	if(boxtype_is("dbox2")) return; // dont save emmstat on these boxes, they lack resources and will crash!
+	
 	char fname[256];
 
 	if(!cfg.emmlogdir)
@@ -212,6 +218,8 @@ void save_emmstat_to_file(void)
 
 void emm_load_cache(void)
 {
+	if(boxtype_is("dbox2")) return; // dont load emmcache on these boxes, they lack resources and will crash!
+	
 	char fname[256];
 	char line[1024];
 	FILE *file;
