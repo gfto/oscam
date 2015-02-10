@@ -772,6 +772,19 @@ static void init_machine_info(void)
 
 	if (!boxtype[0] && !strcasecmp(model, "dm800") && !strcasecmp(buffer.machine, "armv7l"))
 		snprintf(boxtype, sizeof(boxtype), "%s", "su980");
+	
+	if (!boxtype[0])
+	{
+		uchar *pos;
+		pos = (uchar*) memchr(buffer.release, 'd', sizeof(buffer.release));
+		if(pos)
+		{
+			if((!memcmp(pos, "dbox2", sizeof("dbox2"))) && !strcasecmp(buffer.machine, "ppc"))
+			{
+				snprintf(boxtype, sizeof(boxtype), "%s", "dbox2");
+			}
+		}
+	}
 
 	if (model[0])
 		cs_log("Stb model      = %s", model);
