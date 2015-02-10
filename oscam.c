@@ -96,7 +96,7 @@ struct  s_config  cfg;
 int log_remove_sensitive = 1;
 
 static char *prog_name;
-char *stb_boxtype = NULL;
+static char *stb_boxtype;
 
 /*****************************************************************************
         Statics
@@ -757,6 +757,17 @@ static void init_machine_info(void)
 		stb_boxtype = cs_strdup(boxtype);
 	else if (model[0])
 		stb_boxtype = cs_strdup(model);
+}
+
+bool boxtype(const char *boxtype)
+{
+	if (!stb_boxtype) return false;
+	return strcasecmp(stb_boxtype, boxtype) == 0;
+}
+
+const char *boxtype_get(void)
+{
+	return stb_boxtype ? stb_boxtype : "generic";
 }
 
 /* Checks if the date of the system is correct and waits if necessary. */

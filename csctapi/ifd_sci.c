@@ -21,9 +21,6 @@
 #define OK      0
 #define ERROR 1
 
-// extern variables
-extern char *stb_boxtype;
-
 struct sr_data
 {
 	uint8_t old_reset;
@@ -55,11 +52,11 @@ static int32_t Sci_Deactivate(struct s_reader *reader)
 	}
 	if (in != 1) {ioctl(reader->handle, IOCTL_GET_IS_CARD_ACTIVATED, &in);}
 
-	if(in && strcasecmp(stb_boxtype, "dm8000"))
+	if(in && boxtype("dm8000"))
 	{
 		if((ioctl(reader->handle, IOCTL_SET_DEACTIVATE)<0))
 		{
-			rdr_log(reader,"ioctl(IOCTL_SET_DEACTIVATE) not supported on %s",stb_boxtype ? stb_boxtype : "generic" );
+			rdr_log(reader,"ioctl(IOCTL_SET_DEACTIVATE) not supported on %s", boxtype_get());
 			return ERROR;
 		}
 	}

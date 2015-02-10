@@ -17,7 +17,6 @@
 
 extern struct s_cardsystem cardsystems[CS_MAX_MOD];
 extern char *RDR_CD_TXT[];
-extern char *stb_boxtype;
 
 int32_t check_sct_len(const uchar *data, int32_t off)
 {
@@ -315,13 +314,13 @@ bool cardreader_init(struct s_reader *reader)
 	{
 		if(reader->typ == R_INTERNAL)
 		{
-			if(!strcasecmp(stb_boxtype, "dm8000") || !strcasecmp(stb_boxtype, "dm800") || !strcasecmp(stb_boxtype, "dm800se"))
+			if(boxtype("dm8000") || boxtype("dm800") || boxtype("dm800se"))
 				{reader->cardmhz = 2700;}
-			if(!strcasecmp(stb_boxtype, "dm500") || !strcasecmp(stb_boxtype,"dm600pvr"))
+			if(boxtype("dm500") || boxtype("dm600pvr"))
 				{reader->cardmhz = 3150;}
-			if(!strcasecmp(stb_boxtype, "dm7025"))
+			if(boxtype("dm7025"))
 				{reader->cardmhz = 8300;}
-			if(!strcasecmp(stb_boxtype, "vuduo2"))
+			if(boxtype("vuduo2"))
 				{reader->cardmhz = 2700; reader->mhz = 450;} // only one speed by vuduo2
 		}
 		if((reader->cardmhz > 2000) && (reader->typ != R_SMART))
@@ -332,7 +331,7 @@ bool cardreader_init(struct s_reader *reader)
 					RDR_CD_TXT[reader->detect & 0x7f],
 					(float)reader->cardmhz / 100,
 					(float)reader->mhz / 100);
-			rdr_log(reader,"Reader sci internal, detected box type: %s", stb_boxtype ? stb_boxtype : "generic");
+			rdr_log(reader,"Reader sci internal, detected box type: %s", boxtype_get());
 		}
 		else
 		{
@@ -383,7 +382,7 @@ bool cardreader_init(struct s_reader *reader)
 						reader->mhz,
 						reader->cardmhz);
 				if (reader->typ == R_INTERNAL && !(reader->cardmhz > 2000))
-					{rdr_log(reader,"Reader sci internal, detected box type: %s", stb_boxtype ? stb_boxtype : "generic");}
+					rdr_log(reader,"Reader sci internal, detected box type: %s", boxtype_get());
 			}
 		}
 		return true;
