@@ -383,6 +383,15 @@ $(OBJDIR)/%.o: %.c Makefile
 
 -include $(subst .o,.d,$(OBJ))
 
+TESTS_SRC += oscam-conf-mk.c
+TESTS_SRC += oscam-conf-chk.c
+TESTS_SRC += oscam-string.c
+TESTS_SRC += oscam-llist.c
+
+tests: Makefile globals.h $(subst .c,.h,$(TESTS_SRC)) $(TESTS_SRC) tests.c
+	$(SAY) "BUILD	$@"
+	$(Q)$(CC) $(STD_DEFS) $(CC_OPTS) $(CC_WARN) $(CFLAGS) $(LDFLAGS) $(TESTS_SRC) tests.c -o $@
+
 config:
 	$(SHELL) ./config.sh --gui
 
@@ -401,7 +410,7 @@ defconfig:
 	@-$(SHELL) ./config.sh --restore
 
 clean:
-	@-for FILE in $(BUILD_DIR)/*; do \
+	@-for FILE in $(BUILD_DIR)/* tests; do \
 		echo "RM	$$FILE"; \
 		rm -rf $$FILE; \
 	done
@@ -675,6 +684,9 @@ OSCam build system documentation\n\
     make static-libusb - Builds OSCam with libusb linked statically\n\
     make static-libcrypto - Builds OSCam with libcrypto linked statically\n\
     make static-ssl    - Builds OSCam with SSL support linked statically\n\
+\n\
+ Developer targets:\n\
+    make tests         - Builds 'tests' binary\n\
 \n\
  Examples:\n\
    Build OSCam for SH4 (the compilers are in the path):\n\

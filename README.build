@@ -242,6 +242,9 @@ OSCam build system documentation
     make static-libcrypto - Builds OSCam with libcrypto linked statically
     make static-ssl    - Builds OSCam with SSL support linked statically
 
+ Developer targets:
+    make tests         - Builds 'tests' binary
+
  Examples:
    Build OSCam for SH4 (the compilers are in the path):
      make CROSS=sh4-linux-
