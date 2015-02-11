@@ -677,24 +677,24 @@ void clone_ftab(FTAB *src_ftab, FTAB *dst_ftab)
 
 void ecm_whitelist_add(ECM_WHITELIST *ecm_whitelist, ECM_WHITELIST_DATA *ew)
 {
-	ecm_whitelist->ewnum++;
-	if (!cs_realloc(&ecm_whitelist->ewdata, ecm_whitelist->ewnum * sizeof(*ecm_whitelist->ewdata)))
+	if (!cs_realloc(&ecm_whitelist->ewdata, (ecm_whitelist->ewnum + 1) * sizeof(*ecm_whitelist->ewdata)))
 		return;
-	ecm_whitelist->ewdata[ecm_whitelist->ewnum - 1] = *ew;
+	ecm_whitelist->ewdata[ecm_whitelist->ewnum] = *ew;
+	ecm_whitelist->ewnum++;
 }
 
 void ecm_hdr_whitelist_add(ECM_HDR_WHITELIST *ecm_hdr_whitelist, ECM_HDR_WHITELIST_DATA *eh)
 {
-	ecm_hdr_whitelist->ehnum++;
-	if (!cs_realloc(&ecm_hdr_whitelist->ehdata, ecm_hdr_whitelist->ehnum * sizeof(*ecm_hdr_whitelist->ehdata)))
+	if (!cs_realloc(&ecm_hdr_whitelist->ehdata, (ecm_hdr_whitelist->ehnum + 1) * sizeof(*ecm_hdr_whitelist->ehdata)))
 		return;
-	ecm_hdr_whitelist->ehdata[ecm_hdr_whitelist->ehnum - 1] = *eh;
+	ecm_hdr_whitelist->ehdata[ecm_hdr_whitelist->ehnum] = *eh;
+	ecm_hdr_whitelist->ehnum++;
 }
 
 void ftab_add_filter(FTAB *ftab, FILTER *filter)
 {
-	ftab->nfilts++;
-	if (!cs_realloc(&ftab->filts, ftab->nfilts * sizeof(*ftab->filts)))
+	if (!cs_realloc(&ftab->filts, (ftab->nfilts + 1) * sizeof(*ftab->filts)))
 		return;
-	ftab->filts[ftab->nfilts - 1] = *filter;
+	ftab->filts[ftab->nfilts] = *filter;
+	ftab->nfilts++;
 }
