@@ -525,10 +525,14 @@ void chk_ecm_whitelist(char *value, ECM_WHITELIST *ecm_whitelist)
 		} else {
 			ptr2 = ptr;
 		}
+		if (d.caid == 0xffff) d.caid = 0;
+		if (d.ident == 0xffff) d.ident = 0;
 		char *saveptr2 = NULL;
 		for(ptr2 = strtok_r(ptr2, ",", &saveptr2); ptr2; ptr2 = strtok_r(NULL, ",", &saveptr2))
 		{
 			d.len = (int16_t)dyn_word_atob(ptr2);
+			if (d.len == 0xffff)
+				continue;
 			ecm_whitelist_add(&new_ecm_whitelist, &d);
 		}
 	}

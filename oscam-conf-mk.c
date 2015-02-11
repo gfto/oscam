@@ -558,6 +558,8 @@ char *mk_t_ecm_whitelist(struct s_ecm_whitelist *ecm_whitelist)
 				pos += snprintf(ret + pos, maxlen - pos, "%s%04X@%06X:", sep1, cur->caid, cur->ident);
 			else if (cur->caid)
 				pos += snprintf(ret + pos, maxlen - pos, "%s%04X:", sep1, cur->caid);
+			else if (cur->ident)
+				pos += snprintf(ret + pos, maxlen - pos, "%s@%06X:", sep1, cur->ident);
 			else
 				pos += snprintf(ret + pos, maxlen - pos, "%s", sep1);
 			sep1 = ";";
