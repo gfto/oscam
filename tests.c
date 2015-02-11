@@ -27,12 +27,14 @@ struct test_type
 	CHK_FN		*chk_fn;	// chk_XXX() func for the data type
 	MK_T_FN		*mk_t_fn;	// mk_t_XXX() func for the data type
 	CLEAR_FN	*clear_fn;	// clear_XXX() func for the data type
+	const struct test_vec *test_vec; // Array of test vectors
 };
 
-static void run_parser_test(struct test_type *t, const struct test_vec *vec)
+static void run_parser_test(struct test_type *t)
 {
 	memset(t->data, 0, t->data_sz);
 	printf("%s\n", t->desc);
+	const struct test_vec *vec = t->test_vec;
 	while (vec->in)
 	{
 		bool ok;
@@ -66,7 +68,16 @@ static void run_parser_test(struct test_type *t, const struct test_vec *vec)
 int main(void)
 {
 	ECM_WHITELIST ecm_whitelist;
-	const struct test_vec ecm_whitelist_test_vec[] = {
+	struct test_type ecm_whitelist_test =
+	{
+		.desc     = "ECM white list setting (READERS: 'ecmwhitelist')",
+		.data     = &ecm_whitelist,
+		.data_sz  = sizeof(ecm_whitelist),
+		.chk_fn   = (CHK_FN *)&chk_ecm_whitelist,
+		.mk_t_fn  = (MK_T_FN *)&mk_t_ecm_whitelist,
+		.clear_fn = (CLEAR_FN *)&clear_ecm_whitelist,
+		.test_vec = (const struct test_vec[])
+		{
 			{ .in = "0500@043800:70,6E,6C,66,7A,61,67,75,5D,6B;0600@070800:11,22,33,44,55,66;0700:AA,BB,CC,DD,EE;01,02,03,04;0123@456789:01,02,03,04" },
 			{ .in = "0500@043800:70,6E,6C,66,7A,61,67,75,5D,6B" },
 			{ .in = "0500@043800:70,6E,6C,66" },
@@ -94,17 +105,9 @@ int main(void)
 			{ .in = "@:;;;",                 .out = "" },
 			{ .in = ",",                     .out = "" },
 			{ .in = NULL },
+		},
 	};
-	struct test_type ecm_whitelist_test =
-	{
-		.desc     = "ECM white list setting (READERS: 'ecmwhitelist')",
-		.data     = &ecm_whitelist,
-		.data_sz  = sizeof(ecm_whitelist),
-		.chk_fn   = (CHK_FN *)&chk_ecm_whitelist,
-		.mk_t_fn  = (MK_T_FN *)&mk_t_ecm_whitelist,
-		.clear_fn = (CLEAR_FN *)&clear_ecm_whitelist,
-	};
-	run_parser_test(&ecm_whitelist_test, ecm_whitelist_test_vec);
+	run_parser_test(&ecm_whitelist_test);
 
 	return 0;
 }
