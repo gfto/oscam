@@ -501,42 +501,40 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 void chk_ecm_whitelist(char *value, ECM_WHITELIST *ecm_whitelist)
 {
 	clear_ecm_whitelist(ecm_whitelist);
-	ECM_WHITELIST new_ecm_whitelist;
-	ECM_WHITELIST_DATA d;
-	memset(&new_ecm_whitelist, 0, sizeof(new_ecm_whitelist));
 	char *ptr, *saveptr1 = NULL;
 	for(ptr = strtok_r(value, ";", &saveptr1); ptr; ptr = strtok_r(NULL, ";", &saveptr1))
 	{
-		d.caid = 0;
-		d.ident = 0;
-		char *ptr2 = strchr(ptr, ':');
-		if(ptr2 != NULL)
+		ECM_WHITELIST_DATA d;
+		memset(&d, 0, sizeof(d));
+		char *caid_end_ptr = strchr(ptr, ':'); // caid_end_ptr + 1 -> headers
+		char *provid_ptr = strchr(ptr, '@'); // provid_ptr + 1 -> provid
+		char *headers = ptr;
+		if(caid_end_ptr)
 		{
-			ptr2[0] = '\0';
-			ptr2++;
-			char *ptr3 = strchr(ptr, '@');
-			if(ptr3 != NULL)
+			caid_end_ptr[0] = '\0';
+			if (provid_ptr)
 			{
-				ptr3[0] = '\0';
-				ptr3++;
-				d.ident = (uint32_t)a2i(ptr3, 6);
+				provid_ptr[0] = '\0';
+				provid_ptr++;
+				d.ident = a2i(provid_ptr, 6);
 			}
-			d.caid = (int16_t)dyn_word_atob(ptr);
-		} else {
-			ptr2 = ptr;
+			d.caid = dyn_word_atob(ptr);
+			headers = caid_end_ptr + 1; // -> headers
+		} else if(provid_ptr) {
+			provid_ptr[0] = '\0';
+			d.ident = a2i(provid_ptr, 6);
 		}
 		if (d.caid == 0xffff) d.caid = 0;
 		if (d.ident == 0xffff) d.ident = 0;
-		char *saveptr2 = NULL;
-		for(ptr2 = strtok_r(ptr2, ",", &saveptr2); ptr2; ptr2 = strtok_r(NULL, ",", &saveptr2))
+		char *len_ptr, *savelen_ptr = NULL;
+		for(len_ptr = strtok_r(headers, ",", &savelen_ptr); len_ptr; len_ptr = strtok_r(NULL, ",", &savelen_ptr))
 		{
-			d.len = (int16_t)dyn_word_atob(ptr2);
+			d.len = dyn_word_atob(len_ptr);
 			if (d.len == 0xffff)
 				continue;
-			ecm_whitelist_add(&new_ecm_whitelist, &d);
+			ecm_whitelist_add(ecm_whitelist, &d);
 		}
 	}
-	*ecm_whitelist = new_ecm_whitelist;
 }
 
 /* Clears the s_ip structure provided. The pointer will be set to NULL so everything is cleared.*/
