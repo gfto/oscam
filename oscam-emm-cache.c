@@ -37,7 +37,7 @@ void emm_save_cache(void)
 	}
 
 	cs_ftime(&ts);
-	int32_t count = 0;
+	int32_t count = 0, result = 0;
 	LL_ITER it = ll_iter_create(emm_cache);
 	struct s_emmcache *c;
 	while((c = ll_iter_next(&it)))
@@ -46,7 +46,21 @@ void emm_save_cache(void)
 		char_to_hex(c->emmd5, MD5_DIGEST_LENGTH, tmp_emmd5); 
 		uchar tmp_emm[c->len * 2 + 1];
 		char_to_hex(c->emm, c->len, tmp_emm);
-		fprintf(file, "%s,%ld,%ld,%02X,%04X,%s\n", tmp_emmd5, c->firstseen.time, c->lastseen.time, c->type, c->len, tmp_emm);
+		result = fprintf(file, "%s,%ld,%ld,%02X,%04X,%s\n", tmp_emmd5, c->firstseen.time, c->lastseen.time, c->type, c->len, tmp_emm);
+		if(result < 0)
+		{
+			fclose(file);
+			result = remove(fname);
+			if(!result)
+			{
+				cs_log("error writing cache -> cache file removed!");
+			}
+			else
+			{
+				cs_log("error writing cache -> cache file could not be removed either!");
+			}
+			return;
+		}
 		count++;
 	}
 
@@ -186,7 +200,7 @@ void save_emmstat_to_file(void)
 	struct timeb ts, te;
 	cs_ftime(&ts);
 
-	int32_t count = 0;
+	int32_t count = 0, result = 0;
 	struct s_reader *rdr;
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr)))
@@ -201,7 +215,22 @@ void save_emmstat_to_file(void)
 			{
 				uchar tmp_emmd5[MD5_DIGEST_LENGTH * 2 + 1];
 				char_to_hex(s->emmd5, MD5_DIGEST_LENGTH, tmp_emmd5);
-				fprintf(file, "%s,%s,%ld,%ld,%02X,%04X\n", rdr->label, tmp_emmd5, s->firstwritten.time, s->lastwritten.time, s->type, s->count);
+				result = fprintf(file, "%s,%s,%ld,%ld,%02X,%04X\n", rdr->label, tmp_emmd5, s->firstwritten.time, s->lastwritten.time, s->type, s->count);
+				if(result < 0)
+				{
+					cs_writeunlock(&rdr->emmstat_lock);
+					fclose(file);
+					result = remove(fname);
+					if(!result)
+					{
+						cs_log("error writing stats -> stat file removed!");
+					}
+					else
+					{
+						cs_log("error writing stats -> stat file could not be removed either!");
+					}
+					return;
+				}	
 				count++;
 			}
 			cs_writeunlock(&rdr->emmstat_lock);
