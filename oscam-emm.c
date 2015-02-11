@@ -296,6 +296,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 	char *typtext[] = {"unknown", "unique", "shared", "global"};
 	char tmp[17];
 	int32_t emmnok = 0;
+	bool lastseendone = false;
 
 	struct s_reader *aureader = NULL;
 	cs_log_dump_dbg(D_EMM, ep->emm, ep->emmlen, "emm:");
@@ -479,33 +480,35 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 			{ client->account->emmok++; }
 		first_client->emmok++;
 
-		//Check emmcache early:
-		unsigned char md5tmp[MD5_DIGEST_LENGTH];
-
-		MD5(ep->emm, ep->emm[2], md5tmp);
 		ep->client = client;
 
 		int32_t writeemm = 1; // 0= dont write emm, 1=write emm, default = write
 
-		struct s_emmstat *emmstat = get_emm_stat(aureader, md5tmp, ep->type);
-		if(emmstat)
+		if(aureader->cachemm) //Check emmcache early:
 		{
-			if(!aureader->cachemm)
+			unsigned char md5tmp[MD5_DIGEST_LENGTH];
+
+			MD5(ep->emm, ep->emm[2], md5tmp);
+		
+			struct s_emmcache *emmcache = find_emm_cache(md5tmp); // check emm cache
+			if(emmcache && !lastseendone)
 			{
-				rdr_log_dbg(aureader, D_EMM, "emm count %d rewrite always (emmcache disabled!)", emmstat->count);
+				cs_ftime(&emmcache->lastseen);
+				lastseendone = true; // in case several aureaders, only do lastseen once!
 			}
-			else
+		
+			struct s_emmstat *emmstat = get_emm_stat(aureader, md5tmp, ep->type);
+			if(emmstat)
 			{
 				rdr_log_dbg(aureader, D_EMM, "emm count %d rewrite %d", emmstat->count, aureader->rewritemm);
 			}
-			if(aureader->cachemm && (emmstat->count >= aureader->rewritemm))
+			if(emmstat->count >= aureader->rewritemm)
 			{
 				reader_log_emm(aureader, ep, emmstat->count, 2, NULL);
 				writeemm = 0; // dont write emm!
 				saveemm(aureader, ep, "emmcache");
 				continue; // found emm match needs no further handling, proceed with next reader!
 			}
-			writeemm = 1; // found emm match but rewrite counter not reached: write emm!
 		}
 		
 		if(writeemm)   // only write on no cache hit or cache hit that needs further rewrite
@@ -554,10 +557,6 @@ int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		if(!emmcache)
 		{
 			emm_edit_cache(md5tmp, ep, true);
-		}
-		else
-		{
-			cs_ftime(&emmcache->lastseen);
 		}
 		
 		struct s_emmstat *emmstat = get_emm_stat(reader, md5tmp, ep->type);

@@ -438,7 +438,6 @@ int32_t emm_edit_cache(uchar *emmd5, EMM_PACKET *ep, bool add)
 		{
 			if(add)
 			{
-				cs_ftime(&c->lastseen);
 				return 0; //already added
 			}
 			ll_iter_remove_data(&it);
