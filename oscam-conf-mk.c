@@ -579,60 +579,44 @@ char *mk_t_ecm_whitelist(struct s_ecm_whitelist *ecm_whitelist)
 /*
  * Creates a string ready to write as a token into config or WebIf for the ECM Headerwhitelist. You must free the returned value through free_mk_t().
  */
-char *mk_t_ecmheaderwhitelist(struct s_ecmHeaderwhitelist *headerlist)
+char *mk_t_ecm_hdr_whitelist(struct s_ecm_hdr_whitelist *ecm_hdr_whitelist)
 {
-	int32_t needed = 1, pos = 0;
-	struct s_ecmHeaderwhitelist *cip;
-	for(cip = headerlist; cip; cip = cip->next) { needed += 51; }
-	char *value, *dot = "";
-	char tmp[needed];
-	int16_t i;
-	int16_t ccache = 0;
-	uint32_t pcache = 0;
-	tmp[0] = '\0';
-	for(cip = headerlist; cip; cip = cip->next)
+	// Worst case scenario where each entry have different
+	// caid, provid and only one header in it is strlen("1234@123456:0102030405060708091011121314151617181920;") == 52 ((sizeof(header) / 2) + 12)
+	int32_t i, r, maxlen = 53 * ecm_hdr_whitelist->ehnum, pos = 0;
+	char *ret;
+	if (!cs_malloc(&ret, maxlen))
+		return "";
+	char *sep1 = "", *sep2 = "";
+	ECM_HDR_WHITELIST_DATA *last = NULL;
+	for(i = 0; i < ecm_hdr_whitelist->ehnum; i++)
 	{
-		dot = "";
-		if(ccache == cip->caid && pcache == cip->provid)
+		ECM_HDR_WHITELIST_DATA *cur = &ecm_hdr_whitelist->ehdata[i];
+		bool change = !last || last->caid != cur->caid || last->provid != cur->provid;
+		if (change)
 		{
-			if(pos)
-				{ pos -= 1; }
-			if(strlen(tmp))
-				{ pos += snprintf(tmp + pos, needed - pos, ","); }
+			if (cur->caid && cur->provid)
+				pos += snprintf(ret + pos, maxlen - pos, "%s%04X@%06X:", sep1, cur->caid, cur->provid);
+			else if (cur->caid)
+				pos += snprintf(ret + pos, maxlen - pos, "%s%04X:", sep1, cur->caid);
+			else if (cur->provid)
+				pos += snprintf(ret + pos, maxlen - pos, "%s@%06X:", sep1, cur->provid);
+			else
+				pos += snprintf(ret + pos, maxlen - pos, "%s", sep1);
+			sep1 = ";";
+			sep2 = "";
 		}
-		else
-		{
-			if(cip->header != NULL && cip->caid != 0 && cip->provid == 0)
-			{
-				pos += snprintf(tmp + pos, needed - pos, "%s%04X:", dot, cip->caid);
-				ccache = cip->caid;
-				pcache = 0;
-			}
-
-			if(cip->header != NULL && cip->caid != 0 && cip->provid != 0)
-			{
-				pos += snprintf(tmp + pos, needed - pos, "%s%04X@%06X:", dot, cip->caid, cip->provid);
-				ccache = cip->caid;
-				pcache = cip->provid;
-			}
-		}
-		if(cip->header != NULL)
-		{
-			for(i = 0; i < cip->len / 2; i++)
-			{
-				pos += snprintf(tmp + pos, needed - pos, "%s%02X", dot, cip->header[i]);
-				if(i == cip->len / 2 - 1) { pos += snprintf(tmp + pos, needed - pos, ","); }
-				ccache = cip->caid;
-				pcache = cip->provid;
-			}
-		}
-		if(pos)
-			{ pos -= 1; }
-		pos += snprintf(tmp + pos, needed - pos, ";");
+		pos += snprintf(ret + pos, maxlen - pos, "%s", sep2);
+		for(r = 0; r < cur->len / 2; r++)
+			pos += snprintf(ret + pos, maxlen - pos, "%02X", cur->header[r]);
+		sep2 = ",";
+		last = &ecm_hdr_whitelist->ehdata[i];
 	}
-	if(pos == 0 || !cs_malloc(&value, pos + 1)) { return ""; }
-	memcpy(value, tmp, pos - 1);
-	return value;
+	if(pos == 0) {
+		free(ret);
+		return "";
+	}
+	return ret;
 }
 
 /*

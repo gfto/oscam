@@ -845,7 +845,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 	}
 
 	// ECM Header Check
-	if(rdr->ecmHeaderwhitelist && er->ecmlen)
+	if(rdr->ecm_hdr_whitelist.ehdata && er->ecmlen)
 	{
 		int8_t byteok = 0;
 		int8_t entryok = 0;
@@ -854,9 +854,10 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 		int16_t len = 0;
 		int32_t i = 0;
 		int8_t skip = 0;
-		struct s_ecmHeaderwhitelist *tmp;
-		for(tmp = rdr->ecmHeaderwhitelist; tmp; tmp = tmp->next)
+		int32_t r;
+		for(r = 0; r < rdr->ecm_hdr_whitelist.ehnum; r++)
 		{
+			ECM_HDR_WHITELIST_DATA *tmp = &rdr->ecm_hdr_whitelist.ehdata[r];
 			skip = 0;
 			byteok = 0;
 			entryok = 0;

@@ -20,7 +20,7 @@ extern char *mk_t_service(SIDTABS *sidtabs);
 extern char *mk_t_logfile(void);
 extern char *mk_t_iprange(struct s_ip *range);
 extern char *mk_t_ecm_whitelist(struct s_ecm_whitelist *ecm_whitelist);
-extern char *mk_t_ecmheaderwhitelist(struct s_ecmHeaderwhitelist *headerlist);
+extern char *mk_t_ecm_hdr_whitelist(struct s_ecm_hdr_whitelist *ecm_hdr_whitelist);
 extern char *mk_t_cltab(CLASSTAB *clstab);
 extern char *mk_t_emmbylen(struct s_reader *rdr);
 extern char *mk_t_allowedprotocols(struct s_auth *account);

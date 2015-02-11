@@ -2024,7 +2024,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	free_mk_t(value);
 
 	// ECM Header Whitelist
-	value = mk_t_ecmheaderwhitelist(rdr->ecmHeaderwhitelist);
+	value = mk_t_ecm_hdr_whitelist(&rdr->ecm_hdr_whitelist);
 	tpl_addVar(vars, TPLADD, "ECMHEADERWHITELIST", value);
 	free_mk_t(value);
 

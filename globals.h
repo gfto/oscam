@@ -1176,14 +1176,19 @@ typedef struct s_ecm_whitelist
 	ECM_WHITELIST_DATA	*ewdata;
 } ECM_WHITELIST;
 
-struct s_ecmHeaderwhitelist
+typedef struct s_ecm_hdr_whitelist_data
 {
-	uint16_t                caid;
-	uint32_t                provid;
-	uchar                   header[20];
-	int16_t                 len;
-	struct s_ecmHeaderwhitelist     *next;
-};
+	uint16_t		len;
+	uint16_t		caid;
+	uint32_t		provid;
+	uint8_t			header[20];
+} ECM_HDR_WHITELIST_DATA;
+
+typedef struct s_ecm_hdr_whitelist
+{
+	int32_t						ehnum;
+	ECM_HDR_WHITELIST_DATA		*ehdata;
+} ECM_HDR_WHITELIST;
 
 //ratelimit
 struct ecmrl
@@ -1364,7 +1369,7 @@ struct s_reader                                     //contains device info, read
 	FTAB            ftab;
 	CLASSTAB        cltab;
 	ECM_WHITELIST   ecm_whitelist;
-	struct s_ecmHeaderwhitelist *ecmHeaderwhitelist;            // ECM Header Whitelist
+	ECM_HDR_WHITELIST   ecm_hdr_whitelist;
 	int32_t         brk_pos;
 	int32_t         msg_idx;
 	int32_t         secatype;                       // 0=not determined, 2=seca2, 3=nagra(~seca3) this is only valid for localreaders!

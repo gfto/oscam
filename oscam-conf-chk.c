@@ -537,6 +537,50 @@ void chk_ecm_whitelist(char *value, ECM_WHITELIST *ecm_whitelist)
 	}
 }
 
+void chk_ecm_hdr_whitelist(char *value, ECM_HDR_WHITELIST *ecm_hdr_whitelist)
+{
+	clear_ecm_hdr_whitelist(ecm_hdr_whitelist);
+	char *ptr, *saveptr = NULL;
+	for(ptr = strtok_r(value, ";", &saveptr); ptr; ptr = strtok_r(NULL, ";", &saveptr))
+	{
+		ECM_HDR_WHITELIST_DATA d;
+		memset(&d, 0, sizeof(d));
+		char *caid_end_ptr = strchr(ptr, ':'); // caid_end_ptr + 1 -> headers
+		char *provid_ptr = strchr(ptr, '@'); // provid_ptr + 1 -> provid
+		char *headers = ptr;
+		if(caid_end_ptr)
+		{
+			caid_end_ptr[0] = '\0';
+			if (provid_ptr)
+			{
+				provid_ptr[0] = '\0';
+				provid_ptr++;
+				d.provid = a2i(provid_ptr, 6);
+			}
+			d.caid = dyn_word_atob(ptr);
+			headers = caid_end_ptr + 1; // -> headers
+		} else if(provid_ptr) {
+			provid_ptr[0] = '\0';
+			d.provid = a2i(provid_ptr, 6);
+		}
+		if (d.caid == 0xffff) d.caid = 0;
+		if (d.provid == 0xffff) d.provid = 0;
+		char *hdr_ptr, *savehdr_ptr = NULL;
+		for(hdr_ptr = strtok_r(headers, ",", &savehdr_ptr); hdr_ptr; hdr_ptr = strtok_r(NULL, ",", &savehdr_ptr))
+		{
+			hdr_ptr = trim(hdr_ptr);
+			d.len = strlen(hdr_ptr);
+			if (d.len / 2 > sizeof(d.header))
+				d.len = sizeof(d.header) * 2;
+			if (d.len > 1)
+			{
+				key_atob_l(hdr_ptr, d.header, d.len);
+				ecm_hdr_whitelist_add(ecm_hdr_whitelist, &d);
+			}
+		}
+	}
+}
+
 /* Clears the s_ip structure provided. The pointer will be set to NULL so everything is cleared.*/
 void clear_sip(struct s_ip **sip)
 {
@@ -599,6 +643,12 @@ void clear_ecm_whitelist(ECM_WHITELIST *ecm_whitelist)
 	NULLFREE(ecm_whitelist->ewdata);
 }
 
+void clear_ecm_hdr_whitelist(ECM_HDR_WHITELIST *ecm_hdr_whitelist)
+{
+	ecm_hdr_whitelist->ehnum = 0;
+	NULLFREE(ecm_hdr_whitelist->ehdata);
+}
+
 /* Initializes dst_ttab with src_ttab data. If allocation fails clears dts_ttab */
 void clone_ttab(TUNTAB *src_ttab, TUNTAB *dst_ttab)
 {
@@ -631,6 +681,14 @@ void ecm_whitelist_add(ECM_WHITELIST *ecm_whitelist, ECM_WHITELIST_DATA *ew)
 	if (!cs_realloc(&ecm_whitelist->ewdata, ecm_whitelist->ewnum * sizeof(*ecm_whitelist->ewdata)))
 		return;
 	ecm_whitelist->ewdata[ecm_whitelist->ewnum - 1] = *ew;
+}
+
+void ecm_hdr_whitelist_add(ECM_HDR_WHITELIST *ecm_hdr_whitelist, ECM_HDR_WHITELIST_DATA *eh)
+{
+	ecm_hdr_whitelist->ehnum++;
+	if (!cs_realloc(&ecm_hdr_whitelist->ehdata, ecm_hdr_whitelist->ehnum * sizeof(*ecm_hdr_whitelist->ehdata)))
+		return;
+	ecm_hdr_whitelist->ehdata[ecm_hdr_whitelist->ehnum - 1] = *eh;
 }
 
 void ftab_add_filter(FTAB *ftab, FILTER *filter)
