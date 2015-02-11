@@ -534,64 +534,66 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 
 int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 {
-	int32_t rc, ecs = 0,count;
+	int32_t rc, ecs = 0,count = 0;
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 	struct timeb tps;
 
 	cs_ftime(&tps);
 
-	MD5(ep->emm, ep->emm[2], md5tmp);
-
-	count = clean_stale_emm_cache_and_stat(md5tmp, (int64_t)1000*60*60*24*30); // clean after 30 days emm is last seen!
-	if(count)
+	if(reader->cachemm)
 	{
-		cs_log_dbg(D_EMM, "Cleaned %d emm stale stats and cache entries", count);
-	}
-	
-	struct s_emmcache *emmcache = find_emm_cache(md5tmp); // check emm cache
-	if(!emmcache)
-	{
-		emm_edit_cache(md5tmp, ep, true);
-	}
-	else
-	{
-		cs_ftime(&emmcache->lastseen);
-	}
-	
-	struct s_emmstat *emmstat = get_emm_stat(reader, md5tmp, ep->type);
-	if(emmstat)
-	{
-		if(reader->cachemm && emmstat->count >= reader->rewritemm)
+		MD5(ep->emm, ep->emm[2], md5tmp);
+		count = clean_stale_emm_cache_and_stat(md5tmp, (int64_t)1000*60*60*24*30); // clean after 30 days emm is last seen!
+		if(count)
 		{
-			ecs = 2; //skip emm
+			cs_log_dbg(D_EMM, "Cleaned %d emm stale stats and cache entries", count);
+		}
+	
+	
+		struct s_emmcache *emmcache = find_emm_cache(md5tmp); // check emm cache
+		if(!emmcache)
+		{
+			emm_edit_cache(md5tmp, ep, true);
 		}
 		else
 		{
-			ecs = 1; //rewrite emm
+			cs_ftime(&emmcache->lastseen);
+		}
+		
+		struct s_emmstat *emmstat = get_emm_stat(reader, md5tmp, ep->type);
+		if(emmstat)
+		{
+			if(reader->cachemm && emmstat->count >= reader->rewritemm)
+			{
+				ecs = 2; //skip emm
+			}
+			else
+			{
+				ecs = 1; //rewrite emm
+				if(!emmstat->count)
+				{
+					cs_ftime(&emmstat->firstwritten);
+					emmstat->lastwritten = emmstat->firstwritten;
+				}
+				else
+				{
+					cs_ftime(&emmstat->lastwritten);
+				}
+				count = ++emmstat->count;
+			}
+		}
+		else
+		{
+			cs_log("abort: oscam seems out of resources!");
+			return 0;
 		}
 	}
-	else
-	{
-		cs_log("abort: oscam seems out of resources!");
-		return 0;
-	}
-
+	
 	// Ecs=0 not found in cache
 	// Ecs=1 found in cache, rewrite emm
 	// Ecs=2 skip
 	if((rc = ecs) < 2)
-	{
-		if(!emmstat->count)
-		{
-			cs_ftime(&emmstat->firstwritten);
-			emmstat->lastwritten = emmstat->firstwritten;
-		}
-		else
-		{
-			cs_ftime(&emmstat->lastwritten);
-		}
-		emmstat->count++;
-		
+	{	
 		if(is_network_reader(reader))
 		{
 			rdr_log_dbg(reader, D_READER, "network emm reader");
@@ -612,7 +614,7 @@ int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		}
 	}
 
-	reader_log_emm(reader, ep, emmstat->count, rc, &tps);
+	reader_log_emm(reader, ep, count, rc, &tps);
 
 	return rc;
 }

@@ -17,6 +17,22 @@ void emm_save_cache(void)
 {
 	if(boxtype_is("dbox2")) return; // dont save emmcache on these boxes, they lack resources and will crash!
 	
+	struct s_reader *rdr;
+	bool enable = false;
+	LL_ITER itr = ll_iter_create(configured_readers);
+	while((rdr = ll_iter_next(&itr)))
+	{
+		if(rdr->cachemm == 1)
+		{
+			enable = true;
+		}
+	}
+	
+	if (!enable)
+	{
+		cs_log("saving emmcache disabled since no reader is using it!");
+		return;
+	}
 	char fname[256];
 	struct timeb ts, te;
 	
@@ -137,6 +153,11 @@ void load_emmstat_from_file(void)
 			
 			while((rdr = ll_iter_next(&itr)))
 			{
+				if(rdr->cachemm !=1)
+				{
+					cs_log("reader %s skipped since emmcache save is disabled", rdr->label);
+					continue;
+				}
 				if(strcmp(rdr->label, buf) == 0)
 				{
 					break;
@@ -205,6 +226,11 @@ void save_emmstat_to_file(void)
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr)))
 	{
+		if(!rdr->cachemm || rdr->cachemm == 2)
+		{
+			cs_log("reader %s skipped since emmcache save is disabled", rdr->label);
+			continue;
+		}
 
 		if(rdr->emmstat)
 		{
@@ -248,6 +274,24 @@ void save_emmstat_to_file(void)
 void emm_load_cache(void)
 {
 	if(boxtype_is("dbox2")) return; // dont load emmcache on these boxes, they lack resources and will crash!
+	
+	struct s_reader *rdr;
+	bool enable = false;
+	LL_ITER itr = ll_iter_create(configured_readers);
+	
+	while((rdr = ll_iter_next(&itr)))
+	{
+		if(rdr->cachemm == 1)
+		{
+			enable = true;
+		}
+	}
+	
+	if (!enable)
+	{
+		cs_log("loading emmcache disabled since no reader is using it!");
+		return;
+	}
 	
 	char fname[256];
 	char line[1024];
@@ -446,6 +490,8 @@ int32_t remove_emm_stat(struct s_reader *rdr, uchar *emmd5)
 
 struct s_emmstat *get_emm_stat(struct s_reader *rdr, uchar *emmd5, uchar emmtype)
 {
+	if(!rdr->cachemm) return NULL;
+	
 	struct s_emmstat *c;
 	LL_ITER it;
 
