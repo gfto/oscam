@@ -2690,14 +2690,17 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		}
 	}
 
-	demux[demux_id].emm_filter = -1; // to register first run emmfilter start
-	if(cfg.dvbapi_au > 0 && demux[demux_id].emmstart.time == 1)   // irdeto fetch emm cat direct!
+	if(running == 0) // only do emm setup on non-running channels!
 	{
-		cs_ftime(&demux[demux_id].emmstart); // trick to let emm fetching start after 30 seconds to speed up zapping
-		dvbapi_start_filter(demux_id, demux[demux_id].pidindex, 0x001, 0x001, 0x01, 0x01, 0xFF, 0, TYPE_EMM); //CAT
+		demux[demux_id].emm_filter = -1; // to register first run emmfilter start
+		if(cfg.dvbapi_au > 0 && demux[demux_id].emmstart.time == 1)   // irdeto fetch emm cat direct!
+		{
+			cs_ftime(&demux[demux_id].emmstart); // trick to let emm fetching start after 30 seconds to speed up zapping
+			dvbapi_start_filter(demux_id, demux[demux_id].pidindex, 0x001, 0x001, 0x01, 0x01, 0xFF, 0, TYPE_EMM); //CAT
+		}
+		else { cs_ftime(&demux[demux_id].emmstart); } // for all other caids delayed start!
 	}
-	else { cs_ftime(&demux[demux_id].emmstart); } // for all other caids delayed start!
-
+	
 	openxcas_set_sid(program_number);
 	
 	if(demux[demux_id].ECMpidcount == 0) { // for FTA it ends here, but do logging and part of ecmhandler since there will be no ecms asked!
