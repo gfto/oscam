@@ -516,6 +516,7 @@ char *mk_t_logfile(void)
  */
 char *mk_t_ecm_whitelist(struct s_ecm_whitelist *ecm_whitelist)
 {
+	if (!ecm_whitelist || !ecm_whitelist->ewnum) return "";
 	// Worst case scenario where each entry have different
 	// caid, ident and only one length in it is strlen("1234@123456:01;") == 15
 	int32_t i, maxlen = 16 * ecm_whitelist->ewnum, pos = 0;
@@ -545,10 +546,6 @@ char *mk_t_ecm_whitelist(struct s_ecm_whitelist *ecm_whitelist)
 		comma = ",";
 		last = &ecm_whitelist->ewdata[i];
 	}
-	if(pos == 0) {
-		free(ret);
-		return "";
-	}
 	return ret;
 }
 
@@ -557,6 +554,7 @@ char *mk_t_ecm_whitelist(struct s_ecm_whitelist *ecm_whitelist)
  */
 char *mk_t_ecm_hdr_whitelist(struct s_ecm_hdr_whitelist *ecm_hdr_whitelist)
 {
+	if (!ecm_hdr_whitelist || !ecm_hdr_whitelist->ehnum) return "";
 	// Worst case scenario where each entry have different
 	// caid, provid and only one header in it is strlen("1234@123456:0102030405060708091011121314151617181920;") == 52 ((sizeof(header) / 2) + 12)
 	int32_t i, r, maxlen = 53 * ecm_hdr_whitelist->ehnum, pos = 0;
@@ -587,10 +585,6 @@ char *mk_t_ecm_hdr_whitelist(struct s_ecm_hdr_whitelist *ecm_hdr_whitelist)
 			pos += snprintf(ret + pos, maxlen - pos, "%02X", cur->header[r]);
 		comma = ",";
 		last = &ecm_hdr_whitelist->ehdata[i];
-	}
-	if(pos == 0) {
-		free(ret);
-		return "";
 	}
 	return ret;
 }
