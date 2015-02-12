@@ -522,7 +522,7 @@ char *mk_t_ecm_whitelist(struct s_ecm_whitelist *ecm_whitelist)
 	char *ret;
 	if (!cs_malloc(&ret, maxlen))
 		return "";
-	char *sep1 = "", *sep2 = "";
+	const char *semicolon = "", *comma = "";
 	ECM_WHITELIST_DATA *last = NULL;
 	for(i = 0; i < ecm_whitelist->ewnum; i++)
 	{
@@ -531,18 +531,18 @@ char *mk_t_ecm_whitelist(struct s_ecm_whitelist *ecm_whitelist)
 		if (change)
 		{
 			if (cur->caid && cur->ident)
-				pos += snprintf(ret + pos, maxlen - pos, "%s%04X@%06X:", sep1, cur->caid, cur->ident);
+				pos += snprintf(ret + pos, maxlen - pos, "%s%04X@%06X:", semicolon, cur->caid, cur->ident);
 			else if (cur->caid)
-				pos += snprintf(ret + pos, maxlen - pos, "%s%04X:", sep1, cur->caid);
+				pos += snprintf(ret + pos, maxlen - pos, "%s%04X:", semicolon, cur->caid);
 			else if (cur->ident)
-				pos += snprintf(ret + pos, maxlen - pos, "%s@%06X:", sep1, cur->ident);
+				pos += snprintf(ret + pos, maxlen - pos, "%s@%06X:", semicolon, cur->ident);
 			else
-				pos += snprintf(ret + pos, maxlen - pos, "%s", sep1);
-			sep1 = ";";
-			sep2 = "";
+				pos += snprintf(ret + pos, maxlen - pos, "%s", semicolon);
+			semicolon = ";";
+			comma = "";
 		}
-		pos += snprintf(ret + pos, maxlen - pos, "%s%02X", sep2, cur->len);
-		sep2 = ",";
+		pos += snprintf(ret + pos, maxlen - pos, "%s%02X", comma, cur->len);
+		comma = ",";
 		last = &ecm_whitelist->ewdata[i];
 	}
 	if(pos == 0) {
@@ -563,7 +563,7 @@ char *mk_t_ecm_hdr_whitelist(struct s_ecm_hdr_whitelist *ecm_hdr_whitelist)
 	char *ret;
 	if (!cs_malloc(&ret, maxlen))
 		return "";
-	char *sep1 = "", *sep2 = "";
+	const char *semicolon = "", *comma = "";
 	ECM_HDR_WHITELIST_DATA *last = NULL;
 	for(i = 0; i < ecm_hdr_whitelist->ehnum; i++)
 	{
@@ -572,20 +572,20 @@ char *mk_t_ecm_hdr_whitelist(struct s_ecm_hdr_whitelist *ecm_hdr_whitelist)
 		if (change)
 		{
 			if (cur->caid && cur->provid)
-				pos += snprintf(ret + pos, maxlen - pos, "%s%04X@%06X:", sep1, cur->caid, cur->provid);
+				pos += snprintf(ret + pos, maxlen - pos, "%s%04X@%06X:", semicolon, cur->caid, cur->provid);
 			else if (cur->caid)
-				pos += snprintf(ret + pos, maxlen - pos, "%s%04X:", sep1, cur->caid);
+				pos += snprintf(ret + pos, maxlen - pos, "%s%04X:", semicolon, cur->caid);
 			else if (cur->provid)
-				pos += snprintf(ret + pos, maxlen - pos, "%s@%06X:", sep1, cur->provid);
+				pos += snprintf(ret + pos, maxlen - pos, "%s@%06X:", semicolon, cur->provid);
 			else
-				pos += snprintf(ret + pos, maxlen - pos, "%s", sep1);
-			sep1 = ";";
-			sep2 = "";
+				pos += snprintf(ret + pos, maxlen - pos, "%s", semicolon);
+			semicolon = ";";
+			comma = "";
 		}
-		pos += snprintf(ret + pos, maxlen - pos, "%s", sep2);
+		pos += snprintf(ret + pos, maxlen - pos, "%s", comma);
 		for(r = 0; r < cur->len / 2; r++)
 			pos += snprintf(ret + pos, maxlen - pos, "%02X", cur->header[r]);
-		sep2 = ",";
+		comma = ",";
 		last = &ecm_hdr_whitelist->ehdata[i];
 	}
 	if(pos == 0) {
