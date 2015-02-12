@@ -245,6 +245,7 @@ static void vg2_read_tiers(struct s_reader *reader)
 		}
 		else
 		{
+			cs_clear_entitlement(reader);
 			rdr_log(reader, "------------------------------------------------------------------");
 			rdr_log(reader, "|- class -|-- tier --|----- valid to ------|--- package name ----|");
 			rdr_log(reader, "+---------+----------+---------------------+---------------------+");
