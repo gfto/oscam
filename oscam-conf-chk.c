@@ -685,7 +685,7 @@ void tuntab_add(TUNTAB *ttab, TUNTAB_DATA *td)
 	ttab->ttnum++;
 }
 
-void ftab_add_filter(FTAB *ftab, FILTER *filter)
+void ftab_add(FTAB *ftab, FILTER *filter)
 {
 	if (!cs_realloc(&ftab->filts, (ftab->nfilts + 1) * sizeof(*ftab->filts)))
 		return;

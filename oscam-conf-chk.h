@@ -27,7 +27,7 @@ void clear_ecm_hdr_whitelist(ECM_HDR_WHITELIST *ecm_hdr_whitelist);
 void clone_ttab(TUNTAB *src_ttab, TUNTAB *dst_ttab);
 void clone_ftab(FTAB *src_ftab, FTAB *dst_ftab);
 
-void ftab_add_filter(FTAB *ftab, FILTER *filter);
+void ftab_add(FTAB *ftab, FILTER *filter);
 void tuntab_add(TUNTAB *ttab, TUNTAB_DATA *td);
 void ecm_whitelist_add(ECM_WHITELIST *ecm_whitelist, ECM_WHITELIST_DATA *ew);
 void ecm_hdr_whitelist_add(ECM_HDR_WHITELIST *ecm_hdr_whitelist, ECM_HDR_WHITELIST_DATA *eh);

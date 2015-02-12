@@ -914,7 +914,7 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 				mk_user_ftab(&usr_filter);
 
 			if(!cfg.ncd_mgclient)
-				ftab_add_filter(&cl->ftab, &usr_filter); //We cannot filter all cards!
+				ftab_add(&cl->ftab, &usr_filter); //We cannot filter all cards!
 
 			mbuf[0] = MSG_CARD_DATA;
 			mbuf[1] = 0x00;
