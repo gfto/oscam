@@ -661,34 +661,31 @@ void clone_ftab(FTAB *src_ftab, FTAB *dst_ftab)
 	}
 }
 
+static bool array_add(void **arr_data, int32_t *arr_num_entries, uint32_t entry_size, void *new_entry)
+{
+	if (!cs_realloc(arr_data, (*arr_num_entries + 1) * entry_size))
+		return false;
+	memcpy(*arr_data + (*arr_num_entries * entry_size), new_entry, entry_size);
+	*arr_num_entries += 1;
+	return true;
+}
+
 void ecm_whitelist_add(ECM_WHITELIST *ecm_whitelist, ECM_WHITELIST_DATA *ew)
 {
-	if (!cs_realloc(&ecm_whitelist->ewdata, (ecm_whitelist->ewnum + 1) * sizeof(*ecm_whitelist->ewdata)))
-		return;
-	ecm_whitelist->ewdata[ecm_whitelist->ewnum] = *ew;
-	ecm_whitelist->ewnum++;
+	array_add((void **)&ecm_whitelist->ewdata, &ecm_whitelist->ewnum, sizeof(*ecm_whitelist->ewdata), ew);
 }
 
 void ecm_hdr_whitelist_add(ECM_HDR_WHITELIST *ecm_hdr_whitelist, ECM_HDR_WHITELIST_DATA *eh)
 {
-	if (!cs_realloc(&ecm_hdr_whitelist->ehdata, (ecm_hdr_whitelist->ehnum + 1) * sizeof(*ecm_hdr_whitelist->ehdata)))
-		return;
-	ecm_hdr_whitelist->ehdata[ecm_hdr_whitelist->ehnum] = *eh;
-	ecm_hdr_whitelist->ehnum++;
+	array_add((void **)&ecm_hdr_whitelist->ehdata, &ecm_hdr_whitelist->ehnum, sizeof(*ecm_hdr_whitelist->ehdata), eh);
 }
 
 void tuntab_add(TUNTAB *ttab, TUNTAB_DATA *td)
 {
-	if (!cs_realloc(&ttab->ttdata, (ttab->ttnum + 1) * sizeof(*ttab->ttdata)))
-		return;
-	ttab->ttdata[ttab->ttnum] = *td;
-	ttab->ttnum++;
+	array_add((void **)&ttab->ttdata, &ttab->ttnum, sizeof(*ttab->ttdata), td);
 }
 
 void ftab_add(FTAB *ftab, FILTER *filter)
 {
-	if (!cs_realloc(&ftab->filts, (ftab->nfilts + 1) * sizeof(*ftab->filts)))
-		return;
-	ftab->filts[ftab->nfilts] = *filter;
-	ftab->nfilts++;
+	array_add((void **)&ftab->filts, &ftab->nfilts, sizeof(*ftab->filts), filter);
 }
