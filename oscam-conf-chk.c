@@ -577,13 +577,6 @@ void clear_sip(struct s_ip **sip)
 	}
 }
 
-/* Clears the s_ftab struct provided by setting nfilts and nprids to zero. */
-void clear_ftab(struct s_ftab *ftab)
-{
-	ftab->nfilts = 0; // Reset nfilts ASAP
-	NULLFREE(ftab->filts);
-}
-
 /* Clears the s_ptab struct provided by setting nfilts and nprids to zero. */
 void clear_ptab(struct s_ptab *ptab)
 {
@@ -616,23 +609,34 @@ void clear_cacheextab(CECSPVALUETAB *ctab)
 	ctab->n = 0;
 }
 
-/* Clears given tuntab */
+static void array_clear(void **arr_data, int32_t *arr_num_entries)
+{
+	*arr_num_entries = 0;
+	if (arr_data)
+	{
+		free(*arr_data);
+		*arr_data = NULL;
+	}
+}
+
 void clear_tuntab(struct s_tuntab *ttab)
 {
-	ttab->ttnum = 0;
-	NULLFREE(ttab->ttdata);
+	if (ttab) array_clear((void **)&ttab->ttdata, &ttab->ttnum);
 }
 
 void clear_ecm_whitelist(ECM_WHITELIST *ecm_whitelist)
 {
-	ecm_whitelist->ewnum = 0;
-	NULLFREE(ecm_whitelist->ewdata);
+	if (ecm_whitelist) array_clear((void **)&ecm_whitelist->ewdata, &ecm_whitelist->ewnum);
 }
 
 void clear_ecm_hdr_whitelist(ECM_HDR_WHITELIST *ecm_hdr_whitelist)
 {
-	ecm_hdr_whitelist->ehnum = 0;
-	NULLFREE(ecm_hdr_whitelist->ehdata);
+	if (ecm_hdr_whitelist) array_clear((void **)&ecm_hdr_whitelist->ehdata, &ecm_hdr_whitelist->ehnum);
+}
+
+void clear_ftab(struct s_ftab *ftab)
+{
+	if (ftab) array_clear((void **)ftab->filts, &ftab->nfilts);
 }
 
 /* Initializes dst_ttab with src_ttab data. If allocation fails clears dts_ttab */
