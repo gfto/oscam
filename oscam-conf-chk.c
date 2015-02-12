@@ -639,30 +639,29 @@ void clear_ftab(struct s_ftab *ftab)
 	if (ftab) array_clear((void **)ftab->filts, &ftab->nfilts);
 }
 
-/* Initializes dst_ttab with src_ttab data. If allocation fails clears dts_ttab */
-void clone_ttab(TUNTAB *src_ttab, TUNTAB *dst_ttab)
+/* Initializes dst array with src array data. dst array is cleared first */
+static bool array_clone(void **src_arr_data, int32_t *src_arr_num_entries, uint32_t entry_size, void **dst_arr_data, int32_t *dst_arr_num_entries)
 {
-	clear_tuntab(dst_ttab);
-	if (src_ttab->ttdata)
-	{
-		if (!cs_malloc(&dst_ttab->ttdata, src_ttab->ttnum * sizeof(*src_ttab->ttdata)))
-			return;
-		memcpy(dst_ttab->ttdata, src_ttab->ttdata, src_ttab->ttnum * sizeof(*src_ttab->ttdata));
-		dst_ttab->ttnum = src_ttab->ttnum;
-	}
+	array_clear(dst_arr_data, dst_arr_num_entries);
+	if (!src_arr_data || !dst_arr_data || !*src_arr_data)
+		return false;
+	if (!cs_malloc(dst_arr_data, *src_arr_num_entries * entry_size))
+		return false;
+	memcpy(*dst_arr_data, *src_arr_data, *src_arr_num_entries * entry_size);
+	*dst_arr_num_entries = *src_arr_num_entries;
+	return true;
 }
 
-/* Initializes dst_ftab with src_ftab data. If allocation fails clears dts_ftab */
+void clone_ttab(TUNTAB *src_ttab, TUNTAB *dst_ttab)
+{
+	if (src_ttab && dst_ttab)
+		array_clone((void **)&src_ttab->ttdata, &src_ttab->ttnum, sizeof(*src_ttab->ttdata), (void **)&dst_ttab->ttdata, &dst_ttab->ttnum);
+}
+
 void clone_ftab(FTAB *src_ftab, FTAB *dst_ftab)
 {
-	clear_ftab(dst_ftab);
-	if (src_ftab->filts)
-	{
-		if (!cs_malloc(&dst_ftab->filts, src_ftab->nfilts * sizeof(*src_ftab->filts)))
-			return;
-		memcpy(dst_ftab->filts, src_ftab->filts, src_ftab->nfilts * sizeof(*src_ftab->filts));
-		dst_ftab->nfilts = src_ftab->nfilts;
-	}
+	if (src_ftab && dst_ftab)
+		array_clone((void **)&src_ftab->filts, &src_ftab->nfilts, sizeof(*src_ftab->filts), (void **)&dst_ftab->filts, &dst_ftab->nfilts);
 }
 
 static bool array_add(void **arr_data, int32_t *arr_num_entries, uint32_t entry_size, void *new_entry)
