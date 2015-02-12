@@ -658,7 +658,7 @@ void tuntab_clone(TUNTAB *src_ttab, TUNTAB *dst_ttab)
 		array_clone((void **)&src_ttab->ttdata, &src_ttab->ttnum, sizeof(*src_ttab->ttdata), (void **)&dst_ttab->ttdata, &dst_ttab->ttnum);
 }
 
-void clone_ftab(FTAB *src_ftab, FTAB *dst_ftab)
+void ftab_clone(FTAB *src_ftab, FTAB *dst_ftab)
 {
 	if (src_ftab && dst_ftab)
 		array_clone((void **)&src_ftab->filts, &src_ftab->nfilts, sizeof(*src_ftab->filts), (void **)&dst_ftab->filts, &dst_ftab->nfilts);

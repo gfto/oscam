@@ -423,8 +423,8 @@ int32_t cs_auth_client(struct s_client *client, struct s_auth *account, const ch
 				if(account->uniq)
 					{ cs_fake_client(client, account->usr, account->uniq, client->ip); }
 				client->cltab = account->cltab;  // CLASS filter
-				clone_ftab(&account->ftab, &client->ftab);   // IDENT filter
-				clone_ftab(&account->fchid, &client->fchid);  // CHID filter
+				ftab_clone(&account->ftab, &client->ftab);   // IDENT filter
+				ftab_clone(&account->fchid, &client->fchid);  // CHID filter
 				client->sidtabs.ok = account->sidtabs.ok;  // services
 				client->sidtabs.no = account->sidtabs.no;  // services
 				tuntab_clone(&account->ttab, &client->ttab);
@@ -535,8 +535,8 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 					// newcamd module doesn't like ident reloading
 					if(!cl->ncd_server)
 					{
-						clone_ftab(&account->ftab, &cl->ftab);   // IDENT filter
-						clone_ftab(&account->fchid, &cl->fchid);  // CHID filter
+						ftab_clone(&account->ftab, &cl->ftab);   // IDENT filter
+						ftab_clone(&account->fchid, &cl->fchid);  // CHID filter
 					}
 
 					cl->sidtabs.ok = account->sidtabs.ok;   // services
