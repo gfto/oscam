@@ -72,47 +72,23 @@ char *mk_t_caidtab(CAIDTAB *ctab)
  */
 char *mk_t_tuntab(TUNTAB *ttab)
 {
-	if (!ttab)
+	if (!ttab || !ttab->ttnum) return "";
+	// Each entry max length is strlen("aaaa.bbbb:cccc,") == 15
+	int32_t i, maxlen = 16 * ttab->ttnum, pos = 0;
+	char *ret;
+	if (!cs_malloc(&ret, maxlen))
 		return "";
-	int32_t i, needed = 1, pos = 0;
+	const char *comma = "";
 	for(i = 0; i < ttab->ttnum; i++)
 	{
-		// ttab->bt_srvid[i] or 0000 for EMM-only tunnel
-		needed += 10;
-		if(ttab->ttdata[i].bt_caidto) { needed += 5; }
+		TUNTAB_DATA *d = &ttab->ttdata[i];
+		pos += snprintf(ret + pos, maxlen - pos, "%s%04X", comma, d->bt_caidfrom);
+		pos += snprintf(ret + pos, maxlen - pos, ".%04X", d->bt_srvid);
+		if (d->bt_caidto)
+			pos += snprintf(ret + pos, maxlen - pos, ":%04X", d->bt_caidto);
+		comma = ",";
 	}
-	char *value;
-	if(needed == 1 || !cs_malloc(&value, needed)) { return ""; }
-	char *saveptr = value;
-	for(i = 0; i < ttab->ttnum; i++)
-	{
-		if(i == 0)
-		{
-			snprintf(value + pos, needed - (value - saveptr), "%04X", ttab->ttdata[i].bt_caidfrom);
-			pos += 4;
-		}
-		else
-		{
-			snprintf(value + pos, needed - (value - saveptr), ",%04X", ttab->ttdata[i].bt_caidfrom);
-			pos += 5;
-		}
-		if(ttab->ttdata[i].bt_srvid)
-		{
-			snprintf(value + pos, needed - (value - saveptr), ".%04X", ttab->ttdata[i].bt_srvid);
-		}
-		else
-		{
-			snprintf(value + pos, needed - (value - saveptr), ".%04X", 0);
-		}
-		pos += 5;
-		if(ttab->ttdata[i].bt_caidto)
-		{
-			snprintf(value + pos, needed - (value - saveptr), ":%04X", ttab->ttdata[i].bt_caidto);
-			pos += 5;
-		}
-	}
-	value[pos] = '\0';
-	return value;
+	return ret;
 }
 
 /*

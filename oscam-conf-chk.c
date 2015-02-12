@@ -273,43 +273,29 @@ void chk_cacheex_hitvaluetab(char *lbrlt, CECSPVALUETAB *tab)
 void chk_tuntab(char *tunasc, TUNTAB *ttab)
 {
 	int32_t i;
-	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;
-
 	clear_tuntab(ttab);
-	// Count entries
-	int32_t nttabs = 0;
-	char *in_ttab = cs_strdup(tunasc);
-	if (!in_ttab)
-		return;
-	for(i = 0, ptr1 = strtok_r(in_ttab, ",", &saveptr1); (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1), i++)
-		nttabs++;
-	free(in_ttab);
-
-	TUNTAB newttab = { .ttnum = nttabs };
-	if (!cs_malloc(&newttab.ttdata, newttab.ttnum * sizeof(*newttab.ttdata)))
-		return;
-
-	for(i = 0, ptr1 = strtok_r(tunasc, ",", &saveptr1); (i < newttab.ttnum) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1), i++)
+	errno = 0;
+	char *caid_ptr, *savecaid_ptr = NULL;
+	for(i = 0, caid_ptr = strtok_r(tunasc, ",", &savecaid_ptr); (caid_ptr); caid_ptr = strtok_r(NULL, ",", &savecaid_ptr), i++)
 	{
-		uint32_t bt_caidfrom, bt_caidto, bt_srvid;
-		if((ptr3 = strchr(trim(ptr1), ':')))
-			{ * ptr3++ = '\0'; }
-		else
-			{ ptr3 = ""; }
-
-		if((ptr2 = strchr(trim(ptr1), '.')))
-			{ * ptr2++ = '\0'; }
-		else
-			{ ptr2 = ""; }
-
-		if((bt_caidfrom = a2i(ptr1, 2)) | (bt_srvid = a2i(ptr2, -2)) | (bt_caidto = a2i(ptr3, 2)))
-		{
-			newttab.ttdata[i].bt_caidfrom = bt_caidfrom;
-			newttab.ttdata[i].bt_caidto   = bt_caidto;
-			newttab.ttdata[i].bt_srvid    = bt_srvid;
-		}
+		TUNTAB_DATA d;
+		char *srvid_ptr  = strchr(trim(caid_ptr), '.');
+		char *caidto_ptr = strchr(trim(caid_ptr), ':');
+		if (!srvid_ptr)
+			continue;
+		*srvid_ptr++ = '\0';
+		if (caidto_ptr)
+			*caidto_ptr++ = '\0';
+		d.bt_caidfrom = a2i(caid_ptr, 2);
+		d.bt_srvid    = a2i(srvid_ptr, 2);
+		d.bt_caidto   = 0;
+		if (caidto_ptr)
+			d.bt_caidto = a2i(caidto_ptr, 2);
+		if (errno == EINVAL)
+			continue;
+		if (d.bt_caidfrom | d.bt_srvid | d.bt_caidto)
+			tuntab_add(ttab, &d);
 	}
-	*ttab = newttab;
 }
 
 void chk_services(char *labels, SIDTABS *sidtabs)
@@ -689,6 +675,14 @@ void ecm_hdr_whitelist_add(ECM_HDR_WHITELIST *ecm_hdr_whitelist, ECM_HDR_WHITELI
 		return;
 	ecm_hdr_whitelist->ehdata[ecm_hdr_whitelist->ehnum] = *eh;
 	ecm_hdr_whitelist->ehnum++;
+}
+
+void tuntab_add(TUNTAB *ttab, TUNTAB_DATA *td)
+{
+	if (!cs_realloc(&ttab->ttdata, (ttab->ttnum + 1) * sizeof(*ttab->ttdata)))
+		return;
+	ttab->ttdata[ttab->ttnum] = *td;
+	ttab->ttnum++;
 }
 
 void ftab_add_filter(FTAB *ftab, FILTER *filter)
