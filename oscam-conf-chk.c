@@ -652,7 +652,7 @@ static bool array_clone(void **src_arr_data, int32_t *src_arr_num_entries, uint3
 	return true;
 }
 
-void clone_ttab(TUNTAB *src_ttab, TUNTAB *dst_ttab)
+void tuntab_clone(TUNTAB *src_ttab, TUNTAB *dst_ttab)
 {
 	if (src_ttab && dst_ttab)
 		array_clone((void **)&src_ttab->ttdata, &src_ttab->ttnum, sizeof(*src_ttab->ttdata), (void **)&dst_ttab->ttdata, &dst_ttab->ttnum);

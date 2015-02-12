@@ -427,7 +427,7 @@ int32_t cs_auth_client(struct s_client *client, struct s_auth *account, const ch
 				clone_ftab(&account->fchid, &client->fchid);  // CHID filter
 				client->sidtabs.ok = account->sidtabs.ok;  // services
 				client->sidtabs.no = account->sidtabs.no;  // services
-				clone_ttab(&account->ttab, &client->ttab);
+				tuntab_clone(&account->ttab, &client->ttab);
 				ac_init_client(client, account);
 			}
 		}
@@ -545,7 +545,7 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 
 					memcpy(&cl->ctab, &account->ctab, sizeof(cl->ctab));
 
-					clone_ttab(&account->ttab, &cl->ttab);
+					tuntab_clone(&account->ttab, &cl->ttab);
 
 					webif_client_reset_lastresponsetime(cl);
 					if(account->uniq)
