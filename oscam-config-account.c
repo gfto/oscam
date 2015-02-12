@@ -240,7 +240,7 @@ static void account_tuntab_fn(const char *token, char *value, void *setting, FIL
 	{
 		if(strlen(value) == 0)
 		{
-			clear_tuntab(ttab);
+			tuntab_clear(ttab);
 		}
 		else
 		{
@@ -496,9 +496,9 @@ int32_t init_free_userdb(struct s_auth *ptr)
 		ll_destroy(&ptr->aureader_list);
 		ptr->next = NULL;
 		config_list_gc_values(account_opts, ptr);
-		clear_ftab(&ptr->ftab);
-		clear_ftab(&ptr->fchid);
-		clear_tuntab(&ptr->ttab);
+		ftab_clear(&ptr->ftab);
+		ftab_clear(&ptr->fchid);
+		tuntab_clear(&ptr->ttab);
 		add_garbage(ptr);
 		ptr = ptr_next;
 	}

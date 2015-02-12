@@ -75,7 +75,7 @@ int main(void)
 		.data_sz  = sizeof(ecm_whitelist),
 		.chk_fn   = (CHK_FN *)&chk_ecm_whitelist,
 		.mk_t_fn  = (MK_T_FN *)&mk_t_ecm_whitelist,
-		.clear_fn = (CLEAR_FN *)&clear_ecm_whitelist,
+		.clear_fn = (CLEAR_FN *)&ecm_whitelist_clear,
 		.test_vec = (const struct test_vec[])
 		{
 			{ .in = "0500@043800:70,6E,6C,66,7A,61,67,75,5D,6B;0600@070800:11,22,33,44,55,66;0700:AA,BB,CC,DD,EE;01,02,03,04;0123@456789:01,02,03,04" },
@@ -117,7 +117,7 @@ int main(void)
 		.data_sz  = sizeof(ecm_hdr_whitelist),
 		.chk_fn   = (CHK_FN *)&chk_ecm_hdr_whitelist,
 		.mk_t_fn  = (MK_T_FN *)&mk_t_ecm_hdr_whitelist,
-		.clear_fn = (CLEAR_FN *)&clear_ecm_hdr_whitelist,
+		.clear_fn = (CLEAR_FN *)&ecm_hdr_whitelist_clear,
 		.test_vec = (const struct test_vec[])
 		{
 			{ .in = "1830@123456:80308F078D,81308F078D;1702@007878:807090C7000000011010008712078400,817090C7000000011010008713078400" },
@@ -163,7 +163,7 @@ int main(void)
 		.data_sz  = sizeof(tuntab),
 		.chk_fn   = (CHK_FN *)&chk_tuntab,
 		.mk_t_fn  = (MK_T_FN *)&mk_t_tuntab,
-		.clear_fn = (CLEAR_FN *)&clear_tuntab,
+		.clear_fn = (CLEAR_FN *)&tuntab_clear,
 		.test_vec = (const struct test_vec[])
 		{
 			{ .in = "1833.007A:1702,1833.007B:1702,1833.007C:1702,1833.007E:1702,1833.007F:1702,1833.0080:1702,1833.0081:1702,1833.0082:1702,1833.0083:1702,1833.0084:1702" },

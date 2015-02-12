@@ -273,7 +273,7 @@ void chk_cacheex_hitvaluetab(char *lbrlt, CECSPVALUETAB *tab)
 void chk_tuntab(char *tunasc, TUNTAB *ttab)
 {
 	int32_t i;
-	clear_tuntab(ttab);
+	tuntab_clear(ttab);
 	errno = 0;
 	char *caid_ptr, *savecaid_ptr = NULL;
 	for(i = 0, caid_ptr = strtok_r(tunasc, ",", &savecaid_ptr); (caid_ptr); caid_ptr = strtok_r(NULL, ",", &savecaid_ptr), i++)
@@ -323,7 +323,7 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName
 	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;
 	int32_t nfilts = 0;
 
-	clear_ftab(ftab);
+	ftab_clear(ftab);
 	// Count filters
 	char *in_filter = cs_strdup(zFilterAsc);
 	if (!in_filter)
@@ -486,7 +486,7 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 
 void chk_ecm_whitelist(char *value, ECM_WHITELIST *ecm_whitelist)
 {
-	clear_ecm_whitelist(ecm_whitelist);
+	ecm_whitelist_clear(ecm_whitelist);
 	char *ptr, *saveptr1 = NULL;
 	for(ptr = strtok_r(value, ";", &saveptr1); ptr; ptr = strtok_r(NULL, ";", &saveptr1))
 	{
@@ -525,7 +525,7 @@ void chk_ecm_whitelist(char *value, ECM_WHITELIST *ecm_whitelist)
 
 void chk_ecm_hdr_whitelist(char *value, ECM_HDR_WHITELIST *ecm_hdr_whitelist)
 {
-	clear_ecm_hdr_whitelist(ecm_hdr_whitelist);
+	ecm_hdr_whitelist_clear(ecm_hdr_whitelist);
 	char *ptr, *saveptr = NULL;
 	for(ptr = strtok_r(value, ";", &saveptr); ptr; ptr = strtok_r(NULL, ";", &saveptr))
 	{
@@ -619,22 +619,22 @@ static void array_clear(void **arr_data, int32_t *arr_num_entries)
 	}
 }
 
-void clear_tuntab(struct s_tuntab *ttab)
+void tuntab_clear(struct s_tuntab *ttab)
 {
 	if (ttab) array_clear((void **)&ttab->ttdata, &ttab->ttnum);
 }
 
-void clear_ecm_whitelist(ECM_WHITELIST *ecm_whitelist)
+void ecm_whitelist_clear(ECM_WHITELIST *ecm_whitelist)
 {
 	if (ecm_whitelist) array_clear((void **)&ecm_whitelist->ewdata, &ecm_whitelist->ewnum);
 }
 
-void clear_ecm_hdr_whitelist(ECM_HDR_WHITELIST *ecm_hdr_whitelist)
+void ecm_hdr_whitelist_clear(ECM_HDR_WHITELIST *ecm_hdr_whitelist)
 {
 	if (ecm_hdr_whitelist) array_clear((void **)&ecm_hdr_whitelist->ehdata, &ecm_hdr_whitelist->ehnum);
 }
 
-void clear_ftab(struct s_ftab *ftab)
+void ftab_clear(struct s_ftab *ftab)
 {
 	if (ftab) array_clear((void **)ftab->filts, &ftab->nfilts);
 }

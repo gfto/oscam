@@ -725,9 +725,9 @@ void free_client(struct s_client *cl)
 
 	ll_destroy_data(&cl->cascadeusers);
 
-	clear_ftab(&cl->ftab);
-	clear_ftab(&cl->fchid);
-	clear_tuntab(&cl->ttab);
+	ftab_clear(&cl->ftab);
+	ftab_clear(&cl->fchid);
+	tuntab_clear(&cl->ttab);
 
 	NULLFREE(cl->cw_rass);
 	NULLFREE(cl->via_rass);

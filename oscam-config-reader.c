@@ -50,7 +50,7 @@ static void ecmwhitelist_fn(const char *token, char *value, void *setting, FILE 
 		if(strlen(value))
 			chk_ecm_whitelist(value, &rdr->ecm_whitelist);
 		else
-			clear_ecm_whitelist(&rdr->ecm_whitelist);
+			ecm_whitelist_clear(&rdr->ecm_whitelist);
 		return;
 	}
 
@@ -68,7 +68,7 @@ static void ecmheaderwhitelist_fn(const char *token, char *value, void *setting,
 		if(strlen(value))
 			chk_ecm_hdr_whitelist(value, &rdr->ecm_hdr_whitelist);
 		else
-			clear_ecm_hdr_whitelist(&rdr->ecm_hdr_whitelist);
+			ecm_hdr_whitelist_clear(&rdr->ecm_hdr_whitelist);
 		return;
 	}
 
@@ -419,7 +419,7 @@ void ftab_fn(const char *token, char *value, void *setting, long ftab_type, FILE
 		}
 		else
 		{
-			clear_ftab(ftab);
+			ftab_clear(ftab);
 		}
 		if(rdr)
 			{ rdr->changes_since_shareupdate = 1; }
@@ -1056,13 +1056,13 @@ void free_reader(struct s_reader *rdr)
 {
 	NULLFREE(rdr->emmfile);
 
-	clear_ecm_whitelist(&rdr->ecm_whitelist);
-	clear_ecm_hdr_whitelist(&rdr->ecm_hdr_whitelist);
+	ecm_whitelist_clear(&rdr->ecm_whitelist);
+	ecm_hdr_whitelist_clear(&rdr->ecm_hdr_whitelist);
 
-	clear_ftab(&rdr->fallback_percaid);
-	clear_ftab(&rdr->localcards);
-	clear_ftab(&rdr->fchid);
-	clear_ftab(&rdr->ftab);
+	ftab_clear(&rdr->fallback_percaid);
+	ftab_clear(&rdr->localcards);
+	ftab_clear(&rdr->fchid);
+	ftab_clear(&rdr->ftab);
 
 	lb_destroy_stats(rdr);
 

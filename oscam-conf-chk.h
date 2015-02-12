@@ -16,13 +16,14 @@ void chk_ecm_whitelist(char *value, ECM_WHITELIST *ecm_whitelist);
 void chk_ecm_hdr_whitelist(char *value, ECM_HDR_WHITELIST *ecm_hdr_whitelist);
 
 void clear_sip(struct s_ip **sip);
-void clear_ftab(struct s_ftab *ftab);
 void clear_ptab(struct s_ptab *ptab);
 void clear_caidtab(struct s_caidtab *ctab);
 void clear_cacheextab(CECSPVALUETAB *ctab);
-void clear_tuntab(struct s_tuntab *ttab);
-void clear_ecm_whitelist(ECM_WHITELIST *ecm_whitelist);
-void clear_ecm_hdr_whitelist(ECM_HDR_WHITELIST *ecm_hdr_whitelist);
+
+void ftab_clear(struct s_ftab *ftab);
+void tuntab_clear(struct s_tuntab *ttab);
+void ecm_whitelist_clear(ECM_WHITELIST *ecm_whitelist);
+void ecm_hdr_whitelist_clear(ECM_HDR_WHITELIST *ecm_hdr_whitelist);
 
 void tuntab_clone(TUNTAB *src_ttab, TUNTAB *dst_ttab);
 void ftab_clone(FTAB *src_ftab, FTAB *dst_ftab);

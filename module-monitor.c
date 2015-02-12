@@ -738,7 +738,7 @@ static void monitor_set_account(char *args)
 			{
 
 			case    6:
-				clear_tuntab(&account->ttab);
+				tuntab_clear(&account->ttab);
 				break;     //betatunnel
 
 			case    8:
