@@ -18,21 +18,25 @@ struct test_vec
 typedef void  (CHK_FN)  (char *, void *);
 typedef char *(MK_T_FN) (void *);
 typedef void  (CLEAR_FN)(void *);
+typedef void  (CLONE_FN)(void *, void *);
 
 struct test_type
 {
 	char		*desc;		// Test textual description
 	void		*data;		// Pointer to basic data structure
+	void		*data_c;	// Pointer to data structure that will hold cloned data (for clone_ tests)
 	size_t		data_sz;	// Data structure size
 	CHK_FN		*chk_fn;	// chk_XXX() func for the data type
 	MK_T_FN		*mk_t_fn;	// mk_t_XXX() func for the data type
 	CLEAR_FN	*clear_fn;	// clear_XXX() func for the data type
+	CLONE_FN	*clone_fn;	// clone_XXX() func for the data type
 	const struct test_vec *test_vec; // Array of test vectors
 };
 
 static void run_parser_test(struct test_type *t)
 {
 	memset(t->data, 0, t->data_sz);
+	memset(t->data_c, 0, t->data_sz);
 	printf("%s\n", t->desc);
 	const struct test_vec *vec = t->test_vec;
 	while (vec->in)
@@ -41,7 +45,9 @@ static void run_parser_test(struct test_type *t)
 		printf(" Testing \"%s\"", vec->in);
 		char *input_setting = cs_strdup(vec->in);
 		t->chk_fn(input_setting, t->data);
-		char *generated = t->mk_t_fn(t->data);
+		t->clone_fn(t->data, t->data_c); // Check if 'clone' works
+		t->clear_fn(t->data); // Check if 'clear' works
+		char *generated = t->mk_t_fn(t->data_c); // Use cloned data
 		if (vec->out)
 			ok = strcmp(vec->out, generated) == 0;
 		else
@@ -62,20 +68,22 @@ static void run_parser_test(struct test_type *t)
 		fflush(stdout);
 		vec++;
 	}
-	t->clear_fn(t->data);
+	t->clear_fn(t->data_c);
 }
 
 int main(void)
 {
-	ECM_WHITELIST ecm_whitelist;
+	ECM_WHITELIST ecm_whitelist, ecm_whitelist_c;
 	struct test_type ecm_whitelist_test =
 	{
 		.desc     = "ECM white list setting (READERS: 'ecmwhitelist')",
 		.data     = &ecm_whitelist,
+		.data_c   = &ecm_whitelist_c,
 		.data_sz  = sizeof(ecm_whitelist),
 		.chk_fn   = (CHK_FN *)&chk_ecm_whitelist,
 		.mk_t_fn  = (MK_T_FN *)&mk_t_ecm_whitelist,
 		.clear_fn = (CLEAR_FN *)&ecm_whitelist_clear,
+		.clone_fn = (CLONE_FN *)&ecm_whitelist_clone,
 		.test_vec = (const struct test_vec[])
 		{
 			{ .in = "0500@043800:70,6E,6C,66,7A,61,67,75,5D,6B;0600@070800:11,22,33,44,55,66;0700:AA,BB,CC,DD,EE;01,02,03,04;0123@456789:01,02,03,04" },
@@ -109,15 +117,17 @@ int main(void)
 	};
 	run_parser_test(&ecm_whitelist_test);
 
-	ECM_HDR_WHITELIST ecm_hdr_whitelist;
+	ECM_HDR_WHITELIST ecm_hdr_whitelist, ecm_hdr_whitelist_c;
 	struct test_type ecm_hdr_whitelist_test =
 	{
 		.desc     = "ECM header white list setting (READERS: 'ecmhdrwhitelist')",
 		.data     = &ecm_hdr_whitelist,
+		.data_c   = &ecm_hdr_whitelist_c,
 		.data_sz  = sizeof(ecm_hdr_whitelist),
 		.chk_fn   = (CHK_FN *)&chk_ecm_hdr_whitelist,
 		.mk_t_fn  = (MK_T_FN *)&mk_t_ecm_hdr_whitelist,
 		.clear_fn = (CLEAR_FN *)&ecm_hdr_whitelist_clear,
+		.clone_fn = (CLONE_FN *)&ecm_hdr_whitelist_clone,
 		.test_vec = (const struct test_vec[])
 		{
 			{ .in = "1830@123456:80308F078D,81308F078D;1702@007878:807090C7000000011010008712078400,817090C7000000011010008713078400" },
@@ -155,15 +165,17 @@ int main(void)
 	};
 	run_parser_test(&ecm_hdr_whitelist_test);
 
-	TUNTAB tuntab;
+	TUNTAB tuntab, tuntab_c;
 	struct test_type tuntab_test =
 	{
 		.desc     = "Beta tunnel (tuntab) (ACCOUNT: 'betatunnel')",
 		.data     = &tuntab,
+		.data_c   = &tuntab_c,
 		.data_sz  = sizeof(tuntab),
 		.chk_fn   = (CHK_FN *)&chk_tuntab,
 		.mk_t_fn  = (MK_T_FN *)&mk_t_tuntab,
 		.clear_fn = (CLEAR_FN *)&tuntab_clear,
+		.clone_fn = (CLONE_FN *)&tuntab_clone,
 		.test_vec = (const struct test_vec[])
 		{
 			{ .in = "1833.007A:1702,1833.007B:1702,1833.007C:1702,1833.007E:1702,1833.007F:1702,1833.0080:1702,1833.0081:1702,1833.0082:1702,1833.0083:1702,1833.0084:1702" },

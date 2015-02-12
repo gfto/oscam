@@ -664,6 +664,18 @@ void ftab_clone(FTAB *src_ftab, FTAB *dst_ftab)
 		array_clone((void **)&src_ftab->filts, &src_ftab->nfilts, sizeof(*src_ftab->filts), (void **)&dst_ftab->filts, &dst_ftab->nfilts);
 }
 
+void ecm_whitelist_clone(ECM_WHITELIST *src_ecm_whitelist, ECM_WHITELIST *dst_ecm_whitelist)
+{
+	if (src_ecm_whitelist && dst_ecm_whitelist)
+		array_clone((void **)&src_ecm_whitelist->ewdata, &src_ecm_whitelist->ewnum, sizeof(*src_ecm_whitelist->ewdata), (void **)&dst_ecm_whitelist->ewdata, &dst_ecm_whitelist->ewnum);
+}
+
+void ecm_hdr_whitelist_clone(ECM_HDR_WHITELIST *src_ecm_hdr_whitelist, ECM_HDR_WHITELIST *dst_ecm_hdr_whitelist)
+{
+	if (src_ecm_hdr_whitelist && dst_ecm_hdr_whitelist)
+		array_clone((void **)&src_ecm_hdr_whitelist->ehdata, &src_ecm_hdr_whitelist->ehnum, sizeof(*src_ecm_hdr_whitelist->ehdata), (void **)&dst_ecm_hdr_whitelist->ehdata, &dst_ecm_hdr_whitelist->ehnum);
+}
+
 static bool array_add(void **arr_data, int32_t *arr_num_entries, uint32_t entry_size, void *new_entry)
 {
 	if (!cs_realloc(arr_data, (*arr_num_entries + 1) * entry_size))
