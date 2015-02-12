@@ -1,6 +1,7 @@
 #define MODULE_LOG_PREFIX "config"
 
 #include "globals.h"
+#include "oscam-array.h"
 #include "oscam-conf-chk.h"
 #include "oscam-garbage.h"
 #include "oscam-net.h"
@@ -607,100 +608,4 @@ void clear_cacheextab(CECSPVALUETAB *ctab)
 {
 	memset(ctab, -1, sizeof(CECSPVALUETAB));
 	ctab->n = 0;
-}
-
-static void array_clear(void **arr_data, int32_t *arr_num_entries)
-{
-	*arr_num_entries = 0;
-	if (arr_data)
-	{
-		free(*arr_data);
-		*arr_data = NULL;
-	}
-}
-
-void tuntab_clear(struct s_tuntab *ttab)
-{
-	if (ttab) array_clear((void **)&ttab->ttdata, &ttab->ttnum);
-}
-
-void ecm_whitelist_clear(ECM_WHITELIST *ecm_whitelist)
-{
-	if (ecm_whitelist) array_clear((void **)&ecm_whitelist->ewdata, &ecm_whitelist->ewnum);
-}
-
-void ecm_hdr_whitelist_clear(ECM_HDR_WHITELIST *ecm_hdr_whitelist)
-{
-	if (ecm_hdr_whitelist) array_clear((void **)&ecm_hdr_whitelist->ehdata, &ecm_hdr_whitelist->ehnum);
-}
-
-void ftab_clear(struct s_ftab *ftab)
-{
-	if (ftab) array_clear((void **)ftab->filts, &ftab->nfilts);
-}
-
-/* Initializes dst array with src array data. dst array is cleared first */
-static bool array_clone(void **src_arr_data, int32_t *src_arr_num_entries, uint32_t entry_size, void **dst_arr_data, int32_t *dst_arr_num_entries)
-{
-	array_clear(dst_arr_data, dst_arr_num_entries);
-	if (!src_arr_data || !dst_arr_data || !*src_arr_data)
-		return false;
-	if (!cs_malloc(dst_arr_data, *src_arr_num_entries * entry_size))
-		return false;
-	memcpy(*dst_arr_data, *src_arr_data, *src_arr_num_entries * entry_size);
-	*dst_arr_num_entries = *src_arr_num_entries;
-	return true;
-}
-
-void tuntab_clone(TUNTAB *src_ttab, TUNTAB *dst_ttab)
-{
-	if (src_ttab && dst_ttab)
-		array_clone((void **)&src_ttab->ttdata, &src_ttab->ttnum, sizeof(*src_ttab->ttdata), (void **)&dst_ttab->ttdata, &dst_ttab->ttnum);
-}
-
-void ftab_clone(FTAB *src_ftab, FTAB *dst_ftab)
-{
-	if (src_ftab && dst_ftab)
-		array_clone((void **)&src_ftab->filts, &src_ftab->nfilts, sizeof(*src_ftab->filts), (void **)&dst_ftab->filts, &dst_ftab->nfilts);
-}
-
-void ecm_whitelist_clone(ECM_WHITELIST *src_ecm_whitelist, ECM_WHITELIST *dst_ecm_whitelist)
-{
-	if (src_ecm_whitelist && dst_ecm_whitelist)
-		array_clone((void **)&src_ecm_whitelist->ewdata, &src_ecm_whitelist->ewnum, sizeof(*src_ecm_whitelist->ewdata), (void **)&dst_ecm_whitelist->ewdata, &dst_ecm_whitelist->ewnum);
-}
-
-void ecm_hdr_whitelist_clone(ECM_HDR_WHITELIST *src_ecm_hdr_whitelist, ECM_HDR_WHITELIST *dst_ecm_hdr_whitelist)
-{
-	if (src_ecm_hdr_whitelist && dst_ecm_hdr_whitelist)
-		array_clone((void **)&src_ecm_hdr_whitelist->ehdata, &src_ecm_hdr_whitelist->ehnum, sizeof(*src_ecm_hdr_whitelist->ehdata), (void **)&dst_ecm_hdr_whitelist->ehdata, &dst_ecm_hdr_whitelist->ehnum);
-}
-
-static bool array_add(void **arr_data, int32_t *arr_num_entries, uint32_t entry_size, void *new_entry)
-{
-	if (!cs_realloc(arr_data, (*arr_num_entries + 1) * entry_size))
-		return false;
-	memcpy(*arr_data + (*arr_num_entries * entry_size), new_entry, entry_size);
-	*arr_num_entries += 1;
-	return true;
-}
-
-void ecm_whitelist_add(ECM_WHITELIST *ecm_whitelist, ECM_WHITELIST_DATA *ew)
-{
-	array_add((void **)&ecm_whitelist->ewdata, &ecm_whitelist->ewnum, sizeof(*ecm_whitelist->ewdata), ew);
-}
-
-void ecm_hdr_whitelist_add(ECM_HDR_WHITELIST *ecm_hdr_whitelist, ECM_HDR_WHITELIST_DATA *eh)
-{
-	array_add((void **)&ecm_hdr_whitelist->ehdata, &ecm_hdr_whitelist->ehnum, sizeof(*ecm_hdr_whitelist->ehdata), eh);
-}
-
-void tuntab_add(TUNTAB *ttab, TUNTAB_DATA *td)
-{
-	array_add((void **)&ttab->ttdata, &ttab->ttnum, sizeof(*ttab->ttdata), td);
-}
-
-void ftab_add(FTAB *ftab, FILTER *filter)
-{
-	array_add((void **)&ftab->filts, &ftab->nfilts, sizeof(*ftab->filts), filter);
 }

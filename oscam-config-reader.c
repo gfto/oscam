@@ -4,6 +4,7 @@
 #include "module-gbox.h"
 #include "module-stat.h"
 #include "oscam-aes.h"
+#include "oscam-array.h"
 #include "oscam-conf.h"
 #include "oscam-conf-chk.h"
 #include "oscam-conf-mk.h"

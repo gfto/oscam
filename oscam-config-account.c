@@ -2,6 +2,7 @@
 
 #include "globals.h"
 #include "module-anticasc.h"
+#include "oscam-array.h"
 #include "oscam-client.h"
 #include "oscam-conf.h"
 #include "oscam-conf-chk.h"

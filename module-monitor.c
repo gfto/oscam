@@ -5,6 +5,7 @@
 #include "cscrypt/md5.h"
 #include "module-monitor.h"
 #include "oscam-aes.h"
+#include "oscam-array.h"
 #include "oscam-client.h"
 #include "oscam-config.h"
 #include "oscam-conf-chk.h"

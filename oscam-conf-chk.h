@@ -20,19 +20,4 @@ void clear_ptab(struct s_ptab *ptab);
 void clear_caidtab(struct s_caidtab *ctab);
 void clear_cacheextab(CECSPVALUETAB *ctab);
 
-void ftab_clear(struct s_ftab *ftab);
-void tuntab_clear(struct s_tuntab *ttab);
-void ecm_whitelist_clear(ECM_WHITELIST *ecm_whitelist);
-void ecm_hdr_whitelist_clear(ECM_HDR_WHITELIST *ecm_hdr_whitelist);
-
-void tuntab_clone(TUNTAB *src_ttab, TUNTAB *dst_ttab);
-void ftab_clone(FTAB *src_ftab, FTAB *dst_ftab);
-void ecm_whitelist_clone(ECM_WHITELIST *src_ecm_whitelist, ECM_WHITELIST *dst_ecm_whitelist);
-void ecm_hdr_whitelist_clone(ECM_HDR_WHITELIST *src_ecm_hdr_whitelist, ECM_HDR_WHITELIST *dst_ecm_hdr_whitelist);
-
-void ftab_add(FTAB *ftab, FILTER *filter);
-void tuntab_add(TUNTAB *ttab, TUNTAB_DATA *td);
-void ecm_whitelist_add(ECM_WHITELIST *ecm_whitelist, ECM_WHITELIST_DATA *ew);
-void ecm_hdr_whitelist_add(ECM_HDR_WHITELIST *ecm_hdr_whitelist, ECM_HDR_WHITELIST_DATA *eh);
-
 #endif

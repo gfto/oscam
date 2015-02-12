@@ -6,6 +6,7 @@
 #include "cscrypt/md5.h"
 #include "module-cacheex.h"
 #include "module-cccam.h"
+#include "oscam-array.h"
 #include "oscam-cache.h"
 #include "oscam-conf-chk.h"
 #include "oscam-chk.h"

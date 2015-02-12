@@ -5,6 +5,7 @@
  */
 #include "globals.h"
 
+#include "oscam-array.h"
 #include "oscam-string.h"
 #include "oscam-conf-chk.h"
 #include "oscam-conf-mk.h"

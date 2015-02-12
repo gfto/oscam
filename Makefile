@@ -291,6 +291,7 @@ SRC-$(CONFIG_READER_VIDEOGUARD) += reader-videoguard1.c
 SRC-$(CONFIG_READER_VIDEOGUARD) += reader-videoguard12.c
 SRC-$(CONFIG_READER_VIDEOGUARD) += reader-videoguard2.c
 SRC-y += oscam-aes.c
+SRC-y += oscam-array.c
 SRC-y += oscam-hashtable.c
 SRC-y += oscam-cache.c
 SRC-y += oscam-chk.c
@@ -383,6 +384,7 @@ $(OBJDIR)/%.o: %.c Makefile
 
 -include $(subst .o,.d,$(OBJ))
 
+TESTS_SRC += oscam-array.c
 TESTS_SRC += oscam-conf-mk.c
 TESTS_SRC += oscam-conf-chk.c
 TESTS_SRC += oscam-string.c

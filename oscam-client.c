@@ -6,6 +6,7 @@
 #include "module-anticasc.h"
 #include "module-cccam.h"
 #include "module-webif.h"
+#include "oscam-array.h"
 #include "oscam-conf-chk.h"
 #include "oscam-client.h"
 #include "oscam-ecm.h"
