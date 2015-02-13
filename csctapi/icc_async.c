@@ -669,7 +669,10 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 			{ reader->mhz = atr_fs_table[FI] / 10000; } //we are going to clock the card to this nominal frequency
 
 		if(reader->cardmhz > 2000 && reader->autospeed == 1)  // -1 replaced by autospeed parameter is magic number pll internal reader set cardmhz according to optimal atr speed
-			{ reader->mhz = atr_fs_table[FI] / 10000 ; }
+		{
+			reader->mhz = atr_fs_table[FI] / 10000 ;
+			if(!strncmp(boxtype_get(), "vu", 2 )){reader->mhz = 450;}
+		}
 	}
 
 	if(reader->cardmhz > 2000)
@@ -887,7 +890,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 	{
 		if(reader->cardmhz > 2000)
 		{
-			rdr_log(reader, "PLL Reader: ATR Fsmax is %i MHz, clocking card to %.2f Mhz (nearest possible mhz specified reader->cardmhz)",
+			rdr_log(reader, "PLL Reader: ATR Fsmax is %i MHz, clocking card to %.2f Mhz (nearest possible mhz specified reader->mhz)",
 					atr_fs_table[FI] / 1000000, (float) reader->mhz / 100);
 		}
 		else
