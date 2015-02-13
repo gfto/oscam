@@ -77,7 +77,7 @@ int main(void)
 	ECM_WHITELIST ecm_whitelist, ecm_whitelist_c;
 	struct test_type ecm_whitelist_test =
 	{
-		.desc     = "ECM white list setting (READERS: 'ecmwhitelist')",
+		.desc     = "ECM whitelist setting (READER: 'ecmwhitelist')",
 		.data     = &ecm_whitelist,
 		.data_c   = &ecm_whitelist_c,
 		.data_sz  = sizeof(ecm_whitelist),
@@ -121,7 +121,7 @@ int main(void)
 	ECM_HDR_WHITELIST ecm_hdr_whitelist, ecm_hdr_whitelist_c;
 	struct test_type ecm_hdr_whitelist_test =
 	{
-		.desc     = "ECM header white list setting (READERS: 'ecmhdrwhitelist')",
+		.desc     = "ECM header whitelist setting (READER: 'ecmhdrwhitelist')",
 		.data     = &ecm_hdr_whitelist,
 		.data_c   = &ecm_hdr_whitelist_c,
 		.data_sz  = sizeof(ecm_hdr_whitelist),
