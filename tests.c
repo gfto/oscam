@@ -72,7 +72,7 @@ static void run_parser_test(struct test_type *t)
 	t->clear_fn(t->data_c);
 }
 
-int main(void)
+void run_all_tests(void)
 {
 	ECM_WHITELIST ecm_whitelist, ecm_whitelist_c;
 	struct test_type ecm_whitelist_test =
@@ -234,6 +234,4 @@ int main(void)
 		},
 	};
 	run_parser_test(&ftab_test);
-
-	return 0;
 }

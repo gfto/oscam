@@ -1351,8 +1351,20 @@ static void detect_valgrind(void)
 #endif
 }
 
+#ifdef BUILD_TESTS
+extern void run_all_tests(void);
+__attribute__ ((noreturn)) static void run_tests(void)
+{
+	run_all_tests();
+	exit(0);
+}
+#else
+static void run_tests(void) { }
+#endif
+
 int32_t main(int32_t argc, char *argv[])
 {
+	run_tests();
 	int32_t i, j;
 	prog_name = argv[0];
 	struct timespec start_ts;

@@ -13,4 +13,5 @@ Distribution/list_smargo-*
 webif/is_defined.txt
 
 # Testing program
-tests
+tests.bin
+tests.bin.debug

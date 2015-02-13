@@ -243,7 +243,7 @@ OSCam build system documentation
     make static-ssl    - Builds OSCam with SSL support linked statically
 
  Developer targets:
-    make tests         - Builds 'tests' binary
+    make tests         - Builds 'tests.bin' binary
 
  Examples:
    Build OSCam for SH4 (the compilers are in the path):
