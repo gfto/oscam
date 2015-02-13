@@ -367,7 +367,13 @@ use reader as fallback for defined CAIDs only, two-digit wildcard CAIDs are poss
 .RS 3n
 set EMM cache of local reader:
 
- \fBusecache\fP = \fB0\fP|\fB1\fP: 1 = enable EMM caching, default:0
+ \fBusecache\fP = \fB0\fP|\fB1\fP||\fB2\fP
+
+            \fB0\fP = EMM caching disabeld (default)
+            \fB1\fP = enable EMM caching and save EMMs to file after 
+                stopping OSCam
+            \fB2\fP = enable EMM caching, don't save EMMs to file 
+                after stopping OSCam
 
  \fBrewrite\fP  = determines how often one and the same EMM is
             written, default:0

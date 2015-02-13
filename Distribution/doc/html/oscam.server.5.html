@@ -476,7 +476,13 @@ use reader as fallback for defined CAIDs only, two-digit wildcard CAIDs are poss
 <DL COMPACT><DT><DD>
 set EMM cache of local reader:
 <P>
-<BR>&nbsp;<B>usecache</B>&nbsp;=&nbsp;<B>0</B>|<B>1</B>:&nbsp;1&nbsp;=&nbsp;enable&nbsp;EMM&nbsp;caching,&nbsp;default:0
+<BR>&nbsp;<B>usecache</B>&nbsp;=&nbsp;<B>0</B>|<B>1</B>||<B>2</B>
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>0</B>&nbsp;=&nbsp;EMM&nbsp;caching&nbsp;disabeld&nbsp;(default)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>1</B>&nbsp;=&nbsp;enable&nbsp;EMM&nbsp;caching&nbsp;and&nbsp;save&nbsp;EMMs&nbsp;to&nbsp;file&nbsp;after&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stopping&nbsp;OSCam
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>2</B>&nbsp;=&nbsp;enable&nbsp;EMM&nbsp;caching,&nbsp;don't&nbsp;save&nbsp;EMMs&nbsp;to&nbsp;file&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;after&nbsp;stopping&nbsp;OSCam
 <P>
 <BR>&nbsp;<B>rewrite</B>&nbsp;&nbsp;=&nbsp;determines&nbsp;how&nbsp;often&nbsp;one&nbsp;and&nbsp;the&nbsp;same&nbsp;EMM&nbsp;is
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;written,&nbsp;default:0
@@ -679,10 +685,10 @@ block all types of EMMs by length, default:none
 
 <P>
 
-<B>read_old_classes</B> = <B>0</B>|<B>1</B> <B>(Viaccess SCs only)</B>
+<B>read_old_classes</B> = <B>0</B>|<B>1</B> <I>(Viaccess SCs only)</I>
 <DL COMPACT><DT><DD>
 0 = read only active entitlements (default)
-<BR>1 = read all entitlements
+1 = read all entitlements
 </DL>
 
 <P>
