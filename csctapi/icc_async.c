@@ -663,7 +663,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 	tempfi = FI;
 
 	//set clock speed to max if internal reader
-	if(reader->crdr.max_clock_speed == 1)
+	if(reader->crdr.max_clock_speed == 1 && reader->typ == R_INTERNAL)
 	{
 		if(reader->autospeed == 1)  //no overclocking
 			{ reader->mhz = atr_fs_table[FI] / 10000; } //we are going to clock the card to this nominal frequency
