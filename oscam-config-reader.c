@@ -385,46 +385,24 @@ static void detect_fn(const char *token, char *value, void *setting, FILE *f)
 
 void ftab_fn(const char *token, char *value, void *setting, long ftab_type, FILE *f)
 {
-	const char *zType = NULL, *zName = NULL, *zFiltNamef = NULL;
-	struct s_reader *rdr = NULL;
 	FTAB *ftab = setting;
-
-	if(ftab_type & FTAB_ACCOUNT)
+	if(value)
 	{
-		struct s_auth *account = NULL;
-		zType = "account";
-		if(ftab_type & FTAB_PROVID) { account = container_of(setting, struct s_auth, ftab); }
-		if(ftab_type & FTAB_CHID)   { account = container_of(setting, struct s_auth, fchid); }
-		if(account) { zName = account->usr; }
+		if(strlen(value))
+			chk_ftab(value, ftab);
+		else
+			ftab_clear(ftab);
+		return;
 	}
 	if(ftab_type & FTAB_READER)
 	{
-		zType = "reader";
+		struct s_reader *rdr = NULL;
 		if(ftab_type & FTAB_PROVID)     { rdr = container_of(setting, struct s_reader, ftab); }
 		if(ftab_type & FTAB_CHID)       { rdr = container_of(setting, struct s_reader, fchid); }
 		if(ftab_type & FTAB_FBPCAID)    { rdr = container_of(setting, struct s_reader, fallback_percaid); }
 		if(ftab_type & FTAB_LOCALCARDS) { rdr = container_of(setting, struct s_reader, localcards); }
-		if(rdr) { zName = rdr->label; }
-	}
-	if(ftab_type & FTAB_PROVID) { zFiltNamef = "provid"; }
-	if(ftab_type & FTAB_CHID)   { zFiltNamef = "chid"; }
-	if(ftab_type & FTAB_FBPCAID) { zFiltNamef = "fallback_percaid"; }
-	if(ftab_type & FTAB_LOCALCARDS) { zFiltNamef = "localcards"; }
-
-	if(value)
-	{
-		if(strlen(value))
-		{
-			strtolower(value);
-			chk_ftab(value, ftab, zType, zName, zFiltNamef);
-		}
-		else
-		{
-			ftab_clear(ftab);
-		}
 		if(rdr)
 			{ rdr->changes_since_shareupdate = 1; }
-		return;
 	}
 	value = mk_t_ftab(ftab);
 	if(strlen(value) > 0 || cfg.http_full_cfg)

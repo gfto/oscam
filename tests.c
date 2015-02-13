@@ -196,5 +196,44 @@ int main(void)
 	};
 	run_parser_test(&tuntab_test);
 
+	FTAB ftab, ftab_c;
+	struct test_type ftab_test =
+	{
+		.desc     = "Filters (ftab) (ACCOUNT: 'chid', 'ident'; READER: 'chid', 'ident', 'fallback_percaid', 'localcards')",
+		.data     = &ftab,
+		.data_c   = &ftab_c,
+		.data_sz  = sizeof(ftab),
+		.chk_fn   = (CHK_FN *)&chk_ftab,
+		.mk_t_fn  = (MK_T_FN *)&mk_t_ftab,
+		.clear_fn = (CLEAR_FN *)&ftab_clear,
+		.clone_fn = (CLONE_FN *)&ftab_clone,
+		.test_vec = (const struct test_vec[])
+		{
+			{ .in = "0100:123456,234567;0200:345678,456789" },
+			{ .in = "183D:000000,005411" },
+			{ .in = "183D:000000" },
+			{ .in = "0100:000012" },
+			{ .in = "0100:000012;0604:0000BA,000101,00010E,000141" },
+			{ .in = "1234:234567;0010:345678,876543" },
+			{ .in = "" },
+			{ .in = "0200:eeee,tyut,1234", .out = "0200:00EEEE,001234" },
+			{ .in = "0200:eeee,tyut",      .out = "0200:00EEEE" },
+			{ .in = "1:0",                 .out = "0001:000000" },
+			{ .in = "1:0,1,0",             .out = "0001:000000,000001,000000" },
+			{ .in = "0:0",                 .out = "" },
+			{ .in = "zzzz:",               .out = "" },
+			{ .in = "yyyy:rrrr,qqqq",      .out = "" },
+			{ .in = ",",                   .out = "" },
+			{ .in = ",;,",                 .out = "" },
+			{ .in = ";;;",                 .out = "" },
+			{ .in = ".:",                  .out = "" },
+			{ .in = ":.,",                 .out = "" },
+			{ .in = ":;.,",                .out = "" },
+			{ .in = ".:;,",                .out = "" },
+			{ .in = NULL },
+		},
+	};
+	run_parser_test(&ftab_test);
+
 	return 0;
 }

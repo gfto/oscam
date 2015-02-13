@@ -318,81 +318,40 @@ void chk_services(char *labels, SIDTABS *sidtabs)
 	sidtabs->no = newsidno;
 }
 
-void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName, const char *zFiltName)
+void chk_ftab(char *value, FTAB *ftab)
 {
-	int32_t i, j;
-	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;
-	int32_t nfilts = 0;
-
 	ftab_clear(ftab);
-	// Count filters
-	char *in_filter = cs_strdup(zFilterAsc);
-	if (!in_filter)
-		return;
-	for(i = 0, ptr1 = strtok_r(in_filter, ";", &saveptr1); (ptr1); ptr1 = strtok_r(NULL, ";", &saveptr1), i++)
+	char *ptr1, *saveptr1 = NULL;
+	errno = 0;
+	for(ptr1 = strtok_r(value, ";", &saveptr1); (ptr1); ptr1 = strtok_r(NULL, ";", &saveptr1))
 	{
-		if((zFiltName && zFiltName[0] == 'c') && !strchr(trim(ptr1), ':'))
+		FILTER d;
+		memset(&d, 0, sizeof(d));
+		char *caid_end_ptr = strchr(ptr1, ':'); // caid_end_ptr + 1 -> headers
+		if(!caid_end_ptr)
+			continue;
+		caid_end_ptr[0] = '\0';
+		d.caid = a2i(ptr1, 4);
+		if (!d.caid || errno == EINVAL)
 		{
-			cs_log("PANIC: CAID field not found in CHID parameter!");
-			free(in_filter);
-			return;
+			errno = 0;
+			continue;
 		}
-		nfilts++;
-	}
-	free(in_filter);
-
-	// Pointer to filter values
-	char **ptr;
-	if (!cs_malloc(&ptr, nfilts * sizeof(char *)))
-		return;
-
-	FTAB newftab = { .nfilts = nfilts };
-	if (!cs_malloc(&newftab.filts, newftab.nfilts * sizeof(*newftab.filts)))
-	{
-		free(ptr);
-		return;
-	}
-
-	for(i = 0, ptr1 = strtok_r(zFilterAsc, ";", &saveptr1); (i < newftab.nfilts) && (ptr1); ptr1 = strtok_r(NULL, ";", &saveptr1), i++)
-	{
-		ptr[i] = ptr1;
-		if((ptr2 = strchr(trim(ptr1), ':')))
+		ptr1 = caid_end_ptr + 1; // -> headers
+		char *ident_ptr, *saveident_ptr = NULL;
+		for(ident_ptr = strtok_r(ptr1, ",", &saveident_ptr); ident_ptr && d.nprids < ARRAY_SIZE(d.prids); ident_ptr = strtok_r(NULL, ",", &saveident_ptr))
 		{
-			*ptr2++ = '\0';
-			newftab.filts[i].caid = (uint16_t)a2i(ptr1, 4);
-			ptr[i] = ptr2;
+			uint32_t ident = a2i(ident_ptr, 4);
+			if (errno == EINVAL)
+			{
+				errno = 0;
+				continue;
+			}
+			d.prids[d.nprids++] = ident;
 		}
-		else if(zFiltName && zFiltName[0] == 'c')
-		{
-			cs_log("PANIC: CAID field not found in CHID parameter!");
-			free(ptr);
-			return;
-		}
-		else if(zFiltName && (zFiltName[0] == 'f' || zFiltName[0] == 'l') )
-		{
-			newftab.filts[i].caid = (uint16_t)a2i(ptr1, 4);
-			ptr[i] = NULL;
-		}
+		if (d.nprids)
+			ftab_add(ftab, &d);
 	}
-
-	if(newftab.nfilts)
-	{
-		cs_log_dbg(D_CLIENT, "%s '%s' %s filter(s):", zType, zName, zFiltName);
-	}
-	for(i = 0; i < newftab.nfilts; i++)
-	{
-		cs_log_dbg(D_CLIENT, "CAID #%d: %04X", i, newftab.filts[i].caid);
-		if(zFiltName && (zFiltName[0] == 'f' || zFiltName[0] == 'l') && ptr[i] == NULL) { continue; }
-		for(j = 0, ptr3 = strtok_r(ptr[i], ",", &saveptr1); (j < CS_MAXPROV) && (ptr3); ptr3 = strtok_r(NULL, ",", &saveptr1), j++)
-		{
-			newftab.filts[i].prids[j] = a2i(ptr3, 6);
-			newftab.filts[i].nprids++;
-			cs_log_dbg(D_CLIENT, "%s #%d: %06X", zFiltName, j, newftab.filts[i].prids[j]);
-		}
-	}
-
-	free(ptr);
-	*ftab = newftab;
 }
 
 void chk_cltab(char *classasc, CLASSTAB *clstab)

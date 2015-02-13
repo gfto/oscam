@@ -137,36 +137,29 @@ char *mk_t_group(uint64_t grp)
  */
 char *mk_t_ftab(FTAB *ftab)
 {
-	int32_t i = 0, j = 0, needed = 1, pos = 0;
-
-	if(ftab->nfilts != 0)
-	{
-		needed = ftab->nfilts * 5;
-		for(i = 0; i < ftab->nfilts; ++i)
-			{ needed += ftab->filts[i].nprids * 7; }
-	}
-
-	char *value;
-	if(needed == 1 || !cs_malloc(&value, needed)) { return ""; }
-	char *saveptr = value;
-	char *dot = "";
+	if (!ftab || !ftab->nfilts) return "";
+	// Worst case scenario where each entry have different
+	// caid, ident and only one length in it is strlen("1234:123456,") == 12
+	int32_t i, j, maxlen = 13 * ftab->nfilts, pos = 0;
+	for(i = 0; i < ftab->nfilts; i++)
+		maxlen += ftab->filts[i].nprids * 7; /* strlen("123456,") == 7 */
+	char *ret;
+	if (!cs_malloc(&ret, maxlen))
+		return "";
+	const char *semicolon = "", *comma = "";
 	for(i = 0; i < ftab->nfilts; i++)
 	{
-		snprintf(value + pos, needed - (value - saveptr), "%s%04X", dot, ftab->filts[i].caid);
-		pos += 4;
-		if(i > 0) { pos += 1; }
-		dot = ":";
-		for(j = 0; j < ftab->filts[i].nprids; ++j)
+		FILTER *cur = &ftab->filts[i];
+		pos += snprintf(ret + pos, maxlen - pos, "%s%04X:", semicolon, cur->caid);
+		semicolon = ";";
+		comma = "";
+		for (j = 0; j < cur->nprids; j++)
 		{
-			snprintf(value + pos, needed - (value - saveptr), "%s%06X", dot, ftab->filts[i].prids[j]);
-			pos += 7;
-			dot = ",";
+			pos += snprintf(ret + pos, maxlen - pos, "%s%06X", comma, cur->prids[j]);
+			comma = ",";
 		}
-		dot = ";";
 	}
-
-	value[pos] = '\0';
-	return value;
+	return ret;
 }
 
 /*
