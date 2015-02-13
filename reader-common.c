@@ -320,8 +320,8 @@ bool cardreader_init(struct s_reader *reader)
 				{reader->cardmhz = 3150;}
 			if(boxtype_is("dm7025"))
 				{reader->cardmhz = 8300;}
-			if(!strncmp(boxtype_get(), "vu", 2 ))
-				{reader->cardmhz = 2700; reader->mhz = 450;} // only one speed by vu+
+			if((!strncmp(boxtype_get(), "vu", 2 ))||(boxtype_is("ini-8000am")))
+				{reader->cardmhz = 2700; reader->mhz = 450;} // only one speed for vu+ and Atemio Nemesis due to usage of TDA8024
 		}
 		if((reader->cardmhz > 2000) && (reader->typ != R_SMART))
 		{

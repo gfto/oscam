@@ -671,7 +671,7 @@ static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uin
 		if(reader->cardmhz > 2000 && reader->autospeed == 1)  // -1 replaced by autospeed parameter is magic number pll internal reader set cardmhz according to optimal atr speed
 		{
 			reader->mhz = atr_fs_table[FI] / 10000 ;
-			if(!strncmp(boxtype_get(), "vu", 2 )){reader->mhz = 450;}
+			if((!strncmp(boxtype_get(), "vu", 2 ))||(boxtype_is("ini-8000am"))){reader->mhz = 450;}
 		}
 	}
 
