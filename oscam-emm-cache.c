@@ -13,10 +13,8 @@
 
 static LLIST *emm_cache;
 
-void emm_save_cache(void)
+bool emm_cache_configured(void)
 {
-	if(boxtype_is("dbox2")) return; // dont save emmcache on these boxes, they lack resources and will crash!
-	
 	struct s_reader *rdr;
 	bool enable = false;
 	LL_ITER itr = ll_iter_create(configured_readers);
@@ -27,12 +25,18 @@ void emm_save_cache(void)
 			enable = true;
 		}
 	}
+	return enable;
+}
+
+void emm_save_cache(void)
+{
+	if(boxtype_is("dbox2")) return; // dont save emmcache on these boxes, they lack resources and will crash!
 	
-	if (!enable)
-	{
+	if(!emm_cache_configured()){
 		cs_log("saving emmcache disabled since no reader is using it!");
 		return;
 	}
+
 	char fname[256];
 	struct timeb ts, te;
 	
@@ -90,6 +94,11 @@ void load_emmstat_from_file(void)
 {
 	if(boxtype_is("dbox2")) return; // dont load emmstat on these boxes, they lack resources and will crash!
 	
+	if(!emm_cache_configured()){
+		cs_log("loading emmstats disabled since no reader is using it!");
+		return;
+	}
+
 	char buf[256];
 	char fname[256];
 	char *line;
@@ -200,6 +209,11 @@ void save_emmstat_to_file(void)
 {
 	if(boxtype_is("dbox2")) return; // dont save emmstat on these boxes, they lack resources and will crash!
 	
+	if(!emm_cache_configured()){
+		cs_log("saving emmstats disabled since no reader is using it!");
+		return;
+	}
+	
 	char fname[256];
 
 	if(!cfg.emmlogdir)
@@ -275,20 +289,7 @@ void emm_load_cache(void)
 {
 	if(boxtype_is("dbox2")) return; // dont load emmcache on these boxes, they lack resources and will crash!
 	
-	struct s_reader *rdr;
-	bool enable = false;
-	LL_ITER itr = ll_iter_create(configured_readers);
-	
-	while((rdr = ll_iter_next(&itr)))
-	{
-		if(rdr->cachemm == 1)
-		{
-			enable = true;
-		}
-	}
-	
-	if (!enable)
-	{
+	if(!emm_cache_configured()){
 		cs_log("loading emmcache disabled since no reader is using it!");
 		return;
 	}
