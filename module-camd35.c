@@ -543,13 +543,32 @@ int32_t camd35_tcp_connect(struct s_client *cl)
 		cl->pfd = cl->udp_fd = handle;
 	}
 	if(!cl->udp_fd) { return (0); }  // Check if client has no handle -> error
-	// check if client reached timeout, if reached and reader is not udp type disconnect reader
-	if(cl->reader->tcp_rto && (cl->reader->last_s - cl->reader->last_g > cl->reader->tcp_rto) && !cl->is_udp)
+	
+	// check if client reached timeout
+	if(cl->reader->tcp_rto && (cl->reader->last_s - cl->reader->last_g > cl->reader->tcp_rto))
 	{
-		network_tcp_connection_close(cl->reader, "rto");
-		return 0;
+		if(!cl->is_udp) //tcp on timeout disconnect reader
+		{
+			network_tcp_connection_close(cl->reader, "rto");
+			return 0;
+		}
+		else //udp check to discover ip change on dynamic ip servers
+		{
+			IN_ADDR_T last_ip;
+			IP_ASSIGN(last_ip, cl->ip);
+			if(!hostResolve(cl->reader))
+			{
+				network_tcp_connection_close(cl->reader, "no ip");
+				return 0; 
+			}
+			if(!IP_EQUAL(last_ip, cl->ip))
+			{
+				network_tcp_connection_close(cl->reader, "ip change");
+				return 0;
+			}
+		}
 	}
-
+	
 	return (1); // all ok
 }
 
