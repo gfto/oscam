@@ -18,7 +18,7 @@
 #define DEFAULT_GBOX_RESHARE		5
 #define DEFAULT_GBOX_RECONNECT		300
 #define CS_GBOX_MAX_LOCAL_CARDS		16
-#define GBOX_REBROADCAST_TIMEOUT        1250
+#define GBOX_REBROADCAST_TIMEOUT	1250
 #define GBOX_SID_CONFIRM_TIME		3600
 #define GBOX_DEFAULT_CW_TIME		500
 
@@ -40,6 +40,26 @@
 #define GBOX_ECM_SENT_ALL	2
 #define GBOX_ECM_SENT_ALL_TWICE 3
 #define GBOX_ECM_ANSWERED	4
+
+#define GBOX_CARD_TYPE_GBOX	0
+#define GBOX_CARD_TYPE_LOCAL	1
+#define GBOX_CARD_TYPE_BETUN	2
+#define GBOX_CARD_TYPE_CCCAM	3
+#define GBOX_CARD_TYPE_PROXY	4
+
+#define FILE_GBOX_VERSION       "gbox.ver"
+#define FILE_SHARED_CARDS_INFO  "share.info"
+#define FILE_ATTACK_INFO        "attack.txt"
+#define FILE_GBOX_PEER_ONL      "share.onl"
+#define FILE_STATS              "stats.info"
+#define FILE_GOODNIGHT_OSD      "goodnight.osd"
+#define FILE_LOCAL_CARDS_INFO   "sc.info"
+
+#define GBOX_STAT_HELLOL        0
+#define GBOX_STAT_HELLOS        1
+#define GBOX_STAT_HELLOR        2
+#define GBOX_STAT_HELLO3        3
+#define GBOX_STAT_HELLO4        4
 
 struct gbox_rbc_thread_args 
 {
@@ -92,6 +112,7 @@ struct gbox_card
     LLIST *goodsids; //sids that could be decoded (struct gbox_srvid)
     uint32_t no_cws_returned;
     uint32_t average_cw_time;
+    struct gbox_peer *origin_peer;
 };
 
 struct gbox_data
@@ -101,7 +122,6 @@ struct gbox_data
     uchar checkcode[7];
     uint8_t minor_version;
     uint8_t cpu_api;
-    LLIST *cards;
 };
 
 struct gbox_peer
@@ -114,8 +134,8 @@ struct gbox_peer
     uchar ecm_idx;
     CS_MUTEX_LOCK lock;
     struct s_client *my_user;
+    uint16_t filtered_cards;
     uint16_t total_cards;
-    LL_ITER last_it;
 };
 
 struct gbox_ecm_request_ext
@@ -141,6 +161,7 @@ uint32_t gbox_get_local_gbox_password(void);
 void gbox_send(struct s_client *cli, uchar *buf, int32_t l);
 int8_t gbox_message_header(uchar *buf, uint16_t cmd, uint32_t peer_password, uint32_t local_password);
 void gbox_free_cards_pending(ECM_REQUEST *er);
+void gbox_send_hello_packet(struct s_client *cli, int8_t number, uchar *outbuf, uchar *ptr, int32_t nbcards);
 #else
 static inline void gbox_free_cards_pending(ECM_REQUEST *UNUSED(er)) { }
 #endif
