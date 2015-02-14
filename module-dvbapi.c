@@ -3006,7 +3006,7 @@ void event_handler(int32_t UNUSED(signal))
 		}
 
 		cs_log_dbg(D_DVBAPI, "found pmt file %s", dest);
-		//cs_sleepms(100); why wait?
+		cs_sleepms(100);
 
 		uint32_t len = read(pmt_fd, mbuf, sizeof(mbuf));
 		int32_t ret = close(pmt_fd);
@@ -3574,14 +3574,14 @@ static void *dvbapi_main_local(void *cli)
 
 		for(i = 0; i < MAX_DEMUX; i++)
 		{
+			if(demux[i].program_number == 0) { continue; }  // only evalutate demuxers that have channels assigned
+			
 			// add client fd's which are not yet associated with the demux but needs to be polled for data
 			if (unassoc_fd[i]) {
 				pfd2[pfdcount].fd = unassoc_fd[i];
 				pfd2[pfdcount].events = (POLLIN | POLLPRI);
 				type[pfdcount++] = 1;
 			}
-
-			if(demux[i].program_number == 0) { continue; }  // only evalutate demuxers that have channels assigned
 
 			uint32_t ecmcounter = 0, emmcounter = 0;
 			for(g = 0; g < maxfilter; g++)
@@ -3765,7 +3765,6 @@ static void *dvbapi_main_local(void *cli)
 
 		for(i = 0; i < pfdcount && rc > 0; i++)
 		{
-			cs_sleepus(1); // give time to other processes!
 			if(pfd2[i].revents == 0) { continue; }  // skip sockets with no changes
 			rc--; //event handled!
 			cs_log_dbg(D_TRACE, "Now handling fd %d that reported event %d", pfd2[i].fd, pfd2[i].revents);
@@ -4031,18 +4030,18 @@ static void *dvbapi_main_local(void *cli)
 				{
 					int32_t demux_index = ids[i];
 					int32_t n = fdn[i];
-					
-					if((int)demux[demux_index].demux_fd[n].fd != pfd2[i].fd) { continue; } // filter already killed, no need to process this data!
 
-					if((len = dvbapi_read_device(pfd2[i].fd, mbuf, sizeof(mbuf))) <= 0)
+					if((len = dvbapi_read_device(pfd2[i].fd, mbuf, sizeof(mbuf))) <= 0) // always read to empty receiver databuffer
 					{
-						if(len < 0)
+						if((int)demux[demux_index].demux_fd[n].fd != pfd2[i].fd) { continue; } // but if filter already killed no need to process the data!
+						
+						if(len < 0) // serious filterdata read error
 						{
 							dvbapi_stop_filternum(demux_index, n); // stop filter since its giving errors and wont return anything good.
 							maxfilter--; // lower maxfilters to avoid this with new filter setups!
 							continue;
 						}
-						if(!len)
+						if(!len) // receiver internal filterbuffer overflow
 						{
 							memset(mbuf, 0, sizeof(mbuf));
 						}
@@ -4287,6 +4286,12 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 		if(er->rc >= E_NOTFOUND)    // not found on requestmode 0 + 1
 		{
+			if(er->rc == E_SLEEPING)
+			{
+				dvbapi_stop_descrambling(i);
+				return;
+			}
+			
 			struct s_dvbapi_priority *forceentry = dvbapi_check_prio_match(i, j, 'p');
 
 			if(forceentry && forceentry->force)   // forced pid? keep trying the forced ecmpid!
