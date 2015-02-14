@@ -3573,9 +3573,7 @@ static void *dvbapi_main_local(void *cli)
 		pfdcount = (listenfd > -1) ? 1 : 0;
 
 		for(i = 0; i < MAX_DEMUX; i++)
-		{
-			if(demux[i].program_number == 0) { continue; }  // only evalutate demuxers that have channels assigned
-			
+		{	
 			// add client fd's which are not yet associated with the demux but needs to be polled for data
 			if (unassoc_fd[i]) {
 				pfd2[pfdcount].fd = unassoc_fd[i];
@@ -3583,6 +3581,8 @@ static void *dvbapi_main_local(void *cli)
 				type[pfdcount++] = 1;
 			}
 
+			if(demux[i].program_number == 0) { continue; }  // only evalutate demuxers that have channels assigned
+			
 			uint32_t ecmcounter = 0, emmcounter = 0;
 			for(g = 0; g < maxfilter; g++)
 			{
