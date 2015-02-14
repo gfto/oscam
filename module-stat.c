@@ -101,11 +101,15 @@ void load_stat_from_file(void)
 		{ fname = cfg.lb_savepath; }
 
 	file = fopen(fname, "r");
-
-	if(!file)
+	if (file == NULL)
+		{return;}
+	else
 	{
-		cs_log("loadbalancer: can't read from file %s", fname);
-		return;
+		if(!file)
+			{
+				cs_log("loadbalancer: can't read from file %s", fname);
+				return;
+			}
 	}
 
 	if(!cs_malloc(&line, LINESIZE))

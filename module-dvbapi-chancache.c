@@ -68,10 +68,15 @@ void dvbapi_load_channel_cache(void)
 
 	get_config_filename(fname, sizeof(fname), "oscam.ccache");
 	file = fopen(fname, "r");
-	if(!file)
+	if (file == NULL)
+		{return;}
+	else
 	{
-		cs_log("dvbapi channelcache can't read from file %s", fname);
-		return;
+		if(!file)
+			{
+				cs_log("dvbapi channelcache can't read from file %s", fname);
+				return;
+			}
 	}
 
 	int32_t i = 1;
