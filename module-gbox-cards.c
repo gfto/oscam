@@ -301,7 +301,7 @@ void gbox_delete_cards_from_peer(struct gbox_peer *peer)
         return;
 }
 
-static gbox_free_list(LLIST *card_list)
+static void gbox_free_list(LLIST *card_list)
 {
     if(card_list)
     {

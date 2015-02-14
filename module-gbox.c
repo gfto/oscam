@@ -391,8 +391,6 @@ int16_t read_cards_from_hello(uint8_t *ptr, uint8_t *len, CAIDTAB *ctab, uint8_t
 	uint16_t caid;
 	uint32_t provid;
 	uint32_t provid1;
-	struct gbox_card *card_s;
-	struct gbox_card *card;
 	int16_t ncards_in_msg = 0;
 
 	while(ptr < len)
@@ -448,7 +446,6 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 	int32_t hostname_len = 0;
 	int32_t footer_len = 0;
 	uint8_t *ptr = 0;
-	LL_ITER it;
 
 	if(!(gbox_decode_cmd(data) == MSG_HELLO1)) 
 	{
