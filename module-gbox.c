@@ -1285,47 +1285,50 @@ static uint32_t gbox_get_pending_time(ECM_REQUEST *er, uint16_t peer_id, uint8_t
 
 static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, uchar *data, int32_t n)
 {
-    if(gbox_decode_cmd(data) == MSG_CW && n > 43)
-    {
-        int i;
-        uint16_t id_card = 0;
-        struct s_client *proxy;
-        if(cli->typ != 'p')
-        	{ proxy = switch_client_proxy(cli, cli->gbox_peer_id); }
-        else
-        	{ proxy = cli; }
-        proxy->last = time((time_t *)0);
-        *rc = 1;
-        memcpy(dcw, data + 14, 16);
-        uint32_t crc = data[30] << 24 | data[31] << 16 | data[32] << 8 | data[33];
-        char tmp[32];
-        cs_log_dbg(D_READER, "-> cws=%s, peer=%04X, ecm_pid=%04X, sid=%04X, crc=%08X, type=%02X, dist=%01X, unkn1=%01X, unkn2=%02X, chid/0x0000/0xffff=%04X",
-                      cs_hexdump(0, dcw, 32, tmp, sizeof(tmp)), 
-                      data[10] << 8 | data[11], data[6] << 8 | data[7], data[8] << 8 | data[9], crc, data[41], data[42] & 0x0f, data[42] >> 4, data[43], data[37] << 8 | data[38]);
-        struct timeb t_now;             
-        cs_ftime(&t_now);
-        int64_t cw_time = GBOX_DEFAULT_CW_TIME;
-        for(i = 0; i < cfg.max_pending; i++)
-        {
-        	if(proxy->ecmtask[i].gbox_crc == crc)
-        	{
-        		id_card = data[10] << 8 | data[11];
-        		cw_time = comp_timeb(&t_now, &proxy->ecmtask[i].tps) - gbox_get_pending_time(&proxy->ecmtask[i], id_card, data[36]);
-        		gbox_add_good_sid(proxy, id_card, proxy->ecmtask[i].caid, data[36], proxy->ecmtask[i].srvid, cw_time);
-        		gbox_remove_all_bad_sids(proxy->gbox, &proxy->ecmtask[i], proxy->ecmtask[i].srvid);
-        		if(proxy->ecmtask[i].gbox_ecm_status == GBOX_ECM_NOT_ASKED || proxy->ecmtask[i].gbox_ecm_status == GBOX_ECM_ANSWERED)
-        			{ return -1; }
+	if(!cli || gbox_decode_cmd(data) != MSG_CW || n < 44)
+    		{ return -1; }
+        	
+	int i;
+	uint16_t id_card = 0;
+	struct s_client *proxy;
+	if(cli->typ != 'p')
+		{ proxy = switch_client_proxy(cli, cli->gbox_peer_id); }
+	else
+		{ proxy = cli; }
+	if (!proxy || !proxy->reader)
+		{ return -1; }
+	proxy->last = time((time_t *)0);
+	*rc = 1;
+	memcpy(dcw, data + 14, 16);
+	uint32_t crc = data[30] << 24 | data[31] << 16 | data[32] << 8 | data[33];
+	char tmp[32];
+	cs_log_dbg(D_READER, "-> cws=%s, peer=%04X, ecm_pid=%04X, sid=%04X, crc=%08X, type=%02X, dist=%01X, unkn1=%01X, unkn2=%02X, chid/0x0000/0xffff=%04X",
+		cs_hexdump(0, dcw, 32, tmp, sizeof(tmp)), 
+		data[10] << 8 | data[11], data[6] << 8 | data[7], data[8] << 8 | data[9], crc, data[41], data[42] & 0x0f, data[42] >> 4, data[43], data[37] << 8 | data[38]);
+	struct timeb t_now;             
+	cs_ftime(&t_now);
+	int64_t cw_time = GBOX_DEFAULT_CW_TIME;
+	for(i = 0; i < cfg.max_pending; i++)
+	{
+		if(proxy->ecmtask[i].gbox_crc == crc)
+		{
+			id_card = data[10] << 8 | data[11];
+			cw_time = comp_timeb(&t_now, &proxy->ecmtask[i].tps) - gbox_get_pending_time(&proxy->ecmtask[i], id_card, data[36]);
+			gbox_add_good_sid(id_card, proxy->ecmtask[i].caid, data[36], proxy->ecmtask[i].srvid, cw_time);
+			proxy->reader->currenthops = data[42] & 0x0f;
+			gbox_remove_all_bad_sids(proxy->gbox, &proxy->ecmtask[i], proxy->ecmtask[i].srvid);
+			if(proxy->ecmtask[i].gbox_ecm_status == GBOX_ECM_NOT_ASKED || proxy->ecmtask[i].gbox_ecm_status == GBOX_ECM_ANSWERED)
+       				{ return -1; }
 			proxy->ecmtask[i].gbox_ecm_status = GBOX_ECM_ANSWERED;
 			proxy->ecmtask[i].gbox_ecm_id = id_card;
 			*rc = 1;
 			return proxy->ecmtask[i].idx;
 		}
 	}
-        //late answers from other peers,timing not possible
-        gbox_add_good_sid(proxy, id_card, data[34] << 8 | data[35], data[36], data[8] << 8 | data[9], GBOX_DEFAULT_CW_TIME);
-        cs_log_dbg(D_READER, "no task found for crc=%08x", crc);
-    }
-    return -1;
+	//late answers from other peers,timing not possible
+	gbox_add_good_sid(id_card, data[34] << 8 | data[35], data[36], data[8] << 8 | data[9], GBOX_DEFAULT_CW_TIME);
+	cs_log_dbg(D_READER, "no task found for crc=%08x", crc);
+	return -1;
 }
 
 static int8_t gbox_cw_received(struct s_client *cli, uchar *data, int32_t n)

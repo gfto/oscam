@@ -378,11 +378,8 @@ void gbox_send_hello(struct s_client *cli)
         return;
 }                
 
-void gbox_add_good_sid(struct s_client *cl, uint16_t id_card, uint16_t caid, uint8_t slot, uint16_t sid_ok, uint32_t cw_time)
+void gbox_add_good_sid(uint16_t id_card, uint16_t caid, uint8_t slot, uint16_t sid_ok, uint32_t cw_time)
 {
-        if (!cl || !cl->gbox) { return; }
-
-        struct gbox_peer *peer = cl->gbox;
         struct gbox_card *card = NULL;
         struct gbox_good_srvid *srvid = NULL;
         uint8_t factor = 0;
@@ -401,7 +398,6 @@ void gbox_add_good_sid(struct s_client *cl, uint16_t id_card, uint16_t caid, uin
                         else
                                 { factor = 10; }
                                 card->average_cw_time = ((card->average_cw_time * (factor-1)) + cw_time) / factor;
-                        cl->reader->currenthops = card->dist;
                         LL_ITER it2 = ll_iter_create(card->goodsids);
                         while((srvid = ll_iter_next(&it2)))
                         {
