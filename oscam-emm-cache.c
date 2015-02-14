@@ -113,15 +113,10 @@ void load_emmstat_from_file(void)
 		get_config_filename(fname, sizeof(fname), "oscam.emmstat");
 	}
 	file = fopen(fname, "r");
-	if (file == NULL)
-		{ return; }
-	else
+	if(!file)
 	{
-		if(!file)
-		{
-			cs_log("can't read emmstats from file %s", fname);
-			return;
-		}
+		cs_log_dbg(D_TRACE, "can't read emmstats from file %s", fname);
+		return;
 	}
 
 	if(!cs_malloc(&line, LINESIZE))
@@ -313,15 +308,10 @@ void emm_load_cache(void)
 	}
 	
 	file = fopen(fname, "r");
-	if (file == NULL)
-		{ return; }
-	else
+	if(!file)
 	{
-		if(!file)
-		{
-			cs_log("can't read emmcache from file %s", fname);
-			return;
-		}
+		cs_log_dbg(D_TRACE, "can't read emmcache from file %s", fname);
+		return;
 	}
 
 	struct timeb ts, te;
