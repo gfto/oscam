@@ -226,11 +226,11 @@ static int32_t cc_cacheex_push_out(struct s_client *cl, struct ecm_request_t *er
 		return (-1);
 	}
 
-	uint32_t size = 20 + sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw) + sizeof(uint8_t) +
+	uint32_t size = sizeof(er->ecmd5) + sizeof(er->csp_hash) + sizeof(er->cw) + sizeof(uint8_t) +
 					(ll_count(er->csp_lastnodes) + 1) * 8;
 
 	unsigned char *buf;
-	if(!cs_malloc(&buf, size))
+	if(!cs_malloc(&buf, size + 20))  //camd35_send() adds +20
 		{ return -1; }
 
 	// build ecm message
@@ -299,7 +299,7 @@ static int32_t cc_cacheex_push_out(struct s_client *cl, struct ecm_request_t *er
 	}
 	ll_li_destroy(li);
 
-	int32_t res = cc_cmd_send(cl, buf, size, MSG_CACHE_PUSH);
+	int32_t res = cc_cmd_send(cl, buf, size + 20, MSG_CACHE_PUSH);
 	if(res > 0)   // cache-ex is pushing out, so no receive but last_g should be updated otherwise disconnect!
 	{
 		if(cl->reader)
