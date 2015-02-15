@@ -46,7 +46,8 @@ void camd35_cacheex_send_push_filter(struct s_client *cl, uint8_t mode)
 	i2b_buf(2, filter->n, buf + i);
 	i += 2;
 
-	for(j=0; j<15; j++)
+	int32_t max_filters = 15;
+	for(j=0; j<max_filters; j++)
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -55,7 +56,7 @@ void camd35_cacheex_send_push_filter(struct s_client *cl, uint8_t mode)
 		i += 4;
 	}
 
-	for(j=0; j<15 && j<CS_MAXCAIDTAB; j++)
+	for(j=0; j<max_filters && j<CS_MAXCAIDTAB; j++)
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -64,7 +65,7 @@ void camd35_cacheex_send_push_filter(struct s_client *cl, uint8_t mode)
 		i += 4;
 	}
 
-	for(j=0; j<15 && j<CS_MAXCAIDTAB; j++)
+	for(j=0; j<max_filters && j<CS_MAXCAIDTAB; j++)
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -73,7 +74,7 @@ void camd35_cacheex_send_push_filter(struct s_client *cl, uint8_t mode)
 		i += 4;
 	}
 
-	for(j=0; j<15 && j<CS_MAXCAIDTAB; j++)
+	for(j=0; j<max_filters && j<CS_MAXCAIDTAB; j++)
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -117,7 +118,8 @@ static void camd35_cacheex_push_filter(struct s_client *cl, uint8_t *buf, uint8_
 		filter->n = CS_MAXCAIDTAB;
 	}
 
-	for(j=0; j<15; j++)
+	int32_t max_filters = 15;
+	for(j=0; j<max_filters; j++)
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -126,7 +128,7 @@ static void camd35_cacheex_push_filter(struct s_client *cl, uint8_t *buf, uint8_
 		i += 4;
 	}
 
-	for(j=0; j<15 && j<CS_MAXCAIDTAB; j++)
+	for(j=0; j<max_filters && j<CS_MAXCAIDTAB; j++)
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -135,7 +137,7 @@ static void camd35_cacheex_push_filter(struct s_client *cl, uint8_t *buf, uint8_
 		i += 4;
 	}
 
-	for(j=0; j<15 && j<CS_MAXCAIDTAB; j++)
+	for(j=0; j<max_filters && j<CS_MAXCAIDTAB; j++)
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -144,7 +146,7 @@ static void camd35_cacheex_push_filter(struct s_client *cl, uint8_t *buf, uint8_
 		i += 4;
 	}
 
-	for(j=0; j<15 && j<CS_MAXCAIDTAB; j++)
+	for(j=0; j<max_filters && j<CS_MAXCAIDTAB; j++)
 	{
 		if(j<CS_MAXCAIDTAB)
 		{

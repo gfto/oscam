@@ -44,7 +44,8 @@ void cc_cacheex_filter_out(struct s_client *cl)
 	i2b_buf(2, filter->n, buf + i);
 	i += 2;
 
-	for(j=0; j<30; j++)
+	int32_t max_filters = 30;
+	for(j=0; j<max_filters; j++)
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -53,7 +54,7 @@ void cc_cacheex_filter_out(struct s_client *cl)
 		i += 4;
 	}
 
-	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++)
+	for(j=0; j<max_filters && j<CS_MAXCAIDTAB; j++)
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -62,7 +63,7 @@ void cc_cacheex_filter_out(struct s_client *cl)
 		i += 4;
 	}
 
-	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++)
+	for(j=0; j<max_filters && j<CS_MAXCAIDTAB; j++)
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -71,7 +72,7 @@ void cc_cacheex_filter_out(struct s_client *cl)
 		i += 4;
 	}
 
-	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++)
+	for(j=0; j<max_filters && j<CS_MAXCAIDTAB; j++)
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -108,7 +109,8 @@ void cc_cacheex_filter_in(struct s_client *cl, uchar *buf)
 	filter->n = b2i(2, buf + i);
 	i += 2;
 
-	for(j=0; j<30; j++)
+	int32_t max_filters = 30;
+	for(j=0; j<max_filters; j++)
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -117,7 +119,7 @@ void cc_cacheex_filter_in(struct s_client *cl, uchar *buf)
 		i += 4;
 	}
 
-	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++)
+	for(j=0; j<max_filters && j<CS_MAXCAIDTAB; j++)
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -126,7 +128,7 @@ void cc_cacheex_filter_in(struct s_client *cl, uchar *buf)
 		i += 4;
 	}
 
-	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++)
+	for(j=0; j<max_filters && j<CS_MAXCAIDTAB; j++)
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -135,7 +137,7 @@ void cc_cacheex_filter_in(struct s_client *cl, uchar *buf)
 		i += 4;
 	}
 
-	for(j=0; j<30 && j<CS_MAXCAIDTAB; j++)
+	for(j=0; j<max_filters && j<CS_MAXCAIDTAB; j++)
 	{
 		if(j<CS_MAXCAIDTAB)
 		{
@@ -334,6 +336,8 @@ void cc_cacheex_push_in(struct s_client *cl, uchar *buf)
 	er->ecm[0] = buf[19]!=0x80 && buf[19]!=0x81 ? 0 : buf[19]; //odd/even byte, usefull to send it over CSP and to check cw for swapping
 	er->rc = rc;
 
+	er->ecmlen = 0;
+
 	if(buf[18])
 	{
 		if(buf[18] & (0x01 << 7))
@@ -356,8 +360,6 @@ void cc_cacheex_push_in(struct s_client *cl, uchar *buf)
 			{ cl->cwc_info++; }
 		cs_log_dbg(D_CWC, "CWC (CE) received from %s (cccam) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
 	}
-
-	er->ecmlen = 0;
 
 	uint8_t *ofs = buf + 20;
 
