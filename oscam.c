@@ -730,8 +730,11 @@ static void init_machine_info(void)
 
 	// Linux only functionality
 	char boxtype[128];
+	boxtype[0] = 0;
 	char model[128];
+	model[0] = 0;
 	char vumodel[128];
+	vumodel[0] = 0;
 
 	read_line_from_file("/proc/stb/info/model", model, sizeof(model));
 	read_line_from_file("/proc/stb/info/boxtype", boxtype, sizeof(boxtype));
