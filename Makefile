@@ -9,6 +9,11 @@ SVN_REV := $(shell ./config.sh --oscam-revision)
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 
+# This let's us use uname_S tests to detect cygwin
+ifneq (,$(findstring CYGWIN,$(uname_S)))
+	uname_S := Cygwin
+endif
+
 LINKER_VER_OPT:=-Wl,--version
 
 # Find OSX SDK
@@ -121,6 +126,10 @@ else
 TOOLCHAIN_INC_DIR := $(strip $(shell echo | $(CC) -Wp,-v -xc - -fsyntax-only 2>&1 | grep include$ | tail -n 1))
 DEFAULT_PCSC_FLAGS = -I$(TOOLCHAIN_INC_DIR)/PCSC -I$(TOOLCHAIN_INC_DIR)/../local/include/PCSC
 DEFAULT_PCSC_LIB = -lpcsclite
+endif
+
+ifeq ($(uname_S),Cygwin)
+DEFAULT_PCSC_LIB += -lwinscard
 endif
 
 # Function to initialize USE related variables
