@@ -261,10 +261,8 @@ void gbox_calc_checkcode(uint8_t *checkcode)
         return;
 }
 
-uint16_t gbox_count_peer_cards(struct gbox_peer *peer)
+uint16_t gbox_count_peer_cards(uint16_t peer_id)
 {
-        if (!peer) { return 0; }
-
         uint16_t counter = 0;
         struct gbox_card *card;
 
@@ -272,7 +270,7 @@ uint16_t gbox_count_peer_cards(struct gbox_peer *peer)
         LL_ITER it = ll_iter_create(gbox_cards);
         while((card = ll_iter_next(&it)))
         {
-                if (card->origin_peer && card->origin_peer->gbox.id == peer->gbox.id)
+                if (card->origin_peer && card->origin_peer->gbox.id == peer_id)
                         { counter++; }
         }
         cs_readunlock(&gbox_cards_lock);
@@ -280,17 +278,15 @@ uint16_t gbox_count_peer_cards(struct gbox_peer *peer)
         return counter;
 }
 
-void gbox_delete_cards_from_peer(struct gbox_peer *peer)
+void gbox_delete_cards_from_peer(uint16_t peer_id)
 {
-        if (!peer) { return; }
-
         struct gbox_card *card;
 
         cs_writelock(&gbox_cards_lock);
         LL_ITER it = ll_iter_create(gbox_cards);
         while((card = ll_iter_next(&it)))
         {
-                if (card->origin_peer && card->origin_peer->gbox.id == peer->gbox.id)
+                if (card->origin_peer && card->origin_peer->gbox.id == peer_id)
                 {
                         ll_iter_remove(&it);
                         ll_append(gbox_backup_cards, card);
@@ -486,9 +482,9 @@ static int8_t is_already_pending(ECM_REQUEST *er, struct gbox_card_id *searched_
         return 0;
 }
 
-uint8_t gbox_get_cards_for_ecm(uchar *send_buf_1, int32_t cont_1, uint8_t max_cards, ECM_REQUEST *er, uint32_t *current_avg_card_time, struct gbox_peer *desired_peer)
+uint8_t gbox_get_cards_for_ecm(uchar *send_buf_1, int32_t cont_1, uint8_t max_cards, ECM_REQUEST *er, uint32_t *current_avg_card_time, uint16_t peer_id)
 {
-        if (!send_buf_1 || !er || !desired_peer)
+        if (!send_buf_1 || !er)
                 { return 0; }
                 
         uint8_t cont_card_1 = 0;
@@ -510,7 +506,7 @@ uint8_t gbox_get_cards_for_ecm(uchar *send_buf_1, int32_t cont_1, uint8_t max_ca
                 current_id.peer = card->id.peer;
                 current_id.slot = card->id.slot;
 
-                if(card->origin_peer && card->origin_peer->gbox.id == desired_peer->gbox.id && card->type == GBOX_CARD_TYPE_GBOX &&
+                if(card->origin_peer && card->origin_peer->gbox.id == peer_id && card->type == GBOX_CARD_TYPE_GBOX &&
                         card->caid == er->caid && card->provid == er->prid && !is_already_pending(er, &current_id))
                 {
                         sid_verified = 0;
@@ -556,7 +552,7 @@ uint8_t gbox_get_cards_for_ecm(uchar *send_buf_1, int32_t cont_1, uint8_t max_ca
                 current_id.peer = card->id.peer;
                 current_id.slot = card->id.slot;
 
-                if(card->origin_peer && card->origin_peer->gbox.id == desired_peer->gbox.id && card->type == GBOX_CARD_TYPE_GBOX &&
+                if(card->origin_peer && card->origin_peer->gbox.id == peer_id && card->type == GBOX_CARD_TYPE_GBOX &&
                         card->caid == er->caid && card->provid == er->prid && !is_already_pending(er, &current_id) && !enough)
                 {
                         sid_verified = 0;

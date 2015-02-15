@@ -187,9 +187,9 @@ static uint16_t gbox_convert_password_to_id(uint32_t password)
 	return (((password >> 24) & 0xff) ^ ((password >> 8) & 0xff)) << 8 | (((password >> 16) & 0xff) ^ (password & 0xff));
 }
 
-static int8_t gbox_remove_all_bad_sids(struct gbox_peer *peer, ECM_REQUEST *er, uint16_t sid)
+static int8_t gbox_remove_all_bad_sids(ECM_REQUEST *er, uint16_t sid)
 {
-	if (!peer || !er) { return -1; }
+	if (!er) { return -1; }
 
 	struct gbox_card_pending *pending = NULL;
 	LL_ITER it = ll_iter_create(er->gbox_cards_pending);
@@ -271,7 +271,7 @@ static int8_t gbox_reinit_proxy(struct s_client *proxy)
 	proxy->reader->tcp_connected	= 0;
 	proxy->reader->card_status	= NO_CARD;
 	proxy->reader->last_s		= proxy->reader->last_g = 0;
-	gbox_delete_cards_from_peer(peer);
+	gbox_delete_cards_from_peer(peer->gbox.id);
 
 	return 0;
 }
@@ -468,7 +468,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 	
 	if (!(data[11] & 0xf)) //is first packet 
 	{
-		gbox_delete_cards_from_peer(peer);
+		gbox_delete_cards_from_peer(peer->gbox.id);
 		hostname_len = data[payload_len - 1];
 		footer_len = hostname_len + 2 + 7;
 		if(!peer->hostname || memcmp(peer->hostname, data + payload_len - 1 - hostname_len, hostname_len))
@@ -510,7 +510,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		else	//last packet of Hello
 		{
 			peer->online = 1;
-			peer->filtered_cards = gbox_count_peer_cards(peer);
+			peer->filtered_cards = gbox_count_peer_cards(peer->gbox.id);
 			if(!data[0xA])
 			{
 				cs_log("-> HelloS in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, peer->total_cards, peer->filtered_cards);
@@ -1313,7 +1313,7 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
 			cw_time = comp_timeb(&t_now, &proxy->ecmtask[i].tps) - gbox_get_pending_time(&proxy->ecmtask[i], id_card, data[36]);
 			gbox_add_good_sid(id_card, proxy->ecmtask[i].caid, data[36], proxy->ecmtask[i].srvid, cw_time);
 			proxy->reader->currenthops = data[42] & 0x0f;
-			gbox_remove_all_bad_sids(proxy->gbox, &proxy->ecmtask[i], proxy->ecmtask[i].srvid);
+			gbox_remove_all_bad_sids(&proxy->ecmtask[i], proxy->ecmtask[i].srvid);
 			if(proxy->ecmtask[i].gbox_ecm_status == GBOX_ECM_NOT_ASKED || proxy->ecmtask[i].gbox_ecm_status == GBOX_ECM_ANSWERED)
        				{ return -1; }
 			proxy->ecmtask[i].gbox_ecm_status = GBOX_ECM_ANSWERED;
@@ -1485,7 +1485,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 	send_buf_1[len2 + 9] = 0x00;
 	cont_1 = len2 + 10;
 
-	cont_card_1 = gbox_get_cards_for_ecm(&send_buf_1[0], len2 + 10, cli->reader->gbox_maxecmsend, er, &current_avg_card_time, peer);
+	cont_card_1 = gbox_get_cards_for_ecm(&send_buf_1[0], len2 + 10, cli->reader->gbox_maxecmsend, er, &current_avg_card_time, peer->gbox.id);
 	if (cont_card_1 == cli->reader->gbox_maxecmsend)
 		{ max_ecm_reached = 1; }
 	cont_1 += cont_card_1 * 3;
