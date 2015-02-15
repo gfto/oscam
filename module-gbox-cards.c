@@ -465,17 +465,16 @@ uint8_t gbox_next_free_slot(uint16_t id)
         return ++lastslot;
 } 
 
-static int8_t is_already_pending(ECM_REQUEST *er, struct gbox_card_id *searched_id)
+static int8_t is_already_pending(LLIST *pending_cards, uint16_t peer_id, uint8_t slot)
 {
-        if (!er || !searched_id)
+        if (!pending_cards)
                 { return -1; }
                 
-        LL_ITER it = ll_iter_create(er->gbox_cards_pending);
+        LL_ITER it = ll_iter_create(pending_cards);
         struct gbox_card_id *current_id;
         while ((current_id = ll_iter_next(&it)))
         {
-                if (current_id->peer == searched_id->peer &&
-                        current_id->slot == searched_id->slot)
+                if (current_id->peer == peer_id && current_id->slot == slot)
                         { return 1; }
         }
 
@@ -490,7 +489,6 @@ uint8_t gbox_get_cards_for_ecm(uchar *send_buf_1, int32_t cont_1, uint8_t max_ca
         uint8_t cont_card_1 = 0;
         struct gbox_good_srvid *srvid_good = NULL;
         struct gbox_bad_srvid *srvid_bad = NULL;
-        struct gbox_card_id current_id;
         uint8_t enough = 0;              
         uint8_t sid_verified = 0;
         time_t time_since_lastcw;
@@ -503,11 +501,8 @@ uint8_t gbox_get_cards_for_ecm(uchar *send_buf_1, int32_t cont_1, uint8_t max_ca
                                 
         while((card = ll_iter_next(&it)))
         {
-                current_id.peer = card->id.peer;
-                current_id.slot = card->id.slot;
-
                 if(card->origin_peer && card->origin_peer->gbox.id == peer_id && card->type == GBOX_CARD_TYPE_GBOX &&
-                        card->caid == er->caid && card->provid == er->prid && !is_already_pending(er, &current_id))
+                        card->caid == er->caid && card->provid == er->prid && !is_already_pending(er->gbox_cards_pending, card->id.peer, card->id.slot))
                 {
                         sid_verified = 0;
 
@@ -549,11 +544,8 @@ uint8_t gbox_get_cards_for_ecm(uchar *send_buf_1, int32_t cont_1, uint8_t max_ca
         it = ll_iter_create(gbox_cards);
         while((card = ll_iter_next(&it)))
         {
-                current_id.peer = card->id.peer;
-                current_id.slot = card->id.slot;
-
                 if(card->origin_peer && card->origin_peer->gbox.id == peer_id && card->type == GBOX_CARD_TYPE_GBOX &&
-                        card->caid == er->caid && card->provid == er->prid && !is_already_pending(er, &current_id) && !enough)
+                        card->caid == er->caid && card->provid == er->prid && !is_already_pending(er->gbox_cards_pending, card->id.peer, card->id.slot) && !enough)
                 {
                         sid_verified = 0;
 
