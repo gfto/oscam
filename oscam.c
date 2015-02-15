@@ -798,7 +798,7 @@ static void init_machine_info(void)
 		if(!strcasecmp(boxtype,"ini-8000am")){snprintf(boxname, sizeof(boxname), "%s", "Atemio Nemesis");}
 		if(!strcasecmp(boxtype,"ini-9000ru")){snprintf(boxname, sizeof(boxname), "%s", "Sezam Marvel");}
 		if(!strcasecmp(boxtype,"ini-8000sv")){snprintf(boxname, sizeof(boxname), "%s", "Miraclebox Ultra");}
-		if(!strcasecmp(boxtype,"ini-9000ru")){snprintf(boxname, sizeof(boxname), "%s", "Sezam Marvel");}
+		if(!strcasecmp(boxtype,"ini-9000de")){snprintf(boxname, sizeof(boxname), "%s", "Xpeed LX3");}
 		if(boxname[0]){cs_log("Stb boxname    = %s", boxname);}
 		cs_log("Stb boxtype    = %s", boxtype);
 	}
