@@ -164,13 +164,15 @@ static int32_t cc_cacheex_push_chk(struct s_client *cl, struct ecm_request_t *er
 		return 0;
 	}
 
+	uint8_t *remote_node = cc->peer_node_id;
+
 	//search existing peer nodes:
 	LL_LOCKITER *li = ll_li_create(er->csp_lastnodes, 0);
 	uint8_t *node;
 	while((node = ll_li_next(li)))
 	{
-		cs_log_dbg(D_CACHEEX, "cacheex: check node %" PRIu64 "X == %" PRIu64 "X ?", cacheex_node_id(node), cacheex_node_id(cc->peer_node_id));
-		if(memcmp(node, cc->peer_node_id, 8) == 0)
+		cs_log_dbg(D_CACHEEX, "cacheex: check node %" PRIu64 "X == %" PRIu64 "X ?", cacheex_node_id(node), cacheex_node_id(remote_node));
+		if(memcmp(node, remote_node, 8) == 0)
 		{
 			break;
 		}
