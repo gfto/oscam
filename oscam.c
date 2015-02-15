@@ -799,6 +799,7 @@ static void init_machine_info(void)
 		else if(!strcasecmp(boxtype,"ini-9000ru")){snprintf(boxname, sizeof(boxname), "%s", "Sezam Marvel");}
 		else if(!strcasecmp(boxtype,"ini-8000sv")){snprintf(boxname, sizeof(boxname), "%s", "Miraclebox Ultra");}
 		else if(!strcasecmp(boxtype,"ini-9000de")){snprintf(boxname, sizeof(boxname), "%s", "Xpeed LX3");}
+		else boxname[0] = 0;
 		if(boxname[0]){cs_log("Stb boxname    = %s", boxname);}
 		cs_log("Stb boxtype    = %s", boxtype);
 	}
