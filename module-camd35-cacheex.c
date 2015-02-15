@@ -158,28 +158,6 @@ static void camd35_cacheex_push_filter(struct s_client *cl, uint8_t *buf, uint8_
 	cs_log_dbg(D_CACHEEX, "cacheex: received push filter request from %s", username(cl));
 }
 
-/**
- * when a server client connects
- */
-static void camd35_server_client_init(struct s_client *cl)
-{
-	if(!cl->init_done)
-	{
-		cl->cacheex_needfilter = 1;
-	}
-}
-
-/**
- * store received remote id
- */
-static void camd35_cacheex_push_receive_remote_id(struct s_client *cl, uint8_t *buf)
-{
-
-	memcpy(cl->ncd_skey, buf + 20, 8);
-	cl->ncd_skey[8] = 1;
-	cs_log_dbg(D_CACHEEX, "cacheex: received id answer from %s: %" PRIu64 "X", username(cl), cacheex_node_id(cl->ncd_skey));
-}
-
 static int32_t camd35_cacheex_push_chk(struct s_client *cl, ECM_REQUEST *er)
 {
 	if(ll_count(er->csp_lastnodes) >= cacheex_maxhop(cl))    //check max 10 nodes to push:
@@ -322,57 +300,6 @@ static int32_t camd35_cacheex_push_out(struct s_client *cl, struct ecm_request_t
 	return res;
 }
 
-void camd35_cacheex_recv_ce1_cwc_info(struct s_client *cl, uchar *buf, int32_t idx)
-{
-	if(!(buf[0] == 0x01 && buf[18] < 0xFF && buf[18] > 0x00)) // cwc info ; normal camd3 ecms send 0xFF but we need no cycletime of 255 ;)
-		return;
-
-	ECM_REQUEST *er = NULL;
-	int32_t i;
-
-	for(i = 0; i < cfg.max_pending; i++)
-	{
-		if (cl->ecmtask[i].idx == idx)
-		{
-			er = &cl->ecmtask[i];
-			break;
-		}
-	}
-
-	if(!er)
-	{ return; }
-
-	int8_t rc = buf[3];
-	if(rc != E_FOUND)
-		{ return; }
-
-	if(buf[18])
-	{
-		if(buf[18] & (0x01 << 7))
-		{
-			er->cwc_cycletime = (buf[18] & 0x7F); // remove bit 8 to get cycletime
-			er->parent->cwc_cycletime = er->cwc_cycletime;
-			er->cwc_next_cw_cycle = 1;
-			er->parent->cwc_next_cw_cycle = er->cwc_next_cw_cycle;
-		}
-		else
-		{
-			er->cwc_cycletime = buf[18];
-			er->parent->cwc_cycletime = er->cwc_cycletime;
-			er->cwc_next_cw_cycle = 0;
-			er->parent->cwc_next_cw_cycle = er->cwc_next_cw_cycle;
-		}
-	}
-
-	if(cl->typ == 'c' && cl->account && cl->account->cacheex.mode)
-		{ cl->account->cwc_info++; }
-	else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
-		{ cl->cwc_info++; }
-
-	cs_log_dbg(D_CWC, "CWC (CE1) received from %s cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
-
-}
-
 static void camd35_cacheex_push_in(struct s_client *cl, uchar *buf)
 {
 	int8_t rc = buf[3];
@@ -497,6 +424,81 @@ static void camd35_cacheex_push_in(struct s_client *cl, uchar *buf)
 
 	cacheex_add_to_cache(cl, er);
 }
+
+void camd35_cacheex_recv_ce1_cwc_info(struct s_client *cl, uchar *buf, int32_t idx)
+{
+	if(!(buf[0] == 0x01 && buf[18] < 0xFF && buf[18] > 0x00)) // cwc info ; normal camd3 ecms send 0xFF but we need no cycletime of 255 ;)
+		return;
+
+	ECM_REQUEST *er = NULL;
+	int32_t i;
+
+	for(i = 0; i < cfg.max_pending; i++)
+	{
+		if (cl->ecmtask[i].idx == idx)
+		{
+			er = &cl->ecmtask[i];
+			break;
+		}
+	}
+
+	if(!er)
+	{ return; }
+
+	int8_t rc = buf[3];
+	if(rc != E_FOUND)
+		{ return; }
+
+	if(buf[18])
+	{
+		if(buf[18] & (0x01 << 7))
+		{
+			er->cwc_cycletime = (buf[18] & 0x7F); // remove bit 8 to get cycletime
+			er->parent->cwc_cycletime = er->cwc_cycletime;
+			er->cwc_next_cw_cycle = 1;
+			er->parent->cwc_next_cw_cycle = er->cwc_next_cw_cycle;
+		}
+		else
+		{
+			er->cwc_cycletime = buf[18];
+			er->parent->cwc_cycletime = er->cwc_cycletime;
+			er->cwc_next_cw_cycle = 0;
+			er->parent->cwc_next_cw_cycle = er->cwc_next_cw_cycle;
+		}
+	}
+
+	if(cl->typ == 'c' && cl->account && cl->account->cacheex.mode)
+		{ cl->account->cwc_info++; }
+	else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
+		{ cl->cwc_info++; }
+
+	cs_log_dbg(D_CWC, "CWC (CE1) received from %s cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
+
+}
+
+
+/**
+ * when a server client connects
+ */
+static void camd35_server_client_init(struct s_client *cl)
+{
+	if(!cl->init_done)
+	{
+		cl->cacheex_needfilter = 1;
+	}
+}
+
+/**
+ * store received remote id
+ */
+static void camd35_cacheex_push_receive_remote_id(struct s_client *cl, uint8_t *buf)
+{
+
+	memcpy(cl->ncd_skey, buf + 20, 8);
+	cl->ncd_skey[8] = 1;
+	cs_log_dbg(D_CACHEEX, "cacheex: received id answer from %s: %" PRIu64 "X", username(cl), cacheex_node_id(cl->ncd_skey));
+}
+
 
 void camd35_cacheex_init_dcw(struct s_client *client, ECM_REQUEST *er)
 {
