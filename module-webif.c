@@ -1083,6 +1083,9 @@ static char *send_oscam_config_webif(struct templatevars *vars, struct uriparams
 
 	tpl_addVar(vars, TPLADD, "HTTPHELPLANG", cfg.http_help_lang);
 	tpl_addVar(vars, TPLADD, "HTTPLOCALE", cfg.http_locale);
+	tpl_printf(vars, TPLADD, "HTTPEMMUCLEAN", "%d", cfg.http_emmu_clean);
+	tpl_printf(vars, TPLADD, "HTTPEMMSCLEAN", "%d", cfg.http_emms_clean);
+	tpl_printf(vars, TPLADD, "HTTPEMMGCLEAN", "%d", cfg.http_emmg_clean);
 	tpl_printf(vars, TPLADD, "HTTPREFRESH", "%d", cfg.http_refresh);
 	tpl_printf(vars, TPLADD, "HTTPPOLLREFRESH", "%d", cfg.poll_refresh);
 	tpl_addVar(vars, TPLADD, "HTTPTPL", cfg.http_tpl);
@@ -6316,85 +6319,102 @@ static char *send_oscam_EMM(struct templatevars * vars, struct uriparams * param
 
 	FILE *fp;
 	struct stat sb;
-	const char *slash = "/";
 	char buffer[1024];
 	char emm_hex[1024];
+	char filename[128];
 	char targetfile[256];
 	char tmpstr[20];
 	char emm_txt[128];
 	char *emm_path;
 	char *emm_types[] = { "unique_emm", "shared_emm", "global_emm" };
 	char *emm_names[] = { "RDREMMUNIQUE", "RDREMMSHARED", "RDREMMGLOBAL" };
+	char *emm_cfg_names[] = { "httpemmuclean", "httpemmsclean", "httpemmgclean" };
+	int32_t emm_max_size[] = { cfg.http_emmu_clean, cfg.http_emms_clean, cfg.http_emmg_clean };
 	int num_emm_types = 3;
-	int max_kb_size = 256;
 	int i;
 
 	emm_path = cfg.emmlogdir ? cfg.emmlogdir : cs_confdir;
 
 	for( i = 0 ; i < num_emm_types; i++ )
 	{
-		if(emm_path[strlen(emm_path) - 1] == '/') { slash = ""; }
-		snprintf(targetfile, sizeof(targetfile), "%s%s%s%s%s%s", emm_path, slash, getParam(params, "label"), "_", emm_types[i], ".log");
+		snprintf(filename, sizeof(filename), "%s%s%s%s", getParam(params, "label"), "_", emm_types[i], ".log");
+		snprintf(targetfile, sizeof(targetfile), "%s%s%s", emm_path, emm_path[strlen(emm_path) - 1] == '/' ? "" : "/", filename);
+		snprintf(emm_txt, sizeof(emm_txt), "%s_TXT", emm_names[i]);
+		tpl_addVar(vars, TPLADD, emm_txt, filename);
 
-		if((fp = fopen(targetfile, "r")) != NULL) {
-
-			uint32_t emms=0, emm_d, emmrs=0;
-			char *ptr, *saveptr1 = NULL;
-
-			snprintf(emm_txt, sizeof(emm_txt), "%s_TXT", emm_names[i]);
+		if((fp = fopen(targetfile, "r")) != NULL)
+		{
 			stat(targetfile, &sb);
+			tpl_printf(vars, TPLAPPEND, emm_txt, " (Size: %'.2f kB)", (double)sb.st_size/1024);
 
-			while(fgets(buffer, sizeof(buffer), fp) != NULL)
+			if(emm_max_size[i]>0)
 			{
-				emms++;
-				snprintf(tmpstr, sizeof(tmpstr), "LINE_%d", emms);
-				tpl_addVar(vars, TPLADD, tmpstr, buffer);
-			}
+				uint32_t emms=0, emm_d, emmrs=0;
+				char *ptr, *saveptr1 = NULL;
 
-			for(emm_d=emms;emm_d>0;--emm_d) 
-			{
-				snprintf(tmpstr, sizeof(tmpstr), "LINE_%d", emm_d);
-				if(sscanf(tpl_getVar(vars, tmpstr), "%*s %*s %*s %s", &emm_hex[0])==1)
+				while(fgets(buffer, sizeof(buffer), fp) != NULL)
 				{
-					if(strstr(tpl_getVar(vars, "EMM_TMP"),emm_hex)==0)
-						{ tpl_addVar(vars, TPLAPPEND, "EMM_TMP", tpl_getVar(vars, tmpstr)); }
-					tpl_addVar(vars, TPLADD, tmpstr, "");
+					emms++;
+					snprintf(tmpstr, sizeof(tmpstr), "LINE_%d", emms);
+					tpl_addVar(vars, TPLADD, tmpstr, buffer);
+				}
+
+				for(emm_d=emms;emm_d>0;--emm_d) 
+				{
+					snprintf(tmpstr, sizeof(tmpstr), "LINE_%d", emm_d);
+					if(sscanf(tpl_getVar(vars, tmpstr), "%*s %*s %*s %s", &emm_hex[0])==1)
+					{
+						if(strstr(tpl_getVar(vars, "EMM_TMP"),emm_hex)==0)
+							{ tpl_addVar(vars, TPLAPPEND, "EMM_TMP", tpl_getVar(vars, tmpstr)); }
+						tpl_addVar(vars, TPLADD, tmpstr, "");
+					}
+				}
+
+				for(ptr = strtok_r(tpl_getVar(vars, "EMM_TMP"),"\n", &saveptr1); ptr; ptr = strtok_r(NULL,"\n", &saveptr1))
+				{
+					emmrs++;
+					snprintf(tmpstr, sizeof(tmpstr), "LINE_%d", emmrs);
+					tpl_addVar(vars, TPLADD, tmpstr, ptr);
+				}
+				tpl_addVar(vars, TPLADD, "EMM_TMP", ""); 
+
+				tpl_printf(vars, TPLAPPEND, emm_txt, ": %'d different EMMs from a total off %'d Entrys", emmrs,emms);
+				for(emm_d=emmrs;emm_d>0;--emm_d) 
+				{
+					snprintf(tmpstr, sizeof(tmpstr), "LINE_%d", emm_d);
+					tpl_printf(vars, TPLAPPEND, emm_names[i], "%s\n", tpl_getVar(vars, tmpstr));
+				}
+
+				if(sb.st_size>emm_max_size[i]*1024)
+				{
+					char orgfile[256];
+					int f=0;
+					do {
+						snprintf(orgfile, sizeof(orgfile), "%s.%d", targetfile, f);
+						f++;
+					} while(access(orgfile, 0|F_OK) != -1);
+
+					if(rename(targetfile, orgfile) == 0)
+					{
+						FILE *fs = fopen(targetfile, "w");
+						fprintf(fs, "%s", tpl_getVar(vars, emm_names[i]));
+						fclose(fs);
+						tpl_printf(vars, TPLAPPEND, emm_txt, "<br><b>New reduced File created!</b> Size of Original File is higher as %d kB, saved to %s", emm_max_size[i], orgfile);
+					}
 				}
 			}
-
-			for(ptr = strtok_r(tpl_getVar(vars, "EMM_TMP"),"\n", &saveptr1); ptr; ptr = strtok_r(NULL,"\n", &saveptr1))
+			else if (emm_max_size[i]==0)
 			{
-				emmrs++;
-				snprintf(tmpstr, sizeof(tmpstr), "LINE_%d", emmrs);
-				tpl_addVar(vars, TPLADD, tmpstr, ptr);
+				while(fgets(buffer, sizeof(buffer), fp) != NULL)
+				{
+					tpl_addVar(vars, TPLAPPEND, emm_names[i], buffer);
+				}
 			}
-			tpl_addVar(vars, TPLAPPEND, "EMM_TMP", "");
-
-			tpl_printf(vars, TPLADD, emm_txt, "%'d different EMMs from a total off %'d Entrys (Size: %'.2f kB)", emmrs,emms,(double)sb.st_size/1024);
-			for(emm_d=emmrs;emm_d>0;--emm_d) 
+			else
 			{
-				snprintf(tmpstr, sizeof(tmpstr), "LINE_%d", emm_d);
-				tpl_printf(vars, TPLAPPEND, emm_names[i], "%s\n", tpl_getVar(vars, tmpstr));
+				tpl_printf(vars, TPLADD, emm_names[i],"Viewing of EMM File deactivated. <br>Set %s in Config Webif to 0 or higher for viewing or filtering EMM File.", emm_cfg_names[i]);
 			}
 			fclose(fp);
-
-			if(sb.st_size>max_kb_size*1024)
-			{
-				char orgfile[256];
-				int f=0;
-				do {
-					snprintf(orgfile, sizeof(orgfile), "%s.%d", targetfile, f);
-					f++;
-				} while(access(orgfile, 0|F_OK) != -1);
-
-				if(rename(targetfile, orgfile) == 0)
-				{
- 					fp = fopen(targetfile, "w");
- 					fprintf(fp, "%s", tpl_getVar(vars, emm_names[i]));
- 					fclose(fp);
-					tpl_printf(vars, TPLAPPEND, emm_txt, "<br><b>New reduced File created!</b> Size of Original File is higher as %d kB, saved to %s", max_kb_size, orgfile);
-				}
-			}
 		}
 		if(strcmp(tpl_getVar(vars, emm_names[i]),"")==0) { tpl_addVar(vars, TPLADD, emm_names[i],"no saved EMMs"); }
 	}

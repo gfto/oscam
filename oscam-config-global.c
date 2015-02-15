@@ -496,7 +496,7 @@ static const struct config_list webif_opts[] =
 	DEF_OPT_STR("httppiconpath"             , OFS(http_piconpath),          NULL),
 	DEF_OPT_STR("httphelplang"              , OFS(http_help_lang),          "en"),
 	DEF_OPT_STR("httplocale"                , OFS(http_locale),             NULL),
-	DEF_OPT_INT32("http_prepend_embedded_css"   , OFS(http_prepend_embedded_css), 0),
+	DEF_OPT_INT8("http_prepend_embedded_css"   , OFS(http_prepend_embedded_css), 0),
 	DEF_OPT_INT32("httprefresh"             , OFS(http_refresh),            0),
 	DEF_OPT_INT32("httppollrefresh"         , OFS(poll_refresh),            60),
 	DEF_OPT_INT8("httphideidleclients"      , OFS(http_hide_idle_clients),  0),
@@ -518,6 +518,9 @@ static const struct config_list webif_opts[] =
 	DEF_OPT_INT32("aulow"                   , OFS(aulow),                   30),
 	DEF_OPT_INT32("hideclient_to"           , OFS(hideclient_to),           25),
 	DEF_OPT_STR("httposcamlabel"            , OFS(http_oscam_label),        "OSCam"),
+	DEF_OPT_INT32("httpemmuclean"           , OFS(http_emmu_clean),         256),
+	DEF_OPT_INT32("httpemmsclean"           , OFS(http_emms_clean),         -1),
+	DEF_OPT_INT32("httpemmgclean"           , OFS(http_emmg_clean),         -1),
 #ifdef WEBIF_LIVELOG
  	DEF_OPT_INT8("http_status_log"          , OFS(http_status_log),         0),
 #else

@@ -1711,7 +1711,7 @@ struct s_config
 	char            *http_user;
 	char            *http_pwd;
 	char            *http_css;
-	int32_t         http_prepend_embedded_css;
+	int8_t          http_prepend_embedded_css;
 	char            *http_jscript;
 	char            *http_tpl;
 	char            *http_piconpath;
@@ -1741,6 +1741,9 @@ struct s_config
 	char            *http_help_lang;
 	char            *http_locale;
 	char            *http_oscam_label;
+	int32_t         http_emmu_clean;
+	int32_t         http_emms_clean;
+	int32_t         http_emmg_clean;
 #endif
 	int8_t          http_full_cfg;
 	int8_t          http_overwrite_bak_file;
