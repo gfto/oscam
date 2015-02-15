@@ -280,7 +280,7 @@ static int32_t camd35_cacheex_push_out(struct s_client *cl, struct ecm_request_t
 		else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
 			{ cl->cwc_info++; }
 
-		cs_log_dbg(D_CWC, "CWC (CE) push to %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
+		cs_log_dbg(D_CWC, "CWC (CE) push to %s cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
 	}
 
 	buf[19] = er->ecm[0] != 0x80 && er->ecm[0] != 0x81 ? 0 : er->ecm[0];
@@ -369,7 +369,7 @@ void camd35_cacheex_recv_ce1_cwc_info(struct s_client *cl, uchar *buf, int32_t i
 	else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
 		{ cl->cwc_info++; }
 
-	cs_log_dbg(D_CWC, "CWC (CE1) received from %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
+	cs_log_dbg(D_CWC, "CWC (CE1) received from %s cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
 
 }
 
@@ -419,7 +419,7 @@ static void camd35_cacheex_push_in(struct s_client *cl, uchar *buf)
 			{ cl->account->cwc_info++; }
 		else if((cl->typ == 'p' || cl->typ == 'r') && (cl->reader && cl->reader->cacheex.mode))
 			{ cl->cwc_info++; }
-		cs_log_dbg(D_CWC, "CWC (CE) received from %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
+		cs_log_dbg(D_CWC, "CWC (CE) received from %s cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(cl), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
 	}
 
 	uint8_t *ofs = buf + 20;
@@ -513,7 +513,7 @@ void camd35_cacheex_init_dcw(struct s_client *client, ECM_REQUEST *er)
 			{ client->account->cwc_info++; }
 		else if((client->typ == 'p' || client->typ == 'r') && (client->reader && client->reader->cacheex.mode))
 			{ client->cwc_info++; }
-		cs_log_dbg(D_CWC, "CWC (CE1) push to %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(client), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
+		cs_log_dbg(D_CWC, "CWC (CE1) push to %s cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(client), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
 		buf[19] = er->ecm[0];
 	}
 }
