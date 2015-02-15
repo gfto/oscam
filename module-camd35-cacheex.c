@@ -16,38 +16,6 @@
 uint8_t camd35_node_id[8];
 
 /**
- * send own id
- */
-void camd35_cacheex_push_send_own_id(struct s_client *cl, uint8_t *mbuf)
-{
-	uint8_t rbuf[32]; //minimal size
-	if(!cl->crypted) { return; }
-	cs_log_dbg(D_CACHEEX, "cacheex: received id request from node %" PRIu64 "X %s", cacheex_node_id(mbuf + 20), username(cl));
-	memset(rbuf, 0, sizeof(rbuf));
-	rbuf[0] = 0x3e;
-	rbuf[1] = 12;
-	rbuf[2] = 0;
-	memcpy(rbuf + 20, camd35_node_id, 8);
-	cs_log_dbg(D_CACHEEX, "cacheex: sending own id %" PRIu64 "X request %s", cacheex_node_id(camd35_node_id), username(cl));
-	camd35_send(cl, rbuf, 12); //send adds +20
-}
-
-/**
- * request remote id
- */
-void camd35_cacheex_push_request_remote_id(struct s_client *cl)
-{
-	uint8_t rbuf[32];//minimal size
-	memset(rbuf, 0, sizeof(rbuf));
-	rbuf[0] = 0x3d;
-	rbuf[1] = 12;
-	rbuf[2] = 0;
-	memcpy(rbuf + 20, camd35_node_id, 8);
-	cs_log_dbg(D_CACHEEX, "cacheex: sending id request to %s", username(cl));
-	camd35_send(cl, rbuf, 12); //send adds +20
-}
-
-/**
  * send push filter
  */
 void camd35_cacheex_send_push_filter(struct s_client *cl, uint8_t mode)
@@ -525,16 +493,6 @@ static void camd35_cacheex_push_in(struct s_client *cl, uchar *buf)
 		cs_log_dbg(D_CACHEEX, "cacheex: added missing remote node id %" PRIu64 "X", cacheex_node_id(data));
 	}
 
-	//  if (!ll_count(er->csp_lastnodes)) {
-	//      if (!cs_malloc(&data, 8))
-	//          break;
-	//      memcpy(data, &cl->ip, 4);
-	//      memcpy(data+4, &cl->port, 2);
-	//      memcpy(data+6, &cl->is_udp, 1);
-	//      ll_append(er->csp_lastnodes, data);
-	//      cs_log_dbg(D_CACHEEX, "cacheex: added compat remote node id %" PRIu64 "X", cacheex_node_id(data));
-	//  }
-
 	cacheex_add_to_cache(cl, er);
 }
 
@@ -556,6 +514,23 @@ void camd35_cacheex_init_dcw(struct s_client *client, ECM_REQUEST *er)
 		cs_log_dbg(D_CWC, "CWC (CE1) push to %s (camd3) cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", username(client), er->cwc_cycletime, er->cwc_next_cw_cycle, er->caid, er->prid, er->srvid);
 		buf[19] = er->ecm[0];
 	}
+}
+
+/**
+ * send own id
+ */
+void camd35_cacheex_push_send_own_id(struct s_client *cl, uint8_t *mbuf)
+{
+	uint8_t rbuf[32]; //minimal size
+	if(!cl->crypted) { return; }
+	cs_log_dbg(D_CACHEEX, "cacheex: received id request from node %" PRIu64 "X %s", cacheex_node_id(mbuf + 20), username(cl));
+	memset(rbuf, 0, sizeof(rbuf));
+	rbuf[0] = 0x3e;
+	rbuf[1] = 12;
+	rbuf[2] = 0;
+	memcpy(rbuf + 20, camd35_node_id, 8);
+	cs_log_dbg(D_CACHEEX, "cacheex: sending own id %" PRIu64 "X request %s", cacheex_node_id(camd35_node_id), username(cl));
+	camd35_send(cl, rbuf, 12); //send adds +20
 }
 
 bool camd35_cacheex_server(struct s_client *client, uint8_t *mbuf)
@@ -611,6 +586,21 @@ bool camd35_cacheex_recv_chk(struct s_client *client, uint8_t *buf)
 		return 0; // Not processed by cacheex
 	}
 	return 1; // Processed by cacheex
+}
+
+/**
+ * request remote id
+ */
+void camd35_cacheex_push_request_remote_id(struct s_client *cl)
+{
+	uint8_t rbuf[32];//minimal size
+	memset(rbuf, 0, sizeof(rbuf));
+	rbuf[0] = 0x3d;
+	rbuf[1] = 12;
+	rbuf[2] = 0;
+	memcpy(rbuf + 20, camd35_node_id, 8);
+	cs_log_dbg(D_CACHEEX, "cacheex: sending id request to %s", username(cl));
+	camd35_send(cl, rbuf, 12); //send adds +20
 }
 
 void camd35_cacheex_module_init(struct s_module *ph)
