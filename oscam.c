@@ -735,7 +735,7 @@ static void init_machine_info(void)
 
 	read_line_from_file("/proc/stb/info/model", model, sizeof(model));
 	read_line_from_file("/proc/stb/info/boxtype", boxtype, sizeof(boxtype));
-	if (read_line_from_file("/proc/stb/info/vumodel", vumodel, sizeof(vumodel)))
+	if (read_line_from_file("/proc/stb/info/vumodel", vumodel, sizeof(vumodel)) && !boxtype[0])
 		snprintf(boxtype, sizeof(boxtype), "vu%s", vumodel);
 
 	// Detect dreambox type
@@ -788,6 +788,9 @@ static void init_machine_info(void)
 
 	if (model[0])
 		cs_log("Stb model      = %s", model);
+
+	if (vumodel[0])
+		cs_log("Stb vumodel    = vu%s", vumodel);
 
 	if (boxtype[0])
 		cs_log("Stb boxtype    = %s", boxtype);
