@@ -138,7 +138,7 @@ static void show_usage(void)
 		   "| |_| |___) | |_| (_| | | | | | |\n"
 		   " \\___/|____/ \\___\\__,_|_| |_| |_|\n\n");
 	printf("OSCam cardserver v%s, build r%s (%s)\n", CS_VERSION, CS_SVN_VERSION, CS_TARGET);
-	printf("Copyright (C) 2009-2013 OSCam developers.\n");
+	printf("Copyright (C) 2009-2015 OSCam developers.\n");
 	printf("This program is distributed under GPLv3.\n");
 	printf("OSCam is based on Streamboard mp-cardserver v0.9d written by dukat\n");
 	printf("Visit http://www.streamboard.tv/oscam/ for more details.\n\n");
