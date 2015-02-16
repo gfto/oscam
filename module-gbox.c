@@ -1500,6 +1500,7 @@ static void init_local_gbox(void)
 	}
 	last_stats_written = time(NULL);
 	gbox_write_version();
+	local_gbox_initialized = 1;
 }
 
 static int32_t gbox_client_init(struct s_client *cli)
