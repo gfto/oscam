@@ -739,8 +739,11 @@ static void init_machine_info(void)
 
 	read_line_from_file("/proc/stb/info/model", model, sizeof(model));
 	read_line_from_file("/proc/stb/info/boxtype", boxtype, sizeof(boxtype));
-	if (read_line_from_file("/proc/stb/info/vumodel", vumodel, sizeof(vumodel)) && !boxtype[0])
+	read_line_from_file("/proc/stb/info/vumodel", vumodel, sizeof(vumodel));
+	if (vumodel[0] && !boxtype[0] && strncasecmp(model,"premium",7))
 		snprintf(boxtype, sizeof(boxtype), "vu%s", vumodel);
+	if (!boxtype[0] && !strncasecmp(model,"premium",7) && !strcasecmp(vumodel, "ultimo"))
+		snprintf(boxtype, sizeof(boxtype), "%s", "Azbox-premium");
 
 	// Detect dreambox type
 	if (strcasecmp(buffer.machine, "ppc") == 0 && !model[0] && !boxtype[0])
