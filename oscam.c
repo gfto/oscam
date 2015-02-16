@@ -814,20 +814,19 @@ static void init_machine_info(void)
 		stb_boxtype = cs_strdup(model);
 }
 
-bool boxtype_is(const char *boxtype)
-{
-	if (!stb_boxtype) return false;
-	return strcasecmp(stb_boxtype, boxtype) == 0;
-}
-
-char *boxtype_get(void)
+const char *boxtype_get(void)
 {
 	return stb_boxtype ? stb_boxtype : "generic";
 }
 
-char *boxname_get(void)
+const char *boxname_get(void)
 {
 	return stb_boxname ? stb_boxname : "generic";
+}
+
+bool boxtype_is(const char *boxtype)
+{
+	return strcasecmp(boxtype_get(), boxtype) == 0;
 }
 
 /* Checks if the date of the system is correct and waits if necessary. */

@@ -2048,7 +2048,7 @@ char *get_tiername(uint16_t tierid, uint16_t caid, char *buf);
 char *get_provider(uint16_t caid, uint32_t provid, char *buf, uint32_t buflen);
 void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *sat, const char *lang);
 bool boxtype_is(const char *boxtype);
-char *boxtype_get(void);
-char *boxname_get(void);
+const char *boxtype_get(void);
+const char *boxname_get(void);
 
 #endif
