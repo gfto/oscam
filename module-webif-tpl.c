@@ -122,9 +122,9 @@ void webif_tpls_free(void)
 
 /* Adds a name->value-mapping or appends to it. You will get a reference back which you may freely
    use (but you should not call free/realloc on this!)*/
-char *tpl_addVar(struct templatevars *vars, uint8_t addmode, const char *name, const char *value)
+void tpl_addVar(struct templatevars *vars, uint8_t addmode, const char *name, const char *value)
 {
-	if(name == NULL) { return ""; }
+	if(name == NULL) { return; }
 	if(value == NULL) { value = ""; }
 	int32_t i;
 	char *tmp = NULL, *result = NULL;
@@ -140,20 +140,20 @@ char *tpl_addVar(struct templatevars *vars, uint8_t addmode, const char *name, c
 	{
 		if((*vars).varsalloc <= (*vars).varscnt)
 		{
-			if(!cs_realloc(&(*vars).names, (*vars).varsalloc * 2 * sizeof(char **))) { return ""; }
-			if(!cs_realloc(&(*vars).values, (*vars).varsalloc * 2 * sizeof(char **))) { return ""; }
-			if(!cs_realloc(&(*vars).vartypes, (*vars).varsalloc * 2 * sizeof(uint8_t *))) { return ""; }
+			if(!cs_realloc(&(*vars).names, (*vars).varsalloc * 2 * sizeof(char **))) { return; }
+			if(!cs_realloc(&(*vars).values, (*vars).varsalloc * 2 * sizeof(char **))) { return; }
+			if(!cs_realloc(&(*vars).vartypes, (*vars).varsalloc * 2 * sizeof(uint8_t *))) { return; }
 			(*vars).varsalloc = (*vars).varscnt * 2;
 		}
 		int32_t len = strlen(name) + 1;
-		if(!cs_malloc(&tmp, len)) { return ""; }
+		if(!cs_malloc(&tmp, len)) { return; }
 		memcpy(tmp, name, len);
 		(*vars).names[(*vars).varscnt] = tmp;
 		len = strlen(value) + 1;
 		if(!cs_malloc(&tmp, len))
 		{
 			NULLFREE((*vars).names[(*vars).varscnt]);
-			return "";
+			return;
 		}
 		memcpy(tmp, value, len);
 		(*vars).values[(*vars).varscnt] = tmp;
@@ -164,19 +164,19 @@ char *tpl_addVar(struct templatevars *vars, uint8_t addmode, const char *name, c
 	{
 		int32_t oldlen = 0, newlen = strlen(value);
 		if(addmode == TPLAPPEND || addmode == TPLAPPENDONCE) { oldlen = strlen((*vars).values[i]); }
-		if(!cs_realloc(&((*vars).values[i]), oldlen + newlen + 1)) { return ""; }
+		if(!cs_realloc(&((*vars).values[i]), oldlen + newlen + 1)) { return; }
 		memcpy((*vars).values[i] + oldlen, value, newlen + 1);
 		(*vars).vartypes[i] = addmode;
 	}
-	return tmp;
+	return;
 }
 
 /* Adds a message to be output on the page using the TPLMESSAGE template. */
-char *tpl_addMsg(struct templatevars *vars, const char *value)
+void tpl_addMsg(struct templatevars *vars, const char *value)
 {
 	tpl_addVar(vars, TPLADDONCE, "MESSAGE", value);
 	(*vars).messages++;
-	return tpl_addVar(vars, TPLAPPEND, "MESSAGES", tpl_getTpl(vars, "MESSAGEBIT"));
+	tpl_addVar(vars, TPLAPPEND, "MESSAGES", tpl_getTpl(vars, "MESSAGEBIT"));
 }
 
 /* Allows to add a char array which has been allocated by malloc. It will automatically get
@@ -199,7 +199,7 @@ static char *tpl_addTmp(struct templatevars *vars, char *value)
    varname, the printf-result will be added/appended to the varlist, if varname=NULL it will only be returned.
    In either case you will always get a reference back which you may freely use (but you should not call
    free/realloc on this as it will be automatically cleaned!)*/
-char *tpl_printf(struct templatevars *vars, uint8_t addmode, const char *varname, const char *fmtstring, ...)
+void tpl_printf(struct templatevars *vars, uint8_t addmode, const char *varname, const char *fmtstring, ...)
 {
 	uint32_t needed;
 	char test[1];
@@ -210,7 +210,7 @@ char *tpl_printf(struct templatevars *vars, uint8_t addmode, const char *varname
 	va_end(argptr);
 
 	char *result;
-	if(!cs_malloc(&result, needed + 1)) { return ""; }
+	if(!cs_malloc(&result, needed + 1)) { return; }
 	va_start(argptr, fmtstring);
 	vsnprintf(result, needed + 1, fmtstring, argptr);
 	va_end(argptr);
@@ -218,11 +218,10 @@ char *tpl_printf(struct templatevars *vars, uint8_t addmode, const char *varname
 	if(varname == NULL) { tpl_addTmp(vars, result); }
 	else
 	{
-		char *tmp = tpl_addVar(vars, addmode, varname, result);
-		NULLFREE(result);
-		result = tmp;
+		tpl_addVar(vars, addmode, varname, result);
+		free(result);
 	}
-	return result;
+	return;
 }
 
 /* Returns the value for a name or an empty string if nothing was found. */

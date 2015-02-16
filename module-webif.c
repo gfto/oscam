@@ -2380,7 +2380,6 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 #endif
 	default :
 		tpl_addMsg(vars, "Error: protocol not resolvable");
-		tpl_addMsg(vars, tpl_printf(vars, TPLADD, "TMP", "Error: protocol number: %d readername: %s", rdr->typ, xml_encode(vars, rdr->label)));
 		break;
 
 	}
