@@ -736,19 +736,21 @@ static void init_machine_info(void)
 	model[0] = 0;
 	char vumodel[128];
 	vumodel[0] = 0;
+	int8_t azmodel = 0;
+	FILE *f;
 
+	if ((f = fopen("/proc/stb/info/azmodel", "r"))){ azmodel = 1; fclose(f);}
 	read_line_from_file("/proc/stb/info/model", model, sizeof(model));
 	read_line_from_file("/proc/stb/info/boxtype", boxtype, sizeof(boxtype));
 	read_line_from_file("/proc/stb/info/vumodel", vumodel, sizeof(vumodel));
-	if (vumodel[0] && !boxtype[0] && strncasecmp(model,"premium",7))
+	if (vumodel[0] && !boxtype[0] && azmodel == 0)
 		snprintf(boxtype, sizeof(boxtype), "vu%s", vumodel);
-	if (!boxtype[0] && !strncasecmp(model,"premium",7) && !strcasecmp(vumodel, "ultimo"))
+	if (!boxtype[0] && !strncasecmp(model,"premium",7) && !strcasecmp(vumodel, "ultimo") && azmodel)
 		snprintf(boxtype, sizeof(boxtype), "%s", "Azbox-premium");
 
 	// Detect dreambox type
 	if (strcasecmp(buffer.machine, "ppc") == 0 && !model[0] && !boxtype[0])
 	{
-		FILE *f;
 		char line[128], *p;
 		int have_dreambox = 0;
 		if ((f = fopen("/proc/cpuinfo", "r")))
