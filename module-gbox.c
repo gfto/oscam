@@ -30,6 +30,7 @@
 #define LOCAL_GBOX_MAJOR_VERSION	0x02
 
 static struct gbox_data local_gbox;
+static local_gbox_initialized = 0;
 static time_t last_stats_written;
 
 static void	gbox_send_checkcode(struct s_client *cli);
@@ -43,7 +44,6 @@ static int32_t	gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
 static int32_t	gbox_checkcode_recv(struct s_client *cli, uchar *checkcode);
 static uint16_t	gbox_convert_password_to_id(uint32_t password);
 static int32_t	gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSED(buf));
-static void	init_local_gbox(void);
 
 char *get_gbox_tmp_fname(char *fext)
 {
@@ -1164,107 +1164,6 @@ static void gbox_local_cards(struct s_client *cli)
 	}  // end add proxy reader cards 
 } //end add local gbox cards
 
-static int32_t gbox_client_init(struct s_client *cli)
-{
-	if(!cfg.gbx_port[0] || cfg.gbx_port[0] > 65535)
-	{
-		cs_log("error, no/invalid port=%d configured in oscam.conf!",
-			   cfg.gbx_port[0] ? cfg.gbx_port[0] : 0);
-		return -1;
-	}
-	
-	if(!cfg.gbox_hostname || strlen(cfg.gbox_hostname) > 128)
-	{
-		cs_log("error, no/invalid hostname '%s' configured in oscam.conf!",
-			   cfg.gbox_hostname ? cfg.gbox_hostname : "");
-		return -1;
-	}
-
-	if(!local_gbox.id)
-	{
-		cs_log("error, no/invalid password '%s' configured in oscam.conf!",
-			   cfg.gbox_my_password ? cfg.gbox_my_password : "");
-		return -1;
-	}
-
-	if(!cs_malloc(&cli->gbox, sizeof(struct gbox_peer)))
-		{ return -1; }
-
-	struct gbox_peer *peer = cli->gbox;
-	struct s_reader *rdr = cli->reader;
-
-	rdr->card_status = CARD_NEED_INIT;
-	rdr->tcp_connected = 0;
-
-	memset(peer, 0, sizeof(struct gbox_peer));
-
-	peer->gbox.password = a2i(rdr->r_pwd, 4);
-	cs_log_dbg(D_READER, "gbox peer password: %s:", rdr->r_pwd);
-
-	peer->gbox.id = gbox_convert_password_to_id(peer->gbox.password);	
-	if (get_gbox_proxy(peer->gbox.id) || peer->gbox.id == NO_GBOX_ID || peer->gbox.id == local_gbox.id)
-	{
-		cs_log("error, double/invalid gbox id: %04X", peer->gbox.id);	
-		return -1;
-	}
-	cli->gbox_peer_id = peer->gbox.id;	
-
-	cli->pfd = 0;
-	cli->crypted = 1;
-
-	set_null_ip(&cli->ip);
-
-	if((cli->udp_fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-	{
-		cs_log("socket creation failed (errno=%d %s)", errno, strerror(errno));
-		cs_disconnect_client(cli);
-	}
-
-	int32_t opt = 1;
-	setsockopt(cli->udp_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-
-	set_so_reuseport(cli->udp_fd);
-
-	set_socket_priority(cli->udp_fd, cfg.netprio);
-
-	memset((char *)&cli->udp_sa, 0, sizeof(cli->udp_sa));
-
-	if(!hostResolve(rdr))
-		{ return 0; }
-
-	cli->port = rdr->r_port;
-	SIN_GET_FAMILY(cli->udp_sa) = AF_INET;
-	SIN_GET_PORT(cli->udp_sa) = htons((uint16_t)rdr->r_port);
-	hostname2ip(cli->reader->device, &SIN_GET_ADDR(cli->udp_sa));
-
-	cs_log("proxy %s (fd=%d, peer id=%04X, my id=%04X, my hostname=%s, peer's listen port=%d)",
-		   rdr->device, cli->udp_fd, peer->gbox.id, local_gbox.id, cfg.gbox_hostname, rdr->r_port);
-
-	cli->pfd = cli->udp_fd;
-
-	cs_lock_create(&peer->lock, "gbox_lock", 5000);
-
-	gbox_reinit_peer(peer);	
-
-	cli->reader->card_status = CARD_NEED_INIT;
-	gbox_send_hello(cli);
-
-	if(!cli->reader->gbox_maxecmsend)
-		{ cli->reader->gbox_maxecmsend = DEFAULT_GBOX_MAX_ECM_SEND; }
-
-	if(!cli->reader->gbox_maxdist)
-		{ cli->reader->gbox_maxdist = DEFAULT_GBOX_MAX_DIST; }
-
-	//value > DEFAULT_GBOX_RESHARE not allowed in gbox network
-	if(!cli->reader->gbox_reshare || cli->reader->gbox_reshare > DEFAULT_GBOX_RESHARE)
-		{ cli->reader->gbox_reshare = DEFAULT_GBOX_RESHARE; }
-
-	if(!cli->reader->gbox_cccam_reshare || cli->reader->gbox_cccam_reshare > DEFAULT_GBOX_RESHARE)
-		{ cli->reader->gbox_cccam_reshare = DEFAULT_GBOX_RESHARE; }
-
-	return 0;
-}
-
 static uint32_t gbox_get_pending_time(ECM_REQUEST *er, uint16_t peer_id, uint8_t slot)
 {
 	if (!er) { return 0; }
@@ -1603,6 +1502,110 @@ static void init_local_gbox(void)
 	gbox_write_version();
 }
 
+static int32_t gbox_client_init(struct s_client *cli)
+{
+	if (!local_gbox_initialized)
+		{ init_local_gbox(); }
+
+	if(!cfg.gbx_port[0] || cfg.gbx_port[0] > 65535)
+	{
+		cs_log("error, no/invalid port=%d configured in oscam.conf!",
+			   cfg.gbx_port[0] ? cfg.gbx_port[0] : 0);
+		return -1;
+	}
+	
+	if(!cfg.gbox_hostname || strlen(cfg.gbox_hostname) > 128)
+	{
+		cs_log("error, no/invalid hostname '%s' configured in oscam.conf!",
+			   cfg.gbox_hostname ? cfg.gbox_hostname : "");
+		return -1;
+	}
+
+	if(!local_gbox.id)
+	{
+		cs_log("error, no/invalid password '%s' configured in oscam.conf!",
+			   cfg.gbox_my_password ? cfg.gbox_my_password : "");
+		return -1;
+	}
+
+	if(!cs_malloc(&cli->gbox, sizeof(struct gbox_peer)))
+		{ return -1; }
+
+	struct gbox_peer *peer = cli->gbox;
+	struct s_reader *rdr = cli->reader;
+
+	rdr->card_status = CARD_NEED_INIT;
+	rdr->tcp_connected = 0;
+
+	memset(peer, 0, sizeof(struct gbox_peer));
+
+	peer->gbox.password = a2i(rdr->r_pwd, 4);
+	cs_log_dbg(D_READER, "gbox peer password: %s:", rdr->r_pwd);
+
+	peer->gbox.id = gbox_convert_password_to_id(peer->gbox.password);	
+	if (get_gbox_proxy(peer->gbox.id) || peer->gbox.id == NO_GBOX_ID || peer->gbox.id == local_gbox.id)
+	{
+		cs_log("error, double/invalid gbox id: %04X", peer->gbox.id);	
+		return -1;
+	}
+	cli->gbox_peer_id = peer->gbox.id;	
+
+	cli->pfd = 0;
+	cli->crypted = 1;
+
+	set_null_ip(&cli->ip);
+
+	if((cli->udp_fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+	{
+		cs_log("socket creation failed (errno=%d %s)", errno, strerror(errno));
+		cs_disconnect_client(cli);
+	}
+
+	int32_t opt = 1;
+	setsockopt(cli->udp_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+	set_so_reuseport(cli->udp_fd);
+
+	set_socket_priority(cli->udp_fd, cfg.netprio);
+
+	memset((char *)&cli->udp_sa, 0, sizeof(cli->udp_sa));
+
+	if(!hostResolve(rdr))
+		{ return 0; }
+
+	cli->port = rdr->r_port;
+	SIN_GET_FAMILY(cli->udp_sa) = AF_INET;
+	SIN_GET_PORT(cli->udp_sa) = htons((uint16_t)rdr->r_port);
+	hostname2ip(cli->reader->device, &SIN_GET_ADDR(cli->udp_sa));
+
+	cs_log("proxy %s (fd=%d, peer id=%04X, my id=%04X, my hostname=%s, peer's listen port=%d)",
+		   rdr->device, cli->udp_fd, peer->gbox.id, local_gbox.id, cfg.gbox_hostname, rdr->r_port);
+
+	cli->pfd = cli->udp_fd;
+
+	cs_lock_create(&peer->lock, "gbox_lock", 5000);
+
+	gbox_reinit_peer(peer);	
+
+	cli->reader->card_status = CARD_NEED_INIT;
+	gbox_send_hello(cli);
+
+	if(!cli->reader->gbox_maxecmsend)
+		{ cli->reader->gbox_maxecmsend = DEFAULT_GBOX_MAX_ECM_SEND; }
+
+	if(!cli->reader->gbox_maxdist)
+		{ cli->reader->gbox_maxdist = DEFAULT_GBOX_MAX_DIST; }
+
+	//value > DEFAULT_GBOX_RESHARE not allowed in gbox network
+	if(!cli->reader->gbox_reshare || cli->reader->gbox_reshare > DEFAULT_GBOX_RESHARE)
+		{ cli->reader->gbox_reshare = DEFAULT_GBOX_RESHARE; }
+
+	if(!cli->reader->gbox_cccam_reshare || cli->reader->gbox_cccam_reshare > DEFAULT_GBOX_RESHARE)
+		{ cli->reader->gbox_cccam_reshare = DEFAULT_GBOX_RESHARE; }
+
+	return 0;
+}
+
 static void gbox_s_idle(struct s_client *cl)
 {
 	uint32_t time_since_last;
@@ -1723,7 +1726,6 @@ void gbox_send_HERE_query (uint16_t boxid)	//gbox.net send this cmd
 */
 void module_gbox(struct s_module *ph)
 {
-	init_local_gbox();
 	int32_t i;
 	for(i = 0; i < CS_MAXPORTS; i++)
 	{
