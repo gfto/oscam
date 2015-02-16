@@ -30,7 +30,7 @@
 #define LOCAL_GBOX_MAJOR_VERSION	0x02
 
 static struct gbox_data local_gbox;
-static local_gbox_initialized = 0;
+static uint8_t local_gbox_initialized = 0;
 static time_t last_stats_written;
 
 static void	gbox_send_checkcode(struct s_client *cli);
