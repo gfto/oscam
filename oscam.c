@@ -1743,6 +1743,7 @@ int32_t main(int32_t argc, char *argv[])
 	NULLFREE(first_client->account);
 	NULLFREE(first_client);
 	free(stb_boxtype);
+	free(stb_boxname);
 
 	// This prevents the compiler from removing config_mak from the final binary
 	syslog_ident = config_mak;
