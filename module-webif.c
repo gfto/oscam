@@ -7564,6 +7564,13 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			tpl_addVar(vars, TPLADD, "CS_SVN_VERSION", CS_SVN_VERSION);
 			tpl_addVar(vars, TPLADD, "CS_TARGET", CS_TARGET);
 			tpl_addVar(vars, TPLADD, "HTTPOSCAMLABEL", xml_encode(vars,cfg.http_oscam_label));
+			char *PC_OR_BOXTYPE;
+			if(!strcmp(boxname_get(),"generic")){
+				PC_OR_BOXTYPE = boxtype_get();
+			} else {
+				PC_OR_BOXTYPE = boxname_get();
+			}
+			tpl_addVar(vars, TPLADD, "PC_OR_BOXTYPE", PC_OR_BOXTYPE);
 
 			if(cfg.http_locale){
 				float decimal_point = 0.0;

@@ -123,6 +123,7 @@ int log_remove_sensitive = 1;
 
 static char *prog_name;
 static char *stb_boxtype;
+static char *stb_boxname;
 
 /*****************************************************************************
         Statics
@@ -803,7 +804,7 @@ static void init_machine_info(void)
 		else if(!strcasecmp(boxtype,"ini-8000sv")){snprintf(boxname, sizeof(boxname), "%s", "Miraclebox Ultra");}
 		else if(!strcasecmp(boxtype,"ini-9000de")){snprintf(boxname, sizeof(boxname), "%s", "Xpeed LX3");}
 		else boxname[0] = 0;
-		if(boxname[0]){cs_log("Stb boxname    = %s", boxname);}
+		if(boxname[0]){cs_log("Stb boxname    = %s", boxname); stb_boxname = cs_strdup(boxname);}
 		cs_log("Stb boxtype    = %s", boxtype);
 	}
 
@@ -819,9 +820,14 @@ bool boxtype_is(const char *boxtype)
 	return strcasecmp(stb_boxtype, boxtype) == 0;
 }
 
-const char *boxtype_get(void)
+char *boxtype_get(void)
 {
 	return stb_boxtype ? stb_boxtype : "generic";
+}
+
+char *boxname_get(void)
+{
+	return stb_boxname ? stb_boxname : "generic";
 }
 
 /* Checks if the date of the system is correct and waits if necessary. */
