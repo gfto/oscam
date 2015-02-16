@@ -829,6 +829,11 @@ bool boxtype_is(const char *boxtype)
 	return strcasecmp(boxtype_get(), boxtype) == 0;
 }
 
+bool boxname_is(const char *boxname)
+{
+	return strcasecmp(boxname_get(), boxname) == 0;
+}
+
 /* Checks if the date of the system is correct and waits if necessary. */
 static void init_check(void)
 {
