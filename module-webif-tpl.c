@@ -182,7 +182,7 @@ char *tpl_addMsg(struct templatevars *vars, const char *value)
 /* Allows to add a char array which has been allocated by malloc. It will automatically get
   freed when calling tpl_clear(). Please do NOT free the memory yourself or realloc
   it after having added the array here! */
-char *tpl_addTmp(struct templatevars *vars, char *value)
+static char *tpl_addTmp(struct templatevars *vars, char *value)
 {
 	if(value == NULL) { return ""; }
 	if((*vars).tmpalloc <= (*vars).tmpcnt)

@@ -36,7 +36,6 @@ void                 tpl_clear(struct templatevars *vars);
 
 char    *tpl_addVar(struct templatevars *vars, uint8_t addmode, const char *name, const char *value);
 char    *tpl_addMsg(struct templatevars *vars, const char *value);
-char    *tpl_addTmp(struct templatevars *vars, char *value);
 char    *tpl_printf(struct templatevars *vars, uint8_t addmode, const char *varname, const char *fmtstring, ...) __attribute__((format(printf, 4, 5)));
 
 char    *tpl_getVar(struct templatevars *vars, const char *name);
