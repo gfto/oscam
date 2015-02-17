@@ -16,16 +16,7 @@
 
 uint32_t get_fallbacktimeout(uint16_t   caid)
 {
-	uint32_t ftimeout = 0;
-	int32_t i;
-	for(i = 0; i < cfg.ftimeouttab.n; i++)
-	{
-		if(cfg.ftimeouttab.caid[i] == caid || cfg.ftimeouttab.caid[i] == caid >> 8)
-		{
-			ftimeout = cfg.ftimeouttab.value[i];
-			break;
-		}
-	}
+	uint32_t ftimeout = caidvaluetab_get_value(&cfg.ftimeouttab, caid, 0);
 
 	if(ftimeout == 0) { ftimeout = cfg.ftimeout; }
 
@@ -1072,4 +1063,16 @@ bool check_client(struct s_client *cl)
 	if(cl && !cl->kill)
 		{ return true; }
 	return false;
+}
+
+uint16_t caidvaluetab_get_value(CAIDVALUETAB *cv, uint16_t caid, uint16_t default_value)
+{
+	int32_t i;
+	for(i = 0; i < cv->cvnum; i++)
+	{
+		CAIDVALUETAB_DATA *cvdata = &cv->cvdata[i];
+		if(cvdata->caid == caid || cvdata->caid == caid >> 8)
+			return cvdata->value;
+	}
+	return default_value;
 }

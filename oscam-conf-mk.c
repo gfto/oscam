@@ -636,24 +636,25 @@ char *mk_t_cltab(CLASSTAB *clstab)
 /*
  * Creates a string ready to write as a token into config or WebIf. You must free the returned value through free_mk_t().
  */
-char *mk_t_caidvaluetab(CAIDVALUETAB *tab)
+char *mk_t_caidvaluetab(CAIDVALUETAB *caidvaluetab)
 {
-	if(!tab->n) { return ""; }
-	int32_t i, size = 2 + tab->n * (4 + 1 + 5 + 1); //caid + ":" + time + ","
-	char *buf;
-	if(!cs_malloc(&buf, size))
-		{ return ""; }
-	char *ptr = buf;
-
-	for(i = 0; i < tab->n && tab->n <= CS_MAX_CAIDVALUETAB; i++)
+	if (!caidvaluetab || !caidvaluetab->cvnum) return "";
+	// Max entry length is strlen("1234@65535,") == 11
+	int32_t i, maxlen = 12 * caidvaluetab->cvnum, pos = 0;
+	char *ret;
+	if (!cs_malloc(&ret, maxlen))
+		return "";
+	const char *comma = "";
+	for(i = 0; i < caidvaluetab->cvnum; i++)
 	{
-		if(tab->caid[i] < 0x0100)  //Do not format 0D as 000D, its a shortcut for 0Dxx:
-			{ ptr += snprintf(ptr, size - (ptr - buf), "%s%02X:%d", i ? "," : "", tab->caid[i], tab->value[i]); }
+		CAIDVALUETAB_DATA *d = &caidvaluetab->cvdata[i];
+		if (d->caid < 0x0100)
+			pos += snprintf(ret + pos, maxlen - pos, "%s%02X:%d", comma, d->caid, d->value);
 		else
-			{ ptr += snprintf(ptr, size - (ptr - buf), "%s%04X:%d", i ? "," : "", tab->caid[i], tab->value[i]); }
+			pos += snprintf(ret + pos, maxlen - pos, "%s%04X:%d", comma, d->caid, d->value);
+		comma = ",";
 	}
-	*ptr = 0;
-	return buf;
+	return ret;
 }
 
 char *mk_t_cacheex_valuetab(CECSPVALUETAB *tab)

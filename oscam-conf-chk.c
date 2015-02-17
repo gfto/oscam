@@ -77,31 +77,26 @@ void chk_caidtab(char *caidasc, CAIDTAB *ctab)
 	memcpy(ctab, &newctab, sizeof(CAIDTAB));
 }
 
-void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab, int32_t minvalue)
+void chk_caidvaluetab(char *value, CAIDVALUETAB *caidvaluetab)
 {
-	int32_t i;
-	char *ptr1, *ptr2, *saveptr1 = NULL;
-	CAIDVALUETAB newtab;
-	memset(&newtab, 0, sizeof(CAIDVALUETAB));
-
-	for(i = 0, ptr1 = strtok_r(lbrlt, ",", &saveptr1); (i < CS_MAX_CAIDVALUETAB) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1))
+	caidvaluetab_clear(caidvaluetab);
+	char *ptr, *saveptr1 = NULL;
+	for(ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1))
 	{
-		int32_t caid, value;
-
-		if((ptr2 = strchr(trim(ptr1), ':')))
-			{ * ptr2++ = '\0'; }
-		else
-			{ ptr2 = ""; }
-
-		if(((caid = a2i(ptr1, 2)) < 0xFFFF) | ((value = atoi(ptr2)) < 10000))
-		{
-			newtab.caid[i] = caid;
-			if(value < minvalue) { value = minvalue; }
-			newtab.value[i] = value;
-			newtab.n = ++i;
-		}
+		CAIDVALUETAB_DATA d;
+		memset(&d, 0, sizeof(d));
+		char *caid_end_ptr = strchr(ptr, ':'); // caid_end_ptr + 1 -> value
+		if(!caid_end_ptr)
+			continue;
+		*caid_end_ptr++ = '\0';
+		errno = 0;
+		d.caid = a2i(ptr, 2);
+		if (errno == EINVAL)
+			continue;
+		d.value = atoi(caid_end_ptr);
+		if (d.caid && d.value < 10000)
+			caidvaluetab_add(caidvaluetab, &d);
 	}
-	memcpy(tab, &newtab, sizeof(CAIDVALUETAB));
 }
 
 void chk_cacheex_valuetab(char *lbrlt, CECSPVALUETAB *tab)

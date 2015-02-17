@@ -3,6 +3,7 @@
 #include "globals.h"
 #include "module-dvbapi.h"
 #include "module-gbox.h"
+#include "oscam-array.h"
 #include "oscam-conf.h"
 #include "oscam-conf-chk.h"
 #include "oscam-conf-mk.h"
@@ -152,13 +153,25 @@ void check_caidtab_fn(const char *token, char *value, void *setting, FILE *f)
 void caidvaluetab_fn(const char *token, char *value, void *setting, FILE *f)
 {
 	CAIDVALUETAB *caid_value_table = setting;
-	int limit = streq(token, "lb_retrylimits") ? 50 : 1;
 	if(value)
 	{
-		chk_caidvaluetab(value, caid_value_table, limit);
+		if (strlen(value)) {
+			chk_caidvaluetab(value, caid_value_table);
+			if (streq(token, "lb_retrylimits"))
+			{
+				int32_t i;
+				for (i = 0; i < caid_value_table->cvnum; i++)
+				{
+					if (caid_value_table->cvdata[i].value < 50)
+						caid_value_table->cvdata[i].value = 50;
+				}
+			}
+		} else {
+			caidvaluetab_clear(caid_value_table);
+		}
 		return;
 	}
-	if(caid_value_table->n > 0 || cfg.http_full_cfg)
+	if(caid_value_table->cvnum || cfg.http_full_cfg)
 	{
 		value = mk_t_caidvaluetab(caid_value_table);
 		fprintf_conf(f, token, "%s\n", value);
@@ -1053,6 +1066,14 @@ void config_set(char *section, const char *token, char *value)
 void config_free(void)
 {
 	config_sections_free(oscam_conf, &cfg);
+	caidvaluetab_clear(&cfg.ftimeouttab);
+#ifdef WITH_LB
+	caidvaluetab_clear(&cfg.lb_retrylimittab);
+	caidvaluetab_clear(&cfg.lb_nbest_readers_tab);
+#endif
+#ifdef CS_CACHEEX
+	caidvaluetab_clear(&cfg.cacheex_mode1_delay_tab);
+#endif
 }
 
 int32_t init_config(void)

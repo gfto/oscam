@@ -739,13 +739,7 @@ static int32_t has_ident(FTAB *ftab, ECM_REQUEST *er) {
 
 static int32_t get_retrylimit(ECM_REQUEST *er)
 {
-	int32_t i;
-	for(i = 0; i < cfg.lb_retrylimittab.n; i++)
-	{
-		if(cfg.lb_retrylimittab.caid[i] == er->caid || cfg.lb_retrylimittab.caid[i] == er->caid >> 8)
-			{ return cfg.lb_retrylimittab.value[i]; }
-	}
-	return cfg.lb_retrylimit;
+	return caidvaluetab_get_value(&cfg.lb_retrylimittab, er->caid, cfg.lb_retrylimit);
 }
 
 
@@ -762,20 +756,10 @@ static int32_t get_nfb_readers(ECM_REQUEST *er)
 
 static int32_t get_nbest_readers(ECM_REQUEST *er)
 {
-
 	int32_t nbest_readers = er->client->account->lb_nbest_readers == -1 ? cfg.lb_nbest_readers : er->client->account->lb_nbest_readers;
-	CAIDVALUETAB nbest_readers_tab = er->client->account->lb_nbest_readers_tab.n == 0 ?  cfg.lb_nbest_readers_tab  :  er->client->account->lb_nbest_readers_tab;
-
+	CAIDVALUETAB *nbest_readers_tab = er->client->account->lb_nbest_readers_tab.cvnum == 0 ? &cfg.lb_nbest_readers_tab : &er->client->account->lb_nbest_readers_tab;
 	if(nbest_readers <= 0) { nbest_readers = 1; }
-
-	int32_t i;
-	for(i = 0; i < nbest_readers_tab.n; i++)
-	{
-		if(nbest_readers_tab.caid[i] == er->caid || nbest_readers_tab.caid[i] == er->caid >> 8)
-			{ return nbest_readers_tab.value[i]; }
-	}
-
-	return nbest_readers;
+	return caidvaluetab_get_value(nbest_readers_tab, er->caid, nbest_readers);
 }
 
 static void convert_to_beta_int(ECM_REQUEST *er, uint16_t caid_to)

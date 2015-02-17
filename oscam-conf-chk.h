@@ -3,7 +3,7 @@
 
 void chk_iprange(char *value, struct s_ip **base);
 void chk_caidtab(char *caidasc, CAIDTAB *ctab);
-void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab, int32_t minvalue);
+void chk_caidvaluetab(char *value, CAIDVALUETAB *tab);
 void chk_cacheex_valuetab(char *lbrlt, CECSPVALUETAB *tab);
 void chk_cacheex_cwcheck_valuetab(char *lbrlt, CWCHECKTAB *tab);
 void chk_cacheex_hitvaluetab(char *lbrlt, CECSPVALUETAB *tab);

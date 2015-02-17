@@ -248,7 +248,6 @@ typedef unsigned char uchar;
 #define CS_MAXCAIDTAB 32  // max. caid-defs/user
 #define CS_MAXPROV    32
 #define CS_MAXPORTS   32  // max server ports
-#define CS_MAX_CAIDVALUETAB 16
 #define CS_CLIENT_HASHBUCKETS 32
 
 #define CS_ECMSTORESIZE   16  // use MD5()
@@ -537,11 +536,16 @@ typedef struct cs_mutexlock
 
 #include "oscam-llist.h"
 
+typedef struct s_caidvaluetab_data
+{
+	uint16_t			caid;
+	uint16_t			value;
+} CAIDVALUETAB_DATA;
+
 typedef struct s_caidvaluetab
 {
-	uint16_t        n;
-	uint16_t        caid[CS_MAX_CAIDVALUETAB];
-	uint16_t        value[CS_MAX_CAIDVALUETAB];
+	int32_t				cvnum;
+	CAIDVALUETAB_DATA	*cvdata;
 } CAIDVALUETAB;
 
 typedef struct s_classtab

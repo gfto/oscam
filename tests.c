@@ -234,4 +234,44 @@ void run_all_tests(void)
 		},
 	};
 	run_parser_test(&ftab_test);
+
+	CAIDVALUETAB caidvaluetab, caidvaluetab_c;
+	struct test_type caidvaluetab_test =
+	{
+		.desc     = "caidvaluetab (ACCOUNT: 'lb_nbest_percaid'; GLOBAL: 'lb_nbest_percaid', 'fallbacktimeout_percaid', 'lb_retrylimits', 'cacheex_mode1_delay')",
+		.data     = &caidvaluetab,
+		.data_c   = &caidvaluetab_c,
+		.data_sz  = sizeof(caidvaluetab),
+		.chk_fn   = (CHK_FN *)&chk_caidvaluetab,
+		.mk_t_fn  = (MK_T_FN *)&mk_t_caidvaluetab,
+		.clear_fn = (CLEAR_FN *)&caidvaluetab_clear,
+		.clone_fn = (CLONE_FN *)&caidvaluetab_clone,
+		.test_vec = (const struct test_vec[])
+		{
+			{ .in = "0100:4,0200:3,0300:2,0400:1" },
+			{ .in = "0100:4,02:3,03:2,04:1,0500:9999" },
+			{ .in = "0100:4" },
+			{ .in = "01:4" },
+			{ .in = "" },
+			{ .in = "0500:10000",          .out = "" },
+			{ .in = "0200:eeee,tyut,1234", .out = "0200:0" },
+			{ .in = "0200:eeee,tyut",      .out = "0200:0" },
+			{ .in = "1:0",                 .out = "01:0" },
+			{ .in = "1:0,1,0",             .out = "01:0" },
+			{ .in = "0500:10000",          .out = "" },
+			{ .in = "0:0",                 .out = "" },
+			{ .in = "zzzz:",               .out = "" },
+			{ .in = "yyyy:rrrr,qqqq",      .out = "" },
+			{ .in = ",",                   .out = "" },
+			{ .in = ",:,",                 .out = "" },
+			{ .in = ";:;",                 .out = "" },
+			{ .in = ".:",                  .out = "" },
+			{ .in = ":.,",                 .out = "" },
+			{ .in = ":;.,",                .out = "" },
+			{ .in = ".:;,",                .out = "" },
+			{ .in = NULL },
+		},
+	};
+	run_parser_test(&caidvaluetab_test);
+
 }

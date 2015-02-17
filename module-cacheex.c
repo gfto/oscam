@@ -876,27 +876,7 @@ CWCHECK get_cwcheck(ECM_REQUEST *er){
 
 uint16_t get_cacheex_mode1_delay(ECM_REQUEST *er)
 {
-	uint16_t delay = 0;
-
-	int32_t i;
-	for(i = 0; i < cfg.cacheex_mode1_delay_tab.n; i++)
-	{
-
-		if(i == 0 && cfg.cacheex_mode1_delay_tab.caid[i] <= 0)
-		{
-			delay = cfg.cacheex_mode1_delay_tab.value[i];
-			continue;
-		}
-
-
-		if(cfg.cacheex_mode1_delay_tab.caid[i] == er->caid || cfg.cacheex_mode1_delay_tab.caid[i] == er->caid >> 8)
-		{
-			delay = cfg.cacheex_mode1_delay_tab.value[i];
-			break;
-		}
-	}
-
-	return delay;
+	return caidvaluetab_get_value(&cfg.cacheex_mode1_delay_tab, er->caid, 0);
 }
 
 
