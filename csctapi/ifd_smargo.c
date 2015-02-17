@@ -50,7 +50,7 @@ static int32_t smargo_set_settings(struct s_reader *reader, int32_t freq, unsign
 
 	smargo_set_config_mode_on(reader);
 
-	rdr_log_dbg(reader, D_DEVICE, "Smargo: sending F=%04X (%d), D=%02X (%d), Freq=%04X (%d), N=%02X (%d), T=%02X (%d), inv=%02X (%d)",
+	rdr_log_dbg(reader, D_DEVICE, "sending F=%04X (%d), D=%02X (%d), Freq=%04X (%d), N=%02X (%d), T=%02X (%d), inv=%02X (%d)",
 				   Fi, Fi, Di, Di, freqk, freqk, Ni, Ni, T, T, inv, inv);
 
 	if(T != 14 || freq == 369)
@@ -92,7 +92,6 @@ static int32_t smargo_write_settings(struct s_reader *reader, struct s_cardreade
 
 static int32_t smargo_init(struct s_reader *reader)
 {
-	rdr_log(reader, "smargo init type is %s", reader->crdr.desc);
 	reader->handle = open(reader->device,  O_RDWR);
 
 	if(reader->handle < 0)
@@ -175,7 +174,7 @@ static int32_t smargo_fast_reset_by_atr(struct s_reader *reader, ATR *atr)
 
 static int32_t smargo_reset(struct s_reader *reader, ATR *atr)
 {
-	rdr_log_dbg(reader, D_IFD, "Smargo: Resetting card");
+	rdr_log_dbg(reader, D_IFD, "Resetting card");
 	int32_t ret = ERROR;
 	int32_t i;
 	unsigned char buf[ATR_MAX_SIZE];
@@ -211,7 +210,7 @@ static int32_t smargo_reset(struct s_reader *reader, ATR *atr)
 		if(n == 0 || buf[0] == 0)
 			{ continue; }
 
-		rdr_log_dump_dbg(reader, D_IFD, buf, n, "Smargo ATR: %d bytes", n);
+		rdr_log_dump_dbg(reader, D_IFD, buf, n, "ATR: %d bytes", n);
 
 		if((buf[0] != 0x3B && buf[0] != 0x03 && buf[0] != 0x3F) || (buf[1] == 0xFF && buf[2] == 0x00))
 			{ continue; } // this is not a valid ATR
