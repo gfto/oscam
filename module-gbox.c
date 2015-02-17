@@ -268,9 +268,11 @@ static int8_t gbox_reinit_peer(struct gbox_peer *peer)
 
 static int8_t gbox_reinit_proxy(struct s_client *proxy)
 {
+	if (!proxy) { return -1; }
+		
 	struct gbox_peer *peer = proxy->gbox;
-	if (peer)
-		{ gbox_reinit_peer(peer); }
+	gbox_reinit_peer(peer);
+	if (!proxy->reader) { return -1; }
 	proxy->reader->tcp_connected	= 0;
 	proxy->reader->card_status	= NO_CARD;
 	proxy->reader->last_s		= proxy->reader->last_g = 0;
