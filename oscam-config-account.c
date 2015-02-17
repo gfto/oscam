@@ -500,6 +500,7 @@ int32_t init_free_userdb(struct s_auth *ptr)
 		ftab_clear(&ptr->ftab);
 		ftab_clear(&ptr->fchid);
 		tuntab_clear(&ptr->ttab);
+		caidtab_clear(&ptr->ctab);
 #ifdef WITH_LB
 		caidvaluetab_clear(&ptr->lb_nbest_readers_tab);
 #endif
