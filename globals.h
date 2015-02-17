@@ -314,6 +314,7 @@ typedef unsigned char uchar;
 
 #define is_network_reader(__X) (__X->typ & R_IS_NETWORK)
 #define is_cascading_reader(__X) (__X->typ & R_IS_CASCADING)
+#define is_smargo_reader(__X) (strcmp(__X->crdr.desc, "smargo") == 0)
 
 //ECM rc codes:
 #define E_FOUND         0

@@ -752,7 +752,7 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 		if(cta_res[0] == 0x61 && cta_res[1] == 0x10)
 		{
 			reader->seca_nagra_card = 1;
-			if ((reader->typ == R_SMART || reader->typ == R_INTERNAL || !strcasecmp(reader->crdr.desc, "smargo")) && !reader->ins7e11_fast_reset)
+			if ((reader->typ == R_SMART || reader->typ == R_INTERNAL || is_smargo_reader(reader)) && !reader->ins7e11_fast_reset)
 			{
 				ins7e11_state = 1;
 				reader->ins7e11_fast_reset = 1;
@@ -766,7 +766,7 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 			reader->card_atr_length = 14;
 			reader->seca_nagra_card = 2;
 			call(reader->crdr.activate(reader, newatr));// read seca atr to switch back
-			if ((reader->typ == R_SMART || reader->typ == R_INTERNAL || !strcasecmp(reader->crdr.desc, "smargo")) && ins7e11_state == 1)
+			if ((reader->typ == R_SMART || reader->typ == R_INTERNAL || is_smargo_reader(reader)) && ins7e11_state == 1)
 			{
 				ins7e11_state = 0;
 				reader->ins7e11_fast_reset = 0;

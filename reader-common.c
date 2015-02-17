@@ -335,7 +335,8 @@ bool cardreader_init(struct s_reader *reader)
 		}
 		else
 		{
-			if ((reader->typ == R_SMART) || (!strcasecmp(reader->crdr.desc, "smargo")) ){
+			if (reader->typ == R_SMART || is_smargo_reader(reader))
+			{
 				rdr_log_dbg(reader, D_IFD, "clocking for smartreader with smartreader or smargo protocol");
 				if (reader->cardmhz >= 2000) reader->cardmhz =  369; else
 				if (reader->cardmhz >= 1600) reader->cardmhz = 1600; else
@@ -368,7 +369,8 @@ bool cardreader_init(struct s_reader *reader)
 				if (reader->mhz >= 343)  reader->mhz =  343; else 
 				reader->mhz =  320;
 	    	}
-			if (((reader->typ == R_SMART) && (reader->autospeed == 1)) || ((!strcasecmp(reader->crdr.desc, "smargo")) && (reader->autospeed == 1))) { 
+			if ((reader->typ == R_SMART || is_smargo_reader(reader)) && reader->autospeed == 1)
+			{
 				rdr_log(reader, "Reader initialized (device=%s, detect=%s%s, mhz= AUTO, cardmhz=%d)",
 						reader->device,
 						reader->detect & 0x80 ? "!" : "",
