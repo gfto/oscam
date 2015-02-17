@@ -430,7 +430,7 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 	if(!buf)
 	{
-		cs_log("%s: src_data missing.",client->reader->ph.desc);
+		rdr_log(client->reader, "ERROR: src_data missing");
 		return;
 	}
 
@@ -624,7 +624,7 @@ static int32_t camd35_client_init(struct s_client *cl)
 	}
 	cl->crypted=1;
 
-	cs_log("%s proxy %s:%d", cl->reader->ph.desc, cl->reader->device, cl->reader->r_port);
+	rdr_log(cl->reader, "proxy %s:%d", cl->reader->device, cl->reader->r_port);
 
 	if(cl->reader->keepalive)
 		camd35_send_keepalive(cl);
@@ -658,7 +658,7 @@ static void camd35_idle(void)
 		{
 			if(check_client(cl) && cl->reader->tcp_connected && cl->reader->ph.type==MOD_CONN_TCP)
 			{
-				cs_log_dbg(D_READER, "%s inactive_timeout, close connection (fd=%d)", cl->reader->ph.desc, cl->pfd);
+				rdr_log_dbg(cl->reader, D_READER, "inactive_timeout, close connection (fd=%d)", cl->pfd);
 				network_tcp_connection_close(cl->reader, "inactivity");
 			}
 			else
@@ -679,7 +679,7 @@ static void *camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 		{
 			client->reader->last_s = time(NULL); // fixup: last send is now (if client is only sending emms connection would be dropped!)
 		}
-		cs_log("%s_SERVER last = %d, last_s = %d, last_g = %d", client->reader->ph.desc, (int) client->last, (int) client->reader->last_s, (int) client->reader->last_g);
+		rdr_log(client->reader, "SERVER last = %d, last_s = %d, last_g = %d", (int) client->last, (int) client->reader->last_s, (int) client->reader->last_g);
 	}
 	client->last = time(NULL); // last client action is now
 

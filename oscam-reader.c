@@ -808,7 +808,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 	client->udp_sa.sin_port = htons((uint16_t)client->reader->r_port);
 #endif
 
-	rdr_log_dbg(rdr, D_TRACE, "socket open for %s fd=%d", rdr->ph.desc, client->udp_fd);
+	rdr_log_dbg(rdr, D_TRACE, "socket open fd=%d", client->udp_fd);
 
 	if(client->is_udp)
 	{
@@ -1096,7 +1096,7 @@ void reader_do_idle(struct s_reader *reader)
 			struct s_client *cl = reader->client;
 			if(check_client(cl) && reader->tcp_connected && reader->ph.type == MOD_CONN_TCP)
 			{
-				cs_log_dbg(D_READER, "%s inactive_timeout, close connection (fd=%d)", reader->ph.desc, cl->pfd);
+				rdr_log_dbg(reader, D_READER, "inactive_timeout, close connection (fd=%d)", cl->pfd);
 				network_tcp_connection_close(reader, "inactivity");
 			}
 			else
@@ -1117,7 +1117,7 @@ int32_t reader_init(struct s_reader *reader)
 
 		if(!(reader->ph.c_init))
 		{
-			rdr_log(reader, "FATAL: %s-protocol not supporting cascading", reader->ph.desc);
+			rdr_log(reader, "FATAL: protocol not supporting cascading");
 			return 0;
 		}
 
@@ -1306,7 +1306,6 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart)
 			rdr_log(rdr, "Protocol Support missing. (typ=%d)", rdr->typ);
 			return 0;
 		}
-		rdr_log_dbg(rdr, D_TRACE, "protocol: %s", rdr->ph.desc);
 	}
 
 	if(!rdr->enable)
