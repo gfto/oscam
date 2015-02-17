@@ -135,13 +135,14 @@ void check_caidtab_fn(const char *token, char *value, void *setting, FILE *f)
 	CAIDTAB *caid_table = setting;
 	if(value)
 	{
-		if(strlen(value) == 0)
-			{ clear_caidtab(caid_table); }
-		else
-			{ chk_caidtab(value, caid_table); }
+		if(strlen(value)) {
+			chk_caidtab(value, caid_table);
+		} else {
+			caidtab_clear(caid_table);
+		}
 		return;
 	}
-	if(caid_table->caid[0] || cfg.http_full_cfg)
+	if(caid_table->ctnum || cfg.http_full_cfg)
 	{
 		value = mk_t_caidtab(caid_table);
 		fprintf_conf(f, token, "%s\n", value);
@@ -587,7 +588,7 @@ static bool cache_should_save_fn(void *UNUSED(var))
 		   || cfg.cacheex_wait_timetab.n || cfg.cacheex_enable_stats > 0 || cfg.csp_port || cfg.csp.filter_caidtab.n || cfg.csp.allow_request == 0 || cfg.csp.allow_reforward > 0
 #endif
 #ifdef CW_CYCLE_CHECK
-		   || cfg.cwcycle_check_enable || cfg.cwcycle_check_caidtab.caid[0] || cfg.maxcyclelist != 500 || cfg.keepcycletime || cfg.onbadcycle || cfg.cwcycle_dropold || cfg.cwcycle_sensitive || cfg.cwcycle_allowbadfromffb || cfg.cwcycle_usecwcfromce
+		   || cfg.cwcycle_check_enable || cfg.cwcycle_check_caidtab.ctnum || cfg.maxcyclelist != 500 || cfg.keepcycletime || cfg.onbadcycle || cfg.cwcycle_dropold || cfg.cwcycle_sensitive || cfg.cwcycle_allowbadfromffb || cfg.cwcycle_usecwcfromce
 #endif
 		   ;
 }
@@ -1067,12 +1068,17 @@ void config_free(void)
 {
 	config_sections_free(oscam_conf, &cfg);
 	caidvaluetab_clear(&cfg.ftimeouttab);
+	caidtab_clear(&cfg.double_check_caid);
 #ifdef WITH_LB
 	caidvaluetab_clear(&cfg.lb_retrylimittab);
 	caidvaluetab_clear(&cfg.lb_nbest_readers_tab);
+	caidtab_clear(&cfg.lb_noproviderforcaid);
 #endif
 #ifdef CS_CACHEEX
 	caidvaluetab_clear(&cfg.cacheex_mode1_delay_tab);
+#endif
+#ifdef CW_CYCLE_CHECK
+	caidtab_clear(&cfg.cwcycle_check_caidtab);
 #endif
 }
 

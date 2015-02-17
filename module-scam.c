@@ -824,8 +824,9 @@ static void scam_caidlist_add(uint16_t *caidlist, uint32_t listsize, uint32_t *c
 static void scam_server_send_caidlist(struct s_client *cl)
 {
 	uchar mbuf[5];
-	uint32_t i = 0, j = 0;
-	uint16_t caid = 0, caids[55];
+	int32_t j;
+	uint32_t i = 0;
+	uint16_t caids[55];
 	uint32_t cardcount = 0;
 	struct s_reader *rdr = NULL;
 	
@@ -833,19 +834,19 @@ static void scam_server_send_caidlist(struct s_client *cl)
 	for(rdr = first_active_reader; rdr; rdr = rdr->next)
 	{
 		if(rdr->caid && chk_ctab(rdr->caid, &cl->ctab)) {
-			scam_caidlist_add(caids, 55, &cardcount, rdr->caid);
+			scam_caidlist_add(caids, ARRAY_SIZE(caids), &cardcount, rdr->caid);
 		}
 		
-		for(j=0; j<CS_MAXCAIDTAB; j++) {
-			caid = rdr->ctab.caid[j];
-			if(caid && chk_ctab(caid, &cl->ctab)) {
-				scam_caidlist_add(caids, 55, &cardcount, caid);
-			}			
-		}	
+		for(j = 0; j < rdr->ctab.ctnum; j++) {
+			CAIDTAB_DATA *d = &rdr->ctab.ctdata[j];
+			if(d->caid && chk_ctab(d->caid, &cl->ctab)) {
+				scam_caidlist_add(caids, ARRAY_SIZE(caids), &cardcount, d->caid);
+			}
+		}
 	}
 	cs_readunlock(&readerlist_lock);
 
-	for(j=0; j<cardcount; j++) {
+	for(j=0; j < (int32_t)cardcount; j++) {
 		i = 0;
 		mbuf[i++] = 0x20; // caid	data type
 		mbuf[i++] = 0x03; // length

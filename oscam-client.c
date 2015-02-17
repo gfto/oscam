@@ -420,7 +420,7 @@ int32_t cs_auth_client(struct s_client *client, struct s_auth *account, const ch
 				client->autoau = account->autoau;
 				client->tosleep = (60 * account->tosleep);
 				client->c35_sleepsend = account->c35_sleepsend;
-				memcpy(&client->ctab, &account->ctab, sizeof(client->ctab));
+				caidtab_clone(&account->ctab, &client->ctab);
 				if(account->uniq)
 					{ cs_fake_client(client, account->usr, account->uniq, client->ip); }
 				client->cltab = account->cltab;  // CLASS filter
@@ -544,7 +544,7 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 					cl->sidtabs.no = account->sidtabs.no;   // services
 					cl->failban = account->failban;
 
-					memcpy(&cl->ctab, &account->ctab, sizeof(cl->ctab));
+					caidtab_clone(&account->ctab, &cl->ctab);
 
 					tuntab_clone(&account->ttab, &cl->ttab);
 
@@ -729,6 +729,7 @@ void free_client(struct s_client *cl)
 	ftab_clear(&cl->ftab);
 	ftab_clear(&cl->fchid);
 	tuntab_clear(&cl->ttab);
+	caidtab_clear(&cl->ctab);
 
 	NULLFREE(cl->cw_rass);
 	NULLFREE(cl->via_rass);

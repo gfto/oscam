@@ -1284,13 +1284,14 @@ void update_card_list(void)
 
 			if((rdr->typ != R_CCCAM) && !rdr->caid && !flt)
 			{
-				for(j = 0; j < CS_MAXCAIDTAB; j++)
+				for(j = 0; j < rdr->ctab.ctnum; j++)
 				{
-					//cs_log("CAID map CCcam card report caid: %04X cmap: %04X", rdr->ctab.caid[j], rdr->ctab.cmap[j]);
-					uint16_t lcaid = rdr->ctab.caid[j];
+					CAIDTAB_DATA *d = &rdr->ctab.ctdata[j];
+					//cs_log("CAID map CCcam card report caid: %04X cmap: %04X", d->caid, d->cmap);
+					uint16_t lcaid = d->caid;
 
 					if(!lcaid || (lcaid == 0xFFFF))
-						{ lcaid = rdr->ctab.cmap[j]; }
+						{ lcaid = d->cmap; }
 
 					if(lcaid && (lcaid != 0xFFFF))
 					{
@@ -1308,15 +1309,16 @@ void update_card_list(void)
 				}
 			}
 
-			if((rdr->typ != R_CCCAM) && rdr->ctab.caid[0] && !flt)
+			if((rdr->typ != R_CCCAM) && rdr->ctab.ctnum && !flt)
 			{
 				//cs_log("tcp_connected: %d card_status: %d ", rdr->tcp_connected, rdr->card_status);
 				int32_t c;
 				if(rdr->tcp_connected || rdr->card_status == CARD_INSERTED)
 				{
-					for(c = 0; c < CS_MAXCAIDTAB; c++)
+					for(c = 0; c < rdr->ctab.ctnum; c++)
 					{
-						uint16_t caid = rdr->ctab.caid[c];
+						CAIDTAB_DATA *d = &rdr->ctab.ctdata[c];
+						uint16_t caid = d->caid;
 						if(!caid) { break; }
 
 						card = create_card2(rdr, c, caid, reshare);

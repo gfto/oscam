@@ -46,35 +46,33 @@ void chk_iprange(char *value, struct s_ip **base)
 	clear_sip(&lip);
 }
 
-void chk_caidtab(char *caidasc, CAIDTAB *ctab)
+void chk_caidtab(char *value, CAIDTAB *caidtab)
 {
-	int32_t i;
-	char *ptr1, *ptr2, *ptr3, *saveptr1 = NULL;
-	CAIDTAB newctab;
-	memset(&newctab, 0, sizeof(CAIDTAB));
-	for(i = 1; i < CS_MAXCAIDTAB; newctab.mask[i++] = 0xffff) { ; }
-
-	for(i = 0, ptr1 = strtok_r(caidasc, ",", &saveptr1); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1))
+	caidtab_clear(caidtab);
+	char *ptr, *saveptr1 = NULL;
+	for(ptr = strtok_r(value, ",", &saveptr1); ptr; ptr = strtok_r(NULL, ",", &saveptr1))
 	{
-		uint32_t caid, mask, cmap;
-		if((ptr3 = strchr(trim(ptr1), ':')))
-			{ * ptr3++ = '\0'; }
-		else
-			{ ptr3 = ""; }
-
-		if((ptr2 = strchr(trim(ptr1), '&')))
-			{ * ptr2++ = '\0'; }
-		else
-			{ ptr2 = ""; }
-
-		if(((caid = a2i(ptr1, 2)) | (mask = a2i(ptr2, -2)) | (cmap = a2i(ptr3, 2))) < 0x10000)
-		{
-			newctab.caid[i] = caid;
-			newctab.mask[i] = mask;
-			newctab.cmap[i++] = cmap;
+		CAIDTAB_DATA d;
+		memset(&d, 0, sizeof(d));
+		d.mask = 0xffff;
+		char *caid_end_ptr = strchr(ptr, ':'); // caid_end_ptr + 1 -> cmap
+		if(caid_end_ptr) {
+			*caid_end_ptr++ = '\0';
+			d.cmap = a2i(caid_end_ptr, 2);
+			if (errno == EINVAL) continue;
 		}
+		char *mask_start_ptr = strchr(ptr, '&'); // mask_start_ptr + 1 -> mask
+		errno = 0;
+		if(mask_start_ptr) { // Mask is optional
+			*mask_start_ptr++ = '\0';
+			d.mask = a2i(mask_start_ptr, 2);
+			if (errno == EINVAL) continue;
+		}
+		d.caid = a2i(ptr, 2);
+		if (errno == EINVAL) continue;
+		if (d.caid || d.cmap)
+			caidtab_add(caidtab, &d);
 	}
-	memcpy(ctab, &newctab, sizeof(CAIDTAB));
 }
 
 void chk_caidvaluetab(char *value, CAIDVALUETAB *caidvaluetab)
@@ -547,14 +545,6 @@ void clear_ptab(struct s_ptab *ptab)
 			ptab->ports[i].ncd = NULL;
 		}
 	}
-}
-
-/* Clears given caidtab */
-void clear_caidtab(struct s_caidtab *ctab)
-{
-	memset(ctab, 0, sizeof(struct s_caidtab));
-	int32_t i;
-	for(i = 1; i < CS_MAXCAIDTAB; ctab->mask[i++] = 0xffff) { ; }
 }
 
 /* Clears given csptab */

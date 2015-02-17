@@ -1043,6 +1043,8 @@ void free_reader(struct s_reader *rdr)
 	ftab_clear(&rdr->fchid);
 	ftab_clear(&rdr->ftab);
 
+	caidtab_clear(&rdr->ctab);
+
 	lb_destroy_stats(rdr);
 
 	cs_clear_entitlement(rdr);

@@ -616,10 +616,10 @@ static void mk_user_ftab(FILTER *filt)
 
 	// 1. CAID
 	// search server CAID in client CAID
-	for(c = i = 0; i < CS_MAXCAIDTAB; i++)
+	for(c = i = 0; i < cl->ctab.ctnum; i++)
 	{
-		int32_t ctab_caid;
-		ctab_caid = cl->ctab.caid[i] & cl->ctab.mask[i];
+		CAIDTAB_DATA *d = &cl->ctab.ctdata[i];
+		int32_t ctab_caid = d->caid & d->mask;
 		if(ctab_caid) { c++; }
 
 		if(psfilt->caid == ctab_caid)

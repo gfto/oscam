@@ -543,17 +543,18 @@ static int32_t chk_rfilter(ECM_REQUEST *er, struct s_reader *rdr)
 
 int32_t chk_ctab(uint16_t caid, CAIDTAB *ctab)
 {
-	if(!caid || !ctab->caid[0])
+	if(!caid || !ctab->ctnum)
 		{ return 1; }
 
 	int32_t i;
-	for(i = 0; i < CS_MAXCAIDTAB; i++)
+	for(i = 0; i < ctab->ctnum; i++)
 	{
-		if(!ctab->caid[i])
+		CAIDTAB_DATA *d = &ctab->ctdata[i];
+		if(!d->caid)
 		{
 			return 0;
 		}
-		if((caid & ctab->mask[i]) == ctab->caid[i])
+		if((caid & d->mask) == d->caid)
 			{ return 1; }
 	}
 	return 0;
@@ -561,17 +562,18 @@ int32_t chk_ctab(uint16_t caid, CAIDTAB *ctab)
 
 int32_t chk_ctab_ex(uint16_t caid, CAIDTAB *ctab)
 {
-	if(!caid || !ctab->caid[0])
+	if(!caid || !ctab->ctnum)
 		{ return 0; }
 
 	int32_t i;
-	for(i = 0; i < CS_MAXCAIDTAB; i++)
+	for(i = 0; i < ctab->ctnum; i++)
 	{
-		if(!ctab->caid[i])
+		CAIDTAB_DATA *d = &ctab->ctdata[i];
+		if(!d->caid)
 		{
 			return 0;
 		}
-		if((caid & ctab->mask[i]) == ctab->caid[i])
+		if((caid & d->mask) == d->caid)
 			{ return 1; }
 	}
 	return 0;
@@ -949,11 +951,14 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 
 int32_t chk_caid(uint16_t caid, CAIDTAB *ctab)
 {
-	int32_t n, rc;
-	for(rc = -1, n = 0; (n < CS_MAXCAIDTAB) && (rc < 0); n++)
-		if((caid & ctab->mask[n]) == ctab->caid[n])
-			{ rc = ctab->cmap[n] ? ctab->cmap[n] : caid; }
-	return rc;
+	int32_t i;
+	for(i = 0; i < ctab->ctnum; i++)
+	{
+		CAIDTAB_DATA *d = &ctab->ctdata[i];
+		if((caid & d->mask) == d->caid)
+			return d->cmap ? d->cmap : caid;
+	}
+	return -1;
 }
 
 int32_t chk_caid_rdr(struct s_reader *rdr, uint16_t caid)

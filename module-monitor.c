@@ -743,7 +743,7 @@ static void monitor_set_account(char *args)
 				break;     //betatunnel
 
 			case    8:
-				clear_caidtab(&account->ctab);
+				caidtab_clear(&account->ctab);
 				break;    //Caid
 			}
 			found = i;

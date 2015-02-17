@@ -8,63 +8,29 @@
 /*
  * Creates a string ready to write as a token into config or WebIf for CAIDs. You must free the returned value through free_mk_t().
  */
-char *mk_t_caidtab(CAIDTAB *ctab)
+char *mk_t_caidtab(CAIDTAB *caidtab)
 {
-	int32_t i = 0, needed = 1, pos = 0;
-	while(ctab->caid[i])
+	if (!caidtab || !caidtab->ctnum) return "";
+	// Max entry length is strlen("1234&ffff:1234,") == 15
+	int32_t i, maxlen = 16 * caidtab->ctnum, pos = 0;
+	char *ret;
+	if (!cs_malloc(&ret, maxlen))
+		return "";
+	const char *comma = "";
+	for(i = 0; i < caidtab->ctnum; i++)
 	{
-		if(ctab->mask[i]) { needed += 10; }
-		else { needed += 5; }
-		if(ctab->cmap[i]) { needed += 5; }
-		++i;
-	}
-	char *value;
-	if(needed == 1 || !cs_malloc(&value, needed)) { return ""; }
-	char *saveptr = value;
-	i = 0;
-	while(ctab->caid[i])
-	{
-		if(ctab->caid[i] < 0x0100)    //for "ignore provider for" option, caid-shortcut, just first 2 bytes:
-		{
-			if(i == 0)
-			{
-				snprintf(value + pos, needed - (value - saveptr), "%02X", ctab->caid[i]);
-				pos += 2;
-			}
-			else
-			{
-				snprintf(value + pos, needed - (value - saveptr), ",%02X", ctab->caid[i]);
-				pos += 3;
-			}
-		}
+		CAIDTAB_DATA *d = &caidtab->ctdata[i];
+		if (d->caid < 0x0100)
+			pos += snprintf(ret + pos, maxlen - pos, "%s%02X", comma, d->caid);
 		else
-		{
-			if(i == 0)
-			{
-				snprintf(value + pos, needed - (value - saveptr), "%04X", ctab->caid[i]);
-				pos += 4;
-			}
-			else
-			{
-				snprintf(value + pos, needed - (value - saveptr), ",%04X", ctab->caid[i]);
-				pos += 5;
-			}
-		}
-
-		if((ctab->mask[i]) && (ctab->mask[i] != 0xFFFF))
-		{
-			snprintf(value + pos, needed - (value - saveptr), "&%04X", ctab->mask[i]);
-			pos += 5;
-		}
-		if(ctab->cmap[i])
-		{
-			snprintf(value + pos, needed - (value - saveptr), ":%04X", ctab->cmap[i]);
-			pos += 5;
-		}
-		++i;
+			pos += snprintf(ret + pos, maxlen - pos, "%s%04X", comma, d->caid);
+		if (d->mask && d->mask != 0xffff)
+			pos += snprintf(ret + pos, maxlen - pos, "&%04X", d->mask);
+		if (d->cmap)
+			pos += snprintf(ret + pos, maxlen - pos, ":%04X", d->cmap);
+		comma = ",";
 	}
-	value[pos] = '\0';
-	return value;
+	return ret;
 }
 
 /*

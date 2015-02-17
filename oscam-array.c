@@ -67,5 +67,6 @@ DECLARE_ARRAY_FUNCS(tuntab, TUNTAB, TUNTAB_DATA, ttdata, ttnum); // Declare tunt
 DECLARE_ARRAY_FUNCS(ecm_whitelist, ECM_WHITELIST, ECM_WHITELIST_DATA, ewdata, ewnum); // Declare ecm_whitelist_clear(), ecm_whitelist_clone(), ecm_whitelist_add()
 DECLARE_ARRAY_FUNCS(ecm_hdr_whitelist, ECM_HDR_WHITELIST, ECM_HDR_WHITELIST_DATA, ehdata, ehnum); // Declare ecm_hdr_whitelist_clear(), ecm_hdr_whitelist_clone(), ecm_hdr_whitelist_add()
 DECLARE_ARRAY_FUNCS(caidvaluetab, CAIDVALUETAB, CAIDVALUETAB_DATA, cvdata, cvnum); // Declare caidvaluetab_clear(), caidvaluetab_clone(), caidvaluetab_add()
+DECLARE_ARRAY_FUNCS(caidtab, CAIDTAB, CAIDTAB_DATA, ctdata, ctnum); // Declare caidtab_clear(), caidtab_clone(), caidtab_add()
 
 #undef DECLARE_ARRAY_FUNCS

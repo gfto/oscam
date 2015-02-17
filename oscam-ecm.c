@@ -612,12 +612,13 @@ static void add_cascade_data(struct s_client *client, ECM_REQUEST *er)
 
 static int32_t is_double_check_caid(ECM_REQUEST *er)
 {
-	if(!cfg.double_check_caid.caid[0])  //no caids defined: Check all
+	if(!cfg.double_check_caid.ctnum)  //no caids defined: Check all
 		{ return 1; }
 	int32_t i;
-	for(i = 0; i < CS_MAXCAIDTAB; i++)
+	for(i = 0; i < cfg.double_check_caid.ctnum; i++)
 	{
-		uint16_t tcaid = cfg.double_check_caid.caid[i];
+		CAIDTAB_DATA *d = &cfg.double_check_caid.ctdata[i];
+		uint16_t tcaid = d->caid;
 		if(!tcaid)
 			{ break; }
 		if(tcaid == er->caid || (tcaid < 0x0100 && (er->caid >> 8) == tcaid))

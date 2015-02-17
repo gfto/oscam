@@ -274,4 +274,44 @@ void run_all_tests(void)
 	};
 	run_parser_test(&caidvaluetab_test);
 
+	CAIDTAB caidtab, caidtab_c;
+	struct test_type caidtab_test =
+	{
+		.desc     = "caidtab (ACCOUNT: 'caid'; READER: 'caid'; GLOBAL: 'lb_noproviderforcaid', 'double_check_caid', 'cwcycle_check_caid')",
+		.data     = &caidtab,
+		.data_c   = &caidtab_c,
+		.data_sz  = sizeof(caidtab),
+		.chk_fn   = (CHK_FN *)&chk_caidtab,
+		.mk_t_fn  = (MK_T_FN *)&mk_t_caidtab,
+		.clear_fn = (CLEAR_FN *)&caidtab_clear,
+		.clone_fn = (CLONE_FN *)&caidtab_clone,
+		.test_vec = (const struct test_vec[])
+		{
+			{ .in = "0200&FFEE:0300" },
+			{ .in = "0200&FF00:0300,0400&00FF:0500" },
+			{ .in = "0200&FF00:0300,0400,0500:0600,0600&FF0F:1234" },
+			{ .in = "0400&FF00:0500,0600" },
+			{ .in = "0702,0722" },
+			{ .in = "0702&FFDF" },
+			{ .in = "0100" },
+			{ .in = "01" },
+			{ .in = "" },
+			{ .in = "0500:10000",          .out = "0500" },
+			{ .in = "1000&5FFFF5:0600",    .out = "1000&FFF5:0600" },
+			{ .in = "10000:10000",         .out = "" },
+			{ .in = "rrrr&zzzz:mmmm",      .out = "" },
+			{ .in = "0:0",                 .out = "" },
+			{ .in = "zzzz:",               .out = "" },
+			{ .in = "yyyy:rrrr,qqqq",      .out = "" },
+			{ .in = ",",                   .out = "" },
+			{ .in = ",:,",                 .out = "" },
+			{ .in = "&:&",                 .out = "" },
+			{ .in = ".:",                  .out = "" },
+			{ .in = ":.,",                 .out = "" },
+			{ .in = ":&.,",                .out = "" },
+			{ .in = ".:&,",                .out = "" },
+			{ .in = NULL },
+		},
+	};
+	run_parser_test(&caidtab_test);
 }

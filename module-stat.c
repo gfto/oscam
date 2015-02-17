@@ -59,9 +59,10 @@ void init_stat(void)
 static uint32_t get_prid(uint16_t caid, uint32_t prid)
 {
 	int32_t i;
-	for(i = 0; i < CS_MAXCAIDTAB; i++)
+	for(i = 0; i < cfg.lb_noproviderforcaid.ctnum; i++)
 	{
-		uint16_t tcaid = cfg.lb_noproviderforcaid.caid[i];
+		CAIDTAB_DATA *d = &cfg.lb_noproviderforcaid.ctdata[i];
+		uint16_t tcaid = d->caid;
 		if(!tcaid) { break; }
 		if((tcaid == caid) || (tcaid < 0x0100 && (caid >> 8) == tcaid))
 		{

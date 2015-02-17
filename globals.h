@@ -556,11 +556,17 @@ typedef struct s_classtab
 	uchar           bclass[31];
 } CLASSTAB;
 
+typedef struct s_caidtab_data
+{
+	uint16_t		caid;
+	uint16_t		mask;
+	uint16_t		cmap;
+} CAIDTAB_DATA;
+
 typedef struct s_caidtab
 {
-	uint16_t        caid[CS_MAXCAIDTAB];
-	uint16_t        mask[CS_MAXCAIDTAB];
-	uint16_t        cmap[CS_MAXCAIDTAB];
+	int32_t			ctnum;
+	CAIDTAB_DATA	*ctdata;
 } CAIDTAB;
 
 typedef struct s_tuntab_data
