@@ -253,6 +253,8 @@ struct s_client *switch_client_proxy(struct s_client *cli, uint16_t gbox_id)
 
 static int8_t gbox_reinit_peer(struct gbox_peer *peer)
 {
+	if (!peer)
+		{ return -1; }
 	NULLFREE(peer->hostname);
 	peer->online		= 0;
 	peer->ecm_idx		= 0;
