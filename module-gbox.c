@@ -258,6 +258,7 @@ static int8_t gbox_reinit_peer(struct gbox_peer *peer)
 	peer->ecm_idx		= 0;
 	peer->hello_stat	= GBOX_STAT_HELLOL;
 	peer->next_hello	= 0;	
+	gbox_delete_cards_from_peer(peer->gbox.id);
 //	peer->my_user		= NULL;
 	
 	return 0;
@@ -271,7 +272,6 @@ static int8_t gbox_reinit_proxy(struct s_client *proxy)
 	proxy->reader->tcp_connected	= 0;
 	proxy->reader->card_status	= NO_CARD;
 	proxy->reader->last_s		= proxy->reader->last_g = 0;
-	gbox_delete_cards_from_peer(peer->gbox.id);
 
 	return 0;
 }
