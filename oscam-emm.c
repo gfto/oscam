@@ -357,7 +357,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 		}
 		else     // local reader
 		{
-			if(aureader->csystem.active)
+			if(aureader->csystem_active)
 				{ cs = &aureader->csystem; }
 		}
 

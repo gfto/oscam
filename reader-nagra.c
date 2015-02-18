@@ -609,7 +609,7 @@ static int32_t ParseDataType(struct s_reader *reader, unsigned char dt, unsigned
 
 		reader->caid = (SYSTEM_NAGRA | cta_res[11]);
 		memcpy(reader->irdId, cta_res + 14, 4);
-		if(reader->csystem.active)          // do not output on init but only afterwards in card_info
+		if(reader->csystem_active)          // do not output on init but only afterwards in card_info
 		{
 			rdr_log_sensitive(reader, "IRD ID: {%s}", cs_hexdump(1, reader->irdId, 4, ds, sizeof(ds)));
 			nagra_datetime(reader, cta_res + 24, 0, ds, &reader->card_valid_to);

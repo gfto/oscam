@@ -6244,7 +6244,7 @@ static char *send_oscam_EMM_running(struct templatevars * vars, struct uriparams
 		struct s_cardsystem *cs = NULL;
 		int32_t proxy = is_cascading_reader(rdr);
 
-		if((proxy || !rdr->csystem.active) && caid)    // network reader (R_CAMD35 R_NEWCAMD R_CS378X R_CCCAM)
+		if((proxy || !rdr->csystem_active) && caid)    // network reader (R_CAMD35 R_NEWCAMD R_CS378X R_CCCAM)
 		{
 			if(proxy && !rdr->ph.c_send_emm)
 			{
@@ -6259,7 +6259,7 @@ static char *send_oscam_EMM_running(struct templatevars * vars, struct uriparams
 				caid = 0;
 			}
 		}
-		else if(!proxy && rdr->csystem.active)     // local active reader
+		else if(!proxy && rdr->csystem_active)     // local active reader
 		{
 			cs = &rdr->csystem;
 			caid = rdr->caid;

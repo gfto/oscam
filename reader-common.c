@@ -31,6 +31,7 @@ int32_t check_sct_len(const uchar *data, int32_t off)
 
 static void reader_nullcard(struct s_reader *reader)
 {
+	reader->csystem_active = false;
 	memset(&reader->csystem , 0   , sizeof(reader->csystem));
 	memset(reader->hexserial, 0   , sizeof(reader->hexserial));
 	memset(reader->prid     , 0xFF, sizeof(reader->prid));
@@ -116,7 +117,7 @@ void cardreader_get_card_info(struct s_reader *reader)
 		if(cl)
 			{ cl->last = time((time_t *)0); }
 
-		if(reader->csystem.active && reader->csystem.card_info)
+		if(reader->csystem_active && reader->csystem.card_info)
 		{
 			reader->csystem.card_info(reader);
 		}
@@ -127,7 +128,7 @@ void cardreader_poll_status(struct s_reader *reader)
 {
 	if (reader && reader->card_status == CARD_INSERTED)
 	{
-		if (reader->csystem.active && reader->csystem.poll_status)
+		if (reader->csystem_active && reader->csystem.poll_status)
 			{ reader->csystem.poll_status(reader); }
 	}
 }
@@ -144,7 +145,7 @@ static int32_t reader_get_cardsystem(struct s_reader *reader, ATR *atr)
 			{
 				rdr_log(reader, "found card system %s", cardsystems[i].desc);
 				reader->csystem = cardsystems[i];
-				reader->csystem.active = 1;
+				reader->csystem_active = true;
 				led_status_found_cardsystem();
 				break;
 			}
@@ -158,13 +159,13 @@ static int32_t reader_get_cardsystem(struct s_reader *reader, ATR *atr)
 		}
 	}
 
-	if(reader->csystem.active == 0)
+	if(!reader->csystem_active)
 	{
 		rdr_log(reader, "card system not supported");
 		led_status_unsupported_card_system();
 	}
 
-	return (reader->csystem.active);
+	return (reader->csystem_active);
 }
 
 void cardreader_do_reset(struct s_reader *reader)
@@ -400,7 +401,7 @@ void reader_post_process(struct s_reader *reader)
 {
 	// some systems eg. nagra2/3 needs post process after receiving cw from card
 	// To save ECM/CW time we added this function after writing ecm answer
-	if(reader->csystem.active && reader->csystem.post_process)
+	if(reader->csystem_active && reader->csystem.post_process)
 	{
 		reader->csystem.post_process(reader);
 	}
@@ -420,7 +421,7 @@ int32_t cardreader_do_ecm(struct s_reader *reader, ECM_REQUEST *er, struct s_ecm
 			cl->last = time((time_t *)0);
 		}
 
-		if(reader->csystem.active && reader->csystem.do_ecm)
+		if(reader->csystem_active && reader->csystem.do_ecm)
 		{
 			rc = reader->csystem.do_ecm(reader, er, ea);
 			rdr_log_dbg(reader, D_READER, "%s: after csystem.do_ecm rc=%d", __func__, rc);
@@ -446,7 +447,7 @@ int32_t cardreader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		if((1 << (ep->emm[0] % 0x80)) & reader->b_nano)
 			{ return 3; }
 
-		if(reader->csystem.active && reader->csystem.do_emm)
+		if(reader->csystem_active && reader->csystem.do_emm)
 			{ rc = reader->csystem.do_emm(reader, ep); }
 		else
 			{ rc = 0; }

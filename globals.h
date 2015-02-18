@@ -829,7 +829,6 @@ struct s_cardreader
 struct s_cardsystem
 {
 	const char      *desc;
-	int8_t          active;
 	int32_t (*card_init)(struct s_reader *reader, struct s_ATR *);
 	void    (*card_done)(struct s_reader *reader);
 	int32_t (*card_info)(struct s_reader *);
@@ -1345,6 +1344,7 @@ struct s_reader                                     //contains device info, read
 	void            *crdr_data; // Private card reader data
 	struct s_cardsystem csystem;
 	void            *csystem_data; // Private card system data
+	bool            csystem_active;
 	uint8_t         ncd_key[14];
 	uchar           ncd_skey[16];
 	int8_t          ncd_connect_on_init;
