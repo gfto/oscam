@@ -951,14 +951,15 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 
 int32_t chk_caid(uint16_t caid, CAIDTAB *ctab)
 {
-	int32_t n, rc;
-	for(rc = -1, n = 0; (n < ctab->ctnum) && (rc < 0); n++)
+	int32_t i;
+	if (!ctab->ctnum) return caid;
+	for(i = 0; i < ctab->ctnum; i++)
 	{
-		CAIDTAB_DATA *d = &ctab->ctdata[n];
+		CAIDTAB_DATA *d = &ctab->ctdata[i];
 		if((caid & d->mask) == d->caid)
-			{ rc = d->cmap ? d->cmap : caid; }
+			return d->cmap ? d->cmap : caid;
 	}
-	return rc;
+	return -1;
 }
 
 int32_t chk_caid_rdr(struct s_reader *rdr, uint16_t caid)
