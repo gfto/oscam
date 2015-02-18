@@ -3,7 +3,7 @@
 
 struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid);
 struct s_reader *get_reader_by_label(char *lbl);
-char *reader_get_type_desc(struct s_reader *rdr, int32_t extended);
+const char *reader_get_type_desc(struct s_reader *rdr, int32_t extended);
 
 bool hexserialset(struct s_reader *rdr);
 void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid);

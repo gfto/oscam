@@ -729,10 +729,10 @@ struct demux_s ;
 
 struct s_module
 {
+	const char      *desc;
 	int8_t          type;
 	int8_t          large_ecm_support;
 	int16_t         listenertype;
-	char            *desc;
 	//int32_t       s_port;
 	IN_ADDR_T       s_ip;
 	uint16_t        bufsize;
@@ -783,7 +783,7 @@ struct s_cardreader_settings
 
 struct s_cardreader
 {
-	char            *desc;
+	const char      *desc;
 	int32_t (*reader_init)(struct s_reader *);
 	int32_t (*get_status)(struct s_reader *, int *);
 	int32_t (*activate)(struct s_reader *, struct s_ATR *);
@@ -828,8 +828,8 @@ struct s_cardreader
 
 struct s_cardsystem
 {
+	const char      *desc;
 	int8_t          active;
-	char            *desc;
 	int32_t (*card_init)(struct s_reader *reader, struct s_ATR *);
 	void    (*card_done)(struct s_reader *reader);
 	int32_t (*card_info)(struct s_reader *);

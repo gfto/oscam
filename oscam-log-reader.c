@@ -25,7 +25,7 @@ static char *debug_mask_txt(int mask)
 	}
 }
 
-static char *reader_desc_txt(struct s_reader *reader)
+static const char *reader_desc_txt(struct s_reader *reader)
 {
 	if(reader->csystem.desc)
 		{ return reader->csystem.desc; }

@@ -479,9 +479,9 @@ struct s_reader *get_reader_by_label(char *lbl)
 	return rdr;
 }
 
-char *reader_get_type_desc(struct s_reader *rdr, int32_t extended)
+const char *reader_get_type_desc(struct s_reader *rdr, int32_t extended)
 {
-	char *desc = "unknown";
+	const char *desc = "unknown";
 	if(rdr->crdr.desc)
 		{ return rdr->crdr.desc; }
 	if(is_network_reader(rdr) || rdr->typ == R_SERIAL)

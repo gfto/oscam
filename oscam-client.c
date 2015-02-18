@@ -72,7 +72,7 @@ const char *remote_txt(void)
 
 const char *client_get_proto(struct s_client *cl)
 {
-	char *ctyp;
+	const char *ctyp;
 	switch(cl->typ)
 	{
 	case 's':

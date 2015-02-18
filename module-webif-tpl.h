@@ -50,7 +50,7 @@ void    tpl_checkOneDirDiskRevisions(const char *subdir);
 void    tpl_checkDiskRevisions(void);
 
 char    *urlencode(struct templatevars *vars, char *str);
-char    *xml_encode(struct templatevars *vars, char *chartoencode);
+char    *xml_encode(struct templatevars *vars, const char *chartoencode);
 char    *sec2timeformat(struct templatevars *vars, int32_t seconds);
 
 #else

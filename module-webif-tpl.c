@@ -740,7 +740,7 @@ char *urlencode(struct templatevars *vars, char *str)
 
 /* XML-Escapes a char array. The returned reference will be automatically cleaned through the templatevars-mechanism tpl_clear().
    Do not call free() or realloc on the returned reference or you will get memory corruption! */
-char *xml_encode(struct templatevars *vars, char *chartoencode)
+char *xml_encode(struct templatevars *vars, const char *chartoencode)
 {
 	if(!chartoencode) { return ""; }
 	int32_t i, pos = 0, len = strlen(chartoencode);
