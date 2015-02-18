@@ -940,11 +940,7 @@ void module_reader_set(struct s_reader *rdr)
 	{
 		struct s_module *module = &modules[i];
 		if(module->num && module->num == rdr->typ)
-		{
 			rdr->ph = *module;
-			if(rdr->device[0])
-				{ rdr->ph.active = 1; }
-		}
 	}
 }
 

@@ -729,7 +729,6 @@ struct demux_s ;
 
 struct s_module
 {
-	int8_t          active;
 	int8_t          type;
 	int8_t          large_ecm_support;
 	int16_t         listenertype;
