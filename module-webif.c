@@ -7644,7 +7644,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			tpl_addVar(vars, TPLADD, "RUNTIME", sec2timeformat(vars, (now - first_client->login)));
 			time_t uptime = oscam_get_uptime();
 			if(uptime > 0){
-				tpl_addVar(vars, TPLADD, "UPTIMETXT", "Up Time: ");
+				tpl_printf(vars, TPLADD, "UPTIMETXT", "%s Up Time: ", strcmp(tpl_getVar(vars, "DETECTED_BOXTYPE"),"")==0 ? "System" : tpl_getVar(vars, "DETECTED_BOXTYPE"));
 				tpl_addVar(vars, TPLADD, "UPTIME", sec2timeformat(vars, uptime));
 			}
 			tpl_addVar(vars, TPLADD, "CURIP", cs_inet_ntoa(addr));
