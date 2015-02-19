@@ -392,37 +392,17 @@ int8_t gbox_message_header(uchar *buf, uint16_t cmd, uint32_t peer_password, uin
 int16_t read_cards_from_hello(uint8_t *ptr, uint8_t *len, CAIDTAB *ctab, uint8_t maxdist, struct gbox_peer *peer)
 {	
 	uint8_t *current_ptr = 0;
-	uint16_t caid;
-	uint32_t provid;
-	uint32_t provid1;
+	uint32_t caprovid;
 	int16_t ncards_in_msg = 0;
 
 	while(ptr < len)
 	{
-		switch(ptr[0])
-		{
-			//Viaccess
-		case 0x05:
-			caid = ptr[0] << 8;
-			provid =  ptr[1] << 16 | ptr[2] << 8 | ptr[3];
-			break;
-			//Cryptoworks
-		case 0x0D:
-			caid = ptr[0] << 8 | ptr[1];
-			provid =  ptr[2];
-			break;
-		default:
-			caid = ptr[0] << 8 | ptr[1];
-			provid =  ptr[2] << 8 | ptr[3];
-			break;
-		}
+		caprovid = ptr[0] << 24 | ptr[1] << 16 | ptr[2] << 8 | ptr[3];
 
 		ncards_in_msg += ptr[4];
 		//caid check
-		if(chk_ctab(caid, ctab))
+		if(chk_ctab(gbox_get_caid(caprovid), ctab))
 		{
-			provid1 =  ptr[0] << 24 | ptr[1] << 16 | ptr[2] << 8 | ptr[3];
-	
 			current_ptr = ptr; 
 			ptr += 5;
 
@@ -430,7 +410,7 @@ int16_t read_cards_from_hello(uint8_t *ptr, uint8_t *len, CAIDTAB *ctab, uint8_t
 			while (ptr < current_ptr + 5 + current_ptr[4] * 4)
 			{
 				if ((ptr[1] & 0xf) <= maxdist)
-					{ gbox_add_card(ptr[2] << 8 | ptr[3], caid, provid, provid1, ptr[0], ptr[1] >> 4, ptr[1] & 0xf, GBOX_CARD_TYPE_GBOX, peer); }
+					{ gbox_add_card(ptr[2] << 8 | ptr[3], caprovid, ptr[0], ptr[1] >> 4, ptr[1] & 0xf, GBOX_CARD_TYPE_GBOX, peer); }
 				ptr += 4; //next card
 			} // end while cards for provider
 		}
@@ -548,27 +528,6 @@ static int8_t is_blocked_peer(uint16_t peer)
 {
 	if (peer == NO_GBOX_ID) { return 1; }
 	else { return 0; }
-}
-
-static uint32_t gbox_get_ecmchecksum(uchar *ecm, uint16_t ecmlen)
-{
-	uint8_t checksum[4];
-	int32_t counter;
-
-	checksum[3] = ecm[0];
-	checksum[2] = ecm[1];
-	checksum[1] = ecm[2];
-	checksum[0] = ecm[3];
-
-	for(counter = 1; counter < (ecmlen / 4) - 4; counter++)
-	{
-		checksum[3] ^= ecm[counter * 4];
-		checksum[2] ^= ecm[counter * 4 + 1];
-		checksum[1] ^= ecm[counter * 4 + 2];
-		checksum[0] ^= ecm[counter * 4 + 3];
-	}
-
-	return checksum[3] << 24 | checksum[2] << 16 | checksum[1] << 8 | checksum[0];
 }
 
 static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
@@ -1095,19 +1054,19 @@ static void gbox_local_cards(struct s_client *cli)
 				{
 					prid = cl->reader->prid[i][1] << 16 |
 						   cl->reader->prid[i][2] << 8 | cl->reader->prid[i][3];
-					gbox_add_local_card(local_gbox.id, cl->reader->caid, prid, slot, cli->reader->gbox_reshare, 0, GBOX_CARD_TYPE_LOCAL);
+					gbox_add_card(local_gbox.id, gbox_get_caprovid(cl->reader->caid, prid), slot, cli->reader->gbox_reshare, 0, GBOX_CARD_TYPE_LOCAL, NULL);
 				}
 			}
 			else
 			{ 
-				gbox_add_local_card(local_gbox.id, cl->reader->caid, 0, slot, cli->reader->gbox_reshare, 0, GBOX_CARD_TYPE_LOCAL); 
+				gbox_add_card(local_gbox.id, gbox_get_caprovid(cl->reader->caid, 0), slot, cli->reader->gbox_reshare, 0, GBOX_CARD_TYPE_LOCAL, NULL); 
 				
 				//Check for Betatunnel on gbox account in oscam.user
 				if (chk_is_betatunnel_caid(cl->reader->caid) == 1 && cli->ttab.ttdata && cl->reader->caid == cli->ttab.ttdata[0].bt_caidto)
 				{
 					//For now only first entry in tunnel tab. No sense in iteration?
 					//Add betatunnel card to transmitted list
-					gbox_add_local_card(local_gbox.id, cli->ttab.ttdata[0].bt_caidfrom, 0, slot, cli->reader->gbox_reshare, 0, GBOX_CARD_TYPE_BETUN);
+					gbox_add_card(local_gbox.id, gbox_get_caprovid(cli->ttab.ttdata[0].bt_caidfrom, 0), slot, cli->reader->gbox_reshare, 0, GBOX_CARD_TYPE_BETUN, NULL);
 					cs_log_dbg(D_READER, "gbox created betatunnel card for caid: %04X->%04X",cli->ttab.ttdata[0].bt_caidfrom,cl->reader->caid);
 				}
 			}
@@ -1139,10 +1098,10 @@ static void gbox_local_cards(struct s_client *cli)
 				{
 					it2 = ll_iter_create(card->providers);
 					while((provider = ll_iter_next(&it2)))
-						{ gbox_add_local_card(cc_peer_id, card->caid, provider->prov, slot, min_reshare, card->hop, GBOX_CARD_TYPE_CCCAM); }
+						{ gbox_add_card(cc_peer_id, gbox_get_caprovid(card->caid, provider->prov), slot, min_reshare, card->hop, GBOX_CARD_TYPE_CCCAM, NULL); }
 				}
 				else
-					{ gbox_add_local_card(cc_peer_id, card->caid, 0, slot, min_reshare, card->hop, GBOX_CARD_TYPE_CCCAM); }
+					{ gbox_add_card(cc_peer_id, gbox_get_caprovid(card->caid, 0), slot, min_reshare, card->hop, GBOX_CARD_TYPE_CCCAM, NULL); }
 			}
 		}   //end cccam
 #endif
@@ -1152,18 +1111,15 @@ static void gbox_local_cards(struct s_client *cli)
 	{ 
 		for (i = 0; i < cfg.gbox_proxy_cards_num; i++) 
 		{
+			slot = gbox_next_free_slot(local_gbox.id);
+			gbox_add_card(local_gbox.id, cfg.gbox_proxy_card[i], slot, cli->reader->gbox_reshare, 0, GBOX_CARD_TYPE_PROXY, NULL);
 			if ((cfg.gbox_proxy_card[i] >> 24) == 0x05)
-			{ 
-				slot = gbox_next_free_slot(local_gbox.id);
-				gbox_add_local_card(local_gbox.id, (cfg.gbox_proxy_card[i] >> 16) & 0xFFF0, cfg.gbox_proxy_card[i] & 0xFFFFF, slot, cli->reader->gbox_reshare, 0, GBOX_CARD_TYPE_PROXY);
+			{
 				cs_log_dbg(D_READER,"add proxy card:  slot %d %04lX:%06lX",slot, (cfg.gbox_proxy_card[i] >> 16) & 0xFFF0, cfg.gbox_proxy_card[i] & 0xFFFFF);
-			}	
-			else 
-			{	
-				slot = gbox_next_free_slot(local_gbox.id);
-				gbox_add_local_card(local_gbox.id, cfg.gbox_proxy_card[i] >> 16, cfg.gbox_proxy_card[i] & 0xFFFF, slot, cli->reader->gbox_reshare, 0, GBOX_CARD_TYPE_PROXY);
+			} else
+			{
 				cs_log_dbg(D_READER,"add proxy card:  slot %d %04lX:%06lX",slot, cfg.gbox_proxy_card[i] >> 16, cfg.gbox_proxy_card[i] & 0xFFFF);
-			}
+			}	
 		}
 	}  // end add proxy reader cards 
 } //end add local gbox cards
@@ -1330,26 +1286,6 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 		return 0;
 	}
 
-	uint16_t ercaid = er->caid;
-	uint32_t erprid = er->prid;
-
-	switch(ercaid >> 8)
-	{
-		//Viaccess
-	case 0x05:
-		ercaid = (ercaid & 0xFF00) | ((erprid >> 16) & 0xFF);
-		erprid = erprid & 0xFFFF;
-		break;
-		//Cryptoworks
-	case 0x0D:
-		erprid = erprid << 8;
-		break;
-		//Nagra
-	case 0x18:
-		erprid = 0;
-		break;
-	}
-
 	uchar send_buf_1[1024];
 	int32_t len2;
 
@@ -1382,8 +1318,8 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 	send_buf_1[len2 + 3] = 0x00;
 	send_buf_1[len2 + 4] = gbox_get_my_cpu_api();
 
-	i2b_buf(2, ercaid, send_buf_1 + len2 + 5);
-	i2b_buf(2, erprid, send_buf_1 + len2 + 7);
+	uint32_t caprovid = gbox_get_caprovid(er->caid, er->prid);
+	i2b_buf(4, caprovid, send_buf_1 + len2 + 5);
 
 	send_buf_1[len2 + 9] = 0x00;
 	cont_1 = len2 + 10;

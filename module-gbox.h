@@ -101,9 +101,7 @@ struct gbox_card_pending
 struct gbox_card
 {
     struct gbox_card_id id;
-    uint16_t caid;
-    uint32_t provid;
-    uint32_t provid_1;
+    uint32_t caprovid;
     uint8_t slot;
     uint8_t dist;
     uint8_t lvl;
@@ -118,7 +116,7 @@ struct gbox_card
 struct gbox_data
 {
     uint16_t id;
-    uint32_t  password;
+    uint32_t password;
     uchar checkcode[7];
     uint8_t minor_version;
     uint8_t cpu_api;

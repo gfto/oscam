@@ -4,6 +4,7 @@
 
 #ifdef MODULE_GBOX
 #include "module-gbox.h"
+#include "module-gbox-helper.h"
 #include "oscam-lock.h"
 #include "oscam-garbage.h"
 #include "oscam-files.h"
@@ -44,28 +45,28 @@ void gbox_write_cards_info(void)
                 {
                 case GBOX_CARD_TYPE_GBOX:
                         fprintf(fhandle_shared, "CardID %2d at %s Card %08X Sl:%2d Lev:%1d dist:%1d id:%04X\n",
-                                card_count_shared, card->origin_peer->hostname, card->provid_1,
+                                card_count_shared, card->origin_peer->hostname, card->caprovid,
                                 card->id.slot, card->lvl, card->dist, card->id.peer);
                         card_count_shared++;
                         break;
                 case GBOX_CARD_TYPE_LOCAL:
                         fprintf(fhandle_local, "CardID:%2d %s %08X Sl:%2d id:%04X\n",
-                                card_count_local, "Local_Card", card->provid_1,card->id.slot, card->id.peer);
+                                card_count_local, "Local_Card", card->caprovid, card->id.slot, card->id.peer);
                         card_count_local++;
                         break;
                 case GBOX_CARD_TYPE_BETUN:
                         fprintf(fhandle_local, "CardID:%2d %s %08X Sl:%2d id:%04X\n",
-                                card_count_local, "Betun_Card", card->provid_1,card->id.slot, card->id.peer);
+                                card_count_local, "Betun_Card", card->caprovid, card->id.slot, card->id.peer);
                         card_count_local++;
                         break;
                 case GBOX_CARD_TYPE_CCCAM:
                         fprintf(fhandle_local, "CardID:%2d %s %08X Sl:%2d id:%04X\n",
-                                card_count_local, "CCcam_Card", card->provid_1,card->id.slot, card->id.peer);
+                                card_count_local, "CCcam_Card", card->caprovid, card->id.slot, card->id.peer);
                         card_count_local++;
                         break;
                 case GBOX_CARD_TYPE_PROXY:
                         fprintf(fhandle_local, "CardID:%2d %s %08X Sl:%2d id:%04X\n",
-                                card_count_local, "Proxy_Card", card->provid_1,card->id.slot, card->id.peer);
+                                card_count_local, "Proxy_Card", card->caprovid, card->id.slot, card->id.peer);
                         card_count_local++;
                         break;
                 default:
@@ -101,7 +102,7 @@ void gbox_write_stats(void)
                 if (card->type == GBOX_CARD_TYPE_GBOX)
                 {
                         fprintf(fhandle, "CardID %4d Card %08X id:%04X #CWs:%d AVGtime:%d ms\n",
-                                        card_count, card->provid_1, card->id.peer, card->no_cws_returned, card->average_cw_time);
+                                        card_count, card->caprovid, card->id.peer, card->no_cws_returned, card->average_cw_time);
                         fprintf(fhandle, "Good SIDs:\n");
                         LL_ITER it2 = ll_iter_create(card->goodsids);
                         while((srvid_good = ll_iter_next(&it2)))
@@ -134,14 +135,14 @@ static void gbox_free_card(struct gbox_card *card)
         return;
 }
 
-static int8_t closer_path_known(uint32_t provid1, uint16_t id_peer, uint8_t slot, uint8_t distance)
+static int8_t closer_path_known(uint32_t caprovid, uint16_t id_peer, uint8_t slot, uint8_t distance)
 {
         cs_readlock(&gbox_cards_lock);        
         LL_ITER it = ll_iter_create(gbox_cards);
         struct gbox_card *card;
         while((card = ll_iter_next(&it)))
         {
-                if (card->provid_1 == provid1 && card->id.peer == id_peer && card->id.slot == slot && card->dist <= distance)
+                if (card->caprovid == caprovid && card->id.peer == id_peer && card->id.slot == slot && card->dist <= distance)
                 {
                         cs_readunlock(&gbox_cards_lock);                                
                         return 1;                                
@@ -151,14 +152,14 @@ static int8_t closer_path_known(uint32_t provid1, uint16_t id_peer, uint8_t slot
         return 0;
 }
 
-static int8_t got_from_backup(uint32_t provid1, uint16_t id_peer, uint8_t slot, struct gbox_peer *origin_peer)
+static int8_t got_from_backup(uint32_t caprovid, uint16_t id_peer, uint8_t slot, struct gbox_peer *origin_peer)
 {
         cs_writelock(&gbox_cards_lock);        
         LL_ITER it = ll_iter_create(gbox_backup_cards);
         struct gbox_card *card;
         while((card = ll_iter_next(&it)))
         {
-                if (card->provid_1 == provid1 && card->id.peer == id_peer && card->id.slot == slot)
+                if (card->caprovid == caprovid && card->id.peer == id_peer && card->id.slot == slot)
                 {
                         ll_iter_remove(&it);
                         card->origin_peer = origin_peer;
@@ -172,9 +173,19 @@ static int8_t got_from_backup(uint32_t provid1, uint16_t id_peer, uint8_t slot, 
         return 0;
 }
 
-void gbox_add_card(uint16_t id_peer, uint16_t caid, uint32_t provid, uint32_t provid1, uint8_t slot, uint8_t level, uint8_t distance, uint8_t type, struct gbox_peer *origin_peer)
+void gbox_add_card(uint16_t id_peer, uint32_t caprovid, uint8_t slot, uint8_t level, uint8_t distance, uint8_t type, struct gbox_peer *origin_peer)
 {
-        if (!closer_path_known(provid1, id_peer, slot, distance) && !got_from_backup(provid1, id_peer, slot, origin_peer))
+        uint16_t caid = gbox_get_caid(caprovid);
+        uint32_t provid = gbox_get_provid(caprovid);
+
+        //don't insert 0100:000000
+        if((caid >> 8 == 0x01) && (!provid))
+                { return; }
+        //skip CAID 18XX providers
+        if((caid >> 8 == 0x18) && (provid))
+                { return; }
+
+        if (!closer_path_known(caprovid, id_peer, slot, distance) && !got_from_backup(caprovid, id_peer, slot, origin_peer))
         {        
                 struct gbox_card *card;
                 if(!cs_malloc(&card, sizeof(struct gbox_card)))
@@ -182,9 +193,7 @@ void gbox_add_card(uint16_t id_peer, uint16_t caid, uint32_t provid, uint32_t pr
                         cs_log("Card allocation failed");
                         return;
                 }
-                card->caid = caid;
-                card->provid = provid;
-                card->provid_1 = provid1;
+                card->caprovid = caprovid;
                 card->id.peer = id_peer;
                 card->id.slot = slot;
                 card->dist = distance;
@@ -203,36 +212,6 @@ void gbox_add_card(uint16_t id_peer, uint16_t caid, uint32_t provid, uint32_t pr
         return;
 }
 
-void gbox_add_local_card(uint16_t id, uint16_t caid, uint32_t prid, uint8_t slot, uint8_t card_reshare, uint8_t dist, uint8_t type)
-{
-        uint32_t provid_1 = 0;
-
-        //don't insert 0100:000000
-        if((caid >> 8 == 0x01) && (!prid))
-                { return; }
-        //skip CAID 18XX providers
-        if((caid >> 8 == 0x18) && (prid))
-                { return; }
-
-        switch(caid >> 8)
-        {
-                // Viaccess
-        case 0x05:
-                provid_1 = (caid >> 8) << 24 | (prid & 0xFFFFFF);
-                break;
-                // Cryptoworks
-        case 0x0D:
-                provid_1 = (caid >> 8) << 24 | (caid & 0xFF) << 16 |
-                        ((prid << 8) & 0xFF00);
-                break;
-        default:
-                provid_1 = (caid >> 8) << 24 | (caid & 0xFF) << 16 |
-                        (prid & 0xFFFF);
-                break;
-        }
-        gbox_add_card(id, caid, prid, provid_1, slot, card_reshare, dist, type, NULL);
-}
- 
 void gbox_calc_checkcode(uint8_t *checkcode)
 {
         checkcode[0] = 0x15;
@@ -248,10 +227,10 @@ void gbox_calc_checkcode(uint8_t *checkcode)
         struct gbox_card *card;
         while((card = ll_iter_next(&it)))
         {
-                checkcode[0] ^= (0xFF & (card->provid_1 >> 24));
-                checkcode[1] ^= (0xFF & (card->provid_1 >> 16));
-                checkcode[2] ^= (0xFF & (card->provid_1 >> 8));
-                checkcode[3] ^= (0xFF & (card->provid_1));
+                checkcode[0] ^= (0xFF & (card->caprovid >> 24));
+                checkcode[1] ^= (0xFF & (card->caprovid >> 16));
+                checkcode[2] ^= (0xFF & (card->caprovid >> 8));
+                checkcode[3] ^= (0xFF & (card->caprovid));
                 checkcode[4] ^= (0xFF & (card->id.slot));
                 checkcode[5] ^= (0xFF & (card->id.peer >> 8));
                 checkcode[6] ^= (0xFF & (card->id.peer));
@@ -340,12 +319,12 @@ void gbox_send_hello(struct s_client *cli)
                 {
                         //send to user only cards which matching CAID from account and lvl > 0
                         //do not send peer cards back
-                        if(chk_ctab(card->caid, &peer->my_user->account->ctab) && (card->lvl > 0) && (!card->origin_peer || card->origin_peer->gbox.id != peer->gbox.id))
+                        if(chk_ctab(gbox_get_caid(card->caprovid), &peer->my_user->account->ctab) && (card->lvl > 0) && (!card->origin_peer || card->origin_peer->gbox.id != peer->gbox.id))
                         {
-                                *(++ptr) = card->provid_1 >> 24;
-                                *(++ptr) = card->provid_1 >> 16;
-                                *(++ptr) = card->provid_1 >> 8;
-                                *(++ptr) = card->provid_1 & 0xff;
+                                *(++ptr) = card->caprovid >> 24;
+                                *(++ptr) = card->caprovid >> 16;
+                                *(++ptr) = card->caprovid >> 8;
+                                *(++ptr) = card->caprovid & 0xff;
                                 *(++ptr) = 1;       //note: original gbx is more efficient and sends all cards of one caid as package
                                 *(++ptr) = card->id.slot;
                                 //If you modify the next line you are going to destroy the community
@@ -384,7 +363,7 @@ void gbox_add_good_sid(uint16_t id_card, uint16_t caid, uint8_t slot, uint16_t s
         LL_ITER it = ll_iter_create(gbox_cards);
         while((card = ll_iter_next(&it)))
         {
-                if(card->id.peer == id_card && card->caid == caid && card->id.slot == slot)
+                if(card->id.peer == id_card && gbox_get_caid(card->caprovid) == caid && card->id.slot == slot)
                 {
                         card->no_cws_returned++;
                         if (!card->no_cws_returned)
@@ -412,9 +391,9 @@ void gbox_add_good_sid(uint16_t id_card, uint16_t caid, uint8_t slot, uint16_t s
                                 return;
                         }
                         srvid->srvid.sid = sid_ok;
-                        srvid->srvid.provid_id = card->provid;
+                        srvid->srvid.provid_id = gbox_get_provid(card->caprovid);
                         srvid->last_cw_received = time(NULL);
-                        cs_log_dbg(D_READER, "Adding good SID: %04X for CAID: %04X Provider: %04X on CardID: %04X\n", sid_ok, caid, card->provid, id_card);
+                        cs_log_dbg(D_READER, "Adding good SID: %04X for CAID: %04X Provider: %04X on CardID: %04X\n", sid_ok, caid, gbox_get_provid(card->caprovid), id_card);
                         ll_append(card->goodsids, srvid);
                         break;
                 }
@@ -502,7 +481,7 @@ uint8_t gbox_get_cards_for_ecm(uchar *send_buf_1, int32_t cont_1, uint8_t max_ca
         while((card = ll_iter_next(&it)))
         {
                 if(card->origin_peer && card->origin_peer->gbox.id == peer_id && card->type == GBOX_CARD_TYPE_GBOX &&
-                        card->caid == er->caid && card->provid == er->prid && !is_already_pending(er->gbox_cards_pending, card->id.peer, card->id.slot))
+                        gbox_get_caid(card->caprovid) == er->caid && gbox_get_provid(card->caprovid) == er->prid && !is_already_pending(er->gbox_cards_pending, card->id.peer, card->id.slot))
                 {
                         sid_verified = 0;
 
@@ -545,7 +524,7 @@ uint8_t gbox_get_cards_for_ecm(uchar *send_buf_1, int32_t cont_1, uint8_t max_ca
         while((card = ll_iter_next(&it)))
         {
                 if(card->origin_peer && card->origin_peer->gbox.id == peer_id && card->type == GBOX_CARD_TYPE_GBOX &&
-                        card->caid == er->caid && card->provid == er->prid && !is_already_pending(er->gbox_cards_pending, card->id.peer, card->id.slot) && !enough)
+                        gbox_get_caid(card->caprovid) == er->caid && gbox_get_provid(card->caprovid) == er->prid && !is_already_pending(er->gbox_cards_pending, card->id.peer, card->id.slot) && !enough)
                 {
                         sid_verified = 0;
 
@@ -597,7 +576,7 @@ uint8_t gbox_get_cards_for_ecm(uchar *send_buf_1, int32_t cont_1, uint8_t max_ca
                                                 }
 
                                                 srvid_bad->srvid.sid = er->srvid;
-                                                srvid_bad->srvid.provid_id = card->provid;
+                                                srvid_bad->srvid.provid_id = gbox_get_provid(card->caprovid);
                                                 srvid_bad->bad_strikes = 1;
                                                 ll_append(card->badsids, srvid_bad);
                                                 cs_log_dbg(D_READER, "ID: %04X SL: %02X SID: %04X is not checked", card->id.peer, card->id.slot, srvid_bad->srvid.sid);

@@ -5,8 +5,7 @@
 void gbox_write_cards_info(void);
 void gbox_write_stats(void);
 void init_gbox_cards(void);
-void gbox_add_card(uint16_t id_peer, uint16_t caid, uint32_t provid, uint32_t provid1, uint8_t slot, uint8_t level, uint8_t distance, uint8_t type, struct gbox_peer *origin_peer);
-void gbox_add_local_card(uint16_t id, uint16_t caid, uint32_t prid, uint8_t slot, uint8_t card_reshare, uint8_t dist, uint8_t type);
+void gbox_add_card(uint16_t id_peer, uint32_t caprovid, uint8_t slot, uint8_t level, uint8_t distance, uint8_t type, struct gbox_peer *origin_peer);
 void gbox_calc_checkcode(uint8_t *checkcode);
 uint16_t gbox_count_peer_cards(uint16_t peer_id);
 void gbox_delete_cards_from_peer(uint16_t peer_id);
