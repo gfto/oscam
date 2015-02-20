@@ -145,6 +145,7 @@ int32_t ICC_Async_Activate(struct s_reader *reader, ATR *atr, uint16_t deprecate
 	}
 	else
 	{
+		reader->crdr_flush = crdr_ops->flush; // Flush flag may be changed for each reader
 		call(crdr_ops->activate(reader, atr));
 		if(crdr_ops->skip_extra_atr_parsing)
 			{ return OK; }
@@ -674,7 +675,7 @@ static int32_t SetRightParity(struct s_reader *reader)
 
 	call(ICC_Async_SetParity(reader, parity));
 
-	if(crdr_ops->flush)
+	if(crdr_ops->flush && reader->crdr_flush)
 		{ IO_Serial_Flush(reader); }
 
 	return OK;
