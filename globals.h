@@ -314,7 +314,7 @@ typedef unsigned char uchar;
 
 #define is_network_reader(__X) (__X->typ & R_IS_NETWORK)
 #define is_cascading_reader(__X) (__X->typ & R_IS_CASCADING)
-#define is_smargo_reader(__X) (strcmp(__X->crdr.desc, "smargo") == 0)
+#define is_smargo_reader(__X) (__X->crdr && strcmp(__X->crdr->desc, "smargo") == 0)
 
 //ECM rc codes:
 #define E_FOUND         0
@@ -1340,7 +1340,7 @@ struct s_reader                                     //contains device info, read
 	int8_t          card_status;
 	int8_t          deprecated;                     //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
 	struct s_module ph;
-	struct s_cardreader crdr;
+	struct s_cardreader *crdr;
 	void            *crdr_data; // Private card reader data
 	bool            crdr_flush; // sci readers may disable flush per reader
 	struct s_cardsystem csystem;

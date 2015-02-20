@@ -77,7 +77,7 @@ void IO_Serial_Ioctl_Lock(struct s_reader *reader, int32_t flag)
 
 bool IO_Serial_DTR_RTS(struct s_reader *reader, int32_t *dtr, int32_t *rts)
 {
-	struct s_cardreader *crdr_ops = &reader->crdr;
+	struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 
 	if(crdr_ops->set_DTS_RTS)
@@ -488,7 +488,7 @@ int32_t IO_Serial_Receive(struct s_reader *reader, unsigned char *buffer, uint32
 
 bool IO_Serial_Write(struct s_reader *reader, uint32_t delay, uint32_t timeout, uint32_t size, const unsigned char *data)
 {
-	struct s_cardreader *crdr_ops = &reader->crdr;
+	struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 
 	if(timeout == 0)   // General fix for readers not communicating timeout and delay

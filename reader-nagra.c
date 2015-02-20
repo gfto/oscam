@@ -758,7 +758,7 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 				reader->ins7e11_fast_reset = 1;
 			}
 			reader->card_atr_length = 23;
-			struct s_cardreader *crdr_ops = &reader->crdr;
+			struct s_cardreader *crdr_ops = reader->crdr;
 			if (!crdr_ops) return ERROR;
 			call(crdr_ops->activate(reader, newatr)); //read nagra atr
 			get_atr2;
