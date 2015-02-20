@@ -96,7 +96,6 @@ String.prototype.toHHMMSS = function () {
 	return time;
 }
 
-
 function runden(value) {
 	var k = (Math.round(value * 100) / 100).toString();
 	k += (k.indexOf('.') == -1) ? '.00' : '00';
@@ -357,6 +356,12 @@ $(function () {
 		// data.direction - the sorting direction (either asc or desc)
 		lockpoll = 0;
 		table.removeClass("disabledtable");
+	});
+
+	// copy emm to single write emm
+	$("a.tosingleemm").click(function (e) {
+		var ins_emm = (/\s+[0-9a-fA-F]+\s+([0-9a-fA-F]+)\s+/).exec($(this).text());
+		$('#singleemm').val(ins_emm[1]);
 	});
 });
 

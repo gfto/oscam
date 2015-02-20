@@ -6323,7 +6323,8 @@ static char *send_oscam_EMM(struct templatevars * vars, struct uriparams * param
 	char filename[128];
 	char targetfile[256];
 	char tmpstr[20];
-	char emm_txt[128];
+	char emm_txt[32];
+	char emm_title[32];
 	char *emm_path;
 	char *emm_types[] = { "unique_emm", "shared_emm", "global_emm" };
 	char *emm_names[] = { "RDREMMUNIQUE", "RDREMMSHARED", "RDREMMGLOBAL" };
@@ -6345,6 +6346,12 @@ static char *send_oscam_EMM(struct templatevars * vars, struct uriparams * param
 		{
 			stat(targetfile, &sb);
 			tpl_printf(vars, TPLAPPEND, emm_txt, " (Size: %'.2f kB)", (double)sb.st_size/1024);
+
+			if(emm_max_size[i]>=0)
+			{
+				snprintf(emm_title, sizeof(emm_title), "%s_TITLE", emm_names[i]);
+				tpl_addVar(vars, TPLADD, emm_title, "title=\"Klick Line to Copy EMM in Single EMM Write Field\"");
+			}
 
 			if(emm_max_size[i]>0)
 			{
@@ -6381,7 +6388,9 @@ static char *send_oscam_EMM(struct templatevars * vars, struct uriparams * param
 				for(emm_d=emmrs;emm_d>0;--emm_d) 
 				{
 					snprintf(tmpstr, sizeof(tmpstr), "LINE_%d", emm_d);
-					tpl_printf(vars, TPLAPPEND, emm_names[i], "%s\n", tpl_getVar(vars, tmpstr));
+					tpl_printf(vars, TPLAPPEND, emm_names[i], "<a class=\"tosingleemm\" href=\"#\">%s</a>\n", tpl_getVar(vars, tmpstr));
+					if(sb.st_size>emm_max_size[i]*1024) { tpl_printf(vars, TPLAPPEND, "EMM_TMP", "%s\n", tpl_getVar(vars, tmpstr)); }
+					tpl_addVar(vars, TPLADD, tmpstr, "");
 				}
 
 				if(sb.st_size>emm_max_size[i]*1024)
@@ -6396,22 +6405,23 @@ static char *send_oscam_EMM(struct templatevars * vars, struct uriparams * param
 					if(rename(targetfile, orgfile) == 0)
 					{
 						FILE *fs = fopen(targetfile, "w");
-						fprintf(fs, "%s", tpl_getVar(vars, emm_names[i]));
+						fprintf(fs, "%s", tpl_getVar(vars, "EMM_TMP"));
 						fclose(fs);
 						tpl_printf(vars, TPLAPPEND, emm_txt, "<br><b>New reduced File created!</b> Size of Original File is higher as %d kB, saved to %s", emm_max_size[i], orgfile);
 					}
 				}
+				tpl_addVar(vars, TPLADD, "EMM_TMP", ""); 
 			}
 			else if (emm_max_size[i]==0)
 			{
 				while(fgets(buffer, sizeof(buffer), fp) != NULL)
 				{
-					tpl_addVar(vars, TPLAPPEND, emm_names[i], buffer);
+					tpl_printf(vars, TPLAPPEND, emm_names[i], "<a class=\"tosingleemm\" href=\"#\">%s</a>", buffer);
 				}
 			}
 			else
 			{
-				tpl_printf(vars, TPLADD, emm_names[i],"Viewing of EMM File deactivated. <br>Set %s in Config Webif to 0 or higher for viewing or filtering EMM File.", emm_cfg_names[i]);
+				tpl_printf(vars, TPLADD, emm_names[i],"Viewing of EMM File deactivated.<br>Set %s in Config Webif to 0 or higher for viewing or filtering EMM File.", emm_cfg_names[i]);
 			}
 			fclose(fp);
 		}
