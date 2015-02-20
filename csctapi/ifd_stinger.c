@@ -93,6 +93,9 @@ static bool Stinger_IO_Serial_WaitToWrite(struct s_reader *reader, uint32_t dela
 
 bool Stinger_IO_Serial_Write(struct s_reader *reader, uint32_t delay, uint32_t timeout, uint32_t size, const unsigned char *data)
 {
+	struct s_cardreader *crdr_ops = &reader->crdr;
+	if (!crdr_ops) return ERROR;
+
 	if(timeout == 0)   // General fix for readers not communicating timeout and delay
 	{
 		if(reader->char_delay != 0) { timeout = reader->char_delay; }
@@ -147,7 +150,7 @@ AGAIN:
 		else
 		{
 			rdr_log(reader, "Timeout in Stinger_IO_Serial_WaitToWrite, delay=%d us, timeout=%d us", delay, timeout);
-			if(reader->crdr.read_written && reader->written > 0)    // these readers need to read all transmitted chars before they can receive!
+			if(crdr_ops->read_written && reader->written > 0)    // these readers need to read all transmitted chars before they can receive!
 			{
 				unsigned char buf[256];
 				rdr_log_dbg(reader, D_DEVICE, "Reading %d echoed transmitted chars...", reader->written);
@@ -243,7 +246,10 @@ int32_t Stinger_Init(struct s_reader *reader)
 	// First set card in reset state, to not change any parameters while communication ongoing
 	IO_Serial_RTS_Set(reader);
 
-	if(reader->crdr.flush) { IO_Serial_Flush(reader); }
+	struct s_cardreader *crdr_ops = &reader->crdr;
+	if (!crdr_ops) return ERROR;
+
+	if(crdr_ops->flush) { IO_Serial_Flush(reader); }
 
 	rdr_log_dbg(reader, D_IFD, "Initializing reader type=%d", reader->typ);
 
@@ -251,7 +257,7 @@ int32_t Stinger_Init(struct s_reader *reader)
 	if(reader->atr[0] == 0)
 	{
 		if(IO_Serial_SetParams(reader, DEFAULT_BAUDRATE, 8, PARITY_NONE, 2, NULL, NULL)) { return ERROR; }
-		if(reader->crdr.flush) { IO_Serial_Flush(reader); }
+		if(crdr_ops->flush) { IO_Serial_Flush(reader); }
 	}
 
 	return OK;
@@ -267,10 +273,12 @@ int32_t Stinger_Reset(struct s_reader *reader, ATR *atr)
 
 	IO_Serial_SetParams(reader, DEFAULT_BAUDRATE, 8, PARITY_NONE, 2, NULL, NULL);
 
+	struct s_cardreader *crdr_ops = &reader->crdr;
+	if (!crdr_ops) return ERROR;
 
 	for(i = 0; i < 1; i++)
 	{
-		if(reader->crdr.flush) { IO_Serial_Flush(reader); }
+		if(crdr_ops->flush) { IO_Serial_Flush(reader); }
 
 
 		ret = ERROR;
@@ -321,11 +329,13 @@ static int32_t stinger_mouse_init(struct s_reader *reader)
 
 	unsigned int clock_mhz = 0;
 
+	struct s_cardreader *crdr_ops = &reader->crdr;
+	if (!crdr_ops) return ERROR;
 
 	if(detect_db2com_reader(reader))
 	{
 		cardreader_db2com(&reader->crdr);
-		return reader->crdr.reader_init(reader);
+		return crdr_ops->reader_init(reader);
 	}
 
 	clock_mhz = reader->mhz;

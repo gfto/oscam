@@ -758,14 +758,16 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 				reader->ins7e11_fast_reset = 1;
 			}
 			reader->card_atr_length = 23;
-			call(reader->crdr.activate(reader, newatr)); //read nagra atr
+			struct s_cardreader *crdr_ops = &reader->crdr;
+			if (!crdr_ops) return ERROR;
+			call(crdr_ops->activate(reader, newatr)); //read nagra atr
 			get_atr2;
 			memcpy(reader->rom, atr2 + 8, 15);// get historical bytes containing romrev from nagra atr
 			rdr_log(reader,"Nagra layer found"); 
 			rdr_log(reader,"Rom revision: %.15s", reader->rom);
 			reader->card_atr_length = 14;
 			reader->seca_nagra_card = 2;
-			call(reader->crdr.activate(reader, newatr));// read seca atr to switch back
+			call(crdr_ops->activate(reader, newatr));// read seca atr to switch back
 			if ((reader->typ == R_SMART || reader->typ == R_INTERNAL || is_smargo_reader(reader)) && ins7e11_state == 1)
 			{
 				ins7e11_state = 0;

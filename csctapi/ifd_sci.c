@@ -248,8 +248,10 @@ static int32_t Sci_Read_ATR(struct s_reader *reader, ATR *atr)   // reads ATR on
 
 	if(buf[7] == 0x70 && buf[8] == 0x70 && (buf[9]&0x0F) >= 10)
 	{
+		struct s_cardreader *crdr_ops = &reader->crdr;
+		if (!crdr_ops) return ERROR;
 		int8_t nxtr = 0;
-		reader->crdr.flush = 0;
+		crdr_ops->flush = 0;
 		while(nxtr < 2)
 		{
 			if(IO_Serial_Read(reader, 0, 75000, 1, buf + n + nxtr)) { break; }
