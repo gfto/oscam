@@ -416,7 +416,7 @@ int16_t read_cards_from_hello(uint8_t *ptr, uint8_t *len, CAIDTAB *ctab, uint8_t
 		}
 		else
 			{ ptr += 5 + ptr[4] * 4; } //skip cards because caid
-	} // end while caid/provid
+	} // end while < len
 	return ncards_in_msg;
 }
 
@@ -1038,8 +1038,10 @@ static void gbox_local_cards(struct s_client *cli)
 	struct cc_provider *provider;
 	uint8_t *node1 = NULL;
 	uint8_t min_reshare = 0;
+	gbox_delete_cards_from_type(GBOX_CARD_TYPE_CCCAM);
 #endif
-
+	
+	gbox_delete_cards_from_peer(local_gbox.id);
 	struct s_client *cl;
 	for(cl = first_client; cl; cl = cl->next)
 	{
@@ -1562,14 +1564,17 @@ static void gbox_s_idle(struct s_client *cl)
 		{
 			//gbox peer apparently died without saying goodbye
 			peer = proxy->gbox;
+			cs_writelock(&peer->lock);
 			cs_log_dbg(D_READER, "time since last proxy activity in sec: %d => taking gbox peer offline",time_since_last);
 			gbox_reinit_proxy(proxy);
+			cs_writeunlock(&peer->lock);
 		}
 	
 		time_since_last = abs(cl->lastecm - time(NULL));
 		if (time_since_last > HELLO_KEEPALIVE_TIME && cl->gbox_peer_id != NO_GBOX_ID)
 		{
 			peer = proxy->gbox;
+			cs_writelock(&peer->lock);
 			cs_log_dbg(D_READER, "time since last ecm in sec: %d => trigger keepalive hello",time_since_last);
 			if (!peer->online)
 				{ peer->hello_stat = GBOX_STAT_HELLOL; }
@@ -1577,6 +1582,7 @@ static void gbox_s_idle(struct s_client *cl)
 				{ peer->hello_stat = GBOX_STAT_HELLOS; }
 			gbox_send_hello(proxy);
 			peer->hello_stat = GBOX_STAT_HELLOR;
+			cs_writeunlock(&peer->lock);
 		}	
 	}	
 	//prevent users from timing out

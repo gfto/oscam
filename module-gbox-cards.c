@@ -276,6 +276,25 @@ void gbox_delete_cards_from_peer(uint16_t peer_id)
         return;
 }
 
+void gbox_delete_cards_from_type(uint8_t type)
+{
+        struct gbox_card *card;
+
+        cs_writelock(&gbox_cards_lock);
+        LL_ITER it = ll_iter_create(gbox_cards);
+        while((card = ll_iter_next(&it)))
+        {
+                if (card->type == type)
+                {
+                        ll_iter_remove(&it);
+                        ll_append(gbox_backup_cards, card);
+                }
+        }
+        cs_writeunlock(&gbox_cards_lock);
+
+        return;
+}
+
 static void gbox_free_list(LLIST *card_list)
 {
     if(card_list)

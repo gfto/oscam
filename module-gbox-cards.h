@@ -9,6 +9,7 @@ void gbox_add_card(uint16_t id_peer, uint32_t caprovid, uint8_t slot, uint8_t le
 void gbox_calc_checkcode(uint8_t *checkcode);
 uint16_t gbox_count_peer_cards(uint16_t peer_id);
 void gbox_delete_cards_from_peer(uint16_t peer_id);
+void gbox_delete_cards_from_type(uint8_t type);
 void gbox_free_cardlist(void);
 void gbox_send_hello(struct s_client *cli);
 void gbox_add_good_sid(uint16_t id_card, uint16_t caid, uint8_t slot, uint16_t sid_ok, uint32_t cw_time);
