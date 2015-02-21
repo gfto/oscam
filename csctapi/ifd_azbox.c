@@ -161,16 +161,17 @@ static int32_t Azbox_do_reset(struct s_reader *reader, struct s_ATR *atr,
        return ret;
 }
 
-void cardreader_internal_azbox(struct s_cardreader *crdr)
+struct s_cardreader cardreader_internal_azbox =
 {
-        crdr->desc         = "internal";
-        crdr->typ          = R_INTERNAL;
-        crdr->reader_init  = Azbox_Reader_Init;
-        crdr->get_status   = Azbox_GetStatus;
-        crdr->activate     = Azbox_Reset;
-        crdr->transmit     = IO_Serial_Transmit;
-	crdr->receive      = IO_Serial_Receive;
-        crdr->close        = Azbox_Reader_Close;
-        crdr->do_reset     = Azbox_do_reset;
-}
+	.desc         = "internal",
+	.typ          = R_INTERNAL,
+	.reader_init  = Azbox_Reader_Init,
+	.get_status   = Azbox_GetStatus,
+	.activate     = Azbox_Reset,
+	.transmit     = IO_Serial_Transmit,
+	.receive      = IO_Serial_Receive,
+	.close        = Azbox_Reader_Close,
+	.do_reset     = Azbox_do_reset,
+};
+
 #endif

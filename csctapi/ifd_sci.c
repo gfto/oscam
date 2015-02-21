@@ -564,19 +564,19 @@ static int32_t sci_write_settings(struct s_reader *reader, struct s_cardreader_s
 	return OK;
 }
 
-void cardreader_internal_sci(struct s_cardreader *crdr)
+struct s_cardreader cardreader_internal_sci =
 {
-	crdr->desc         = "internal";
-	crdr->typ          = R_INTERNAL;
-	crdr->flush        = 1;
-	crdr->max_clock_speed = 1;
-	crdr->reader_init  = Sci_Init;
-	crdr->get_status   = Sci_GetStatus;
-	crdr->activate     = sci_activate;
-	crdr->transmit     = IO_Serial_Transmit;
-	crdr->receive      = IO_Serial_Receive;
-	crdr->close        = Sci_Close;
-	crdr->write_settings = sci_write_settings;
-}
+	.desc            = "internal",
+	.typ             = R_INTERNAL,
+	.flush           = 1,
+	.max_clock_speed = 1,
+	.reader_init     = Sci_Init,
+	.get_status      = Sci_GetStatus,
+	.activate        = sci_activate,
+	.transmit        = IO_Serial_Transmit,
+	.receive         = IO_Serial_Receive,
+	.close           = Sci_Close,
+	.write_settings  = sci_write_settings,
+};
 
 #endif

@@ -78,7 +78,6 @@ static char default_pidfile[64];
 int32_t exit_oscam = 0;
 static struct s_module modules[CS_MAX_MOD];
 struct s_cardsystem cardsystems[CS_MAX_MOD];
-struct s_cardreader cardreaders[CS_MAX_MOD];
 
 struct s_client *first_client = NULL;  //Pointer to clients list, first client is master
 struct s_reader *first_active_reader = NULL;  //list of active readers (enable=1 deleted = 0)
@@ -1388,6 +1387,45 @@ __attribute__ ((noreturn)) static void run_tests(void)
 static void run_tests(void) { }
 #endif
 
+struct s_cardreader *cardreaders[] =
+{
+#ifdef CARDREADER_DB2COM
+	&cardreader_db2com,
+#endif
+#if defined(CARDREADER_INTERNAL_AZBOX)
+	&cardreader_internal_azbox,
+#elif defined(CARDREADER_INTERNAL_COOLAPI)
+	&cardreader_internal_cool,
+#elif defined(CARDREADER_INTERNAL_SCI)
+	&cardreader_internal_sci,
+#endif
+#ifdef CARDREADER_PHOENIX
+	&cardreader_mouse,
+#endif
+#ifdef CARDREADER_MP35
+	&cardreader_mp35,
+#endif
+#ifdef CARDREADER_PCSC
+	&cardreader_pcsc,
+#endif
+#ifdef CARDREADER_SC8IN1
+	&cardreader_sc8in1,
+#endif
+#ifdef CARDREADER_SMARGO
+	&cardreader_smargo,
+#endif
+#ifdef CARDREADER_SMART
+	&cardreader_smartreader,
+#endif
+#ifdef CARDREADER_STAPI
+	&cardreader_stapi,
+#endif
+#ifdef CARDREADER_STINGER
+	&cardreader_stinger,
+#endif
+	NULL
+};
+
 int32_t main(int32_t argc, char *argv[])
 {
 	run_tests();
@@ -1495,45 +1533,6 @@ int32_t main(int32_t argc, char *argv[])
 		0
 	};
 
-	void (*cardreader_def[])(struct s_cardreader *) =
-	{
-#ifdef CARDREADER_DB2COM
-		cardreader_db2com,
-#endif
-#if defined(CARDREADER_INTERNAL_AZBOX)
-		cardreader_internal_azbox,
-#elif defined(CARDREADER_INTERNAL_COOLAPI)
-		cardreader_internal_cool,
-#elif defined(CARDREADER_INTERNAL_SCI)
-		cardreader_internal_sci,
-#endif
-#ifdef CARDREADER_PHOENIX
-		cardreader_mouse,
-#endif
-#ifdef CARDREADER_MP35
-		cardreader_mp35,
-#endif
-#ifdef CARDREADER_PCSC
-		cardreader_pcsc,
-#endif
-#ifdef CARDREADER_SC8IN1
-		cardreader_sc8in1,
-#endif
-#ifdef CARDREADER_SMARGO
-		cardreader_smargo,
-#endif
-#ifdef CARDREADER_SMART
-		cardreader_smartreader,
-#endif
-#ifdef CARDREADER_STAPI
-		cardreader_stapi,
-#endif
-#ifdef CARDREADER_STINGER
-		cardreader_stinger,
-#endif
-		0
-	};
-
 	parse_cmdline_params(argc, argv);
 
 	if(bg && do_daemon(1, 0))
@@ -1594,11 +1593,6 @@ int32_t main(int32_t argc, char *argv[])
 	{
 		memset(&cardsystems[i], 0, sizeof(struct s_cardsystem));
 		cardsystem_def[i](&cardsystems[i]);
-	}
-	for(i = 0; cardreader_def[i]; i++)
-	{
-		memset(&cardreaders[i], 0, sizeof(struct s_cardreader));
-		cardreader_def[i](&cardreaders[i]);
 	}
 
 	init_sidtab();

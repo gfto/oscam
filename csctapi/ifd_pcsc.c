@@ -340,18 +340,18 @@ static int32_t pcsc_close(struct s_reader *pcsc_reader)
 	return OK;
 }
 
-void cardreader_pcsc(struct s_cardreader *crdr)
+struct s_cardreader cardreader_pcsc =
 {
-	crdr->desc         = "pcsc";
-	crdr->typ          = R_PCSC;
-	crdr->skip_extra_atr_parsing  = 1;
-	crdr->skip_t1_command_retries = 1;
-	crdr->skip_setting_ifsc       = 1;
-	crdr->reader_init  = pcsc_init;
-	crdr->get_status   = pcsc_get_status;
-	crdr->activate     = pcsc_activate;
-	crdr->card_write   = pcsc_do_api;
-	crdr->close        = pcsc_close;
-}
+	.desc                    = "pcsc",
+	.typ                     = R_PCSC,
+	.skip_extra_atr_parsing  = 1,
+	.skip_t1_command_retries = 1,
+	.skip_setting_ifsc       = 1,
+	.reader_init             = pcsc_init,
+	.get_status              = pcsc_get_status,
+	.activate                = pcsc_activate,
+	.card_write              = pcsc_do_api,
+	.close                   = pcsc_close,
+};
 
 #endif

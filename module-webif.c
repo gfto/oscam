@@ -31,7 +31,7 @@
 #include "oscam-time.h"
 #include "oscam-work.h"
 
-extern struct s_cardreader cardreaders[CS_MAX_MOD];
+extern struct s_cardreader *cardreaders[];
 extern char cs_confdir[];
 extern uint32_t ecmcwcache_size;
 extern uint8_t cs_http_use_utf8;
@@ -1686,12 +1686,9 @@ static char *send_oscam_reader(struct templatevars *vars, struct uriparams *para
 		tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>scam</option>\n");
 #endif
 
-		for(i = 0; i < CS_MAX_MOD; i++)
+		for(i = 0; cardreaders[i]; i++)
 		{
-			if(cardreaders[i].desc)
-			{
-				tpl_printf(vars, TPLAPPEND, "ADDPROTOCOL", "<option>%s</option>\n", xml_encode(vars, cardreaders[i].desc));
-			}
+			tpl_printf(vars, TPLAPPEND, "ADDPROTOCOL", "<option>%s</option>\n", xml_encode(vars, cardreaders[i]->desc));
 		}
 		return tpl_getTpl(vars, "READERS");
 	}

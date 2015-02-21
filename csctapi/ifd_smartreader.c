@@ -1804,19 +1804,19 @@ static int32_t sr_init_locks(struct s_reader *UNUSED(reader))
 	return OK;
 }
 
-void cardreader_smartreader(struct s_cardreader *crdr)
+struct s_cardreader cardreader_smartreader =
 {
-	crdr->desc           = "smartreader";
-	crdr->typ            = R_SMART;
-	crdr->reader_init    = SR_Init;
-	crdr->get_status     = SR_GetStatus;
-	crdr->set_parity     = SR_SetParity;
-	crdr->activate       = SR_Activate;
-	crdr->transmit       = SR_Transmit;
-	crdr->receive        = SR_Receive;
-	crdr->close          = SR_Close;
-	crdr->write_settings = sr_write_settings;
-	crdr->lock_init      = sr_init_locks;
-}
+	.desc           = "smartreader",
+	.typ            = R_SMART,
+	.reader_init    = SR_Init,
+	.get_status     = SR_GetStatus,
+	.set_parity     = SR_SetParity,
+	.activate       = SR_Activate,
+	.transmit       = SR_Transmit,
+	.receive        = SR_Receive,
+	.close          = SR_Close,
+	.write_settings = sr_write_settings,
+	.lock_init      = sr_init_locks,
+};
 
 #endif

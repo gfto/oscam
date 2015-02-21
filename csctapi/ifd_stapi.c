@@ -77,17 +77,18 @@ static int32_t stapi_writesettings(struct s_reader *reader, struct s_cardreader_
 	return STReader_SetClockrate(crdr_data->stapi_handle);
 }
 
-void cardreader_stapi(struct s_cardreader *crdr)
+struct s_cardreader cardreader_stapi =
 {
-	crdr->desc      = "stapi";
-	crdr->reader_init   = stapi_init;
-	crdr->get_status    = stapi_getstatus;
-	crdr->activate  = stapi_reset;
-	crdr->transmit  = stapi_transmit;
-	crdr->receive       = stapi_receive;
-	crdr->close     = stapi_close;
-	crdr->set_protocol  = stapi_setprotocol;
-	crdr->write_settings = stapi_writesettings;
-	crdr->typ       = R_INTERNAL;
-}
+	.desc           = "stapi",
+	.typ            = R_INTERNAL,
+	.reader_init    = stapi_init,
+	.get_status     = stapi_getstatus,
+	.activate       = stapi_reset,
+	.transmit       = stapi_transmit,
+	.receive        = stapi_receive,
+	.close          = stapi_close,
+	.set_protocol   = stapi_setprotocol,
+	.write_settings = stapi_writesettings,
+};
+
 #endif

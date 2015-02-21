@@ -256,19 +256,19 @@ int32_t smargo_activate(struct s_reader *reader, struct s_ATR *atr)
 	return OK;
 }
 
-void cardreader_smargo(struct s_cardreader *crdr)
+struct s_cardreader cardreader_smargo =
 {
-	crdr->desc      = "smargo";
-	crdr->reader_init   = smargo_init;
-	crdr->get_status    = IO_Serial_GetStatus;
-	crdr->activate  = smargo_activate;
-	crdr->transmit  = IO_Serial_Transmit;
-	crdr->receive       = IO_Serial_Receive;
-	crdr->close     = IO_Serial_Close;
-	crdr->write_settings = smargo_write_settings;
-	crdr->set_parity    = IO_Serial_SetParity;
-	crdr->typ       = R_MOUSE;
+	.desc            = "smargo",
+	.typ             = R_MOUSE,
+	.max_clock_speed = 1,
+	.reader_init     = smargo_init,
+	.activate        = smargo_activate,
+	.write_settings  = smargo_write_settings,
+	.get_status      = IO_Serial_GetStatus,
+	.transmit        = IO_Serial_Transmit,
+	.receive         = IO_Serial_Receive,
+	.close           = IO_Serial_Close,
+	.set_parity      = IO_Serial_SetParity,
+};
 
-	crdr->max_clock_speed   = 1;
-}
 #endif
