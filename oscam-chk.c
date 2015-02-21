@@ -416,6 +416,13 @@ int32_t chk_ufilters(ECM_REQUEST *er)
 			ucaid = f->filts[i].caid;
 			if(er->caid == 0 || ucaid == 0 || (er->caid != 0 && er->caid == ucaid))
 			{
+				if (er->prid == 0)
+				{
+					cs_log_dbg(D_CLIENT, "%04X:%06X allowed by user '%s' filter caid %04X prid %06X",
+								  er->caid, er->prid, cur_cl->account->usr, ucaid, 0);
+					rc = 1;
+					break;
+				}
 				for(j = rc = 0; (!rc) && (j < f->filts[i].nprids); j++)
 				{
 					uprid = f->filts[i].prids[j];
