@@ -31,7 +31,7 @@
 #include "oscam-time.h"
 #include "oscam-work.h"
 
-extern struct s_cardreader *cardreaders[];
+extern const struct s_cardreader *cardreaders[];
 extern char cs_confdir[];
 extern uint32_t ecmcwcache_size;
 extern uint8_t cs_http_use_utf8;

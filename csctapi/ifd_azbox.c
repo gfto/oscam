@@ -161,7 +161,7 @@ static int32_t Azbox_do_reset(struct s_reader *reader, struct s_ATR *atr,
        return ret;
 }
 
-struct s_cardreader cardreader_internal_azbox =
+const struct s_cardreader cardreader_internal_azbox =
 {
 	.desc         = "internal",
 	.typ          = R_INTERNAL,

@@ -77,7 +77,7 @@ static int32_t stapi_writesettings(struct s_reader *reader, struct s_cardreader_
 	return STReader_SetClockrate(crdr_data->stapi_handle);
 }
 
-struct s_cardreader cardreader_stapi =
+const struct s_cardreader cardreader_stapi =
 {
 	.desc           = "stapi",
 	.typ            = R_INTERNAL,
