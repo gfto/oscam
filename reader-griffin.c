@@ -435,7 +435,7 @@ static int32_t griffin_card_info(struct s_reader *rdr)
 	{
 		for(i = 0; i < cta_lr - 8; i += 9)
 		{
-			rdr_log(rdr, " Subscription stream #%d - %c%c%c%c%c%c",
+			rdr_log(rdr, " Subscription stream %d - %c%c%c%c%c%c",
 					r++, cta_res[i + 2], cta_res[i + 3], cta_res[i + 4],
 					cta_res[i + 5], cta_res[i + 6], cta_res[i + 7]);
 		}

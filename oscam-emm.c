@@ -78,7 +78,7 @@ static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs
 				{ k += 2; } //skip emm len bytes
 			if(!mask)
 				{ continue; }
-			//cs_log("**** filter #%d [%d] = %02X, filter mask[%d] = %02X, flt&mask = %02X , ep->emm[%d] = %02X, ep->emm[%d] & mask = %02X ****", j, i,
+			//cs_log("**** filter %d [%d] = %02X, filter mask[%d] = %02X, flt&mask = %02X , ep->emm[%d] = %02X, ep->emm[%d] & mask = %02X ****", j, i,
 			//  dmx_filter[j].filter[i], i, dmx_filter[j].mask[i], flt&mask, k, ep->emm[k], k, ep->emm[k] & mask);
 			flt = (dmx_filter[j].filter[i] & mask);
 			match = (flt == (ep->emm[k] & mask));

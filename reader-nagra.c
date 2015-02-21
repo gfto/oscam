@@ -923,7 +923,7 @@ static int32_t nagra2_card_info(struct s_reader *reader)
 				do_cmd(reader, 0xD0, 0x04, 0x50, 0xAA, tier_cmd2, cta_res, &cta_lr);
 				if(cta_lr == 0xAC)
 				{
-					//rdr_log_dump(reader, cta_res, cta_lr, "NCMED Card Record #%d", i+1);
+					//rdr_log_dump(reader, cta_res, cta_lr, "NCMED Card Record %d", i+1);
 					for(j = 2; j < cta_res[1] - 14; ++j)
 					{
 						if(cta_res[j] == 0x80 && cta_res[j + 6] != 0x00)

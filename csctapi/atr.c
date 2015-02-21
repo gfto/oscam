@@ -197,7 +197,7 @@ int32_t ATR_InitFromArray(ATR *atr, const unsigned char atr_buffer[ATR_MAX_SIZE]
 		cs_log_dbg(D_ATR, "FI = %02x", FI);
 		if(atr_fs_table[FI] == 0)
 		{
-			cs_log_dbg(D_ATR, "ERROR: this ATR FI for protocol #%d is not returning a valid cardfrequency value", pn + 1);
+			cs_log_dbg(D_ATR, "ERROR: this ATR FI for protocol %d is not returning a valid cardfrequency value", pn + 1);
 			return (ERROR);
 		}
 	}
@@ -207,7 +207,7 @@ int32_t ATR_InitFromArray(ATR *atr, const unsigned char atr_buffer[ATR_MAX_SIZE]
 	{
 		if(atr->ib[pn][ATR_INTERFACE_BYTE_TB].value > 0x80)
 		{
-			cs_log_dbg(D_ATR, "ERROR: this ATR TB1 for protocol #%d has an invalid value", pn + 1);
+			cs_log_dbg(D_ATR, "ERROR: this ATR TB1 for protocol %d has an invalid value", pn + 1);
 			return (ERROR);
 		}
 	}

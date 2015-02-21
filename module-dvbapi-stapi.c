@@ -274,7 +274,7 @@ int32_t stapi_set_filter(int32_t demux_id, uint16_t pid, uchar *filter, uchar *m
 				ret = stapi_do_set_filter(demux_id, &dev_list[i].demux_fd[demux_id][num], pids, 1, filter, mask, i);
 				if(ret > 0)    // success
 				{
-					cs_log_dbg(D_DVBAPI, "%s filter #%d set (pid %04X)", dev_list[i].name, num, pid);
+					cs_log_dbg(D_DVBAPI, "%s filter %d set (pid %04X)", dev_list[i].name, num, pid);
 					return ret; // return filternumber
 				}
 				else   // failure
@@ -319,11 +319,11 @@ int32_t stapi_remove_filter(int32_t demux_id, int32_t num, char *pmtfile)
 	}
 	if(ret == 1)
 	{
-		cs_log_dbg(D_DVBAPI, "filter #%d removed", num);
+		cs_log_dbg(D_DVBAPI, "filter %d removed", num);
 	}
 	else
 	{
-		cs_log_dbg(D_DVBAPI, "Error: filter #%d was not removed!", num);
+		cs_log_dbg(D_DVBAPI, "Error: filter %d was not removed!", num);
 	}
 	return ret;
 }

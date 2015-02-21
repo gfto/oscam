@@ -702,12 +702,12 @@ static void mk_user_ftab(FILTER *filt)
 	for(j = 0; j < cl->ftab.nfilts; j++)
 	{
 		uint32_t ucaid = cl->ftab.filts[j].caid;
-		cs_log_dbg(D_CLIENT, "client caid #%d: %04X", j, ucaid);
+		cs_log_dbg(D_CLIENT, "client caid %d: %04X", j, ucaid);
 		if(!ucaid || ucaid == filt->caid)
 		{
 			for(i = 0; i < psfilt->nprids; i++)
 			{
-				cs_log_dbg(D_CLIENT, "search server provid #%d: %06X", i, psfilt->prids[i]);
+				cs_log_dbg(D_CLIENT, "search server provid %d: %06X", i, psfilt->prids[i]);
 				if(cl->ftab.filts[j].nprids)
 				{
 					for(k = 0; k < cl->ftab.filts[j].nprids; k++)
