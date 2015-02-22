@@ -6076,7 +6076,7 @@ static char *send_oscam_failban(struct templatevars * vars, struct uriparams * p
 		{ return tpl_getTpl(vars, "APIFAILBAN"); }
 }
 
-static bool send_EMM(struct s_reader * rdr, uint16_t caid, struct s_cardsystem *csystem, const unsigned char *emmhex, uint32_t len)
+static bool send_EMM(struct s_reader * rdr, uint16_t caid, const struct s_cardsystem *csystem, const unsigned char *emmhex, uint32_t len)
 {
 
 	if(NULL != rdr && NULL != emmhex && 0 != len)
@@ -6113,7 +6113,7 @@ static bool send_EMM(struct s_reader * rdr, uint16_t caid, struct s_cardsystem *
 	return false;
 }
 
-static bool process_single_emm(struct templatevars * vars, struct s_reader * rdr, uint16_t caid, struct s_cardsystem *csystem, const char *ep)
+static bool process_single_emm(struct templatevars * vars, struct s_reader * rdr, uint16_t caid, const struct s_cardsystem *csystem, const char *ep)
 {
 
 	if(NULL != vars && NULL != rdr && NULL != ep)
@@ -6152,7 +6152,7 @@ static bool process_single_emm(struct templatevars * vars, struct s_reader * rdr
 	return false;
 }
 
-static bool process_emm_file(struct templatevars * vars, struct s_reader * rdr, uint16_t caid, struct s_cardsystem *csystem, const char *sFilePath)
+static bool process_emm_file(struct templatevars * vars, struct s_reader * rdr, uint16_t caid, const struct s_cardsystem *csystem, const char *sFilePath)
 {
 
 	bool     bret     = false;
@@ -6239,7 +6239,7 @@ static char *send_oscam_EMM_running(struct templatevars * vars, struct uriparams
 		int32_t tcaid = dyn_word_atob(getParam(params, "emmcaid"));
 		uint16_t caid = (-1 != tcaid) ? (uint16_t)tcaid : 0;
 		char buff[7] = "";
-		struct s_cardsystem *csystem = NULL;
+		const struct s_cardsystem *csystem = NULL;
 		int32_t proxy = is_cascading_reader(rdr);
 
 		if((proxy || !rdr->csystem_active) && caid)    // network reader (R_CAMD35 R_NEWCAMD R_CS378X R_CCCAM)

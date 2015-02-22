@@ -1,7 +1,7 @@
 #ifndef _OSCAM_READER_H_
 #define _OSCAM_READER_H_
 
-struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid);
+const struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid);
 struct s_reader *get_reader_by_label(char *lbl);
 const char *reader_get_type_desc(struct s_reader *rdr, int32_t extended);
 

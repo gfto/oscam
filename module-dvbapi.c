@@ -915,7 +915,7 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 		if(rdr->audisabled || !rdr->enable || (!is_network_reader(rdr) && rdr->card_status != CARD_INSERTED))
 			{ continue; }
 
-		struct s_cardsystem *csystem;
+		const struct s_cardsystem *csystem;
 		uint16_t c, match;
 		cs_log_dbg(D_DVBAPI, "Demuxer %d matching reader %s against available emmpids -> START!", demux_index, rdr->label);
 		for(c = 0; c < demux[demux_index].EMMpidcount; c++)
