@@ -6075,7 +6075,7 @@ static char *send_oscam_failban(struct templatevars * vars, struct uriparams * p
 		{ return tpl_getTpl(vars, "APIFAILBAN"); }
 }
 
-static bool send_EMM(struct s_reader * rdr, uint16_t caid, struct s_cardsystem * cs, const unsigned char *emmhex, uint32_t len)
+static bool send_EMM(struct s_reader * rdr, uint16_t caid, struct s_cardsystem *csystem, const unsigned char *emmhex, uint32_t len)
 {
 
 	if(NULL != rdr && NULL != emmhex && 0 != len)
@@ -6095,9 +6095,9 @@ static bool send_EMM(struct s_reader * rdr, uint16_t caid, struct s_cardsystem *
 			emm_pack->caid[0] = (caid >> 8) & 0xFF;
 			emm_pack->caid[1] = caid & 0xFF;
 
-			if(cs && cs->get_emm_type)
+			if(csystem && csystem->get_emm_type)
 			{
-				if(!cs->get_emm_type(emm_pack, rdr))
+				if(!csystem->get_emm_type(emm_pack, rdr))
 				{
 					rdr_log_dbg(rdr, D_EMM, "get_emm_type() returns error");
 				}
@@ -6112,7 +6112,7 @@ static bool send_EMM(struct s_reader * rdr, uint16_t caid, struct s_cardsystem *
 	return false;
 }
 
-static bool process_single_emm(struct templatevars * vars, struct s_reader * rdr, uint16_t caid, struct s_cardsystem * cs, const char *ep)
+static bool process_single_emm(struct templatevars * vars, struct s_reader * rdr, uint16_t caid, struct s_cardsystem *csystem, const char *ep)
 {
 
 	if(NULL != vars && NULL != rdr && NULL != ep)
@@ -6139,7 +6139,7 @@ static bool process_single_emm(struct templatevars * vars, struct s_reader * rdr
 				tpl_addVar(vars, TPLADD, "EP", strtoupper(emmdata));
 				tpl_addVar(vars, TPLADD, "SIZE", buff);
 
-				if(send_EMM(rdr, caid, cs, emmhex, len))
+				if(send_EMM(rdr, caid, csystem, emmhex, len))
 				{
 					tpl_addMsg(vars, "Single EMM has been sent.");
 					return true;
@@ -6151,7 +6151,7 @@ static bool process_single_emm(struct templatevars * vars, struct s_reader * rdr
 	return false;
 }
 
-static bool process_emm_file(struct templatevars * vars, struct s_reader * rdr, uint16_t caid, struct s_cardsystem * cs, const char *sFilePath)
+static bool process_emm_file(struct templatevars * vars, struct s_reader * rdr, uint16_t caid, struct s_cardsystem *csystem, const char *sFilePath)
 {
 
 	bool     bret     = false;
@@ -6188,7 +6188,7 @@ static bool process_emm_file(struct templatevars * vars, struct s_reader * rdr, 
 						continue;
 					}
 					len /= 2;
-					if(send_EMM(rdr, caid, cs, emmhex, len))
+					if(send_EMM(rdr, caid, csystem, emmhex, len))
 					{
 						++wemms;
 						/* Give time to process EMM, otherwise, too many jobs can be added*/
@@ -6238,7 +6238,7 @@ static char *send_oscam_EMM_running(struct templatevars * vars, struct uriparams
 		int32_t tcaid = dyn_word_atob(getParam(params, "emmcaid"));
 		uint16_t caid = (-1 != tcaid) ? (uint16_t)tcaid : 0;
 		char buff[7] = "";
-		struct s_cardsystem *cs = NULL;
+		struct s_cardsystem *csystem = NULL;
 		int32_t proxy = is_cascading_reader(rdr);
 
 		if((proxy || !rdr->csystem_active) && caid)    // network reader (R_CAMD35 R_NEWCAMD R_CS378X R_CCCAM)
@@ -6249,8 +6249,8 @@ static char *send_oscam_EMM_running(struct templatevars * vars, struct uriparams
 				return tpl_getTpl(vars, "EMM_RUNNING");
 			}
 
-			cs = get_cardsystem_by_caid(caid);
-			if(!cs)
+			csystem = get_cardsystem_by_caid(caid);
+			if(!csystem)
 			{
 				rdr_log_dbg(rdr, D_EMM, "unable to find cardsystem for caid %04X", caid);
 				caid = 0;
@@ -6258,13 +6258,13 @@ static char *send_oscam_EMM_running(struct templatevars * vars, struct uriparams
 		}
 		else if(!proxy && rdr->csystem_active)     // local active reader
 		{
-			cs = &rdr->csystem;
+			csystem = &rdr->csystem;
 			caid = rdr->caid;
 		}
 
-		if(cs)
+		if(csystem)
 		{
-			tpl_addVar(vars, TPLADD, "SYSTEM", cs->desc);
+			tpl_addVar(vars, TPLADD, "SYSTEM", csystem->desc);
 		}
 		else
 		{
@@ -6280,8 +6280,8 @@ static char *send_oscam_EMM_running(struct templatevars * vars, struct uriparams
 			tpl_addVar(vars, TPLADD, "CAID", "unknown");
 		}
 
-		process_single_emm(vars, rdr, caid, cs, getParam(params, "ep"));
-		process_emm_file(vars, rdr, caid, cs, getParam(params, "emmfile"));
+		process_single_emm(vars, rdr, caid, csystem, getParam(params, "ep"));
+		process_emm_file(vars, rdr, caid, csystem, getParam(params, "emmfile"));
 	}
 	else
 	{

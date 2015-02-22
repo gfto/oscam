@@ -915,7 +915,7 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 		if(rdr->audisabled || !rdr->enable || (!is_network_reader(rdr) && rdr->card_status != CARD_INSERTED))
 			{ continue; }
 
-		struct s_cardsystem *cs;
+		struct s_cardsystem *csystem;
 		uint16_t c, match;
 		cs_log_dbg(D_DVBAPI, "Demuxer %d matching reader %s against available emmpids -> START!", demux_index, rdr->label);
 		for(c = 0; c < demux[demux_index].EMMpidcount; c++)
@@ -938,15 +938,15 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 			}
 			if(match)
 			{
-				cs = get_cardsystem_by_caid(caid);
-				if(cs)
+				csystem = get_cardsystem_by_caid(caid);
+				if(csystem)
 				{
 					if(caid != ncaid)
 					{
-						cs = get_cardsystem_by_caid(ncaid);
-						if(cs)
+						csystem = get_cardsystem_by_caid(ncaid);
+						if(csystem && csystem->get_tunemm_filter)
 						{
-							cs->get_tunemm_filter(rdr, &dmx_filter, &filter_count);
+							csystem->get_tunemm_filter(rdr, &dmx_filter, &filter_count);
 							cs_log_dbg(D_DVBAPI, "Demuxer %d setting emm filter for betatunnel: %04X -> %04X", demux_index, ncaid, caid);
 						}
 						else
@@ -955,9 +955,9 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 							continue;
 						}
 					}
-					else if (cs->get_emm_filter)
+					else if (csystem->get_emm_filter)
 					{
-						cs->get_emm_filter(rdr, &dmx_filter, &filter_count);
+						csystem->get_emm_filter(rdr, &dmx_filter, &filter_count);
 					}
 				}
 				else
