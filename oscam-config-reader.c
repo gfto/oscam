@@ -115,7 +115,7 @@ static void protocol_fn(const char *token, char *value, void *setting, FILE *f)
 		{
 			if(streq(value, cardreaders[i].desc))
 			{
-				rdr->crdr = cardreaders[i];
+				rdr->crdr = &cardreaders[i];
 				rdr->typ  = cardreaders[i].typ;
 				return;
 			}

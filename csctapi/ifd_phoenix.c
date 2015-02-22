@@ -66,7 +66,7 @@ int32_t Phoenix_Init(struct s_reader *reader)
 	// First set card in reset state, to not change any parameters while communication ongoing
 	IO_Serial_RTS_Set(reader);
 
-	struct s_cardreader *crdr_ops = &reader->crdr;
+	struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 
 	if(crdr_ops->flush) { IO_Serial_Flush(reader); }
@@ -117,7 +117,7 @@ int32_t Phoenix_Reset(struct s_reader *reader, ATR *atr)
 
 	call(IO_Serial_SetBaudrate(reader, DEFAULT_BAUDRATE));
 
-	struct s_cardreader *crdr_ops = &reader->crdr;
+	struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 
 	for(i = 0; i < 3; i++)
@@ -202,12 +202,12 @@ int32_t Phoenix_FastReset (struct s_reader * reader, int32_t delay)
 */
 static int32_t mouse_init(struct s_reader *reader)
 {
-	struct s_cardreader *crdr_ops = &reader->crdr;
+	struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 
 	if(detect_db2com_reader(reader))
 	{
-		cardreader_db2com(&reader->crdr);
+		cardreader_db2com(reader->crdr);
 		return crdr_ops->reader_init(reader);
 	}
 
