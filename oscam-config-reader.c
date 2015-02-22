@@ -432,11 +432,12 @@ static void emmcache_fn(const char *token, char *value, void *setting, FILE *f)
 		rdr->cachemm   = 0;
 		rdr->rewritemm = 0;
 		rdr->logemm    = 0;
+		rdr->deviceemm = 0;
 		if(strlen(value))
 		{
 			int i;
 			char *ptr, *saveptr1 = NULL;
-			for(i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 3) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++)
+			for(i = 0, ptr = strtok_r(value, ",", &saveptr1); (i < 4) && (ptr); ptr = strtok_r(NULL, ",", &saveptr1), i++)
 			{
 				switch(i)
 				{
@@ -449,13 +450,15 @@ static void emmcache_fn(const char *token, char *value, void *setting, FILE *f)
 				case 2:
 					rdr->logemm = atoi(ptr);
 					break;
+				case 3:
+					rdr->deviceemm = atoi(ptr);
 				}
 			}
 			if(rdr->rewritemm <= 0)
 			{
-				fprintf(stderr, "Setting reader \"emmcache\" to %i,%d,%i instead of %i,%i,%i.",
-						rdr->cachemm, 1, rdr->logemm,
-						rdr->cachemm, rdr->rewritemm, rdr->logemm);
+				fprintf(stderr, "Setting reader \"emmcache\" to %i,%d,%i,%i instead of %i,%i,%i,%i.",
+						rdr->cachemm, 1, rdr->logemm, rdr->deviceemm,
+						rdr->cachemm, rdr->rewritemm, rdr->logemm, rdr->deviceemm);
 				fprintf(stderr, "Zero or negative number of rewrites is silly\n");
 				rdr->rewritemm = 1;
 			}
@@ -463,7 +466,7 @@ static void emmcache_fn(const char *token, char *value, void *setting, FILE *f)
 		return;
 	}
 	if(rdr->cachemm || cfg.http_full_cfg)
-		{ fprintf_conf(f, token, "%d,%d,%d\n", rdr->cachemm, rdr->rewritemm, rdr->logemm); }
+		{ fprintf_conf(f, token, "%d,%d,%d,%d\n", rdr->cachemm, rdr->rewritemm, rdr->logemm,rdr->deviceemm); }
 }
 
 static void blockemm_bylen_fn(const char *token, char *value, void *setting, FILE *f)

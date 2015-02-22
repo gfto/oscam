@@ -196,21 +196,36 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 		return 1;
 	}
 
-	if(reader->auprovid == provid)
+	uint32_t prid = reader->auprovid;
+	
+	if((caid >> 8 == 0x05) && (prid != 0) && ((prid &0xFFFFF0) != prid)) // viaccess fixup last digit of provid is a dont care!
 	{
-		rdr_log_dbg(reader, D_EMM, "reader auprovid = %06X matching with emm provid = %06X -> SEND!", reader->auprovid, provid);
+		rdr_log_dbg(reader, D_EMM, "reader auprovid = %06X fixup to %06X (ignoring last digit)", reader->auprovid, prid); 
+		prid &= 0xFFFFF0;
+	}
+	
+	if(prid == provid)
+	{
+		rdr_log_dbg(reader, D_EMM, "reader auprovid = %06X matching with emm provid = %06X -> SEND!", prid, provid);
 		return 1;
 	}
 
 	for(i = 0; i < reader->nprov; i++)
 	{
-		uint32_t prid = b2i(4, reader->prid[i]);
+		prid = b2i(4, reader->prid[i]);
+		
+		if((caid >> 8 == 0x05) && (prid != 0) && ((prid &0xFFFFF0) != prid)) // viaccess fixup last digit of provid is a dont care!
+		{
+			rdr_log_dbg(reader, D_EMM, "reader provid = %06X fixup to %06X (ignoring last digit)", prid, (prid &0xFFFFF0));
+			prid &= 0xFFFFF0;
+		}
 		
 		if(prid == provid)
 		{
 			rdr_log_dbg(reader, D_EMM, "reader provid %06X matching with emm provid %06X -> SEND!", prid, provid);
 			return 1;
 		}
+		
 		if(!reader->auprovid && ((reader->typ == R_CAMD35 || reader->typ == R_CS378X) && (prid & 0xFFFF) == (provid & 0xFFFF)))
 		{
 			rdr_log_dbg(reader, D_EMM, "CS378: Match after fixing reader provid %06X to ??%04X and emm provid %06X to ??%04X -> SEND!", prid, prid&0xFFFF, provid, provid&0xFFFF);
@@ -317,7 +332,12 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 
 		uint16_t caid = b2i(2, ep->caid);
 		uint32_t provid = b2i(4, ep->provid);
-
+		
+		if(caid >> 8 == 0x05) // viaccess fixup last digit is a dont care!
+		{
+			 provid &= 0xFFFFF0;
+		}
+		
 		if(aureader->audisabled)
 		{
 			rdr_log_dbg(aureader, D_EMM, "AU is disabled");

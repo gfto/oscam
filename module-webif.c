@@ -2213,7 +2213,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	free_mk_t(value);
 
 	if(rdr->cachemm)
-		{ tpl_printf(vars, TPLADD, "EMMCACHE", "%d,%d,%d", rdr->cachemm, rdr->rewritemm, rdr->logemm); }
+		{ tpl_printf(vars, TPLADD, "EMMCACHE", "%d,%d,%d,%d", rdr->cachemm, rdr->rewritemm, rdr->logemm, rdr->deviceemm); }
 
 	//savenano
 	value = mk_t_nano(rdr->s_nano);

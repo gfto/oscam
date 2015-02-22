@@ -1186,7 +1186,7 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len)
 				{
 					if (buf[k] == 0x14)
 					{
-						emm_provider = b2i(3, buf + k + 2);
+						emm_provider = (b2i(3, buf + k + 2) & 0xFFFFF0); // viaccess fixup last digit is a dont care!
 						dvbapi_add_emmpid(demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
 					}
 				}

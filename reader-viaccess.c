@@ -1336,11 +1336,11 @@ static int32_t viaccess_get_emm_filter(struct s_reader *rdr, struct s_csystem_em
 {
 	if(*emm_filters == NULL)
 	{
-		int8_t max_filter_count = 4;
-#ifdef MODULE_CAMD35
-		if(rdr->typ == R_CAMD35 && rdr->via_emm_global == 1)
-			{max_filter_count = 6;}
-#endif
+		bool network = is_network_reader(rdr);
+		int8_t device_emm = ((rdr->deviceemm >0) ? 1 : 0); // set to 1 if device specific emms should be catched too
+		
+		const unsigned int max_filter_count = 4 + ((device_emm != 0 && !network && rdr->nprov > 0) ? 1:0) + (3 * ((rdr->nprov > 0 && !network) ? (rdr->nprov - 1) : 0));
+		
 		if(!cs_malloc(emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
 			{ return ERROR; }
 
@@ -1348,42 +1348,66 @@ static int32_t viaccess_get_emm_filter(struct s_reader *rdr, struct s_csystem_em
 		*filter_count = 0;
 
 		int32_t idx = 0;
-#ifdef MODULE_CAMD35
-		if(rdr->typ == R_CAMD35 && rdr->via_emm_global == 1)
-		{ 
-			filters[idx].type = EMM_GLOBAL;
+		int32_t prov;
+		
+		if(rdr->nprov > 0 && !network && device_emm == 1)
+		{
+			filters[idx].type = EMM_GLOBAL;  // 8A or 8B no reassembly needed!
 			filters[idx].enabled   = 1;
 			filters[idx].filter[0] = 0x8A;
-			filters[idx].mask[0]   = 0xFF;
-			idx++;
-
-			filters[idx].type = EMM_GLOBAL;
-			filters[idx].enabled   = 1;
-			filters[idx].filter[0] = 0x8B;
-			filters[idx].mask[0]   = 0xFF;
+			filters[idx].mask[0]   = 0xFE;
+			filters[idx].filter[3] = 0x80; // device specific emms 
+			filters[idx].mask[3]   = 0x80;
 			idx++;
 		}
-#endif
+			
+		for(prov = 0; (prov < rdr->nprov || prov == 0); prov++)
+		{
+			filters[idx].type = EMM_GLOBAL;  // 8A or 8B no reassembly needed!
+			filters[idx].enabled   = 1;
+			filters[idx].filter[0] = 0x8A;
+			filters[idx].mask[0]   = 0xFE;
+			if(rdr->nprov > 0 && !network)
+			{
+				memcpy(&filters[idx].filter[3], &rdr->prid[prov][1], 3);
+				memset(&filters[idx].mask[3], 0xFF, 2);
+				filters[idx].mask[5]   = 0xF0; // ignore last digit since this is key on card indicator!
+			}
+			else if (device_emm == 0)
+			{
+				filters[idx].filter[3] = 0x00; // additional filter to cancel device specific emms 
+				filters[idx].mask[3]   = 0x80;
+			}
+			idx++;
+			
+			filters[idx].type = EMM_SHARED; // 8C or 8D always first part of shared, second part delivered by 8E!
+			filters[idx].enabled   = 1;
+			filters[idx].filter[0] = 0x8C;
+			filters[idx].mask[0]   = 0xFE;
+			if(rdr->nprov > 0 && !network)
+			{
+				memcpy(&filters[idx].filter[3], &rdr->prid[prov][1], 3);
+				memset(&filters[idx].mask[3], 0xFF, 2);
+				filters[idx].mask[5]   = 0xF0; // ignore last digit since this is key on card indicator!
+			}
+			idx++;
 
-		filters[idx].type = EMM_SHARED;
-		filters[idx].enabled   = 1;
-		filters[idx].filter[0] = 0x8C;
-		filters[idx].mask[0]   = 0xFF;
-		idx++;
-
-		filters[idx].type = EMM_SHARED;
-		filters[idx].enabled   = 1;
-		filters[idx].filter[0] = 0x8D;
-		filters[idx].mask[0]   = 0xFF;
-		idx++;
-
-		filters[idx].type = EMM_SHARED;
-		filters[idx].enabled   = 1;
-		filters[idx].filter[0] = 0x8E;
-		filters[idx].mask[0]   = 0xFF;
-		memcpy(&filters[idx].filter[1], &rdr->sa[0][0], 3);
-		memset(&filters[idx].mask[1], 0xFF, 3);
-		idx++;
+			filters[idx].type = EMM_SHARED; // 8E second part reassembly with 8c/8d needed!
+			filters[idx].enabled   = 1;
+			filters[idx].filter[0] = 0x8E;
+			filters[idx].mask[0]   = 0xFF;
+			if(rdr->nprov > 0 && !network)
+			{
+				memcpy(&filters[idx].filter[1], &rdr->sa[prov][0], 3);
+				memset(&filters[idx].mask[1], 0xFF, 3);
+			}
+			idx++;
+			
+			if (network) // for network readers 1 set of generic filters is sufficient so it ends here!
+			{ 
+				break;
+			}
+		}
 
 		filters[idx].type = EMM_UNIQUE;
 		filters[idx].enabled   = 1;
@@ -1413,27 +1437,29 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 
 	int32_t emmdatastart = 7;
 
-   if (ep->emm[1] == 0x01) { // emm from cccam
-                               emmdatastart=12;
-                              ep->emm[1] = 0x70; // (& 0x0f) of this byte is length, so 0x01 would increase the length by 256
-                               ep->emm[2] -= 1;
-                               if (ep->type == SHARED) {
-                                       // build missing 0x90 nano from provider at serial position
-                                       memcpy(ep->emm+7, ep->emm+3, 3);
-                                       ep->emm[5] = 0x90;
-                                       ep->emm[6] = 0x03;
-                                       ep->emm[9] |= 0x01;
-                                       ep->emm[10] = 0x9E;
-                          ep->emm[11] = 0x20;
-                                       emmdatastart = 5;
-                              }
-                      }
+	if (ep->emm[1] == 0x01) // emm from cccam
+	{
+		emmdatastart=12;
+		ep->emm[1] = 0x70; // (& 0x0f) of this byte is length, so 0x01 would increase the length by 256
+		ep->emm[2] -= 1;
+		if (ep->type == SHARED || ep->type == GLOBAL) // build missing 0x90 nano from provider at serial position
+		{
+			memcpy(ep->emm+7, ep->emm+3, 3);
+			ep->emm[5] = 0x90;
+			ep->emm[6] = 0x03;
+			ep->emm[9] |= 0x01;
+			ep->emm[10] = 0x9E;
+			ep->emm[11] = 0x20;
+			emmdatastart = 5;
+		}
+	}
 
 	if(ep->type == UNIQUE) { emmdatastart++; }
+	if(ep->type == GLOBAL && emmdatastart == 7) { emmdatastart -= 4; }
 	int32_t emmLen = SCT_LEN(ep->emm) - emmdatastart;
 	int32_t rc = 0;
 
-	///rdr_log_dump(reader, ep->emm, emmLen+emmdatastart, "RECEIVED EMM VIACCESS");
+	rdr_log_dump(reader, ep->emm, emmLen+emmdatastart, "RECEIVED EMM VIACCESS");
 
 	int32_t emmUpToEnd;
 	uchar *emmParsed = ep->emm + emmdatastart;
@@ -1451,7 +1477,7 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 
 	for(emmUpToEnd = emmLen; (emmParsed[1] != 0) && (emmUpToEnd > 0); emmUpToEnd -= (2 + emmParsed[1]), emmParsed += (2 + emmParsed[1]))
 	{
-		///rdr_log_dump(reader, emmParsed, emmParsed[1] + 2, "NANO");
+		rdr_log_dump(reader, emmParsed, emmParsed[1] + 2, "NANO");
 
 		if(emmParsed[0] == 0x90 && emmParsed[1] == 0x03)
 		{
@@ -1821,7 +1847,6 @@ static int32_t viaccess_reassemble_emm(struct s_reader *rdr, struct s_client *cl
 		// copy first part of the emm-s
 		memcpy(r_emm->emm, buffer, *len);
 		r_emm->emmlen = *len;
-		//rdr_log_dump_dbg(rdr, D_READER, buffer, len, "global emm:");
 		return 0;
 
 	case 0x8e:

@@ -1324,6 +1324,7 @@ struct s_reader                                     //contains device info, read
 	int8_t          logemm;
 	int8_t          cachemm;
 	int16_t         rewritemm;
+	int16_t			deviceemm;						// catch device specific emms (so far only used for viaccess)
 	int8_t          card_status;
 	int8_t          deprecated;                     //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
 	struct s_module ph;
