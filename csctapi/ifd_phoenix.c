@@ -65,7 +65,11 @@ int32_t Phoenix_Init(struct s_reader *reader)
 {
 	// First set card in reset state, to not change any parameters while communication ongoing
 	IO_Serial_RTS_Set(reader);
-	if(reader->crdr.flush) { IO_Serial_Flush(reader); }
+
+	struct s_cardreader *crdr_ops = &reader->crdr;
+	if (!crdr_ops) return ERROR;
+
+	if(crdr_ops->flush) { IO_Serial_Flush(reader); }
 
 	// define reader->gpio number used for card detect and reset. ref to globals.h
 	if(reader_use_gpio(reader))
@@ -84,7 +88,7 @@ int32_t Phoenix_Init(struct s_reader *reader)
 	if(reader->atr[0] == 0)
 	{
 		if(IO_Serial_SetParams(reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, NULL, NULL)) { return ERROR; }
-		if(reader->crdr.flush) { IO_Serial_Flush(reader); }
+		if(crdr_ops->flush) { IO_Serial_Flush(reader); }
 	}
 	return OK;
 }
@@ -113,10 +117,13 @@ int32_t Phoenix_Reset(struct s_reader *reader, ATR *atr)
 
 	call(IO_Serial_SetBaudrate(reader, DEFAULT_BAUDRATE));
 
+	struct s_cardreader *crdr_ops = &reader->crdr;
+	if (!crdr_ops) return ERROR;
+
 	for(i = 0; i < 3; i++)
 	{
-		if(reader->crdr.flush) { IO_Serial_Flush(reader); }
-		if(reader->crdr.set_parity) { IO_Serial_SetParity(reader, parity[i]); }
+		if(crdr_ops->flush) { IO_Serial_Flush(reader); }
+		if(crdr_ops->set_parity) { IO_Serial_SetParity(reader, parity[i]); }
 
 		ret = ERROR;
 
@@ -195,10 +202,13 @@ int32_t Phoenix_FastReset (struct s_reader * reader, int32_t delay)
 */
 static int32_t mouse_init(struct s_reader *reader)
 {
+	struct s_cardreader *crdr_ops = &reader->crdr;
+	if (!crdr_ops) return ERROR;
+
 	if(detect_db2com_reader(reader))
 	{
 		cardreader_db2com(&reader->crdr);
-		return reader->crdr.reader_init(reader);
+		return crdr_ops->reader_init(reader);
 	}
 
 	reader->handle = open(reader->device,  O_RDWR | O_NOCTTY | O_NONBLOCK);

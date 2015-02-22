@@ -77,8 +77,11 @@ void IO_Serial_Ioctl_Lock(struct s_reader *reader, int32_t flag)
 
 bool IO_Serial_DTR_RTS(struct s_reader *reader, int32_t *dtr, int32_t *rts)
 {
-	if(reader->crdr.set_DTS_RTS)
-		{ return reader->crdr.set_DTS_RTS(reader, dtr, rts); }
+	struct s_cardreader *crdr_ops = &reader->crdr;
+	if (!crdr_ops) return ERROR;
+
+	if(crdr_ops->set_DTS_RTS)
+		{ return crdr_ops->set_DTS_RTS(reader, dtr, rts); }
 
 	uint32_t msr;
 	uint32_t mbit;
@@ -485,6 +488,9 @@ int32_t IO_Serial_Receive(struct s_reader *reader, unsigned char *buffer, uint32
 
 bool IO_Serial_Write(struct s_reader *reader, uint32_t delay, uint32_t timeout, uint32_t size, const unsigned char *data)
 {
+	struct s_cardreader *crdr_ops = &reader->crdr;
+	if (!crdr_ops) return ERROR;
+
 	if(timeout == 0)   // General fix for readers not communicating timeout and delay
 	{
 		if(reader->char_delay != 0) { timeout = reader->char_delay; }
@@ -533,7 +539,7 @@ AGAIN:
 				{
 					to_do -= u;
 					errorcount = 0;
-					if(reader->crdr.read_written)
+					if(crdr_ops->read_written)
 						{ reader->written += u; } // these readers echo transmitted chars
 				}
 			}
@@ -541,7 +547,7 @@ AGAIN:
 		else
 		{
 			rdr_log(reader, "Timeout in IO_Serial_WaitToWrite, delay=%d us, timeout=%d us", delay, timeout);
-			if(reader->crdr.read_written && reader->written > 0)    // these readers need to read all transmitted chars before they can receive!
+			if(crdr_ops->read_written && reader->written > 0)    // these readers need to read all transmitted chars before they can receive!
 			{
 				unsigned char buf[256];
 				rdr_log_dbg(reader, D_DEVICE, "Reading %d echoed transmitted chars...", reader->written);
@@ -554,7 +560,7 @@ AGAIN:
 			return ERROR;
 		}
 	}
-	if(reader->crdr.read_written && reader->written > 0)    // these readers need to read all transmitted chars before they can receive!
+	if(crdr_ops->read_written && reader->written > 0)    // these readers need to read all transmitted chars before they can receive!
 	{
 		unsigned char buf[256];
 		rdr_log_dbg(reader, D_DEVICE, "Reading %d echoed transmitted chars...", reader->written);

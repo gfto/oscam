@@ -1244,9 +1244,12 @@ static int32_t sc8in1_get_status(struct s_reader *reader, int32_t *in)
 
 static int32_t sc8in1_activate(struct s_reader *reader, struct s_ATR *atr)
 {
-	reader->crdr.lock(reader);
+	struct s_cardreader *crdr_ops = &reader->crdr;
+	if (!crdr_ops) return ERROR;
+
+	crdr_ops->lock(reader);
 	int32_t retval = Phoenix_Reset(reader, atr);
-	reader->crdr.unlock(reader);
+	crdr_ops->unlock(reader);
 	if(retval == ERROR)
 	{
 		rdr_log_dbg(reader, D_TRACE, "ERROR: Phoenix_Reset returns error");
