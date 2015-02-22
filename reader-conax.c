@@ -20,15 +20,18 @@ static int32_t RSA_CNX(struct s_reader *reader, unsigned char *msg, unsigned cha
 	if(cta_lr > (pre_size + size) &&
 			size >= modbytes && size < 128)
 	{
-		bn_mod = BN_new();
-		bn_exp = BN_new();
-		bn_data = BN_new();
-		bn_res = BN_new();
 		ctx = BN_CTX_new();
+
 		if(ctx == NULL)
 		{
 			rdr_log_dbg(reader, D_READER, "RSA Error in RSA_CNX");
 		}
+
+		BN_CTX_start(ctx);
+		bn_mod = BN_CTX_get(ctx);
+		bn_exp = BN_CTX_get(ctx);
+		bn_data = BN_CTX_get(ctx);
+		bn_res = BN_CTX_get(ctx);
 
 		/*RSA first round*/
 		BN_bin2bn(mod, modbytes, bn_mod);  // rsa modulus
@@ -64,6 +67,7 @@ static int32_t RSA_CNX(struct s_reader *reader, unsigned char *msg, unsigned cha
 
 		if(0 == ret)
 			{ memcpy(msg, data, n); }
+		BN_CTX_end(ctx);
 		BN_CTX_free(ctx);
 	}
 	else
