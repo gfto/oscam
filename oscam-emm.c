@@ -200,8 +200,8 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 	
 	if((caid >> 8 == 0x05) && (prid != 0) && ((prid &0xFFFFF0) != prid)) // viaccess fixup last digit of provid is a dont care!
 	{
-		rdr_log_dbg(reader, D_EMM, "reader auprovid = %06X fixup to %06X (ignoring last digit)", reader->auprovid, prid); 
 		prid &= 0xFFFFF0;
+		rdr_log_dbg(reader, D_EMM, "reader auprovid = %06X fixup to %06X (ignoring last digit)", reader->auprovid, prid); 
 	}
 	
 	if(prid == provid)
