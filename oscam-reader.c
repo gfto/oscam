@@ -450,7 +450,7 @@ int32_t ecm_ratelimit_check(struct s_reader *reader, ECM_REQUEST *er, int32_t re
 	return OK;
 }
 
-struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid)
+const struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid)
 {
 	int32_t i, j;
 	for(i = 0; i < CS_MAX_MOD; i++)

@@ -37,7 +37,7 @@ static int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len)
  *
  * the emm is checked against it and returns 1 for a valid emm or 0 if not
  */
-static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *csystem, EMM_PACKET *ep, int8_t cl_dvbapi)
+static int8_t do_simple_emm_filter(struct s_reader *rdr, const struct s_cardsystem *csystem, EMM_PACKET *ep, int8_t cl_dvbapi)
 {
 	if(is_network_reader(rdr)) { return 1; }  // dont evaluate on network readers, server with local reader will check it
 
@@ -343,7 +343,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 		if(!emm_reader_match(aureader, caid, provid))
 			{ continue; }
 
-		struct s_cardsystem *csystem = NULL;
+		const struct s_cardsystem *csystem = NULL;
 
 		if(is_network_reader(aureader))    // network reader (R_CAMD35 R_NEWCAMD R_CS378X R_CCCAM)
 		{
@@ -663,7 +663,7 @@ void do_emm_from_file(struct s_reader *reader)
 		{ memcpy(eptmp->provid, reader->prid[0], sizeof(eptmp->provid)); }
 	eptmp->emmlen = eptmp->emm[2] + 3;
 }
-	struct s_cardsystem *csystem = get_cardsystem_by_caid(reader->caid);
+	const struct s_cardsystem *csystem = get_cardsystem_by_caid(reader->caid);
 	if(csystem && csystem->get_emm_type && !csystem->get_emm_type(eptmp, reader))
 	{
 		rdr_log_dbg(reader, D_EMM, "emm skipped, get_emm_type() returns error");
