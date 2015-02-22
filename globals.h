@@ -1342,6 +1342,7 @@ struct s_reader                                     //contains device info, read
 	struct s_module ph;
 	struct s_cardreader crdr;
 	void            *crdr_data; // Private card reader data
+	bool            crdr_flush; // sci readers may disable flush per reader
 	struct s_cardsystem csystem;
 	void            *csystem_data; // Private card system data
 	bool            csystem_active;
