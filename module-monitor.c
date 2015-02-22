@@ -459,7 +459,7 @@ static void monitor_process_details_reader(struct s_client *cl)
 	}
 
 	snprintf(tmpbuf, sizeof(tmpbuf) - 1, "Cardsystem: %s Reader: %s ValidTo: %s HexSerial: %s ATR: %s",
-			 rdr->csystem.desc,
+			 rdr->csystem ? rdr->csystem->desc : "-",
 			 rdr->label,
 			 valid_to,
 			 cs_hexdump(1, rdr->hexserial, 8, tbuffer2, sizeof(tbuffer2)),

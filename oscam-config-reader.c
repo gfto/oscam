@@ -1050,8 +1050,8 @@ void free_reader(struct s_reader *rdr)
 	cs_clear_entitlement(rdr);
 	ll_destroy(&rdr->ll_entitlements);
 
-	if(rdr->csystem.card_done)
-		rdr->csystem.card_done(rdr);
+	if(rdr->csystem && rdr->csystem->card_done)
+		rdr->csystem->card_done(rdr);
 	NULLFREE(rdr->csystem_data);
 
 	ll_destroy_data(&rdr->blockemmbylen);

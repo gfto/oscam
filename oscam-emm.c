@@ -160,9 +160,11 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 	if(reader->caid != caid)
 	{
 		int caid_found = 0;
-		for(i = 0; i < (int)ARRAY_SIZE(reader->csystem.caids); i++)
+		if (!reader->csystem)
+			return 0;
+		for(i = 0; i < (int)ARRAY_SIZE(reader->csystem->caids); i++)
 		{
-			if( (reader->caid != 0) && (reader->csystem.caids[i] == caid) ) 
+			if( (reader->caid != 0) && (reader->csystem->caids[i] == caid) )
 			{
 				caid_found = 1;
 				break;
@@ -358,7 +360,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 		else     // local reader
 		{
 			if(aureader->csystem_active)
-				{ csystem = &aureader->csystem; }
+				{ csystem = aureader->csystem; }
 		}
 
 		if(csystem && csystem->get_emm_type)
