@@ -245,7 +245,7 @@ static int32_t mp35_init(struct s_reader *reader)
 	return OK;
 }
 
-struct s_cardreader cardreader_mp35 =
+const struct s_cardreader cardreader_mp35 =
 {
 	.desc         = "mp35",
 	.typ          = R_MOUSE,

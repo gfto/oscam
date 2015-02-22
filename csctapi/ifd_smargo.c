@@ -256,7 +256,7 @@ int32_t smargo_activate(struct s_reader *reader, struct s_ATR *atr)
 	return OK;
 }
 
-struct s_cardreader cardreader_smargo =
+const struct s_cardreader cardreader_smargo =
 {
 	.desc            = "smargo",
 	.typ             = R_MOUSE,

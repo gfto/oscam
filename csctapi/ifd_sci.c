@@ -248,7 +248,7 @@ static int32_t Sci_Read_ATR(struct s_reader *reader, ATR *atr)   // reads ATR on
 
 	if(buf[7] == 0x70 && buf[8] == 0x70 && (buf[9]&0x0F) >= 10)
 	{
-		struct s_cardreader *crdr_ops = reader->crdr;
+		const struct s_cardreader *crdr_ops = reader->crdr;
 		if (!crdr_ops) return ERROR;
 		int8_t nxtr = 0;
 		reader->crdr_flush = 0;
@@ -564,7 +564,7 @@ static int32_t sci_write_settings(struct s_reader *reader, struct s_cardreader_s
 	return OK;
 }
 
-struct s_cardreader cardreader_internal_sci =
+const struct s_cardreader cardreader_internal_sci =
 {
 	.desc            = "internal",
 	.typ             = R_INTERNAL,

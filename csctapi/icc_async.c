@@ -68,7 +68,7 @@ static int32_t SetRightParity(struct s_reader *reader);
 
 int32_t ICC_Async_Device_Init(struct s_reader *reader)
 {
-	struct s_cardreader *crdr_ops = reader->crdr;
+	const struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 	reader->fdmc = -1;
 	rdr_log_dbg(reader, D_IFD, "Opening device %s", reader->device);
@@ -92,7 +92,7 @@ int32_t ICC_Async_Init_Locks(void)
 	LL_ITER itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(&itr)))
 	{
-		struct s_cardreader *crdr_ops = rdr->crdr;
+		const struct s_cardreader *crdr_ops = rdr->crdr;
 		if (!crdr_ops || !crdr_ops->lock_init) continue;
 		crdr_ops->lock_init(rdr);
 	}
@@ -101,7 +101,7 @@ int32_t ICC_Async_Init_Locks(void)
 
 int32_t ICC_Async_GetStatus(struct s_reader *reader, int32_t *card)
 {
-	struct s_cardreader *crdr_ops = reader->crdr;
+	const struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 	if (reader->typ == R_SMART && reader->smartdev_found >= 4) {
 		reader->statuscnt = reader->statuscnt + 1;
@@ -134,7 +134,7 @@ int32_t ICC_Async_Activate(struct s_reader *reader, ATR *atr, uint16_t deprecate
 {
 	rdr_log_dbg(reader, D_IFD, "Activating card");
 
-	struct s_cardreader *crdr_ops = reader->crdr;
+	const struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 
 	reader->current_baudrate = DEFAULT_BAUDRATE;
@@ -190,7 +190,7 @@ int32_t ICC_Async_Activate(struct s_reader *reader, ATR *atr, uint16_t deprecate
 
 int32_t ICC_Async_CardWrite(struct s_reader *reader, unsigned char *command, uint16_t command_len, unsigned char *rsp, uint16_t *lr)
 {
-	struct s_cardreader *crdr_ops = reader->crdr;
+	const struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 	int32_t ret;
 
@@ -277,7 +277,7 @@ int32_t ICC_Async_GetTimings(struct s_reader *reader, uint32_t wait_etu)
 
 int32_t ICC_Async_Transmit(struct s_reader *reader, uint32_t size, uint32_t expectedlen, unsigned char *data, uint32_t delay, uint32_t timeout)
 {
-	struct s_cardreader *crdr_ops = reader->crdr;
+	const struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 
 	if(expectedlen)  //expectedlen = 0 means expected len is unknown
@@ -305,7 +305,7 @@ int32_t ICC_Async_Transmit(struct s_reader *reader, uint32_t size, uint32_t expe
 
 int32_t ICC_Async_Receive(struct s_reader *reader, uint32_t size, unsigned char *data, uint32_t delay, uint32_t timeout)
 {
-	struct s_cardreader *crdr_ops = reader->crdr;
+	const struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 
 	rdr_log_dbg(reader, D_IFD, "Receive size %d bytes, delay %d us, timeout=%d us", size, delay, timeout);
@@ -318,7 +318,7 @@ int32_t ICC_Async_Receive(struct s_reader *reader, uint32_t size, unsigned char 
 
 int32_t ICC_Async_Close(struct s_reader *reader)
 {
-	struct s_cardreader *crdr_ops = reader->crdr;
+	const struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 
 	rdr_log_dbg(reader, D_IFD, "Closing device %s", reader->device);
@@ -334,7 +334,7 @@ int32_t ICC_Async_Close(struct s_reader *reader)
 
 void ICC_Async_DisplayMsg(struct s_reader *reader, char *msg)
 {
-	struct s_cardreader *crdr_ops = reader->crdr;
+	const struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops || !crdr_ops->display_msg) return;
 	crdr_ops->display_msg(reader, msg);
 }
@@ -343,7 +343,7 @@ int32_t ICC_Async_Reset(struct s_reader *reader, struct s_ATR *atr,
 						int32_t (*rdr_activate_card)(struct s_reader *, struct s_ATR *, uint16_t deprecated),
 						int32_t (*rdr_get_cardsystem)(struct s_reader *, struct s_ATR *))
 {
-	struct s_cardreader *crdr_ops = reader->crdr;
+	const struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops || !crdr_ops->do_reset) return 0;
 	return crdr_ops->do_reset(reader, atr, rdr_activate_card, rdr_get_cardsystem);
 }
@@ -586,7 +586,7 @@ static int32_t Parse_ATR(struct s_reader *reader, ATR *atr, uint16_t deprecated)
 
 static int32_t PPS_Exchange(struct s_reader *reader, unsigned char *params, uint32_t *length)
 {
-	struct s_cardreader *crdr_ops = reader->crdr;
+	const struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 
 	unsigned char confirm[PPS_MAX_LENGTH];
@@ -650,7 +650,7 @@ static uint32_t ETU_to_us(struct s_reader *reader, uint32_t ETU)
 
 static int32_t ICC_Async_SetParity(struct s_reader *reader, uint16_t parity)
 {
-	struct s_cardreader *crdr_ops = reader->crdr;
+	const struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 
 	if(crdr_ops->set_parity)
@@ -663,7 +663,7 @@ static int32_t ICC_Async_SetParity(struct s_reader *reader, uint16_t parity)
 
 static int32_t SetRightParity(struct s_reader *reader)
 {
-	struct s_cardreader *crdr_ops = reader->crdr;
+	const struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 
 	//set right parity
@@ -683,7 +683,7 @@ static int32_t SetRightParity(struct s_reader *reader)
 
 static int32_t InitCard(struct s_reader *reader, ATR *atr, unsigned char FI, uint32_t D, unsigned char N, uint16_t deprecated)
 {
-	struct s_cardreader *crdr_ops = reader->crdr;
+	const struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 
 	uint32_t I, F, Fi, BGT = 0, edc, GT = 0, WWT = 0, EGT = 0;

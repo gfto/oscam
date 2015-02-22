@@ -93,7 +93,7 @@ static bool Stinger_IO_Serial_WaitToWrite(struct s_reader *reader, uint32_t dela
 
 bool Stinger_IO_Serial_Write(struct s_reader *reader, uint32_t delay, uint32_t timeout, uint32_t size, const unsigned char *data)
 {
-	struct s_cardreader *crdr_ops = reader->crdr;
+	const struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 
 	if(timeout == 0)   // General fix for readers not communicating timeout and delay
@@ -246,7 +246,7 @@ int32_t Stinger_Init(struct s_reader *reader)
 	// First set card in reset state, to not change any parameters while communication ongoing
 	IO_Serial_RTS_Set(reader);
 
-	struct s_cardreader *crdr_ops = reader->crdr;
+	const struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 
 	if(crdr_ops->flush) { IO_Serial_Flush(reader); }
@@ -273,7 +273,7 @@ int32_t Stinger_Reset(struct s_reader *reader, ATR *atr)
 
 	IO_Serial_SetParams(reader, DEFAULT_BAUDRATE, 8, PARITY_NONE, 2, NULL, NULL);
 
-	struct s_cardreader *crdr_ops = reader->crdr;
+	const struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 
 	for(i = 0; i < 1; i++)
@@ -329,7 +329,7 @@ static int32_t stinger_mouse_init(struct s_reader *reader)
 
 	unsigned int clock_mhz = 0;
 
-	struct s_cardreader *crdr_ops = reader->crdr;
+	const struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 
 	if(detect_db2com_reader(reader))
@@ -560,7 +560,7 @@ static int32_t Stinger_Set_Clock(struct s_reader *reader, unsigned int c)
 	return OK;
 }
 
-struct s_cardreader cardreader_stinger =
+const struct s_cardreader cardreader_stinger =
 {
 	.desc          = "stinger",
 	.typ           = R_MOUSE,

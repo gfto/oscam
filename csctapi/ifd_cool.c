@@ -315,7 +315,7 @@ static int32_t Cool_SetProtocol(struct s_reader *reader, unsigned char *params, 
 	return OK;
 }
 
-struct s_cardreader cardreader_internal_cool =
+const struct s_cardreader cardreader_internal_cool =
 {
 	.desc            = "internal",
 	.typ             = R_INTERNAL,

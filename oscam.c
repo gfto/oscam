@@ -1387,7 +1387,7 @@ __attribute__ ((noreturn)) static void run_tests(void)
 static void run_tests(void) { }
 #endif
 
-struct s_cardreader *cardreaders[] =
+const struct s_cardreader *cardreaders[] =
 {
 #ifdef CARDREADER_DB2COM
 	&cardreader_db2com,

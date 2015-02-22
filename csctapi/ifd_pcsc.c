@@ -340,7 +340,7 @@ static int32_t pcsc_close(struct s_reader *pcsc_reader)
 	return OK;
 }
 
-struct s_cardreader cardreader_pcsc =
+const struct s_cardreader cardreader_pcsc =
 {
 	.desc                    = "pcsc",
 	.typ                     = R_PCSC,

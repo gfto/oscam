@@ -16,7 +16,7 @@
 
 #define cs_srvr "oscam.server"
 
-extern struct s_cardreader *cardreaders[];
+extern const struct s_cardreader *cardreaders[];
 extern char *RDR_CD_TXT[];
 
 static void reader_label_fn(const char *token, char *value, void *setting, FILE *f)

@@ -131,7 +131,7 @@ static bool db2com_DTR_RTS(struct s_reader *reader, int32_t *dtr, int32_t *rts)
 	return OK;
 }
 
-struct s_cardreader cardreader_db2com =
+const struct s_cardreader cardreader_db2com =
 {
 	.desc          = "db2com",
 	.typ           = R_DB2COM1,

@@ -1804,7 +1804,7 @@ static int32_t sr_init_locks(struct s_reader *UNUSED(reader))
 	return OK;
 }
 
-struct s_cardreader cardreader_smartreader =
+const struct s_cardreader cardreader_smartreader =
 {
 	.desc           = "smartreader",
 	.typ            = R_SMART,

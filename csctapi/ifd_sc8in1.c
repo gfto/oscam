@@ -1244,7 +1244,7 @@ static int32_t sc8in1_get_status(struct s_reader *reader, int32_t *in)
 
 static int32_t sc8in1_activate(struct s_reader *reader, struct s_ATR *atr)
 {
-	struct s_cardreader *crdr_ops = reader->crdr;
+	const struct s_cardreader *crdr_ops = reader->crdr;
 	if (!crdr_ops) return ERROR;
 
 	crdr_ops->lock(reader);
@@ -1264,7 +1264,7 @@ static int32_t sc8in1_set_baudrate(struct s_reader *reader, uint32_t baudrate)
 	return OK;
 }
 
-struct s_cardreader cardreader_sc8in1 =
+const struct s_cardreader cardreader_sc8in1 =
 {
 	.desc                    = "sc8in1",
 	.typ                     = R_SC8in1,
