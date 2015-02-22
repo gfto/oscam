@@ -1191,17 +1191,17 @@ static int32_t irdeto_card_info(struct s_reader *reader)
 	return OK;
 }
 
-void reader_irdeto(struct s_cardsystem *ph)
+const struct s_cardsystem reader_irdeto =
 {
-	ph->do_emm = irdeto_do_emm;
-	ph->do_ecm = irdeto_do_ecm;
-	ph->card_info = irdeto_card_info;
-	ph->card_init = irdeto_card_init;
-	ph->get_emm_type = irdeto_get_emm_type;
-	ph->get_emm_filter = irdeto_get_emm_filter;
-	ph->get_tunemm_filter = irdeto_get_tunemm_filter;
-	ph->caids[0] = 0x06;
-	ph->caids[1] = 0x17;
-	ph->desc = "irdeto";
-}
+	.desc              = "irdeto",
+	.caids             = (uint16_t[]){ 0x06, 0x17, 0 },
+	.do_emm            = irdeto_do_emm,
+	.do_ecm            = irdeto_do_ecm,
+	.card_info         = irdeto_card_info,
+	.card_init         = irdeto_card_init,
+	.get_emm_type      = irdeto_get_emm_type,
+	.get_emm_filter    = irdeto_get_emm_filter,
+	.get_tunemm_filter = irdeto_get_tunemm_filter,
+};
+
 #endif

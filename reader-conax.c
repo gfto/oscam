@@ -529,15 +529,16 @@ static int32_t conax_card_info(struct s_reader *reader)
 	return OK;
 }
 
-void reader_conax(struct s_cardsystem *ph)
+const struct s_cardsystem reader_conax =
 {
-	ph->do_emm = conax_do_emm;
-	ph->do_ecm = conax_do_ecm;
-	ph->card_info = conax_card_info;
-	ph->card_init = conax_card_init;
-	ph->get_emm_type = conax_get_emm_type;
-	ph->get_emm_filter = conax_get_emm_filter;
-	ph->caids[0] = 0x0B;
-	ph->desc = "conax";
-}
+	.desc           = "conax",
+	.caids          = (uint16_t[]){ 0x0B, 0 },
+	.do_emm         = conax_do_emm,
+	.do_ecm         = conax_do_ecm,
+	.card_info      = conax_card_info,
+	.card_init      = conax_card_init,
+	.get_emm_type   = conax_get_emm_type,
+	.get_emm_filter = conax_get_emm_filter,
+};
+
 #endif

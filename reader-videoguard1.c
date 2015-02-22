@@ -349,15 +349,16 @@ static int32_t videoguard1_card_info(struct s_reader *reader)
 	return OK;
 }
 
-void reader_videoguard1(struct s_cardsystem *ph)
+const struct s_cardsystem reader_videoguard1 =
 {
-	ph->do_emm = videoguard1_do_emm;
-	ph->do_ecm = videoguard1_do_ecm;
-	ph->card_info = videoguard1_card_info;
-	ph->card_init = videoguard1_card_init;
-	ph->get_emm_type = videoguard_get_emm_type;
-	ph->get_emm_filter = videoguard_get_emm_filter;
-	ph->caids[0] = 0x09;
-	ph->desc = "videoguard1";
-}
+	.desc           = "videoguard1",
+	.caids          = (uint16_t[]){ 0x09, 0 },
+	.do_emm         = videoguard1_do_emm,
+	.do_ecm         = videoguard1_do_ecm,
+	.card_info      = videoguard1_card_info,
+	.card_init      = videoguard1_card_init,
+	.get_emm_type   = videoguard_get_emm_type,
+	.get_emm_filter = videoguard_get_emm_filter,
+};
+
 #endif

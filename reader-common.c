@@ -15,7 +15,7 @@
 //#include "csctapi/atr.h"
 #include "csctapi/icc_async.h"
 
-extern struct s_cardsystem cardsystems[CS_MAX_MOD];
+extern const struct s_cardsystem *cardsystems[];
 extern char *RDR_CD_TXT[];
 
 int32_t check_sct_len(const uchar *data, int32_t off)
@@ -136,26 +136,24 @@ void cardreader_poll_status(struct s_reader *reader)
 static int32_t reader_get_cardsystem(struct s_reader *reader, ATR *atr)
 {
 	int32_t i;
-	for(i = 0; i < CS_MAX_MOD; i++)
+	for(i = 0; cardsystems[i]; i++)
 	{
-		if(cardsystems[i].card_init)
+		NULLFREE(reader->csystem_data);
+		const struct s_cardsystem *csystem = cardsystems[i];
+		if(csystem->card_init(reader, atr))
 		{
+			rdr_log(reader, "found card system %s", csystem->desc);
+			reader->csystem = csystem;
+			reader->csystem_active = true;
+			led_status_found_cardsystem();
+			break;
+		}
+		else
+		{
+			// On error free allocated card system data if any
+			if(csystem->card_done)
+				csystem->card_done(reader);
 			NULLFREE(reader->csystem_data);
-			if(cardsystems[i].card_init(reader, atr))
-			{
-				rdr_log(reader, "found card system %s", cardsystems[i].desc);
-				reader->csystem = &cardsystems[i];
-				reader->csystem_active = true;
-				led_status_found_cardsystem();
-				break;
-			}
-			else
-			{
-				// On error free allocated card system data if any
-				if(cardsystems[i].card_done)
-					cardsystems[i].card_done(reader);
-				NULLFREE(reader->csystem_data);
-			}
 		}
 	}
 

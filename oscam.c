@@ -77,7 +77,6 @@ static char default_pidfile[64];
 
 int32_t exit_oscam = 0;
 static struct s_module modules[CS_MAX_MOD];
-struct s_cardsystem cardsystems[CS_MAX_MOD];
 
 struct s_client *first_client = NULL;  //Pointer to clients list, first client is master
 struct s_reader *first_active_reader = NULL;  //list of active readers (enable=1 deleted = 0)
@@ -1387,6 +1386,49 @@ __attribute__ ((noreturn)) static void run_tests(void)
 static void run_tests(void) { }
 #endif
 
+const struct s_cardsystem *cardsystems[] =
+{
+#ifdef READER_NAGRA
+	&reader_nagra,
+#endif
+#ifdef READER_IRDETO
+	&reader_irdeto,
+#endif
+#ifdef READER_CONAX
+	&reader_conax,
+#endif
+#ifdef READER_CRYPTOWORKS
+	&reader_cryptoworks,
+#endif
+#ifdef READER_SECA
+	&reader_seca,
+#endif
+#ifdef READER_VIACCESS
+	&reader_viaccess,
+#endif
+#ifdef READER_VIDEOGUARD
+	&reader_videoguard1,
+	&reader_videoguard2,
+	&reader_videoguard12,
+#endif
+#ifdef READER_DRE
+	&reader_dre,
+#endif
+#ifdef READER_TONGFANG
+	&reader_tongfang,
+#endif
+#ifdef READER_BULCRYPT
+	&reader_bulcrypt,
+#endif
+#ifdef READER_GRIFFIN
+	&reader_griffin,
+#endif
+#ifdef READER_DGCRYPT
+	&reader_dgcrypt,
+#endif
+	NULL
+};
+
 const struct s_cardreader *cardreaders[] =
 {
 #ifdef CARDREADER_DB2COM
@@ -1490,49 +1532,6 @@ int32_t main(int32_t argc, char *argv[])
 		0
 	};
 
-	void (*cardsystem_def[])(struct s_cardsystem *) =
-	{
-#ifdef READER_NAGRA
-		reader_nagra,
-#endif
-#ifdef READER_IRDETO
-		reader_irdeto,
-#endif
-#ifdef READER_CONAX
-		reader_conax,
-#endif
-#ifdef READER_CRYPTOWORKS
-		reader_cryptoworks,
-#endif
-#ifdef READER_SECA
-		reader_seca,
-#endif
-#ifdef READER_VIACCESS
-		reader_viaccess,
-#endif
-#ifdef READER_VIDEOGUARD
-		reader_videoguard1,
-		reader_videoguard2,
-		reader_videoguard12,
-#endif
-#ifdef READER_DRE
-		reader_dre,
-#endif
-#ifdef READER_TONGFANG
-		reader_tongfang,
-#endif
-#ifdef READER_BULCRYPT
-		reader_bulcrypt,
-#endif
-#ifdef READER_GRIFFIN
-		reader_griffin,
-#endif
-#ifdef READER_DGCRYPT
-		reader_dgcrypt,
-#endif
-		0
-	};
-
 	parse_cmdline_params(argc, argv);
 
 	if(bg && do_daemon(1, 0))
@@ -1588,11 +1587,6 @@ int32_t main(int32_t argc, char *argv[])
 	{
 		struct s_module *module = &modules[i];
 		mod_def[i](module);
-	}
-	for(i = 0; cardsystem_def[i]; i++)
-	{
-		memset(&cardsystems[i], 0, sizeof(struct s_cardsystem));
-		cardsystem_def[i](&cardsystems[i]);
 	}
 
 	init_sidtab();

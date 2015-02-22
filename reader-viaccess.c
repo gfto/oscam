@@ -1880,16 +1880,17 @@ static int32_t viaccess_reassemble_emm(struct s_reader *rdr, struct s_client *cl
 	return 1;
 }
 
-void reader_viaccess(struct s_cardsystem *ph)
+const struct s_cardsystem reader_viaccess =
 {
-	ph->do_emm_reassembly = viaccess_reassemble_emm;
-	ph->do_emm = viaccess_do_emm;
-	ph->do_ecm = viaccess_do_ecm;
-	ph->card_info = viaccess_card_info;
-	ph->card_init = viaccess_card_init;
-	ph->get_emm_type = viaccess_get_emm_type;
-	ph->get_emm_filter = viaccess_get_emm_filter;
-	ph->caids[0] = 0x05;
-	ph->desc = "viaccess";
-}
+	.desc              = "viaccess",
+	.caids             = (uint16_t[]){ 0x05, 0 },
+	.do_emm_reassembly = viaccess_reassemble_emm,
+	.do_emm            = viaccess_do_emm,
+	.do_ecm            = viaccess_do_ecm,
+	.card_info         = viaccess_card_info,
+	.card_init         = viaccess_card_init,
+	.get_emm_type      = viaccess_get_emm_type,
+	.get_emm_filter    = viaccess_get_emm_filter,
+};
+
 #endif

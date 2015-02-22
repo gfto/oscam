@@ -1312,17 +1312,17 @@ static void videoguard2_card_done(struct s_reader *reader)
 	}
 }
 
-void reader_videoguard2(struct s_cardsystem *ph)
+const struct s_cardsystem reader_videoguard2 =
 {
-	ph->do_emm = videoguard2_do_emm;
-	ph->do_ecm = videoguard2_do_ecm;
-	ph->card_info = videoguard2_card_info;
-	ph->card_init = videoguard2_card_init;
-	ph->card_done = videoguard2_card_done;
-	ph->get_emm_type = videoguard_get_emm_type;
-	ph->get_emm_filter = videoguard_get_emm_filter;
-	ph->caids[0] = 0x09;
-	ph->desc = "videoguard2";
-}
-#endif
+	.desc           = "videoguard2",
+	.caids          = (uint16_t[]){ 0x09, 0 },
+	.do_emm         = videoguard2_do_emm,
+	.do_ecm         = videoguard2_do_ecm,
+	.card_info      = videoguard2_card_info,
+	.card_init      = videoguard2_card_init,
+	.card_done      = videoguard2_card_done,
+	.get_emm_type   = videoguard_get_emm_type,
+	.get_emm_filter = videoguard_get_emm_filter,
+};
 
+#endif

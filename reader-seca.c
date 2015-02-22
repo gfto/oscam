@@ -573,15 +573,16 @@ static int32_t seca_card_info(struct s_reader *reader)
 	return OK;
 }
 
-void reader_seca(struct s_cardsystem *ph)
+const struct s_cardsystem reader_seca =
 {
-	ph->do_emm = seca_do_emm;
-	ph->do_ecm = seca_do_ecm;
-	ph->card_info = seca_card_info;
-	ph->card_init = seca_card_init;
-	ph->get_emm_type = seca_get_emm_type;
-	ph->get_emm_filter = seca_get_emm_filter;
-	ph->caids[0] = 0x01;
-	ph->desc = "seca";
-}
+	.desc           = "seca",
+	.caids          = (uint16_t[]){ 0x01, 0 },
+	.do_emm         = seca_do_emm,
+	.do_ecm         = seca_do_ecm,
+	.card_info      = seca_card_info,
+	.card_init      = seca_card_init,
+	.get_emm_type   = seca_get_emm_type,
+	.get_emm_filter = seca_get_emm_filter,
+};
+
 #endif
