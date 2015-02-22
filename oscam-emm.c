@@ -37,7 +37,7 @@ static int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len)
  *
  * the emm is checked against it and returns 1 for a valid emm or 0 if not
  */
-static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs, EMM_PACKET *ep, int8_t cl_dvbapi)
+static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *csystem, EMM_PACKET *ep, int8_t cl_dvbapi)
 {
 	if(is_network_reader(rdr)) { return 1; }  // dont evaluate on network readers, server with local reader will check it
 
@@ -49,7 +49,7 @@ static int8_t do_simple_emm_filter(struct s_reader *rdr, struct s_cardsystem *cs
 	unsigned int j, filter_count = 0;
 
 	// Call cardsystems emm filter
-	cs->get_emm_filter(rdr, &dmx_filter, &filter_count);
+	csystem->get_emm_filter(rdr, &dmx_filter, &filter_count);
 
 	// Only check matching emmtypes:
 	uint8_t org_emmtype;
@@ -341,15 +341,15 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 		if(!emm_reader_match(aureader, caid, provid))
 			{ continue; }
 
-		struct s_cardsystem *cs = NULL;
+		struct s_cardsystem *csystem = NULL;
 
 		if(is_network_reader(aureader))    // network reader (R_CAMD35 R_NEWCAMD R_CS378X R_CCCAM)
 		{
 			if(!aureader->ph.c_send_emm)  // no emm support
 				{ continue; }
 
-			cs = get_cardsystem_by_caid(caid);
-			if(!cs)
+			csystem = get_cardsystem_by_caid(caid);
+			if(!csystem)
 			{
 				rdr_log_dbg(aureader, D_EMM, "unable to find cardsystem for caid %04X", caid);
 				continue;
@@ -358,12 +358,12 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 		else     // local reader
 		{
 			if(aureader->csystem_active)
-				{ cs = &aureader->csystem; }
+				{ csystem = &aureader->csystem; }
 		}
 
-		if(cs && cs->get_emm_type)
+		if(csystem && csystem->get_emm_type)
 		{
-			if(!cs->get_emm_type(ep, aureader))
+			if(!csystem->get_emm_type(ep, aureader))
 			{
 				rdr_log_dbg(aureader, D_EMM, "emm skipped, get_emm_type() returns error");
 				emmnok++;
@@ -371,11 +371,11 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 			}
 		}
 
-		if(!ep->skip_filter_check && cs && cs->get_emm_filter)
+		if(!ep->skip_filter_check && csystem && csystem->get_emm_filter)
 		{
-			if(!do_simple_emm_filter(aureader, cs, ep, 1)) // do check with dvbapi fixup enabled
+			if(!do_simple_emm_filter(aureader, csystem, ep, 1)) // do check with dvbapi fixup enabled
 			{
-				if(!do_simple_emm_filter(aureader, cs, ep, 0)) // do check with dvbapi fixup disabled
+				if(!do_simple_emm_filter(aureader, csystem, ep, 0)) // do check with dvbapi fixup disabled
 				{
 					rdr_log_dbg(aureader, D_EMM, "emm skipped, do_simple_emm_filter() returns invalid");
 					emmnok++;
@@ -384,11 +384,11 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 			}
 		}
 
-		if(cs && cs->do_emm_reassembly)
+		if(csystem && csystem->do_emm_reassembly)
 		{
 			if(assemble)
 			{
-				if(!cs->do_emm_reassembly(aureader, client, ep))
+				if(!csystem->do_emm_reassembly(aureader, client, ep))
 					{ continue; } // skip this reader
 			}
 			else
@@ -661,8 +661,8 @@ void do_emm_from_file(struct s_reader *reader)
 		{ memcpy(eptmp->provid, reader->prid[0], sizeof(eptmp->provid)); }
 	eptmp->emmlen = eptmp->emm[2] + 3;
 }
-	struct s_cardsystem *cs = get_cardsystem_by_caid(reader->caid);
-	if(cs && cs->get_emm_type && !cs->get_emm_type(eptmp, reader))
+	struct s_cardsystem *csystem = get_cardsystem_by_caid(reader->caid);
+	if(csystem && csystem->get_emm_type && !csystem->get_emm_type(eptmp, reader))
 	{
 		rdr_log_dbg(reader, D_EMM, "emm skipped, get_emm_type() returns error");
 		NULLFREE(eptmp);
