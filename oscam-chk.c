@@ -707,12 +707,14 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 
 	if(!is_network_reader(rdr) && ((rdr->caid >> 8) != ((er->caid >> 8) & 0xFF) && (rdr->caid >> 8) != ((er->ocaid >> 8) & 0xFF)))
 	{
+		if (!rdr->csystem)
+			return 0;
 		int i, caid_found = 0;
-		for(i = 0; i < (int)ARRAY_SIZE(rdr->csystem.caids); i++)
+		for(i = 0; i < (int)ARRAY_SIZE(rdr->csystem->caids); i++)
 		{
-			if(!rdr->csystem.caids[i])
+			if(!rdr->csystem->caids[i])
 				{ continue; }
-			if(rdr->csystem.caids[i] == er->caid || rdr->csystem.caids[i] == er->ocaid)
+			if(rdr->csystem->caids[i] == er->caid || rdr->csystem->caids[i] == er->ocaid)
 			{
 				caid_found = 1;
 				break;

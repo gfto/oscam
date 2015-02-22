@@ -27,8 +27,8 @@ static char *debug_mask_txt(int mask)
 
 static const char *reader_desc_txt(struct s_reader *reader)
 {
-	if(reader->csystem.desc)
-		{ return reader->csystem.desc; }
+	if(reader->csystem && reader->csystem->desc)
+		{ return reader->csystem->desc; }
 	else if(reader->crdr && reader->crdr->desc)
 		{ return reader->crdr->desc; }
 	else if(reader->ph.desc)

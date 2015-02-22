@@ -4144,7 +4144,8 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				if(rdr->card_atr_length)
 					for(i = 0; i < rdr->card_atr_length; i++) { tpl_printf(vars, TPLAPPEND, "READERATR", "%02X ", rdr->card_atr[i]); }
 
-				tpl_addVar(vars, TPLADD, "READERCSYSTEM", rdr->csystem.desc);
+				if (rdr->csystem)
+					tpl_addVar(vars, TPLADD, "READERCSYSTEM", rdr->csystem->desc);
 
 				if(add_nds_line)
 				{
@@ -6258,7 +6259,7 @@ static char *send_oscam_EMM_running(struct templatevars * vars, struct uriparams
 		}
 		else if(!proxy && rdr->csystem_active)     // local active reader
 		{
-			csystem = &rdr->csystem;
+			csystem = rdr->csystem;
 			caid = rdr->caid;
 		}
 
