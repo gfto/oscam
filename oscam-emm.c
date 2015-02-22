@@ -162,9 +162,10 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 		int caid_found = 0;
 		if (!reader->csystem)
 			return 0;
-		for(i = 0; i < (int)ARRAY_SIZE(reader->csystem->caids); i++)
+		for(i = 0; reader->csystem->caids[i]; i++)
 		{
-			if( (reader->caid != 0) && (reader->csystem->caids[i] == caid) )
+			uint16_t cs_caid = reader->csystem->caids[i];
+			if (reader->caid && cs_caid == caid)
 			{
 				caid_found = 1;
 				break;

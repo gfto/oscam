@@ -1358,16 +1358,17 @@ static int32_t nagra2_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	return OK;
 }
 
-void reader_nagra(struct s_cardsystem *ph)
+const struct s_cardsystem reader_nagra =
 {
-	ph->do_emm = nagra2_do_emm;
-	ph->do_ecm = nagra2_do_ecm;
-	ph->post_process = nagra2_post_process;
-	ph->card_info = nagra2_card_info;
-	ph->card_init = nagra2_card_init;
-	ph->get_emm_type = nagra2_get_emm_type;
-	ph->get_emm_filter = nagra2_get_emm_filter;
-	ph->caids[0] = 0x18;
-	ph->desc = "nagra";
-}
+	.desc           = "nagra",
+	.caids          = (uint16_t[]){ 0x18, 0 },
+	.do_emm         = nagra2_do_emm,
+	.do_ecm         = nagra2_do_ecm,
+	.post_process   = nagra2_post_process,
+	.card_info      = nagra2_card_info,
+	.card_init      = nagra2_card_init,
+	.get_emm_type   = nagra2_get_emm_type,
+	.get_emm_filter = nagra2_get_emm_filter,
+};
+
 #endif

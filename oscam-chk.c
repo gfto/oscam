@@ -710,11 +710,12 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 		if (!rdr->csystem)
 			return 0;
 		int i, caid_found = 0;
-		for(i = 0; i < (int)ARRAY_SIZE(rdr->csystem->caids); i++)
+		for(i = 0; rdr->csystem->caids[i]; i++)
 		{
-			if(!rdr->csystem->caids[i])
+			uint16_t cs_caid = rdr->csystem->caids[i];
+			if(!cs_caid)
 				{ continue; }
-			if(rdr->csystem->caids[i] == er->caid || rdr->csystem->caids[i] == er->ocaid)
+			if(cs_caid == er->caid || cs_caid == er->ocaid)
 			{
 				caid_found = 1;
 				break;

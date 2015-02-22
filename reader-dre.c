@@ -587,18 +587,16 @@ static int32_t dre_card_info(struct s_reader *UNUSED(rdr))
 	return OK;
 }
 
-void reader_dre(struct s_cardsystem *ph)
+const struct s_cardsystem reader_dre =
 {
-	ph->do_emm = dre_do_emm;
-	ph->do_ecm = dre_do_ecm;
-	ph->card_info = dre_card_info;
-	ph->card_init = dre_card_init;
-	ph->get_emm_type = dre_get_emm_type;
-	ph->get_emm_filter = dre_get_emm_filter;
-	ph->caids[0] = 0x4AE0;
-	ph->caids[1] = 0x4AE1;
-	ph->caids[2] = 0x7BE0;
-	ph->caids[3] = 0x7BE1;
-	ph->desc = "dre";
-}
+	.desc           = "dre",
+	.caids          = (uint16_t[]){ 0x4AE0, 0x4AE1, 0x7BE0, 0x7BE1, 0 },
+	.do_emm         = dre_do_emm,
+	.do_ecm         = dre_do_ecm,
+	.card_info      = dre_card_info,
+	.card_init      = dre_card_init,
+	.get_emm_type   = dre_get_emm_type,
+	.get_emm_filter = dre_get_emm_filter,
+};
+
 #endif

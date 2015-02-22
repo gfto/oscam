@@ -1,19 +1,19 @@
 #ifndef READERS_H_
 #define READERS_H_
 
-void reader_nagra(struct s_cardsystem *);
-void reader_irdeto(struct s_cardsystem *);
-void reader_cryptoworks(struct s_cardsystem *);
-void reader_viaccess(struct s_cardsystem *);
-void reader_conax(struct s_cardsystem *);
-void reader_seca(struct s_cardsystem *);
-void reader_videoguard1(struct s_cardsystem *);
-void reader_videoguard2(struct s_cardsystem *);
-void reader_videoguard12(struct s_cardsystem *);
-void reader_dre(struct s_cardsystem *);
-void reader_tongfang(struct s_cardsystem *);
-void reader_bulcrypt(struct s_cardsystem *);
-void reader_griffin(struct s_cardsystem *);
-void reader_dgcrypt(struct s_cardsystem *);
+extern const struct s_cardsystem reader_nagra;
+extern const struct s_cardsystem reader_irdeto;
+extern const struct s_cardsystem reader_cryptoworks;
+extern const struct s_cardsystem reader_viaccess;
+extern const struct s_cardsystem reader_conax;
+extern const struct s_cardsystem reader_seca;
+extern const struct s_cardsystem reader_videoguard1;
+extern const struct s_cardsystem reader_videoguard2;
+extern const struct s_cardsystem reader_videoguard12;
+extern const struct s_cardsystem reader_dre;
+extern const struct s_cardsystem reader_tongfang;
+extern const struct s_cardsystem reader_bulcrypt;
+extern const struct s_cardsystem reader_griffin;
+extern const struct s_cardsystem reader_dgcrypt;
 
 #endif
