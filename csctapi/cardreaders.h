@@ -1,17 +1,17 @@
 #ifndef CSCTAPI_CARDREADERS_H_
 #define CSCTAPI_CARDREADERS_H_
 
-void cardreader_db2com(struct s_cardreader *crdr);
-void cardreader_internal_sci(struct s_cardreader *crdr);
-void cardreader_internal_cool(struct s_cardreader *crdr);
-void cardreader_internal_azbox(struct s_cardreader *crdr);
-void cardreader_mp35(struct s_cardreader *crdr);
-void cardreader_mouse(struct s_cardreader *crdr);
-void cardreader_pcsc(struct s_cardreader *crdr);
-void cardreader_sc8in1(struct s_cardreader *crdr);
-void cardreader_smargo(struct s_cardreader *crdr);
-void cardreader_smartreader(struct s_cardreader *crdr);
-void cardreader_stapi(struct s_cardreader *crdr);
-void cardreader_stinger(struct s_cardreader *crdr);
+extern struct s_cardreader cardreader_db2com;
+extern struct s_cardreader cardreader_internal_sci;
+extern struct s_cardreader cardreader_internal_cool;
+extern struct s_cardreader cardreader_internal_azbox;
+extern struct s_cardreader cardreader_mp35;
+extern struct s_cardreader cardreader_mouse;
+extern struct s_cardreader cardreader_pcsc;
+extern struct s_cardreader cardreader_sc8in1;
+extern struct s_cardreader cardreader_smargo;
+extern struct s_cardreader cardreader_smartreader;
+extern struct s_cardreader cardreader_stapi;
+extern struct s_cardreader cardreader_stinger;
 
 #endif

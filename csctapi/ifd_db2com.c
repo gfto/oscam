@@ -131,21 +131,22 @@ static bool db2com_DTR_RTS(struct s_reader *reader, int32_t *dtr, int32_t *rts)
 	return OK;
 }
 
-void cardreader_db2com(struct s_cardreader *crdr)
+struct s_cardreader cardreader_db2com =
 {
-	crdr->desc          = "db2com";
-	crdr->typ           = R_DB2COM1;
-	crdr->flush         = 1;
-	crdr->need_inverse  = 1;
-	crdr->read_written  = 1;
-	crdr->reader_init   = db2com_init;
-	crdr->get_status    = db2com_get_status;
-	crdr->activate      = Phoenix_Reset;
-	crdr->transmit      = IO_Serial_Transmit;
-	crdr->receive       = IO_Serial_Receive;
-	crdr->close         = Phoenix_Close;
-	crdr->set_parity    = IO_Serial_SetParity;
-	crdr->set_baudrate  = IO_Serial_SetBaudrate;
-	crdr->set_DTS_RTS   = db2com_DTR_RTS;
-}
+	.desc          = "db2com",
+	.typ           = R_DB2COM1,
+	.flush         = 1,
+	.need_inverse  = 1,
+	.read_written  = 1,
+	.reader_init   = db2com_init,
+	.get_status    = db2com_get_status,
+	.activate      = Phoenix_Reset,
+	.transmit      = IO_Serial_Transmit,
+	.receive       = IO_Serial_Receive,
+	.close         = Phoenix_Close,
+	.set_parity    = IO_Serial_SetParity,
+	.set_baudrate  = IO_Serial_SetBaudrate,
+	.set_DTS_RTS   = db2com_DTR_RTS,
+};
+
 #endif

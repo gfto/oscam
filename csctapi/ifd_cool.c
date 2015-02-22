@@ -315,19 +315,19 @@ static int32_t Cool_SetProtocol(struct s_reader *reader, unsigned char *params, 
 	return OK;
 }
 
-void cardreader_internal_cool(struct s_cardreader *crdr)
+struct s_cardreader cardreader_internal_cool =
 {
-	crdr->desc         = "internal";
-	crdr->typ          = R_INTERNAL;
-	crdr->max_clock_speed = 1;
-	crdr->reader_init  = Cool_Init;
-	crdr->get_status   = Cool_GetStatus;
-	crdr->activate     = Cool_Reset;
-	crdr->transmit     = Cool_Transmit;
-	crdr->receive      = Cool_Receive;
-	crdr->close        = Cool_Close;
-	crdr->write_settings = Cool_WriteSettings;
-	crdr->set_protocol  = Cool_SetProtocol;
-}
+	.desc            = "internal",
+	.typ             = R_INTERNAL,
+	.max_clock_speed = 1,
+	.reader_init     = Cool_Init,
+	.get_status      = Cool_GetStatus,
+	.activate        = Cool_Reset,
+	.transmit        = Cool_Transmit,
+	.receive         = Cool_Receive,
+	.close           = Cool_Close,
+	.write_settings  = Cool_WriteSettings,
+	.set_protocol    = Cool_SetProtocol,
+};
 
 #endif

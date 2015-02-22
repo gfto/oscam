@@ -245,21 +245,21 @@ static int32_t mp35_init(struct s_reader *reader)
 	return OK;
 }
 
-void cardreader_mp35(struct s_cardreader *crdr)
+struct s_cardreader cardreader_mp35 =
 {
-	crdr->desc         = "mp35";
-	crdr->typ          = R_MOUSE;
-	crdr->flush        = 1;
-	crdr->need_inverse = 1;
-	crdr->read_written = 1;
-	crdr->reader_init  = mp35_init;
-	crdr->get_status   = IO_Serial_GetStatus;
-	crdr->activate     = Phoenix_Reset;
-	crdr->transmit     = IO_Serial_Transmit;
-	crdr->receive      = IO_Serial_Receive;
-	crdr->close        = mp35_close;
-	crdr->set_parity   = IO_Serial_SetParity;
-	crdr->set_baudrate = IO_Serial_SetBaudrate;
-}
+	.desc         = "mp35",
+	.typ          = R_MOUSE,
+	.flush        = 1,
+	.need_inverse = 1,
+	.read_written = 1,
+	.reader_init  = mp35_init,
+	.get_status   = IO_Serial_GetStatus,
+	.activate     = Phoenix_Reset,
+	.transmit     = IO_Serial_Transmit,
+	.receive      = IO_Serial_Receive,
+	.close        = mp35_close,
+	.set_parity   = IO_Serial_SetParity,
+	.set_baudrate = IO_Serial_SetBaudrate,
+};
 
 #endif

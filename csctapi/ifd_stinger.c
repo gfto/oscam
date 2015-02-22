@@ -334,7 +334,7 @@ static int32_t stinger_mouse_init(struct s_reader *reader)
 
 	if(detect_db2com_reader(reader))
 	{
-		cardreader_db2com(reader->crdr);
+		reader->crdr = crdr_ops = &cardreader_db2com;
 		return crdr_ops->reader_init(reader);
 	}
 
@@ -560,21 +560,21 @@ static int32_t Stinger_Set_Clock(struct s_reader *reader, unsigned int c)
 	return OK;
 }
 
-
-void cardreader_stinger(struct s_cardreader *crdr)
+struct s_cardreader cardreader_stinger =
 {
-	crdr->desc          = "stinger";
-	crdr->typ           = R_MOUSE;
-	crdr->flush         = 1;
-	crdr->read_written  = 1;
-	crdr->need_inverse  = 1;
-	crdr->reader_init   = stinger_mouse_init;
-	crdr->get_status    = Phoenix_GetStatus;
-	crdr->activate      = Stinger_Reset;
-	crdr->transmit      = IO_Serial_Transmit;
-	crdr->receive       = IO_Serial_Receive;
-	crdr->close         = Phoenix_Close;
-	crdr->set_parity    = Stinger_IO_Serial_SetParity;
-	crdr->set_baudrate  = Stinger_IO_Serial_SetBaudrate;
-}
+	.desc          = "stinger",
+	.typ           = R_MOUSE,
+	.flush         = 1,
+	.read_written  = 1,
+	.need_inverse  = 1,
+	.reader_init   = stinger_mouse_init,
+	.get_status    = Phoenix_GetStatus,
+	.activate      = Stinger_Reset,
+	.transmit      = IO_Serial_Transmit,
+	.receive       = IO_Serial_Receive,
+	.close         = Phoenix_Close,
+	.set_parity    = Stinger_IO_Serial_SetParity,
+	.set_baudrate  = Stinger_IO_Serial_SetBaudrate,
+};
+
 #endif

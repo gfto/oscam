@@ -207,7 +207,7 @@ static int32_t mouse_init(struct s_reader *reader)
 
 	if(detect_db2com_reader(reader))
 	{
-		cardreader_db2com(reader->crdr);
+		reader->crdr = crdr_ops = &cardreader_db2com;
 		return crdr_ops->reader_init(reader);
 	}
 
@@ -227,20 +227,21 @@ static int32_t mouse_init(struct s_reader *reader)
 	return OK;
 }
 
-void cardreader_mouse(struct s_cardreader *crdr)
+struct s_cardreader cardreader_mouse =
 {
-	crdr->desc          = "mouse";
-	crdr->typ           = R_MOUSE;
-	crdr->flush         = 1;
-	crdr->read_written  = 1;
-	crdr->need_inverse  = 1;
-	crdr->reader_init   = mouse_init;
-	crdr->get_status    = Phoenix_GetStatus;
-	crdr->activate      = Phoenix_Reset;
-	crdr->transmit      = IO_Serial_Transmit;
-	crdr->receive       = IO_Serial_Receive;
-	crdr->close         = Phoenix_Close;
-	crdr->set_parity    = IO_Serial_SetParity;
-	crdr->set_baudrate  = IO_Serial_SetBaudrate;
-}
+	.desc          = "mouse",
+	.typ           = R_MOUSE,
+	.flush         = 1,
+	.read_written  = 1,
+	.need_inverse  = 1,
+	.reader_init   = mouse_init,
+	.get_status    = Phoenix_GetStatus,
+	.activate      = Phoenix_Reset,
+	.transmit      = IO_Serial_Transmit,
+	.receive       = IO_Serial_Receive,
+	.close         = Phoenix_Close,
+	.set_parity    = IO_Serial_SetParity,
+	.set_baudrate  = IO_Serial_SetBaudrate,
+};
+
 #endif

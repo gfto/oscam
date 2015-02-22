@@ -16,7 +16,7 @@
 
 #define cs_srvr "oscam.server"
 
-extern struct s_cardreader cardreaders[CS_MAX_MOD];
+extern struct s_cardreader *cardreaders[];
 extern char *RDR_CD_TXT[];
 
 static void reader_label_fn(const char *token, char *value, void *setting, FILE *f)
@@ -111,12 +111,12 @@ static void protocol_fn(const char *token, char *value, void *setting, FILE *f)
 		}, *p;
 		int i;
 		// Parse card readers
-		for(i = 0; i < CS_MAX_MOD; i++)
+		for(i = 0; cardreaders[i]; i++)
 		{
-			if(streq(value, cardreaders[i].desc))
+			if(streq(value, cardreaders[i]->desc))
 			{
-				rdr->crdr = &cardreaders[i];
-				rdr->typ  = cardreaders[i].typ;
+				rdr->crdr = cardreaders[i];
+				rdr->typ  = cardreaders[i]->typ;
 				return;
 			}
 		}

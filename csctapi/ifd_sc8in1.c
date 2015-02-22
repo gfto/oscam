@@ -1264,26 +1264,26 @@ static int32_t sc8in1_set_baudrate(struct s_reader *reader, uint32_t baudrate)
 	return OK;
 }
 
-void cardreader_sc8in1(struct s_cardreader *crdr)
+struct s_cardreader cardreader_sc8in1 =
 {
-	crdr->desc         = "sc8in1";
-	crdr->typ          = R_SC8in1;
-	crdr->flush        = 1;
-	crdr->read_written = 1;
-	crdr->need_inverse = 1;
-	crdr->skip_t1_command_retries = 1;
-	crdr->lock_init    = Sc8in1_InitLocks;
-	crdr->lock         = sc8in1_lock;
-	crdr->unlock       = sc8in1_unlock;
-	crdr->display_msg  = sc8in1_display;
-	crdr->reader_init  = sc8in1_init;
-	crdr->close        = sc8in1_close;
-	crdr->get_status   = sc8in1_get_status;
-	crdr->activate     = sc8in1_activate;
-	crdr->transmit     = IO_Serial_Transmit;
-	crdr->receive      = IO_Serial_Receive;
-	crdr->set_parity   = IO_Serial_SetParity;
-	crdr->set_baudrate = sc8in1_set_baudrate;
-}
+	.desc                    = "sc8in1",
+	.typ                     = R_SC8in1,
+	.flush                   = 1,
+	.read_written            = 1,
+	.need_inverse            = 1,
+	.skip_t1_command_retries = 1,
+	.lock_init               = Sc8in1_InitLocks,
+	.lock                    = sc8in1_lock,
+	.unlock                  = sc8in1_unlock,
+	.display_msg             = sc8in1_display,
+	.reader_init             = sc8in1_init,
+	.close                   = sc8in1_close,
+	.get_status              = sc8in1_get_status,
+	.activate                = sc8in1_activate,
+	.transmit                = IO_Serial_Transmit,
+	.receive                 = IO_Serial_Receive,
+	.set_parity              = IO_Serial_SetParity,
+	.set_baudrate            = sc8in1_set_baudrate,
+};
 
 #endif
