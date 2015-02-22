@@ -345,9 +345,6 @@ typedef unsigned char uchar;
 #define MOD_CONN_SERIAL 4
 #define MOD_NO_CONN 8
 
-#define MOD_CARDSYSTEM  16
-#define MOD_ADDON       32
-
 #define EMM_UNIQUE 1
 #define EMM_SHARED 2
 #define EMM_GLOBAL 4
@@ -372,16 +369,6 @@ typedef unsigned char uchar;
 #define UNIQUE  1
 #define SHARED  2
 #define GLOBAL  3
-
-#define PIP_ID_ECM    0
-#define PIP_ID_EMM    1
-#define PIP_ID_CIN    2  // CARD_INFO
-#define PIP_ID_UDP    3
-#define PIP_ID_MAX    PIP_ID_UDP
-#define PIP_ID_ERR    (-1)
-#define PIP_ID_NUL    (-2)
-
-#define cdiff *c_start
 
 #define NCD_AUTO    0
 #define NCD_524     1
