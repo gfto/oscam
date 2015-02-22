@@ -1269,9 +1269,6 @@ struct s_reader                                     //contains device info, read
 	int8_t          fallback;
 	FTAB            fallback_percaid;
 	FTAB            localcards;
-#ifdef MODULE_CAMD35
-	int8_t			via_emm_global;					// to enable global emm viaccess on camd35
-#endif
 #ifdef CS_CACHEEX
 	CECSP           cacheex; //CacheEx Settings
 #endif

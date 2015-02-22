@@ -852,9 +852,6 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC("cooldown"             , 0,                            cooldown_fn),
 	DEF_OPT_FUNC("cooldowndelay"        , 0,                            cooldowndelay_fn),
 	DEF_OPT_FUNC("cooldowntime"         , 0,                            cooldowntime_fn),
-#ifdef MODULE_CAMD35
-	DEF_OPT_INT8("via_emm_global"       , OFS(via_emm_global),          0),
-#endif
 	DEF_OPT_UINT8("read_old_classes"    , OFS(read_old_classes),        0),
 	DEF_LAST_OPT
 };
@@ -919,16 +916,6 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	};
 	if(reader->typ != R_NEWCAMD && in_list(setting, newcamd_settings))
 		{ return false; }
-#ifdef MODULE_CAMD35
-	// Special settings for CAMD35 or CS357X only written if rader is CAMD35/CS357X
-	static const char *camd35_settings[] =
-	{
-		"via_emm_global",
-		0
-	};
-	if(reader->typ != R_CAMD35 && in_list(setting, camd35_settings))
-		{ return false; }
-#endif
 #ifdef MODULE_CCCAM
 	// These are written only when the reader is CCCAM
 	static const char *cccam_settings[] =

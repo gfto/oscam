@@ -2057,17 +2057,6 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	{
 		tpl_addVar(vars, TPLADD, "AUTOSPEEDVALUE", (rdr->autospeed == 1) ? "1" : "0");
 	}
-#ifdef MODULE_CAMD35
-	// Aktivate global emm filter on viacces camd35 reader
-	if(!apicall)
-	{
-		tpl_addVar(vars, TPLADD, "VIAEMMGLOBAL", (rdr->via_emm_global == 1) ? "checked" : "");
-	}
-	else
-	{
-		tpl_addVar(vars, TPLADD, "VIAEMMGLOBAL", (rdr->via_emm_global == 1) ? "1" : "0");
-	}
-#endif
 	// sc8in1 dtrrts patch
 	if(!apicall)
 	{
