@@ -198,7 +198,7 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 
 	uint32_t prid = reader->auprovid;
 	
-	if((caid >> 8 == 0x05) && (prid != 0) && ((prid &0xFFFFF0) != prid)) // viaccess fixup last digit of provid is a dont care!
+	if(caid_is_viaccess(caid) && (prid != 0) && ((prid &0xFFFFF0) != prid)) // viaccess fixup last digit of provid is a dont care!
 	{
 		prid &= 0xFFFFF0;
 		rdr_log_dbg(reader, D_EMM, "reader auprovid = %06X fixup to %06X (ignoring last digit)", reader->auprovid, prid); 
@@ -214,7 +214,7 @@ int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid
 	{
 		prid = b2i(4, reader->prid[i]);
 		
-		if((caid >> 8 == 0x05) && (prid != 0) && ((prid &0xFFFFF0) != prid)) // viaccess fixup last digit of provid is a dont care!
+		if(caid_is_viaccess(caid) && (prid != 0) && ((prid &0xFFFFF0) != prid)) // viaccess fixup last digit of provid is a dont care!
 		{
 			rdr_log_dbg(reader, D_EMM, "reader provid = %06X fixup to %06X (ignoring last digit)", prid, (prid &0xFFFFF0));
 			prid &= 0xFFFFF0;
@@ -333,7 +333,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 		uint16_t caid = b2i(2, ep->caid);
 		uint32_t provid = b2i(4, ep->provid);
 		
-		if(caid >> 8 == 0x05) // viaccess fixup last digit is a dont care!
+		if(caid_is_viaccess(caid)) // viaccess fixup last digit is a dont care!
 		{
 			 provid &= 0xFFFFF0;
 		}

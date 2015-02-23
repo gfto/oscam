@@ -2247,7 +2247,7 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 		}
 		else
 		{
-			if(descriptor_ca_system_id >> 8 == 0x05 && descriptor_length == 0x0F && buffer[j + 12] == 0x14)
+			if(caid_is_viaccess(descriptor_ca_system_id) && descriptor_length == 0x0F && buffer[j + 12] == 0x14)
 				{ descriptor_ca_provider = b2i(3, buffer + j + 14) &0xFFFFF0; }
 
 			if(caid_is_nagra(descriptor_ca_system_id) && descriptor_length == 0x07)
