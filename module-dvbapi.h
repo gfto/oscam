@@ -284,6 +284,7 @@ int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, int32_t idx);
 void disable_unused_streampids(int16_t demux_id);
 int8_t is_ca_used(uint8_t cadevice);
 const char *dvbapi_get_client_name(void);
+void rotate_emmfilter(int32_t demux_id);
 uint16_t dvbapi_get_client_proto_version(void);
 void delayer(ECM_REQUEST *er);
 void check_add_emmpid(int32_t demux_index, uchar *filter, int32_t l, int32_t emmtype);

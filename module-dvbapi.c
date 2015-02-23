@@ -3345,84 +3345,6 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		}
 		dvbapi_process_emm(demux_id, filter_num, buffer, len);
 	}
-
-	// emm filter iteration
-	if(!ll_emm_active_filter)
-		{ ll_emm_active_filter = ll_create("ll_emm_active_filter"); }
-
-	if(!ll_emm_inactive_filter)
-		{ ll_emm_inactive_filter = ll_create("ll_emm_inactive_filter"); }
-
-	if(!ll_emm_pending_filter)
-		{ ll_emm_pending_filter = ll_create("ll_emm_pending_filter"); }
-
-	uint32_t filter_count = ll_count(ll_emm_active_filter) + ll_count(ll_emm_inactive_filter);
-
-	if(demux[demux_id].max_emm_filter > 0
-			&& ll_count(ll_emm_inactive_filter) > 0
-			&& filter_count > demux[demux_id].max_emm_filter)
-	{
-
-		int32_t filter_queue = ll_count(ll_emm_inactive_filter);
-		int32_t stopped = 0, started = 0;
-		struct timeb now;
-		cs_ftime(&now);
-
-		struct s_emm_filter *filter_item;
-		LL_ITER itr;
-		itr = ll_iter_create(ll_emm_active_filter);
-
-		while((filter_item = ll_iter_next(&itr)) != NULL)
-		{
-			if(!ll_count(ll_emm_inactive_filter) || started == filter_queue)
-				{ break; }
-			int64_t gone = comp_timeb(&now, &filter_item->time_started); 
-			if( gone > 45*1000)
-			{
-				struct s_dvbapi_priority *forceentry = dvbapi_check_prio_match_emmpid(filter_item->demux_id, filter_item->caid,
-													   filter_item->provid, 'p');
-
-				if(!forceentry || (forceentry && !forceentry->force))
-				{
-					cs_log_dbg(D_DVBAPI, "Removing emm filter %d on demux index %d", filter_item->num, filter_item->demux_id);
-					dvbapi_stop_filternum(filter_item->demux_id, filter_item->num - 1);
-					ll_iter_remove_data(&itr);
-					add_emmfilter_to_list(filter_item->demux_id, filter_item->filter, filter_item->caid,
-										  filter_item->provid, filter_item->pid, -1, false);
-					stopped++;
-				}
-			}
-
-			int32_t ret;
-			if(stopped > started)
-			{
-				struct s_emm_filter *filter_item2;
-				LL_ITER itr2 = ll_iter_create(ll_emm_inactive_filter);
-
-				while((filter_item2 = ll_iter_next(&itr2)))
-				{
-					cs_log_dump_dbg(D_DVBAPI, filter_item2->filter, 32, "Starting emm filter pid: 0x%04X on demux index %i", filter_item2->pid, filter_item2->demux_id);
-					ret = dvbapi_set_filter(filter_item2->demux_id, selected_api, filter_item2->pid, filter_item2->caid,
-											filter_item2->provid, filter_item2->filter, filter_item2->filter + 16, 0,
-											demux[filter_item2->demux_id].pidindex, TYPE_EMM, 1);
-					if(ret != -1)
-					{
-						ll_iter_remove_data(&itr2);
-						started++;
-						break;
-					}
-				}
-			}
-		}
-
-		itr = ll_iter_create(ll_emm_pending_filter);
-
-		while((filter_item = ll_iter_next(&itr)) != NULL)
-		{
-			add_emmfilter_to_list(filter_item->demux_id, filter_item->filter, filter_item->caid, filter_item->provid, filter_item->pid, 0, false);
-			ll_iter_remove_data(&itr);
-		}
-	}
 }
 
 static void *dvbapi_main_local(void *cli)
@@ -3638,6 +3560,7 @@ static void *dvbapi_main_local(void *cli)
 					{
 						demux[i].emmstart = now;
 						dvbapi_start_emm_filter(i); // start emmfiltering delayed if filters already were running
+						rotate_emmfilter(i); // rotate active emmfilters
 					}
 				}
 				//if(emmstarted != demux[i].emm_filter && !emmcounter) { continue; }  // proceed with next demuxer if no emms where running before
@@ -4965,6 +4888,86 @@ void check_add_emmpid(int32_t demux_index, uchar *filter, int32_t l, int32_t emm
 		cs_log_dump_dbg(D_DVBAPI, filter, 32, "Demuxer %d added inactive emm filter type %s, pid: 0x%04X", demux_index, typtext[typtext_idx], demux[demux_index].EMMpids[l].PID);
 	}
 	return;
+}
+
+void rotate_emmfilter(int32_t demux_id)
+{
+	// emm filter iteration
+	if(!ll_emm_active_filter)
+		{ ll_emm_active_filter = ll_create("ll_emm_active_filter"); }
+
+	if(!ll_emm_inactive_filter)
+		{ ll_emm_inactive_filter = ll_create("ll_emm_inactive_filter"); }
+
+	if(!ll_emm_pending_filter)
+		{ ll_emm_pending_filter = ll_create("ll_emm_pending_filter"); }
+
+	uint32_t filter_count = ll_count(ll_emm_active_filter) + ll_count(ll_emm_inactive_filter);
+
+	if(demux[demux_id].max_emm_filter > 0
+			&& ll_count(ll_emm_inactive_filter) > 0
+			&& filter_count > demux[demux_id].max_emm_filter)
+	{
+
+		int32_t filter_queue = ll_count(ll_emm_inactive_filter);
+		int32_t stopped = 0, started = 0;
+		struct timeb now;
+		cs_ftime(&now);
+
+		struct s_emm_filter *filter_item;
+		LL_ITER itr;
+		itr = ll_iter_create(ll_emm_active_filter);
+
+		while((filter_item = ll_iter_next(&itr)) != NULL)
+		{
+			if(!ll_count(ll_emm_inactive_filter) || started == filter_queue)
+				{ break; }
+			int64_t gone = comp_timeb(&now, &filter_item->time_started); 
+			if( gone > 45*1000)
+			{
+				struct s_dvbapi_priority *forceentry = dvbapi_check_prio_match_emmpid(filter_item->demux_id, filter_item->caid,
+													   filter_item->provid, 'p');
+
+				if(!forceentry || (forceentry && !forceentry->force))
+				{
+					// stop active filter and add to pending list
+					dvbapi_stop_filternum(filter_item->demux_id, filter_item->num - 1);
+					ll_iter_remove_data(&itr);
+					add_emmfilter_to_list(filter_item->demux_id, filter_item->filter, filter_item->caid,
+										  filter_item->provid, filter_item->pid, -1, false);
+					stopped++;
+				}
+			}
+
+			int32_t ret;
+			if(stopped > started) // we have room for new filters, try to start an inactive emmfilter!
+			{
+				struct s_emm_filter *filter_item2;
+				LL_ITER itr2 = ll_iter_create(ll_emm_inactive_filter);
+
+				while((filter_item2 = ll_iter_next(&itr2)))
+				{
+					ret = dvbapi_set_filter(filter_item2->demux_id, selected_api, filter_item2->pid, filter_item2->caid,
+											filter_item2->provid, filter_item2->filter, filter_item2->filter + 16, 0,
+											demux[filter_item2->demux_id].pidindex, TYPE_EMM, 1);
+					if(ret != -1)
+					{
+						ll_iter_remove_data(&itr2);
+						started++;
+						break;
+					}
+				}
+			}
+		}
+
+		itr = ll_iter_create(ll_emm_pending_filter);
+
+		while((filter_item = ll_iter_next(&itr)) != NULL) // move pending filters to inactive
+		{
+			add_emmfilter_to_list(filter_item->demux_id, filter_item->filter, filter_item->caid, filter_item->provid, filter_item->pid, 0, false);
+			ll_iter_remove_data(&itr);
+		}
+	}
 }
 
 uint16_t dvbapi_get_client_proto_version(void)
