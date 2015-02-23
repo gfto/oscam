@@ -519,10 +519,8 @@ void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid)
 		dest[0] = 0x00;
 		dest[1] = 0x00;
 		memcpy(dest + 2, source, 4);
-		return;
 	}
-	caid = caid >> 8;
-	if(caid == 0x17 || caid == 0x06)    // Betacrypt or Irdeto
+	else if(caid_is_irdeto(caid) || caid_is_betacrypt(caid))
 	{
 		// only 4 Bytes Hexserial for newcamd clients (Hex Base + Hex Serial)
 		// first 2 Byte always 00
@@ -535,7 +533,7 @@ void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid)
 		dest[4] = source[1];
 		dest[5] = source[2];
 	}
-	else if(caid == 0x05 || caid == 0x0D)
+	else if(caid >> 8 == 0x05 || caid >> 8 == 0x0D)
 	{
 		dest[0] = 0x00;
 		memcpy(dest + 1, source, 5);
@@ -553,17 +551,15 @@ void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid)
 		memcpy(dest, source + 2, 4);
 		dest[4] = 0x00;
 		dest[5] = 0x00;
-		return;
 	}
-	caid = caid >> 8;
-	if(caid == 0x17 || caid == 0x06)    // Betacrypt or Irdeto
+	else if(caid_is_irdeto(caid) || caid_is_betacrypt(caid))
 	{
 		memcpy(dest, source + 3, 3);
 		dest[3] = source[2];
 		dest[4] = 0;
 		dest[5] = 0;
 	}
-	else if(caid == 0x05 || caid == 0x0D)
+	else if(caid >> 8 == 0x05 || caid >> 8 == 0x0D)
 	{
 		memcpy(dest, source + 1, 5);
 		dest[5] = 0;

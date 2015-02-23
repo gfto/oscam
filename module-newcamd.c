@@ -482,8 +482,7 @@ static int32_t connect_newcamd_server(void)
 	memset(cl->reader->prid, 0x00, sizeof(cl->reader->prid));
 	for(i = 0; i < cl->reader->nprov; i++)
 	{
-		if(((cl->reader->caid >> 8) == 0x17) ||
-				((cl->reader->caid >> 8) == 0x06)) //Betacrypt or Irdeto
+		if(caid_is_betacrypt(cl->reader->caid) || caid_is_irdeto(cl->reader->caid))
 		{
 			memcpy(&cl->reader->prid[i], buf + 22 + 2 + 11 * i, 4);
 		}
@@ -939,7 +938,7 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 			mbuf[14] = pufilt->nprids;
 			for(j = 0; j < pufilt->nprids; j++)
 			{
-				if(((pufilt->caid >> 8) == 0x17) || ((pufilt->caid >> 8) == 0x06))     // Betacrypt or Irdeto
+				if(caid_is_betacrypt(pufilt->caid) || caid_is_irdeto(pufilt->caid))
 				{
 					mbuf[15 + 11 * j] = 0;
 					mbuf[16 + 11 * j] = 0;
@@ -968,7 +967,7 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 							rprid = b2i(3, &aureader->prid[k][1]);
 							if(rprid == pufilt->prids[j])
 							{
-								if(((pufilt->caid >> 8) == 0x17) || ((pufilt->caid >> 8) == 0x06))     // Betacrypt or Irdeto
+								if(caid_is_betacrypt(pufilt->caid) || caid_is_irdeto(pufilt->caid))
 								{
 									mbuf[22 + 11 * j] = aureader->prid[k][0];
 									mbuf[23 + 11 * j] = aureader->prid[k][1];
@@ -997,7 +996,7 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 				}
 				else
 				{
-					if(((pufilt->caid >> 8) == 0x17) || ((pufilt->caid >> 8) == 0x06))     // Betacrypt or Irdeto
+					if(caid_is_betacrypt(pufilt->caid) || caid_is_irdeto(pufilt->caid))
 					{
 						mbuf[22 + 11 * j] = 0x00;
 						mbuf[23 + 11 * j] = (uchar)(pufilt->prids[j] >> 16);

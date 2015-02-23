@@ -278,7 +278,7 @@ static int32_t irdeto_card_init_provider(struct s_reader *reader)
 
 			// maps the provider id for Betacrypt from FFFFFF to 000000,
 			// fixes problems with cascading CCcam and OSCam
-			if((reader->caid >= 0x1700) && (reader->caid <= 0x1799))
+			if(caid_is_betacrypt(reader->caid))
 				{ memset(&reader->prid[i][0], 0, 4); }
 			else
 				{ memcpy(&reader->prid[i][0], cta_res + acspadd, 4); }
@@ -789,7 +789,7 @@ static int32_t irdeto_get_emm_filter(struct s_reader *rdr, struct s_csystem_emm_
 		idx++;
 
 		// Shared on Hex Serial only for Betacrypt
-		if((rdr->caid >> 8) == 0x17)
+		if(caid_is_betacrypt(rdr->caid))
 		{
 			filters[idx].type = EMM_SHARED;
 			filters[idx].enabled   = 1;

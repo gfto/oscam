@@ -1078,7 +1078,7 @@ void dvbapi_add_ecmpid_int(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uin
 		{ demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].streams |= (1 << stream); }
 
 	cs_log("Demuxer %d added new ecmpid %d CAID: %04X ECM_PID: %04X PROVID: %06X", demux_id, demux[demux_id].ECMpidcount, caid, ecmpid, provid);
-	if(caid >> 8 == 0x06) { demux[demux_id].emmstart.time = 1; }  // marker to fetch emms early irdeto needs them!
+	if(caid_is_irdeto(caid)) { demux[demux_id].emmstart.time = 1; }  // marker to fetch emms early irdeto needs them!
 
 	demux[demux_id].ECMpidcount++;
 }
@@ -1406,7 +1406,7 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 	{
 		int8_t match = matching_reader(er, rdr); // check for matching reader
 		int64_t gone = comp_timeb(&now, &rdr->emm_last);
-		if(gone > 3600*1000 && rdr->needsemmfirst && er->caid >> 8 == 0x06)
+		if(gone > 3600*1000 && rdr->needsemmfirst && caid_is_irdeto(er->caid))
 		{
 			cs_log("Warning reader %s received no emms for the last %d seconds -> skip, this reader needs emms first!", rdr->label,
 				   (int)(gone/1000));
@@ -1461,7 +1461,7 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 		if(match)   // if matching reader found check for irdeto cas if local irdeto card check if it received emms in last 60 minutes
 		{
 
-			if(er->caid >> 8 == 0x06)   // irdeto cas init irdeto_curindex to wait for first index (00)
+			if(caid_is_irdeto(er->caid))   // irdeto cas init irdeto_curindex to wait for first index (00)
 			{
 				if(demux[demux_id].ECMpids[pid].irdeto_curindex == 0xFE) { demux[demux_id].ECMpids[pid].irdeto_curindex = 0x00; }
 			}
@@ -2328,7 +2328,7 @@ void dvbapi_try_next_caid(int32_t demux_id, int8_t checked)
 				openxcas_set_ecm_pid(demux[demux_id].ECMpids[found].ECM_PID);
 
 				// fixup for cas that need emm first!
-				if((demux[demux_id].ECMpids[found].CAID >> 8) == 0x06) { demux[demux_id].emmstart.time = 0; }
+				if(caid_is_irdeto(demux[demux_id].ECMpids[found].CAID)) { demux[demux_id].emmstart.time = 0; }
 				started = dvbapi_start_descrambling(demux_id, found, checked);
 				if(cfg.dvbapi_requestmode == 0 && started == 1) { return; }  // in requestmode 0 we only start 1 ecm request at the time
 			}
@@ -3126,10 +3126,10 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 				return;
 			}
 
-			if(curpid->table == buffer[0] && curpid->CAID >> 8 != 0x06)  // wait for odd / even ecm change (only not for irdeto!)
+			if(curpid->table == buffer[0] && !caid_is_irdeto(curpid->CAID))  // wait for odd / even ecm change (only not for irdeto!)
 				{ return; }
 
-			if(curpid->CAID >> 8 == 0x06)  //irdeto cas
+			if(caid_is_irdeto(curpid->CAID))
 			{
 				// 80 70 39 53 04 05 00 88
 				// 81 70 41 41 01 06 00 13 00 06 80 38 1F 52 93 D2
@@ -3169,7 +3169,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 			return;
 		}
 
-		if(curpid->CAID >> 8 == 0x06)  //irdeto cas
+		if(caid_is_irdeto(curpid->CAID))
 		{
 
 			if(curpid->irdeto_curindex != buffer[4])   // old style wrong irdeto index
@@ -3204,7 +3204,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		// check for matching chid (unique ecm part in case of non-irdeto cas) + added fix for seca2 monthly changing fakechid 
 		if((curpid->CHID < 0x10000) && !((chid == curpid->CHID) || ((curpid->CAID >> 8 == 0x01) && (chid&0xF0FF) == (curpid->CHID&0xF0FF)) ) )  
 		{
-			if(curpid->CAID >> 8 == 0x06)
+			if(caid_is_irdeto(curpid->CAID))
 			{
 
 				if((curpid->irdeto_cycle < 0xFE) && curpid->irdeto_cycle == buffer[4])   // if same: we cycled all indexes but no luck!
@@ -3279,7 +3279,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		if(!curpid->PROVID)
 			{ curpid->PROVID = chk_provid(buffer, curpid->CAID); }
 
-		if((curpid->CAID >> 8) == 0x06)   // irdeto: wait for the correct index
+		if(caid_is_irdeto(curpid->CAID))   // irdeto: wait for the correct index
 		{
 			if(buffer[4] != curpid->irdeto_curindex)
 			{
@@ -3308,7 +3308,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 					curpid->irdeto_curindex = 0;
 				}
 				curpid->table = 0;
-				if((curpid->CAID >> 8) == 0x06)   // irdeto: wait for the correct index
+				if(caid_is_irdeto(curpid->CAID))   // irdeto: wait for the correct index
 				{
 					dvbapi_set_section_filter(demux_id, er); // set ecm filter to odd + even since this chid has to be ignored!
 				}
@@ -4296,7 +4296,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 			if(forceentry && forceentry->force)   // forced pid? keep trying the forced ecmpid!
 			{
-				if((er->caid >> 8) != 0x06 || forceentry->chid < 0x10000)   //all cas or irdeto cas with forced prio chid
+				if(!caid_is_irdeto(er->caid) || forceentry->chid < 0x10000)   //all cas or irdeto cas with forced prio chid
 				{
 					demux[i].ECMpids[j].table = 0;
 					dvbapi_set_section_filter(i, er);
@@ -4331,7 +4331,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				demux[i].ECMpids[j].tries = 0xFE; // reset timeout retry
 			}
 
-			if((er->caid >> 8) == 0x06)
+			if(caid_is_irdeto(er->caid))
 			{
 				if(demux[i].ECMpids[j].irdeto_curindex == 0xFE) { demux[i].ECMpids[j].irdeto_curindex = 0x00; }  // init irdeto current index to first one
 				if(!(demux[i].ECMpids[j].irdeto_curindex + 1 > demux[i].ECMpids[j].irdeto_maxindex))  // check for last / max chid
@@ -4373,7 +4373,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 						found = 1;
 					}
 				}
-				if(er->caid >> 8 == 0x06)   // in case irdeto cas stop old emm filters
+				if(caid_is_irdeto(er->caid))   // in case irdeto cas stop old emm filters
 				{
 					filternum = dvbapi_get_filternum(i, er, TYPE_EMM); // get emm filternumber
 					if(filternum > -1)   // in case valid filter found
@@ -4589,7 +4589,7 @@ int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er)
 	}
 
 	int32_t irdetomatch = 1; // check if wanted irdeto index is the one the delivers current chid!
-	if(curpid->CAID >> 8 == 0x06)
+	if(caid_is_irdeto(curpid->CAID))
 	{
 		if(curpid->irdeto_curindex == er->ecm[4]) { irdetomatch = 1; }  // ok apply chid filtering
 		else { irdetomatch = 0; } // skip chid filtering but apply irdeto index filtering
@@ -4604,7 +4604,7 @@ int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er)
 	}
 	else
 	{
-		if(curpid->CAID >> 8 == 0x06 && (curpid->irdeto_curindex < 0xFE))  // on irdeto we can always apply irdeto index filtering!
+		if(caid_is_irdeto(curpid->CAID) && (curpid->irdeto_curindex < 0xFE))  // on irdeto we can always apply irdeto index filtering!
 		{
 			filter[2] = curpid->irdeto_curindex;
 			mask[2] = 0xFF;

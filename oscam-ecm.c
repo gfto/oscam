@@ -2202,7 +2202,7 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 	// ignore ecm ...
 	int32_t offset = 3;
 	// ... and betacrypt header for cache md5 calculation
-	if((er->caid >> 8) == 0x17)
+	if(caid_is_betacrypt(er->caid))
 		{ offset = 13; }
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
 	// store ECM in cache
