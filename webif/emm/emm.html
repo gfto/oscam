@@ -9,17 +9,17 @@
 			<TR><TH COLSPAN="2">Selected reader: ##READER##</TH></TR>
 			<TR><TD>CAID:</TD><TD><input name="emmcaid" class="short" type="text" maxlength="4" value="##CAID##" ##READONLY##></TD></TR>
 			<TR><TD>Single EMM to write:</TD><TD><textarea name="ep" id="singleemm" rows="6" maxlength="1024"></textarea></TD></TR>
-			<TR><TD>File path with EMMs:</TD><TD><input name="emmfile" type="text" maxlength="256"></TD></TR>
+			<TR><TD>File path with EMM's:</TD><TD><input name="emmfile" type="text" maxlength="256"></TD></TR>
 			<TR><TD COLSPAN="2" CLASS="centered"><input name="action" type="submit" value="Launch" onclick="return confirm('Write EMM really to Reader ##READER## ?')" title="Write EMM to Reader ##READER##" ##BTNDISABLED##></TD></TR>
 			<TR CLASS="configfirstrow"><TD></TD><TD></TD></TR>
 		</TABLE>
 		<DIV CLASS="extract">
-			<P class="emmhead">Saved EMMs for Reader: ##READER##</P>
-			<P>UniqueEMM&nbsp;&nbsp;&nbsp;&nbsp;<span class="emminfo">##RDREMMUNIQUE_TXT##</span></P>
+			<P class="emmhead">Saved EMM's for Reader: ##READER##</P>
+			<P>Unique EMM&nbsp;&nbsp;&nbsp;&nbsp;<span class="emminfo">##RDREMMUNIQUE_TXT##</span></P>
 			<PRE ##RDREMMUNIQUE_TITLE##>##RDREMMUNIQUE##</PRE>
-			<P>SharedEMM&nbsp;&nbsp;&nbsp;&nbsp;<span class="emminfo">##RDREMMSHARED_TXT##</span></P>
+			<P>Shared EMM&nbsp;&nbsp;&nbsp;&nbsp;<span class="emminfo">##RDREMMSHARED_TXT##</span></P>
 			<PRE ##RDREMMSHARED_TITLE##>##RDREMMSHARED##</PRE>
-			<P>GlobalEMM&nbsp;&nbsp;&nbsp;&nbsp;<span class="emminfo">##RDREMMGLOBAL_TXT##</span></P>
+			<P>Global EMM&nbsp;&nbsp;&nbsp;&nbsp;<span class="emminfo">##RDREMMGLOBAL_TXT##</span></P>
 			<PRE ##RDREMMGLOBAL_TITLE##>##RDREMMGLOBAL##</PRE>
 		</DIV>
 	</form>

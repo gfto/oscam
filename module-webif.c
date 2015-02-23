@@ -6235,7 +6235,7 @@ static char *send_oscam_EMM_running(struct templatevars * vars, struct uriparams
 		{
 			if(proxy && !rdr->ph.c_send_emm)
 			{
-				tpl_addMsg(vars, "The reader does not support EMMs!");
+				tpl_addMsg(vars, "The reader does not support EMM's!");
 				return tpl_getTpl(vars, "EMM_RUNNING");
 			}
 
@@ -6337,7 +6337,7 @@ static char *send_oscam_EMM(struct templatevars * vars, struct uriparams * param
 			if(emm_max_size[i]>=0)
 			{
 				snprintf(emm_title, sizeof(emm_title), "%s_TITLE", emm_names[i]);
-				tpl_addVar(vars, TPLADD, emm_title, "title=\"Klick Line to Copy EMM in Single EMM Write Field\"");
+				tpl_addVar(vars, TPLADD, emm_title, "title=\"Click Line to Copy EMM in Single EMM Write Field\"");
 			}
 
 			if(emm_max_size[i]>0)
@@ -6371,7 +6371,7 @@ static char *send_oscam_EMM(struct templatevars * vars, struct uriparams * param
 				}
 				tpl_addVar(vars, TPLADD, "EMM_TMP", ""); 
 
-				tpl_printf(vars, TPLAPPEND, emm_txt, ": %'d different EMMs from a total off %'d Entrys", emmrs,emms);
+				tpl_printf(vars, TPLAPPEND, emm_txt, ": %'d different EMM's from a total off %'d Entrys", emmrs,emms);
 				for(emm_d=emmrs;emm_d>0;--emm_d) 
 				{
 					snprintf(tmpstr, sizeof(tmpstr), "LINE_%d", emm_d);
@@ -6412,7 +6412,7 @@ static char *send_oscam_EMM(struct templatevars * vars, struct uriparams * param
 			}
 			fclose(fp);
 		}
-		if(strcmp(tpl_getVar(vars, emm_names[i]),"")==0) { tpl_addVar(vars, TPLADD, emm_names[i],"no saved EMMs"); }
+		if(strcmp(tpl_getVar(vars, emm_names[i]),"")==0) { tpl_addVar(vars, TPLADD, emm_names[i],"no saved EMM's"); }
 	}
 
 	return tpl_getTpl(vars, "ASKEMM");
