@@ -179,7 +179,7 @@ void gbox_add_card(uint16_t id_peer, uint32_t caprovid, uint8_t slot, uint8_t le
         uint32_t provid = gbox_get_provid(caprovid);
 
         //don't insert 0100:000000
-        if((caid >> 8 == 0x01) && (!provid))
+        if(caid_is_seca(caid) && (!provid))
                 { return; }
         //skip CAID 18XX providers
         if((caid >> 8 == 0x18) && (provid))

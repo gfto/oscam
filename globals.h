@@ -2049,6 +2049,7 @@ const char *boxtype_get(void);
 const char *boxname_get(void);
 static inline bool caid_is_fake(uint16_t caid) { return caid == 0xffff; }
 static inline bool caid_is_biss(uint16_t caid) { return caid >> 8 == 0x26; }
+static inline bool caid_is_seca(uint16_t caid) { return caid >> 8 == 0x01; }
 static inline bool caid_is_irdeto(uint16_t caid) { return caid >> 8 == 0x06; }
 static inline bool caid_is_videoguard(uint16_t caid) { return caid >> 8 == 0x09; }
 static inline bool caid_is_betacrypt(uint16_t caid) { return caid >> 8 == 0x17; }

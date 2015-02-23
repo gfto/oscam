@@ -3687,7 +3687,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 #ifdef MODULE_CCCSHARE
 static char *get_cardsystem_desc_by_caid(uint16_t caid)
 {
-	if(caid >= 0x0100 && caid <= 0x01FF) { return "seca"; }
+	if(caid_is_seca(caid)) { return "seca"; }
 	if(caid >= 0x0500 && caid <= 0x05FF) { return "viaccess"; }
 	if(caid_is_irdeto(caid)) { return "irdeto"; }
 	if(caid_is_videoguard(caid)) { return "videoguard"; }
