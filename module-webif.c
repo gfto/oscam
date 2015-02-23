@@ -3690,7 +3690,7 @@ static char *get_cardsystem_desc_by_caid(uint16_t caid)
 	if(caid >= 0x0100 && caid <= 0x01FF) { return "seca"; }
 	if(caid >= 0x0500 && caid <= 0x05FF) { return "viaccess"; }
 	if(caid_is_irdeto(caid)) { return "irdeto"; }
-	if(caid >= 0x0900 && caid <= 0x09FF) { return "videoguard"; }
+	if(caid_is_videoguard(caid)) { return "videoguard"; }
 	if(caid >= 0x0B00 && caid <= 0x0BFF) { return "conax"; }
 	if(caid >= 0x0D00 && caid <= 0x0DFF) { return "cryptoworks"; }
 	if(caid_is_betacrypt(caid)) { return "betacrypt"; }
