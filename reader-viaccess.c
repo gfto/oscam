@@ -1829,10 +1829,13 @@ static int32_t viaccess_reassemble_emm(struct s_reader *rdr, struct s_client *cl
 	// Viaccess
 	if(*len > 500) { return 0; }
 
-	if (!client->via_rass && !cs_malloc(&client->via_rass, sizeof(*client->via_rass)))
+	if(!client->via_rass)
 	{
-		cs_log("[viaccess] ERROR: Can't allocate EMM reassembly buffer.");
-		return 0;
+		if(!cs_malloc(&client->via_rass, sizeof(*client->via_rass)))
+		{
+			cs_log("[viaccess] ERROR: Can't allocate EMM reassembly buffer.");
+			return 0;
+		}
 	}
 	struct emm_rass *r_emm = client->via_rass;
 
@@ -1900,6 +1903,7 @@ static int32_t viaccess_reassemble_emm(struct s_reader *rdr, struct s_client *cl
 		rdr_log_dump_dbg(rdr, D_EMM, buffer, pos, "%s: assembled emm", __func__);
 
 		*len = pos;
+		NULLFREE(client->via_rass); // free reassembly 8c/8d
 		break;
 	}
 	return 1;
