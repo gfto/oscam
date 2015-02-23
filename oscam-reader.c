@@ -533,7 +533,7 @@ void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid)
 		dest[4] = source[1];
 		dest[5] = source[2];
 	}
-	else if(caid >> 8 == 0x05 || caid >> 8 == 0x0D)
+	else if(caid >> 8 == 0x05 || caid_is_cryptoworks(caid))
 	{
 		dest[0] = 0x00;
 		memcpy(dest + 1, source, 5);
@@ -559,7 +559,7 @@ void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid)
 		dest[4] = 0;
 		dest[5] = 0;
 	}
-	else if(caid >> 8 == 0x05 || caid >> 8 == 0x0D)
+	else if(caid >> 8 == 0x05 || caid_is_cryptoworks(caid))
 	{
 		memcpy(dest, source + 1, 5);
 		dest[5] = 0;

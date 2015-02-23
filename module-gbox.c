@@ -1049,8 +1049,7 @@ static void gbox_local_cards(struct s_client *cli)
 		{
 			slot = gbox_next_free_slot(local_gbox.id);
 			//SECA, Viaccess and Cryptoworks have multiple providers
-			if(caid_is_seca(cl->reader->caid) || (cl->reader->caid >> 8 == 0x05) ||
-					(cl->reader->caid >> 8 == 0x0D))
+			if(caid_is_seca(cl->reader->caid) || (cl->reader->caid >> 8 == 0x05) || caid_is_cryptoworks(cl->reader->caid))
 			{
 				for(i = 0; i < cl->reader->nprov; i++)
 				{
@@ -1095,8 +1094,7 @@ static void gbox_local_cards(struct s_client *cli)
 				min_reshare++; //strange CCCam logic. 0 means direct peers
 				if (cli->reader->gbox_cccam_reshare < min_reshare)
 					{ min_reshare = cli->reader->gbox_cccam_reshare; }
-				if(caid_is_seca(card->caid) || (card->caid >> 8 == 0x05) ||
-						(card->caid >> 8 == 0x0D))
+				if(caid_is_seca(card->caid) || (card->caid >> 8 == 0x05) || caid_is_cryptoworks(card->caid))
 				{
 					it2 = ll_iter_create(card->providers);
 					while((provider = ll_iter_next(&it2)))
