@@ -1000,7 +1000,7 @@ void stat_get_best_reader(ECM_REQUEST *er)
 
 
 	//auto-betatunnel: The trick is: "let the loadbalancer decide"!
-	if(cfg.lb_auto_betatunnel && er->caid >> 8 == 0x18 && er->ecmlen)    //nagra
+	if(cfg.lb_auto_betatunnel && caid_is_nagra(er->caid) && er->ecmlen)    //nagra
 	{
 		uint16_t caid_to = __lb_get_betatunnel_caid_to(er->caid);
 		if(caid_to)

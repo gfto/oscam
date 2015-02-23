@@ -3694,7 +3694,7 @@ static char *get_cardsystem_desc_by_caid(uint16_t caid)
 	if(caid >= 0x0B00 && caid <= 0x0BFF) { return "conax"; }
 	if(caid >= 0x0D00 && caid <= 0x0DFF) { return "cryptoworks"; }
 	if(caid_is_betacrypt(caid)) { return "betacrypt"; }
-	if(caid >= 0x1800 && caid <= 0x18FF) { return "nagra"; }
+	if(caid_is_nagra(caid)) { return "nagra"; }
 	if(caid >= 0x4B00 && caid <= 0x4BFF) { return "tongfang"; }
 	if(caid >= 0x5501 && caid <= 0x551A) { return "griffin"; }
 	if(caid == 0x4AE0 || caid == 0x4AE1) { return "drecrypt"; }

@@ -1290,8 +1290,8 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 			//accept beta card when beta-tunnel is on
 			lb_match = chk_only && cfg.lb_mode && cfg.lb_auto_betatunnel &&
 				(
-					(cur_er->caid >> 8 == 0x18 && caid_is_betacrypt(ncard->caid) && cfg.lb_auto_betatunnel_mode <= 3) ||
-					(caid_is_betacrypt(cur_er->caid) && ncard->caid >> 8 == 0x18 && cfg.lb_auto_betatunnel_mode >= 1)
+					(caid_is_nagra(cur_er->caid) && caid_is_betacrypt(ncard->caid) && cfg.lb_auto_betatunnel_mode <= 3) ||
+					(caid_is_betacrypt(cur_er->caid) && caid_is_nagra(ncard->caid) && cfg.lb_auto_betatunnel_mode >= 1)
 				);
 		}
 
@@ -1334,7 +1334,7 @@ struct cc_card *get_matching_card(struct s_client *cl, ECM_REQUEST *cur_er, int8
 			}
 
 
-			if(!(rdr->cc_want_emu) && (ncard->caid >> 8 == 0x18) && (!xcard || ncard->hop < xcard->hop))
+			if(!(rdr->cc_want_emu) && caid_is_nagra(ncard->caid) && (!xcard || ncard->hop < xcard->hop))
 				{ xcard = ncard; } //remember card (D+ / 1810 fix) if request has no provider, but card has
 
 			rating = ncard->rating - ncard->hop * HOP_RATING;

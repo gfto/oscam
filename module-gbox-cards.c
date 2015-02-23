@@ -182,7 +182,7 @@ void gbox_add_card(uint16_t id_peer, uint32_t caprovid, uint8_t slot, uint8_t le
         if(caid_is_seca(caid) && (!provid))
                 { return; }
         //skip CAID 18XX providers
-        if((caid >> 8 == 0x18) && (provid))
+        if(caid_is_nagra(caid) && (provid))
                 { return; }
 
         if (!closer_path_known(caprovid, id_peer, slot, distance) && !got_from_backup(caprovid, id_peer, slot, origin_peer))
