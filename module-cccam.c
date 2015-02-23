@@ -1121,7 +1121,7 @@ void cc_UA_oscam2cccam(uint8_t *in, uint8_t *out, uint16_t caid)
 	//  //Place here your own adjustments!
 	//}
 
-	if (caid == 0x5581 || caid == 0x4aee) { // Bulcrypt fix
+	if (caid_is_bulcrypt(caid)) {
            out[4] = in[0];
            out[5] = in[1];
            out[6] = in[2];
@@ -1154,7 +1154,7 @@ void cc_UA_cccam2oscam(uint8_t *in, uint8_t *out, uint16_t caid)
 	//  //Place here your own adjustments!
 	//}
 
-	if (caid == 0x5581 || caid == 0x4aee) { // Bulcrypt fix
+	if (caid_is_bulcrypt(caid)) {
 		out[0] = in[4];
 		out[1] = in[5];
 		out[2] = in[6];

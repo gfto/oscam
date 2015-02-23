@@ -4582,7 +4582,7 @@ int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er)
 			offset = 11;
 			break; // videoguard
 		case 0x4A:  // DRE-Crypt, Bulcrypt,Tongang and others?
-			if(!(er->caid == 0x4AEE))  // Bulcrypt excluded for now
+			if(!caid_is_bulcrypt(er->caid))
 				{ offset = 6; }
 			break;
 		}

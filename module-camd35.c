@@ -342,9 +342,7 @@ static void camd35_request_emm(ECM_REQUEST *er)
 
 	uint16_t au_caid = aureader->caid;
 
-	// Bulcrypt has 2 caids and aureader->caid can't be used.
-    // Use ECM_REQUEST caid for AU.
-	if(!au_caid && (er->caid == 0x5581 || er->caid == 0x4aee))
+	if(!au_caid && caid_is_bulcrypt(er->caid)) // Bulcrypt has 2 caids and aureader->caid can't be used. Use ECM_REQUEST caid for AU.
 		{ au_caid = er->caid; }
 
 	time(&now);

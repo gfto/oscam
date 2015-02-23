@@ -1795,7 +1795,7 @@ uint32_t get_subid(ECM_REQUEST *er)
 		id = b2i(2, er->ecm + 11);
 		break; // videoguard
 	case 0x4A: // DRE-Crypt, Bulcrypt, Tongfang and others?
-		if(!(er->caid == 0x4AEE))  // Bulcrypt excluded for now
+		if(!caid_is_bulcrypt(er->caid))
 			{ id = b2i(2, er->ecm + 6); }
 		break;
 	}

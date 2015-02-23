@@ -3698,7 +3698,7 @@ static char *get_cardsystem_desc_by_caid(uint16_t caid)
 	if(caid >= 0x4B00 && caid <= 0x4BFF) { return "tongfang"; }
 	if(caid >= 0x5501 && caid <= 0x551A) { return "griffin"; }
 	if(caid == 0x4AE0 || caid == 0x4AE1) { return "drecrypt"; }
-	if(caid == 0x5581 || caid == 0x4AEE) { return "bulcrypt"; }
+	if(caid_is_bulcrypt(caid)) { return "bulcrypt"; }
 	if(caid_is_biss(caid)) { return "biss"; }
 	if(caid == 0x4ABF) { return "dgcrypt"; }
 	return "???";
