@@ -4942,31 +4942,29 @@ void check_add_emmpid(int32_t demux_index, uchar *filter, int32_t l, int32_t emm
 		return;
 	}
 
-	if(demux[demux_index].emm_filter >= demux[demux_index].max_emm_filter) // can this filter be started? if not add to list of inactive emmfilters
+	if(demux[demux_index].emm_filter < demux[demux_index].max_emm_filter) // can this filter be started?
 	{
-		add_emmfilter_to_list(demux_index, filter, demux[demux_index].EMMpids[l].CAID, demux[demux_index].EMMpids[l].PROVID, demux[demux_index].EMMpids[l].PID, 0, false);
-	}
-	else // activate this emmfilter
-	{
+		// try to activate this emmfilter
 		ret = dvbapi_set_filter(demux_index, selected_api, demux[demux_index].EMMpids[l].PID, demux[demux_index].EMMpids[l].CAID,
 			demux[demux_index].EMMpids[l].PROVID, filter, filter + 16, 0, demux[demux_index].pidindex, TYPE_EMM, 1);
-		if(ret != -1)
+	}
+	
+	if(ret != -1) // -1 if maxfilter reached or filter start error!
+	{
+		if(demux[demux_index].emm_filter == -1) // -1: first run of emm filtering on this demuxer
 		{
-			if(demux[demux_index].emm_filter == -1) // first run -1
-			{
-				demux[demux_index].emm_filter = 0;
-			}
-			demux[demux_index].emm_filter++; // increase total active filters
-			cs_log_dump_dbg(D_DVBAPI, filter, 32, "Demuxer %d started emm filter type %s, pid: 0x%04X", demux_index, typtext[typtext_idx], demux[demux_index].EMMpids[l].PID);
-			return;
+			demux[demux_index].emm_filter = 0;
 		}
-		else   // not set successful, so add it to the list for try again later on!
-		{
-			add_emmfilter_to_list(demux_index, filter, demux[demux_index].EMMpids[l].CAID, demux[demux_index].EMMpids[l].PROVID, demux[demux_index].EMMpids[l].PID, 0, false);
-			cs_log_dump_dbg(D_DVBAPI, filter, 32, "Demuxer %d added inactive emm filter type %s, pid: 0x%04X", demux_index, typtext[typtext_idx], demux[demux_index].EMMpids[l].PID);
-		}
+		demux[demux_index].emm_filter++; // increase total active filters
+		cs_log_dump_dbg(D_DVBAPI, filter, 32, "Demuxer %d started emm filter type %s, pid: 0x%04X", demux_index, typtext[typtext_idx], demux[demux_index].EMMpids[l].PID);
 		return;
 	}
+	else   // not set successful, so add it to the list for try again later on!
+	{
+		add_emmfilter_to_list(demux_index, filter, demux[demux_index].EMMpids[l].CAID, demux[demux_index].EMMpids[l].PROVID, demux[demux_index].EMMpids[l].PID, 0, false);
+		cs_log_dump_dbg(D_DVBAPI, filter, 32, "Demuxer %d added inactive emm filter type %s, pid: 0x%04X", demux_index, typtext[typtext_idx], demux[demux_index].EMMpids[l].PID);
+	}
+	return;
 }
 
 uint16_t dvbapi_get_client_proto_version(void)
