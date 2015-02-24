@@ -36,6 +36,22 @@
 
 static int is_samygo;
 
+void flush_read_fd(int32_t demux_index, int32_t num, int fd)
+{
+	cs_log("Demuxer %d flushing stale input data of filter %d (fd:%d)", demux_index, num + 1, fd);
+	fd_set rd;
+	struct timeval t;
+	char buff[100];
+	t.tv_sec=0;
+	t.tv_usec=0;
+	FD_ZERO(&rd);
+	FD_SET(fd,&rd);
+	while(select(fd+1,&rd,NULL,NULL,&t))
+	{
+		read(fd,buff,100);
+	}
+}
+
 static int dvbapi_ioctl(int fd, uint32_t request, ...)
 { 
 	int ret = 0;
@@ -684,7 +700,7 @@ static int32_t dvbapi_read_device(int32_t dmx_fd, unsigned char *buf, int32_t le
 			cs_log("fd %d no valid data present since receiver reported an internal bufferoverflow!", dmx_fd);
 			return 0;
 		}
-		else
+		else if(errno != EBADF && errno !=EINVAL) // dont throw errors on invalid fd or invalid argument
 		{
 			cs_log("ERROR: Read error on fd %d (errno=%d %s)", dmx_fd, errno, strerror(errno));
 		}
@@ -842,9 +858,13 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 #ifndef WITH_COOLAPI // no fd close for coolapi and stapi, all others do close fd!
 		if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
 		{
-			retfd = close(fd);
-			if(errno == 9) { retfd = 0; }  // no error on bad file descriptor
 			if(selected_api == STAPI) { retfd = 0; }  // stapi closes its own filter fd!
+			else
+			{
+				flush_read_fd(demux_index, num, fd); // flush filter input buffer in attempt to avoid overflow receivers internal buffer
+				retfd = close(fd);
+				if(errno == 9) { retfd = 0; }  // no error on bad file descriptor
+			}
 		}
 		else
 			retfd = 0;
@@ -858,10 +878,14 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 		if(demux[demux_index].demux_fd[num].type == TYPE_ECM)   //ecm filter stopped: reset index!
 		{
 			int32_t idx = demux[demux_index].ECMpids[demux[demux_index].demux_fd[num].pidindex].index;
-			demux[demux_index].ECMpids[demux[demux_index].demux_fd[num].pidindex].index = 0;
-			int32_t i;
-			for(i = 0; i < demux[demux_index].STREAMpidcount && idx; i++){
-				dvbapi_set_pid(demux_index, i, idx - 1, false); // disable all streampids for this index!
+			if(idx) // if in use
+			{
+				demux[demux_index].ECMpids[demux[demux_index].demux_fd[num].pidindex].index = 0;
+				int32_t i;
+				for(i = 0; i < demux[demux_index].STREAMpidcount && idx; i++)
+				{
+					dvbapi_set_pid(demux_index, i, idx - 1, false); // disable all streampids for this index!
+				}
 			}
 		}
 
@@ -3541,7 +3565,7 @@ static void *dvbapi_main_local(void *cli)
 					cs_ftime(&demux[i].emmstart); // trick to let emm fetching start after 30 seconds to speed up zapping
 					dvbapi_start_filter(i, demux[i].pidindex, 0x001, 0x001, 0x01, 0x01, 0xFF, 0, TYPE_EMM); //CAT
 				}
-				//continue; // proceed with next demuxer
+				break; // filters changed -> start from scratch!
 			}
 
 			//early start for irdeto since they need emm before ecm (pmt emmstart = 1 if detected caid 0x06)
@@ -3552,6 +3576,7 @@ static void *dvbapi_main_local(void *cli)
 				{
 					demux[i].emmstart = now;
 					dvbapi_start_emm_filter(i); // start emmfiltering if emmpids are found
+					break; // filters changed -> start from scratch!
 				}
 				else
 				{
@@ -3561,9 +3586,9 @@ static void *dvbapi_main_local(void *cli)
 						demux[i].emmstart = now;
 						dvbapi_start_emm_filter(i); // start emmfiltering delayed if filters already were running
 						rotate_emmfilter(i); // rotate active emmfilters
+						break; // filters changed -> start from scratch!
 					}
 				}
-				//if(emmstarted != demux[i].emm_filter && !emmcounter) { continue; }  // proceed with next demuxer if no emms where running before
 			}
 
 			if(ecmcounter == 0 && demux[i].ECMpidcount > 0)   // Restart decoding all caids we have ecmpids but no ecm filters!
@@ -3953,21 +3978,19 @@ static void *dvbapi_main_local(void *cli)
 				{
 					int32_t demux_index = ids[i];
 					int32_t n = fdn[i];
-
-					if((len = dvbapi_read_device(pfd2[i].fd, mbuf, sizeof(mbuf))) <= 0) // always read to empty receiver databuffer
+					
+					if((int)demux[demux_index].demux_fd[n].fd != pfd2[i].fd) { continue; } // filter already killed, no need to process this data!
+					
+					len = dvbapi_read_device(pfd2[i].fd, mbuf, sizeof(mbuf));
+					if(len < 0) // serious filterdata read error
 					{
-						if((int)demux[demux_index].demux_fd[n].fd != pfd2[i].fd) { continue; } // but if filter already killed no need to process the data!
-						
-						if(len < 0) // serious filterdata read error
-						{
-							dvbapi_stop_filternum(demux_index, n); // stop filter since its giving errors and wont return anything good.
-							maxfilter--; // lower maxfilters to avoid this with new filter setups!
-							continue;
-						}
-						if(!len) // receiver internal filterbuffer overflow
-						{
-							memset(mbuf, 0, sizeof(mbuf));
-						}
+						dvbapi_stop_filternum(demux_index, n); // stop filter since its giving errors and wont return anything good.
+						maxfilter--; // lower maxfilters to avoid this with new filter setups!
+						continue;
+					}
+					if(!len) // receiver internal filterbuffer overflow
+					{
+						memset(mbuf, 0, sizeof(mbuf));
 					}
 
 					dvbapi_process_input(demux_index, n, mbuf, len);
