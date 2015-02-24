@@ -38,17 +38,20 @@ static int is_samygo;
 
 void flush_read_fd(int32_t demux_index, int32_t num, int fd)
 {
-	cs_log_dbg(D_DVBAPI,"Demuxer %d flushing stale input data of filter %d (fd:%d)", demux_index, num + 1, fd);
-	fd_set rd;
-	struct timeval t;
-	char buff[100];
-	t.tv_sec=0;
-	t.tv_usec=0;
-	FD_ZERO(&rd);
-	FD_SET(fd,&rd);
-	while(select(fd+1,&rd,NULL,NULL,&t))
+	if(!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
 	{
-		read(fd,buff,100);
+		cs_log_dbg(D_DVBAPI,"Demuxer %d flushing stale input data of filter %d (fd:%d)", demux_index, num + 1, fd);
+		fd_set rd;
+		struct timeval t;
+		char buff[100];
+		t.tv_sec=0;
+		t.tv_usec=0;
+		FD_ZERO(&rd);
+		FD_SET(fd,&rd);
+		while(select(fd+1,&rd,NULL,NULL,&t))
+		{
+			read(fd,buff,100);
+		}
 	}
 }
 
@@ -3357,7 +3360,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		return; // end of ecm filterhandling!
 	}
 
-	if(demux[demux_id].demux_fd[filter_num].type == TYPE_EMM)
+	if(demux[demux_id].demux_fd[filter_num].type == TYPE_EMM && len != 0)  // len = 0 receiver encountered an internal bufferoverflow!
 	{
 		if(demux[demux_id].demux_fd[filter_num].pid == 0x01) // CAT
 		{
