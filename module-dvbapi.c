@@ -3565,7 +3565,6 @@ static void *dvbapi_main_local(void *cli)
 					cs_ftime(&demux[i].emmstart); // trick to let emm fetching start after 30 seconds to speed up zapping
 					dvbapi_start_filter(i, demux[i].pidindex, 0x001, 0x001, 0x01, 0x01, 0xFF, 0, TYPE_EMM); //CAT
 				}
-				break; // filters changed -> start from scratch!
 			}
 
 			//early start for irdeto since they need emm before ecm (pmt emmstart = 1 if detected caid 0x06)
@@ -3576,7 +3575,6 @@ static void *dvbapi_main_local(void *cli)
 				{
 					demux[i].emmstart = now;
 					dvbapi_start_emm_filter(i); // start emmfiltering if emmpids are found
-					break; // filters changed -> start from scratch!
 				}
 				else
 				{
@@ -3586,7 +3584,6 @@ static void *dvbapi_main_local(void *cli)
 						demux[i].emmstart = now;
 						dvbapi_start_emm_filter(i); // start emmfiltering delayed if filters already were running
 						rotate_emmfilter(i); // rotate active emmfilters
-						break; // filters changed -> start from scratch!
 					}
 				}
 			}
