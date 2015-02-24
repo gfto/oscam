@@ -38,7 +38,7 @@ static int is_samygo;
 
 void flush_read_fd(int32_t demux_index, int32_t num, int fd)
 {
-	cs_log("Demuxer %d flushing stale input data of filter %d (fd:%d)", demux_index, num + 1, fd);
+	cs_log_dbg(D_DVBAPI,"Demuxer %d flushing stale input data of filter %d (fd:%d)", demux_index, num + 1, fd);
 	fd_set rd;
 	struct timeval t;
 	char buff[100];
