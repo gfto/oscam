@@ -161,9 +161,8 @@ void load_emmstat_from_file(void)
 			
 			while((rdr = ll_iter_next(&itr)))
 			{
-				if(rdr->cachemm !=1)
+				if(rdr->cachemm !=1) //skip: emmcache save is disabled
 				{
-					cs_log("reader %s skipped since emmcache save is disabled", rdr->label);
 					continue;
 				}
 				if(strcmp(rdr->label, buf) == 0)
