@@ -48,11 +48,9 @@ void flush_read_fd(int32_t demux_index, int32_t num, int fd)
 		t.tv_usec=0;
 		FD_ZERO(&rd);
 		FD_SET(fd,&rd);
-		int8_t n = 0;
-		while(select(fd+1,&rd,NULL,NULL,&t))
+		while(select(fd+1,&rd,NULL,NULL,&t) > 0)
 		{
-			n = read(fd,buff,100);
-			cs_log_dbg(D_DVBAPI, "flushed %d", n);
+			(void) read(fd,buff,100);
 		}
 	}
 }
