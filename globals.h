@@ -984,6 +984,7 @@ struct s_zap_list
 struct emm_rass
 {
 	int16_t         emmlen;
+	int32_t			provid;
 	uint8_t         emm[512];
 };
 
@@ -1015,7 +1016,7 @@ struct s_client
 	int8_t          dup;
 	LLIST           *aureader_list;
 	int8_t          autoau;
-	struct emm_rass *via_rass;         // EMM reassembly buffer for viaccess
+	LLIST           *ra_buf;         // EMM reassembly buffer for viaccess
 	struct emm_rass *cw_rass;          // EMM reassembly buffer for cryptoworks
 	int8_t          monlvl;
 	CAIDTAB         ctab;

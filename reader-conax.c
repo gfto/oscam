@@ -501,7 +501,7 @@ static int32_t conax_card_info(struct s_reader *reader)
 								rdr_log(reader, "%s: %d, id: %04X%s, date: %s - %s, name: %s", txt[type], ++n, provid, chid, pdate, pdate + 16, trim(provname));
 
 								// add entitlements to list
-								cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), provid, cxclass, start_t, end_t, type + 1);
+								cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), provid, cxclass, start_t, end_t, type + 1, 1);
 
 								k = 0;
 								chid[0] = '\0';
@@ -520,7 +520,7 @@ static int32_t conax_card_info(struct s_reader *reader)
 					rdr_log(reader, "%s: %d, id: %04X%s, date: %s - %s, name: %s", txt[type], ++n, provid, chid, pdate, pdate + 16, trim(provname));
 
 					// add entitlements to list
-					cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), provid, cxclass, start_t, end_t, type + 1);
+					cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), provid, cxclass, start_t, end_t, type + 1, 1);
 				}
 			}
 		}

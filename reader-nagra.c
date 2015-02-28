@@ -630,7 +630,8 @@ static int32_t ParseDataType(struct s_reader *reader, unsigned char dt, unsigned
 							   0,
 							   tier_date(b2i(2, cta_res + 20) - 0x7f7, ds, 15),
 							   tier_date(b2i(2, cta_res + 13) - 0x7f7, de, 15),
-							   4);
+							   4,
+							   1);
 
 
 			// tier_date(b2i(2, cta_res+20)-0x7f7, ds, 15);
@@ -993,7 +994,7 @@ static int32_t nagra2_card_info(struct s_reader *reader)
 							rdr_log(reader, "Activation     : ( %04X ) from %s to %s  (%3d euro) %s",
 									records[i].value, records[i].date1, records[i].date2, euro, get_tiername(records[i].value, reader->caid, tiername));
 						}
-						cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), records[i].value, 0, tiger_date2time(records[i].date1), tiger_date2time(records[i].date2)+ 0x1517F, 4);
+						cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), records[i].value, 0, tiger_date2time(records[i].date1), tiger_date2time(records[i].date2)+ 0x1517F, 4, 1);
 					}
 					break;
 
@@ -1006,7 +1007,7 @@ static int32_t nagra2_card_info(struct s_reader *reader)
 							rdr_log(reader, "Tier : %04X, expiry date: %s %s",
 									records[i].value, records[i].date2, get_tiername(records[i].value, reader->caid, tiername));
 						}
-						cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), records[i].value, 0, tiger_date2time(records[i].date1), tiger_date2time(records[i].date2)+ 0x1517F, 4);
+						cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), records[i].value, 0, tiger_date2time(records[i].date1), tiger_date2time(records[i].date2)+ 0x1517F, 4, 1);
 					}
 					break;
 				}

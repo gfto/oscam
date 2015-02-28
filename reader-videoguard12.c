@@ -88,7 +88,7 @@ static void read_tiers(struct s_reader *reader)
 		struct tm timeinfo;
 		memset(&timeinfo, 0, sizeof(struct tm));
 		rev_date_calc_tm(&cta_res[4], &timeinfo, csystem_data->card_baseyear);
-		cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), tier_id, 0, 0, mktime(&timeinfo), 4);
+		cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), tier_id, 0, 0, mktime(&timeinfo), 4, 1);
 		char tiername[83];
 		rdr_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, get_tiername(tier_id, reader->caid, tiername));
 	}

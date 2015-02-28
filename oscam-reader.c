@@ -571,31 +571,61 @@ void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid)
 }
 
 /**
- * add one entitlement item to entitlements of reader.
+ * add or find one entitlement item to entitlements of reader
+ * use add = 0 for find only, or add > 0 to find and add if not found 
  **/
-void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, uint64_t id, uint32_t class, time_t start, time_t end, uint8_t type)
+S_ENTITLEMENT *cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, uint64_t id, uint32_t class, time_t start, time_t end, uint8_t type, uint8_t add)
 {
-	if(!rdr->ll_entitlements) { rdr->ll_entitlements = ll_create("ll_entitlements"); }
-
-	S_ENTITLEMENT *item;
-	if(cs_malloc(&item, sizeof(S_ENTITLEMENT)))
-	{
-
-		// fill item
-		item->caid = caid;
-		item->provid = provid;
-		item->id = id;
-		item->class = class;
-		item->start = start;
-		item->end = end;
-		item->type = type;
-
-		//add item
-		ll_append(rdr->ll_entitlements, item);
-
-		// cs_log_dbg(D_TRACE, "entitlement: Add caid %4X id %4X %s - %s ", item->caid, item->id, item->start, item->end);
+	if(!rdr->ll_entitlements)
+	{ 
+		rdr->ll_entitlements = ll_create("ll_entitlements"); 
 	}
 
+	S_ENTITLEMENT *item = NULL;
+	LL_ITER it;
+	
+	it = ll_iter_create(rdr->ll_entitlements);
+	while((item = ll_iter_next(&it)) != NULL)
+	{ 
+		if(
+			(caid && item->caid != caid) || 
+			(provid && item->provid != provid) || 
+			(id && item->id != id) || 
+			(class && item->class != class) ||
+			(start && item->start != start) ||
+			(end && item->end != end) ||
+			(type && item->type != type))
+		{
+			continue; // no match, try next!
+		}
+		break; // match found!
+	}
+	
+	if(add && item == NULL)
+	{
+		if(cs_malloc(&item, sizeof(S_ENTITLEMENT)))
+		{
+			// fill item
+			item->caid = caid;
+			item->provid = provid;
+			item->id = id;
+			item->class = class;
+			item->start = start;
+			item->end = end;
+			item->type = type;
+
+			//add item
+			ll_append(rdr->ll_entitlements, item);
+			// cs_log_dbg(D_TRACE, "entitlement: Add caid %4X id %4X %s - %s ", item->caid, item->id, item->start, item->end);
+		}
+		else
+		{
+			cs_log("ERROR: Can't allocate entitlement to reader!");
+			
+		}
+	}
+	
+	return item;
 }
 
 /**

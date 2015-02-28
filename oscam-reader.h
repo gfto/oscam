@@ -9,7 +9,7 @@ bool hexserialset(struct s_reader *rdr);
 void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid);
 void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid);
 
-void cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, uint64_t id, uint32_t class, time_t start, time_t end, uint8_t type);
+S_ENTITLEMENT *cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t provid, uint64_t id, uint32_t class, time_t start, time_t end, uint8_t type, uint8_t add);
 void cs_clear_entitlement(struct s_reader *rdr);
 
 int32_t hostResolve(struct s_reader *reader);

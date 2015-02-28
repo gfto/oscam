@@ -732,7 +732,7 @@ void free_client(struct s_client *cl)
 	caidtab_clear(&cl->ctab);
 
 	NULLFREE(cl->cw_rass);
-	NULLFREE(cl->via_rass);
+	ll_destroy_data(&cl->ra_buf);
 	NULLFREE(cl->aes_keys);
 
 #ifdef MODULE_CCCAM

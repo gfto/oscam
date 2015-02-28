@@ -146,7 +146,7 @@ static int32_t dre_set_provider_info(struct s_reader *reader)
 					int32_t endday = temp.tm_mday;
 					rdr_log(reader, "active package %i valid from %04i/%02i/%02i to %04i/%02i/%02i", i, startyear, startmonth, startday,
 							endyear, endmonth, endday);
-					cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), 0, 0, start, end, 1);
+					cs_add_entitlement(reader, reader->caid, b2ll(4, reader->prid[0]), 0, 0, start, end, 1, 1);
 				}
 	}
 	return OK;

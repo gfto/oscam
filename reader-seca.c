@@ -121,7 +121,7 @@ static int32_t set_provider_info(struct s_reader *reader, int32_t i)
 	}
 	else
 		// add entitlement info
-		{ cs_add_entitlement(reader, reader->caid, provid, get_pbm(reader, i), 0, 0, mktime(&lt), (i) ? 6 : 7); }
+		{ cs_add_entitlement(reader, reader->caid, provid, get_pbm(reader, i), 0, 0, mktime(&lt), (i) ? 6 : 7, 1); }
 
 	return OK;
 }

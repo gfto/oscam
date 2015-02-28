@@ -740,7 +740,8 @@ static int32_t bulcrypt_card_info(struct s_reader *reader)
 								   0, /* class */
 								   last_upd_ts, /* start_ts */
 								   subs_end_ts, /* end_ts */
-								   4 /* type: Tier */
+								   4, /* type: Tier */
+								   1  /* add */
 								  );
 				cs_add_entitlement(reader, 0x5581,
 								   0, /* provid */
@@ -748,7 +749,8 @@ static int32_t bulcrypt_card_info(struct s_reader *reader)
 								   0, /* class */
 								   last_upd_ts, /* start_ts */
 								   subs_end_ts, /* end_ts */
-								   4 /* type: Tier */
+								   4, /* type: Tier */
+								   1  /* add */
 								  );
 				get_tiername(i, 0x4aee, tmp);
 				if(tmp[0] == 0x00)

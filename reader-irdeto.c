@@ -1172,7 +1172,7 @@ static int32_t irdeto_card_info(struct s_reader *reader)
 							end_t = chid_date(reader, date + cta_res[k + 4], t + 16, 16);
 
 							// todo: add entitlements to list but produces a warning related to date variable
-							cs_add_entitlement(reader, reader->caid, b2i(3, &reader->prid[i][1]), chid, 0, start_t, end_t, 3);
+							cs_add_entitlement(reader, reader->caid, b2i(3, &reader->prid[i][1]), chid, 0, start_t, end_t, 3, 1);
 
 							if(first)
 							{

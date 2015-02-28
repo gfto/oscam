@@ -707,7 +707,7 @@ static int32_t cryptoworks_card_info(struct s_reader *reader)
 					// todo: add entitlements to list but produces a warning related to date variable
 					cs_add_entitlement(reader, reader->caid, reader->prid[i][3], b2i(2, cta_res + 6), 0,
 									   chid_date(cta_res + 28, ds, sizeof(ds) - 1),
-									   chid_date(cta_res + 30, de, sizeof(de) - 1), 3);
+									   chid_date(cta_res + 30, de, sizeof(de) - 1), 3, 1);
 
 					rdr_log(reader, "chid: %02X%02X, date: %s - %s, name: %s",
 							cta_res[6], cta_res[7], ds, de, trim((char *) cta_res + 10));
@@ -730,7 +730,7 @@ static int32_t cryptoworks_card_info(struct s_reader *reader)
 					// todo: add entitlements to list but produces a warning related to date variable
 					cs_add_entitlement(reader, reader->caid, reader->prid[i][3], b2i(2, cta_res + 6), 0,
 									   chid_date(cta_res + 28, ds, sizeof(ds) - 1),
-									   chid_date(cta_res + 30, de, sizeof(de) - 1), 3);
+									   chid_date(cta_res + 30, de, sizeof(de) - 1), 3, 1);
 
 					cta_res[27] = 0;
 					rdr_log(reader, "chid: %02X%02X, date: %s - %s, name: %s",

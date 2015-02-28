@@ -80,6 +80,31 @@ static void parse_via_date(const uchar *buf, struct via_date *vd, int32_t fend)
 //  *end_t = mktime(&tm);
 //
 //}
+struct emm_rass *find_rabuf(struct s_client *client, int32_t provid, uint8_t nano, int8_t add)
+{
+	struct emm_rass *e;
+	LL_ITER it;
+
+	if(!client->ra_buf)
+	{ 
+		client->ra_buf = ll_create("client->ra_buf");
+	}
+
+	it = ll_iter_create(client->ra_buf);
+
+	while((e = ll_iter_next(&it)) != NULL)
+	{
+		if(!add && e->provid == provid && e->emmlen != 0) { return e; }
+		if(add && e->provid == provid && e->emm[0] == nano) { return e; }
+	}
+	if(!add) return NULL;
+	
+	if(!cs_malloc(&e, sizeof(struct emm_rass)))
+		{ return NULL; }
+	e->provid = provid;
+	ll_append(client->ra_buf, e);
+	return e;
+}
 
 static void show_class(struct s_reader *reader, const char *p, uint32_t provid, const uchar *b, int32_t l)
 {
@@ -99,9 +124,11 @@ static void show_class(struct s_reader *reader, const char *p, uint32_t provid, 
 				parse_via_date(b - 4, &vd, 1);
 				cls = (l - (j + 1)) * 8 + i;
 				if(p)
+				{
 					rdr_log(reader, "%sclass: %02X, expiry date: %04d/%02d/%02d - %04d/%02d/%02d", p, cls,
 							vd.year_s + 1980, vd.month_s, vd.day_s,
 							vd.year_e + 1980, vd.month_e, vd.day_e);
+				}
 				else
 				{
 					rdr_log(reader, "class: %02X, expiry date: %04d/%02d/%02d - %04d/%02d/%02d", cls,
@@ -122,9 +149,37 @@ static void show_class(struct s_reader *reader, const char *p, uint32_t provid, 
 					tm.tm_mday = vd.day_e;
 					end_t = cs_timegm(&tm);
 
-					cs_add_entitlement(reader, reader->caid, provid, cls, cls, start_t, end_t, 5);
+					cs_add_entitlement(reader, reader->caid, provid, cls, cls, start_t, end_t, 5, 1);
 				}
 			}
+}
+
+static int8_t find_class(struct s_reader *reader, uint32_t provid, const uchar *b, int32_t l)
+{
+	int32_t i, j;
+
+	// b -> via date (4 uint8_ts)
+	b += 4;
+	l -= 4;
+
+	j = l - 1;
+	for(; j >= 0; j--)
+		for(i = 0; i < 8; i++)
+			if(b[j] & (1 << (i & 7)))
+			{
+				uchar cls;
+				cls = (l - (j + 1)) * 8 + i;
+				if(cs_add_entitlement(reader, reader->caid, provid, cls, cls, 0, 0, 5, 0) == NULL)
+				{
+					rdr_log(reader, "provid %06X class %02X not found!", provid, cls);
+					return 0; // class not found!
+				}
+				else
+				{
+					rdr_log(reader, "provid %06X has matching class %02X", provid, cls);
+				}
+			}
+	return 1; // all classes found!
 }
 
 static void show_subs(struct s_reader *reader, const uchar *emm)
@@ -1283,7 +1338,8 @@ static int32_t viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 
 	if(ep->emm[3] == 0x90 && ep->emm[4] == 0x03)
 	{
-		provid = ep->emm[5] << 16 | ep->emm[6] << 8 | (ep->emm[7] & 0xFE);
+		provid = b2i(4, ep->emm+5);
+		provid &=0xFFFFF0; 
 		i2b_buf(4, provid, ep->provid);
 	}
 
@@ -1294,7 +1350,14 @@ static int32_t viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 		memset(ep->hexserial, 0, 8);
 		memcpy(ep->hexserial, ep->emm + 4, 4);
 		rdr_log_dbg(rdr, D_EMM, "UNIQUE");
-		return (!memcmp(rdr->hexserial + 1, ep->hexserial, 4));
+		if(!is_network_reader(rdr))
+		{
+			return (!memcmp(rdr->hexserial + 1, ep->hexserial, 4)); // local reader
+		}
+		else
+		{
+			return 1; // let server decide!
+		}
 
 	case 0x8A:
 	case 0x8B:
@@ -1312,18 +1375,19 @@ static int32_t viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 
 	case 0x8E:
 		ep->type = SHARED;
+		rdr_log_dbg(rdr, D_EMM, "SHARED");
 		memset(ep->hexserial, 0, 8);
 		memcpy(ep->hexserial, ep->emm + 3, 3);
-		rdr_log_dbg(rdr, D_EMM, "SHARED");
 
-		//check for provider as serial (cccam only?)
+		// local reader
 		int8_t i;
 		for(i = 0; i < rdr->nprov; i++)
 		{
-			if(!memcmp(&rdr->prid[i][1], ep->hexserial, 3))
+			if(!memcmp(&rdr->prid[i][2], ep->hexserial+1, 2))
 				{ return 1; }
+			
+			return (!memcmp(&rdr->sa[0][0], ep->hexserial, 3));
 		}
-		return (!memcmp(&rdr->sa[0][0], ep->hexserial, 3));
 
 	default:
 		ep->type = UNKNOWN;
@@ -1339,7 +1403,7 @@ static int32_t viaccess_get_emm_filter(struct s_reader *rdr, struct s_csystem_em
 		bool network = is_network_reader(rdr);
 		int8_t device_emm = ((rdr->deviceemm >0) ? 1 : 0); // set to 1 if device specific emms should be catched too
 		
-		const unsigned int max_filter_count = 4 + ((device_emm != 0 && !network && rdr->nprov > 0) ? 1:0) + (3 * ((rdr->nprov > 0 && !network) ? (rdr->nprov - 1) : 0));
+		const unsigned int max_filter_count = 4 + ((device_emm != 0 && rdr->nprov > 0) ? 1:0) + (3 * ((rdr->nprov > 0) ? (rdr->nprov - 1) : 0));
 		
 		if(!cs_malloc(emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
 			{ return ERROR; }
@@ -1350,7 +1414,7 @@ static int32_t viaccess_get_emm_filter(struct s_reader *rdr, struct s_csystem_em
 		int32_t idx = 0;
 		int32_t prov;
 		
-		if(rdr->nprov > 0 && !network && device_emm == 1)
+		if(rdr->nprov > 0 && device_emm == 1)
 		{
 			filters[idx].type = EMM_GLOBAL;  // 8A or 8B no reassembly needed!
 			filters[idx].enabled   = 1;
@@ -1360,34 +1424,23 @@ static int32_t viaccess_get_emm_filter(struct s_reader *rdr, struct s_csystem_em
 			filters[idx].mask[3]   = 0x80;
 			idx++;
 		}
-			
-		for(prov = 0; (prov < rdr->nprov || prov == 0); prov++)
-		{
-			filters[idx].type = EMM_GLOBAL;  // 8A or 8B no reassembly needed!
-			filters[idx].enabled   = 1;
-			filters[idx].filter[0] = 0x8A;
-			filters[idx].mask[0]   = 0xFE;
-			if(rdr->nprov > 0 && !network)
+		
+		// shared are most important put them on top, define first since viaccess produces a lot of filters!	
+		for(prov = 0; (prov < rdr->nprov); prov++)
+		{	
+			if((rdr->prid[prov][2] &0xF0) == 0xF0) // skip this not useful provider
 			{
-				memcpy(&filters[idx].filter[3], &rdr->prid[prov][1], 3);
-				memset(&filters[idx].mask[3], 0xFF, 2);
-				filters[idx].mask[5]   = 0xF0; // ignore last digit since this is key on card indicator!
+				continue;
 			}
-			else if (device_emm == 0)
-			{
-				filters[idx].filter[3] = 0x00; // additional filter to cancel device specific emms 
-				filters[idx].mask[3]   = 0x80;
-			}
-			idx++;
 			
 			filters[idx].type = EMM_SHARED; // 8C or 8D always first part of shared, second part delivered by 8E!
 			filters[idx].enabled   = 1;
 			filters[idx].filter[0] = 0x8C;
 			filters[idx].mask[0]   = 0xFE;
-			if(rdr->nprov > 0 && !network)
+			if(rdr->nprov > 0)
 			{
-				memcpy(&filters[idx].filter[3], &rdr->prid[prov][1], 3);
-				memset(&filters[idx].mask[3], 0xFF, 2);
+				memcpy(&filters[idx].filter[4], &rdr->prid[prov][2], 2);
+				filters[idx].mask[4]   = 0xFF;
 				filters[idx].mask[5]   = 0xF0; // ignore last digit since this is key on card indicator!
 			}
 			idx++;
@@ -1396,25 +1449,54 @@ static int32_t viaccess_get_emm_filter(struct s_reader *rdr, struct s_csystem_em
 			filters[idx].enabled   = 1;
 			filters[idx].filter[0] = 0x8E;
 			filters[idx].mask[0]   = 0xFF;
-			if(rdr->nprov > 0 && !network)
+			if(rdr->nprov > 0)
 			{
 				memcpy(&filters[idx].filter[1], &rdr->sa[prov][0], 3);
 				memset(&filters[idx].mask[1], 0xFF, 3);
 			}
 			idx++;
-			
-			if (network) // for network readers 1 set of generic filters is sufficient so it ends here!
-			{ 
-				break;
-			}
 		}
-
+		
+		// globals are less important, define last since viaccess produces a lot of filters!
+		for(prov = 0; (prov < rdr->nprov); prov++)
+		{
+			if((rdr->prid[prov][2] &0xF0) == 0xF0) // skip this not useful provider
+			{
+				continue;
+			}
+			
+			filters[idx].type = EMM_GLOBAL;  // 8A or 8B no reassembly needed!
+			filters[idx].enabled   = 1;
+			filters[idx].filter[0] = 0x8A;
+			filters[idx].mask[0]   = 0xFE;
+			if(rdr->nprov > 0)
+			{
+				memcpy(&filters[idx].filter[4], &rdr->prid[prov][2], 2);
+				filters[idx].mask[4]   = 0xFF;
+				filters[idx].mask[5]   = 0xF0; // ignore last digit since this is key on card indicator!
+			}
+			else if (device_emm == 0)
+			{
+				filters[idx].filter[3] = 0x00; // additional filter to cancel device specific emms 
+				filters[idx].mask[3]   = 0x80;
+			}
+			idx++;
+		}
+		
 		filters[idx].type = EMM_UNIQUE;
 		filters[idx].enabled   = 1;
 		filters[idx].filter[0] = 0x88;
 		filters[idx].mask[0]   = 0xFF;
-		memcpy(&filters[idx].filter[1], rdr->hexserial + 1, 4);
-		memset(&filters[idx].mask[1], 0xFF, 4);
+		if(!network) // network has only 3 digits out of 4
+		{
+			memcpy(&filters[idx].filter[1], rdr->hexserial + 1, 4);
+			memset(&filters[idx].mask[1], 0xFF, 4);
+		}
+		else
+		{
+			memcpy(&filters[idx].filter[1], rdr->hexserial + 1, 3);
+			memset(&filters[idx].mask[1], 0xFF, 3);
+		}
 		idx++;
 
 		*filter_count = idx;
@@ -1464,7 +1546,7 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	int32_t emmUpToEnd;
 	uchar *emmParsed = ep->emm + emmdatastart;
 	int32_t provider_ok = 0;
-	uint32_t emm_provid;
+	uint32_t emm_provid = 0;
 	uchar keynr = 0;
 	int32_t ins18Len = 0;
 	uchar ins18Data[512];
@@ -1535,9 +1617,14 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 				afd = (uchar *)emmParsed + 2;
 
 				if(afd[31 - custwp / 8] & (1 << (custwp & 7)))
-					{ rdr_log_dbg(reader, D_READER, "emm for our card %08X", b2i(4, &reader->sa[0][0])); }
+				{ 
+					rdr_log_dbg(reader, D_READER, "emm for our card %08X", b2i(4, &reader->sa[0][0]));
+				}
 				else
-					{ return SKIPPED; }
+				{ 
+					rdr_log_dbg(reader, D_READER, "emm not suitable for our card %08X", b2i(4, &reader->sa[0][0]));
+					return SKIPPED; 
+				}
 			}
 
 			// memorize
@@ -1564,6 +1651,19 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		{
 			/* other nanos */
 			show_subs(reader, emmParsed);
+			if(emmParsed[0] == 0xA9 && ep->type == SHARED) // check on shared (reassembled) emm if all nanos are present on card: if not and written error 90 40 
+			{	
+				if(!emm_provid)
+				{
+					rdr_log(reader, "no provid in shared emm -> skipped!");
+					return SKIPPED;
+				}
+				if(!find_class(reader, emm_provid, emmParsed + 2, emmParsed[1]))
+				{
+					rdr_log(reader, "shared emm provid %06X class mismatch -> skipped!", emm_provid);
+					return SKIPPED;
+				}
+			}
 
 			memcpy(ins18Data + ins18Len, emmParsed, emmParsed[1] + 2);
 			ins18Len += emmParsed [1] + 2;
@@ -1825,86 +1925,113 @@ static int32_t viaccess_reassemble_emm(struct s_reader *rdr, struct s_client *cl
 	int16_t *len = &ep->emmlen;
 	int32_t pos = 0, i;
 	int16_t k;
-
+	int32_t prov, provid = 0;
+	struct emm_rass *r_emm = NULL;
+	
 	// Viaccess
-	if(*len > 500) { return 0; }
-
-	if(!client->via_rass)
-	{
-		if(!cs_malloc(&client->via_rass, sizeof(*client->via_rass)))
-		{
-			cs_log("[viaccess] ERROR: Can't allocate EMM reassembly buffer.");
-			return 0;
-		}
-	}
-	struct emm_rass *r_emm = client->via_rass;
+	if(*len > 500) { return 0; } 
 
 	switch(buffer[0])
 	{
-	case 0x8c:
-	case 0x8d:
-		// emm-s part 1
-		if(!memcmp(r_emm->emm, buffer, *len))
-			{ return 0; }
-
-		// copy first part of the emm-s
-		memcpy(r_emm->emm, buffer, *len);
-		r_emm->emmlen = *len;
-		return 0;
-
-	case 0x8e:
-		// emm-s part 2
-		if(!r_emm->emmlen) { return 0; }
-
-		//extract nanos from emm-gh and emm-s
-		uchar emmbuf[512];
-
-		rdr_log_dbg(rdr, D_EMM, "%s: start extracting nanos", __func__);
-		//extract from emm-gh
-		for(i = 3; i < r_emm->emmlen; i += r_emm->emm[i + 1] + 2)
-		{
-			//copy nano (length determined by i+1)
-			memcpy(emmbuf + pos, r_emm->emm + i, r_emm->emm[i + 1] + 2);
-			pos += r_emm->emm[i + 1] + 2;
-		}
-
-		if(buffer[2] == 0x2c)
-		{
-			//add 9E 20 nano + first 32 uint8_ts of emm content
-			memcpy(emmbuf + pos, "\x9E\x20", 2);
-			memcpy(emmbuf + pos + 2, buffer + 7, 32);
-			pos += 34;
-
-			//add F0 08 nano + 8 subsequent uint8_ts of emm content
-			memcpy(emmbuf + pos, "\xF0\x08", 2);
-			memcpy(emmbuf + pos + 2, buffer + 39, 8);
-			pos += 10;
-		}
-		else
-		{
-			//extract from variable emm-s
-			for(k = 7; k < (*len); k += buffer[k + 1] + 2)
+		case 0x8c:
+		case 0x8d:
+			// emm-s part 1
+			provid = b2i(3, ep->emm+5); // extract provid from emm
+			provid &= 0xFFFFF0; // last digit is dont care
+			r_emm = find_rabuf(client, provid, (uint8_t) buffer[0], 1); 
+			if(!r_emm)
 			{
-				//copy nano (length determined by k+1)
-				memcpy(emmbuf + pos, buffer + k, buffer[k + 1] + 2);
-				pos += buffer[k + 1] + 2;
+				cs_log("[viaccess] ERROR: Can't allocate EMM reassembly buffer.");
+				return 0;
 			}
-		}
+			if(!memcmp(&r_emm->emm, &buffer[0], *len)) // skip same shared emm, this make sure emmlen isnt replaced. emmlen = 0 means this shared emm has been used for reassembly
+			{
+				return 0;
+			}
+			memcpy(&r_emm->emm[0], &buffer[0], *len); // put the fresh new shared emm
+			r_emm->emmlen = *len; // put the emmlen indicating that this shared emm isnt being reassembled
+			rdr_log_dump_dbg(rdr, D_EMM, r_emm->emm, r_emm->emmlen, "%s: received fresh emm-gh for provid %06X", __func__, provid);
+			return 0;
+		
+		case 0x8e:
+			// emm-s part 2
+			for(prov = 0; prov < rdr->nprov ; prov++)
+			{
+				if(!memcmp(&buffer[3], &rdr->sa[prov][0], 3))
+				{
+					//matching sa found!
+					if(is_network_reader(rdr))
+					{
+						provid = b2i(4, ep->provid); // use provid from emm since we have nothing better!
+						provid &= 0xFFFFF0; // last digit is dont care
+					}
+					else
+					{
+						provid = b2i(4, rdr->prid[prov]); // get corresponding provid from reader since there is no provid in emm payload!
+						provid &= 0xFFFFF0; // last digit is dont care
+					}
+					r_emm = find_rabuf(client, provid, 0, 0); // nano = dont care, the shared 8c or 8d not been written gets returned!
+					if(!r_emm || !r_emm->emmlen) 
+					{ 
+						continue; // match but no emm-gh found for this provider 
+					}
+					else
+					{
+						break; // stop searching-> emm-gh found!
+					}
+				}
+			}
+			if(!r_emm || !r_emm->emmlen) { return 0; } // stop -> no emm-gh found!
+			
+			//extract nanos from emm-gh and emm-s
+			uchar emmbuf[512];
 
-		rdr_log_dump_dbg(rdr, D_EMM, buffer, *len, "%s: %s emm-s", __func__, (buffer[2] == 0x2c) ? "fixed" : "variable");
+			rdr_log_dbg(rdr, D_EMM, "%s: start extracting nanos", __func__);
+			//extract from emm-gh
+			for(i = 3; i < r_emm->emmlen; i += r_emm->emm[i + 1] + 2)
+			{
+				//copy nano (length determined by i+1)
+				memcpy(emmbuf + pos, r_emm->emm + i, r_emm->emm[i + 1] + 2);
+				pos += r_emm->emm[i + 1] + 2;
+			}
 
-		emm_sort_nanos(buffer + 7, emmbuf, pos);
-		pos += 7;
+			if(buffer[2] == 0x2c)
+			{
+				//add 9E 20 nano + first 32 uint8_ts of emm content
+				memcpy(emmbuf + pos, "\x9E\x20", 2);
+				memcpy(emmbuf + pos + 2, buffer + 7, 32);
+				pos += 34;
 
-		//calculate emm length and set it on position 2
-		buffer[2] = pos - 3;
+				//add F0 08 nano + 8 subsequent uint8_ts of emm content
+				memcpy(emmbuf + pos, "\xF0\x08", 2);
+				memcpy(emmbuf + pos + 2, buffer + 39, 8);
+				pos += 10;
+			}
+			else
+			{
+				//extract from variable emm-s
+				for(k = 7; k < (*len); k += buffer[k + 1] + 2)
+				{
+					//copy nano (length determined by k+1)
+					memcpy(emmbuf + pos, buffer + k, buffer[k + 1] + 2);
+					pos += buffer[k + 1] + 2;
+				}
+			}
 
-		rdr_log_dump_dbg(rdr, D_EMM, r_emm->emm, r_emm->emmlen, "%s: emm-gh", __func__);
-		rdr_log_dump_dbg(rdr, D_EMM, buffer, pos, "%s: assembled emm", __func__);
+			rdr_log_dump_dbg(rdr, D_EMM, buffer, *len, "%s: %s emm-s", __func__, (buffer[2] == 0x2c) ? "fixed" : "variable");
 
-		*len = pos;
-		NULLFREE(client->via_rass); // free reassembly 8c/8d
-		break;
+			emm_sort_nanos(buffer + 7, emmbuf, pos);
+			pos += 7;
+
+			//calculate emm length and set it on position 2
+			buffer[2] = pos - 3;
+
+			rdr_log_dump_dbg(rdr, D_EMM, r_emm->emm, r_emm->emmlen, "%s: emm-gh provid %06X", __func__, provid);
+			rdr_log_dump_dbg(rdr, D_EMM, buffer, pos, "%s: assembled emm", __func__);
+
+			*len = pos;
+			r_emm->emmlen = 0; // mark this shared 8c or 8d as being used for reassembly and send to reader!
+			break;
 	}
 	return 1;
 }
