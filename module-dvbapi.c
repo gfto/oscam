@@ -1292,7 +1292,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 	default:
 		for(i = 0; i < MAX_DEMUX; i++)
 		{
-			if(demux[demux_id].ca_mask & (1 << i))
+			if(((demux[demux_id].ca_mask & (1 << i)) == (uint) (1 << i)))
 			{	
 				int8_t action = 0;
 				if(enable){
@@ -1306,7 +1306,9 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 					ca_pid_t ca_pid2;
 					memset(&ca_pid2, 0, sizeof(ca_pid2));
 					ca_pid2.pid = demux[demux_id].STREAMpids[num];
+					#if defined(__powerpc__)
 					if(action == REMOVED_STREAMPID_LASTINDEX) idx = -1; // removed last index of streampid -> disable pid with -1
+					#endif
 					ca_pid2.index = idx;
 
 					cs_log_dbg(D_DVBAPI, "Demuxer %d %s stream %d pid=0x%04x index=%d on ca%d", demux_id,
@@ -4732,7 +4734,7 @@ int32_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid)
 
 	for(n = 0; n < demux[demux_index].STREAMpidcount; n++)
 	{
-		if(!demux[demux_index].ECMpids[pid].streams || demux[demux_index].ECMpids[pid].streams & (1 << n)){
+		if(!demux[demux_index].ECMpids[pid].streams || ((demux[demux_index].ECMpids[pid].streams & (1 << n)) == (uint) (1 << n))){
 			dvbapi_set_pid(demux_index, n, idx - 1, true); // enable streampid
 		}
 		else{
@@ -4755,7 +4757,7 @@ int8_t update_streampid_list(uint8_t cadevice, uint16_t pid, int32_t idx)
 		while((listitem = ll_iter_next(&itr)))
 		{
 			if (cadevice == listitem->cadevice && pid == listitem->streampid){
-				if(listitem->activeindexers & (1 << idx)){
+				if((listitem->activeindexers & (1 << idx)) == (uint) (1 << idx)){
 					return FOUND_STREAMPID_INDEX; // match found
 				}else{
 					listitem->activeindexers|=(1 << idx); // ca + pid found but not this index -> add this index
@@ -4780,6 +4782,7 @@ int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, int32_t idx)
 	if(!ll_activestreampids) return NO_STREAMPID_LISTED;
 	
 	struct s_streampid *listitem;
+	int8_t removed = 0;
 	
 	LL_ITER itr;
 	if(ll_count(ll_activestreampids) > 0)
@@ -4787,20 +4790,32 @@ int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, int32_t idx)
 		itr = ll_iter_create(ll_activestreampids);
 		while((listitem = ll_iter_next(&itr)))
 		{
-			if (cadevice == listitem->cadevice && pid == listitem->streampid){
-				if(idx != -1 && listitem->activeindexers & (1 << idx)){
-					listitem->activeindexers &= ~(1 << idx); // flag it as disabled for this index
-				}
+			if (cadevice == listitem->cadevice && pid == listitem->streampid)
+			{
 				if(idx == -1){ // idx -1 means disable all!
 					listitem->activeindexers = 0;
+					removed = 1;
 				}
-				cs_log_dbg(D_DVBAPI, "Remove streampid %04X using indexer %d from ca%d", pid, idx, cadevice);
-				if (listitem->activeindexers == 0){ // all indexers disabled? -> remove pid from list!
+				else if((listitem->activeindexers & (1 << idx)) == (uint) (1 << idx))
+				{
+					listitem->activeindexers &= ~(1 << idx); // flag it as disabled for this index
+					removed = 1;
+				}
+				
+				if(removed)
+				{
+					cs_log_dbg(D_DVBAPI, "Remove streampid %04X using indexer %d from ca%d", pid, idx, cadevice);
+				}
+				if (listitem->activeindexers == 0 && removed == 1) // all indexers disabled? -> remove pid from list!
+				{ 
 					ll_iter_remove_data(&itr);
 					cs_log_dbg(D_DVBAPI, "Removed last indexer of streampid %04X from ca%d", pid, cadevice);
 					return REMOVED_STREAMPID_LASTINDEX;
 				}
-				return REMOVED_STREAMPID_INDEX;
+				else if(removed == 1)
+				{
+					return REMOVED_STREAMPID_INDEX;
+				}
 			}
 		}
 	}
@@ -4820,14 +4835,14 @@ void disable_unused_streampids(int16_t demux_id)
 	struct s_streampid *listitem;
 	// search for old enabled streampids on all ca devices that have to be disabled, index 0 is skipped as it belongs to fta!
 	for(i = 0; i < MAX_DEMUX && idx; i++){
-		if(!(demux[demux_id].ca_mask & (1 << i))) continue; // continue if ca is unused by this demuxer
+		if(!((demux[demux_id].ca_mask & (1 << i)) == (uint) (1 << i))) continue; // continue if ca is unused by this demuxer
 		
 		LL_ITER itr;
 		itr = ll_iter_create(ll_activestreampids);
 		while((listitem = ll_iter_next(&itr)))
 		{
 			if (i != listitem->cadevice) continue; // ca doesnt match
-			if (!(listitem->activeindexers & (1 << (idx-1)))) continue; // index doesnt match
+			if (!((listitem->activeindexers & (1 << (idx-1))) == (uint) (1 << (idx-1)))) continue; // index doesnt match
 			for(n = 0; n < demux[demux_id].STREAMpidcount; n++){
 				if (listitem->streampid == demux[demux_id].STREAMpids[n]){ // check if pid matches with current streampid on demuxer
 					break;

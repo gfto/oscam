@@ -122,7 +122,7 @@ typedef struct demux_s
 {
 	int8_t demux_index;
 	FILTERTYPE demux_fd[MAX_FILTER];
-	int32_t ca_mask;
+	uint32_t ca_mask;
 	int8_t adapter_index;
 	int32_t socket_fd;
 	int8_t ECMpidcount;
