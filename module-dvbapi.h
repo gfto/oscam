@@ -282,7 +282,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable);
 int8_t update_streampid_list(uint8_t cadevice, uint16_t pid, int32_t idx);
 int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, int32_t idx);
 void disable_unused_streampids(int16_t demux_id);
-int8_t is_ca_used(uint8_t cadevice);
+int8_t is_ca_used(uint8_t cadevice, int32_t pid);
 const char *dvbapi_get_client_name(void);
 void rotate_emmfilter(int32_t demux_id);
 uint16_t dvbapi_get_client_proto_version(void);

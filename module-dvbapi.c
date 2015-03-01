@@ -1306,9 +1306,10 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 					ca_pid_t ca_pid2;
 					memset(&ca_pid2, 0, sizeof(ca_pid2));
 					ca_pid2.pid = demux[demux_id].STREAMpids[num];
-					#if defined(__powerpc__)
-					if(action == REMOVED_STREAMPID_LASTINDEX) idx = -1; // removed last index of streampid -> disable pid with -1
-					#endif
+					
+					// removed last of this streampid on ca? -> disable this pid with -1 on this ca
+					if(action == REMOVED_STREAMPID_LASTINDEX && is_ca_used(i, ca_pid2.pid) == CA_IS_CLEAR) idx = -1; 
+					
 					ca_pid2.index = idx;
 
 					cs_log_dbg(D_DVBAPI, "Demuxer %d %s stream %d pid=0x%04x index=%d on ca%d", demux_id,
@@ -1328,7 +1329,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 						{
 							if(dvbapi_ioctl(currentfd, CA_SET_PID, &ca_pid2) == -1)
 								cs_log_dbg(D_TRACE | D_DVBAPI,"CA_SET_PID ioctl error (errno=%d %s)", errno, strerror(errno));
-							int8_t result = is_ca_used(i);
+							int8_t result = is_ca_used(i,0); // check if in use by any pid
 							if(!enable && result == CA_IS_CLEAR){
 								cs_log_dbg(D_DVBAPI, "Demuxer %d close now unused CA%d device", demux_id, i);
 								int32_t ret = close(currentfd);
@@ -4858,7 +4859,7 @@ void disable_unused_streampids(int16_t demux_id)
 }
 
 
-int8_t is_ca_used(uint8_t cadevice)
+int8_t is_ca_used(uint8_t cadevice, int32_t pid)
 {
 	if(!ll_activestreampids) return CA_IS_CLEAR;
 	
@@ -4870,7 +4871,8 @@ int8_t is_ca_used(uint8_t cadevice)
 		itr = ll_iter_create(ll_activestreampids);
 		while((listitem = ll_iter_next(&itr)))
 		{
-			if (listitem->cadevice != cadevice) continue;
+			if(listitem->cadevice != cadevice) continue;
+			if(pid && listitem->streampid != pid) continue;
 			return CA_IS_IN_USE;
 		}
 	}
