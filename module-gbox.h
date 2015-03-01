@@ -102,7 +102,6 @@ struct gbox_card
 {
     struct gbox_card_id id;
     uint32_t caprovid;
-    uint8_t slot;
     uint8_t dist;
     uint8_t lvl;
     uint8_t type;
@@ -127,7 +126,6 @@ struct gbox_peer
     struct gbox_data gbox;
     uchar *hostname;
     int8_t online;
-    int8_t hello_stat;
     uint8_t next_hello;
     uchar ecm_idx;
     CS_MUTEX_LOCK lock;
@@ -141,16 +139,14 @@ struct gbox_ecm_request_ext
 //    uint32_t        gbox_crc;       // rcrc for gbox, used to identify ECM
 //    uint16_t        gbox_ecm_id;
 //    uint8_t         gbox_ecm_ok;
-    uint8_t         gbox_hops;
-    uint16_t        gbox_peer;
-    uint16_t        gbox_mypeer;
-    uint16_t        gbox_caid;      //could be calculated 0x05 and 0x0D are
-    uint16_t        gbox_prid;      //same as gbox_caid
-    uint8_t         gbox_slot;
-    uint8_t         gbox_version;
-    uint8_t         gbox_unknown;   //byte between version and cpu info of
-    uint8_t         gbox_type;
-    uchar           gbox_routing_info[GBOX_MAXHOPS];  //support max 10 hops
+    uint8_t	gbox_hops;
+    uint16_t	gbox_peer;
+    uint16_t	gbox_mypeer;
+    uint8_t	gbox_slot;
+    uint8_t	gbox_version;
+    uint8_t	gbox_unknown;   //byte between version and cpu info of
+    uint8_t	gbox_type;
+    uchar	gbox_routing_info[GBOX_MAXHOPS];  //support max 10 hops
 };
 
 char *get_gbox_tmp_fname(char *fext);
@@ -159,7 +155,7 @@ uint32_t gbox_get_local_gbox_password(void);
 void gbox_send(struct s_client *cli, uchar *buf, int32_t l);
 int8_t gbox_message_header(uchar *buf, uint16_t cmd, uint32_t peer_password, uint32_t local_password);
 void gbox_free_cards_pending(ECM_REQUEST *er);
-void gbox_send_hello_packet(struct s_client *cli, int8_t number, uchar *outbuf, uchar *ptr, int32_t nbcards);
+void gbox_send_hello_packet(struct s_client *proxy, int8_t number, uchar *outbuf, uchar *ptr, int32_t nbcards, uint8_t hello_stat);
 #else
 static inline void gbox_free_cards_pending(ECM_REQUEST *UNUSED(er)) { }
 #endif

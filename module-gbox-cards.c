@@ -276,6 +276,25 @@ void gbox_delete_cards_from_peer(uint16_t peer_id)
         return;
 }
 
+void gbox_delete_cards_with_id(uint16_t peer_id)
+{
+        struct gbox_card *card;
+
+        cs_writelock(&gbox_cards_lock);
+        LL_ITER it = ll_iter_create(gbox_cards);
+        while((card = ll_iter_next(&it)))
+        {
+                if (card->id.peer == peer_id)
+                {
+                        ll_iter_remove(&it);
+                        ll_append(gbox_backup_cards, card);
+                }
+        }
+        cs_writeunlock(&gbox_cards_lock);
+
+        return;
+}
+
 void gbox_delete_cards_from_type(uint8_t type)
 {
         struct gbox_card *card;
@@ -317,9 +336,13 @@ void gbox_free_cardlist(void)
         return;
 }
 
-void gbox_send_hello(struct s_client *cli)
+void gbox_send_hello(struct s_client *proxy, uint8_t hello_stat)
 {
-        struct gbox_peer *peer = cli->gbox;
+        if (!proxy)
+        {
+                cs_log("Invalid call to gbox_send_hello with proxy");
+                return;
+        }
 
         uint16_t nbcards = 0;
         uint8_t packet;
@@ -327,8 +350,14 @@ void gbox_send_hello(struct s_client *cli)
 
         packet = 0;
         uchar *ptr = buf + 11;
-        if(ll_count(gbox_cards) != 0 && peer->hello_stat > GBOX_STAT_HELLOL)
+        if(ll_count(gbox_cards) != 0 && hello_stat > GBOX_STAT_HELLOL)
         {
+                struct gbox_peer *peer = proxy->gbox;
+                if (!peer || !peer->my_user || !peer->my_user->account)
+                {
+                        cs_log("Invalid call to gbox_send_hello with peer"); 
+                        return;
+                }
                 memset(buf, 0, sizeof(buf));
 
                 cs_readlock(&gbox_cards_lock);
@@ -354,8 +383,8 @@ void gbox_send_hello(struct s_client *cli)
                                 nbcards++;
                                 if(nbcards == 100)    //check if 100 is good or we need more sophisticated algorithm
                                 {
-                                        //NEEDFIX: Try toget rid of send hello in cards function
-                                        gbox_send_hello_packet(cli, packet, buf, ptr, nbcards);
+                                        //NEEDFIX: Try to get rid of send hello in cards function
+                                        gbox_send_hello_packet(proxy, packet, buf, ptr, nbcards, hello_stat);
                                         packet++;
                                         nbcards = 0;
                                         ptr = buf + 11;
@@ -365,9 +394,8 @@ void gbox_send_hello(struct s_client *cli)
                 }
                 cs_readunlock(&gbox_cards_lock);
         } // end if local card exists
-        
         //last packet has bit 0x80 set
-        gbox_send_hello_packet(cli, 0x80 | packet, buf, ptr, nbcards);
+        gbox_send_hello_packet(proxy, 0x80 | packet, buf, ptr, nbcards, hello_stat);
 
         return;
 }                
