@@ -890,6 +890,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 				int32_t i;
 				for(i = 0; i < demux[demux_index].STREAMpidcount; i++)
 				{
+					int8_t match = 0;
 					// check streams of old disabled ecmpid
 					if(!demux[demux_index].ECMpids[oldpid].streams || ((demux[demux_index].ECMpids[oldpid].streams & (1 << i)) == (uint) (1 << i)))
 					{
@@ -898,9 +899,36 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 						{
 							continue; // found same stream on old and new ecmpid -> skip! (and leave it enabled!)
 						}
-						dvbapi_set_pid(demux_index, i, idx - 1, false); // disable streampid since its not used by this pid (or by the new ecmpid!)
+						
+						int32_t j, k, otherdemuxpid, otherdemuxidx;
+						
+						for(j = 0; j < MAX_DEMUX; j++) // check other demuxers for same streampid with same index
+						{
+							if(demux[j].program_number == 0) { continue; }  			// skip empty demuxers
+							if(demux_index == j) { continue; } 							// skip same demuxer
+							
+							otherdemuxpid = demux[j].pidindex;
+							if(otherdemuxpid == -1) { continue; }          				// Other demuxer not descrambling yet
+
+							otherdemuxidx = demux[j].ECMpids[otherdemuxpid].index;
+							if(!otherdemuxidx || otherdemuxidx != idx) { continue; } 	// Other demuxer has no index yet, or index is different
+							
+							for(k = 0; k < demux[j].STREAMpidcount; k++)
+							{
+								if(!demux[j].ECMpids[otherdemuxpid].streams || ((demux[j].ECMpids[otherdemuxpid].streams & (1 << i)) == (uint) (1 << i)))
+								{
+									continue; // found same stream enabled with same index on one or more other demuxers -> skip! (and leave it enabled!)
+								}
+								match = 1; // matching stream found
+							}
+						}
+						
+						if(!match)
+						{
+							dvbapi_set_pid(demux_index, i, idx - 1, false); // disable streampid since its not used by this pid (or by the new ecmpid or any other demuxer!) 
+						}
 					}
-				}  
+				}
 			}
 		}
 
@@ -1267,18 +1295,18 @@ int32_t dvbapi_get_descindex(int32_t demux_index)
 	while(fail)
 	{
 		fail = 0;
-		for(i = 0; i < MAX_DEMUX; i++)
+		for(i = 0; i < MAX_DEMUX && !fail; i++)
 		{
-			for(j = 0; j < demux[i].ECMpidcount; j++)
+			for(j = 0; j < demux[i].ECMpidcount && !fail; j++)
 			{
 				if(demux[i].ECMpids[j].index == idx)
 				{
-					idx++;
 					fail = 1;
-					break;
+					idx++;
 				}
 			}
 		}
+		cs_sleepms(1);
 	}
 	pthread_mutex_unlock(&lockindex); // and release it!
 	return idx;
