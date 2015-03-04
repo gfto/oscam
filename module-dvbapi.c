@@ -881,15 +881,26 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 
 		if(demux[demux_index].demux_fd[num].type == TYPE_ECM)   //ecm filter stopped: reset index!
 		{
-			int32_t idx = demux[demux_index].ECMpids[demux[demux_index].demux_fd[num].pidindex].index;
+			int32_t oldpid = demux[demux_index].demux_fd[num].pidindex;
+			int32_t curpid = demux[demux_index].pidindex;
+			int32_t idx = demux[demux_index].ECMpids[oldpid].index;
+			demux[demux_index].ECMpids[oldpid].index = 0;
 			if(idx) // if in use
 			{
-				demux[demux_index].ECMpids[demux[demux_index].demux_fd[num].pidindex].index = 0;
 				int32_t i;
-				for(i = 0; i < demux[demux_index].STREAMpidcount && idx; i++)
+				for(i = 0; i < demux[demux_index].STREAMpidcount; i++)
 				{
-					dvbapi_set_pid(demux_index, i, idx - 1, false); // disable all streampids for this index!
-				}
+					// check streams of old disabled ecmpid
+					if(!demux[demux_index].ECMpids[oldpid].streams || ((demux[demux_index].ECMpids[oldpid].streams & (1 << i)) == (uint) (1 << i)))
+					{
+						// check if new ecmpid is using same streams
+						if(curpid != -1 && (!demux[demux_index].ECMpids[curpid].streams || ((demux[demux_index].ECMpids[curpid].streams & (1 << i)) == (uint) (1 << i))))
+						{
+							continue; // found same stream on old and new ecmpid -> skip! (and leave it enabled!)
+						}
+						dvbapi_set_pid(demux_index, i, idx - 1, false); // disable streampid since its not used by this pid (or by the new ecmpid!)
+					}
+				}  
 			}
 		}
 
@@ -1354,19 +1365,13 @@ void dvbapi_stop_descrambling(int32_t demux_id)
 	char channame[32];
 	i = demux[demux_id].pidindex;
 	if(i < 0) { i = 0; }
-	int32_t idx = demux[demux_id].ECMpids[i].index;
+	demux[demux_id].pidindex = -1; // no ecmpid is to be descrambling since we start stop descrambling!
 	get_servicename(dvbapi_client, demux[demux_id].program_number, demux[demux_id].ECMpidcount > 0 ? demux[demux_id].ECMpids[i].CAID : 0, channame);
 	cs_log_dbg(D_DVBAPI, "Demuxer %d stop descrambling program number %04X (%s)", demux_id, demux[demux_id].program_number, channame);
 	dvbapi_stop_filter(demux_id, TYPE_EMM);
 	if(demux[demux_id].ECMpidcount > 0)
 	{
 		dvbapi_stop_filter(demux_id, TYPE_ECM);
-		demux[demux_id].pidindex = -1;
-		demux[demux_id].curindex = -1;
-		for(i = 0; i < demux[demux_id].STREAMpidcount; i++)
-		{
-			dvbapi_set_pid(demux_id, i, idx - 1, false); // disable all streampids for this index!
-		}
 	}
 
 	memset(&demux[demux_id], 0 , sizeof(DEMUXTYPE));
@@ -2502,7 +2507,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			openxcas_set_sid(program_number);
 
 			demux[i].stopdescramble = 0; // dont stop current demuxer!
-			if(demux[demux_id].ECMpidcount != 0) { running = 1; }  // fix for channel changes from fta to scrambled		
+			if(demux[demux_id].ECMpidcount != 0 && demux[demux_id].pidindex != -1 ) { running = 1; }  // running channel changes from scrambled to fta		
 			break; // no need to explore other demuxers since we have a found!
 		}
 	}
@@ -2734,6 +2739,10 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	
 	openxcas_set_sid(program_number);
 	
+#if !defined WITH_STAPI && !defined WITH_COOLAPI && !defined WITH_MCA && !defined WITH_AZBOX
+	if (running) disable_unused_streampids(demux_id); // disable all streampids not in use anymore
+#endif
+
 	if(demux[demux_id].ECMpidcount == 0) { // for FTA it ends here, but do logging and part of ecmhandler since there will be no ecms asked!
 		if(cfg.usrfileflag) { cs_statistics(dvbapi_client);} // add to user log previous channel + time on channel
 		dvbapi_client->last_srvid = demux[demux_id].program_number; // set new channel srvid
@@ -2742,9 +2751,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		return demux_id; 
 	}
 
-#if !defined WITH_STAPI && !defined WITH_COOLAPI && !defined WITH_MCA && !defined WITH_AZBOX
-	if (running) disable_unused_streampids(demux_id); // disable all streampids not in use anymore
-#endif
 	if(running == 0)   // only start demuxer if it wasnt running
 	{
 		demux[demux_id].decodingtries = -1;
@@ -4187,35 +4193,17 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			{
 
 				int32_t t, o, ecmcounter = 0;
-
+				int32_t oldpidindex = demux[i].pidindex;
+				demux[i].pidindex = j; // set current ecmpid as the new pid to descramble
 				for(t = 0; t < demux[i].ECMpidcount; t++)  //check this pid with controlword FOUND for higher status:
 				{
 					if(t != j && demux[i].ECMpids[j].status >= demux[i].ECMpids[t].status)
 					{
-#if !defined WITH_STAPI && !defined WITH_COOLAPI && !defined WITH_MCA && !defined WITH_AZBOX
-						int32_t pidindex = demux[i].pidindex;
-						if(pidindex == t) // check if lower status pid already descrambling!
+						if(oldpidindex == t) // check if lower status pid already descrambling!
 						{ 
-							int32_t idx = demux[i].ECMpids[j].index = demux[i].ECMpids[pidindex].index; // swap index with lower status pid
-							demux[i].ECMpids[pidindex].index = 0; // reset index of the old pid!
-							int32_t n;
-							for(n = 0; n < demux[i].STREAMpidcount; n++)
-							{
-								if(!demux[i].ECMpids[j].streams || demux[i].ECMpids[j].streams & (1 << n))
-								{
-									dvbapi_set_pid(i, n, idx - 1, true); // enable streampid used by new pid
-								}
-								else
-								{   
-									dvbapi_set_pid(i, n, idx - 1, false); // disable streampid not used by new pid  
-								}
-							}
-							dvbapi_edit_channel_cache(i, pidindex, 0); // remove lowerstatus pid from channelcache
-
+							demux[i].ECMpids[j].index = demux[i].ECMpids[oldpidindex].index; // swap index with lower status pid
 						}
-#endif
-						demux[i].ECMpids[t].checked = 4; // mark index t as low status
-
+						
 						for(o = 0; o < maxfilter; o++)    // check if ecmfilter is in use & stop all ecmfilters of lower status pids
 						{
 							if(demux[i].demux_fd[o].fd > 0 && demux[i].demux_fd[o].type == TYPE_ECM && demux[i].demux_fd[o].pidindex == t)
@@ -4223,6 +4211,8 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 								dvbapi_stop_filternum(i, o); // ecmfilter belongs to lower status pid -> kill!
 							}
 						}
+						dvbapi_edit_channel_cache(i, t, 0); // remove lowerstatus pid from channelcache
+						demux[i].ECMpids[t].checked = 4; // mark index t as low status
 					}
 				}
 	
@@ -4231,7 +4221,6 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 				demux[i].ECMpids[j].tries = 0xFE; // reset timeout retry flag
 				demux[i].ECMpids[j].irdeto_cycle = 0xFE; // reset irdetocycle
-				demux[i].pidindex = j; // set current index as *the* pid to descramble
 
 				if(ecmcounter == 1)   // if total found running ecmfilters is 1 -> we found the "best" pid
 				{
@@ -4722,18 +4711,6 @@ int32_t dvbapi_get_filternum(int32_t demux_index, ECM_REQUEST *er, int32_t type)
 int32_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid)
 {
 	int32_t idx = -1, n;
-	for(n = 0; n < demux[demux_index].ECMpidcount; n++)  // cleanout old indexes of pids that have now status ignore (=no decoding possible!)
-	{
-		idx = demux[demux_index].ECMpids[n].index;
-		if (!idx) continue; // skip ecmpids that are not used to decrypt 
-		if(demux[demux_index].ECMpids[n].status == -1 || demux[demux_index].ECMpids[n].checked == 0) { // reset index!
-			demux[demux_index].ECMpids[n].index = 0;
-			int32_t i;
-			for(i = 0; i < demux[demux_index].STREAMpidcount && idx; i++){
-				dvbapi_set_pid(demux_index, i, idx - 1, false); // disable all streampids for this index!
-			}
-		}
-	}
 
 	idx = demux[demux_index].ECMpids[pid].index;
 
