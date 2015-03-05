@@ -899,7 +899,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 						{
 							continue; // found same stream on old and new ecmpid -> skip! (and leave it enabled!)
 						}
-						
+						int32_t pidtobestopped = demux[demux_index].STREAMpids[i];
 						int32_t j, k, otherdemuxpid, otherdemuxidx;
 						
 						for(j = 0; j < MAX_DEMUX; j++) // check other demuxers for same streampid with same index
@@ -915,9 +915,12 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 							
 							for(k = 0; k < demux[j].STREAMpidcount; k++)
 							{
-								if(!demux[j].ECMpids[otherdemuxpid].streams || ((demux[j].ECMpids[otherdemuxpid].streams & (1 << i)) == (uint) (1 << i)))
+								if(!demux[j].ECMpids[otherdemuxpid].streams || ((demux[j].ECMpids[otherdemuxpid].streams & (1 << k)) == (uint) (1 << k)))
 								{
-									continue; // found same stream enabled with same index on one or more other demuxers -> skip! (and leave it enabled!)
+									if(demux[j].STREAMpids[k] == pidtobestopped)
+									{
+										continue; // found same streampid enabled with same index on one or more other demuxers -> skip! (and leave it enabled!)
+									}
 								}
 								match = 1; // matching stream found
 							}
