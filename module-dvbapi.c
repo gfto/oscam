@@ -35,7 +35,6 @@
 #endif
 
 static int is_samygo;
-static int dvbdriverbug;
 
 void flush_read_fd(int32_t demux_index, int32_t num, int fd)
 {
@@ -1351,7 +1350,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 					ca_pid2.pid = demux[demux_id].STREAMpids[num];
 					
 					// removed last of this streampid on ca? -> disable this pid with -1 on this ca
-					if(action == REMOVED_STREAMPID_LASTINDEX && is_ca_used(i, ca_pid2.pid) == CA_IS_CLEAR && !dvbdriverbug) idx = -1; 
+					if(action == REMOVED_STREAMPID_LASTINDEX && is_ca_used(i, ca_pid2.pid) == CA_IS_CLEAR) idx = -1; 
 					
 					ca_pid2.index = idx;
 
@@ -2629,7 +2628,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	{
 		demux[demux_id].ECMpids[j].VPID = vpid; // register found vpid on all ecmpids of this demuxer
 	}
-	cs_log("Demuxer %d found %d ECMpids and %d STREAMpids in PMT", demux_id, demux[demux_id].ECMpidcount, demux[demux_id].STREAMpidcount-1);
+	cs_log("Demuxer %d found %d ECMpids and %d STREAMpids in PMT", demux_id, demux[demux_id].ECMpidcount, demux[demux_id].STREAMpidcount);
 
 	getDemuxOptions(demux_id, buffer, &ca_mask, &demux_index, &adapter_index, &pmtpid);
 	cs_log("Demuxer %d receiver wants to demux srvid %04X on adapter %04X camask %04X index %04X pmtpid %04X", demux_id,
@@ -3460,17 +3459,6 @@ static void *dvbapi_main_local(void *cli)
 	{
 		cs_log("ERROR: Could not detect DVBAPI version.");
 		return NULL;
-	}
-	
-	// vu boxes and gigablue seem to have the same ca disable pid with index -1 bug in their drivers, perhaps they share the same dvb driver base code?!
-	if( (!strncmp(boxtype_get(), "vu", 2 )) || (!strncmp(boxtype_get(), "gb", 2 )) )
-	{ 
-		cs_log("ERROR: Your %s box contains a serious dvb driverbug for pid handling, please ask the manufacturer to fix it!", boxtype_get() );
-		dvbdriverbug = 1;
-	}
-	else
-	{
-		dvbdriverbug = 0;
 	}
 	
 	if(cfg.dvbapi_pmtmode == 1)
