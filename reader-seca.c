@@ -126,6 +126,31 @@ static int32_t set_provider_info(struct s_reader *reader, int32_t i)
 	return OK;
 }
 
+static int32_t get_maturity(struct s_reader *reader)
+{
+	// Get maturity on card
+	static const uchar ins16[] = { 0xC1, 0x16, 0x00, 0x00, 0x06 };
+	
+	def_resp;
+	
+	write_cmd(ins16, NULL);
+	if((cta_res[cta_lr - 2] == 0x90) && cta_res[cta_lr - 1] == 0x00)
+	{
+		reader->maturity=cta_res[cta_lr - 4] & 0xF ;
+	//	rdr_log(reader, "Maturity rating on the card 0x%X!", reader->maturity);
+		if (reader->maturity<0xF)
+		{
+			rdr_log(reader, "Maturity level [%X]= older than %i years", reader->maturity, reader->maturity);
+		}
+		else
+			{
+				rdr_log(reader, "Maturity level [%X]=no age limit", reader->maturity);
+			}
+	}	
+	rdr_log_dbg(reader, D_READER, "ins30_answer: %02x%02x", cta_res[0], cta_res[1]);
+	return 0;
+}
+
 static int32_t unlock_parental(struct s_reader *reader)
 {
 	// Unlock parental control
@@ -149,6 +174,7 @@ static int32_t unlock_parental(struct s_reader *reader)
 	}
 
 	write_cmd(ins30, ins30data);
+	rdr_log_dbg(reader, D_READER, "ins30_answer: %02x%02x", cta_res[0], cta_res[1]);
 	if(!(cta_res[cta_lr - 2] == 0x90 && cta_res[cta_lr - 1] == 0))
 	{
 		if(strcmp(reader->pincode, "none"))
@@ -161,9 +187,11 @@ static int32_t unlock_parental(struct s_reader *reader)
 		}
 	}
 	else
-		{ rdr_log(reader, "Parental lock disabled"); }
+		{
+			rdr_log(reader, "Parental lock disabled");
+			get_maturity(reader);
+		}
 
-	rdr_log_dbg(reader, D_READER, "ins30_answer: %02x%02x", cta_res[0], cta_res[1]);
 	return 0;
 }
 
@@ -225,10 +253,12 @@ static int32_t seca_card_init(struct s_reader *reader, ATR *newatr)
 		rdr_log(reader, "Detected seca2 card");
 	}
 
+	get_maturity(reader);
 	// Unlock parental control
 	if(cfg.ulparent != 0)
 	{
 		unlock_parental(reader);
+		get_maturity(reader);
 	}
 	else
 	{

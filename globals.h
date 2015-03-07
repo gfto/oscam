@@ -1309,7 +1309,7 @@ struct s_reader                                     //contains device info, read
 	uchar           prid[CS_MAXPROV][8];
 	uchar           sa[CS_MAXPROV][4];              // viaccess & seca
 	uint8_t			read_old_classes;               // viaccess
-	uint8_t			maturity;						// viaccess maturity level
+	uint8_t			maturity;						// viaccess & seca maturity level
 	uint16_t        caid;
 	uint16_t        b_nano;
 	uint16_t        s_nano;
