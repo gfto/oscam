@@ -88,18 +88,18 @@ void gbox_write_cards_info(void)
         fname = get_gbox_tmp_fname(fext);
         FILE *fhandle_expired;
         fhandle_expired = fopen(fname, "w");
-        if(!fhandle_shared)
+        if(!fhandle_expired)
         {
                 cs_log("Couldn't open %s: %s", fname, strerror(errno));
                 return;
         }
         cs_readlock(&gbox_cards_lock);
-        it = ll_iter_create(gbox_backup_cards);
-        while((card = ll_iter_next(&it)))
+        LL_ITER it2 = ll_iter_create(gbox_backup_cards);
+        while((card = ll_iter_next(&it2)))
         {
                 if (card->type == GBOX_CARD_TYPE_GBOX)
                 {
-                        fprintf(fhandle_shared, "CardID %2d at %s Card %08X Sl:%2d Lev:%1d dist:%1d id:%04X\n",
+                        fprintf(fhandle_expired, "CardID %2d at %s Card %08X Sl:%2d Lev:%1d dist:%1d id:%04X\n",
                                 card_count_expired, card->origin_peer->hostname, card->caprovid,
                                 card->id.slot, card->lvl, card->dist, card->id.peer);
                         card_count_expired++;
@@ -153,7 +153,7 @@ void gbox_write_stats(void)
 void init_gbox_cards(void)
 {
         gbox_cards = ll_create("gbox.cards");
-        gbox_backup_cards = ll_create("gbox_backup_cards");
+        gbox_backup_cards = ll_create("gbox.backup.cards");
         cs_lock_create(&gbox_cards_lock, "gbox_cards_lock", 5000);
         cs_writelock(&gbox_cards_lock);        
         checkcode[0] = 0x15;
@@ -204,6 +204,7 @@ static int8_t closer_path_known(uint32_t caprovid, uint16_t id_peer, uint8_t slo
 
 static int8_t got_from_backup(uint32_t caprovid, uint16_t id_peer, uint8_t slot, struct gbox_peer *origin_peer)
 {
+        uint8_t ret = 0;
         cs_writelock(&gbox_cards_lock);        
         LL_ITER it = ll_iter_create(gbox_backup_cards);
         struct gbox_card *card;
@@ -211,17 +212,18 @@ static int8_t got_from_backup(uint32_t caprovid, uint16_t id_peer, uint8_t slot,
         {
                 if (card->caprovid == caprovid && card->id.peer == id_peer && card->id.slot == slot)
                 {
-                        ll_iter_remove(&it);
+                        cs_log_dbg(D_READER, "getting backup card: %04X\n", card->id.peer);
+                        ll_remove(gbox_backup_cards, card);
                         card->origin_peer = origin_peer;
                         ll_append(gbox_cards, card);
                         update_checkcode(card);
-                        cs_writeunlock(&gbox_cards_lock);        
-                        return 1;
+                        ret = 1;
+                        break;
                 }                
         }
         cs_writeunlock(&gbox_cards_lock);        
         
-        return 0;
+        return ret;
 }
 
 void gbox_add_card(uint16_t id_peer, uint32_t caprovid, uint8_t slot, uint8_t level, uint8_t distance, uint8_t type, struct gbox_peer *origin_peer)
@@ -244,6 +246,7 @@ void gbox_add_card(uint16_t id_peer, uint32_t caprovid, uint8_t slot, uint8_t le
                         cs_log("Card allocation failed");
                         return;
                 }
+                cs_log_dbg(D_READER, "new card: %04X\n", id_peer);
                 card->caprovid = caprovid;
                 card->id.peer = id_peer;
                 card->id.slot = slot;
@@ -316,7 +319,8 @@ void gbox_delete_cards(uint8_t delete_type, uint16_t criteria)
                 }
                 if (found)
                 {
-                        ll_iter_remove(&it);
+                        cs_log_dbg(D_READER, "remove card: %04X\n", card->id.peer);
+                        ll_remove(gbox_cards, card);
                         ll_append(gbox_backup_cards, card);
                         update_checkcode(card);
                 }
