@@ -4133,6 +4133,19 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 				if(rdr->card_atr_length)
 					for(i = 0; i < rdr->card_atr_length; i++) { tpl_printf(vars, TPLAPPEND, "READERATR", "%02X ", rdr->card_atr[i]); }
 
+				if(rdr->maturity==0xF)
+					{
+						tpl_printf(vars, TPLAPPEND, "READERMATURITY", "%s ", "no limit");
+					}
+					else if(rdr->maturity==0)
+						{
+							tpl_printf(vars, TPLAPPEND, "READERMATURITY", "%s ", "unknown");
+						}
+						else
+							{
+								tpl_printf(vars, TPLAPPEND, "READERMATURITY", "%d+", rdr->maturity);
+							}
+
 				if (rdr->csystem)
 					tpl_addVar(vars, TPLADD, "READERCSYSTEM", rdr->csystem->desc);
 

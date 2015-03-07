@@ -290,6 +290,31 @@ static int32_t unlock_parental(struct s_reader *reader)
 	return 0;
 }
 
+static int32_t get_maturity(struct s_reader *reader)
+{
+	/* retrieve maturity rating on the card */
+	
+	def_resp;
+
+	uchar insac[] = { 0xca, 0xac, 0x00, 0x00, 0x00 }; // select data
+	uchar insb8[] = { 0xca, 0xb8, 0x00, 0x00, 0x00 }; // read selected data
+	
+	insac[2]=0x06; write_cmd(insac, NULL); // request maturity rating
+	insb8[4]=0x02; write_cmd(insb8, NULL); // read maturity rating nano + len
+	insb8[4]=cta_res[1]; write_cmd(insb8, NULL); // read maturity rating
+	
+	reader->maturity= cta_res[cta_lr - 3] & 0x0F;
+	if (reader->maturity<0xF)
+	{
+		rdr_log(reader, "[viaccess-reader] Maturity level [%X]= older than %i years", reader->maturity, reader->maturity);
+	}
+	else
+		{
+			rdr_log(reader, "[viaccess-reader] Maturity level [%X]=no age limit", reader->maturity);
+		}
+	return 0;
+}
+
 int32_t hdSurEncBasicCrypt_D2_0F_11(int32_t Value, int32_t XorVal)
 {
 	int32_t i = (Value << 13) - Value + 0x1B59;
@@ -942,8 +967,12 @@ static int32_t viaccess_card_init(struct s_reader *reader, ATR *newatr)
 	reader->nprov = i;
 	rdr_log(reader, "providers: %d (%s)", reader->nprov, buf + 1);
 
+	get_maturity(reader);
 	if(cfg.ulparent)
-		{ unlock_parental(reader); }
+		{ 
+			unlock_parental(reader);
+			get_maturity(reader);
+		}
 
 	rdr_log(reader, "ready for requests");
 	return OK;
