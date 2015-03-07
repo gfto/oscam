@@ -236,7 +236,7 @@ static int8_t gbox_reinit_peer(struct gbox_peer *peer)
 	peer->online		= 0;
 	peer->ecm_idx		= 0;
 	peer->next_hello	= 0;
-	gbox_delete_cards_from_peer(peer->gbox.id);
+	gbox_delete_cards(GBOX_DELETE_FROM_PEER, peer->gbox.id);
 //	peer->my_user		= NULL;
 	
 	return 0;
@@ -432,7 +432,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 	
 	if (!(data[11] & 0xf)) //is first packet 
 	{
-		gbox_delete_cards_from_peer(peer->gbox.id);
+		gbox_delete_cards(GBOX_DELETE_FROM_PEER, peer->gbox.id);
 		hostname_len = data[payload_len - 1];
 		footer_len = hostname_len + 2 + 7;
 		if(!peer->hostname || memcmp(peer->hostname, data + payload_len - 1 - hostname_len, hostname_len))
@@ -786,10 +786,10 @@ static int32_t gbox_checkcode_recv(struct s_client *cli, uchar *checkcode)
 	struct gbox_peer *peer = cli->gbox;
 	char tmp[14];
 
-	if(memcmp(peer->gbox.checkcode, checkcode, 7))
+	if(memcmp(peer->checkcode, checkcode, 7))
 	{
-		memcpy(peer->gbox.checkcode, checkcode, 7);
-		cs_log_dbg(D_READER, "-> new checkcode=%s",  cs_hexdump(0, peer->gbox.checkcode, 14, tmp, sizeof(tmp)));
+		memcpy(peer->checkcode, checkcode, 7);
+		cs_log_dbg(D_READER, "-> new checkcode=%s",  cs_hexdump(0, peer->checkcode, 14, tmp, sizeof(tmp)));
 		return 1;
 	}
 	return 0;
@@ -825,9 +825,8 @@ void gbox_send_hello_packet(struct s_client *cli, int8_t number, uchar *outbuf, 
 
 	if((number & 0x0F) == 0)
 	{
-		gbox_calc_checkcode(&local_gbox.checkcode[0]);
 		if(hello_stat != GBOX_STAT_HELLOL)
-			{ memcpy(++ptr, local_gbox.checkcode, 7); }
+			{ memcpy(++ptr, gbox_get_checkcode(), 7); }
 		else	
 			{ memset(++ptr, 0, 7); }		
 		ptr += 7;
@@ -865,9 +864,8 @@ static void gbox_send_checkcode(struct s_client *cli)
 	struct gbox_peer *peer = cli->gbox;
 	uchar outbuf[20];
 
-	gbox_calc_checkcode(&local_gbox.checkcode[0]);
 	gbox_message_header(outbuf, MSG_CHECKCODE, peer->gbox.password, local_gbox.password);
-	memcpy(outbuf + 10, local_gbox.checkcode, 7);
+	memcpy(outbuf + 10, gbox_get_checkcode(), 7);
 
 	gbox_send(cli, outbuf, 17);
 }
@@ -1006,9 +1004,9 @@ static void gbox_local_cards(struct s_reader *reader, TUNTAB *ttab)
 	struct cc_provider *provider;
 	uint8_t *node1 = NULL;
 	uint8_t min_reshare = 0;
-	gbox_delete_cards_from_type(GBOX_CARD_TYPE_CCCAM);
+	gbox_delete_cards(GBOX_DELETE_WITH_TYPE, GBOX_CARD_TYPE_CCCAM);
 #endif	
-	gbox_delete_cards_with_id(local_gbox.id);
+	gbox_delete_cards(GBOX_DELETE_WITH_ID, local_gbox.id);
 	struct s_client *cl;
 	cs_readlock(&clientlist_lock);
 	for(cl = first_client; cl; cl = cl->next)
@@ -1315,9 +1313,9 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 		send_buf_1[cont_1] = 0;
 		cont_1++;		
 
-		memcpy(&send_buf_1[cont_1], local_gbox.checkcode, 7);
+		memcpy(&send_buf_1[cont_1], gbox_get_checkcode(), 7);
 		cont_1 = cont_1 + 7;
-		memcpy(&send_buf_1[cont_1], peer->gbox.checkcode, 7);
+		memcpy(&send_buf_1[cont_1], peer->checkcode, 7);
 		cont_1 = cont_1 + 7;
 
 		cs_log_dbg(D_READER, "gbox sending ecm for %04X:%06X:%04X to %d cards -> %s", er->caid, er->prid , er->srvid, cont_card_1, cli->reader->label);
@@ -1395,7 +1393,6 @@ static void init_local_gbox(void)
 {
 	local_gbox.id = 0;
 	local_gbox.password = 0;
-	memset(&local_gbox.checkcode[0], 0, 7);
 	local_gbox.minor_version = gbox_get_my_vers();
 	local_gbox.cpu_api = gbox_get_my_cpu_api();
 	init_gbox_cards();

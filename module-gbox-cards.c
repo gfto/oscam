@@ -15,23 +15,29 @@
 LLIST *gbox_cards;
 LLIST *gbox_backup_cards; //NEEDFIX: this list has to be cleaned from time to time 
 CS_MUTEX_LOCK gbox_cards_lock;
+uchar checkcode[7];
 
 void gbox_write_cards_info(void)
 {
         uint16_t card_count_local = 0;
         uint16_t card_count_shared = 0;
+        uint16_t card_count_expired = 0;        
+        char *fext = FILE_LOCAL_CARDS_INFO;
+        char *fname = get_gbox_tmp_fname(fext); 
         FILE *fhandle_local;
-        fhandle_local = fopen(get_gbox_tmp_fname(FILE_LOCAL_CARDS_INFO), "w");
+        fhandle_local = fopen(fname, "w");
         if(!fhandle_local)
         {
-                cs_log("Couldn't open %s: %s", get_gbox_tmp_fname(FILE_LOCAL_CARDS_INFO), strerror(errno));
+                cs_log("Couldn't open %s: %s", fname, strerror(errno));
                 return;
         }
+        fext = FILE_SHARED_CARDS_INFO;
+        fname = get_gbox_tmp_fname(fext);
         FILE *fhandle_shared;
-        fhandle_shared = fopen(get_gbox_tmp_fname(FILE_SHARED_CARDS_INFO), "w");
+        fhandle_shared = fopen(fname, "w");
         if(!fhandle_shared)
         {
-                cs_log("Couldn't open %s: %s", get_gbox_tmp_fname(FILE_SHARED_CARDS_INFO), strerror(errno));
+                cs_log("Couldn't open %s: %s", fname, strerror(errno));
                 return;
         }
 
@@ -70,13 +76,37 @@ void gbox_write_cards_info(void)
                         card_count_local++;
                         break;
                 default:
+                        cs_log("Invalid card type: %d in gbox_write_cards_info", card->type);
                         break;
                 }
         }
         cs_readunlock(&gbox_cards_lock);
-
         fclose(fhandle_local);
         fclose(fhandle_shared);
+
+        fext = FILE_BACKUP_CARDS_INFO;
+        fname = get_gbox_tmp_fname(fext);
+        FILE *fhandle_expired;
+        fhandle_expired = fopen(fname, "w");
+        if(!fhandle_shared)
+        {
+                cs_log("Couldn't open %s: %s", fname, strerror(errno));
+                return;
+        }
+        cs_readlock(&gbox_cards_lock);
+        it = ll_iter_create(gbox_backup_cards);
+        while((card = ll_iter_next(&it)))
+        {
+                if (card->type == GBOX_CARD_TYPE_GBOX)
+                {
+                        fprintf(fhandle_shared, "CardID %2d at %s Card %08X Sl:%2d Lev:%1d dist:%1d id:%04X\n",
+                                card_count_expired, card->origin_peer->hostname, card->caprovid,
+                                card->id.slot, card->lvl, card->dist, card->id.peer);
+                        card_count_expired++;
+                }
+        }
+        cs_readunlock(&gbox_cards_lock);
+        fclose(fhandle_expired);                
         return;
 }
 
@@ -125,6 +155,26 @@ void init_gbox_cards(void)
         gbox_cards = ll_create("gbox.cards");
         gbox_backup_cards = ll_create("gbox_backup_cards");
         cs_lock_create(&gbox_cards_lock, "gbox_cards_lock", 5000);
+        cs_writelock(&gbox_cards_lock);        
+        checkcode[0] = 0x15;
+        checkcode[1] = 0x30;
+        checkcode[2] = 0x02;
+        checkcode[3] = 0x04;
+        checkcode[4] = 0x19;
+        checkcode[5] = 0x19;
+        checkcode[6] = 0x66;
+        cs_writeunlock(&gbox_cards_lock);        
+}
+
+static void update_checkcode(struct gbox_card *card)
+{
+        checkcode[0] ^= (0xFF & (card->caprovid >> 24));
+        checkcode[1] ^= (0xFF & (card->caprovid >> 16));
+        checkcode[2] ^= (0xFF & (card->caprovid >> 8));
+        checkcode[3] ^= (0xFF & (card->caprovid));
+        checkcode[4] ^= (0xFF & (card->id.slot));
+        checkcode[5] ^= (0xFF & (card->id.peer >> 8));
+        checkcode[6] ^= (0xFF & (card->id.peer));
 }
 
 static void gbox_free_card(struct gbox_card *card)
@@ -164,6 +214,7 @@ static int8_t got_from_backup(uint32_t caprovid, uint16_t id_peer, uint8_t slot,
                         ll_iter_remove(&it);
                         card->origin_peer = origin_peer;
                         ll_append(gbox_cards, card);
+                        update_checkcode(card);
                         cs_writeunlock(&gbox_cards_lock);        
                         return 1;
                 }                
@@ -206,38 +257,16 @@ void gbox_add_card(uint16_t id_peer, uint32_t caprovid, uint8_t slot, uint8_t le
                 card->origin_peer = origin_peer;
                 cs_writelock(&gbox_cards_lock);
                 ll_append(gbox_cards, card);
+                update_checkcode(card);
                 cs_writeunlock(&gbox_cards_lock);
         }
 
         return;
 }
 
-void gbox_calc_checkcode(uint8_t *checkcode)
+uchar *gbox_get_checkcode(void)
 {
-        checkcode[0] = 0x15;
-        checkcode[1] = 0x30;
-        checkcode[2] = 0x02;
-        checkcode[3] = 0x04;
-        checkcode[4] = 0x19;
-        checkcode[5] = 0x19;
-        checkcode[6] = 0x66;
-
-        cs_readlock(&gbox_cards_lock);
-        LL_ITER it = ll_iter_create(gbox_cards);
-        struct gbox_card *card;
-        while((card = ll_iter_next(&it)))
-        {
-                checkcode[0] ^= (0xFF & (card->caprovid >> 24));
-                checkcode[1] ^= (0xFF & (card->caprovid >> 16));
-                checkcode[2] ^= (0xFF & (card->caprovid >> 8));
-                checkcode[3] ^= (0xFF & (card->caprovid));
-                checkcode[4] ^= (0xFF & (card->id.slot));
-                checkcode[5] ^= (0xFF & (card->id.peer >> 8));
-                checkcode[6] ^= (0xFF & (card->id.peer));
-        }
-        cs_readunlock(&gbox_cards_lock);        
-        
-        return;
+        return &checkcode[0];
 }
 
 uint16_t gbox_count_peer_cards(uint16_t peer_id)
@@ -257,56 +286,39 @@ uint16_t gbox_count_peer_cards(uint16_t peer_id)
         return counter;
 }
 
-void gbox_delete_cards_from_peer(uint16_t peer_id)
+void gbox_delete_cards(uint8_t delete_type, uint16_t criteria)
 {
         struct gbox_card *card;
+        uint8_t found;
 
         cs_writelock(&gbox_cards_lock);
         LL_ITER it = ll_iter_create(gbox_cards);
         while((card = ll_iter_next(&it)))
         {
-                if (card->origin_peer && card->origin_peer->gbox.id == peer_id)
+                found = 0;
+                switch (delete_type)
                 {
-                        ll_iter_remove(&it);
-                        ll_append(gbox_backup_cards, card);
+                case GBOX_DELETE_FROM_PEER:
+                        if (card->origin_peer && card->origin_peer->gbox.id == criteria)
+                                { found = 1; }
+                        break;
+                case GBOX_DELETE_WITH_ID:                
+                        if (card->id.peer == criteria)
+                                { found = 1; }
+                        break;
+                case GBOX_DELETE_WITH_TYPE:                
+                        if (card->type == criteria)
+                                { found = 1; }
+                        break;        
+                default:
+                        cs_log("Invalid delete type: %d in gbox_delete_cards", delete_type);
+                        break;        
                 }
-        }
-        cs_writeunlock(&gbox_cards_lock);
-
-        return;
-}
-
-void gbox_delete_cards_with_id(uint16_t peer_id)
-{
-        struct gbox_card *card;
-
-        cs_writelock(&gbox_cards_lock);
-        LL_ITER it = ll_iter_create(gbox_cards);
-        while((card = ll_iter_next(&it)))
-        {
-                if (card->id.peer == peer_id)
+                if (found)
                 {
                         ll_iter_remove(&it);
                         ll_append(gbox_backup_cards, card);
-                }
-        }
-        cs_writeunlock(&gbox_cards_lock);
-
-        return;
-}
-
-void gbox_delete_cards_from_type(uint8_t type)
-{
-        struct gbox_card *card;
-
-        cs_writelock(&gbox_cards_lock);
-        LL_ITER it = ll_iter_create(gbox_cards);
-        while((card = ll_iter_next(&it)))
-        {
-                if (card->type == type)
-                {
-                        ll_iter_remove(&it);
-                        ll_append(gbox_backup_cards, card);
+                        update_checkcode(card);
                 }
         }
         cs_writeunlock(&gbox_cards_lock);

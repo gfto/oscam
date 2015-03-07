@@ -49,6 +49,7 @@
 
 #define FILE_GBOX_VERSION       "gbox.ver"
 #define FILE_SHARED_CARDS_INFO  "share.info"
+#define FILE_BACKUP_CARDS_INFO  "expired.info"
 #define FILE_ATTACK_INFO        "attack.txt"
 #define FILE_GBOX_PEER_ONL      "share.onl"
 #define FILE_STATS              "stats.info"
@@ -60,6 +61,10 @@
 #define GBOX_STAT_HELLOR        2
 #define GBOX_STAT_HELLO3        3
 #define GBOX_STAT_HELLO4        4
+
+#define GBOX_DELETE_FROM_PEER	0
+#define GBOX_DELETE_WITH_ID	1
+#define GBOX_DELETE_WITH_TYPE	2
 
 struct gbox_rbc_thread_args 
 {
@@ -116,7 +121,6 @@ struct gbox_data
 {
     uint16_t id;
     uint32_t password;
-    uchar checkcode[7];
     uint8_t minor_version;
     uint8_t cpu_api;
 };
@@ -125,6 +129,7 @@ struct gbox_peer
 {
     struct gbox_data gbox;
     uchar *hostname;
+    uchar checkcode[7];
     int8_t online;
     uint8_t next_hello;
     uchar ecm_idx;
