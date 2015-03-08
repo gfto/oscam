@@ -512,15 +512,19 @@ static int8_t is_already_pending(LLIST *pending_cards, uint16_t peer_id, uint8_t
         if (!pending_cards)
                 { return -1; }
                 
+        int8_t ret = 0;
         struct gbox_card_id *current_id;
         LL_LOCKITER *li = ll_li_create(pending_cards, 0);
         while ((current_id = ll_li_next(li)))
         {
                 if (current_id->peer == peer_id && current_id->slot == slot)
-                        { return 1; }
+                {
+                        ret = 1;
+                        break;
+                }
         }
         ll_li_destroy(li);
-        return 0;
+        return ret;
 }
 
 uint8_t gbox_get_cards_for_ecm(uchar *send_buf_1, int32_t cont_1, uint8_t max_cards, ECM_REQUEST *er, uint32_t *current_avg_card_time, uint16_t peer_id)
