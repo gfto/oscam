@@ -38,13 +38,14 @@
 #define BOXTYPE_PC_NODMX    12
 #define BOXTYPES        12
 #define DMXMD5HASHSIZE  16  // use MD5() 
-#define REMOVED_STREAMPID_LASTINDEX 2
 #define REMOVED_STREAMPID_INDEX 1
+#define REMOVED_STREAMPID_LASTINDEX 2
+#define REMOVED_DECODING_STREAMPID_INDEX 3
 #define NO_STREAMPID_LISTED 0
 #define FOUND_STREAMPID_INDEX 0
 #define ADDED_STREAMPID_INDEX 1
-#define CA_IS_IN_USE 1
-#define CA_IS_CLEAR 0
+#define FIRST_STREAMPID_INDEX 2
+#define CA_IS_CLEAR -1
 #define DUMMY_FD    0xFFFF
 
 //constants used int socket communication:
@@ -148,6 +149,7 @@ typedef struct demux_s
 	char pmt_file[30];
 	time_t pmt_time;
 	uint8_t stopdescramble;
+	uint8_t running;
 	uint8_t old_ecmfiltercount; // previous ecm filtercount
 	uint8_t old_emmfiltercount; // previous emm filtercount
 	pthread_mutex_t answerlock; // requestmode 1 avoid race	
@@ -165,6 +167,7 @@ typedef struct s_streampid
 	uint8_t		cadevice; // holds ca device
 	uint16_t 	streampid; // holds pids
 	uint32_t	activeindexers; // bitmask indexers if streampid enabled for index bit is set
+	uint32_t	caindex; // holds index that is used to decode on ca device
 }STREAMPIDTYPE;
 
 struct s_dvbapi_priority
@@ -262,6 +265,7 @@ typedef struct ca_pid
 // --------------------------------------------------------------------
 
 void dvbapi_stop_descrambling(int);
+void dvbapi_stop_all_descrambling(void);
 void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, int32_t len);
 int32_t dvbapi_open_device(int32_t, int32_t, int);
 int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num);
@@ -273,7 +277,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 void request_cw(struct s_client *client, ECM_REQUEST *er, int32_t demux_id, uint8_t delayed_ecm_check);
 void dvbapi_try_next_caid(int32_t demux_id, int8_t checked);
 void dvbapi_read_priority(void);
-int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er);
+int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er, int32_t n);
 int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t fd, int32_t pid, uchar *filter, uchar *mask);
 int32_t dvbapi_check_ecm_delayed_delivery(int32_t demux_index, ECM_REQUEST *er);
 int32_t dvbapi_get_filternum(int32_t demux_index, ECM_REQUEST *er, int32_t type);
