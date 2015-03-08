@@ -512,14 +512,14 @@ static int8_t is_already_pending(LLIST *pending_cards, uint16_t peer_id, uint8_t
         if (!pending_cards)
                 { return -1; }
                 
-        LL_ITER it = ll_iter_create(pending_cards);
         struct gbox_card_id *current_id;
-        while ((current_id = ll_iter_next(&it)))
+        LL_LOCKITER *li = ll_li_create(pending_cards, 0);
+        while ((current_id = ll_li_next(li)))
         {
                 if (current_id->peer == peer_id && current_id->slot == slot)
                         { return 1; }
         }
-
+        ll_li_destroy(li);
         return 0;
 }
 
