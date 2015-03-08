@@ -313,6 +313,7 @@ static inline void openxcas_set_provid(uint32_t UNUSED(_provid)) { }
 bool is_dvbapi_usr(char *usr);
 static inline bool module_dvbapi_enabled(void) { return cfg.dvbapi_enabled; }
 #else
+static inline void dvbapi_stop_all_descrambling(void) { }
 static inline void dvbapi_read_priority(void) { }
 static inline bool is_dvbapi_usr(char *UNUSED(usr)) { return 0; }
 static inline bool module_dvbapi_enabled(void) { return 0; }
