@@ -1682,8 +1682,12 @@ int32_t main(int32_t argc, char *argv[])
 	remove_versionfile();
 
 	stat_finish();
+
+#ifdef HAVE_DVBAPI
 	dvbapi_stop_all_descrambling();
 	dvbapi_save_channel_cache();
+#endif
+
 	emm_save_cache();
 	save_emmstat_to_file();
 	
