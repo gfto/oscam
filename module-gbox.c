@@ -190,9 +190,10 @@ static int8_t gbox_remove_all_bad_sids(ECM_REQUEST *er, uint16_t sid)
 	if (!er) { return -1; }
 
 	struct gbox_card_pending *pending = NULL;
-	LL_ITER it = ll_iter_create(er->gbox_cards_pending);
-	while ((pending = ll_iter_next(&it)))
+	LL_LOCKITER *li = ll_li_create(er->gbox_cards_pending, 0);
+	while ((pending = ll_li_next(li)))
 		{ gbox_remove_bad_sid(pending->id.peer, pending->id.slot, sid); }
+	ll_li_destroy(li);
 	return 0;
 }
 
@@ -1096,13 +1097,13 @@ static uint32_t gbox_get_pending_time(ECM_REQUEST *er, uint16_t peer_id, uint8_t
 	if (!er) { return 0; }
 	
 	struct gbox_card_pending *pending = NULL;
-	LL_ITER it = ll_iter_create(er->gbox_cards_pending);
-	while ((pending = ll_iter_next(&it)))
+	LL_LOCKITER *li = ll_li_create(er->gbox_cards_pending, 0);
+	while ((pending = ll_li_next(li)))
 	{
 		if ((pending->id.peer == peer_id) && (pending->id.slot == slot))
 			{ return pending->pending_time; }
 	}
-	
+	ll_li_destroy(li);
 	return 0;
 }
 
@@ -1337,9 +1338,10 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 			cs_log_dbg(D_READER, "gbox card %d: ID: %04X, Slot: %02X", i+1, (send_buf_1[len2+10+i*3] << 8) | send_buf_1[len2+11+i*3], send_buf_1[len2+12+i*3]); 
 		}
 	
-		LL_ITER it = ll_iter_create(er->gbox_cards_pending);
-		while ((pending = ll_iter_next(&it)))
+		LL_LOCKITER *li = ll_li_create(er->gbox_cards_pending, 0);
+		while ((pending = ll_li_next(li)))
 			{ cs_log_dbg(D_READER, "Pending Card ID: %04X Slot: %02X Time: %d", pending->id.peer, pending->id.slot, pending->pending_time); }
+		ll_li_destroy(li);
 	
 		if(er->gbox_ecm_status > GBOX_ECM_NOT_ASKED)
 			{ er->gbox_ecm_status++; }
