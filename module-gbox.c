@@ -1096,15 +1096,19 @@ static uint32_t gbox_get_pending_time(ECM_REQUEST *er, uint16_t peer_id, uint8_t
 {
 	if (!er) { return 0; }
 	
+	uint32_t ret_time = 0;
 	struct gbox_card_pending *pending = NULL;
 	LL_LOCKITER *li = ll_li_create(er->gbox_cards_pending, 0);
 	while ((pending = ll_li_next(li)))
 	{
 		if ((pending->id.peer == peer_id) && (pending->id.slot == slot))
-			{ return pending->pending_time; }
+		{
+			ret_time = pending->pending_time;
+			break;
+		}
 	}
 	ll_li_destroy(li);
-	return 0;
+	return ret_time;
 }
 
 static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, uchar *data, int32_t n)
