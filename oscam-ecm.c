@@ -1898,6 +1898,7 @@ void write_ecm_answer_fromcache(struct s_write_from_cache *wfc)
 
 void get_cw(struct s_client *client, ECM_REQUEST *er)
 {
+	cs_log_dump_dbg(D_ATR, er->ecm, er->ecmlen, "get cw for ecm:");
 	cs_log_dbg(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [get_cw] NEW REQUEST!", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid);
 	increment_n_request(client);
 
