@@ -233,12 +233,12 @@ struct s_client *get_gbox_proxy(uint16_t gbox_id)
 static int8_t gbox_reinit_peer(struct gbox_peer *peer)
 {
 	if (!peer) { return -1; }
-	NULLFREE(peer->hostname);
+
 	peer->online		= 0;
 	peer->ecm_idx		= 0;
 	peer->next_hello	= 0;
 	gbox_delete_cards(GBOX_DELETE_FROM_PEER, peer->gbox.id);
-//	peer->my_user		= NULL;
+	gbox_write_peer_onl();
 	
 	return 0;
 }
@@ -303,6 +303,8 @@ static int8_t gbox_disconnect_double_peers(struct s_client *cli)
 	{
 		if (cl->typ == 'c' && cl->gbox_peer_id == cli->gbox_peer_id && cl != cli)
 		{
+			cl->reader = NULL;
+			cl->gbox = NULL;
 			cs_log_dbg(D_READER, "disconnected double client %s",username(cl));
 			cs_disconnect_client(cl);		
 		}
@@ -475,9 +477,17 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 		else	//last packet of Hello
 		{
 			peer->filtered_cards = gbox_count_peer_cards(peer->gbox.id);
-			if(!data[0xA])
+			if(!data[10])
 			{
-				cs_log("-> HelloS in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, peer->total_cards, peer->filtered_cards);
+				memset(&tmpbuf[0], 0, 7);		
+				if (data[11] == 0x80 && !memcmp(data+12,tmpbuf,7))
+					{
+						cs_log("-> HelloL in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, peer->total_cards, peer->filtered_cards);
+						peer->online = 1;
+						gbox_write_peer_onl();
+					}
+				else
+					{ cs_log("-> HelloS in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, peer->total_cards, peer->filtered_cards); }			
 				gbox_send_hello(cli, GBOX_STAT_HELLOR);
 			}
 			else
@@ -486,19 +496,20 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 				gbox_send_checkcode(cli);
 			}
 			if(!peer->online)
-				{ gbox_send_hello(cli, GBOX_STAT_HELLOS); }
-			peer->online = 1;
+			{
+				peer->online = 1;
+				gbox_send_hello(cli, GBOX_STAT_HELLOS);
+				gbox_write_peer_onl();				
+			}				
 			cli->reader->tcp_connected = 2; //we have card
 			if(!peer->filtered_cards)
 				{ cli->reader->card_status = NO_CARD; }
 			else	
-				{ cli->reader->card_status = CARD_INSERTED; }
-			
-			peer->next_hello = 0;
-			gbox_write_cards_info();
-			gbox_write_peer_onl();
-			cli->last = time((time_t *)0); //hello is activity on proxy
+				{ cli->reader->card_status = CARD_INSERTED; }			
 		}		
+		peer->next_hello = 0;
+		gbox_write_cards_info();			
+		cli->last = time((time_t *)0); //hello is activity on proxy
 	}
 	else { peer->next_hello++; }
 	return 0;
@@ -1453,11 +1464,8 @@ static int32_t gbox_client_init(struct s_client *cli)
 	if(!cs_malloc(&cli->gbox, sizeof(struct gbox_peer)))
 		{ return -1; }
 
-	struct gbox_peer *peer = cli->gbox;
 	struct s_reader *rdr = cli->reader;
-
-	rdr->card_status = CARD_NEED_INIT;
-	rdr->tcp_connected = 0;
+	struct gbox_peer *peer = cli->gbox;
 
 	memset(peer, 0, sizeof(struct gbox_peer));
 
@@ -1470,10 +1478,17 @@ static int32_t gbox_client_init(struct s_client *cli)
 		cs_log("error, double/invalid gbox id: %04X", peer->gbox.id);	
 		return -1;
 	}
+	cs_lock_create(&peer->lock, "gbox_lock", 5000);
+
+	gbox_reinit_peer(peer);	
+
 	cli->gbox_peer_id = peer->gbox.id;	
 
 	cli->pfd = 0;
 	cli->crypted = 1;
+
+	rdr->card_status = CARD_NEED_INIT;
+	rdr->tcp_connected = 0;
 
 	set_null_ip(&cli->ip);
 
@@ -1505,11 +1520,6 @@ static int32_t gbox_client_init(struct s_client *cli)
 
 	cli->pfd = cli->udp_fd;
 
-	cs_lock_create(&peer->lock, "gbox_lock", 5000);
-
-	gbox_reinit_peer(peer);	
-
-	cli->reader->card_status = CARD_NEED_INIT;
 	gbox_send_hello(cli, GBOX_STAT_HELLOL);
 
 	if(!cli->reader->gbox_maxecmsend)
@@ -1599,9 +1609,12 @@ static int8_t gbox_send_peer_good_night(struct s_client *proxy)
 
 void gbox_cleanup(struct s_client *cl)
 {
+/* Commented because the remove doubled clients causes trouble
+	NEEDFIX: How to cleanup when oscam ends 
 	gbox_free_cardlist();
 	if(cl && cl->gbox && cl->typ == 'p')
 		{ gbox_send_peer_good_night(cl); }
+*/
 }
 
 /*

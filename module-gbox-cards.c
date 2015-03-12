@@ -376,14 +376,15 @@ void gbox_send_hello(struct s_client *proxy, uint8_t hello_stat)
                 }
                 memset(buf, 0, sizeof(buf));
 
+                struct gbox_card *card;
                 cs_readlock(&gbox_cards_lock);
                 LL_ITER it = ll_iter_create(gbox_cards);
-                struct gbox_card *card;
                 while((card = ll_iter_next(&it)))
                 {
                         //send to user only cards which matching CAID from account and lvl > 0
                         //do not send peer cards back
-                        if(chk_ctab(gbox_get_caid(card->caprovid), &peer->my_user->account->ctab) && (card->lvl > 0) && (!card->origin_peer || card->origin_peer->gbox.id != peer->gbox.id))
+                        if(chk_ctab(gbox_get_caid(card->caprovid), &peer->my_user->account->ctab) && (card->lvl > 0) && 
+                                (!card->origin_peer || (card->origin_peer && card->origin_peer->gbox.id != peer->gbox.id)))
                         {
                                 *(++ptr) = card->caprovid >> 24;
                                 *(++ptr) = card->caprovid >> 16;
