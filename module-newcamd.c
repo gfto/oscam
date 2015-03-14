@@ -1114,8 +1114,7 @@ static void newcamd_process_emm(uchar *buf)
 	memset(&epg, 0, sizeof(epg));
 
 	epg.emmlen = buf[2] + 3;
-	if (cl->ftab.filts)
-		caid = cl->ftab.filts[0].caid;
+	caid = cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].caid;
 	epg.caid[0] = (uchar)(caid >> 8);
 	epg.caid[1] = (uchar)(caid);
 
