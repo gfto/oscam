@@ -573,7 +573,7 @@ static void stapi_DescramblerAssociate(int32_t demux_id, uint16_t pid, int32_t m
 	if(demux[demux_id].DescramblerHandle[n] == 0) { return; }
 
 	if(mode == ASSOCIATE)
-	{
+	{	
 		int32_t k;
 		for(k = 0; k < SLOTNUM; k++)
 		{
@@ -700,6 +700,18 @@ int32_t stapi_write_cw(int32_t demux_id, uchar *cw, uint16_t *STREAMpids, int32_
 		}
 
 		if(demux[demux_id].DescramblerHandle[n] == 0) { continue; }
+		
+		int32_t pidnum = demux[demux_id].pidindex; // get current pidindex used for descrambling
+		int32_t idx = demux[demux_id].ECMpids[pidnum].index;
+
+		if(!idx)   // if no indexer for this pid get one!
+		{
+			idx = dvbapi_get_descindex(demux_id);
+			demux[demux_id].ECMpids[pidnum].index = idx;
+			cs_log_dbg(D_DVBAPI, "Demuxer %d PID: %d CAID: %04X ECMPID: %04X is using index %d", demux_id, pidnum,
+					  demux[demux_id].ECMpids[pidnum].CAID, demux[demux_id].ECMpids[pidnum].ECM_PID, idx - 1);
+		}
+		
 		for(k = 0; k < STREAMpidcount; k++)
 		{
 			stapi_DescramblerAssociate(demux_id, STREAMpids[k], ASSOCIATE, n);
