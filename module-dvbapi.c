@@ -935,14 +935,15 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 						
 						for(j = 0; j < MAX_DEMUX; j++) // check other demuxers for same streampid with same index
 						{
-							if(demux[j].program_number == 0) { continue; }  			// skip empty demuxers
-							if(demux_index == j) { continue; } 							// skip same demuxer
+							if(demux[j].program_number == 0) { continue; }  					// skip empty demuxers
+							if(demux_index == j) { continue; } 									// skip same demuxer
+							if(demux[j].ca_mask != demux[demux_index].ca_mask) { continue;}		// skip streampid running on other ca device
 							
 							otherdemuxpid = demux[j].pidindex;
-							if(otherdemuxpid == -1) { continue; }          				// Other demuxer not descrambling yet
+							if(otherdemuxpid == -1) { continue; }          						// Other demuxer not descrambling yet
 
 							otherdemuxidx = demux[j].ECMpids[otherdemuxpid].index;
-							if(!otherdemuxidx || otherdemuxidx != idx) { continue; } 	// Other demuxer has no index yet, or index is different
+							if(!otherdemuxidx || otherdemuxidx != idx) { continue; } 			// Other demuxer has no index yet, or index is different
 							
 							for(k = 0; k < demux[j].STREAMpidcount; k++)
 							{
