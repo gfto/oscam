@@ -2061,7 +2061,7 @@ void cc_idle(void)
 	}
 }
 
-struct cc_card *read_card(uint8_t *buf, int32_t ext)
+struct cc_card *read_card(uint8_t *buf, int32_t ext, int8_t ignore_goodbad)
 {
 	struct cc_card *card;
 	if(!cs_malloc(&card, sizeof(struct cc_card)))
@@ -2119,32 +2119,38 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext)
 	{
 		for(i = 0; i < nassign; i++)
 		{
-			uint16_t sid = b2i(2, ptr);
-			//cs_log_dbg(D_CLIENT, "      assigned sid = %04X, added to good sid list", sid);
+			if (!ignore_goodbad)
+			{
+				uint16_t sid = b2i(2, ptr);
+				//cs_log_dbg(D_CLIENT, "      assigned sid = %04X, added to good sid list", sid);
 
-			struct cc_srvid *srvid;
-			if(!cs_malloc(&srvid, sizeof(struct cc_srvid)))
-				{ break; }
-			srvid->sid = sid;
-			srvid->chid = 0;
-			srvid->ecmlen = 0;
-			ll_append(card->goodsids, srvid);
+				struct cc_srvid *srvid;
+				if(!cs_malloc(&srvid, sizeof(struct cc_srvid)))
+					{ break; }
+				srvid->sid = sid;
+				srvid->chid = 0;
+				srvid->ecmlen = 0;
+				ll_append(card->goodsids, srvid);
+			}
 			ptr += 2;
 		}
 
 		for(i = 0; i < nreject; i++)
 		{
-			uint16_t sid = b2i(2, ptr);
-			//cs_log_dbg(D_CLIENT, "      rejected sid = %04X, added to sid block list", sid);
+			if (!ignore_goodbad)
+			{
+				uint16_t sid = b2i(2, ptr);
+				//cs_log_dbg(D_CLIENT, "      rejected sid = %04X, added to sid block list", sid);
 
-			struct cc_srvid_block *srvid;
-			if(!cs_malloc(&srvid, sizeof(struct cc_srvid_block)))
-				{ break; }
-			srvid->sid = sid;
-			srvid->chid = 0;
-			srvid->ecmlen = 0;
-			srvid->blocked_till = 0;
-			ll_append(card->badsids, srvid);
+				struct cc_srvid_block *srvid;
+				if(!cs_malloc(&srvid, sizeof(struct cc_srvid_block)))
+					{ break; }
+				srvid->sid = sid;
+				srvid->chid = 0;
+				srvid->ecmlen = 0;
+				srvid->blocked_till = 0;
+				ll_append(card->badsids, srvid);
+			}
 			ptr += 2;
 		}
 	}
@@ -2425,7 +2431,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 		rdr->card_status = CARD_INSERTED;
 
 		cs_writelock(&cc->cards_busy);
-		struct cc_card *card = read_card(data, buf[1] == MSG_NEW_CARD_SIDINFO);
+		struct cc_card *card = read_card(data, buf[1] == MSG_NEW_CARD_SIDINFO, rdr->cc_ignore_goodbad);
 		if(!card)
 		{
 			cs_writeunlock(&cc->cards_busy);

@@ -833,6 +833,7 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_INT8("cccmaxhops"           , OFS(cc_maxhops),              DEFAULT_CC_MAXHOPS),
 	DEF_OPT_INT8("cccmindown"           , OFS(cc_mindown),              0),
 	DEF_OPT_INT8("cccwantemu"           , OFS(cc_want_emu),             0),
+	DEF_OPT_INT8("cccignoregoodbad"     , OFS(cc_ignore_goodbad),       0),
 	DEF_OPT_INT8("ccckeepalive"         , OFS(cc_keepalive),            DEFAULT_CC_KEEPALIVE),
 	DEF_OPT_INT8("cccreshare"           , OFS(cc_reshare),              DEFAULT_CC_RESHARE),
 	DEF_OPT_INT32("cccreconnect"        , OFS(cc_reconnect),            DEFAULT_CC_RECONNECT),
@@ -920,7 +921,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	// These are written only when the reader is CCCAM
 	static const char *cccam_settings[] =
 	{
-		"cccversion", "cccmaxhops", "cccmindown", "cccwantemu", "ccckeepalive",
+		"cccversion", "cccmaxhops", "cccmindown", "cccwantemu", "cccignoregoodbad", "ccckeepalive",
 		"cccreconnect",
 		0
 	};

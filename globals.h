@@ -1346,6 +1346,7 @@ struct s_reader                                     //contains device info, read
 	int8_t          cc_maxhops;                     // cccam max distance
 	int8_t          cc_mindown;                     // cccam min downhops
 	int8_t          cc_want_emu;                    // Schlocke: Client want to have EMUs, 0 - NO; 1 - YES
+	int8_t          cc_ignore_goodbad;
 	uint32_t        cc_id;
 	int8_t          cc_keepalive;
 	int8_t          cc_hop;                         // For non-cccam reader: hop for virtual cards
