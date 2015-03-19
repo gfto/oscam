@@ -2302,8 +2302,6 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	tpl_printf(vars, TPLADD, "RESHARE",      "%d", cfg.cc_reshare);
 	tpl_printf(vars, TPLADD, "CCCRECONNECT", "%d", rdr->cc_reconnect);
 
-	tpl_addVar(vars, TPLADD, "CCCIGNOREGOODBAD", (rdr->cc_ignore_goodbad == 1) ? "checked" : "");
-
 	if(rdr->cc_want_emu)
 		{ tpl_addVar(vars, TPLADD, "CCCWANTEMUCHECKED", "checked"); }
 	if(rdr->cc_keepalive)
