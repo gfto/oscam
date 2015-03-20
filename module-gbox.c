@@ -1576,7 +1576,7 @@ static void gbox_s_idle(struct s_client *cl)
 	cs_log_dbg(D_READER, "client idle prevented: %s", username(cl));
 	cl->last = time((time_t *)0);
 }
-
+/*
 static int8_t gbox_send_peer_good_night(struct s_client *proxy)
 {
 	uchar outbuf[64];
@@ -1604,20 +1604,18 @@ static int8_t gbox_send_peer_good_night(struct s_client *proxy)
 			gbox_reinit_proxy(proxy);
 		}
 	}
-	return 0;	
+	return 0;
 }
 
 void gbox_cleanup(struct s_client *cl)
 {
-/* Commented because the remove doubled clients causes trouble
+ Commented because the remove doubled clients causes trouble
 	NEEDFIX: How to cleanup when oscam ends 
 	gbox_free_cardlist();
 	if(cl && cl->gbox && cl->typ == 'p')
 		{ gbox_send_peer_good_night(cl); }
-*/
 }
 
-/*
 void gbox_send_goodbye(uint16_t boxid) //to implement later
 {
 	uchar outbuf[15];
@@ -1638,8 +1636,7 @@ void gbox_send_goodbye(uint16_t boxid) //to implement later
 	}
 	cs_readunlock(&clientlist_lock);
 }
-*/
-/*
+
 void gbox_send_HERE_query (uint16_t boxid)	//gbox.net send this cmd
 {
 	uchar outbuf[30];
@@ -1686,7 +1683,7 @@ void module_gbox(struct s_module *ph)
 	ph->send_dcw = gbox_send_dcw;
 
 	ph->recv = gbox_recv;
-	ph->cleanup = gbox_cleanup;
+	/*ph->cleanup = gbox_cleanup;*/
 	ph->c_init = gbox_client_init;
 	ph->c_recv_chk = gbox_recv_chk;
 	ph->c_send_ecm = gbox_send_ecm;
