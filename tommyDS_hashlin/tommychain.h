@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Andrea Mazzoleni. All rights reserved.
+ * Copyright (c) 2010, Andrea Mazzoleni. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,10 +12,10 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY ANDREA MAZZOLENI AND CONTRIBUTORS ``AS IS''
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL ANDREA MAZZOLENI OR CONTRIBUTORS BE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -167,11 +167,11 @@ tommy_inline void tommy_chain_mergesort(tommy_chain* chain, tommy_compare_func* 
 	 * Value stored inside the bit bucket.
 	 * It's used to know which bucket is empty of full.
 	 */
-	unsigned counter;
+	tommy_count_t counter;
 	tommy_node* node = chain->head;
 	tommy_node* tail = chain->tail;
-	unsigned mask;
-	unsigned i;
+	tommy_count_t mask;
+	tommy_count_t i;
 
 	counter = 0;
 	while (1) {
@@ -210,11 +210,10 @@ tommy_inline void tommy_chain_mergesort(tommy_chain* chain, tommy_compare_func* 
 	mask = counter >> i;
 	while (mask != 1) {
 		mask >>= 1;
-		if (mask & 1) {
-			tommy_chain_merge_degenerated(&bit[i+1], &bit[i], cmp);
-		} else {
-			bit[i+1] = bit[i];
-		}
+		if (mask & 1)
+			tommy_chain_merge_degenerated(&bit[i + 1], &bit[i], cmp);
+		else
+			bit[i + 1] = bit[i];
 		++i;
 	}
 

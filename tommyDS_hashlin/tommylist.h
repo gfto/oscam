@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Andrea Mazzoleni. All rights reserved.
+ * Copyright (c) 2010, Andrea Mazzoleni. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,10 +12,10 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY ANDREA MAZZOLENI AND CONTRIBUTORS ``AS IS''
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL ANDREA MAZZOLENI OR CONTRIBUTORS BE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -28,18 +28,18 @@
 /** \file
  * Double linked list for collisions into hashtables.
  *
- * This list is a double linked list mainly targetted for collisions into an hashtables,
- * but useable also as a generic list.
+ * This list is a double linked list mainly targetted for handling collisions
+ * into an hashtables, but useable also as a generic list.
  *
  * The main feature of this list is to require only one pointer to represent the
- * list, compared to a classic implementation requiring an head an a tail pointers.
+ * list, compared to a classic implementation requiring a head an a tail pointers.
  * This reduces the memory usage in hashtables.
  *
  * Another feature is to support the insertion at the end of the list. This allow to store
  * collisions in a stable order. Where for stable order we mean that equal elements keep
  * their insertion order.
  *
- * To initialize the list, you have to call tommy_list_init(), or simply assign
+ * To initialize the list, you have to call tommy_list_init(), or to simply assign
  * to it NULL, as an empty list is represented by the NULL value.
  *
  * \code
@@ -69,7 +69,7 @@
  * tommy_list_insert_tail(&list, &obj->node, obj); // inserts the object
  * \endcode
  *
- * To iterates over all the elements in the list you have to call
+ * To iterate over all the elements in the list you have to call
  * tommy_list_head() to get the head of the list and follow the
  * tommy_node::next pointer until NULL.
  *
@@ -84,19 +84,14 @@
  * }
  * \endcode
  *
- * To destroy the list you have only to remove all the elements, as the list is
- * completely inplace and it doesn't allocate memory.
+ * To destroy the list you have to remove all the elements,
+ * as the list is completely inplace and it doesn't allocate memory.
+ * This can be done with the tommy_list_foreach() function.
  *
  * \code
- * tommy_node* i = tommy_list_head(&list);
- * while (i) {
- *     tommy_node* i_next = i->next; // saves the next element before freeing
- *
- *     free(i->data); // frees the object allocated memory
- *
- *     i = i_next; // goes to the next element
- * }
- * \endcode 
+ * // deallocates all the objects iterating the list
+ * tommy_list_foreach(&list, free);
+ * \endcode
  */
 
 #ifndef __TOMMYLIST_H
@@ -108,7 +103,7 @@
 /* list */
 
 /**
- * Double linked list for collisions into hashtables.
+ * Double linked list type.
  */
 typedef tommy_node* tommy_list;
 
@@ -151,7 +146,7 @@ tommy_inline tommy_node* tommy_list_tail(tommy_list* list)
  */
 tommy_inline void tommy_list_insert_first(tommy_list* list, tommy_node* node)
 {
-	/* one element "circular" prev list */   
+	/* one element "circular" prev list */
 	node->prev = node;
 
 	/* one element "0 terminated" next list */
@@ -206,11 +201,10 @@ tommy_inline void tommy_list_insert_head(tommy_list* list, tommy_node* node, voi
 {
 	tommy_node* head = tommy_list_head(list);
 
-	if (head) {
+	if (head)
 		tommy_list_insert_head_not_empty(list, node);
-	} else {
+	else
 		tommy_list_insert_first(list, node);
-	}
 
 	node->data = data;
 }
@@ -224,11 +218,10 @@ tommy_inline void tommy_list_insert_tail(tommy_list* list, tommy_node* node, voi
 {
 	tommy_node* head = tommy_list_head(list);
 
-	if (head) {
+	if (head)
 		tommy_list_insert_tail_not_empty(head, node);
-	} else {
+	else
 		tommy_list_insert_first(list, node);
-	}
 
 	node->data = data;
 }
@@ -264,18 +257,16 @@ tommy_inline void* tommy_list_remove_existing(tommy_list* list, tommy_node* node
 	tommy_node* head = tommy_list_head(list);
 
 	/* remove from the "circular" prev list */
-	if (node->next) { 
+	if (node->next)
 		node->next->prev = node->prev;
-	} else {
+	else
 		head->prev = node->prev; /* the last */
-	}
 
 	/* remove from the "0 terminated" next list */
-	if (head == node) {
+	if (head == node)
 		*list = node->next; /* the new head, in case 0 */
-	} else {
+	else
 		node->prev->next = node->next;
-	}
 
 	return node->data;
 }
@@ -294,7 +285,7 @@ void tommy_list_concat(tommy_list* first, tommy_list* second);
  * It's a stable merge sort with O(N*log(N)) worst complexity.
  * It's faster on degenerated cases like partially ordered lists.
  * \param cmp Compare function called with two elements.
- * The function should return <0 if the first element is less than the second, == 0 if equal, and > 0 if greather.
+ * The function should return <0 if the first element is less than the second, ==0 if equal, and >0 if greather.
  */
 void tommy_list_sort(tommy_list* list, tommy_compare_func* cmp);
 
@@ -309,10 +300,36 @@ tommy_inline tommy_bool_t tommy_list_empty(tommy_list* list)
 
 /**
  * Calls the specified function for each element in the list.
+ *
+ * You can use this function to deallocate all the elements
+ * inserted in a list.
+ *
+ * \code
+ * tommy_list list;
+ *
+ * // initializes the list
+ * tommy_list_init(&list);
+ *
+ * ...
+ *
+ * // creates an object
+ * struct object* obj = malloc(sizeof(struct object));
+ *
+ * ...
+ *
+ * // insert it in the list
+ * tommy_list_insert_tail(&list, &obj->node, obj);
+ *
+ * ...
+ *
+ * // deallocates all the objects iterating the list
+ * tommy_list_foreach(&list, free);
+ * \endcode
  */
 tommy_inline void tommy_list_foreach(tommy_list* list, tommy_foreach_func* func)
 {
 	tommy_node* node = tommy_list_head(list);
+
 	while (node) {
 		void* data = node->data;
 		node = node->next;
@@ -321,11 +338,12 @@ tommy_inline void tommy_list_foreach(tommy_list* list, tommy_foreach_func* func)
 }
 
 /**
- * Calls the specified function with argument for each element in the list.
+ * Calls the specified function with an argument for each element in the list.
  */
 tommy_inline void tommy_list_foreach_arg(tommy_list* list, tommy_foreach_arg_func* func, void* arg)
 {
 	tommy_node* node = tommy_list_head(list);
+
 	while (node) {
 		void* data = node->data;
 		node = node->next;

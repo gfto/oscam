@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Andrea Mazzoleni. All rights reserved.
+ * Copyright (c) 2010, Andrea Mazzoleni. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,10 +12,10 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY ANDREA MAZZOLENI AND CONTRIBUTORS ``AS IS''
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL ANDREA MAZZOLENI OR CONTRIBUTORS BE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -24,7 +24,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 /** \file
  * Hash functions for the use with ::tommy_hashtable, ::tommy_hashdyn and ::tommy_hashlin.
  */
@@ -48,7 +48,7 @@ typedef tommy_key_t tommy_hash_t;
  * from http://www.burtleburtle.net/bob/hash/doobs.html, function hashlittle().
  * \param init_val Initialization value.
  * Using a different initialization value, you can generate a completely different set of hash values.
- * Use 0 if not relevalt.
+ * Use 0 if not relevant.
  * \param void_key Pointer at the data to hash.
  * \param key_len Size of the data to hash.
  * \note
@@ -63,9 +63,9 @@ tommy_uint32_t tommy_hash_u32(tommy_uint32_t init_val, const void* void_key, tom
  * from http://www.burtleburtle.net/bob/hash/doobs.html, function hashlittle2().
  * \param init_val Initialization value.
  * Using a different initialization value, you can generate a completely different set of hash values.
- * Use 0 if not relevalt.
+ * Use 0 if not relevant.
  * \param void_key Pointer at the data to hash.
- * \param key_len Size of the data to hash. 
+ * \param key_len Size of the data to hash.
  * \note
  * This function is endianess independent.
  * \return The hash value of 64 bits.

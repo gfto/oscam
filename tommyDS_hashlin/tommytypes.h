@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Andrea Mazzoleni. All rights reserved.
+ * Copyright (c) 2010, Andrea Mazzoleni. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,10 +12,10 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY ANDREA MAZZOLENI AND CONTRIBUTORS ``AS IS''
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL ANDREA MAZZOLENI OR CONTRIBUTORS BE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -35,20 +35,36 @@
 /******************************************************************************/
 /* types */
 
-#if defined(_MSC_VER)
 #include <stddef.h>
+
+#if defined(_MSC_VER)
 typedef unsigned tommy_uint32_t; /**< Generic uint32_t type. */
 typedef unsigned _int64 tommy_uint64_t; /**< Generic uint64_t type. */
-typedef size_t tommy_size_t; /**< Generic size_t type. */
 typedef size_t tommy_uintptr_t; /**< Generic uintptr_t type. */
 #else
 #include <stdint.h>
 typedef uint32_t tommy_uint32_t; /**< Generic uint32_t type. */
 typedef uint64_t tommy_uint64_t; /**< Generic uint64_t type. */
-typedef uintptr_t tommy_size_t; /**< Generic size_t type. */
 typedef uintptr_t tommy_uintptr_t; /**< Generic uintptr_t type. */
 #endif
+typedef size_t tommy_size_t; /**< Generic size_t type. */
+typedef ptrdiff_t tommy_ptrdiff_t; /**< Generic ptrdiff_t type. */
 typedef int tommy_bool_t; /**< Generic boolean type. */
+
+/**
+ * Generic unsigned integer type.
+ *
+ * It has no specific size, as is used to store only small values.
+ * To make the code more efficient, a full 32 bit integer is used.
+ */
+typedef tommy_uint32_t tommy_uint_t;
+
+/**
+ * Generic unsigned integer for counting objects.
+ *
+ * TommyDS doesn't support more than 2^32-1 objects.
+ */
+typedef tommy_uint32_t tommy_count_t;
 
 /** \internal
  * Type cast required for the C++ compilation.
@@ -64,16 +80,25 @@ typedef int tommy_bool_t; /**< Generic boolean type. */
 /******************************************************************************/
 /* heap */
 
-/* by default uses malloc/realloc/free */
+/* by default uses malloc/calloc/realloc/free */
 
 /**
- * Generic malloc(), realloc() and free() functions.
- * Redefine them to what you need. By default they map to the C malloc(), realloc() and free().
+ * Generic malloc(), calloc(), realloc() and free() functions.
+ * Redefine them to what you need. By default they map to the C malloc(), calloc(), realloc() and free().
  */
-#if !defined(tommy_malloc) && !defined(tommy_realloc) && !defined(tommy_free)
+#if !defined(tommy_malloc) || !defined(tommy_calloc) || !defined(tommy_realloc) || !defined(tommy_free)
 #include <stdlib.h>
+#endif
+#if !defined(tommy_malloc)
 #define tommy_malloc malloc
+#endif
+#if !defined(tommy_calloc)
+#define tommy_calloc calloc
+#endif
+#if !defined(tommy_realloc)
 #define tommy_realloc realloc
+#endif
+#if !defined(tommy_free)
 #define tommy_free free
 #endif
 
@@ -109,7 +134,7 @@ typedef int tommy_bool_t; /**< Generic boolean type. */
  */
 #if !defined(tommy_likely)
 #if defined(__GNUC__)
-#define tommy_likely(x) __builtin_expect(!!(x),1)
+#define tommy_likely(x) __builtin_expect(!!(x), 1)
 #else
 #define tommy_likely(x) (x)
 #endif
@@ -120,7 +145,7 @@ typedef int tommy_bool_t; /**< Generic boolean type. */
  */
 #if !defined(tommy_unlikely)
 #if defined(__GNUC__)
-#define tommy_unlikely(x) __builtin_expect(!!(x),0)
+#define tommy_unlikely(x) __builtin_expect(!!(x), 0)
 #else
 #define tommy_unlikely(x) (x)
 #endif
@@ -218,7 +243,7 @@ typedef int tommy_compare_func(const void* obj_a, const void* obj_b);
  * Search function for elements.
  * \param arg Pointer at the value to search.
  * \param obj Pointer at the object to compare to.
- * \return ==0 if the value matches the element. != 0 if different.
+ * \return ==0 if the value matches the element. !=0 if different.
  *
  * Note that the first argument is a pointer to the value to search and
  * the second one is a pointer to the object to compare.
@@ -235,14 +260,14 @@ typedef int tommy_compare_func(const void* obj_a, const void* obj_b);
  *     return *(const int*)arg != ((const struct object*)obj)->value;
  * }
  *
- * int value_to_find = 1; 
+ * int value_to_find = 1;
  * struct object* obj = tommy_hashtable_search(&hashtable, compare, &value_to_find, tommy_inthash_u32(value_to_find));
  * if (!obj) {
  *     // not found
  * } else {
  *     // found
  * }
- * \endcode 
+ * \endcode
  *
  */
 typedef int tommy_search_func(const void* arg, const void* obj);
@@ -271,37 +296,54 @@ typedef void tommy_foreach_arg_func(void* arg, void* obj);
 #if defined(_MSC_VER) && !defined(__cplusplus)
 #include <intrin.h>
 #pragma intrinsic(_BitScanReverse)
+#pragma intrinsic(_BitScanForward)
 #endif
 
 /** \internal
  * Integer log2 for constants.
  * You can use it only for exact power of 2 up to 256.
  */
-#define TOMMY_ILOG2(value) ((value) == 256 ? 8 : (value) == 128 ? 7 :(value) == 64 ? 6 : (value) == 32 ? 5 : (value) == 16 ? 4 : (value) == 8 ? 3 : (value) == 4 ? 2 : (value) == 2 ? 1 : 0)
+#define TOMMY_ILOG2(value) ((value) == 256 ? 8 : (value) == 128 ? 7 : (value) == 64 ? 6 : (value) == 32 ? 5 : (value) == 16 ? 4 : (value) == 8 ? 3 : (value) == 4 ? 2 : (value) == 2 ? 1 : 0)
 
 /**
  * Bit scan reverse or integer log2.
  * Return the bit index of the most significant 1 bit.
  *
  * If no bit is set, the result is undefined.
- * To force a return 0 in this case, you can use tommy_ilog2(value | 1).
+ * To force a return 0 in this case, you can use tommy_ilog2_u32(value | 1).
  *
- * Other interesting ways for bitscan can be found at:
- * 
- * Bit Twiddling Hacks 
- * http://graphics.stanford.edu/~seander/bithacks.html 
+ * Other interesting ways for bitscan are at:
+ *
+ * Bit Twiddling Hacks
+ * http://graphics.stanford.edu/~seander/bithacks.html
  *
  * Chess Programming BitScan
  * http://chessprogramming.wikispaces.com/BitScan
  *
  * \param value Value to scan. 0 is not allowed.
- * \return The index of the most significan bit set.
+ * \return The index of the most significant bit set.
  */
-tommy_inline unsigned tommy_ilog2_u32(tommy_uint32_t value)
+tommy_inline tommy_uint_t tommy_ilog2_u32(tommy_uint32_t value)
 {
+#if defined(_MSC_VER)
+	unsigned long count;
+	_BitScanReverse(&count, value);
+	return count;
+#elif defined(__GNUC__)
+	/*
+	 * GCC implements __builtin_clz(x) as "__builtin_clz(x) = bsr(x) ^ 31"
+	 *
+	 * Where "x ^ 31 = 31 - x", but gcc does not optimize "31 - __builtin_clz(x)" to bsr(x),
+	 * but generates 31 - (bsr(x) xor 31).
+	 *
+	 * So we write "__builtin_clz(x) ^ 31" instead of "31 - __builtin_clz(x)",
+	 * to allow the double xor to be optimized out.
+	 */
+	return __builtin_clz(value) ^ 31;
+#else
 	/* Find the log base 2 of an N-bit integer in O(lg(N)) operations with multiply and lookup */
 	/* from http://graphics.stanford.edu/~seander/bithacks.html */
-	static const int TOMMY_DE_BRUIJN_INDEX_ILOG2[32] = {
+	static unsigned char TOMMY_DE_BRUIJN_INDEX_ILOG2[32] = {
 		0, 9, 1, 10, 13, 21, 2, 29, 11, 14, 16, 18, 22, 25, 3, 30,
 		8, 12, 20, 28, 15, 17, 24, 7, 19, 27, 23, 6, 26, 5, 4, 31
 	};
@@ -313,6 +355,7 @@ tommy_inline unsigned tommy_ilog2_u32(tommy_uint32_t value)
 	value |= value >> 16;
 
 	return TOMMY_DE_BRUIJN_INDEX_ILOG2[(tommy_uint32_t)(value * 0x07C4ACDDU) >> 27];
+#endif
 }
 
 /**
@@ -321,18 +364,26 @@ tommy_inline unsigned tommy_ilog2_u32(tommy_uint32_t value)
  *
  * If no bit is set, the result is undefined.
  * \param value Value to scan. 0 is not allowed.
- * \return The index of the least significan bit set.
+ * \return The index of the least significant bit set.
  */
-tommy_inline unsigned tommy_ctz_u32(tommy_uint32_t value)
+tommy_inline tommy_uint_t tommy_ctz_u32(tommy_uint32_t value)
 {
+#if defined(_MSC_VER)
+	unsigned long count;
+	_BitScanForward(&count, value);
+	return count;
+#elif defined(__GNUC__)
+	return __builtin_ctz(value);
+#else
 	/* Count the consecutive zero bits (trailing) on the right with multiply and lookup */
 	/* from http://graphics.stanford.edu/~seander/bithacks.html */
-	static const tommy_uint32_t TOMMY_DE_BRUIJN_INDEX_CTZ[32] = {
+	static const unsigned char TOMMY_DE_BRUIJN_INDEX_CTZ[32] = {
 		0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8,
 		31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9
 	};
 
-	return TOMMY_DE_BRUIJN_INDEX_CTZ[(tommy_uint32_t)(((value & -value) * 0x077CB531U)) >> 27];
+	return TOMMY_DE_BRUIJN_INDEX_CTZ[(tommy_uint32_t)(((value & - value) * 0x077CB531U)) >> 27];
+#endif
 }
 
 /**
