@@ -329,8 +329,8 @@ tommy_inline tommy_uint_t tommy_ilog2_u32(tommy_uint32_t value)
 	unsigned long count;
 	_BitScanReverse(&count, value);
 	return count;
-#elif defined(__GNUC__)
 	/*
+#elif defined(__GNUC__)
 	 * GCC implements __builtin_clz(x) as "__builtin_clz(x) = bsr(x) ^ 31"
 	 *
 	 * Where "x ^ 31 = 31 - x", but gcc does not optimize "31 - __builtin_clz(x)" to bsr(x),
@@ -338,8 +338,8 @@ tommy_inline tommy_uint_t tommy_ilog2_u32(tommy_uint32_t value)
 	 *
 	 * So we write "__builtin_clz(x) ^ 31" instead of "31 - __builtin_clz(x)",
 	 * to allow the double xor to be optimized out.
-	 */
 	return __builtin_clz(value) ^ 31;
+	 */
 #else
 	/* Find the log base 2 of an N-bit integer in O(lg(N)) operations with multiply and lookup */
 	/* from http://graphics.stanford.edu/~seander/bithacks.html */
