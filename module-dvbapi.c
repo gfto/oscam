@@ -1377,15 +1377,16 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 					ca_pid2.pid = demux[demux_id].STREAMpids[num];
 					
 					// removed last of this streampid on ca? -> disable this pid with -1 on this ca
-					if(action == REMOVED_STREAMPID_LASTINDEX && is_ca_used(i, ca_pid2.pid) == CA_IS_CLEAR) idx = -1; 
+					if((action == REMOVED_STREAMPID_LASTINDEX) && (is_ca_used(i, ca_pid2.pid) == CA_IS_CLEAR)) idx = -1; 
 					
 					// removed index of streampid that is used to decode on ca -> get a fresh one
 					if(action == REMOVED_DECODING_STREAMPID_INDEX)
 					{
-						ca_pid2.index |= is_ca_used(i, demux[demux_id].STREAMpids[num]); // get an active index for this pid and enable it on ca device
+						idx = is_ca_used(i, demux[demux_id].STREAMpids[num]); // get an active index for this pid and enable it on ca device
+						enable = 1;
 					}
-					ca_pid2.index = idx;
 
+					ca_pid2.index = idx;
 					cs_log_dbg(D_DVBAPI, "Demuxer %d %s stream %d pid=0x%04x index=%d on ca%d", demux_id,
 						(enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i);
 
@@ -2529,16 +2530,18 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	
 	cs_log_dump_dbg(D_DVBAPI, buffer, length, "capmt:");
 	cs_log_dbg(D_DVBAPI, "Receiver sends PMT command %d for channel %04X", ca_pmt_list_management, program_number);
-	if((ca_pmt_list_management == LIST_FIRST || ca_pmt_list_management == LIST_ONLY) && (pmt_stopmarking == 0 && cfg.dvbapi_pmtmode == 6))
+	if((ca_pmt_list_management == LIST_FIRST || ca_pmt_list_management == LIST_ONLY))
 	{
 		for(i = 0; i < MAX_DEMUX; i++)
 		{
+			if(cfg.dvbapi_pmtmode == 6 && pmt_stopmarking == 1) { continue; } // already marked -> skip!
 			if(demux[i].program_number == 0) { continue; }  // skip empty demuxers
+			if(demux[i].ECMpidcount != 0 && demux[i].pidindex != -1 ) { demux[i].running = 1; }  // running channel changes from scrambled to fta
 			if(demux[i].socket_fd != connfd) { continue; }  // skip demuxers belonging to other ca pmt connection
 			demux[i].stopdescramble = 1; // Mark for deletion if not used again by following pmt objects.
-			cs_log_dbg(D_DVBAPI, "Marked demuxer %d/%d to stop decoding", i, MAX_DEMUX);
-			pmt_stopmarking = 1;
+			cs_log_dbg(D_DVBAPI, "Marked demuxer %d/%d (srvid = %04X fd = %d) to stop decoding", i, MAX_DEMUX, demux[i].program_number, connfd);
 		}
+		pmt_stopmarking = 1;
 	}
 	getDemuxOptions(i, buffer, &ca_mask, &demux_index, &adapter_index, &pmtpid);
 	cs_log_dbg(D_DVBAPI,"Receiver wants to demux srvid %04X on adapter %04X camask %04X index %04X pmtpid %04X",
@@ -2575,8 +2578,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 			openxcas_set_sid(program_number);
 
-			demux[i].stopdescramble = 0; // dont stop current demuxer!
-			if(demux[demux_id].ECMpidcount != 0 && demux[demux_id].pidindex != -1 ) { demux[demux_id].running = 1; }  // running channel changes from scrambled to fta		
+			demux[i].stopdescramble = 0; // dont stop current demuxer!		
 			break; // no need to explore other demuxers since we have a found!
 		}
 	}
@@ -4163,37 +4165,58 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid)
 		{
 			int32_t idx = dvbapi_ca_setpid(demux_id, pid);  // prepare ca
 			if (idx == -1) return; // return on no index!
-			ca_descr.index = idx;
-			ca_descr.parity = n;
-			cs_log_dbg(D_DVBAPI, "Demuxer %d writing %s part (%s) of controlword, replacing expired (%s)", demux_id, (n == 1 ? "even" : "odd"),
-						  newcw, lastcw);
-			memcpy(demux[demux_id].lastcw[n], cw + (n * 8), 8);
-			memcpy(ca_descr.cw, cw + (n * 8), 8);
 
 #ifdef WITH_COOLAPI
+			ca_descr.index = idx;
+			ca_descr.parity = n;
+			memcpy(demux[demux_id].lastcw[n], cw + (n * 8), 8);
+			memcpy(ca_descr.cw, cw + (n * 8), 8);
 			cs_log_dbg(D_DVBAPI, "Demuxer %d write cw%d index: %d (ca_mask %d)", demux_id, n, ca_descr.index, demux[demux_id].ca_mask);
 			coolapi_write_cw(demux[demux_id].ca_mask, demux[demux_id].STREAMpids, demux[demux_id].STREAMpidcount, &ca_descr);
 #else
-			int32_t i;
+			int32_t i,j, write_cw = 0;
 			for(i = 0; i < MAX_DEMUX; i++)
 			{
-				if(demux[demux_id].ca_mask & (1 << i))
+				if(!(demux[demux_id].ca_mask & (1 << i))) continue; // ca not in use by this demuxer!
+				
+				for(j = 0; j < demux[demux_id].STREAMpidcount; j++)
 				{
-					cs_log_dbg(D_DVBAPI, "Demuxer %d write cw%d index: %d (ca%d)", demux_id, n, ca_descr.index, i);
-
-					if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-						dvbapi_net_send(DVBAPI_CA_SET_DESCR, demux[demux_id].socket_fd, demux_id, -1 /*unused*/, (unsigned char *) &ca_descr);
-					else
+					if(!demux[demux_id].ECMpids[pid].streams || ((demux[demux_id].ECMpids[pid].streams & (1 << j)) == (uint) (1 << j)))
 					{
-						if(ca_fd[i] <= 0)
+						int32_t usedidx = is_ca_used(i, demux[demux_id].STREAMpids[j]);
+						if(idx != usedidx)
 						{
-							ca_fd[i] = dvbapi_open_device(1, i, demux[demux_id].adapter_index);
-							if(ca_fd[i] <= 0)
-								{ continue; } // proceed next stream
+							cs_log_dbg(D_DVBAPI,"Demuxer %d ca%d is using index %d for streampid %04X -> skip!", demux_id, i, usedidx, demux[demux_id].STREAMpids[j]);
+							continue; // if not used for descrambling -> skip!
 						}
-						if (dvbapi_ioctl(ca_fd[i], CA_SET_DESCR, &ca_descr) < 0) {
-							cs_log("ERROR: ioctl(CA_SET_DESCR): %s", strerror(errno));
+						else
+						{
+							cs_log_dbg(D_DVBAPI,"Demuxer %d ca%d is using index %d for streampid %04X -> write!", demux_id, i, usedidx, demux[demux_id].STREAMpids[j]);
+							write_cw = 1;
 						}
+					}
+				}
+				if(!write_cw) { continue; } // no need to write the cw since this ca isnt using it!
+				
+				ca_descr.index = idx;
+				ca_descr.parity = n;
+				memcpy(demux[demux_id].lastcw[n], cw + (n * 8), 8);
+				memcpy(ca_descr.cw, cw + (n * 8), 8);
+				cs_log_dbg(D_DVBAPI, "Demuxer %d writing %s part (%s) of controlword, replacing expired (%s)", demux_id, (n == 1 ? "even" : "odd"), newcw, lastcw);
+				cs_log_dbg(D_DVBAPI, "Demuxer %d write cw%d index: %d (ca%d)", demux_id, n, ca_descr.index, i);
+
+				if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
+					dvbapi_net_send(DVBAPI_CA_SET_DESCR, demux[demux_id].socket_fd, demux_id, -1 /*unused*/, (unsigned char *) &ca_descr);
+				else
+				{
+					if(ca_fd[i] <= 0)
+					{
+						ca_fd[i] = dvbapi_open_device(1, i, demux[demux_id].adapter_index);
+						if(ca_fd[i] <= 0) { continue; } 
+					}
+					if (dvbapi_ioctl(ca_fd[i], CA_SET_DESCR, &ca_descr) < 0)
+					{
+						cs_log("ERROR: ioctl(CA_SET_DESCR): %s", strerror(errno));
 					}
 				}
 			}
@@ -4999,8 +5022,13 @@ int8_t is_ca_used(uint8_t cadevice, int32_t pid)
 		{
 			if(listitem->cadevice != cadevice) continue;
 			if(pid && listitem->streampid != pid) continue;
-			uint32_t i = 0, newindex = 0;
-			while(!newindex)
+			uint32_t i = 0;
+			int32_t newindex = -1;
+			if(listitem->caindex != 0xFFFF)
+			{
+				newindex = listitem->caindex;
+			}
+			while(newindex == -1)
 			{
 				if((listitem->activeindexers&(1 << i)) == (uint)(1 << i))
 				{
