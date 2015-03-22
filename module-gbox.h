@@ -66,6 +66,9 @@
 #define GBOX_DELETE_WITH_ID	1
 #define GBOX_DELETE_WITH_TYPE	2
 
+#define GBOX_PEER_OFFLINE	0
+#define GBOX_PEER_ONLINE	1
+
 struct gbox_rbc_thread_args 
 {
     struct s_client *cli;
