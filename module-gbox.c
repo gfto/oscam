@@ -165,7 +165,9 @@ void gbox_write_peer_onl(void)
 
 void gbox_write_version(void)
 {
-	FILE *fhandle = fopen(get_gbox_tmp_fname(FILE_GBOX_VERSION), "w");
+	char *fext= FILE_GBOX_VERSION; 
+	char *fname = get_gbox_tmp_fname(fext); 
+	FILE *fhandle = fopen(fname, "w");
 	if(!fhandle)
 	{
 		cs_log("Couldn't open %s: %s", get_gbox_tmp_fname(FILE_GBOX_VERSION), strerror(errno));
@@ -230,15 +232,23 @@ struct s_client *get_gbox_proxy(uint16_t gbox_id)
 	return found;
 }
 
+static int8_t gbox_peer_online(struct gbox_peer *peer, uint8_t online)
+{
+	if (!peer) { return -1; }
+
+	peer->online = online;
+	gbox_write_peer_onl();
+	return 0;	
+}
+
 static int8_t gbox_reinit_peer(struct gbox_peer *peer)
 {
 	if (!peer) { return -1; }
 
-	peer->online		= 0;
 	peer->ecm_idx		= 0;
 	peer->next_hello	= 0;
 	gbox_delete_cards(GBOX_DELETE_FROM_PEER, peer->gbox.id);
-	gbox_write_peer_onl();
+	gbox_peer_online(peer, 0);
 	
 	return 0;
 }
@@ -481,11 +491,10 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 			{
 				memset(&tmpbuf[0], 0, 7);		
 				if (data[11] == 0x80 && !memcmp(data+12,tmpbuf,7))
-					{
-						cs_log("-> HelloL in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, peer->total_cards, peer->filtered_cards);
-						peer->online = 1;
-						gbox_write_peer_onl();
-					}
+				{
+					cs_log("-> HelloL in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, peer->total_cards, peer->filtered_cards);
+					gbox_peer_online(peer, 1);
+				}
 				else
 					{ cs_log("-> HelloS in %d packets from %s (%s:%d) V2.%02X with %d cards filtered to %d cards", (data[0x0B] & 0x0f)+1, cli->reader->label, cs_inet_ntoa(cli->ip), cli->reader->r_port, peer->gbox.minor_version, peer->total_cards, peer->filtered_cards); }			
 				gbox_send_hello(cli, GBOX_STAT_HELLOR);
@@ -497,9 +506,8 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 			}
 			if(!peer->online)
 			{
-				peer->online = 1;
 				gbox_send_hello(cli, GBOX_STAT_HELLOS);
-				gbox_write_peer_onl();				
+				gbox_peer_online(peer, 1);
 			}				
 			cli->reader->tcp_connected = 2; //we have card
 			if(!peer->filtered_cards)
@@ -508,7 +516,7 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 				{ cli->reader->card_status = CARD_INSERTED; }			
 		}		
 		peer->next_hello = 0;
-		gbox_write_cards_info();			
+		gbox_write_share_cards_info();
 		cli->last = time((time_t *)0); //hello is activity on proxy
 	}
 	else { peer->next_hello++; }
@@ -623,6 +631,7 @@ int32_t gbox_cmd_switch(struct s_client *proxy, uchar *data, int32_t n)
 	switch(cmd)
 	{
 	case MSG_BOXINFO:
+		cs_log("-> BOXINFO from %s",username(proxy));	
 		gbox_send_hello(proxy, GBOX_STAT_HELLOR);
 		break;
 	case MSG_GOODBYE:
@@ -705,11 +714,6 @@ int32_t gbox_cmd_switch(struct s_client *proxy, uchar *data, int32_t n)
 	return 0;
 }
 
-static uint32_t gbox_get_pw(uchar *buf)
-{
-	return buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
-}
-
 //returns -1 in case of error, 1 if authentication was performed, 0 else
 static int8_t gbox_check_header(struct s_client *cli, struct s_client *proxy, uchar *data, int32_t l)
 {
@@ -730,7 +734,7 @@ static int8_t gbox_check_header(struct s_client *cli, struct s_client *proxy, uc
 
 	cs_log_dump_dbg(D_READER, data, n, "-> decrypted data (%d bytes):", n);
 	//verify my pass received
-	my_received_pw = gbox_get_pw(&data[2]);
+	my_received_pw = b2i(4, data + 2);
 	if (my_received_pw == local_gbox.password)
 	{
 		cs_log_dbg(D_READER, "-> data, peer : %04x   data: %s", cli->gbox_peer_id, cs_hexdump(0, data, l, tmp, sizeof(tmp)));
@@ -739,7 +743,7 @@ static int8_t gbox_check_header(struct s_client *cli, struct s_client *proxy, uc
 		{
 			if (cli->gbox_peer_id == NO_GBOX_ID)
 			{
-				if (gbox_auth_client(cli, gbox_get_pw(&data[6])) < 0)
+				if (gbox_auth_client(cli, b2i(4, data + 6)) < 0)
 				{ 
 					cs_log_dbg(D_READER, "Authentication failed. Please check user in oscam.server and oscam.user");
 					return -1;
@@ -750,7 +754,7 @@ static int8_t gbox_check_header(struct s_client *cli, struct s_client *proxy, uc
 				peer = proxy->gbox;
 			}
 			if (!peer) { return -1; }
-			peer_received_pw = gbox_get_pw(&data[6]);
+			peer_received_pw = b2i(4, data + 6);
 			if (peer_received_pw != peer->gbox.password)
 			{
 				cs_log("gbox peer: %04X sends wrong password", peer->gbox.id);
@@ -881,20 +885,7 @@ static void gbox_send_checkcode(struct s_client *cli)
 
 	gbox_send(cli, outbuf, 17);
 }
-/*
-static void gbox_send_boxinfo(struct s_client *cli)
-{
-	struct gbox_peer *peer = cli->gbox;
-	uchar outbuf[256];
-	int32_t hostname_len = strlen(cfg.gbox_hostname);
 
-	gbox_message_header(outbuf, MSG_BOXINFO, peer);
-	outbuf[0xA] = local_gbox.minor_version;
-	outbuf[0xB] = local_gbox.type;
-	memcpy(&outbuf[0xC], cfg.gbox_hostname, hostname_len);
-	gbox_send(cli, outbuf, hostname_len + 0xC);
-}
-*/
 static int32_t gbox_recv(struct s_client *cli, uchar *buf, int32_t l)
 {
 	uchar data[RECEIVE_BUFFER_SIZE];
@@ -1100,7 +1091,8 @@ static void gbox_local_cards(struct s_reader *reader, TUNTAB *ttab)
 				cs_log_dbg(D_READER,"add proxy card:  slot %d %04lX:%06lX",slot, cfg.gbox_proxy_card[i] >> 16, cfg.gbox_proxy_card[i] & 0xFFFF);
 			}	
 		}
-	}  // end add proxy reader cards 
+	}  // end add proxy reader cards
+	gbox_write_local_cards_info();
 } //end add local gbox cards
 
 static uint32_t gbox_get_pending_time(ECM_REQUEST *er, uint16_t peer_id, uint8_t slot)
@@ -1576,7 +1568,7 @@ static void gbox_s_idle(struct s_client *cl)
 	cs_log_dbg(D_READER, "client idle prevented: %s", username(cl));
 	cl->last = time((time_t *)0);
 }
-/*
+
 static int8_t gbox_send_peer_good_night(struct s_client *proxy)
 {
 	uchar outbuf[64];
@@ -1607,15 +1599,18 @@ static int8_t gbox_send_peer_good_night(struct s_client *proxy)
 	return 0;
 }
 
-void gbox_cleanup(struct s_client *cl)
+void gbox_send_good_night(void)
 {
- Commented because the remove doubled clients causes trouble
-	NEEDFIX: How to cleanup when oscam ends 
-	gbox_free_cardlist();
-	if(cl && cl->gbox && cl->typ == 'p')
-		{ gbox_send_peer_good_night(cl); }
-}
-
+	struct s_client *cli;
+	cs_readlock(&clientlist_lock);
+	for(cli = first_client; cli; cli = cli->next)
+	{
+		if(cli->gbox && cli->typ == 'p')
+			{ gbox_send_peer_good_night(cli); }
+	}
+	cs_readunlock(&clientlist_lock);
+}                                                    
+/*
 void gbox_send_goodbye(uint16_t boxid) //to implement later
 {
 	uchar outbuf[15];
@@ -1661,6 +1656,19 @@ void gbox_send_HERE_query (uint16_t boxid)	//gbox.net send this cmd
 	}
 	cs_readunlock(&clientlist_lock);
 }
+//This is most likely the same as MSG_HERE. Don't know what would be the difference
+static void gbox_send_boxinfo(struct s_client *cli)
+{
+	struct gbox_peer *peer = cli->gbox;
+	uchar outbuf[256];
+	int32_t hostname_len = strlen(cfg.gbox_hostname);
+
+	gbox_message_header(outbuf, MSG_BOXINFO, peer);
+	outbuf[0xA] = local_gbox.minor_version;
+	outbuf[0xB] = local_gbox.type;
+	memcpy(&outbuf[0xC], cfg.gbox_hostname, hostname_len);
+	gbox_send(cli, outbuf, hostname_len + 0xC);
+}
 */
 void module_gbox(struct s_module *ph)
 {
@@ -1683,7 +1691,6 @@ void module_gbox(struct s_module *ph)
 	ph->send_dcw = gbox_send_dcw;
 
 	ph->recv = gbox_recv;
-	/*ph->cleanup = gbox_cleanup;*/
 	ph->c_init = gbox_client_init;
 	ph->c_recv_chk = gbox_recv_chk;
 	ph->c_send_ecm = gbox_send_ecm;

@@ -1688,6 +1688,7 @@ int32_t main(int32_t argc, char *argv[])
 	save_emmstat_to_file();
 	
 	cccam_done_share();
+	gbox_send_good_night(); 
 
 	kill_all_clients();
 	kill_all_readers();

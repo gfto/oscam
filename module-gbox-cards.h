@@ -2,7 +2,8 @@
 #define MODULE_GBOX_CARDS_H_
 
 #ifdef MODULE_GBOX
-void gbox_write_cards_info(void);
+void gbox_write_share_cards_info(void);
+void gbox_write_local_cards_info(void);
 void gbox_write_stats(void);
 void init_gbox_cards(void);
 void gbox_add_card(uint16_t id_peer, uint32_t caprovid, uint8_t slot, uint8_t level, uint8_t distance, uint8_t type, struct gbox_peer *origin_peer);

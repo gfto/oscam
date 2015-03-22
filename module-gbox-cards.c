@@ -17,22 +17,12 @@ LLIST *gbox_backup_cards; //NEEDFIX: this list has to be cleaned from time to ti
 CS_MUTEX_LOCK gbox_cards_lock;
 uchar checkcode[7];
 
-void gbox_write_cards_info(void)
+void gbox_write_share_cards_info(void)
 {
-        uint16_t card_count_local = 0;
         uint16_t card_count_shared = 0;
         uint16_t card_count_expired = 0;        
-        char *fext = FILE_LOCAL_CARDS_INFO;
-        char *fname = get_gbox_tmp_fname(fext); 
-        FILE *fhandle_local;
-        fhandle_local = fopen(fname, "w");
-        if(!fhandle_local)
-        {
-                cs_log("Couldn't open %s: %s", fname, strerror(errno));
-                return;
-        }
-        fext = FILE_SHARED_CARDS_INFO;
-        fname = get_gbox_tmp_fname(fext);
+        char *fext = FILE_SHARED_CARDS_INFO;
+        char *fname = get_gbox_tmp_fname(fext);
         FILE *fhandle_shared;
         fhandle_shared = fopen(fname, "w");
         if(!fhandle_shared)
@@ -42,46 +32,19 @@ void gbox_write_cards_info(void)
         }
 
         struct gbox_card *card;
-
         cs_readlock(&gbox_cards_lock);
         LL_ITER it = ll_iter_create(gbox_cards);
         while((card = ll_iter_next(&it)))
         {
-                switch (card->type)
+                if (card->type == GBOX_CARD_TYPE_GBOX)
                 {
-                case GBOX_CARD_TYPE_GBOX:
                         fprintf(fhandle_shared, "CardID %2d at %s Card %08X Sl:%2d Lev:%1d dist:%1d id:%04X\n",
                                 card_count_shared, card->origin_peer->hostname, card->caprovid,
                                 card->id.slot, card->lvl, card->dist, card->id.peer);
                         card_count_shared++;
-                        break;
-                case GBOX_CARD_TYPE_LOCAL:
-                        fprintf(fhandle_local, "CardID:%2d %s %08X Sl:%2d id:%04X\n",
-                                card_count_local, "Local_Card", card->caprovid, card->id.slot, card->id.peer);
-                        card_count_local++;
-                        break;
-                case GBOX_CARD_TYPE_BETUN:
-                        fprintf(fhandle_local, "CardID:%2d %s %08X Sl:%2d id:%04X\n",
-                                card_count_local, "Betun_Card", card->caprovid, card->id.slot, card->id.peer);
-                        card_count_local++;
-                        break;
-                case GBOX_CARD_TYPE_CCCAM:
-                        fprintf(fhandle_local, "CardID:%2d %s %08X Sl:%2d id:%04X\n",
-                                card_count_local, "CCcam_Card", card->caprovid, card->id.slot, card->id.peer);
-                        card_count_local++;
-                        break;
-                case GBOX_CARD_TYPE_PROXY:
-                        fprintf(fhandle_local, "CardID:%2d %s %08X Sl:%2d id:%04X\n",
-                                card_count_local, "Proxy_Card", card->caprovid, card->id.slot, card->id.peer);
-                        card_count_local++;
-                        break;
-                default:
-                        cs_log("Invalid card type: %d in gbox_write_cards_info", card->type);
-                        break;
                 }
         }
         cs_readunlock(&gbox_cards_lock);
-        fclose(fhandle_local);
         fclose(fhandle_shared);
 
         fext = FILE_BACKUP_CARDS_INFO;
@@ -110,21 +73,73 @@ void gbox_write_cards_info(void)
         return;
 }
 
+void gbox_write_local_cards_info(void)
+{
+        uint16_t card_count_local = 0;
+        char *fext = FILE_LOCAL_CARDS_INFO;
+        char *fname = get_gbox_tmp_fname(fext); 
+        FILE *fhandle_local;
+        fhandle_local = fopen(fname, "w");
+        if(!fhandle_local)
+        {
+                cs_log("Couldn't open %s: %s", fname, strerror(errno));
+                return;
+        }
+
+        struct gbox_card *card;
+        cs_readlock(&gbox_cards_lock);
+        LL_ITER it = ll_iter_create(gbox_cards);
+        while((card = ll_iter_next(&it)))
+        {
+                switch (card->type)
+                {
+                case GBOX_CARD_TYPE_GBOX:
+                        break;
+                case GBOX_CARD_TYPE_LOCAL:
+                        fprintf(fhandle_local, "CardID:%2d %s %08X Sl:%2d id:%04X\n",
+                                card_count_local, "Local_Card", card->caprovid, card->id.slot, card->id.peer);
+                        card_count_local++;
+                        break;
+                case GBOX_CARD_TYPE_BETUN:
+                        fprintf(fhandle_local, "CardID:%2d %s %08X Sl:%2d id:%04X\n",
+                                card_count_local, "Betun_Card", card->caprovid, card->id.slot, card->id.peer);
+                        card_count_local++;
+                        break;
+                case GBOX_CARD_TYPE_CCCAM:
+                        fprintf(fhandle_local, "CardID:%2d %s %08X Sl:%2d id:%04X\n",
+                                card_count_local, "CCcam_Card", card->caprovid, card->id.slot, card->id.peer);
+                        card_count_local++;
+                        break;
+                case GBOX_CARD_TYPE_PROXY:
+                        fprintf(fhandle_local, "CardID:%2d %s %08X Sl:%2d id:%04X\n",
+                                card_count_local, "Proxy_Card", card->caprovid, card->id.slot, card->id.peer);
+                        card_count_local++;
+                        break;
+                default:
+                        cs_log("Invalid card type: %d in gbox_write_cards_info", card->type);
+                        break;
+                }
+        }
+        cs_readunlock(&gbox_cards_lock);
+        fclose(fhandle_local);
+}
+
 void gbox_write_stats(void)
 {
         int32_t card_count = 0;
         struct gbox_good_srvid *srvid_good = NULL;
         struct gbox_bad_srvid *srvid_bad = NULL;
+        char *fext = FILE_STATS;
+        char *fname = get_gbox_tmp_fname(fext);
         FILE *fhandle;
-        fhandle = fopen(get_gbox_tmp_fname(FILE_STATS), "w");
+        fhandle = fopen(fname, "w");
         if(!fhandle)
         {
-                cs_log("Couldn't open %s: %s", get_gbox_tmp_fname(FILE_STATS), strerror(errno));
+                cs_log("Couldn't open %s: %s", fname, strerror(errno));
                 return;
         }
 
         struct gbox_card *card;
-
         cs_readlock(&gbox_cards_lock);
         LL_ITER it = ll_iter_create(gbox_cards);
         while((card = ll_iter_next(&it)))
@@ -187,27 +202,28 @@ static void gbox_free_card(struct gbox_card *card)
 
 static int8_t closer_path_known(uint32_t caprovid, uint16_t id_peer, uint8_t slot, uint8_t distance)
 {
+        uint8_t ret = 0;
+        struct gbox_card *card;
         cs_readlock(&gbox_cards_lock);        
         LL_ITER it = ll_iter_create(gbox_cards);
-        struct gbox_card *card;
         while((card = ll_iter_next(&it)))
         {
                 if (card->caprovid == caprovid && card->id.peer == id_peer && card->id.slot == slot && card->dist <= distance)
                 {
-                        cs_readunlock(&gbox_cards_lock);                                
-                        return 1;                                
+                        ret = 1;
+                        break;
                 }                
         }
         cs_readunlock(&gbox_cards_lock);        
-        return 0;
+        return ret;
 }
 
 static int8_t got_from_backup(uint32_t caprovid, uint16_t id_peer, uint8_t slot, struct gbox_peer *origin_peer)
 {
         uint8_t ret = 0;
+        struct gbox_card *card;
         cs_writelock(&gbox_cards_lock);        
         LL_ITER it = ll_iter_create(gbox_backup_cards);
-        struct gbox_card *card;
         while((card = ll_iter_next(&it)))
         {
                 if (card->caprovid == caprovid && card->id.peer == id_peer && card->id.slot == slot)
@@ -221,8 +237,7 @@ static int8_t got_from_backup(uint32_t caprovid, uint16_t id_peer, uint8_t slot,
                         break;
                 }                
         }
-        cs_writeunlock(&gbox_cards_lock);        
-        
+        cs_writeunlock(&gbox_cards_lock);                
         return ret;
 }
 

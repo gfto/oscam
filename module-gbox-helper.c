@@ -54,6 +54,7 @@ uint32_t gbox_get_caprovid(uint16_t caid, uint32_t prid)
                 // N@gr@
         case 0x18:
                 caprovid = (caid >> 8) << 24 | (caid & 0xFF) << 16;
+                break;
         default:
                 caprovid = (caid >> 8) << 24 | (caid & 0xFF) << 16 |
                         (prid & 0xFFFF);
