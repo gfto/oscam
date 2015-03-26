@@ -82,7 +82,7 @@ void flush_read_fd(int32_t demux_index, int32_t num, int fd)
 		FD_SET(fd,&rd);
 		while(select(fd+1,&rd,NULL,NULL,&t) > 0)
 		{
-			(void) read(fd,buff,100);
+			 if (read(fd,buff,100)){;}
 		}
 	}
 }
