@@ -1167,7 +1167,6 @@ void dvbapi_add_ecmpid_int(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uin
 	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].tries = 0xFE;
 	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].streams = 0; // reset streams!
 	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].irdeto_curindex = 0xFE; // reset
-	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].irdeto_curindex = 0xFE; // reset
 	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].irdeto_maxindex = 0; // reset
 	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].irdeto_cycle = 0xFE; // reset
 	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].table = 0;
@@ -3235,7 +3234,6 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 	{
 		curpid = &demux[demux_id].ECMpids[pid];
 	}	
-	
 	uint32_t chid = 0x10000;
 	uint32_t ecmlen = (b2i(2, buffer + 1)&0xFFF)+3;
 	ECM_REQUEST *er;
@@ -3332,7 +3330,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		{
 
 			if(curpid->irdeto_curindex != buffer[4])   // old style wrong irdeto index
-			{
+			{	
 				if(curpid->irdeto_curindex == 0xFE)  // check if this ecmfilter just started up
 				{
 					curpid->irdeto_curindex = buffer[4]; // on startup set the current index to the irdeto index of the ecm
@@ -3365,8 +3363,8 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		{
 			if(caid_is_irdeto(curpid->CAID))
 			{
-
-				if((curpid->irdeto_cycle < 0xFE) && curpid->irdeto_cycle == buffer[4])   // if same: we cycled all indexes but no luck!
+			
+				if((curpid->irdeto_cycle < 0xFE) && (curpid->irdeto_cycle == curpid->irdeto_curindex))   // if same: we cycled all indexes but no luck!
 				{
 					struct s_dvbapi_priority *forceentry = dvbapi_check_prio_match(demux_id, pid, 'p');
 					if(!forceentry || !forceentry->force)   // forced pid? keep trying the forced ecmpid, no force kill ecm filter
@@ -3382,9 +3380,9 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 						return;
 					}
 				}
-				if(curpid->irdeto_cycle == 0xFE) { curpid->irdeto_cycle = buffer[4]; }  // register irdeto index of current ecm
-
+				
 				curpid->irdeto_curindex++; // set check on next index
+				if(curpid->irdeto_cycle == 0xFE) curpid->irdeto_cycle = buffer[4]; // on startup set to current irdeto index
 				if(curpid->irdeto_curindex > curpid->irdeto_maxindex) { curpid->irdeto_curindex = 0; }  // check if we reached max irdeto index, if so reset to 0
 
 				curpid->table = 0;
@@ -3462,12 +3460,13 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 			if(p->type == 'i' && (p->chid < 0x10000 && p->chid == chid))    // found a ignore chid match with current ecm -> ignoring this irdeto index
 			{
 				curpid->irdeto_curindex++;
+				if(curpid->irdeto_cycle == 0xFE) curpid->irdeto_cycle = buffer[4]; // on startup set to current irdeto index
 				if(curpid->irdeto_curindex > curpid->irdeto_maxindex)    // check if curindex is over the max
 				{
 					curpid->irdeto_curindex = 0;
 				}
 				curpid->table = 0;
-				if(caid_is_irdeto(curpid->CAID))   // irdeto: wait for the correct index
+				if(caid_is_irdeto(curpid->CAID) && (curpid->irdeto_cycle != curpid->irdeto_curindex))   // irdeto: wait for the correct index + check if we cycled all
 				{
 					dvbapi_set_section_filter(demux_id, er, filter_num); // set ecm filter to odd + even since this chid has to be ignored!
 				}
@@ -3485,9 +3484,12 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 				return;
 			}
 		}
-		if (er){
+		
+		if(er)
+		{
 			curpid->table = er->ecm[0];
 		}
+		
 		request_cw(dvbapi_client, er, demux_id, 1); // register this ecm for delayed ecm response check
 		return; // end of ecm filterhandling!
 	}
@@ -4332,7 +4334,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				int32_t t, o, ecmcounter = 0;
 				int32_t oldpidindex = demux[i].pidindex;
 				demux[i].pidindex = j; // set current ecmpid as the new pid to descramble
-				demux[i].ECMpids[j].index = demux[i].ECMpids[oldpidindex].index; // swap index with lower status pid that was descrambling
+				if(oldpidindex != -1) demux[i].ECMpids[j].index = demux[i].ECMpids[oldpidindex].index; // swap index with lower status pid that was descrambling
 				for(t = 0; t < demux[i].ECMpidcount; t++)  //check this pid with controlword FOUND for higher status:
 				{
 					if(t != j && demux[i].ECMpids[j].status >= demux[i].ECMpids[t].status)
@@ -4728,6 +4730,7 @@ int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t
 {
 
 	int32_t ret = -1;
+	flush_read_fd(demux_index, num, fd); // flush filter input buffer to prevent fetching stale data!
 	switch(selected_api)
 	{
 	case DVBAPI_3:
