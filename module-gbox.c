@@ -261,6 +261,127 @@ static int8_t gbox_reinit_proxy(struct s_client *proxy)
 	return 0;
 }
 
+void gbox_send(struct s_client *cli, uchar *buf, int32_t l)
+{
+	struct gbox_peer *peer = cli->gbox;
+
+	cs_log_dump_dbg(D_READER, buf, l, "<- decrypted data (%d bytes):", l);
+
+	hostname2ip(cli->reader->device, &SIN_GET_ADDR(cli->udp_sa));
+	SIN_GET_FAMILY(cli->udp_sa) = AF_INET;
+	SIN_GET_PORT(cli->udp_sa) = htons((uint16_t)cli->reader->r_port);
+
+	gbox_encrypt(buf, l, peer->gbox.password);
+	sendto(cli->udp_fd, buf, l, 0, (struct sockaddr *)&cli->udp_sa, cli->udp_sa_len);
+	cs_log_dump_dbg(D_READER, buf, l, "<- encrypted data (%d bytes):", l);
+}
+
+void gbox_send_hello_packet(struct s_client *cli, int8_t number, uchar *outbuf, uchar *ptr, int32_t nbcards, uint8_t hello_stat)
+{
+	struct gbox_peer *peer = cli->gbox;
+	int32_t hostname_len = strlen(cfg.gbox_hostname);
+	int32_t len;
+	gbox_message_header(outbuf, MSG_HELLO, peer->gbox.password, local_gbox.password);
+	// initial HELLO = 0, subsequent = 1
+	if(hello_stat > GBOX_STAT_HELLOS)
+		{ outbuf[10] = 1; }
+	else
+		{ outbuf[10] = 0; }
+	outbuf[11] = number;    // 0x80 (if last packet) else 0x00 | packet number
+
+	if((number & 0x0F) == 0)
+	{
+		if(hello_stat != GBOX_STAT_HELLOL)
+			{ memcpy(++ptr, gbox_get_checkcode(), 7); }
+		else	
+			{ memset(++ptr, 0, 7); }		
+		ptr += 7;
+		*ptr = local_gbox.minor_version;
+		*(++ptr) = local_gbox.cpu_api;
+		memcpy(++ptr, cfg.gbox_hostname, hostname_len);
+		ptr += hostname_len;
+		*ptr = hostname_len;
+	}
+	len = ptr - outbuf + 1;
+	switch(hello_stat)
+	{
+	case GBOX_STAT_HELLOL:
+		cs_log("<- HelloL to %s", cli->reader->label);
+		break;
+	case GBOX_STAT_HELLOS:
+		cs_log("<- HelloS total cards  %d to %s", nbcards, cli->reader->label);
+		break;
+	case GBOX_STAT_HELLOR:
+		cs_log("<- HelloR total cards  %d to %s", nbcards, cli->reader->label);
+		break;
+	default:
+		cs_log("<- hello total cards  %d to %s", nbcards, cli->reader->label);
+		break;
+	}
+	cs_log_dump_dbg(D_READER, outbuf, len, "<- hello, (len=%d):", len);
+
+	gbox_compress(outbuf, len, &len);
+
+	gbox_send(cli, outbuf, len);
+}
+
+void gbox_send_hello(struct s_client *proxy, uint8_t hello_stat)
+{
+        if (!proxy)
+        {
+                cs_log("Invalid call to gbox_send_hello with proxy");
+                return;
+        }
+        uint16_t nbcards = 0;
+        uint8_t packet;
+        uchar buf[2048];
+        packet = 0;
+        uchar *ptr = buf + 11;
+        if(gbox_count_cards() != 0 && hello_stat > GBOX_STAT_HELLOL)
+        {
+                struct gbox_peer *peer = proxy->gbox;
+                if (!peer || !peer->my_user || !peer->my_user->account)
+                {
+                        cs_log("Invalid call to gbox_send_hello with peer");
+                        return;
+                }
+                memset(buf, 0, sizeof(buf));
+                struct gbox_card *card;
+                GBOX_CARDS_ITER *gci = gbox_cards_iter_create();
+                while((card = gbox_cards_iter_next(gci)))
+                {
+                        //send to user only cards which matching CAID from account and lvl > 0
+                        //do not send peer cards back
+                        if(chk_ctab(gbox_get_caid(card->caprovid), &peer->my_user->account->ctab) && (card->lvl > 0) &&
+                                (!card->origin_peer || (card->origin_peer && card->origin_peer->gbox.id != peer->gbox.id)))
+                        {
+                                *(++ptr) = card->caprovid >> 24;
+                                *(++ptr) = card->caprovid >> 16;
+                                *(++ptr) = card->caprovid >> 8;
+                                *(++ptr) = card->caprovid & 0xff;
+                                *(++ptr) = 1;       //note: original gbx is more efficient and sends all cards of one caid as package
+                                *(++ptr) = card->id.slot;
+                                *(++ptr) = ((card->lvl - 1) << 4) + card->dist + 1;
+                                *(++ptr) = card->id.peer >> 8;
+                                *(++ptr) = card->id.peer & 0xff;
+                                nbcards++;
+                                if(nbcards == 100)    //check if 100 is good or we need more sophisticated algorithm
+                                {
+                                        gbox_send_hello_packet(proxy, packet, buf, ptr, nbcards, hello_stat);
+                                        packet++;
+                                        nbcards = 0;
+                                        ptr = buf + 11;
+                                        memset(buf, 0, sizeof(buf));
+                                }
+                        }
+                }
+                gbox_cards_iter_destroy(gci);
+        } // end if local card exists
+        //last packet has bit 0x80 set
+        gbox_send_hello_packet(proxy, 0x80 | packet, buf, ptr, nbcards, hello_stat);
+        return;
+}
+
 void gbox_reconnect_client(uint16_t gbox_id)
 {
 	struct s_client *cl;
@@ -1007,127 +1128,6 @@ static int8_t gbox_check_header(struct s_client *cli, struct s_client *proxy, uc
 	if(!peer) { return -1; }
 
 	return authentication_done;
-}
-
-void gbox_send(struct s_client *cli, uchar *buf, int32_t l)
-{
-	struct gbox_peer *peer = cli->gbox;
-
-	cs_log_dump_dbg(D_READER, buf, l, "<- decrypted data (%d bytes):", l);
-
-	hostname2ip(cli->reader->device, &SIN_GET_ADDR(cli->udp_sa));
-	SIN_GET_FAMILY(cli->udp_sa) = AF_INET;
-	SIN_GET_PORT(cli->udp_sa) = htons((uint16_t)cli->reader->r_port);
-
-	gbox_encrypt(buf, l, peer->gbox.password);
-	sendto(cli->udp_fd, buf, l, 0, (struct sockaddr *)&cli->udp_sa, cli->udp_sa_len);
-	cs_log_dump_dbg(D_READER, buf, l, "<- encrypted data (%d bytes):", l);
-}
-
-void gbox_send_hello_packet(struct s_client *cli, int8_t number, uchar *outbuf, uchar *ptr, int32_t nbcards, uint8_t hello_stat)
-{
-	struct gbox_peer *peer = cli->gbox;
-	int32_t hostname_len = strlen(cfg.gbox_hostname);
-	int32_t len;
-	gbox_message_header(outbuf, MSG_HELLO, peer->gbox.password, local_gbox.password);
-	// initial HELLO = 0, subsequent = 1
-	if(hello_stat > GBOX_STAT_HELLOS)
-		{ outbuf[10] = 1; }
-	else
-		{ outbuf[10] = 0; }
-	outbuf[11] = number;    // 0x80 (if last packet) else 0x00 | packet number
-
-	if((number & 0x0F) == 0)
-	{
-		if(hello_stat != GBOX_STAT_HELLOL)
-			{ memcpy(++ptr, gbox_get_checkcode(), 7); }
-		else	
-			{ memset(++ptr, 0, 7); }		
-		ptr += 7;
-		*ptr = local_gbox.minor_version;
-		*(++ptr) = local_gbox.cpu_api;
-		memcpy(++ptr, cfg.gbox_hostname, hostname_len);
-		ptr += hostname_len;
-		*ptr = hostname_len;
-	}
-	len = ptr - outbuf + 1;
-	switch(hello_stat)
-	{
-	case GBOX_STAT_HELLOL:
-		cs_log("<- HelloL to %s", cli->reader->label);
-		break;
-	case GBOX_STAT_HELLOS:
-		cs_log("<- HelloS total cards  %d to %s", nbcards, cli->reader->label);
-		break;
-	case GBOX_STAT_HELLOR:
-		cs_log("<- HelloR total cards  %d to %s", nbcards, cli->reader->label);
-		break;
-	default:
-		cs_log("<- hello total cards  %d to %s", nbcards, cli->reader->label);
-		break;
-	}
-	cs_log_dump_dbg(D_READER, outbuf, len, "<- hello, (len=%d):", len);
-
-	gbox_compress(outbuf, len, &len);
-
-	gbox_send(cli, outbuf, len);
-}
-
-void gbox_send_hello(struct s_client *proxy, uint8_t hello_stat)
-{
-        if (!proxy)
-        {
-                cs_log("Invalid call to gbox_send_hello with proxy");
-                return;
-        }
-        uint16_t nbcards = 0;
-        uint8_t packet;
-        uchar buf[2048];
-        packet = 0;
-        uchar *ptr = buf + 11;
-        if(gbox_count_cards() != 0 && hello_stat > GBOX_STAT_HELLOL)
-        {
-                struct gbox_peer *peer = proxy->gbox;
-                if (!peer || !peer->my_user || !peer->my_user->account)
-                {
-                        cs_log("Invalid call to gbox_send_hello with peer");
-                        return;
-                }
-                memset(buf, 0, sizeof(buf));
-                struct gbox_card *card;
-                GBOX_CARDS_ITER *gci = gbox_cards_iter_create();
-                while((card = gbox_cards_iter_next(gci)))
-                {
-                        //send to user only cards which matching CAID from account and lvl > 0
-                        //do not send peer cards back
-                        if(chk_ctab(gbox_get_caid(card->caprovid), &peer->my_user->account->ctab) && (card->lvl > 0) &&
-                                (!card->origin_peer || (card->origin_peer && card->origin_peer->gbox.id != peer->gbox.id)))
-                        {
-                                *(++ptr) = card->caprovid >> 24;
-                                *(++ptr) = card->caprovid >> 16;
-                                *(++ptr) = card->caprovid >> 8;
-                                *(++ptr) = card->caprovid & 0xff;
-                                *(++ptr) = 1;       //note: original gbx is more efficient and sends all cards of one caid as package
-                                *(++ptr) = card->id.slot;
-                                *(++ptr) = ((card->lvl - 1) << 4) + card->dist + 1;
-                                *(++ptr) = card->id.peer >> 8;
-                                *(++ptr) = card->id.peer & 0xff;
-                                nbcards++;
-                                if(nbcards == 100)    //check if 100 is good or we need more sophisticated algorithm
-                                {
-                                        gbox_send_hello_packet(proxy, packet, buf, ptr, nbcards, hello_stat);
-                                        packet++;
-                                        nbcards = 0;
-                                        ptr = buf + 11;
-                                        memset(buf, 0, sizeof(buf));
-                                }
-                        }
-                }
-                gbox_cards_iter_destroy(gci);
-        } // end if local card exists
-        //last packet has bit 0x80 set
-        gbox_send_hello_packet(proxy, 0x80 | packet, buf, ptr, nbcards, hello_stat);
-        return;
 }
 
 static int32_t gbox_recv(struct s_client *cli, uchar *buf, int32_t l)

@@ -37,6 +37,7 @@ void gbox_cards_iter_destroy(GBOX_CARDS_ITER *gci)
 struct gbox_card *gbox_cards_iter_next(GBOX_CARDS_ITER *gci)
 {
         if (gci) { return ll_iter_next(&gci->it); }
+        else { return NULL; }
 }
 
 void gbox_write_share_cards_info(void)
