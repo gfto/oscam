@@ -119,7 +119,7 @@ struct gbox_card
     uint32_t average_cw_time;
     struct gbox_peer *origin_peer;
 };
-
+                    
 struct gbox_data
 {
     uint16_t id;
@@ -163,7 +163,6 @@ uint32_t gbox_get_local_gbox_password(void);
 void gbox_send(struct s_client *cli, uchar *buf, int32_t l);
 int8_t gbox_message_header(uchar *buf, uint16_t cmd, uint32_t peer_password, uint32_t local_password);
 void gbox_free_cards_pending(ECM_REQUEST *er);
-void gbox_send_hello_packet(struct s_client *proxy, int8_t number, uchar *outbuf, uchar *ptr, int32_t nbcards, uint8_t hello_stat);
 void gbox_send_good_night(void);
 #else
 static inline void gbox_free_cards_pending(ECM_REQUEST *UNUSED(er)) { }

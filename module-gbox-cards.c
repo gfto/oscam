@@ -4,6 +4,7 @@
 
 #ifdef MODULE_GBOX
 #include "module-gbox.h"
+#include "module-gbox-cards.h"
 #include "module-gbox-helper.h"
 #include "oscam-lock.h"
 #include "oscam-garbage.h"
@@ -16,6 +17,27 @@ LLIST *gbox_cards;
 LLIST *gbox_backup_cards; //NEEDFIX: this list has to be cleaned from time to time 
 CS_MUTEX_LOCK gbox_cards_lock;
 uchar checkcode[7];
+
+GBOX_CARDS_ITER *gbox_cards_iter_create(void)
+{
+        GBOX_CARDS_ITER *gci;
+        if(!cs_malloc(&gci, sizeof(GBOX_CARDS_ITER)))
+                { return NULL; }
+        cs_readlock(&gbox_cards_lock);
+        gci->it = ll_iter_create(gbox_cards);
+        return gci;
+}
+
+void gbox_cards_iter_destroy(GBOX_CARDS_ITER *gci)
+{
+        cs_readunlock(&gbox_cards_lock);
+        if (gci) { add_garbage(gci); }
+}
+
+struct gbox_card *gbox_cards_iter_next(GBOX_CARDS_ITER *gci)
+{
+        if (gci) { return ll_iter_next(&gci->it); }
+}
 
 void gbox_write_share_cards_info(void)
 {
@@ -200,7 +222,7 @@ static void gbox_free_card(struct gbox_card *card)
         return;
 }
 
-static int8_t closer_path_known(uint32_t caprovid, uint16_t id_peer, uint8_t slot, uint8_t distance)
+static uint8_t closer_path_known(uint32_t caprovid, uint16_t id_peer, uint8_t slot, uint8_t distance)
 {
         uint8_t ret = 0;
         struct gbox_card *card;
@@ -218,7 +240,7 @@ static int8_t closer_path_known(uint32_t caprovid, uint16_t id_peer, uint8_t slo
         return ret;
 }
 
-static int8_t got_from_backup(uint32_t caprovid, uint16_t id_peer, uint8_t slot, struct gbox_peer *origin_peer)
+static uint8_t got_from_backup(uint32_t caprovid, uint16_t id_peer, uint8_t slot, struct gbox_peer *origin_peer)
 {
         uint8_t ret = 0;
         struct gbox_card *card;
@@ -285,6 +307,11 @@ void gbox_add_card(uint16_t id_peer, uint32_t caprovid, uint8_t slot, uint8_t le
 uchar *gbox_get_checkcode(void)
 {
         return &checkcode[0];
+}
+
+uint16_t gbox_count_cards(void)
+{
+        return ll_count(gbox_cards);
 }
 
 uint16_t gbox_count_peer_cards(uint16_t peer_id)
@@ -366,71 +393,6 @@ void gbox_free_cardlist(void)
         gbox_free_list(gbox_backup_cards);
         return;
 }
-
-void gbox_send_hello(struct s_client *proxy, uint8_t hello_stat)
-{
-        if (!proxy)
-        {
-                cs_log("Invalid call to gbox_send_hello with proxy");
-                return;
-        }
-
-        uint16_t nbcards = 0;
-        uint8_t packet;
-        uchar buf[2048];
-
-        packet = 0;
-        uchar *ptr = buf + 11;
-        if(ll_count(gbox_cards) != 0 && hello_stat > GBOX_STAT_HELLOL)
-        {
-                struct gbox_peer *peer = proxy->gbox;
-                if (!peer || !peer->my_user || !peer->my_user->account)
-                {
-                        cs_log("Invalid call to gbox_send_hello with peer"); 
-                        return;
-                }
-                memset(buf, 0, sizeof(buf));
-
-                struct gbox_card *card;
-                cs_readlock(&gbox_cards_lock);
-                LL_ITER it = ll_iter_create(gbox_cards);
-                while((card = ll_iter_next(&it)))
-                {
-                        //send to user only cards which matching CAID from account and lvl > 0
-                        //do not send peer cards back
-                        if(chk_ctab(gbox_get_caid(card->caprovid), &peer->my_user->account->ctab) && (card->lvl > 0) && 
-                                (!card->origin_peer || (card->origin_peer && card->origin_peer->gbox.id != peer->gbox.id)))
-                        {
-                                *(++ptr) = card->caprovid >> 24;
-                                *(++ptr) = card->caprovid >> 16;
-                                *(++ptr) = card->caprovid >> 8;
-                                *(++ptr) = card->caprovid & 0xff;
-                                *(++ptr) = 1;       //note: original gbx is more efficient and sends all cards of one caid as package
-                                *(++ptr) = card->id.slot;
-                                //If you modify the next line you are going to destroy the community
-                                //It will be recognized by original gbx and you will get banned
-                                *(++ptr) = ((card->lvl - 1) << 4) + card->dist + 1;
-                                *(++ptr) = card->id.peer >> 8;
-                                *(++ptr) = card->id.peer & 0xff;
-                                nbcards++;
-                                if(nbcards == 100)    //check if 100 is good or we need more sophisticated algorithm
-                                {
-                                        //NEEDFIX: Try to get rid of send hello in cards function
-                                        gbox_send_hello_packet(proxy, packet, buf, ptr, nbcards, hello_stat);
-                                        packet++;
-                                        nbcards = 0;
-                                        ptr = buf + 11;
-                                        memset(buf, 0, sizeof(buf));
-                                }
-                        }
-                }
-                cs_readunlock(&gbox_cards_lock);
-        } // end if local card exists
-        //last packet has bit 0x80 set
-        gbox_send_hello_packet(proxy, 0x80 | packet, buf, ptr, nbcards, hello_stat);
-
-        return;
-}                
 
 void gbox_add_good_sid(uint16_t id_card, uint16_t caid, uint8_t slot, uint16_t sid_ok, uint32_t cw_time)
 {

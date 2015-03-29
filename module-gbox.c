@@ -683,7 +683,7 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
 	proxy->last = time((time_t *)0);
 	*rc = 1;
 	memcpy(dcw, data + 14, 16);
-	uint32_t crc = data[30] << 24 | data[31] << 16 | data[32] << 8 | data[33];
+	uint32_t crc = b2i(4, data + 30);
 	char tmp[32];
 	cs_log_dbg(D_READER, "-> cws=%s, peer=%04X, ecm_pid=%04X, sid=%04X, crc=%08X, type=%02X, dist=%01X, unkn1=%01X, unkn2=%02X, chid/0x0000/0xffff=%04X",
 		cs_hexdump(0, dcw, 32, tmp, sizeof(tmp)), 
@@ -695,7 +695,7 @@ static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, ucha
 	{
 		if(proxy->ecmtask[i].gbox_crc == crc)
 		{
-			id_card = data[10] << 8 | data[11];
+			id_card = b2i(2, data + 10);
 			cw_time = comp_timeb(&t_now, &proxy->ecmtask[i].tps) - gbox_get_pending_time(&proxy->ecmtask[i], id_card, data[36]);
 			gbox_add_good_sid(id_card, proxy->ecmtask[i].caid, data[36], proxy->ecmtask[i].srvid, cw_time);
 			proxy->reader->currenthops = data[42] & 0x0f;
@@ -1071,6 +1071,63 @@ void gbox_send_hello_packet(struct s_client *cli, int8_t number, uchar *outbuf, 
 	gbox_compress(outbuf, len, &len);
 
 	gbox_send(cli, outbuf, len);
+}
+
+void gbox_send_hello(struct s_client *proxy, uint8_t hello_stat)
+{
+        if (!proxy)
+        {
+                cs_log("Invalid call to gbox_send_hello with proxy");
+                return;
+        }
+        uint16_t nbcards = 0;
+        uint8_t packet;
+        uchar buf[2048];
+        packet = 0;
+        uchar *ptr = buf + 11;
+        if(gbox_count_cards() != 0 && hello_stat > GBOX_STAT_HELLOL)
+        {
+                struct gbox_peer *peer = proxy->gbox;
+                if (!peer || !peer->my_user || !peer->my_user->account)
+                {
+                        cs_log("Invalid call to gbox_send_hello with peer");
+                        return;
+                }
+                memset(buf, 0, sizeof(buf));
+                struct gbox_card *card;
+                GBOX_CARDS_ITER *gci = gbox_cards_iter_create();
+                while((card = gbox_cards_iter_next(gci)))
+                {
+                        //send to user only cards which matching CAID from account and lvl > 0
+                        //do not send peer cards back
+                        if(chk_ctab(gbox_get_caid(card->caprovid), &peer->my_user->account->ctab) && (card->lvl > 0) &&
+                                (!card->origin_peer || (card->origin_peer && card->origin_peer->gbox.id != peer->gbox.id)))
+                        {
+                                *(++ptr) = card->caprovid >> 24;
+                                *(++ptr) = card->caprovid >> 16;
+                                *(++ptr) = card->caprovid >> 8;
+                                *(++ptr) = card->caprovid & 0xff;
+                                *(++ptr) = 1;       //note: original gbx is more efficient and sends all cards of one caid as package
+                                *(++ptr) = card->id.slot;
+                                *(++ptr) = ((card->lvl - 1) << 4) + card->dist + 1;
+                                *(++ptr) = card->id.peer >> 8;
+                                *(++ptr) = card->id.peer & 0xff;
+                                nbcards++;
+                                if(nbcards == 100)    //check if 100 is good or we need more sophisticated algorithm
+                                {
+                                        gbox_send_hello_packet(proxy, packet, buf, ptr, nbcards, hello_stat);
+                                        packet++;
+                                        nbcards = 0;
+                                        ptr = buf + 11;
+                                        memset(buf, 0, sizeof(buf));
+                                }
+                        }
+                }
+                gbox_cards_iter_destroy(gci);
+        } // end if local card exists
+        //last packet has bit 0x80 set
+        gbox_send_hello_packet(proxy, 0x80 | packet, buf, ptr, nbcards, hello_stat);
+        return;
 }
 
 static int32_t gbox_recv(struct s_client *cli, uchar *buf, int32_t l)
