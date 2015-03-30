@@ -4730,7 +4730,7 @@ int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t
 {
 
 	int32_t ret = -1;
-	flush_read_fd(demux_index, num, fd); // flush filter input buffer to prevent fetching stale data!
+
 	switch(selected_api)
 	{
 	case DVBAPI_3:
