@@ -2537,8 +2537,11 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			if(demux[i].program_number == 0) { continue; }  // skip empty demuxers
 			if(demux[i].ECMpidcount != 0 && demux[i].pidindex != -1 ) { demux[i].running = 1; }  // running channel changes from scrambled to fta
 			if(demux[i].socket_fd != connfd) { continue; }  // skip demuxers belonging to other ca pmt connection
-			demux[i].stopdescramble = 1; // Mark for deletion if not used again by following pmt objects.
-			cs_log_dbg(D_DVBAPI, "Marked demuxer %d/%d (srvid = %04X fd = %d) to stop decoding", i, MAX_DEMUX, demux[i].program_number, connfd);
+			if(cfg.dvbapi_pmtmode == 6)
+			{
+				demux[i].stopdescramble = 1; // Mark for deletion if not used again by following pmt objects.
+				cs_log_dbg(D_DVBAPI, "Marked demuxer %d/%d (srvid = %04X fd = %d) to stop decoding", i, MAX_DEMUX, demux[i].program_number, connfd);
+			}
 		}
 		pmt_stopmarking = 1;
 	}
