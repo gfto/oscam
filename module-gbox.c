@@ -1245,12 +1245,20 @@ void *gbox_rebroadcast_thread(struct gbox_rbc_thread_args *args)
 	ECM_REQUEST *er = args->er;
 	uint32_t waittime = args->waittime;
 
-	if (!cli) { return NULL; }
+	//NEEDFIX currently the next line avoids a second rebroadcast 
+	if (!is_valid_client(cli)) { return NULL; }
+	
+	pthread_mutex_lock(&cli->thread_lock);
+	cli->thread_active = 1;
 	pthread_setspecific(getclient, cli);
 	set_thread_name(__func__);
-
+	cli->thread_active = 0;
+	pthread_mutex_unlock(&cli->thread_lock);
+	
 	cs_sleepms(waittime);
-	if (!cli || !cli->gbox || !er) { return NULL; }
+	if (!cli || cli->kill || !cli->gbox || !er) { return NULL; }
+	pthread_mutex_lock(&cli->thread_lock);
+	cli->thread_active = 1;
 
 	struct gbox_peer *peer = cli->gbox;
 
@@ -1268,6 +1276,8 @@ void *gbox_rebroadcast_thread(struct gbox_rbc_thread_args *args)
 		gbox_send_ecm(cli, er, NULL);
  		cs_writeunlock(&peer->lock);
 	}
+	cli->thread_active = 0;
+	pthread_mutex_unlock(&cli->thread_lock);	
 
 	return NULL;
 }
@@ -1418,22 +1428,31 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSE
 		{ 
 			//Create thread to rebroacast ecm after time
 			pthread_t rbc_thread;
+			pthread_attr_t attr;
+			pthread_attr_init(&attr);
+			pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 			struct gbox_rbc_thread_args args;
 			args.cli = cli;
 			args.er = er;
 			if ((current_avg_card_time > 0) && (cont_card_1 == 1))
-				{ args.waittime = current_avg_card_time + (current_avg_card_time / 2); }
+			{
+				args.waittime = current_avg_card_time + (current_avg_card_time / 2);
+				if (args.waittime < GBOX_MIN_REBROADCAST_TIME)
+				{ args.waittime = GBOX_MIN_REBROADCAST_TIME; }
+			}
 			else
 				{ args.waittime = GBOX_REBROADCAST_TIMEOUT; }
 			cs_log_dbg(D_READER, "Creating rebroadcast thread with waittime: %d", args.waittime);
-			int32_t ret = pthread_create(&rbc_thread, NULL, (void *)gbox_rebroadcast_thread, &args);
+			int32_t ret = pthread_create(&rbc_thread, &attr, (void *)gbox_rebroadcast_thread, &args);
 			if(ret)
 			{
 				cs_log("Can't create gbox rebroadcast thread (errno=%d %s)", ret, strerror(ret));
+				pthread_attr_destroy(&attr);
 				return -1;
 			}
 			else
 				{ pthread_detach(rbc_thread); }
+			pthread_attr_destroy(&attr);
 		}
 		else
 			{ er->gbox_ecm_status--; }
