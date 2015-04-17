@@ -421,8 +421,8 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 			if((ptr2 = strchr(trim(ptr3), ':')))
 			{
 				*ptr2++ = '\0';
-				newptab->ports[iport].ncd->ncd_ftab.nfilts++;
-				ifilt = newptab->ports[iport].ncd->ncd_ftab.nfilts - 1;
+				ifilt = newptab->ports[iport].ncd->ncd_ftab.nfilts++;
+				j = 0;
 				newptab->ports[iport].ncd->ncd_ftab.filts[ifilt].caid = (uint16_t)a2i(ptr3, 4);
 				newptab->ports[iport].ncd->ncd_ftab.filts[ifilt].prids[j] = a2i(ptr2, 6);
 			}
