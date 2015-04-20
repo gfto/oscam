@@ -615,7 +615,7 @@ void client_check_status(struct s_client *cl)
 		if((rdr->tcp_ito && is_cascading_reader(rdr)) || (rdr->typ == R_CCCAM) || (rdr->typ == R_CAMD35) || (rdr->typ == R_CS378X) || (rdr->typ == R_SCAM) || (rdr->tcp_ito != 0 && rdr->typ == R_RADEGAST))
 		{
 			time_t now = time(NULL);
-			int32_t time_diff = abs(now - rdr->last_check);
+			int32_t time_diff = llabs(now - rdr->last_check);
 			if(time_diff > 60 || (time_diff > 30 && (rdr->typ == R_CCCAM || rdr->typ == R_CAMD35 || rdr->typ == R_CS378X)) || ((time_diff > (rdr->tcp_rto?rdr->tcp_rto:60)) && rdr->typ == R_RADEGAST))     //check 1x per minute or every 30s for cccam/camd35 or reconnecttimeout radegast if 0 defaut 60s
 			{
 				add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);

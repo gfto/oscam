@@ -1608,9 +1608,9 @@ static void gbox_s_idle(struct s_client *cl)
 
 	if (proxy && proxy->gbox)
 	{ 
-		if (abs(proxy->last - time(NULL)) > abs(cl->lastecm - time(NULL)))
-			{ time_since_last = abs(cl->lastecm - time(NULL)); } 
-		else { time_since_last = abs(proxy->last - time(NULL)); }
+		if (llabs(proxy->last - time(NULL)) > llabs(cl->lastecm - time(NULL)))
+			{ time_since_last = llabs(cl->lastecm - time(NULL)); } 
+		else { time_since_last = llabs(proxy->last - time(NULL)); }
 		if (time_since_last > (HELLO_KEEPALIVE_TIME*3) && cl->gbox_peer_id != NO_GBOX_ID)	
 		{
 			//gbox peer apparently died without saying goodbye
@@ -1621,7 +1621,7 @@ static void gbox_s_idle(struct s_client *cl)
 			cs_writeunlock(&peer->lock);
 		}
 	
-		time_since_last = abs(cl->lastecm - time(NULL));
+		time_since_last = llabs(cl->lastecm - time(NULL));
 		if (time_since_last > HELLO_KEEPALIVE_TIME && cl->gbox_peer_id != NO_GBOX_ID)
 		{
 			peer = proxy->gbox;

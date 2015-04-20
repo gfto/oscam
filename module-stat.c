@@ -1442,10 +1442,10 @@ void stat_get_best_reader(ECM_REQUEST *er)
 			}
 
 
-			cs_log_dbg(D_LB, "loadbalancer: reader %s lbvalue = %d (time-avg %d)", rdr->label, abs(current), s->time_avg);
+			cs_log_dbg(D_LB, "loadbalancer: reader %s lbvalue = %d (time-avg %d)", rdr->label, (int) llabs(current), s->time_avg);
 
 #if defined(WEBIF) || defined(LCDSUPPORT)
-			rdr->lbvalue = abs(current);
+			rdr->lbvalue = llabs(current);
 #endif
 
 			ea->value = current;

@@ -333,7 +333,7 @@ void radegast_idle(void)
 	if(rdr->tcp_ito > 0)
 	{
 		int32_t time_diff;
-		time_diff = abs(now - rdr->last_s);
+		time_diff = llabs(now - rdr->last_s);
 		if(time_diff > (rdr->tcp_ito))
 		{
 			network_tcp_connection_close(rdr, "inactivity");

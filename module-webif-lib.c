@@ -759,12 +759,12 @@ void calc_cpu_usage_pct(struct pstat* cur_usage, struct pstat* last_usage)
 		cur_usage->check_available &= ~(1 << 10);
 		cur_usage->check_available &= ~(1 << 11);
 
-		cur_usage->cpu_usage_user = 100.0 * abs(cur_ticks - last_ticks) / total_time_diff;
+		cur_usage->cpu_usage_user = 100.0 * llabs(cur_ticks - last_ticks) / total_time_diff;
 
 		cur_ticks = cur_usage->stime_ticks + cur_usage->cstime_ticks;
 		last_ticks = last_usage->stime_ticks + last_usage->cstime_ticks;
 
-		cur_usage->cpu_usage_sys = 100.0 * abs(cur_ticks - last_ticks) / total_time_diff;
+		cur_usage->cpu_usage_sys = 100.0 * llabs(cur_ticks - last_ticks) / total_time_diff;
 	}
 }
 #endif

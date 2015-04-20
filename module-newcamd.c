@@ -1344,7 +1344,7 @@ void newcamd_idle(void)
 		time_t now;
 		int32_t time_diff;
 		time(&now);
-		time_diff = abs(now - rdr->last_s);
+		time_diff = llabs(now - rdr->last_s);
 		if(time_diff > (rdr->tcp_ito))
 		{
 			if(client->ncd_keepalive)

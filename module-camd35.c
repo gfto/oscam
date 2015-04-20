@@ -347,7 +347,7 @@ static void camd35_request_emm(ECM_REQUEST *er)
 
 	time(&now);
 	if(!memcmp(cl->lastserial, aureader->hexserial, 8))
-		if(abs(now - cl->last) < 180) { return; }
+		if(llabs(now - cl->last) < 180) { return; }
 
 	memcpy(cl->lastserial, aureader->hexserial, 8);
 	cl->last = now;
@@ -651,7 +651,7 @@ static void camd35_idle(void)
 		time_t now;
 		int32_t time_diff;
 		time(&now);
-		time_diff = abs(now - cl->reader->last_s);
+		time_diff = llabs(now - cl->reader->last_s);
 		if(time_diff>cl->reader->tcp_ito)
 		{
 			if(check_client(cl) && cl->reader->tcp_connected && cl->reader->ph.type==MOD_CONN_TCP)

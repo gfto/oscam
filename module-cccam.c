@@ -2042,7 +2042,7 @@ void cc_idle(void)
 	{
 		//cs_log("last_s - now = %d, last_g - now = %d, tcp_ito=%d", abs(rdr->last_s - now), abs(rdr->last_g - now), rdr->tcp_ito);
 		//check inactivity timeout:
-		if((abs(rdr->last_s - now) > rdr->tcp_ito) && (abs(rdr->last_g - now) > rdr->tcp_ito))   // inactivity timeout is entered in seconds in webif!
+		if((llabs(rdr->last_s - now) > rdr->tcp_ito) && (llabs(rdr->last_g - now) > rdr->tcp_ito))   // inactivity timeout is entered in seconds in webif!
 		{
 			rdr_log_dbg(rdr, D_READER, "inactive_timeout, close connection (fd=%d)", rdr->client->pfd);
 			network_tcp_connection_close(rdr, "inactivity");
@@ -2050,7 +2050,7 @@ void cc_idle(void)
 		}
 
 		//check read timeout:
-		int32_t rto = abs(rdr->last_g - now);
+		int32_t rto = llabs(rdr->last_g - now);
 		//cs_log("last_g - now = %d, rto=%d", rto, rdr->tcp_rto);
 		if(rto > (rdr->tcp_rto))    // this is also entered in seconds, actually its an receive timeout!
 		{

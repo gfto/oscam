@@ -1117,7 +1117,7 @@ void reader_do_idle(struct s_reader *reader)
 		time_t now;
 		int32_t time_diff;
 		time(&now);
-		time_diff = abs(now - reader->last_s);
+		time_diff = llabs(now - reader->last_s);
 		if(time_diff > reader->tcp_ito)
 		{
 			struct s_client *cl = reader->client;

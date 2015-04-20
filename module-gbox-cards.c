@@ -539,7 +539,7 @@ uint8_t gbox_get_cards_for_ecm(uchar *send_buf_1, int32_t cont_1, uint8_t max_ca
                                 {
                                         if (!enough || *current_avg_card_time > card->average_cw_time)
                                         {
-                                                time_since_lastcw = abs(srvid_good->last_cw_received - time(NULL));
+                                                time_since_lastcw = llabs(srvid_good->last_cw_received - time(NULL));
                                                 *current_avg_card_time = card->average_cw_time;
                                                 if (enough)
                                                         { cont_1 = cont_1 - 3; }
