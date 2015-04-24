@@ -182,3 +182,25 @@ Alternatively when there is a need to stop decoding channels, while having the c
 '3f' packed to OSCam. To stop decoding specified demux the following CA_PMT data should be sent to OSCam:
 9F 80 3f 04 83 02 00 <demux index>
 If <demux index> is 0xff, then it is parsed as a wildcard and all demuxers associated with the connection are stopped.
+
+
+In protocol version 2 the new packet with ECM info data was introduced:
+
+-= DVBAPI_ECM_INFO =-
+-----------------------------------------------------------------------
+type/size                description
+-----------------------------------------------------------------------
+uint32_t                 operation code -> DVBAPI_ECM_INFO
+uint8_t                  adapter index
+uint16_t                 Service ID
+uint16_t                 CAID
+uint16_t                 PID
+uint32_t                 Provider ID
+uint32_t                 ECM time (ms)
+uint8_t                  size of followed string (255 bytes max)
+string                   reader name (string length should be max 255 bytes)
+uint8_t                  size of followed string (255 bytes max)
+string                   from - source name (string length should be max 255 bytes)
+uint8_t                  size of followed string (255 bytes max)
+string                   protocol name (string length should be max 255 bytes)
+uint8_t                  hops (cccam & gbox; set to 0 otherwise)

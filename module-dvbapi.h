@@ -49,7 +49,7 @@
 #define DUMMY_FD    0xFFFF
 
 //constants used int socket communication:
-#define DVBAPI_PROTOCOL_VERSION         1
+#define DVBAPI_PROTOCOL_VERSION         2
 
 #define DVBAPI_CA_SET_PID      0x40086f87
 #define DVBAPI_CA_SET_DESCR    0x40106f86
@@ -62,6 +62,9 @@
 #define DVBAPI_FILTER_DATA     0xFFFF0000
 #define DVBAPI_CLIENT_INFO     0xFFFF0001
 #define DVBAPI_SERVER_INFO     0xFFFF0002
+#define DVBAPI_ECM_INFO        0xFFFF0003
+
+#define DVBAPI_MAX_PACKET_SIZE 262         //maximum possible packet size
 
 struct box_devices
 {

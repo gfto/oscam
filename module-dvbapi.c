@@ -365,9 +365,18 @@ void remove_emmfilter_from_list(int32_t demux_id, uint16_t caid, uint32_t provid
 		{ return; }
 }
 
-int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, int32_t demux_index, uint32_t filter_number, unsigned char *data)
+void dvbapi_net_add_str(unsigned char *packet, int *size, const char *str)
 {
-	unsigned char packet[262];                                          //maximum possible packet size
+	unsigned char *str_len = &packet[*size];                            //string length
+	*size += 1;
+
+	*str_len = snprintf((char *) &packet[*size], DVBAPI_MAX_PACKET_SIZE - *size, "%s", str);
+	*size += *str_len;
+}
+
+int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, int32_t demux_index, uint32_t filter_number, unsigned char *data, struct s_client *client, ECM_REQUEST *er)
+{
+	unsigned char packet[DVBAPI_MAX_PACKET_SIZE];                       //maximum possible packet size
 	int32_t size = 0;
 
 	// not connected?
@@ -405,6 +414,71 @@ int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, int32_t demux_index
 
 			*info_len = snprintf((char *) &packet[size], sizeof(packet) - size, "OSCam v%s, build r%s (%s)", CS_VERSION, CS_SVN_VERSION, CS_TARGET);
 			size += *info_len;
+			break;
+		}
+		case DVBAPI_ECM_INFO:
+		{
+			if (er->rc >= E_NOTFOUND)
+				return 0;
+
+			int8_t hops = 0;
+
+			uint16_t sid = htons(er->srvid);                                  //service ID (program number)
+			memcpy(&packet[size], &sid, 2);
+			size += 2;
+
+			uint16_t caid = htons(er->caid);                                  //CAID
+			memcpy(&packet[size], &caid, 2);
+			size += 2;
+
+			uint16_t pid = htons(er->pid);                                    //PID
+			memcpy(&packet[size], &pid, 2);
+			size += 2;
+
+			uint32_t prid = htonl(er->prid);                                  //Provider ID
+			memcpy(&packet[size], &prid, 4);
+			size += 4;
+
+			uint32_t ecmtime = htonl(client->cwlastresptime);                 //ECM time
+			memcpy(&packet[size], &ecmtime, 4);
+			size += 4;
+
+			switch (er->rc)
+			{
+				case E_FOUND:
+					if (er->selected_reader)
+					{
+						dvbapi_net_add_str(packet, &size, er->selected_reader->label);                   //reader
+						if (is_network_reader(er->selected_reader))
+							dvbapi_net_add_str(packet, &size, er->selected_reader->device);          //from
+						else
+							dvbapi_net_add_str(packet, &size, "local");                              //from
+						dvbapi_net_add_str(packet, &size, reader_get_type_desc(er->selected_reader, 1)); //protocol
+						hops = er->selected_reader->currenthops;
+					}
+					break;
+
+				case E_CACHE1:
+					dvbapi_net_add_str(packet, &size, "Cache");       //reader
+					dvbapi_net_add_str(packet, &size, "cache1");      //from
+					dvbapi_net_add_str(packet, &size, "none");        //protocol
+					break;
+
+				case E_CACHE2:
+					dvbapi_net_add_str(packet, &size, "Cache");       //reader
+					dvbapi_net_add_str(packet, &size, "cache2");      //from
+					dvbapi_net_add_str(packet, &size, "none");        //protocol
+					break;
+
+				case E_CACHEEX:
+					dvbapi_net_add_str(packet, &size, "Cache");       //reader
+					dvbapi_net_add_str(packet, &size, "cache3");      //from
+					dvbapi_net_add_str(packet, &size, "none");        //protocol
+					break;
+			}
+
+			packet[size++] = hops;                                            //hops
+
 			break;
 		}
 		case DVBAPI_CA_SET_PID:
@@ -576,7 +650,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 			memcpy(sFP2.filter.filter, filt, 16);
 			memcpy(sFP2.filter.mask, mask, 16);
 			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-				ret = dvbapi_net_send(DVBAPI_DMX_SET_FILTER, demux[demux_id].socket_fd, demux_id, n, (unsigned char *) &sFP2);
+				ret = dvbapi_net_send(DVBAPI_DMX_SET_FILTER, demux[demux_id].socket_fd, demux_id, n, (unsigned char *) &sFP2, NULL, NULL);
 			else
 				ret = dvbapi_ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER, &sFP2);
 		}
@@ -859,7 +933,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 		{
 		case DVBAPI_3:
 			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-				retfilter = dvbapi_net_send(DVBAPI_DMX_STOP, demux[demux_index].socket_fd, demux_index, num, NULL);
+				retfilter = dvbapi_net_send(DVBAPI_DMX_STOP, demux[demux_index].socket_fd, demux_index, num, NULL, NULL, NULL);
 			else
 				retfilter = dvbapi_ioctl(fd, DMX_STOP, NULL);
 			break;
@@ -1390,7 +1464,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 						(enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i);
 
 					if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-						dvbapi_net_send(DVBAPI_CA_SET_PID, demux[demux_id].socket_fd, demux_id, -1 /*unused*/, (unsigned char *) &ca_pid2);
+						dvbapi_net_send(DVBAPI_CA_SET_PID, demux[demux_id].socket_fd, demux_id, -1 /*unused*/, (unsigned char *) &ca_pid2, NULL, NULL);
 					else
 					{
 						currentfd = ca_fd[i];
@@ -4056,7 +4130,7 @@ static void *dvbapi_main_local(void *cli)
 											client_proto_version = client_proto; //setting the global var according to the client
 
 											// as a response we are sending our info to the client:
-											dvbapi_net_send(DVBAPI_SERVER_INFO, connfd, -1, -1, NULL);
+											dvbapi_net_send(DVBAPI_SERVER_INFO, connfd, -1, -1, NULL, NULL, NULL);
 											break;
 										}
 									}
@@ -4211,7 +4285,7 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid)
 				cs_log_dbg(D_DVBAPI, "Demuxer %d write cw%d index: %d (ca%d)", demux_id, n, ca_descr.index, i);
 
 				if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-					dvbapi_net_send(DVBAPI_CA_SET_DESCR, demux[demux_id].socket_fd, demux_id, -1 /*unused*/, (unsigned char *) &ca_descr);
+					dvbapi_net_send(DVBAPI_CA_SET_DESCR, demux[demux_id].socket_fd, demux_id, -1 /*unused*/, (unsigned char *) &ca_descr, NULL, NULL);
 				else
 				{
 					if(ca_fd[i] <= 0)
@@ -4520,7 +4594,9 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		client->last = time((time_t *)0); // ********* TO BE FIXED LATER ON ******
 
 		FILE *ecmtxt = NULL;
-		if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
+		if (cfg.dvbapi_listenport && client_proto_version >= 2)
+			dvbapi_net_send(DVBAPI_ECM_INFO, demux[i].socket_fd, i, 0, NULL, client, er);
+		else if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
 			ecmtxt = fopen(ECMINFO_FILE, "w");
 		if(ecmtxt != NULL && er->rc < E_NOTFOUND)
 		{
@@ -4770,7 +4846,7 @@ int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t
 			memcpy(sFP2.filter.filter, filter, 16);
 			memcpy(sFP2.filter.mask, mask, 16);
 			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-				ret = dvbapi_net_send(DVBAPI_DMX_SET_FILTER, demux[demux_index].socket_fd, demux_index, num, (unsigned char *) &sFP2);
+				ret = dvbapi_net_send(DVBAPI_DMX_SET_FILTER, demux[demux_index].socket_fd, demux_index, num, (unsigned char *) &sFP2, NULL, NULL);
 			else
 				ret = dvbapi_ioctl(fd, DMX_SET_FILTER, &sFP2);
 		}
