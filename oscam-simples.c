@@ -106,3 +106,24 @@ void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *
 	cs_strncpy(prov->lang, lang, sizeof(prov->lang));
 	*ptr = prov;
 }
+
+// Get a cardsystem name based on caid
+// used in webif/CCcam share and in dvbapi/ecminfo
+char *get_cardsystem_desc_by_caid(uint16_t caid)
+{
+        if(caid_is_seca(caid)) { return "seca"; }
+        if(caid_is_viaccess(caid)) { return "viaccess"; }
+        if(caid_is_irdeto(caid)) { return "irdeto"; }
+        if(caid_is_videoguard(caid)) { return "videoguard"; }
+        if(caid >= 0x0B00 && caid <= 0x0BFF) { return "conax"; }
+        if(caid_is_cryptoworks(caid)) { return "cryptoworks"; }
+        if(caid_is_betacrypt(caid)) { return "betacrypt"; }
+        if(caid_is_nagra(caid)) { return "nagra"; }
+        if(caid >= 0x4B00 && caid <= 0x4BFF) { return "tongfang"; }
+        if(caid >= 0x5501 && caid <= 0x551A) { return "griffin"; }
+        if(caid == 0x4AE0 || caid == 0x4AE1) { return "drecrypt"; }
+        if(caid_is_bulcrypt(caid)) { return "bulcrypt"; }
+        if(caid_is_biss(caid)) { return "biss"; }
+        if(caid == 0x4ABF) { return "dgcrypt"; }
+        return "???";
+}

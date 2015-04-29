@@ -3685,25 +3685,6 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 #define ENTITLEMENT_PAGE_SIZE 500
 
 #ifdef MODULE_CCCSHARE
-static char *get_cardsystem_desc_by_caid(uint16_t caid)
-{
-	if(caid_is_seca(caid)) { return "seca"; }
-	if(caid_is_viaccess(caid)) { return "viaccess"; }
-	if(caid_is_irdeto(caid)) { return "irdeto"; }
-	if(caid_is_videoguard(caid)) { return "videoguard"; }
-	if(caid >= 0x0B00 && caid <= 0x0BFF) { return "conax"; }
-	if(caid_is_cryptoworks(caid)) { return "cryptoworks"; }
-	if(caid_is_betacrypt(caid)) { return "betacrypt"; }
-	if(caid_is_nagra(caid)) { return "nagra"; }
-	if(caid >= 0x4B00 && caid <= 0x4BFF) { return "tongfang"; }
-	if(caid >= 0x5501 && caid <= 0x551A) { return "griffin"; }
-	if(caid == 0x4AE0 || caid == 0x4AE1) { return "drecrypt"; }
-	if(caid_is_bulcrypt(caid)) { return "bulcrypt"; }
-	if(caid_is_biss(caid)) { return "biss"; }
-	if(caid == 0x4ABF) { return "dgcrypt"; }
-	return "???";
-}
-
 static void print_cards(struct templatevars *vars, struct uriparams *params, struct cc_card **cardarray, int32_t cardsize,
 						int8_t show_global_list, struct s_reader *rdr, int32_t offset, int32_t apicall)
 {

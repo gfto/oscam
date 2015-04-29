@@ -198,6 +198,8 @@ uint16_t                 PID
 uint32_t                 Provider ID
 uint32_t                 ECM time (ms)
 uint8_t                  size of followed string (255 bytes max)
+string                   cardsystem name (string length should be max 255 bytes)
+uint8_t                  size of followed string (255 bytes max)
 string                   reader name (string length should be max 255 bytes)
 uint8_t                  size of followed string (255 bytes max)
 string                   from - source name (string length should be max 255 bytes)

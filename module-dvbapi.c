@@ -423,25 +423,27 @@ int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, int32_t demux_index
 
 			int8_t hops = 0;
 
-			uint16_t sid = htons(er->srvid);                                  //service ID (program number)
+			uint16_t sid = htons(er->srvid);                                           //service ID (program number)
 			memcpy(&packet[size], &sid, 2);
 			size += 2;
 
-			uint16_t caid = htons(er->caid);                                  //CAID
+			uint16_t caid = htons(er->caid);                                           //CAID
 			memcpy(&packet[size], &caid, 2);
 			size += 2;
 
-			uint16_t pid = htons(er->pid);                                    //PID
+			uint16_t pid = htons(er->pid);                                             //PID
 			memcpy(&packet[size], &pid, 2);
 			size += 2;
 
-			uint32_t prid = htonl(er->prid);                                  //Provider ID
+			uint32_t prid = htonl(er->prid);                                           //Provider ID
 			memcpy(&packet[size], &prid, 4);
 			size += 4;
 
-			uint32_t ecmtime = htonl(client->cwlastresptime);                 //ECM time
+			uint32_t ecmtime = htonl(client->cwlastresptime);                          //ECM time
 			memcpy(&packet[size], &ecmtime, 4);
 			size += 4;
+
+			dvbapi_net_add_str(packet, &size, get_cardsystem_desc_by_caid(er->caid));  //cardsystem name
 
 			switch (er->rc)
 			{
@@ -459,25 +461,25 @@ int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, int32_t demux_index
 					break;
 
 				case E_CACHE1:
-					dvbapi_net_add_str(packet, &size, "Cache");       //reader
-					dvbapi_net_add_str(packet, &size, "cache1");      //from
-					dvbapi_net_add_str(packet, &size, "none");        //protocol
+					dvbapi_net_add_str(packet, &size, "Cache");                //reader
+					dvbapi_net_add_str(packet, &size, "cache1");               //from
+					dvbapi_net_add_str(packet, &size, "none");                 //protocol
 					break;
 
 				case E_CACHE2:
-					dvbapi_net_add_str(packet, &size, "Cache");       //reader
-					dvbapi_net_add_str(packet, &size, "cache2");      //from
-					dvbapi_net_add_str(packet, &size, "none");        //protocol
+					dvbapi_net_add_str(packet, &size, "Cache");                //reader
+					dvbapi_net_add_str(packet, &size, "cache2");               //from
+					dvbapi_net_add_str(packet, &size, "none");                 //protocol
 					break;
 
 				case E_CACHEEX:
-					dvbapi_net_add_str(packet, &size, "Cache");       //reader
-					dvbapi_net_add_str(packet, &size, "cache3");      //from
-					dvbapi_net_add_str(packet, &size, "none");        //protocol
+					dvbapi_net_add_str(packet, &size, "Cache");                //reader
+					dvbapi_net_add_str(packet, &size, "cache3");               //from
+					dvbapi_net_add_str(packet, &size, "none");                 //protocol
 					break;
 			}
 
-			packet[size++] = hops;                                            //hops
+			packet[size++] = hops;                                                     //hops
 
 			break;
 		}
