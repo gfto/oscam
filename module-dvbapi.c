@@ -2605,21 +2605,21 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	
 	cs_log_dump_dbg(D_DVBAPI, buffer, length, "capmt:");
 	cs_log_dbg(D_DVBAPI, "Receiver sends PMT command %d for channel %04X", ca_pmt_list_management, program_number);
-	if((ca_pmt_list_management == LIST_FIRST || ca_pmt_list_management == LIST_ONLY))
+	
+	for(i = 0; i < MAX_DEMUX && !pmt_stopmarking; i++, pmt_stopmarking = (i == MAX_DEMUX)) // only mark running and deleting for first pmt record
 	{
-		for(i = 0; i < MAX_DEMUX; i++)
+		if(demux[i].program_number == 0) { continue; }  // skip empty demuxers
+		if(demux[i].ECMpidcount != 0 && demux[i].pidindex != -1 ) 
+		{ 
+			cs_log_dbg(D_DVBAPI, "Marked demuxer %d/%d (srvid = %04X fd = %d ecmpids = %d pidindex = %d) as already running", i, MAX_DEMUX,
+				demux[i].program_number, connfd, demux[i].ECMpidcount, demux[i].pidindex);
+			demux[i].running = 1; }  // mark if channel is already descrambling and running
+		if(demux[i].socket_fd != connfd) { continue; }  // skip demuxers belonging to other ca pmt connection
+		if(ca_pmt_list_management == LIST_FIRST || ca_pmt_list_management == LIST_ONLY)
 		{
-			if(cfg.dvbapi_pmtmode == 6 && pmt_stopmarking == 1) { continue; } // already marked channels that need to stop -> skip!
-			if(demux[i].program_number == 0) { continue; }  // skip empty demuxers
-			if(demux[i].ECMpidcount != 0 && demux[i].pidindex != -1 ) { demux[i].running = 1; }  // mark if channel is already descrambling and running
-			if(demux[i].socket_fd != connfd) { continue; }  // skip demuxers belonging to other ca pmt connection
-			if(cfg.dvbapi_pmtmode == 6)
-			{
-				demux[i].stopdescramble = 1; // Mark for deletion if not used again by following pmt objects.
-				cs_log_dbg(D_DVBAPI, "Marked demuxer %d/%d (srvid = %04X fd = %d) to stop decoding", i, MAX_DEMUX, demux[i].program_number, connfd);
-			}
+			demux[i].stopdescramble = 1; // Mark for deletion if not used again by following pmt objects.
+			cs_log_dbg(D_DVBAPI, "Marked demuxer %d/%d (srvid = %04X fd = %d) to stop decoding", i, MAX_DEMUX, demux[i].program_number, connfd);
 		}
-		pmt_stopmarking = 1;
 	}
 	getDemuxOptions(i, buffer, &ca_mask, &demux_index, &adapter_index, &pmtpid);
 	cs_log_dbg(D_DVBAPI,"Receiver wants to demux srvid %04X on adapter %04X camask %04X index %04X pmtpid %04X",
@@ -2661,8 +2661,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		}
 	}
 
-	// stop descramble old demuxers from this ca pmt connection that arent used anymore
-	if((ca_pmt_list_management == LIST_LAST) || (ca_pmt_list_management == LIST_ONLY))
+	// start using the new list
+	if(ca_pmt_list_management != LIST_FIRST && ca_pmt_list_management != LIST_MORE)
 	{
 		for(j = 0; j < MAX_DEMUX; j++)
 		{
@@ -2880,10 +2880,10 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		}
 	}
 
-	if(demux[demux_id].running == 0) // only do emm setup on non-running channels!
+	if(cfg.dvbapi_au > 0 && demux[demux_id].EMMpidcount == 0) // only do emm setup if au enabled and not running!
 	{
 		demux[demux_id].emm_filter = -1; // to register first run emmfilter start
-		if(cfg.dvbapi_au > 0 && demux[demux_id].emmstart.time == 1)   // irdeto fetch emm cat direct!
+		if(demux[demux_id].emmstart.time == 1)   // irdeto fetch emm cat direct!
 		{
 			cs_ftime(&demux[demux_id].emmstart); // trick to let emm fetching start after 30 seconds to speed up zapping
 			dvbapi_start_filter(demux_id, demux[demux_id].pidindex, 0x001, 0x001, 0x01, 0x01, 0xFF, 0, TYPE_EMM); //CAT
@@ -2936,7 +2936,7 @@ void dvbapi_handlesockmsg(unsigned char *buffer, uint32_t len, int32_t connfd)
 		}
 
 		if(k > 0)
-			cs_log_dump_dbg(D_DVBAPI, buffer + k, len - k, "Parsing next PMT object(s):");
+			cs_log_dump_dbg(D_DVBAPI, buffer + k, len - k, "Parsing next PMT object:");
 
 		if(buffer[3 + k] & 0x80)
 		{
@@ -4092,7 +4092,7 @@ static void *dvbapi_main_local(void *cli)
 									chunks_processed++;
 									if ((opcode & 0xFFFFF000) == DVBAPI_AOT_CA)
 									{
-										cs_log_dump_dbg(D_DVBAPI, mbuf, chunksize, "Parsing %d PMT object(s):", chunks_processed);
+										cs_log_dump_dbg(D_DVBAPI, mbuf, chunksize, "Parsing PMT object %d:", chunks_processed);
 										dvbapi_handlesockmsg(mbuf, chunksize, connfd);
 										add_to_poll = 0;
 										if (cfg.dvbapi_listenport && opcode == DVBAPI_AOT_CA_STOP)
