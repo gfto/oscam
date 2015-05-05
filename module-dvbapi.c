@@ -2606,21 +2606,18 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	cs_log_dump_dbg(D_DVBAPI, buffer, length, "capmt:");
 	cs_log_dbg(D_DVBAPI, "Receiver sends PMT command %d for channel %04X", ca_pmt_list_management, program_number);
 	
-	for(i = 0; i < MAX_DEMUX && !pmt_stopmarking; i++, pmt_stopmarking = (i == MAX_DEMUX)) // only mark running and deleting for first pmt record
+	if(!pmt_stopmarking && (ca_pmt_list_management == LIST_FIRST || ca_pmt_list_management == LIST_ONLY))
 	{
-		if(demux[i].program_number == 0) { continue; }  // skip empty demuxers
-		if(demux[i].ECMpidcount != 0 && demux[i].pidindex != -1 ) 
-		{ 
-			cs_log_dbg(D_DVBAPI, "Marked demuxer %d/%d (srvid = %04X fd = %d ecmpids = %d pidindex = %d) as already running", i, MAX_DEMUX,
-				demux[i].program_number, connfd, demux[i].ECMpidcount, demux[i].pidindex);
-			demux[i].running = 1; }  // mark if channel is already descrambling and running
-		if(demux[i].socket_fd != connfd) { continue; }  // skip demuxers belonging to other ca pmt connection
-		if(ca_pmt_list_management == LIST_FIRST || ca_pmt_list_management == LIST_ONLY)
+		for(i = 0; i < MAX_DEMUX; i++) 
 		{
+			if(demux[i].program_number == 0) { continue; }  // skip empty demuxers
+			if(demux[i].socket_fd != connfd) { continue; }  // skip demuxers belonging to other ca pmt connection
 			demux[i].stopdescramble = 1; // Mark for deletion if not used again by following pmt objects.
 			cs_log_dbg(D_DVBAPI, "Marked demuxer %d/%d (srvid = %04X fd = %d) to stop decoding", i, MAX_DEMUX, demux[i].program_number, connfd);
 		}
+		pmt_stopmarking = 1; // only stop demuxing for first pmt record
 	}
+	
 	getDemuxOptions(i, buffer, &ca_mask, &demux_index, &adapter_index, &pmtpid);
 	cs_log_dbg(D_DVBAPI,"Receiver wants to demux srvid %04X on adapter %04X camask %04X index %04X pmtpid %04X",
 		program_number, adapter_index, ca_mask, demux_index, pmtpid);
@@ -2901,6 +2898,9 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			
 			if(demux[j].running == 0 && demux[j].ECMpidcount != 0 )   // only start demuxer if it wasnt running
 			{
+				cs_log_dbg(D_DVBAPI, "Demuxer %d/%d lets start descrambling (srvid = %04X fd = %d ecmpids = %d)", j, MAX_DEMUX,
+					demux[j].program_number, connfd, demux[j].ECMpidcount);
+				demux[j].running = 1;  // mark channel as running
 				openxcas_set_sid(demux[j].program_number);
 				demux[j].decodingtries = -1;
 				dvbapi_resort_ecmpids(j);
@@ -2909,6 +2909,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			}
 			else if(demux[j].ECMpidcount == 0) //fta do logging and part of ecmhandler since there will be no ecms asked!
 			{
+				cs_log_dbg(D_DVBAPI, "Demuxer %d/%d no descrambling needed (srvid = %04X fd = %d ecmpids = %d)", j, MAX_DEMUX,
+					demux[j].program_number, connfd, demux[j].ECMpidcount);
 				demux[j].running = 0; // reset running flag
 				demux[demux_id].pidindex = -1; // reset ecmpid used for descrambling
 				dvbapi_stop_filter(j, TYPE_ECM);
