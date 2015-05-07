@@ -621,7 +621,9 @@ static int32_t ParseDataType(struct s_reader *reader, unsigned char dt, unsigned
 		if((cta_lr > 33) && (chid = b2i(2, cta_res + 11)))
 		{
 			int32_t id = (cta_res[7] * 256) | cta_res[8];
-
+			int32_t offset = ((reader->caid == 0x1830 || reader->caid == 0x1843)
+							&& chid == 0x0BEA) ? -20 : 0;
+            
 			// todo: add entitlements to list
 			cs_add_entitlement(reader,
 							   reader->caid,
@@ -629,7 +631,7 @@ static int32_t ParseDataType(struct s_reader *reader, unsigned char dt, unsigned
 							   chid,
 							   0,
 							   tier_date(b2i(2, cta_res + 20) - 0x7f7, ds, 15),
-							   tier_date(b2i(2, cta_res + 13) - 0x7f7, de, 15),
+							   tier_date(b2i(2, cta_res + 13) - 0x7f7 + offset, de, 15),
 							   4,
 							   1);
 
