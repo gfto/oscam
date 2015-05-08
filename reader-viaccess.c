@@ -1121,14 +1121,14 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 				// as some card don't support this
 				if(csystem_data->last_geo.number_ecm > 0)
 				{
-					if(csystem_data->last_geo.number_ecm == curnumber_ecm && !(ecm88Data[nanoLen - 1] == 0x01 && (ecm88Data[2] == 0x03 && ecm88Data[3] == 0x0B && ecm88Data[4] == 0x00)))
+					if(csystem_data->last_geo.number_ecm == curnumber_ecm && !(ecm88Data[nanoLen - 1] == 0x01))
 					{
 						keynr = ecm88Data[5];
 						rdr_log_dbg(reader, D_READER, "keyToUse = %02x, ECM ending with %02x", ecm88Data[5], ecm88Data[nanoLen - 1]);
 					}
 					else
 					{
-						if(ecm88Data[nanoLen - 1] == 0x01 && (ecm88Data[2] == 0x03 && ecm88Data[3] == 0x0B && ecm88Data[4] == 0x00))
+						if(ecm88Data[nanoLen - 1] == 0x01)
 						{
 							rdr_log_dbg(reader, D_READER, "Skip ECM ending with = %02x for ecm number (%x) for provider %02x%02x%02x", ecm88Data[nanoLen - 1], curnumber_ecm, ecm88Data[2], ecm88Data[3], ecm88Data[4]);
 						}
