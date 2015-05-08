@@ -2612,6 +2612,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		{
 			if(demux[i].program_number == 0) { continue; }  // skip empty demuxers
 			if(demux[i].socket_fd != connfd) { continue; }  // skip demuxers belonging to other ca pmt connection
+			if((demux[i].socket_fd == -1) && (strcmp(demux[i].pmt_file, pmtfile) != 0)) { continue; } // skip demuxers handled by other pmt files
 			demux[i].stopdescramble = 1; // Mark for deletion if not used again by following pmt objects.
 			cs_log_dbg(D_DVBAPI, "Marked demuxer %d/%d (srvid = %04X fd = %d) to stop decoding", i, MAX_DEMUX, demux[i].program_number, connfd);
 		}
@@ -3194,9 +3195,8 @@ void event_handler(int32_t UNUSED(signal))
 				if((time_t)pmt_info.st_mtime == demux[i].pmt_time)
 				{
 					found = 1;
-					continue;
+					break;
 				}
-				dvbapi_stop_descrambling(i);
 			}
 		}
 		if(found)
