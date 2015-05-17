@@ -104,7 +104,7 @@ void load_stat_from_file(void)
 	file = fopen(fname, "r");
 	if(!file)
 	{
-		cs_log("loadbalancer: can't read from file %s", fname);
+		cs_log("loadbalancer: no file %s found", fname);
 		return;
 	}
 
