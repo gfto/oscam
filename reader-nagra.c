@@ -622,7 +622,7 @@ static int32_t ParseDataType(struct s_reader *reader, unsigned char dt, unsigned
 		{
 			int32_t id = (cta_res[7] * 256) | cta_res[8];
 			int32_t offset = ((reader->caid == 0x1830 || reader->caid == 0x1843)
-							&& chid == 0x0BEA) ? -20 : 0;
+							&& chid == 0x0BEA) ? -21 : 0;
             
 			// todo: add entitlements to list
 			cs_add_entitlement(reader,
