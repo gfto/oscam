@@ -2357,7 +2357,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 		}
 	}
 	demux[demux_index].max_status = highest_prio; // register maxstatus
-	if(highest_priopid != -1 && found == highest_priopid)     // Found in cache
+	if(highest_priopid != -1 && found == highest_priopid && cache == 2) // Found entry in channelcache that is valid and has exact match on srvid
 	{
 		for(n = 0; n < demux[demux_index].ECMpidcount; n++)
 		{

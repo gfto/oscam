@@ -18,6 +18,9 @@ void dvbapi_save_channel_cache(void)
 {
 	if(boxtype_is("dbox2")) return; // dont save channelcache on these boxes, they lack resources and will crash!
 	
+	if (USE_OPENXCAS) // Why?
+		return;
+
 	char fname[256];
 	int32_t result = 0;
 	get_config_filename(fname, sizeof(fname), "oscam.ccache");
