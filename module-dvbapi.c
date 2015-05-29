@@ -2392,7 +2392,7 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 
 	if(buffer[0] == 0x01)
 	{
-		buffer = buffer + 1;
+		buffer++;
 		info_length--;
 	}
 
@@ -2703,7 +2703,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	
 	if(program_info_length > 1 && program_info_length < length)
 	{
-		dvbapi_parse_descriptor(demux_id, program_info_length - 1, buffer + 7);
+		dvbapi_parse_descriptor(demux_id, program_info_length - 1, buffer + 6);
 	}
 
 	uint32_t es_info_length = 0, vpid = 0;
