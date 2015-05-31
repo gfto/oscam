@@ -397,7 +397,7 @@ bool IO_Serial_Read(struct s_reader *reader, uint32_t delay, uint32_t timeout, u
 	if(timeout == 0)   // General fix for readers not communicating timeout and delay
 	{
 		if(reader->read_timeout != 0) { timeout = reader->read_timeout; }
-		else { timeout = 9990000; }   // hope 99990000 is long enough!
+		else { timeout = 9999000; }   // hope 9999000 is long enough!
 		rdr_log_dbg(reader, D_DEVICE, "Warning: read timeout 0 changed to %d us", timeout);
 	}
 

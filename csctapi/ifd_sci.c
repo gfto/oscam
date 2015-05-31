@@ -15,9 +15,6 @@
 #include "io_serial.h"
 #include "../oscam-string.h"
 
-#undef ATR_TIMEOUT
-#define ATR_TIMEOUT   800000
-
 #define OK      0
 #define ERROR 1
 
@@ -451,7 +448,7 @@ static int32_t Sci_FastReset(struct s_reader *reader, ATR *atr)
 	}
 	else
 	{
-		IO_Serial_Read(reader, 0, timeout,atr_len, buf);  //read atr
+		IO_Serial_Read(reader, 0, timeout*10, atr_len, buf);  //read atr: give some extra timeout time since on some platforms all chars are read at once
 //		rdr_log_dump(reader,buf, SCI_MAX_ATR_SIZE * 2, "SCI ATR :"); // just to crosscheck the buffer I left it commented.
 		if(ioctl(reader->handle, IOCTL_SET_ATR_READY, 1) < 0)
 		{
