@@ -824,6 +824,15 @@ static int32_t cryptoworks_reassemble_emm(struct s_reader *rdr, struct s_client 
 
 		assembled_EMM[1] = ((emm_len + 9) >> 8) | 0x70;
 		assembled_EMM[2] = (emm_len + 9) & 0xFF;
+
+		if(assembled_EMM[11] != emm_len)  // sanity check
+		{
+			// error in emm assembly
+			rdr_log_dbg(rdr, D_EMM, "Error assembling EMM-S");
+			free(assembled_EMM);
+			return 0;
+		}
+
 		//copy back the assembled emm in the working buffer
 		memcpy(buffer, assembled_EMM, emm_len + 12);
 		*len = emm_len + 12;
@@ -834,13 +843,6 @@ static int32_t cryptoworks_reassemble_emm(struct s_reader *rdr, struct s_client 
 		r_emm->emmlen = 0;
 
 		rdr_log_dump_dbg(rdr, D_EMM, buffer, *len, "shared emm (assembled):");
-		if(assembled_EMM[11] != emm_len)  // sanity check
-		{
-			// error in emm assembly
-			rdr_log_dbg(rdr, D_EMM, "Error assembling EMM-S");
-			free(assembled_EMM);
-			return 0;
-		}
 		free(assembled_EMM);
 		break;
 
