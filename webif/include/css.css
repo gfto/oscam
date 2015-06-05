@@ -265,7 +265,7 @@ table.statsbalance td:last-child {
 	line-height:20px;
 	width:125px
 }
-table.statsbalance td:last-child img.icon {
+table.statsbalance td:last-child a {
 	float:right;
 	margin-left:10px
 }
