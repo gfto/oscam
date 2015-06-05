@@ -909,7 +909,7 @@ div.colorPicker-swatch {
 	line-height:12px
 }
 /* User-Page polling */
-#inc,#dec {
+#inc,#dec,.regexbutton {
 	padding:0 3px;
 	margin:-3px 3px;
 	border:none;
@@ -922,7 +922,7 @@ div.colorPicker-swatch {
 	width:22px;
 	height:22px
 }
-#inc:hover,#dec:hover {
+#inc:hover,#dec:hover,.regexbutton:hover {
 	background-color:red
 }
 #nav li.pollselect {

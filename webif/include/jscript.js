@@ -61,6 +61,44 @@ function cleaninsert(deleteinsert) {
 	}
 }
 
+var beep = (function () {
+	var contextClass = (window.AudioContext || 
+						window.webkitAudioContext || 
+						window.mozAudioContext || 
+						window.oAudioContext || 
+						window.msAudioContext);
+	if (contextClass) {
+		var ctx = new contextClass();
+		return function (duration, type, freq, vol, finishedCallback) {
+			duration = +duration;
+			// Only 0-4 are valid types.
+			type = (type % 5) || 0;
+
+			if (typeof finishedCallback != "function") {
+				finishedCallback = function () {};
+			}
+
+			var osc = ctx.createOscillator();
+			var gainNode = ctx.createGain();
+			osc.type = type;
+			osc.connect(gainNode);
+			gainNode.connect(ctx.destination);
+			gainNode.gain.value = vol;
+			osc.type = type;
+			osc.frequency.value = freq; // value in hertz
+			osc.detune.value = 100; // value in cents
+			osc.start(0);
+
+			setTimeout(function () {
+				osc.stop(0);
+				finishedCallback();
+			}, duration);
+		};
+	} else {
+		return function (duration, type, freq, vol, finishedCallback) {return;};
+	}
+})();
+
 String.prototype.toHHMMSS = function () {
 	if (this.length < 1) {
 		return ''
@@ -148,10 +186,42 @@ $(function () {
 	$('table.status').on('mouseout', 'tr > td.statuscol14', function () {
 		$("#chart").hide();
 	});
+	
+	$("#add1regex").click(function () {
+		if (MAX_SEARCH_PATTERN > 98) return;
+		MAX_SEARCH_PATTERN++;
+		localStorage.MAX_SEARCH_PATTERN = MAX_SEARCH_PATTERN;
+		var i = MAX_SEARCH_PATTERN;
+		var beep_disabled = ' disabled="disabled" title="Not supported by your browser"';
+		var contextClass = (window.AudioContext || window.webkitAudioContext || window.mozAudioContext || window.oAudioContext || window.msAudioContext);
+		if (contextClass) { beep_disabled = ''; }
+		var prefix = "0";
+		if ( i > 9 ) { prefix = ""; }
+		$('<LI class="regex" id="regexrow' + i + '">Search' + prefix + i + ': <input type="text" name="regex' + i + '" class="regexinput" ID="regex' + i + '" value=""> Found only: <input type="checkbox" id="whitelisted' + i + '"><label></label> Hide: <input type="checkbox" id="hidden' + i + '"><label></label> Back Color: <input size="7" maxlength="7" type="text" name="color' + i + '" class="colorinput" ID="color' + i + '" value=""> Color: <input size="7" maxlength="7" type="text" name="fcolor' + i + '" class="colorinput" ID="fcolor' + i + '" value=""> Beep: <input type="checkbox" id="beep' + i + '"' + beep_disabled +'><label></label></LI>').insertBefore(".regexdata_save");
+		$('#color' + i).val($('.colorPicker_def_color').css('color'));
+		$('#fcolor' + i).val($('.colorPicker_def_fcolor').css('color'));
+		$('#color' + i).colorPicker();
+		$('#fcolor' + i).colorPicker();
+	});
+
+	$("#del1regex").click(function () {
+		var i = MAX_SEARCH_PATTERN;
+		if (i < 2) return;
+		if ($('#regex' + i).val() != '') if (!confirm('Search' + i + ' is not empty! Delete?')) return;
+		$("#regexrow" + i).remove();
+		localStorage.removeItem('regex' + i);
+		localStorage.removeItem('color' + i);
+		localStorage.removeItem('fcolor' + i);
+		localStorage.removeItem('whitelisted' + i);
+		localStorage.removeItem('hidden' + i);
+		localStorage.removeItem('beep' + i);
+		MAX_SEARCH_PATTERN--;
+		localStorage.MAX_SEARCH_PATTERN = MAX_SEARCH_PATTERN;
+	});
 
 	$("#regexok").click(function () {
 
-		for (var i = 1; i < 6; i++) {
+		for (var i = 1; i < MAX_SEARCH_PATTERN + 1; i++) {
 			var pattern = $('#regex' + i).val();
 			if (pattern) {
 				var color = $('#color' + i).val();
@@ -165,6 +235,7 @@ $(function () {
 			localStorage['fcolor' + i] = fcolor ? fcolor : '';
 			localStorage['whitelisted' + i] = $('#whitelisted' + i).prop('checked') ? '1' : '0';
 			localStorage['hidden' + i] = $('#hidden' + i).prop('checked') ? '1' : '0';
+			localStorage['beep' + i] = $('#beep' + i).prop('checked') ? '1' : '0';
 		}
 
 	});
@@ -172,7 +243,7 @@ $(function () {
 	$("#regexreset").click(function () {
 
 		if (confirm('Delete all Filters and Colors?')) {
-			for (var i = 1; i < 6; i++) {
+			for (var i = 1; i < MAX_SEARCH_PATTERN + 1; i++) {
 				$('#regex' + i).val('');
 				$('#whitelisted' + i).prop('checked', false);
 				$('#hidden' + i).prop('checked', false);
@@ -180,11 +251,13 @@ $(function () {
 				$('#color' + i).change();
 				$('#fcolor' + i).val($('.colorPicker_def_fcolor').css('color'));   
     			$('#fcolor' + i).change();
+				$('#beep' + i).prop('checked', false);
 				localStorage['regex' + i] = '';
 				localStorage['color' + i] = '';
 				localStorage['fcolor' + i] = '';
 				localStorage['whitelisted' + i] = '0';
 				localStorage['hidden' + i] = '0';
+				localStorage['beep' + i] = '0';
 			}
 		}
 
@@ -777,17 +850,19 @@ function getLogColor(text) {
 		return null;
 	}
 
-	for (var i = 1; i < 6; i++) {
+	for (var i = 1; i < MAX_SEARCH_PATTERN + 1; i++) {
 		var pattern = localStorage['regex' + i];
 		var color = localStorage['color' + i];
 		var fcolor = localStorage['fcolor' + i];
 		var hidden = localStorage['hidden' + i];
+		var beep = localStorage['beep' + i];
 		var regex = new RegExp(pattern);
 		if (pattern && (pattern != '') && (regex.exec(text))) {
 			return {
 				color: color,
 				fcolor: fcolor,
-				hidden: hidden
+				hidden: hidden,
+				beep: beep
 			}
 		}
 	}
@@ -804,11 +879,11 @@ function isWhitelisted(text) {
 	}
 
 	var numwhite = 0;
-	for (var i = 1; i < 6; i++) {
+	for (var i = 1; i < MAX_SEARCH_PATTERN + 1; i++) {
 		numwhite += parseInt(localStorage['whitelisted' + i]);
 	}
 	if (numwhite > 0) {
-		for (var i = 1; i < 6; i++) {
+		for (var i = 1; i < MAX_SEARCH_PATTERN + 1; i++) {
 			var whitelisted = localStorage['whitelisted' + i];
 			var pattern = localStorage['regex' + i];
 			var regex = new RegExp(pattern);
@@ -852,6 +927,9 @@ function updateLogpage(data) {
 						newline.css('color', newcolor.fcolor);
 					}
 					$("#livelogdata").append(newline);
+					if (newcolor.beep == 1) {
+						beep(50, 4, 1000, 0.2);
+					}
 				} else {
 					hiddenline = 1;
 				}
@@ -1577,8 +1655,24 @@ $(document).ready(function () {
 
 		case 'livelog':
 
+			var saved_regex = localStorage.MAX_SEARCH_PATTERN;
+			MAX_SEARCH_PATTERN = parseInt(saved_regex ? saved_regex : MAX_SEARCH_PATTERN);
+			$('<LI style="display:none;"><span class="colorPicker_def_color"></span><span class="colorPicker_def_fcolor"></span></LI>').insertBefore(".regexdata_save");
+			
+			var beep_disabled = ' disabled="disabled" title="Not supported by your browser"';
+			var contextClass = (window.AudioContext || window.webkitAudioContext || window.mozAudioContext || window.oAudioContext || window.msAudioContext);
+			if (contextClass) { beep_disabled = ''; }
+
+			for (var i = 1; i < MAX_SEARCH_PATTERN + 1; i++) {
+
+				var prefix = "0";
+				if ( i > 9 ) { prefix = ""; }
+
+				$('<LI class="regex" id="regexrow' + i + '">Search' + prefix + i + ': <input type="text" name="regex' + i + '" class="regexinput" ID="regex' + i + '" value=""> Found only: <input type="checkbox" id="whitelisted' + i + '"><label></label> Hide: <input type="checkbox" id="hidden' + i + '"><label></label> Back Color: <input size="7" maxlength="7" type="text" name="color' + i + '" class="colorinput" ID="color' + i + '" value=""> Color: <input size="7" maxlength="7" type="text" name="fcolor' + i + '" class="colorinput" ID="fcolor' + i + '" value=""> Beep: <input type="checkbox" id="beep' + i + '"' + beep_disabled +'><label></label></LI>').insertBefore(".regexdata_save");
+			}
+
 			if (!nostorage) {
-				for (var i = 1; i < 6; i++) {
+				for (var i = 1; i < MAX_SEARCH_PATTERN + 1; i++) {
 					var pattern = localStorage['regex' + i];
 					var color = localStorage['color' + i];
 					var fcolor = localStorage['fcolor' + i];
@@ -1589,6 +1683,7 @@ $(document).ready(function () {
 					$('#fcolor' + i).colorPicker();
 					$('#whitelisted' + i).prop('checked', localStorage['whitelisted' + i] == '1' ? true : false);
 					$('#hidden' + i).prop('checked', localStorage['hidden' + i] == '1' ? true : false);
+					$('#beep' + i).prop('checked', localStorage['beep' + i] == '1' ? true : false);
 				}
 			}
 			waitForMsg();
