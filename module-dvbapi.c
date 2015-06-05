@@ -2390,7 +2390,7 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 	if(info_length < 1)
 		{ return; }
 
-	if(!(buffer[0] == 0x09 || buffer[0] == 0x81)) // skip input we have no interest in: accept only 0x09 ecmpid descriptor and 0x81 enigma private descriptor 
+	if((buffer[0] < 0x02) && info_length > 0) // skip input values like 0x00 and 0x01 
 	{
 		buffer++;
 		info_length--;
