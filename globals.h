@@ -1203,26 +1203,37 @@ struct ecmrl
 };
 #define MAXECMRATELIMIT 20
 
+typedef struct ce_csp_tab_data
+{
+	int32_t     caid;
+	int32_t     cmask;
+	int32_t     prid;
+	int32_t     srvid;
+	int16_t     awtime;
+	int16_t     dwtime;
+} CECSPVALUETAB_DATA;
+
 typedef struct ce_csp_tab
 {
-	uint16_t    n;
-	int32_t     caid[CS_MAXCAIDTAB];
-	int32_t     cmask[CS_MAXCAIDTAB];
-	int32_t     prid[CS_MAXCAIDTAB];
-	int32_t     srvid[CS_MAXCAIDTAB];
-	int16_t     awtime[CS_MAXCAIDTAB];
-	int16_t     dwtime[CS_MAXCAIDTAB];
+	int32_t            cevnum;
+	CECSPVALUETAB_DATA *cevdata;
 } CECSPVALUETAB;
+
+typedef struct cacheex_check_cw_tab_data
+{
+	int32_t     caid;
+	int32_t     cmask;
+	int32_t     prid;
+	int32_t     srvid;
+	int8_t      mode;
+	uint32_t    counter;
+} CWCHECKTAB_DATA;
 
 typedef struct cacheex_check_cw_tab
 {
-	uint16_t    n;
-	int32_t     caid[CS_MAXCAIDTAB];
-	int32_t     cmask[CS_MAXCAIDTAB];
-	int32_t     prid[CS_MAXCAIDTAB];
-	int32_t     srvid[CS_MAXCAIDTAB];
-	int8_t      mode[CS_MAXCAIDTAB];
-	uint32_t    counter[CS_MAXCAIDTAB];
+	int32_t    cwchecknum;
+	CWCHECKTAB_DATA *cwcheckdata;
+
 } CWCHECKTAB;
 
 typedef struct cacheex_check_cw

@@ -192,7 +192,7 @@ void cacheex_valuetab_fn(const char *token, char *value, void *setting, FILE *f)
 			{ chk_cacheex_valuetab(value, cacheex_value_table); }
 		return;
 	}
-	if(cacheex_value_table->n || cfg.http_full_cfg)
+	if(cacheex_value_table->cevnum || cfg.http_full_cfg)
 	{
 		value = mk_t_cacheex_valuetab(cacheex_value_table);
 		fprintf_conf(f, token, "%s\n", value);
@@ -207,8 +207,8 @@ void cacheex_cwcheck_tab_fn(const char *token, char *value, void *setting, FILE 
 	{
 		if(strlen(value) == 0)
 		{
-			memset(cacheex_value_table, -1, sizeof(CWCHECKTAB));
-			cacheex_value_table->n = 0;
+			cacheex_value_table->cwchecknum = 0;
+			NULLFREE(cacheex_value_table->cwcheckdata);
 		}
 		else
 		{
@@ -217,7 +217,7 @@ void cacheex_cwcheck_tab_fn(const char *token, char *value, void *setting, FILE 
 		return;
 	}
 
-	if(cacheex_value_table->n || cfg.http_full_cfg)
+	if(cacheex_value_table->cwchecknum || cfg.http_full_cfg)
 	{
 		value = mk_t_cacheex_cwcheck_valuetab(cacheex_value_table);
 		fprintf_conf(f, token, "%s\n", value);
@@ -236,7 +236,7 @@ void cacheex_hitvaluetab_fn(const char *token, char *value, void *setting, FILE 
 			{ chk_cacheex_hitvaluetab(value, cacheex_value_table); }
 		return;
 	}
-	if(cacheex_value_table->n || cfg.http_full_cfg)
+	if(cacheex_value_table->cevnum || cfg.http_full_cfg)
 	{
 		value = mk_t_cacheex_hitvaluetab(cacheex_value_table);
 		fprintf_conf(f, token, "%s\n", value);
@@ -585,7 +585,7 @@ static bool cache_should_save_fn(void *UNUSED(var))
 {
 	return cfg.delay > 0 || cfg.max_cache_time != 15
 #ifdef CS_CACHEEX
-		   || cfg.cacheex_wait_timetab.n || cfg.cacheex_enable_stats > 0 || cfg.csp_port || cfg.csp.filter_caidtab.n || cfg.csp.allow_request == 0 || cfg.csp.allow_reforward > 0
+		   || cfg.cacheex_wait_timetab.cevnum || cfg.cacheex_enable_stats > 0 || cfg.csp_port || cfg.csp.filter_caidtab.cevnum || cfg.csp.allow_request == 0 || cfg.csp.allow_reforward > 0
 #endif
 #ifdef CW_CYCLE_CHECK
 		   || cfg.cwcycle_check_enable || cfg.cwcycle_check_caidtab.ctnum || cfg.maxcyclelist != 500 || cfg.keepcycletime || cfg.onbadcycle || cfg.cwcycle_dropold || cfg.cwcycle_sensitive || cfg.cwcycle_allowbadfromffb || cfg.cwcycle_usecwcfromce
@@ -1076,6 +1076,7 @@ void config_free(void)
 #endif
 #ifdef CS_CACHEEX
 	caidvaluetab_clear(&cfg.cacheex_mode1_delay_tab);
+	cecspvaluetab_clear(&cfg.cacheex_wait_timetab);
 #endif
 #ifdef CW_CYCLE_CHECK
 	caidtab_clear(&cfg.cwcycle_check_caidtab);

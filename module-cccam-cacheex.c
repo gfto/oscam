@@ -41,43 +41,35 @@ void cc_cacheex_filter_out(struct s_client *cl)
 		return;
 	}
 
-	i2b_buf(2, filter->n, buf + i);
+	i2b_buf(2, filter->cevnum, buf + i);
 	i += 2;
 
 	int32_t max_filters = 30;
-	for(j=0; j<max_filters; j++)
+	for(j=0; j<max_filters && j<filter->cevnum; j++)
 	{
-		if(j<CS_MAXCAIDTAB)
-		{
-			i2b_buf(4, filter->caid[j], buf + i);
-		}
+		CECSPVALUETAB_DATA *d = &filter->cevdata[j];
+		i2b_buf(4, d->caid, buf + i);
 		i += 4;
 	}
 
-	for(j=0; j<max_filters && j<CS_MAXCAIDTAB; j++)
+	for(j=0; j<max_filters && j<filter->cevnum; j++)
 	{
-		if(j<CS_MAXCAIDTAB)
-		{
-			i2b_buf(4, filter->cmask[j], buf + i);
-		}
+		CECSPVALUETAB_DATA *d = &filter->cevdata[j];
+		i2b_buf(4, d->cmask, buf + i);
 		i += 4;
 	}
 
-	for(j=0; j<max_filters && j<CS_MAXCAIDTAB; j++)
+	for(j=0; j<max_filters && j<filter->cevnum; j++)
 	{
-		if(j<CS_MAXCAIDTAB)
-		{
-			i2b_buf(4, filter->prid[j], buf + i);
-		}
+		CECSPVALUETAB_DATA *d = &filter->cevdata[j];
+		i2b_buf(4, d->prid, buf + i);
 		i += 4;
 	}
 
-	for(j=0; j<max_filters && j<CS_MAXCAIDTAB; j++)
+	for(j=0; j<max_filters && j<filter->cevnum; j++)
 	{
-		if(j<CS_MAXCAIDTAB)
-		{
-			i2b_buf(4, filter->srvid[j], buf + i);
-		}
+		CECSPVALUETAB_DATA *d = &filter->cevdata[j];
+		i2b_buf(4, d->srvid, buf + i);
 		i += 4;
 	}
 
@@ -106,43 +98,35 @@ void cc_cacheex_filter_in(struct s_client *cl, uchar *buf)
 		return;
 	}
 
-	filter->n = b2i(2, buf + i);
+	filter->cevnum = b2i(2, buf + i);
 	i += 2;
 
 	int32_t max_filters = 30;
-	for(j=0; j<max_filters; j++)
+	for(j=0; j<max_filters && j<filter->cevnum; j++)
 	{
-		if(j<CS_MAXCAIDTAB)
-		{
-			filter->caid[j] = b2i(4, buf + i);
-		}
+		CECSPVALUETAB_DATA *d = &filter->cevdata[j];
+		d->caid = b2i(4, buf + i);
 		i += 4;
 	}
 
-	for(j=0; j<max_filters && j<CS_MAXCAIDTAB; j++)
+	for(j=0; j<max_filters && j<filter->cevnum; j++)
 	{
-		if(j<CS_MAXCAIDTAB)
-		{
-			filter->cmask[j] = b2i(4, buf + i);
-		}
+		CECSPVALUETAB_DATA *d = &filter->cevdata[j];
+		d->cmask = b2i(4, buf + i);
 		i += 4;
 	}
 
-	for(j=0; j<max_filters && j<CS_MAXCAIDTAB; j++)
+	for(j=0; j<max_filters && j<filter->cevnum; j++)
 	{
-		if(j<CS_MAXCAIDTAB)
-		{
-			filter->prid[j] = b2i(4, buf + i);
-		}
+		CECSPVALUETAB_DATA *d = &filter->cevdata[j];
+		d->prid = b2i(4, buf + i);
 		i += 4;
 	}
 
-	for(j=0; j<max_filters && j<CS_MAXCAIDTAB; j++)
+	for(j=0; j<max_filters && j<filter->cevnum; j++)
 	{
-		if(j<CS_MAXCAIDTAB)
-		{
-			filter->srvid[j] = b2i(4, buf + i);
-		}
+		CECSPVALUETAB_DATA *d = &filter->cevdata[j];
+		d->srvid = b2i(4, buf + i);
 		i += 4;
 	}
 
