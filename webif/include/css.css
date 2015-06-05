@@ -207,6 +207,10 @@ li.configmenu a, li.configmenu a:hover,
 li.configmenu_selected a, li.configmenu_selected a:hover {
 	color:#050840
 }
+/* entitlements.html, readerconfig.html and user_edit.html */
+li.text_entitle {
+	font-weight:700
+}
 
 /* **************** 7. TABLE */
 table {
@@ -236,7 +240,7 @@ table.infotable {
 /* include readerconfig.html & user_edit.html */
 table.config, table.configreader,table.configuser {
 	width:80%;
- 	margin-bottom:-1px;
+	margin-bottom:-1px;
 	max-width:610px;
 	white-space:nowrap
 }
@@ -295,7 +299,7 @@ table.users {
 }
 /* services_edit.html */
 table.configservices {
- 	margin-bottom:-1px;
+	margin-bottom:-1px;
 	text-align:left
 }
 
@@ -611,7 +615,7 @@ input.short[type=text] {
 	width:52px
 }
 input.colorinput[type=text] {
-    width:60px
+	width:60px
 }
 input.medium[type=text] {
 	width:125px
@@ -689,9 +693,9 @@ td.configcolsave {
 	margin:5px
 }
 #otherdropdown option:first-child {
-    display:none
+	display:none
 }
-/* for extract in script.html and emm.html */ 
+/* for extract in script.html and emm.html */
 div.extract {
 	width:750px;
 	margin:10px auto;
@@ -783,11 +787,6 @@ span.global_conf {
 	cursor:default;
 	padding:4px;
 	color:blue
-}
-/* entitlements.html, readerconfig.html and user_edit.html */
-span.text_entitle {
-	display:inline-block;
-	font-weight:700
 }
 /* cachex status */
 span.e_expired {background-color:#FFF3E7}
@@ -973,7 +972,7 @@ input.pintervall {
 	position:absolute
 }
 .disabledtable {
-    opacity:0.5
+	opacity:0.5
 }
 /* Statuspage Functions: Generate a Bar for Barchart */
 div.bar {
