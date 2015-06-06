@@ -439,7 +439,7 @@ int32_t cc_clear_reported_carddata(LLIST *reported_carddatas, LLIST *except,
 			LL_ITER it2 = ll_iter_create(except);
 			while((card2 = ll_iter_next(&it2)))
 			{
-				if(card == card2)
+				if((card == card2) || (card->caid == card2->caid && card->hop == card2->hop && card->origin_id == card2->origin_id && card->reshare == card2->reshare && card->card_type == card2->card_type && card->remote_id == card2->remote_id && memcmp(card->hexserial, card2->hexserial, sizeof(card->hexserial)) && card->grp == card2->grp))
 					{ break; }
 			}
 		}
