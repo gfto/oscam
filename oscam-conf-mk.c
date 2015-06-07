@@ -625,45 +625,44 @@ char *mk_t_caidvaluetab(CAIDVALUETAB *caidvaluetab)
 
 char *mk_t_cacheex_valuetab(CECSPVALUETAB *tab)
 {
-	if (!tab || !tab->cevnum) return "";
-	int32_t i, size = 2 + tab->cevnum * (4 + 1 + 4 + 1 + 6 + 1 + 4 + 1 + 5 + 1 + 5 + 1); //caid&mask@provid$servid:awtime:dwtime","
+	if(!tab->n) { return ""; }
+	int32_t i, size = 2 + tab->n * (4 + 1 + 4 + 1 + 6 + 1 + 4 + 1 + 5 + 1 + 5 + 1); //caid&mask@provid$servid:awtime:dwtime","
 	char *buf;
 	if(!cs_malloc(&buf, size))
 		{ return ""; }
 	char *ptr = buf;
 
-	for(i = 0; i < tab->cevnum; i++)
+	for(i = 0; i < tab->n && tab->n <= CS_MAXCAIDTAB ; i++)
 	{
-		CECSPVALUETAB_DATA *d = &tab->cevdata[i];
 		if(i) { ptr += snprintf(ptr, size - (ptr - buf), ","); }
-		if(d->caid >= 0)
+		if(tab->caid[i] >= 0)
 		{
-			if(d->caid == 0)
+			if(tab->caid[i] == 0)
 			{
-				if(d->awtime > 0)
-					{ ptr += snprintf(ptr, size - (ptr - buf), "%d", d->caid); }
+				if(tab->awtime[i] > 0)
+					{ ptr += snprintf(ptr, size - (ptr - buf), "%d", tab->caid[i]); }
 			}
-			else if(d->caid < 256)   //Do not format 0D as 000D, its a shortcut for 0Dxx:
-				{ ptr += snprintf(ptr, size - (ptr - buf), "%02X", d->caid); }
+			else if(tab->caid[i] < 256)   //Do not format 0D as 000D, its a shortcut for 0Dxx:
+				{ ptr += snprintf(ptr, size - (ptr - buf), "%02X", tab->caid[i]); }
 			else
-				{ ptr += snprintf(ptr, size - (ptr - buf), "%04X", d->caid); }
+				{ ptr += snprintf(ptr, size - (ptr - buf), "%04X", tab->caid[i]); }
 		}
-		if(d->cmask >= 0)
-			{ ptr += snprintf(ptr, size - (ptr - buf), "&%04X", d->cmask); }
-		if(d->prid >= 0)
-			{ ptr += snprintf(ptr, size - (ptr - buf), "@%06X", d->prid); }
-		if(d->srvid >= 0)
-			{ ptr += snprintf(ptr, size - (ptr - buf), "$%04X", d->srvid); }
-		if(d->awtime > 0)
-			{ ptr += snprintf(ptr, size - (ptr - buf), ":%d", d->awtime); }
-		if(!d->dwtime > 0)
+		if(tab->cmask[i] >= 0)
+			{ ptr += snprintf(ptr, size - (ptr - buf), "&%04X", tab->cmask[i]); }
+		if(tab->prid[i] >= 0)
+			{ ptr += snprintf(ptr, size - (ptr - buf), "@%06X", tab->prid[i]); }
+		if(tab->srvid[i] >= 0)
+			{ ptr += snprintf(ptr, size - (ptr - buf), "$%04X", tab->srvid[i]); }
+		if(tab->awtime[i] > 0)
+			{ ptr += snprintf(ptr, size - (ptr - buf), ":%d", tab->awtime[i]); }
+		if(!tab->dwtime[i] > 0)
 			{ ptr += snprintf(ptr, size - (ptr - buf), ":0"); }
-		if(d->dwtime > 0)
+		if(tab->dwtime[i] > 0)
 		{
-			if((d->caid <= 0) && (d->prid == -1) && (d->srvid == -1) && (d->srvid == -1) && (d->awtime <= 0))
-				{ ptr += snprintf(ptr, size - (ptr - buf), "%d", d->dwtime); }
+			if((tab->caid[i] <= 0) && (tab->prid[i] == -1) && (tab->srvid[i] == -1) && (tab->srvid[i] == -1) && (tab->awtime[i] <= 0))
+				{ ptr += snprintf(ptr, size - (ptr - buf), "%d", tab->dwtime[i]); }
 			else
-				{ ptr += snprintf(ptr, size - (ptr - buf), ":%d", d->dwtime); }
+				{ ptr += snprintf(ptr, size - (ptr - buf), ":%d", tab->dwtime[i]); }
 		}
 	}
 	*ptr = 0;
@@ -673,37 +672,35 @@ char *mk_t_cacheex_valuetab(CECSPVALUETAB *tab)
 
 char *mk_t_cacheex_cwcheck_valuetab(CWCHECKTAB *tab)
 {
-	if(!tab || !tab->cwchecknum) { return ""; }
-	int32_t i, size = 2 + tab->cwchecknum * (4 + 1 + 4 + 1 + 6 + 1 + 4 + 1 + 5 + 1 + 5 + 1); //caid[&mask][@provid][$servid]:mode:counter","
+	if(!tab->n) { return ""; }
+	int32_t i, size = 2 + tab->n * (4 + 1 + 4 + 1 + 6 + 1 + 4 + 1 + 5 + 1 + 5 + 1); //caid[&mask][@provid][$servid]:mode:counter","
 	char *buf;
 	if(!cs_malloc(&buf, size))
 		{ return ""; }
 	char *ptr = buf;
 
-	for(i = 0; i < tab->cwchecknum; i++)
+	for(i = 0; i < tab->n && i <= CS_MAXCAIDTAB; i++)
 	{
-		CWCHECKTAB_DATA *d = &tab->cwcheckdata[i];
-
 		if(i) { ptr += snprintf(ptr, size - (ptr - buf), ","); }
-		if(d->caid >= 0)
+		if(tab->caid[i] >= 0)
 		{
-			if(d->caid == 0)
-				{ ptr += snprintf(ptr, size - (ptr - buf), "%d", d->caid); }
-			else if(d->caid < 256)   //Do not format 0D as 000D, its a shortcut for 0Dxx:
-				{ ptr += snprintf(ptr, size - (ptr - buf), "%02X", d->caid); }
+			if(tab->caid[i] == 0)
+				{ ptr += snprintf(ptr, size - (ptr - buf), "%d", tab->caid[i]); }
+			else if(tab->caid[i] < 256)   //Do not format 0D as 000D, its a shortcut for 0Dxx:
+				{ ptr += snprintf(ptr, size - (ptr - buf), "%02X", tab->caid[i]); }
 			else
-				{ ptr += snprintf(ptr, size - (ptr - buf), "%04X", d->caid); }
+				{ ptr += snprintf(ptr, size - (ptr - buf), "%04X", tab->caid[i]); }
 		}
-		if(d->cmask >= 0)
-			{ ptr += snprintf(ptr, size - (ptr - buf), "&%04X", d->cmask); }
-		if(d->prid >= 0)
-			{ ptr += snprintf(ptr, size - (ptr - buf), "@%06X", d->prid); }
-		if(d->srvid >= 0)
-			{ ptr += snprintf(ptr, size - (ptr - buf), "$%04X", d->srvid); }
-		if(d->mode >= 0)
-			{ ptr += snprintf(ptr, size - (ptr - buf), ":%d", d->mode); }
-		if(d->counter > 0)
-			{ ptr += snprintf(ptr, size - (ptr - buf), ":%d", d->counter); }
+		if(tab->cmask[i] >= 0)
+			{ ptr += snprintf(ptr, size - (ptr - buf), "&%04X", tab->cmask[i]); }
+		if(tab->prid[i] >= 0)
+			{ ptr += snprintf(ptr, size - (ptr - buf), "@%06X", tab->prid[i]); }
+		if(tab->srvid[i] >= 0)
+			{ ptr += snprintf(ptr, size - (ptr - buf), "$%04X", tab->srvid[i]); }
+		if(tab->mode[i] >= 0)
+			{ ptr += snprintf(ptr, size - (ptr - buf), ":%d", tab->mode[i]); }
+		if(tab->counter[i] > 0)
+			{ ptr += snprintf(ptr, size - (ptr - buf), ":%d", tab->counter[i]); }
 	}
 	*ptr = 0;
 	return buf;
@@ -711,29 +708,28 @@ char *mk_t_cacheex_cwcheck_valuetab(CWCHECKTAB *tab)
 
 char *mk_t_cacheex_hitvaluetab(CECSPVALUETAB *tab)
 {
-	if (!tab || !tab->cevnum) return "";
-	int32_t i, size = 2 + tab->cevnum * (4 + 1 + 4 + 1 + 6 + 1 + 4 + 1); //caid&mask@provid$servid","
+	if(!tab->n) { return ""; }
+	int32_t i, size = 2 + tab->n * (4 + 1 + 4 + 1 + 6 + 1 + 4 + 1); //caid&mask@provid$servid","
 	char *buf;
 	if(!cs_malloc(&buf, size))
 		{ return ""; }
 	char *ptr = buf;
 
-	for(i = 0; i < tab->cevnum; i++)
+	for(i = 0; i < tab->n; i++)
 	{
-		CECSPVALUETAB_DATA *d = &tab->cevdata[i];
 		if(i) { ptr += snprintf(ptr, size - (ptr - buf), ","); }
-		if(d->caid > 0)
+		if(tab->caid[i] > 0)
 		{
-			if(d->caid < 256)  //Do not format 0D as 000D, its a shortcut for 0Dxx:
-				{ ptr += snprintf(ptr, size - (ptr - buf), "%02X", d->caid); }
+			if(tab->caid[i] < 256)  //Do not format 0D as 000D, its a shortcut for 0Dxx:
+				{ ptr += snprintf(ptr, size - (ptr - buf), "%02X", tab->caid[i]); }
 			else
-				{ ptr += snprintf(ptr, size - (ptr - buf), "%04X", d->caid); }
-			if(d->cmask >= 0)
-				{ ptr += snprintf(ptr, size - (ptr - buf), "&%04X", d->cmask); }
-			if(d->prid >= 0)
-				{ ptr += snprintf(ptr, size - (ptr - buf), "@%06X", d->prid); }
-			if(d->srvid >= 0)
-				{ ptr += snprintf(ptr, size - (ptr - buf), "$%04X", d->srvid); }
+				{ ptr += snprintf(ptr, size - (ptr - buf), "%04X", tab->caid[i]); }
+			if(tab->cmask[i] >= 0)
+				{ ptr += snprintf(ptr, size - (ptr - buf), "&%04X", tab->cmask[i]); }
+			if(tab->prid[i] >= 0)
+				{ ptr += snprintf(ptr, size - (ptr - buf), "@%06X", tab->prid[i]); }
+			if(tab->srvid[i] >= 0)
+				{ ptr += snprintf(ptr, size - (ptr - buf), "$%04X", tab->srvid[i]); }
 		}
 	}
 	*ptr = 0;

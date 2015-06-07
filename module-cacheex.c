@@ -112,7 +112,7 @@ static void cacheex_add_hitcache(struct s_client *cl, ECM_REQUEST *er)
 {
 	if (!cfg.max_hitcache_time)  //we don't want check/save hitcache
 		return;
-	if (!cfg.cacheex_wait_timetab.cevnum)
+	if (!cfg.cacheex_wait_timetab.n)
 		return;
 	uint32_t cacheex_wait_time = get_cacheex_wait_time(er,NULL);
 	if (!cacheex_wait_time)
@@ -836,25 +836,23 @@ CWCHECK get_cwcheck(ECM_REQUEST *er){
 	int8_t mode = 0;
 	int16_t counter = 1;
 
-	for(i = 0; i < cfg.cacheex_cwcheck_tab.cwchecknum; i++)
+	for(i = 0; i < cfg.cacheex_cwcheck_tab.n; i++)
 	{
-		CWCHECKTAB_DATA *d = &cfg.cacheex_cwcheck_tab.cwcheckdata[i];
-
-		if(i == 0 && d->caid <= 0)
+		if(i == 0 && cfg.cacheex_cwcheck_tab.caid[i] <= 0)
 		{
-			mode = d->mode;
-			counter = d->counter;
+			mode = cfg.cacheex_cwcheck_tab.mode[i];
+			counter = cfg.cacheex_cwcheck_tab.counter[i];
 			continue; //check other, only valid for unset
 		}
 
-		if(d->caid == er->caid || d->caid == er->caid >> 8 || ((d->cmask >= 0 && (er->caid & d->cmask) == d->caid) || d->caid == -1))
+		if(cfg.cacheex_cwcheck_tab.caid[i] == er->caid || cfg.cacheex_cwcheck_tab.caid[i] == er->caid >> 8 || ((cfg.cacheex_cwcheck_tab.cmask[i] >= 0 && (er->caid & cfg.cacheex_cwcheck_tab.cmask[i]) == cfg.cacheex_cwcheck_tab.caid[i]) || cfg.cacheex_cwcheck_tab.caid[i] == -1))
 		{
-			if((d->prid >= 0 && d->prid == (int32_t)er->prid) || d->prid == -1)
+			if((cfg.cacheex_cwcheck_tab.prid[i] >= 0 && cfg.cacheex_cwcheck_tab.prid[i] == (int32_t)er->prid) || cfg.cacheex_cwcheck_tab.prid[i] == -1)
 			{
-				if((d->srvid >= 0 && d->srvid == er->srvid) || d->srvid == -1)
+				if((cfg.cacheex_cwcheck_tab.srvid[i] >= 0 && cfg.cacheex_cwcheck_tab.srvid[i] == er->srvid) || cfg.cacheex_cwcheck_tab.srvid[i] == -1)
 				{
-					mode = d->mode;
-					counter = d->counter;
+					mode = cfg.cacheex_cwcheck_tab.mode[i];
+					counter = cfg.cacheex_cwcheck_tab.counter[i];
 					break;
 				}
 			}
@@ -887,25 +885,23 @@ uint32_t get_cacheex_wait_time(ECM_REQUEST *er, struct s_client *cl)
 {
 	int32_t i, dwtime = -1, awtime = -1;
 
-	for(i = 0; i < cfg.cacheex_wait_timetab.cevnum; i++)
+	for(i = 0; i < cfg.cacheex_wait_timetab.n; i++)
 	{
-		CECSPVALUETAB_DATA *d = &cfg.cacheex_wait_timetab.cevdata[i];
-
-		if(i == 0 && d->caid <= 0)
+		if(i == 0 && cfg.cacheex_wait_timetab.caid[i] <= 0)
 		{
-			dwtime = d->dwtime;
-			awtime = d->awtime;
+			dwtime = cfg.cacheex_wait_timetab.dwtime[i];
+			awtime = cfg.cacheex_wait_timetab.awtime[i];
 			continue; //check other, only valid for unset
 		}
 
-		if(d->caid == er->caid || d->caid == er->caid >> 8 || ((d->cmask >= 0 && (er->caid & d->cmask) == d->caid) || d->caid == -1))
+		if(cfg.cacheex_wait_timetab.caid[i] == er->caid || cfg.cacheex_wait_timetab.caid[i] == er->caid >> 8 || ((cfg.cacheex_wait_timetab.cmask[i] >= 0 && (er->caid & cfg.cacheex_wait_timetab.cmask[i]) == cfg.cacheex_wait_timetab.caid[i]) || cfg.cacheex_wait_timetab.caid[i] == -1))
 		{
-			if((d->prid >= 0 && d->prid == (int32_t)er->prid) || d->prid == -1)
+			if((cfg.cacheex_wait_timetab.prid[i] >= 0 && cfg.cacheex_wait_timetab.prid[i] == (int32_t)er->prid) || cfg.cacheex_wait_timetab.prid[i] == -1)
 			{
-				if((d->srvid >= 0 && d->srvid == er->srvid) || d->srvid == -1)
+				if((cfg.cacheex_wait_timetab.srvid[i] >= 0 && cfg.cacheex_wait_timetab.srvid[i] == er->srvid) || cfg.cacheex_wait_timetab.srvid[i] == -1)
 				{
-					dwtime = d->dwtime;
-					awtime = d->awtime;
+					dwtime = cfg.cacheex_wait_timetab.dwtime[i];
+					awtime = cfg.cacheex_wait_timetab.awtime[i];
 					break;
 				}
 			}
@@ -937,19 +933,19 @@ uint32_t get_cacheex_wait_time(ECM_REQUEST *er, struct s_client *cl)
 
 int32_t chk_csp_ctab(ECM_REQUEST *er, CECSPVALUETAB *tab)
 {
-	if(!er->caid || !tab->cevnum)
+	if(!er->caid || !tab->n)
 		{ return 1; } // nothing setup we add all
 	int32_t i;
-	for(i = 0; i < tab->cevnum; i++)
+	for(i = 0; i < tab->n; i++)
 	{
-		CECSPVALUETAB_DATA *d = &tab->cevdata[i];
-		if(d->caid > 0)
+
+		if(tab->caid[i] > 0)
 		{
-			if(d->caid == er->caid || d->caid == er->caid >> 8 || ((d->cmask >= 0 && (er->caid & d->cmask) == d->caid) || d->caid == -1))
+			if(tab->caid[i] == er->caid || tab->caid[i] == er->caid >> 8 || ((tab->cmask[i] >= 0 && (er->caid & tab->cmask[i]) == tab->caid[i]) || tab->caid[i] == -1))
 			{
-				if((d->prid >= 0 && d->prid == (int32_t)er->prid) || d->prid == -1)
+				if((tab->prid[i] >= 0 && tab->prid[i] == (int32_t)er->prid) || tab->prid[i] == -1)
 				{
-					if((d->srvid >= 0 && d->srvid == er->srvid) || d->srvid == -1)
+					if((tab->srvid[i] >= 0 && tab->srvid[i] == er->srvid) || tab->srvid[i] == -1)
 					{
 						return 1;
 					}
