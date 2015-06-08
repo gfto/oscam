@@ -116,7 +116,7 @@ static void reader_log_emm(struct s_reader *reader, EMM_PACKET *ep, int32_t coun
 		if(!tps)
 			{ tps = &tpe; }
 
-		rdr_log(reader, "%s emmtype=%s, len=%d, cnt=%d: %s (%"PRId64" ms)",
+		rdr_log(reader, "%s emmtype=%s, len=0x%02X, cnt=%d: %s (%"PRId64" ms)",
 				username(ep->client), typedesc[ep->type], ep->emm[2], count, rtxt[rc], comp_timeb(&tpe, tps));
 	}
 
@@ -346,7 +346,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 			 of EMM log is done. */
 			if(aureader->logemm & 0x10)
 			{
-				rdr_log(aureader, "%s emmtype=%s, len=%d, idx=0, cnt=1: audisabled (0 ms)",
+				rdr_log(aureader, "%s emmtype=%s, len=0x%02X, idx=0, cnt=1: audisabled (0 ms)",
 						client->account->usr,
 						typtext[ep->type],
 						ep->emm[2]);
@@ -486,7 +486,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 			 of EMM log is done. */
 			if(aureader->logemm & 0x08)
 			{
-				rdr_log(aureader, "%s emmtype=%s, len=%d, idx=0, cnt=%d: blocked (0 ms)",
+				rdr_log(aureader, "%s emmtype=%s, len=0x%02X, idx=0, cnt=%d: blocked (0 ms)",
 						client->account->usr,
 						typtext[ep->type],
 						ep->emm[2],
