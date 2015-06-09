@@ -1320,6 +1320,7 @@ const struct s_cardsystem reader_videoguard2 =
 	.do_ecm         = videoguard2_do_ecm,
 	.card_info      = videoguard2_card_info,
 	.card_init      = videoguard2_card_init,
+	.poll_status    = videoguard2_poll_status,
 	.card_done      = videoguard2_card_done,
 	.get_emm_type   = videoguard_get_emm_type,
 	.get_emm_filter = videoguard_get_emm_filter,
