@@ -613,12 +613,26 @@ static void cs_dumpstack(int32_t sig)
  **/
 static void cs_reload_config(void)
 {
+	static pthread_mutex_t mutex = NULL;
+	
+	if(mutex == NULL)
+	{
+		pthread_mutex_init(&mutex, NULL);
+	}
+	
+	if(pthread_mutex_trylock(&mutex))
+	{
+		return;	
+	}
+	
 	cs_accounts_chk();
 	reload_readerdb();
 	init_srvid();
 	init_tierid();
 	ac_init_stat();
 	cs_reopen_log(); // FIXME: aclog.log, emm logs, cw logs (?)
+	
+	pthread_mutex_unlock(&mutex);
 }
 
 /* Sets signal handlers to ignore for early startup of OSCam because for example log
