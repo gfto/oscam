@@ -3058,6 +3058,12 @@ int32_t dvbapi_net_init_listenfd(void)
 
 	int32_t opt = 0;
 #ifdef IPV6SUPPORT
+
+	// azbox toolchain do not have this define
+#ifndef IPV6_V6ONLY
+#define IPV6_V6ONLY 26
+#endif
+
 	// set the server socket option to listen on IPv4 and IPv6 simultaneously
 	setsockopt(listenfd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&opt, sizeof(opt));
 #endif
