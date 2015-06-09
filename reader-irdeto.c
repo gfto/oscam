@@ -807,7 +807,7 @@ static int32_t irdeto_get_emm_filter(struct s_reader *rdr, struct s_csystem_emm_
 		for(i = 0; i < rdr->nprov; i++)
 		{
 			// 00XX00 provider is a not initialised not used provider
-			if(rdr->prid[i][1] == 0xFF || (rdr->prid[i][1] == 0x00 && rdr->prid[i][3] == 0x00))
+			if(rdr->prid[i][1] == 0xFF || (rdr->prid[i][1] == 0x00 && rdr->prid[i][3] == 0x00 && rdr->caid != 0x0647))
 				{ continue; }
 
 			filters[idx].type = EMM_UNIQUE;
