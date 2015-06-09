@@ -356,7 +356,12 @@ tr.expired td {background-color:#FBA}
 tr.connected td {background-color:#FFA}
 tr.disabled td {}
 tr.disabled td:first-child img.icon,
-tr.disabledreader td:first-child img.icon {background-color:#0A0}
+tr.disabledreader td:first-child img.icon {background-color:red}
+tr.online td:first-child img.icon,
+tr.offline td:first-child img.icon,
+tr.expired td:first-child img.icon,
+tr.connected td:first-child img.icon,
+tr.enabledreader td:first-child img.icon {background-color:#0A0}
 /* colors for status rows in status.html depend on status */
 tr.a td {background-color:#3F0}
 tr.c td {background-color:#F1F5E6}
