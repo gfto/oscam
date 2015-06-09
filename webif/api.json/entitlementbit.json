@@ -1,0 +1,1 @@
+##JSONDELIMITER##{"type":"##ENTTYPE##", "caid": "##ENTCAID##", "provid": "##ENTPROVID##", "id": "##ENTID##", "class": "##ENTCLASS##", "startDate": "##ENTSTARTDATE##", "expireDate": "##ENTENDDATE##", "name": "##ENTRESNAME##"}

@@ -8,6 +8,8 @@
 
 JSONCACHEEX                   api.json/cacheex.json                                       CS_CACHEEX
 JSONCACHEEXBIT                api.json/cacheexbit.json                                    CS_CACHEEX
+JSONENTITLEMENTS              api.json/entitlements.json
+JSONENTITLEMENTBIT            api.json/entitlementbit.json
 JSONFOOTER                    api.json/footer.json
 JSONHEADER                    api.json/header.json
 JSONREADER                    api.json/reader.json

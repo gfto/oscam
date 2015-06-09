@@ -3981,9 +3981,9 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 
 					tpl_addVar(vars, TPLAPPEND, "LOGHISTORY", "<BR><BR>New Structure:<BR>");
 					char tbuffer[83];
+					int jsondelimiter = 0;
 					while((item = ll_iter_next(&itr)))
 					{
-
 						localtime_r(&item->start, &start_t);
 						localtime_r(&item->end, &end_t);
 
@@ -4015,6 +4015,11 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 						if((strcmp(getParam(params, "hideexpired"), "1") != 0) || (item->end > now))
 							{ tpl_addVar(vars, TPLAPPEND, "READERENTENTRY", tpl_getTpl(vars, "ENTITLEMENTITEMBIT")); }
 
+						if(apicall==2)
+						{
+							tpl_printf(vars, TPLAPPEND, "APIENTITLEMENTLIST","%s%s",jsondelimiter?",":"", tpl_getTpl(vars, "JSONENTITLEMENTBIT"));
+							jsondelimiter++;
+						}
 					}
 				}
 
@@ -4154,7 +4159,12 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 	if(!apicall)
 		{ return tpl_getTpl(vars, "ENTITLEMENTS"); }
 	else
-		{ return tpl_getTpl(vars, "APICCCAMCARDLIST"); }
+	{
+		if(apicall==1)
+			{ return tpl_getTpl(vars, "APICCCAMCARDLIST"); }
+		else
+			{ return tpl_getTpl(vars, "JSONENTITLEMENTS"); }
+	}
 }
 
 #ifdef WEBIF_LIVELOG
@@ -6706,7 +6716,7 @@ static char *send_oscam_api(struct templatevars * vars, FILE * f, struct uripara
 			struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 			if(rdr)
 			{
-				if(rdr->typ == R_CCCAM && rdr->enable == 1)
+				if(rdr->enable == 1)
 				{
 					return send_oscam_entitlement(vars, params, apicall);
 				}
