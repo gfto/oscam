@@ -265,6 +265,31 @@ int32_t write_card(struct cc_data *cc, uint8_t *buf, struct cc_card *card, int32
 	return ofs;
 }
 
+static int32_t is_client_au_allowed(struct cc_card *card, struct s_client *cl)
+{
+	if(!card || !card->origin_reader)
+	{
+		return 0;
+	}
+	
+	if(!cl || !cl->aureader_list || !ll_count(cl->aureader_list))
+	{
+		return 0;
+	}
+		
+	struct s_reader *rdr = NULL;
+	LL_ITER itr = ll_iter_create(cl->aureader_list);
+	while((rdr = ll_iter_next(&itr)))
+	{
+		if(rdr == card->origin_reader)
+		{
+			return 1;
+		}
+	}
+	
+	return 0;
+}
+
 static int32_t send_card_to_client(struct cc_card *card, struct s_client *cl)
 {
 	uint8_t buf[CC_MAXMSGSIZE];
@@ -310,7 +335,7 @@ static int32_t send_card_to_client(struct cc_card *card, struct s_client *cl)
 
 	struct cc_data *cc = cl->cc;
 	int32_t is_ext = cc->cccam220 && can_use_ext(card);
-	int32_t len = write_card(cc, buf, card, 1, is_ext, ll_count(cl->aureader_list), cl);
+	int32_t len = write_card(cc, buf, card, 1, is_ext, is_client_au_allowed(card, cl), cl);
 	//buf[10] = card->hop-1;
 	buf[11] = new_reshare;
 
@@ -478,14 +503,6 @@ int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card)
 	//Check group:
 	if(card->grp && !(card->grp & cl->grp))
 		{ return 0; }
-
-	if(card->aufilter)    //aufilter (0=any, 1=au clients only, 2=nonau clients only)
-	{
-		int8_t cl_au = ll_count(cl->aureader_list) > 0; //client has au allowed
-		int8_t card_au = card->aufilter == 1;
-		if(card_au != cl_au)
-			{ return 0; }
-	}
 
 	//Check idents:
 	if(!chk_ident(&cl->ftab, card))
@@ -885,23 +902,6 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int8_t fre
 	if(!card)
 		{ return modified; }
 
-	if(card)
-	{
-		if(!card->aufilter && is_au_card(card))
-		{
-
-			//card keeps their hexserial, set aufilter (0=any, 1=au clients only, 2=nonau clients only)
-			card->aufilter = 1;
-			struct cc_card *card3 = create_card(card);
-
-			add_card_providers(card3, card, 1); //copy providers to new card. Copy remote nodes to new card
-
-			//create a copy of the card, set aufilter to 2 and remove hexserial:
-			card3->aufilter = 2;
-			memset(card3->hexserial, 0, sizeof(card3->hexserial));
-			modified = add_card_to_serverlist(cardlist, card3, 1);
-		}
-	}
 	LL_ITER it = ll_iter_create(cardlist);
 	struct cc_card *card2;
 

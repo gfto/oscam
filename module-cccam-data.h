@@ -118,7 +118,6 @@ struct cc_card
 	struct s_reader  *origin_reader;
 	uint32_t origin_id;
 	cc_card_type card_type;
-	int8_t aufilter;
 	struct s_sidtab *sidtab; //pointer to sidtab entry if card_type = CT_CARD_BY_SERVICE
 	uint64_t grp;
 	uint8_t rdr_reshare;
