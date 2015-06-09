@@ -15,14 +15,13 @@ extern "C" {
 #define DES_ECS2_DECRYPT    (DES_IP | DES_IP_1 | DES_RIGHT)
 #define DES_ECS2_CRYPT      (DES_IP | DES_IP_1)
 
-	extern int des_encrypt(unsigned char *buffer, int len, unsigned char *deskey);
-	extern int des_decrypt(unsigned char *buffer, int len, unsigned char *deskey);
-	extern unsigned char *des_login_key_get(unsigned char *key1, unsigned char *key2, int len, unsigned char *des16);
 	extern void doPC1(unsigned char data[]);
 	extern void des(unsigned char key[], unsigned char mode, unsigned char data[]);
 	extern void des_cbc_encrypt(unsigned char *data, const unsigned char *iv, const unsigned char *okey, int len);
 	extern void des_cbc_decrypt(unsigned char *data, unsigned char *iv, const unsigned char *okey, int len);
-
+	extern unsigned char *des_key_spread(unsigned char *normal, unsigned char *spread);
+	extern void des_random_get(unsigned char *buffer, unsigned char len);
+	
 #ifdef  __cplusplus
 }
 #endif

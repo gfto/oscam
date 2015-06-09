@@ -16,7 +16,7 @@
 #include "oscam-string.h"
 #include "oscam-time.h"
 
-#define CWS_NETMSGSIZE 400  //csp 0.8.9 (default: 400). This is CWS_NETMSGSIZE. The old default was 240
+#define CWS_NETMSGSIZE 500  //csp 0.8.9 (default: 400). This is CWS_NETMSGSIZE. The old default was 240
 #define NCD_CLIENT_ID 0x8888
 
 #define CWS_FIRSTCMDNO 0xe0
@@ -68,6 +68,172 @@ typedef struct custom_data
 } custom_data_t;
 
 #define REQ_SIZE  2
+
+#define CRYPT           0
+#define HASH            1
+#define F_EURO_S2       0
+#define F_TRIPLE_DES    1
+
+#define TestBit(addr, bit) ((addr) & (1 << bit))
+
+static unsigned char getmask(unsigned char *OutData, unsigned char *Mask, unsigned char I, unsigned char J)
+{
+	unsigned char K, B, M, M1 , D, DI, MI;
+
+	K = I ^ J;
+	DI = 7;
+	if((K & 4) == 4)
+	{
+		K ^= 7;
+		DI ^= 7;
+	}
+	MI = 3;
+	MI &= J;
+	K ^= MI;
+	K += MI;
+	if((K & 4) == 4)
+	{
+		return 0;
+	}
+	DI ^= J;
+	D = OutData[DI];
+	MI = 0;
+	MI += J;
+	M1 = Mask[MI];
+	MI ^= 4;
+	M = Mask[MI];
+	B = 0;
+	for(K = 0; K <= 7; K++)
+	{
+		if((D & 1) == 1) { B += M; }
+		D = (D >> 1) + ((B & 1) << 7);
+		B = B >> 1;
+	}
+	return D ^ M1;
+}
+
+static void v2mask(unsigned char *cw, unsigned char *mask)
+{
+	int i, j;
+
+	for(i = 7; i >= 0; i--)
+		for(j = 7; j >= 4; j--)
+			{ cw[i] ^= getmask(cw, mask, i, j); }
+	for(i = 0; i <= 7; i++)
+		for(j = 0; j <= 3; j++)
+			{ cw[i] ^= getmask(cw, mask, i, j); }
+}
+
+static void EuroDes(unsigned char key1[], unsigned char key2[], unsigned char desMode, unsigned char operatingMode, unsigned char data[])
+{
+	unsigned char mode;
+
+	if(key1[7])   /* Viaccess */
+	{
+		mode = (operatingMode == HASH) ? DES_ECM_HASH : DES_ECM_CRYPT;
+
+		if(key2 != NULL)
+			{ v2mask(data, key2); }
+		des(key1, mode, data);
+		if(key2 != NULL)
+			{ v2mask(data, key2); }
+	}
+	else if(TestBit(desMode, F_TRIPLE_DES))
+	{
+		/* Eurocrypt 3-DES */
+		mode = (operatingMode == HASH) ?  0 : DES_RIGHT;
+		des(key1, (unsigned char)(DES_IP | mode), data);
+
+		mode ^= DES_RIGHT;
+		des(key2, mode, data);
+
+		mode ^= DES_RIGHT;
+		des(key1, (unsigned char)(mode | DES_IP_1), data);
+	}
+	else
+	{
+		if(TestBit(desMode, F_EURO_S2))
+		{
+			/* Eurocrypt S2 */
+			mode = (operatingMode == HASH) ? DES_ECS2_CRYPT : DES_ECS2_DECRYPT;
+		}
+		else
+		{
+			/* Eurocrypt M */
+			mode = (operatingMode == HASH) ? DES_ECM_HASH : DES_ECM_CRYPT;
+		}
+		des(key1, mode, data);
+	}
+}
+
+static int des_encrypt(unsigned char *buffer, int len, unsigned char *deskey)
+{
+	unsigned char checksum = 0;
+	unsigned char noPadBytes;
+	unsigned char padBytes[7];
+	char ivec[8];
+	short i;
+
+	if(!deskey) { return len; }
+	noPadBytes = (8 - ((len - 1) % 8)) % 8;
+	if(len + noPadBytes + 1 >= CWS_NETMSGSIZE - 8) { return -1; }
+	des_random_get(padBytes, noPadBytes);
+	for(i = 0; i < noPadBytes; i++) { buffer[len++] = padBytes[i]; }
+	for(i = 2; i < len; i++) { checksum ^= buffer[i]; }
+	buffer[len++] = checksum;
+	des_random_get((unsigned char *)ivec, 8);
+	memcpy(buffer + len, ivec, 8);
+	for(i = 2; i < len; i += 8)
+	{
+		unsigned char j;
+		const unsigned char flags = (1 << F_EURO_S2) | (1 << F_TRIPLE_DES);
+		for(j = 0; j < 8; j++) { buffer[i + j] ^= ivec[j]; }
+		EuroDes(deskey, deskey + 8, flags, HASH, buffer + i);
+		memcpy(ivec, buffer + i, 8);
+	}
+	len += 8;
+	return len;
+}
+
+static int des_decrypt(unsigned char *buffer, int len, unsigned char *deskey)
+{
+	char ivec[8];
+	char nextIvec[8];
+	int i;
+	unsigned char checksum = 0;
+
+	if(!deskey) { return len; }
+	if((len - 2) % 8 || (len - 2) < 16) { return -1; }
+	len -= 8;
+	memcpy(nextIvec, buffer + len, 8);
+	for(i = 2; i < len; i += 8)
+	{
+		unsigned char j;
+		const unsigned char flags = (1 << F_EURO_S2) | (1 << F_TRIPLE_DES);
+
+		memcpy(ivec, nextIvec, 8);
+		memcpy(nextIvec, buffer + i, 8);
+		EuroDes(deskey, deskey + 8, flags, CRYPT, buffer + i);
+		for(j = 0; j < 8; j++)
+			{ buffer[i + j] ^= ivec[j]; }
+	}
+	for(i = 2; i < len; i++) { checksum ^= buffer[i]; }
+	if(checksum) { return -1; }
+	return len;
+}
+
+static unsigned char *des_login_key_get(unsigned char *key1, unsigned char *key2, int len, unsigned char *des16)
+{
+	unsigned char des14[14];
+	int i;
+
+	memcpy(des14, key1, sizeof(des14));
+	for(i = 0; i < len; i++) { des14[i % 14] ^= key2[i]; }
+	des16 = des_key_spread(des14, des16);
+	doPC1(des16);
+	doPC1(des16 + 8);
+	return des16;
+}
 
 static int32_t network_message_send(int32_t handle, uint16_t *netMsgId, uint8_t *buffer,
 									int32_t len, uint8_t *deskey, comm_type_t commType,
