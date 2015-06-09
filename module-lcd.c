@@ -221,7 +221,7 @@ static void refresh_lcd_file(void)
 					label = cl->account->usr;
 					count_u++;
 
-					get_servicename(cl, cl->last_srvid, cl->last_caid, channame);
+					get_servicename(cl, cl->last_srvid, cl->last_provid, cl->last_caid, channame);
 					fprintf(fpsave, "%s%d | %-10.10s | %-10.10s:%-17.17s| % 4d\n",
 							type,
 							idx,

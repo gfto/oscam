@@ -562,7 +562,7 @@ void cs_statistics(struct s_client *client)
 			{ cwps = 0; }
 
 		char channame[32];
-		get_servicename(client, client->last_srvid, client->last_caid, channame);
+		get_servicename(client, client->last_srvid, client->last_provid, client->last_caid, channame);
 
 		int32_t lsec;
 		if((client->last_caid == NO_CAID_VALUE) && (client->last_srvid == NO_SRVID_VALUE))
@@ -589,7 +589,7 @@ void cs_statistics(struct s_client *client)
 		/* statistics entry start with 's' to filter it out on other end of pipe
 		 * so we can use the same Pipe as Log
 		 */
-		snprintf(buf, sizeof(buf), "s%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %02d:%02d:%02d %s %04X:%04X %s\n",
+		snprintf(buf, sizeof(buf), "s%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %02d:%02d:%02d %s %04X:%06X:%04X %s\n",
 				 lt.tm_mday, lt.tm_mon + 1, lt.tm_year % 100,
 				 lt.tm_hour, lt.tm_min, lt.tm_sec, cwps,
 				 client->account->usr,
@@ -606,6 +606,7 @@ void cs_statistics(struct s_client *client)
 				 fullhours, mins, secs,
 				 get_module(client)->desc,
 				 client->last_caid,
+				 client->last_provid,
 				 client->last_srvid,
 				 channame);
 

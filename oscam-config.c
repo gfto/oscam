@@ -371,9 +371,9 @@ int32_t init_srvid(void)
 
 	while(fgets(token, MAXLINESIZE, fp))
 	{
-		int32_t l, j, len = 0, len2, srvidtmp;
+		int32_t l, j, len = 0, len2, srvidtmp, providtmp=0;
 		uint32_t pos;
-		char *srvidasc;
+		char *srvidasc, *providasc;
 		tmp = trim(token);
 
 		if(tmp[0] == '#') { continue; }
@@ -381,6 +381,19 @@ int32_t init_srvid(void)
 		if(!(srvidasc = strchr(token, ':'))) { continue; }
 		if(!(payload = strchr(token, '|'))) { continue; }
 		*payload++ = '\0';
+
+		char *aux = strchr(srvidasc+1,':');
+		if(aux)
+		{
+			//caid:opid:ident
+			providasc = srvidasc;
+			srvidasc = aux;
+		}
+		else
+		{
+			//caid:ident 
+			providasc = NULL;
+		}
 
 		if(!cs_malloc(&srvid, sizeof(struct s_srvid)))
 		{
@@ -461,7 +474,11 @@ int32_t init_srvid(void)
 
 		*srvidasc++ = '\0';
 		srvidtmp = dyn_word_atob(srvidasc) & 0xFFFF;
-		//printf("srvid %s - %d\n",srvidasc,srvid->srvid );
+		if(providasc)
+		{
+			*providasc++ = '\0';
+			providtmp = dyn_word_atob(providasc) & 0xFFFFFF;
+		}
 
 		if(srvidtmp < 0)
 		{
@@ -469,7 +486,11 @@ int32_t init_srvid(void)
 			NULLFREE(srvid);
 			continue;
 		}
-		else { srvid->srvid = srvidtmp; }
+		else
+		{
+			srvid->srvid = srvidtmp;
+			srvid->provid = providtmp;
+		}
 
 		srvid->ncaid = 0;
 		for(i = 0, ptr1 = strtok_r(token, ",", &saveptr1); (ptr1) && (i < 10) ; ptr1 = strtok_r(NULL, ",", &saveptr1), i++)

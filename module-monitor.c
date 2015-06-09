@@ -310,11 +310,11 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf)
 			snprintf(ldate, sizeof(ldate), "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon + 1, lt.tm_year % 100);
 			int32_t cnr = get_threadnum(cl);
 			snprintf(ltime, sizeof(ldate), "%02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
-			snprintf(sbuf, 256, "[%c--CCC]%8X|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",
+			snprintf(sbuf, 256, "[%c--CCC]%8X|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%06X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",
 					 id, cl->tid, cl->typ, cnr, usr, cau, cl->crypted,
 					 cs_inet_ntoa(cl->ip), cl->port, client_get_proto(cl),
-					 ldate, ltime, lsec, cl->last_caid, cl->last_srvid,
-					 get_servicename_or_null(cl, cl->last_srvid, cl->last_caid, channame), isec, con,
+					 ldate, ltime, lsec, cl->last_caid, cl->last_provid, cl->last_srvid,
+					 get_servicename_or_null(cl, cl->last_srvid, cl->last_provid, cl->last_caid, channame), isec, con,
 					 cl->cwfound, cl->cwnot, cl->cwcache, cl->cwignored,
 					 cl->cwtout, cl->emmok, cl->emmnok, lrt);
 		}

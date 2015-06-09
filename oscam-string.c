@@ -235,19 +235,19 @@ int32_t word_atob(char *asc)
 
 /*
  * dynamic word_atob
- * converts an 1-4 digit asc hexstring
+ * converts an 1-6 digit asc hexstring
  */
 int32_t dyn_word_atob(char *asc)
 {
 	int32_t rc = (-1);
 	int32_t i, len = strlen(trim(asc));
-	if(len <= 4 && len > 0)
+	if(len <= 6 && len > 0)
 	{
 		for(i = 0, rc = 0; i < len; i++)
 		{
 			rc = rc << 4 | gethexval(asc[i]);
 		}
-		if(rc & 0x10000)
+		if(rc & 0x1000000)
 			{ rc = -1; }
 	}
 	return rc;

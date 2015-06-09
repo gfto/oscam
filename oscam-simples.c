@@ -2,7 +2,7 @@
 #include "oscam-string.h"
 
 /* Gets the servicename. Make sure that buf is at least 32 bytes large. */
-static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf, bool return_unknown)
+static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf, bool return_unknown, bool ignore_provid)
 {
 	int32_t i;
 	struct s_srvid *this;
@@ -11,7 +11,7 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint16_t cai
 	if(!srvid || (srvid >> 12) >= 16)  //cfg.srvid[16]
 		{ return (buf); }
 
-	if(cl && cl->last_srvidptr && cl->last_srvidptr->srvid == srvid)
+	if(cl && cl->last_srvidptr && cl->last_srvidptr->srvid == srvid && (ignore_provid || cl->last_srvidptr->provid == provid))
 		for(i = 0; i < cl->last_srvidptr->ncaid; i++)
 			if(cl->last_srvidptr->caid[i] == caid && cl->last_srvidptr->name)
 			{
@@ -20,7 +20,7 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint16_t cai
 			}
 
 	for(this = cfg.srvid[srvid >> 12]; this; this = this->next)
-		if(this->srvid == srvid)
+		if(this->srvid == srvid && (ignore_provid || this->provid == provid))
 			for(i = 0; i < this->ncaid; i++)
 				if(this->caid[i] == caid && this->name && cl)
 				{
@@ -31,21 +31,28 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint16_t cai
 
 	if(!buf[0])
 	{
-		if(return_unknown)
-			{ snprintf(buf, 32, "%04X:%04X unknown", caid, srvid); }
-		if(cl) { cl->last_srvidptr = NULL; }
+		if(!ignore_provid)
+		{
+			return __get_servicename(cl, srvid, provid, caid, buf, return_unknown, true);
+		}
+		else 
+		{
+			if(return_unknown)
+				{ snprintf(buf, 32, "%04X:%06X:%04X unknown", caid, provid, srvid); }
+			if(cl) { cl->last_srvidptr = NULL; }
+		}
 	}
 	return (buf);
 }
 
-char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf)
+char *get_servicename(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf)
 {
-	return __get_servicename(cl, srvid, caid, buf, true);
+	return __get_servicename(cl, srvid, provid, caid, buf, true, false);
 }
 
-char *get_servicename_or_null(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf)
+char *get_servicename_or_null(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf)
 {
-	return __get_servicename(cl, srvid, caid, buf, false);
+	return __get_servicename(cl, srvid, provid, caid, buf, false, false);
 }
 
 

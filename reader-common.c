@@ -475,8 +475,8 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 	if(rc == ERROR)
 	{
 		char buf[32];
-		rdr_log_dbg(reader, D_READER, "Error processing ecm for caid %04X, srvid %04X, servicename: %s",
-					   er->caid, er->srvid, get_servicename(cl, er->srvid, er->caid, buf));
+		rdr_log_dbg(reader, D_READER, "Error processing ecm for caid %04X, provid %06X, srvid %04X, servicename: %s",
+					   er->caid, er->prid, er->srvid, get_servicename(cl, er->srvid, er->prid, er->caid, buf));
 		ea.rc = E_NOTFOUND;
 		ea.rcEx = 0;
 		ICC_Async_DisplayMsg(reader, "Eer");
@@ -485,8 +485,8 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 	if(rc == E_CORRUPT)
 	{
 		char buf[32];
-		rdr_log_dbg(reader, D_READER, "Error processing ecm for caid %04X, srvid %04X, servicename: %s",
-					   er->caid, er->srvid, get_servicename(cl, er->srvid, er->caid, buf));
+		rdr_log_dbg(reader, D_READER, "Error processing ecm for caid %04X, provid %06X, srvid %04X, servicename: %s",
+					   er->caid, er->prid, er->srvid, get_servicename(cl, er->srvid, er->prid, er->caid, buf));
 		ea.rc = E_NOTFOUND;
 		ea.rcEx = E2_WRONG_CHKSUM; //flag it as wrong checksum
 		memcpy(ea.msglog, "Invalid ecm type for card", 25);

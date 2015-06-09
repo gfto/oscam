@@ -1026,6 +1026,7 @@ struct s_client
 	int8_t          typ;                // first s_client is type s=starting (master) thread; type r = physical reader, type p = proxy reader both always have 1 s_reader struct allocated; type c = client (user logging in into oscam) type m = monitor type h = http server a = anticascader
 	uint8_t         module_idx;
 	uint16_t        last_srvid;
+	uint32_t        last_provid;
 	uint16_t        last_caid;
 	struct s_srvid  *last_srvidptr;
 	int32_t         tosleep;
@@ -1582,6 +1583,7 @@ struct s_srvid
 {
 	uint16_t        srvid;
 	int8_t          ncaid;
+	uint32_t        provid;
 	uint16_t        caid[10];
 	char            *data;
 	char            *prov;
@@ -2040,8 +2042,8 @@ struct s_module *get_module(struct s_client *cl);
 void module_reader_set(struct s_reader *rdr);
 
 // Until we find a better place for these (they are implemented in oscam-simples.h)
-char *get_servicename(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf);
-char *get_servicename_or_null(struct s_client *cl, uint16_t srvid, uint16_t caid, char *buf);
+char *get_servicename(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf);
+char *get_servicename_or_null(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf);
 char *get_tiername(uint16_t tierid, uint16_t caid, char *buf);
 char *get_provider(uint16_t caid, uint32_t provid, char *buf, uint32_t buflen);
 void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *sat, const char *lang);

@@ -788,7 +788,7 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	if(er->rcEx)
 		{ snprintf(erEx, sizeof(erEx) - 1, "rejected %s%s", stxtWh[er->rcEx >> 4], stxtEx[er->rcEx & 0xf]); }
 
-	get_servicename_or_null(client, er->srvid, er->caid, channame);
+	get_servicename_or_null(client, er->srvid, er->prid, er->caid, channame);
 	if(!channame[0])
 		{ schaninfo[0] = '\0'; }
 	else
@@ -1473,7 +1473,7 @@ static void logCWtoFile(ECM_REQUEST *er, uchar *cw)
 	* causing problems in file name
 	*/
 
-	get_servicename(cur_client(), er->srvid, er->caid, srvname);
+	get_servicename(cur_client(), er->srvid, er->prid, er->caid, srvname);
 
 	for(i = 0; srvname[i]; i++)
 		if(srvname[i] == ' ') { srvname[i] = '_'; }
