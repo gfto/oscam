@@ -288,4 +288,76 @@ void gbox_send_gsms_ack(struct s_client *cli, uint8_t gsms_prot)
 		gbox_send(cli, outbuf, 16);
 		}
 }
+
+static pthread_t sms_sender_thread;
+static int32_t sms_sender_active = 0;
+static pthread_cond_t sleep_cond;
+static pthread_mutex_t sleep_cond_mutex;
+static pthread_mutex_t sms_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static void sms_sender(void)
+{
+ 	char *fext= FILE_GSMS_TXT;
+	char *fname = get_gbox_tmp_fname(fext);
+			
+	while(sms_sender_active)
+	{
+    	if (file_exists(fname))
+        {
+			gbox_init_send_gsms();
+        } 		
+		
+		sleepms_on_cond(&sleep_cond_mutex, &sleep_cond, 1000);
+	}
+	pthread_exit(NULL);
+}
+
+void start_sms_sender(void)
+{
+	int32_t is_active;
+	
+	pthread_mutex_lock(&sms_mutex);
+	is_active = sms_sender_active;
+	if(!sms_sender_active)
+	{
+		sms_sender_active = 1;
+	}
+	pthread_mutex_unlock(&sms_mutex);
+	
+	if(is_active)
+	{
+		return;	
+	}
+	
+	cs_pthread_cond_init(&sleep_cond_mutex, &sleep_cond);
+
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+
+	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+	int32_t ret = pthread_create(&sms_sender_thread, &attr, (void *)&sms_sender, NULL);
+	if(ret)
+	{
+		cs_log("ERROR: can't create sms_sender_thread thread (errno=%d %s)", ret, strerror(ret));
+		pthread_attr_destroy(&attr);
+		cs_exit(1);
+	}
+	pthread_attr_destroy(&attr);
+}
+
+void stop_sms_sender(void)
+{
+	pthread_mutex_lock(&sms_mutex);
+	
+	if(sms_sender_active)
+	{
+		sms_sender_active = 0;
+		pthread_cond_signal(&sleep_cond);
+		pthread_join(sms_sender_thread, NULL);
+	}
+	
+	pthread_mutex_unlock(&sms_mutex);
+}
+
+
 #endif

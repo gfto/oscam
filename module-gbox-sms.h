@@ -14,6 +14,9 @@ void write_gsms_msg (struct s_client *cli, uchar *gsms, uint16_t type, uint16_t 
 void gbox_send_gsms_ack(struct s_client *cli, uint8_t gsms_prot);
 void write_gsms_ack (struct s_client *cli, uint8_t gsms_prot);
 void gsms_unavail(void);
+void start_sms_sender(void);
+void stop_sms_sender(void);
+
 #endif
 
 #endif

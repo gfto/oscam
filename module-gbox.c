@@ -477,6 +477,8 @@ static void gbox_server_init(struct s_client *cl)
 		//We cannot authenticate here, because we don't know gbox pw
 		cl->gbox_peer_id = NO_GBOX_ID;
 		cl->init_done = 1;
+		
+		start_sms_sender();
 	}
 	return;
 }
@@ -1597,6 +1599,8 @@ static int32_t gbox_client_init(struct s_client *cli)
 	if(!cli->reader->gbox_cccam_reshare || cli->reader->gbox_cccam_reshare > DEFAULT_GBOX_RESHARE)
 		{ cli->reader->gbox_cccam_reshare = DEFAULT_GBOX_RESHARE; }
 
+	start_sms_sender();
+	
 	return 0;
 }
 

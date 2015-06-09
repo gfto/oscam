@@ -15,6 +15,7 @@
 #include "module-dvbapi-azbox.h"
 #include "module-dvbapi-mca.h"
 #include "module-dvbapi-chancache.h"
+#include "module-gbox-sms.h"
 #include "module-ird-guess.h"
 #include "module-lcd.h"
 #include "module-led.h"
@@ -1679,6 +1680,7 @@ int32_t main(int32_t argc, char *argv[])
 	pthread_cond_signal(&reader_check_sleep_cond); // Stop reader_check thread
 
 	// Cleanup
+	stop_sms_sender();
 	webif_close();
 	azbox_close();
 	coolapi_close_all();
