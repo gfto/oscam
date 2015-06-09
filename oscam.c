@@ -613,12 +613,7 @@ static void cs_dumpstack(int32_t sig)
  **/
 static void cs_reload_config(void)
 {
-	static pthread_mutex_t mutex = NULL;
-	
-	if(mutex == NULL)
-	{
-		pthread_mutex_init(&mutex, NULL);
-	}
+	static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 	
 	if(pthread_mutex_trylock(&mutex))
 	{
