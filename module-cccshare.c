@@ -439,7 +439,7 @@ int32_t cc_clear_reported_carddata(LLIST *reported_carddatas, LLIST *except,
 			LL_ITER it2 = ll_iter_create(except);
 			while((card2 = ll_iter_next(&it2)))
 			{
-				if((card == card2)
+				if(card == card2)
 					{ break; }
 			}
 		}
