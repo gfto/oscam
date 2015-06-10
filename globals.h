@@ -909,7 +909,7 @@ typedef struct ecm_request_t
 #ifdef CW_CYCLE_CHECK
 	char            cwc_msg_log[MSGLOGSIZE];
 #endif
-#if defined(WITH_STAPI) || defined(WITH_STAPI5)
+#ifdef WITH_STAPI5
 	char			dev_name[20];
 #endif
 	struct ecm_request_t    *parent;
