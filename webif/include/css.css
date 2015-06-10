@@ -356,7 +356,7 @@ tr.expired td {background-color:#FBA}
 tr.connected td {background-color:#FFA}
 tr.disabled td {}
 tr.disabled td:first-child img.icon,
-tr.disabledreader td:first-child img.icon {background-color:red}
+tr.disabledreader td:first-child img.icon {background-color:#A00}
 tr.online td:first-child img.icon,
 tr.offline td:first-child img.icon,
 tr.expired td:first-child img.icon,
