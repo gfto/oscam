@@ -159,7 +159,13 @@ static int dvbapi_ioctl(int fd, uint32_t request, ...)
 #define FROM_TO 0
 #define TO_FROM 1
 
+#if defined(CARDREADER_STAPI) || defined(CARDREADER_STAPI5)
+//fix from stapi5 patch
+int32_t pausecam = 0, disable_pmt_files = 0, pmt_stopmarking = 1, pmthandling = 0;
+#else
 int32_t pausecam = 0, disable_pmt_files = 0, pmt_stopmarking = 0, pmthandling = 0;
+#endif
+
 DEMUXTYPE demux[MAX_DEMUX];
 struct s_dvbapi_priority *dvbapi_priority;
 struct s_client *dvbapi_client;
@@ -172,7 +178,11 @@ static const struct box_devices devices[BOX_COUNT] =
 	/* dreambox (dvb-api-3)*/   { "/dev/dvb/adapter%d/",    "ca%d",         "demux%d",      "/tmp/camd.socket", DVBAPI_3    },
 	/* dreambox (dvb-api-1)*/   { "/dev/dvb/card%d/",       "ca%d",         "demux%d",      "/tmp/camd.socket", DVBAPI_1    },
 	/* neumo (dvb-api-1)*/      { "/dev/",                  "demuxapi",     "demuxapi",     "/tmp/camd.socket", DVBAPI_1    },
+#ifdef WITH_STAPI5
+	/* sh4      (stapi5)*/      { "/dev/stapi/",            "stpti5_ioctl", "stpti5_ioctl", "/tmp/camd.socket", STAPI       },
+#else
 	/* sh4      (stapi)*/       { "/dev/stapi/",            "stpti4_ioctl", "stpti4_ioctl", "/tmp/camd.socket", STAPI       },
+#endif
 	/* coolstream*/             { "/dev/cnxt/",             "null",         "null",         "/tmp/camd.socket", COOLAPI     }
 };
 
@@ -673,7 +683,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 		ret = dvbapi_ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER1, &sFP1);
 
 		break;
-#ifdef WITH_STAPI
+#if defined(WITH_STAPI) || defined(WITH_STAPI5)
 	case STAPI:
 		ret = stapi_set_filter(demux_id, pid, filt, mask, n, demux[demux_id].pmt_file);
 		if(ret != 0)
@@ -771,7 +781,7 @@ static int32_t dvbapi_detect_api(void)
 	
 	if(ret < 0) { cs_log("ERROR: Could not close demuxer fd (errno=%d %s)", errno, strerror(errno)); } // log it here since some needed var are not inited before!
 	if(is_samygo){ cs_log("SAMYGO detected."); } // log it here since some needed var are not inited before!
-#ifdef WITH_STAPI
+#if defined(WITH_STAPI) || defined(WITH_STAPI5)
 	if(devnum == 4 && stapi_open() == 0)
 	{
 		cs_log("ERROR: stapi: setting up stapi failed.");
@@ -944,7 +954,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 			retfilter = dvbapi_ioctl(fd, DMX_STOP, NULL);
 			break;
 
-#ifdef WITH_STAPI
+#if defined(WITH_STAPI) || defined(WITH_STAPI5)
 		case STAPI:
 			retfilter = stapi_remove_filter(demux_index, num, demux[demux_index].pmt_file);
 			if(retfilter != 1)   // stapi returns 0 for error, 1 for all ok
@@ -1422,7 +1432,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 
 	switch(selected_api)
 	{
-#ifdef WITH_STAPI
+#if defined(WITH_STAPI) || defined(WITH_STAPI5)
 	case STAPI:
 		if(!enable) idx = -1;
 		stapi_set_pid(demux_id, num, idx, demux[demux_id].STREAMpids[num], demux[demux_id].pmt_file); // only used to disable pids!!!
@@ -1583,6 +1593,10 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 	er->prid  = demux[demux_id].ECMpids[pid].PROVID;
 	er->vpid  = demux[demux_id].ECMpids[pid].VPID;
 	er->pmtpid  = demux[demux_id].pmtpid;
+
+#ifdef WITH_STAPI5
+	cs_strncpy(er->dev_name, dev_list[demux[demux_id].dev_index].name, sizeof(dev_list[demux[demux_id].dev_index].name));
+#endif	
 
 	struct timeb now;
 	cs_ftime(&now);
@@ -1841,7 +1855,7 @@ void dvbapi_read_priority(void)
 		}
 
 		type = 0;
-#ifdef WITH_STAPI
+#if defined(WITH_STAPI) || defined(WITH_STAPI5)
 		uint32_t disablefilter = 0;
 		ret = sscanf(trim(token), "%c: %63s %63s %d", &type, str1, str1 + 64, &disablefilter);
 #else
@@ -1873,7 +1887,7 @@ void dvbapi_read_priority(void)
 
 		count++;
 
-#ifdef WITH_STAPI
+#if defined(WITH_STAPI) || defined(WITH_STAPI5)
 		if(type == 's')
 		{
 			strncpy(entry->devname, str1, 29);
@@ -3167,7 +3181,7 @@ void event_handler(int32_t UNUSED(signal))
 			{ continue; }
 		if(strncmp(dp->d_name, "pmt", 3) != 0 || strncmp(dp->d_name + strlen(dp->d_name) - 4, ".tmp", 4) != 0)
 			{ continue; }
-#ifdef WITH_STAPI
+#if defined(WITH_STAPI) || defined(WITH_STAPI5)
 		struct s_dvbapi_priority *p;
 		for(p = dvbapi_priority; p != NULL; p = p->next)  // stapi: check if there is a device connected to this pmt file!
 		{
@@ -3348,6 +3362,10 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 
 				er->srvid = demux[demux_id].program_number;
 
+#ifdef WITH_STAPI5
+				cs_strncpy(er->dev_name, dev_list[demux[demux_id].dev_index].name, sizeof(dev_list[demux[demux_id].dev_index].name));
+#endif	
+
 				er->tsid = demux[demux_id].tsid;
 				er->onid = demux[demux_id].onid;
 				er->pmtpid = demux[demux_id].pmtpid;
@@ -3385,6 +3403,10 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		}
 
 		er->srvid = demux[demux_id].program_number;
+
+#ifdef WITH_STAPI5
+		cs_strncpy(er->dev_name, dev_list[demux[demux_id].dev_index].name, sizeof(dev_list[demux[demux_id].dev_index].name));
+#endif	
 
 		er->tsid = demux[demux_id].tsid;
 		er->onid = demux[demux_id].onid;
@@ -4328,6 +4350,11 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		uint32_t nocw_write = 0; // 0 = write cw, 1 = dont write cw to hardware demuxer
 		if(demux[i].program_number == 0) { continue; }  // ignore empty demuxers
 		if(demux[i].program_number != er->srvid) { continue; }  // skip ecm response for other srvid
+
+#ifdef WITH_STAPI5
+		if(strcmp(dev_list[demux[i].dev_index].name, er->dev_name) != 0) { continue; }  // skip request if PTI device doesn't match request
+#endif				
+			
 		demux[i].rdr = er->selected_reader;
 		for(j = 0; j < demux[i].ECMpidcount; j++)  // check for matching ecmpid
 		{
@@ -4581,7 +4608,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 		switch(selected_api)
 		{
-#ifdef WITH_STAPI
+#if defined(WITH_STAPI) || defined(WITH_STAPI5)
 		case STAPI:
 			stapi_write_cw(i, er->cw, demux[i].STREAMpids, demux[i].STREAMpidcount, demux[i].pmt_file);
 			break;
@@ -4866,7 +4893,7 @@ int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t
 		ret = dvbapi_ioctl(fd, DMX_SET_FILTER1, &sFP1);
 		break;
 	}
-#ifdef WITH_STAPI
+#if defined(WITH_STAPI) || defined(WITH_STAPI5)
 	case STAPI:
 	{
 		ret = stapi_activate_section_filter(fd, filter, mask);

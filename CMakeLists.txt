@@ -277,6 +277,19 @@ if (NOT OSCamOperatingSystem MATCHES "Mac OS X")
 		    	set (HAVE_LIBSTAPI False)
 		    endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stapi/liboscam_stapi.a)
     endif (WITH_STAPI)
+    if (WITH_STAPI5)
+		    if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stapi/liboscam_stapi5.a)
+		    	message(STATUS "  liboscam_stapi5.a found")
+		    	add_definitions ("-DWITH_STAPI5=1")
+		  	add_library(stapi5lib STATIC IMPORTED)
+		    	set_property(TARGET stapi5lib PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/stapi/liboscam_stapi5.a)
+		    	set (HAVE_LIBSTAPI5 True)
+			set (USE_STAPI5 "USE_STAPI5")
+		    else (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stapi/liboscam_stapi5.a)
+		    	message(FATAL "  liboscam_stapi5.a support requested but not found! ")
+		    	set (HAVE_LIBSTAPI5 False)
+		    endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stapi/liboscam_stapi5.a)
+    endif (WITH_STAPI5)
 else (NOT OSCamOperatingSystem MATCHES "Mac OS X")
     set (HAVE_LIBRT True)
 endif (NOT OSCamOperatingSystem MATCHES "Mac OS X")
@@ -415,8 +428,8 @@ GENERATE_OSCAM_CONFIG("${CMAKE_CURRENT_SOURCE_DIR}/config.h")
 
 # Build config.mak and related files
 # FIXME: Create USE_FLAGS and pass them to config.sh using --use-flags
-execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --objdir ${CMAKE_CURRENT_BINARY_DIR} --use-flags  "${USE_STAPI} ${USE_COOLAPI} /
-${USE_SU980} ${USE_AZBOX} ${USE_MCA} ${USE_SSL} ${USE_LIBCRYPTO} ${USE_LIBUSB} ${USE_PCSC}" --make-config.mak)
+execute_process (COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config.sh --objdir ${CMAKE_CURRENT_BINARY_DIR} --use-flags  "${USE_STAPI} ${USE_STAPI5} /
+${USE_COOLAPI} ${USE_SU980} ${USE_AZBOX} ${USE_MCA} ${USE_SSL} ${USE_LIBCRYPTO} ${USE_LIBUSB} ${USE_PCSC}" --make-config.mak)
 # Generate webif/pages.c
 execute_process (COMMAND make --no-print-directory --quiet -C ${CMAKE_CURRENT_SOURCE_DIR}/webif)
 
@@ -538,6 +551,10 @@ endif (HAVE_PCSC)
 if (HAVE_LIBSTAPI)
     target_link_libraries(${exe_name} stapilib)
 endif (HAVE_LIBSTAPI)
+
+if (HAVE_LIBSTAPI5)
+    target_link_libraries(${exe_name} stapi5lib)
+endif (HAVE_LIBSTAPI5)
 
 add_dependencies (${exe_name} ${csoscam} ${csreaders} ${csmodules})
 

@@ -102,6 +102,16 @@ OSCam build system documentation
                      Using USE_STAPI=1 adds to '-stapi' to PLUS_TARGET.
                      In order for USE_STAPI to work you have to create stapi
                      directory and put liboscam_stapi.a file in it.
+                     
+   USE_STAPI5=1    - Request linking with STAPI5. The variables that control
+                     USE_STAPI5=1 build are:
+                         STAPI5_FLAGS='-DWITH_STAPI5=1'
+                         STAPI5_CFLAGS='-DWITH_STAPI5=1'
+                         STAPI5_LDFLAGS='-DWITH_STAPI5=1'
+                         STAPI5_LIB='-L./stapi -loscam_stapi5'
+                     Using USE_STAPI5=1 adds to '-stapi' to PLUS_TARGET.
+                     In order for USE_STAPI5 to work you have to create stapi
+                     directory and put liboscam_stapi5.a file in it.
 
    USE_COOLAPI=1  - Request support for Coolstream API (libnxp) aka NeutrinoHD
                     box. The variables that control the build are:

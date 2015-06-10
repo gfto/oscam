@@ -82,6 +82,10 @@
 #define CARDREADER_STAPI 1
 #endif
 
+#ifdef WITH_STAPI5
+#define CARDREADER_STAPI5 1
+#endif
+
 #endif // WITH_CARDREADER
 
 #endif //OSCAM_CONFIG_H_

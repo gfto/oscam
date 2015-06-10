@@ -84,12 +84,17 @@ OSCam supports building with the following external dependencies:
   - libusb             - 'make USE_LIBUSB=1'
   - PCSC               - 'make USE_PCSC=1'
   - SH4 STAPI support  - 'make USE_STAPI=1'
+  - SH4 STAPI5 support - 'make USE_STAPI5=1'
   - Coolapi support    - 'make USE_COOLAPI=1'
   - AZBOX support      - 'make USE_AZBOX=1'
 
 For STAPI support you need to download liboscam_stapi.a library and place
 it in stapi directory under oscam/ root dir. liboscam_stapi.a can be downloaded
 from: http://www.streamboard.tv/wbb2/thread.php?threadid=28854
+
+For STAPI5 support you need to download liboscam_stapi5.a library and place
+it in stapi directory under oscam/ root dir. liboscam_stapi5.a can be downloaded
+from: http://www.streamboard.tv/wbb2/thread.php?postid=541107#post541107
 
 For more information and examples on using the build system, run `make help`.
 

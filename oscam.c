@@ -365,6 +365,7 @@ static void write_versionfile(bool use_stdout)
 		write_conf(WITH_MCA, "DVB API with MCA support");
 		write_conf(WITH_COOLAPI, "DVB API with COOLAPI support");
 		write_conf(WITH_STAPI, "DVB API with STAPI support");
+		write_conf(WITH_STAPI5, "DVB API with STAPI5 support");
 	}
 	write_conf(IRDETO_GUESSING, "Irdeto guessing");
 	write_conf(CS_ANTICASC, "Anti-cascading support");
@@ -426,6 +427,7 @@ static void write_versionfile(bool use_stdout)
 		write_cardreaderconf(CARDREADER_SMART, "smartreader");
 		write_cardreaderconf(CARDREADER_DB2COM, "db2com");
 		write_cardreaderconf(CARDREADER_STAPI, "stapi");
+		write_cardreaderconf(CARDREADER_STAPI5, "stapi5");
 		write_cardreaderconf(CARDREADER_STINGER, "stinger");
 	}
 	else
@@ -1470,7 +1472,7 @@ const struct s_cardreader *cardreaders[] =
 #ifdef CARDREADER_SMART
 	&cardreader_smartreader,
 #endif
-#ifdef CARDREADER_STAPI
+#if defined(CARDREADER_STAPI) || defined(CARDREADER_STAPI5)
 	&cardreader_stapi,
 #endif
 #ifdef CARDREADER_STINGER

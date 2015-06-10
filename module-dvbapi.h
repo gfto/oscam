@@ -104,7 +104,7 @@ typedef struct filter_s
 	uint16_t type;
 	int32_t count;
 	uchar   ecmd5[CS_ECMSTORESIZE]; // last requested ecm md5
-#ifdef WITH_STAPI
+#if defined(WITH_STAPI) || defined(WITH_STAPI5)
 	int32_t NumSlots;
 	uint32_t    SlotHandle[10];
 	uint32_t    BufferHandle[10];
@@ -161,6 +161,9 @@ typedef struct demux_s
 	int32_t desc_pidcount;
 	uint32_t slot_assc[PTINUM][SLOTNUM];
 #endif
+#ifdef WITH_STAPI5
+	uint32_t dev_index;
+#endif
 	int8_t decodingtries; // -1 = first run
 	struct timeb decstart,decend;
 } DEMUXTYPE;
@@ -187,7 +190,7 @@ struct s_dvbapi_priority
 	int16_t delay;
 	int8_t force;
 	int8_t pidx;
-#ifdef WITH_STAPI
+#if defined(WITH_STAPI) || defined(WITH_STAPI5)
 	char devname[30];
 	char pmtfile[30];
 	int8_t disablefilter;
@@ -296,6 +299,7 @@ uint16_t dvbapi_get_client_proto_version(void);
 void delayer(ECM_REQUEST *er);
 void check_add_emmpid(int32_t demux_index, uchar *filter, int32_t l, int32_t emmtype);
 void *dvbapi_start_handler(struct s_client *cl, uchar *mbuf, int32_t module_idx, void * (*_main_func)(void *));
+int32_t dvbapi_get_descindex(int32_t demux_index);
 
 #if defined(WITH_AZBOX) || defined(WITH_MCA)
 #define USE_OPENXCAS 1

@@ -91,6 +91,7 @@ TARGET := $(shell $(CC) -dumpmachine 2>/dev/null)
 
 # Process USE_ variables
 DEFAULT_STAPI_LIB = -L./stapi -loscam_stapi
+DEFAULT_STAPI5_LIB = -L./stapi -loscam_stapi5
 DEFAULT_COOLAPI_LIB = -lnxp -lrt
 DEFAULT_SU980_LIB = -lentropic -lrt
 DEFAULT_AZBOX_LIB = -Lextapi/openxcas -lOpenXCASAPI
@@ -153,6 +154,7 @@ endef
 
 # Initialize USE variables
 $(eval $(call prepare_use_flags,STAPI,stapi))
+$(eval $(call prepare_use_flags,STAPI5,stapi5))
 $(eval $(call prepare_use_flags,COOLAPI,coolapi))
 $(eval $(call prepare_use_flags,SU980,su980))
 $(eval $(call prepare_use_flags,AZBOX,azbox))
@@ -245,6 +247,7 @@ SRC-$(CONFIG_CARDREADER_SMARGO) += csctapi/ifd_smargo.c
 SRC-$(CONFIG_CARDREADER_SMART) += csctapi/ifd_smartreader.c
 SRC-$(CONFIG_CARDREADER_STINGER) += csctapi/ifd_stinger.c
 SRC-$(CONFIG_CARDREADER_STAPI) += csctapi/ifd_stapi.c
+SRC-$(CONFIG_CARDREADER_STAPI5) += csctapi/ifd_stapi.c
 
 SRC-$(CONFIG_LIB_MINILZO) += minilzo/minilzo.c
 
@@ -264,6 +267,7 @@ SRC-$(CONFIG_WITH_MCA) += module-dvbapi-mca.c
 SRC-$(CONFIG_WITH_COOLAPI) += module-dvbapi-coolapi.c
 SRC-$(CONFIG_WITH_SU980) += module-dvbapi-coolapi.c
 SRC-$(CONFIG_WITH_STAPI) += module-dvbapi-stapi.c
+SRC-$(CONFIG_WITH_STAPI5) += module-dvbapi-stapi5.c
 SRC-$(CONFIG_HAVE_DVBAPI) += module-dvbapi-chancache.c
 SRC-$(CONFIG_HAVE_DVBAPI) += module-dvbapi.c
 SRC-$(CONFIG_MODULE_GBOX) += module-gbox-helper.c
@@ -560,6 +564,16 @@ OSCam build system documentation\n\
                      Using USE_STAPI=1 adds to '-stapi' to PLUS_TARGET.\n\
                      In order for USE_STAPI to work you have to create stapi\n\
                      directory and put liboscam_stapi.a file in it.\n\
+\n\
+   USE_STAPI5=1    - Request linking with STAPI5. The variables that control\n\
+                     USE_STAPI5=1 build are:\n\
+                         STAPI5_FLAGS='$(DEFAULT_STAPI5_FLAGS)'\n\
+                         STAPI5_CFLAGS='$(DEFAULT_STAPI5_FLAGS)'\n\
+                         STAPI5_LDFLAGS='$(DEFAULT_STAPI5_FLAGS)'\n\
+                         STAPI5_LIB='$(DEFAULT_STAPI5_LIB)'\n\
+                     Using USE_STAPI5=1 adds to '-stapi' to PLUS_TARGET.\n\
+                     In order for USE_STAPI5 to work you have to create stapi\n\
+                     directory and put liboscam_stapi5.a file in it.\n\
 \n\
    USE_COOLAPI=1  - Request support for Coolstream API (libnxp) aka NeutrinoHD\n\
                     box. The variables that control the build are:\n\

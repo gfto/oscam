@@ -403,11 +403,11 @@ bool IO_Serial_Read(struct s_reader *reader, uint32_t delay, uint32_t timeout, u
 
 	rdr_log_dbg(reader, D_DEVICE, "Read timeout %d us, read delay %d us, to read %d char(s), chunksize %d char(s)", timeout, delay, size, size);
 
-#if defined(WITH_STAPI) || defined(__SH4__) //internal stapi and sh4 readers need special treatment as they don't respond correctly to poll and some sh4 boxes only can read 1 byte at once
+#if defined(WITH_STAPI) || defined(WITH_STAPI5) || defined(__SH4__) //internal stapi and sh4 readers need special treatment as they don't respond correctly to poll and some sh4 boxes only can read 1 byte at once
 	if(reader->typ == R_INTERNAL)
 	{
 		int32_t readed;
-#if defined(WITH_STAPI)
+#if defined(WITH_STAPI) || defined(WITH_STAPI5)
 		const uint32_t chunksize = INT_MAX;
 #elif defined(__SH4__)
 		const uint32_t chunksize = 1;
