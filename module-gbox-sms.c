@@ -293,7 +293,18 @@ static pthread_t sms_sender_thread;
 static int32_t sms_sender_active = 0;
 static pthread_cond_t sleep_cond;
 static pthread_mutex_t sleep_cond_mutex;
-static pthread_mutex_t sms_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t sms_mutex;
+
+static void sms_mutex_init(void)
+{
+	static int8_t mutex_init = 0;
+	
+	if(!mutex_init)
+	{
+		pthread_mutex_init(&sms_mutex, NULL);
+		mutex_init = 1;
+	}	
+}
 
 static void sms_sender(void)
 {
@@ -315,6 +326,8 @@ static void sms_sender(void)
 void start_sms_sender(void)
 {
 	int32_t is_active;
+	
+	sms_mutex_init();
 	
 	pthread_mutex_lock(&sms_mutex);
 	is_active = sms_sender_active;
@@ -347,6 +360,8 @@ void start_sms_sender(void)
 
 void stop_sms_sender(void)
 {
+	sms_mutex_init();
+	
 	pthread_mutex_lock(&sms_mutex);
 	
 	if(sms_sender_active)
