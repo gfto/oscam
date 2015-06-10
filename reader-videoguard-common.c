@@ -1124,7 +1124,14 @@ int32_t videoguard_get_emm_filter(struct s_reader *rdr, struct s_csystem_emm_fil
 {
 	if(*emm_filters == NULL)
 	{
-		const unsigned int max_filter_count = 7;
+		unsigned int max_filter_count = 7;
+		unsigned int count = 3;
+		
+		if(rdr->minimize_emm_filter == 1)
+			{ max_filter_count = 3; count = 1; }
+		else if(rdr->minimize_emm_filter == 2)
+			{ max_filter_count = 5; count = 2; }
+		
 		if(!cs_malloc(emm_filters, max_filter_count * sizeof(struct s_csystem_emm_filter)))
 			{ return ERROR; }
 
@@ -1134,7 +1141,7 @@ int32_t videoguard_get_emm_filter(struct s_reader *rdr, struct s_csystem_emm_fil
 		int32_t idx = 0;
 		uint32_t n;
 
-		for(n = 0; n < 3; ++n)
+		for(n = 0; n < count; ++n)
 		{
 			filters[idx].type = EMM_UNIQUE;
 			filters[idx].enabled  = 1;
@@ -1148,7 +1155,7 @@ int32_t videoguard_get_emm_filter(struct s_reader *rdr, struct s_csystem_emm_fil
 		}
 		// fourth serial position does not fit within the 16bytes demux filter
 
-		for(n = 0; n < 3; ++n)
+		for(n = 0; n < count; ++n)
 		{
 			filters[idx].type = EMM_SHARED;
 			filters[idx].enabled  = 1;
