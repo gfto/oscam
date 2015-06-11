@@ -22,7 +22,7 @@ static void refresh_lcd_file(void)
 {
 	char targetfile[256];
 	char temp_file[256];
-	char channame[32];
+	char channame[CS_SERVICENAME_SIZE];
 
 	set_thread_name(__func__);
 
@@ -221,7 +221,7 @@ static void refresh_lcd_file(void)
 					label = cl->account->usr;
 					count_u++;
 
-					get_servicename(cl, cl->last_srvid, cl->last_provid, cl->last_caid, channame);
+					get_servicename(cl, cl->last_srvid, cl->last_provid, cl->last_caid, channame, sizeof(channname));
 					fprintf(fpsave, "%s%d | %-10.10s | %-10.10s:%-17.17s| % 4d\n",
 							type,
 							idx,

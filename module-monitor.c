@@ -247,7 +247,7 @@ static void monitor_send_info(char *txt, int32_t last)
 
 static char *monitor_client_info(char id, struct s_client *cl, char *sbuf)
 {
-	char channame[32];
+	char channame[CS_SERVICENAME_SIZE];
 	sbuf[0] = '\0';
 
 	if(cl)
@@ -314,7 +314,7 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf)
 					 id, cl->tid, cl->typ, cnr, usr, cau, cl->crypted,
 					 cs_inet_ntoa(cl->ip), cl->port, client_get_proto(cl),
 					 ldate, ltime, lsec, cl->last_caid, cl->last_provid, cl->last_srvid,
-					 get_servicename_or_null(cl, cl->last_srvid, cl->last_provid, cl->last_caid, channame), isec, con,
+					 get_servicename_or_null(cl, cl->last_srvid, cl->last_provid, cl->last_caid, channame, sizeof(channame)), isec, con,
 					 cl->cwfound, cl->cwnot, cl->cwcache, cl->cwignored,
 					 cl->cwtout, cl->emmok, cl->emmnok, lrt);
 		}

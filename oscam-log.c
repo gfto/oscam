@@ -571,8 +571,8 @@ void cs_statistics(struct s_client *client)
 		else
 			{ cwps = 0; }
 
-		char channame[32];
-		get_servicename(client, client->last_srvid, client->last_provid, client->last_caid, channame);
+		char channame[CS_SERVICENAME_SIZE];
+		get_servicename(client, client->last_srvid, client->last_provid, client->last_caid, channame, sizeof(channame));
 
 		int32_t lsec;
 		if((client->last_caid == NO_CAID_VALUE) && (client->last_srvid == NO_SRVID_VALUE))

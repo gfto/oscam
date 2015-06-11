@@ -2569,7 +2569,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 		int32_t statsize;
 		// @todo alno: sort by click, 0=ascending, 1=descending (maybe two buttons or reverse on second click)
 		READER_STAT **statarray = get_sorted_stat_copy(rdr, 0, &statsize);
-		char channame[32];
+		char channame[CS_SERVICENAME_SIZE];
 		for(; rowcount < statsize; ++rowcount)
 		{
 			READER_STAT *s = statarray[rowcount];
@@ -2581,7 +2581,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 				if(!apicall)
 				{
 					tpl_printf(vars, TPLADD, "CHANNEL", "%04X:%06X:%04X:%04X", s->caid, s->prid, s->srvid, s->chid);
-					tpl_addVar(vars, TPLADD, "CHANNELNAME", xml_encode(vars, get_servicename(cur_client(), s->srvid, s->prid, s->caid, channame)));
+					tpl_addVar(vars, TPLADD, "CHANNELNAME", xml_encode(vars, get_servicename(cur_client(), s->srvid, s->prid, s->caid, channame, sizeof(channame))));
 					tpl_printf(vars, TPLADD, "ECMLEN", "%04hX", s->ecmlen);
 					tpl_addVar(vars, TPLADD, "RC", stxt[s->rc]);
 					tpl_printf(vars, TPLADD, "TIME", PRINTF_LOCAL_D " ms", s->time_avg);
@@ -2607,7 +2607,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 					tpl_printf(vars, TPLADD, "ECMPROVID", "%06X", s->prid);
 					tpl_printf(vars, TPLADD, "ECMSRVID", "%04X", s->srvid);
 					tpl_printf(vars, TPLADD, "ECMLEN", "%04hX", s->ecmlen);
-					tpl_addVar(vars, TPLADD, "ECMCHANNELNAME", xml_encode(vars, get_servicename(cur_client(), s->srvid, s->prid, s->caid, channame)));
+					tpl_addVar(vars, TPLADD, "ECMCHANNELNAME", xml_encode(vars, get_servicename(cur_client(), s->srvid, s->prid, s->caid, channame, sizeof(channame))));
 					tpl_printf(vars, TPLADD, "ECMTIME", PRINTF_LOCAL_D, s->time_avg);
 					tpl_printf(vars, TPLADD, "ECMTIMELAST", PRINTF_LOCAL_D, s->time_stat[s->time_idx]);
 					tpl_printf(vars, TPLADD, "ECMRC", "%d", s->rc);
@@ -3458,7 +3458,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 		int8_t conn = 0;
 		if(latestclient != NULL)
 		{
-			char channame[32];
+			char channame[CS_SERVICENAME_SIZE];
 			status = (!apicall) ? "<B>connected</B>" : "connected";
 			if(account->expirationdate && account->expirationdate < now) { classname = "expired"; }
 			else { classname = "connected";conn = 1; }
@@ -3472,7 +3472,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 
 			if(clientsrvid != NO_SRVID_VALUE || clientcaid != NO_CAID_VALUE)
 			{
-				lastchan = xml_encode(vars, get_servicename(latestclient, clientsrvid, clientprovid, clientcaid, channame));
+				lastchan = xml_encode(vars, get_servicename(latestclient, clientsrvid, clientprovid, clientcaid, channame, sizeof(channame)));
 				tpl_addVar(vars, TPLADD, "LASTCHANNELSORT", lastchan);
 			}
 			else
@@ -3486,9 +3486,27 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 
 			if(cfg.http_showpicons )
 			{
-				char picon_name[32];
-				snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%06X_%04X", clientcaid, clientprovid, clientsrvid);
-				int8_t picon_ok = picon_exists(picon_name);
+				char picon_name[128];
+				char picon_channame[128];
+				int8_t picon_ok = 0;
+				
+				get_picon_servicename_or_null(latestclient, clientsrvid, clientprovid, clientcaid, picon_channame, sizeof(picon_channame));
+				if(picon_channame[0])
+				{
+					snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s", picon_channame);
+					picon_ok = picon_exists(picon_name);
+					
+					if(!picon_ok && picon_servicename_remve_hd(picon_channame, sizeof(picon_channame)))
+					{
+						snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s", picon_channame);
+						picon_ok = picon_exists(picon_name);
+					}
+				}
+				if(!picon_ok)
+				{
+					snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%06X_%04X", clientcaid, clientprovid, clientsrvid);
+					picon_ok = picon_exists(picon_name);
+				}
 				if(!picon_ok)
 				{
 					snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%04X", clientcaid, clientsrvid);
@@ -3747,7 +3765,7 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, str
 			if(!apicall)
 			{
 				int32_t n;
-				char channame[32];
+				char channame[CS_SERVICENAME_SIZE];
 				int8_t sidname = 0;
 				LL_ITER its = ll_iter_create(card->goodsids);
 				struct cc_srvid *srv;
@@ -3760,7 +3778,7 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, str
 				{
 					if(sidname)
 					{
-						tpl_printf(vars, TPLAPPEND, "SERVICESGOOD", "%04X - %s<BR>", srv->sid, xml_encode(vars, get_servicename(cur_client(), srv->sid, 0, card->caid, channame)));
+						tpl_printf(vars, TPLAPPEND, "SERVICESGOOD", "%04X - %s<BR>", srv->sid, xml_encode(vars, get_servicename(cur_client(), srv->sid, 0, card->caid, channame, sizeof(channame))));
 					} else {
 						tpl_printf(vars, TPLAPPEND, "SERVICESGOOD", "%04X%s", srv->sid, ++n % 10 == 0 ? "<BR>\n" : " ");
 					} 	
@@ -3773,7 +3791,7 @@ static void print_cards(struct templatevars *vars, struct uriparams *params, str
 				{
 					if(sidname)
 					{
-						tpl_printf(vars, TPLAPPEND, "SERVICESBAD", "%04X - %s<BR>", srv->sid, xml_encode(vars, get_servicename(cur_client(), srv->sid, 0, card->caid, channame)));
+						tpl_printf(vars, TPLAPPEND, "SERVICESBAD", "%04X - %s<BR>", srv->sid, xml_encode(vars, get_servicename(cur_client(), srv->sid, 0, card->caid, channame, sizeof(channame))));
 					} else {
 						tpl_printf(vars, TPLAPPEND, "SERVICESBAD", "%04X%s", srv->sid, ++n % 10 == 0 ? "<BR>\n" : " ");
 					} 	
@@ -4724,20 +4742,40 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						}
 						if(cl->last_caid != NO_CAID_VALUE || cl->last_srvid != NO_SRVID_VALUE)
 						{
-							char channame[32];
+							char channame[CS_SERVICENAME_SIZE];
 							tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", cl->last_caid);
 							tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", cl->last_srvid);
 							tpl_printf(vars, TPLADD, "CLIENTSRVPROVIDER", "%s%s", cl->last_srvidptr && cl->last_srvidptr->prov ? xml_encode(vars, cl->last_srvidptr->prov) : "", cl->last_srvidptr && cl->last_srvidptr->prov ? ": " : "");
-							tpl_addVar(vars, TPLADD, "CLIENTSRVNAME",xml_encode(vars, get_servicename(cl, cl->last_srvid, cl->last_provid, cl->last_caid, channame)));
+							tpl_addVar(vars, TPLADD, "CLIENTSRVNAME",xml_encode(vars, get_servicename(cl, cl->last_srvid, cl->last_provid, cl->last_caid, channame, sizeof(channame))));
 							tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime ? cl->cwlastresptime : 1);
 							tpl_addVar(vars, TPLADD, "CLIENTSRVTYPE", cl->last_srvidptr && cl->last_srvidptr->type ? xml_encode(vars, cl->last_srvidptr->type) : "");
 							tpl_addVar(vars, TPLADD, "CLIENTSRVDESCRIPTION", cl->last_srvidptr && cl->last_srvidptr->desc ? xml_encode(vars, cl->last_srvidptr->desc) : "");
 							tpl_addVar(vars, TPLADD, "CLIENTTIMEONCHANNEL", sec2timeformat(vars, chsec));
 							if(cfg.http_showpicons && cl->last_srvid)
 							{
-								snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%06X_%04X", cl->last_caid, cl->last_provid, cl->last_srvid);
-								tpl_addVar(vars, TPLADD, "PICONNAME", picon_name);
-								int8_t picon_ok = picon_exists(picon_name);
+								char picon_channame[128];
+								int8_t picon_ok = 0;
+								
+								get_picon_servicename_or_null(cl, cl->last_srvid, cl->last_provid, cl->last_caid, picon_channame, sizeof(picon_channame));
+								if(picon_channame[0])
+								{
+									snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s", picon_channame);
+									picon_ok = picon_exists(picon_name);
+									if(picon_ok) tpl_addVar(vars, TPLADD, "PICONNAME", picon_name);
+									
+									if(!picon_ok && picon_servicename_remve_hd(picon_channame, sizeof(picon_channame)))
+									{
+										snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%s", picon_channame);
+										picon_ok = picon_exists(picon_name);
+										if(picon_ok) tpl_addVar(vars, TPLADD, "PICONNAME", picon_name);
+									}
+								}
+								if(!picon_ok)
+								{
+									snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%06X_%04X", cl->last_caid, cl->last_provid, cl->last_srvid);
+									tpl_addVar(vars, TPLADD, "PICONNAME", picon_name);
+									picon_ok = picon_exists(picon_name);
+								}
 								if(!picon_ok)
 								{
 									snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%04X", cl->last_caid, cl->last_srvid);
@@ -5414,7 +5452,7 @@ static char *send_oscam_services(struct templatevars * vars, struct uriparams * 
 {
 	struct s_sidtab *sidtab;
 	char *service = getParam(params, "service");
-	char channame[32];
+	char channame[CS_SERVICENAME_SIZE];
 	int32_t i, counter = 0;
 
 	setActiveMenu(vars, MNU_SERVICES);
@@ -5498,7 +5536,7 @@ static char *send_oscam_services(struct templatevars * vars, struct uriparams * 
 			tpl_addVar(vars, TPLAPPEND, "SID", "<DIV CLASS=\"sidlistclose\"><A HREF=\"services.html\">X</A></DIV>");
 			for(i = 0; i < sidtab->num_srvid; i++)
 			{
-				tpl_printf(vars, TPLAPPEND, "SID", "%04X : %s<BR>", sidtab->srvid[i], xml_encode(vars, get_servicename(cur_client(), sidtab->srvid[i], sidtab->provid[0], sidtab->caid[0], channame)));
+				tpl_printf(vars, TPLAPPEND, "SID", "%04X : %s<BR>", sidtab->srvid[i], xml_encode(vars, get_servicename(cur_client(), sidtab->srvid[i], sidtab->provid[0], sidtab->caid[0], channame, sizeof(channame))));
 			}
 		}
 		else
@@ -6628,8 +6666,8 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 						tpl_addVar(vars, TPLADD, "PUSH", "");
 					}
 					tpl_addVar(vars, TPLADD, "HIT", "");
-					char channame[32];
-					char *lastchan = xml_encode(vars, get_servicename(cl, cacheex_stats_entry->cache_srvid, cacheex_stats_entry->cache_prid, cacheex_stats_entry->cache_caid, channame));
+					char channame[CS_SERVICENAME_SIZE];
+					char *lastchan = xml_encode(vars, get_servicename(cl, cacheex_stats_entry->cache_srvid, cacheex_stats_entry->cache_prid, cacheex_stats_entry->cache_caid, channame, sizeof(channame)));
 					tpl_addVar(vars, TPLADD, "LEVEL", lastchan);
 					if (apicall == 2){
 						tpl_printf(vars, TPLADD, "JSONDELIMITER", "%s", (delimiter > 1)?",":"");

@@ -677,7 +677,7 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	char sby[100] = "", sreason[32] = "", scwcinfo[32] = "", schaninfo[32] = "", srealecmtime[50]="";
 	char erEx[32] = "";
 	char usrname[38] = "";
-	char channame[32];
+	char channame[CS_SERVICENAME_SIZE];
 	struct timeb tpe;
 
 	snprintf(usrname, sizeof(usrname) - 1, "%s", username(client));
@@ -788,7 +788,7 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	if(er->rcEx)
 		{ snprintf(erEx, sizeof(erEx) - 1, "rejected %s%s", stxtWh[er->rcEx >> 4], stxtEx[er->rcEx & 0xf]); }
 
-	get_servicename_or_null(client, er->srvid, er->prid, er->caid, channame);
+	get_servicename_or_null(client, er->srvid, er->prid, er->caid, channame, sizeof(channame));
 	if(!channame[0])
 		{ schaninfo[0] = '\0'; }
 	else
@@ -1461,7 +1461,7 @@ void update_chid(ECM_REQUEST *er)
 static void logCWtoFile(ECM_REQUEST *er, uchar *cw)
 {
 	FILE *pfCWL;
-	char srvname[128];
+	char srvname[CS_SERVICENAME_SIZE];
 	/* %s / %s   _I  %04X  _  %s  .cwl  */
 	char buf[256 + sizeof(srvname)];
 	char date[9];
@@ -1473,7 +1473,7 @@ static void logCWtoFile(ECM_REQUEST *er, uchar *cw)
 	* causing problems in file name
 	*/
 
-	get_servicename(cur_client(), er->srvid, er->prid, er->caid, srvname);
+	get_servicename(cur_client(), er->srvid, er->prid, er->caid, srvname, sizeof(srvname));
 
 	for(i = 0; srvname[i]; i++)
 		if(srvname[i] == ' ') { srvname[i] = '_'; }

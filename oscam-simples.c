@@ -2,7 +2,7 @@
 #include "oscam-string.h"
 
 /* Gets the servicename. Make sure that buf is at least 32 bytes large. */
-static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf, bool return_unknown, bool ignore_provid, bool final_try)
+static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf, uint32_t buflen, bool return_unknown, bool ignore_provid, bool final_try)
 {
 	int32_t i;
 	struct s_srvid *this;
@@ -15,7 +15,7 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 		for(i = 0; i < cl->last_srvidptr->ncaid; i++)
 			if(cl->last_srvidptr->caid[i] == caid && cl->last_srvidptr->name)
 			{
-				cs_strncpy(buf, cl->last_srvidptr->name, 32);
+				cs_strncpy(buf, cl->last_srvidptr->name, buflen);
 				return (buf);
 			}
 
@@ -24,7 +24,7 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 			for(i = 0; i < this->ncaid; i++)
 				if(this->caid[i] == caid && this->name && cl)
 				{
-					cs_strncpy(buf, this->name, 32);
+					cs_strncpy(buf, this->name, buflen);
 					cl->last_srvidptr = this;
 					return (buf);
 				}
@@ -35,40 +35,117 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 		{
 			if(provid != 0)
 			{
-				__get_servicename(cl, srvid, 0, caid, buf, false, false, true);
+				__get_servicename(cl, srvid, 0, caid, buf, buflen, false, false, true);
 				
 				if(!buf[0])
 				{
 					if(return_unknown)
-						{ snprintf(buf, 32, "%04X:%06X:%04X unknown", caid, provid, srvid); }
+						{ snprintf(buf, buflen, "%04X:%06X:%04X unknown", caid, provid, srvid); }
 					if(cl) { cl->last_srvidptr = NULL; }					
 				}
 			}		
 			else
 			{
-				return __get_servicename(cl, srvid, 0, caid, buf, return_unknown, true, true);
+				return __get_servicename(cl, srvid, 0, caid, buf, buflen, return_unknown, true, true);
 			}
 		}
 		else 
 		{
 			if(return_unknown)
-				{ snprintf(buf, 32, "%04X:%06X:%04X unknown", caid, provid, srvid); }
+				{ snprintf(buf, buflen, "%04X:%06X:%04X unknown", caid, provid, srvid); }
 			if(cl) { cl->last_srvidptr = NULL; }
 		}
 	}
 	return (buf);
 }
 
-char *get_servicename(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf)
+char *get_servicename(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf, uint32_t buflen)
 {
-	return __get_servicename(cl, srvid, provid, caid, buf, true, false, false);
+	return __get_servicename(cl, srvid, provid, caid, buf, buflen, true, false, false);
 }
 
-char *get_servicename_or_null(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf)
+char *get_servicename_or_null(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf, uint32_t buflen)
 {
-	return __get_servicename(cl, srvid, provid, caid, buf, false, false, false);
+	return __get_servicename(cl, srvid, provid, caid, buf, buflen, false, false, false);
 }
 
+char *get_picon_servicename_or_null(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf, uint32_t buflen)
+{
+	uint32_t i, j;
+	
+	__get_servicename(cl, srvid, provid, caid, buf, buflen, false, false, false);
+	
+	char *tmp_buf;
+	
+	if(buf[0])
+	{
+		if(!cs_malloc(&tmp_buf, buflen))
+		{
+			buf[0] = '\0';
+			return (buf);	
+		}
+		
+		j = 0;
+		
+		for(i=0; i<buflen && buf[i] && j+4<buflen; i++)
+		{
+			if(isalnum((int)buf[i]))
+			{
+				tmp_buf[j] = (char)tolower((int)buf[i]);
+				j++;
+			}
+			else if(buf[i] == '*')
+			{
+				tmp_buf[j] = 's';
+				tmp_buf[j+1] = 't';
+				tmp_buf[j+2] = 'a';
+				tmp_buf[j+3] = 'r';						
+				j += 4;
+			}
+			else if(buf[i] == '+')
+			{
+				tmp_buf[j] = 'p';
+				tmp_buf[j+1] = 'l';
+				tmp_buf[j+2] = 'u';
+				tmp_buf[j+3] = 's';				
+				j += 4;
+			}
+			else if(buf[i] == '&')
+			{
+				tmp_buf[j] = 'a';
+				tmp_buf[j+1] = 'n';
+				tmp_buf[j+2] = 'd';				
+				j += 3;
+			}						
+		}
+		
+		tmp_buf[buflen-1] = '\0';
+		cs_strncpy(buf, tmp_buf, buflen);
+		
+		NULLFREE(tmp_buf);
+	}
+	
+	return (buf);
+}
+
+int32_t picon_servicename_remve_hd(char *buf, uint32_t UNUSED(buflen))
+{
+	int32_t l = strlen(buf);
+	
+	if(l < 3)
+	{
+		return 0;
+	}
+	
+	if(buf[l-2] == 'h' && buf[l-1] == 'd')
+	{
+		buf[l-2] = '\0';
+		buf[l-1] = '\0';
+		return 1;
+	}
+	
+	return 0;
+}
 
 /* Gets the tier name. Make sure that buf is at least 83 bytes long. */
 char *get_tiername(uint16_t tierid, uint16_t caid, char *buf)
