@@ -35,7 +35,14 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 		{
 			if(provid != 0)
 			{
-				return __get_servicename(cl, srvid, 0, caid, buf, return_unknown, false, true);
+				__get_servicename(cl, srvid, 0, caid, buf, false, false, true);
+				
+				if(!buf[0])
+				{
+					if(return_unknown)
+						{ snprintf(buf, 32, "%04X:%06X:%04X unknown", caid, provid, srvid); }
+					if(cl) { cl->last_srvidptr = NULL; }					
+				}
 			}		
 			else
 			{
