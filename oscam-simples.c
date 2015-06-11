@@ -2,7 +2,7 @@
 #include "oscam-string.h"
 
 /* Gets the servicename. Make sure that buf is at least 32 bytes large. */
-static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf, bool return_unknown, bool ignore_provid)
+static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf, bool return_unknown, bool ignore_provid, bool final_try)
 {
 	int32_t i;
 	struct s_srvid *this;
@@ -31,9 +31,16 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 
 	if(!buf[0])
 	{
-		if(!ignore_provid)
+		if(!final_try)
 		{
-			return __get_servicename(cl, srvid, provid, caid, buf, return_unknown, true);
+			if(provid != 0)
+			{
+				return __get_servicename(cl, srvid, 0, caid, buf, return_unknown, false, true);
+			}		
+			else
+			{
+				return __get_servicename(cl, srvid, 0, caid, buf, return_unknown, true, true);
+			}
 		}
 		else 
 		{
@@ -47,12 +54,12 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 
 char *get_servicename(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf)
 {
-	return __get_servicename(cl, srvid, provid, caid, buf, true, false);
+	return __get_servicename(cl, srvid, provid, caid, buf, true, false, false);
 }
 
 char *get_servicename_or_null(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf)
 {
-	return __get_servicename(cl, srvid, provid, caid, buf, false, false);
+	return __get_servicename(cl, srvid, provid, caid, buf, false, false, false);
 }
 
 
