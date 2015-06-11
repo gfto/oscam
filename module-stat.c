@@ -569,6 +569,8 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 	s = get_add_stat(rdr, &q);
 
 	struct timeb now;
+	cs_ftime(&now);
+	
 	cs_ftime(&s->last_received);
 
 	if(rc == E_FOUND)    //found
@@ -598,7 +600,7 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 		if((rdr->lb_usagelevel_ecmcount % cfg.lb_min_ecmcount) == 0)  //update every MIN_ECM_COUNT usagelevel:
 		{
 			int64_t t = comp_timeb(&now, &rdr->lb_usagelevel_time) / 1000;
-			rdr->lb_usagelevel = 1000 / (t < 1 ? 1 : t);
+			rdr->lb_usagelevel = cfg.lb_min_ecmcount * 1000 / (t < 1 ? 1 : t);
 			/* Reset of usagelevel time and counter */
 			rdr->lb_usagelevel_time = now;
 			rdr->lb_usagelevel_ecmcount = 0;
