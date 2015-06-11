@@ -27,6 +27,9 @@ static int log_list_queued;
 static pthread_t log_thread;
 static pthread_cond_t log_thread_sleep_cond;
 static pthread_mutex_t log_thread_sleep_cond_mutex;
+static int32_t syslog_socket = -1;
+static struct sockaddr_in syslog_addr;
+
 
 struct s_log
 {
@@ -310,6 +313,13 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 		if(cfg.logtosyslog)
 			{ syslog(LOG_INFO, "%s", txt + 29); }
 	}
+	
+	if (cfg.sysloghost != NULL && syslog_socket != -1)
+	{	
+		if (sendto(syslog_socket, txt + 8, strlen(txt) - 8, 0, (struct sockaddr*) &syslog_addr, sizeof(syslog_addr)) == -1)
+			perror("Send data error!");
+	}	
+	
 	strcat(txt, "\n");
 	cs_write_log(txt + 8, do_flush);
 
@@ -643,10 +653,31 @@ void log_list_thread(void)
 	ll_destroy(&log_list);
 }
 
+static void init_syslog_socket(void)
+{
+	if(cfg.sysloghost != NULL && syslog_socket == -1)
+	{	
+		IN_ADDR_T in_addr;
+		
+		if ((syslog_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+		{
+			perror("Socket create error!");
+		}
+		
+		memset((char *) &syslog_addr, 0, sizeof(syslog_addr));
+		syslog_addr.sin_family = AF_INET;
+		syslog_addr.sin_port = htons(cfg.syslogport);
+		cs_resolve(cfg.sysloghost, &in_addr, NULL, NULL);
+		SIN_GET_ADDR(syslog_addr) = in_addr;
+	}		
+}
+
 int32_t cs_init_log(void)
 {
 	if(logStarted == 0)
 	{
+		init_syslog_socket();
+		
 		pthread_mutex_init(&log_mutex, NULL);
 
 		cs_pthread_cond_init(&log_thread_sleep_cond_mutex, &log_thread_sleep_cond);
@@ -688,12 +719,19 @@ void cs_disable_log(int8_t disabled)
 		{
 			if(logStarted)
 			{
+				if(syslog_socket != -1)
+				{
+					close(syslog_socket);
+					syslog_socket = -1;					
+				}
+				
 				cs_sleepms(20);
 				cs_close_log();
 			}
 		}
 		else
 		{
+			init_syslog_socket();
 			cs_open_logfiles();
 		}
 	}
@@ -701,6 +739,11 @@ void cs_disable_log(int8_t disabled)
 
 void log_free(void)
 {
+	if(syslog_socket != -1)
+	{
+		close(syslog_socket);
+		syslog_socket = -1;
+	}
 	cs_close_log();
 	log_running = 0;
 	pthread_cond_signal(&log_thread_sleep_cond);

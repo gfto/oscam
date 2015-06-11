@@ -1689,6 +1689,8 @@ struct s_config
 	uint8_t         logtostdout;
 	uint8_t         logtosyslog;
 	int8_t          logduplicatelines;
+	char			*sysloghost;
+	int32_t			syslogport;
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 	uint32_t        loghistorysize;
 #endif
