@@ -729,6 +729,8 @@ int32_t stapi_write_cw(int32_t demux_id, uchar *cw, uint16_t *STREAMpids, int32_
 		if(memcmp(cw + (l * 8), demux[demux_id].lastcw[l], 8) != 0 && memcmp(cw + (l * 8), nullcw, 8) != 0)
 		{
 			ErrorCode = oscam_sttkd_KeyWrite(tkd_desc_info[demux[demux_id].dev_index].key_hndl, l, cw + (l * 8));
+			
+			memcpy(demux[demux_id].lastcw[l], cw + (l * 8), 8);
 			cs_log_dbg(D_DVBAPI, "write cw %s index: %d on %s", text[l], demux_id, dev_list[demux[demux_id].dev_index].name);
 		}
 	}
