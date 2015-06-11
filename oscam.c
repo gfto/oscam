@@ -155,7 +155,11 @@ static void show_usage(void)
 	printf("                         . Default: /tmp/.oscam\n");
 #endif
 	printf("\n Startup:\n");
+#if defined(WITH_STAPI) || defined(WITH_STAPI5)
+	printf(" -f, --foreground        | Start in the foreground mode.\n");
+#else
 	printf(" -b, --daemon            | Start in the background as daemon.\n");
+#endif
 	printf(" -B, --pidfile <pidfile> | Create pidfile when starting.\n");
 	if(config_enabled(WEBIF))
 	{
@@ -207,14 +211,22 @@ static void show_usage(void)
 }
 
 /* Keep the options sorted */
+#if defined(WITH_STAPI) || defined(WITH_STAPI5)
+static const char short_options[] = "aB:fc:d:g:hI:p:r:Sst:uVw:";
+#else
 static const char short_options[] = "aB:bc:d:g:hI:p:r:Sst:uVw:";
+#endif
 
 /* Keep the options sorted by short option */
 static const struct option long_options[] =
 {
 	{ "crash-dump",         no_argument,       NULL, 'a' },
 	{ "pidfile",            required_argument, NULL, 'B' },
+#if defined(WITH_STAPI) || defined(WITH_STAPI5)
+	{ "foreground",         no_argument,       NULL, 'f' },
+#else
 	{ "daemon",             no_argument,       NULL, 'b' },
+#endif
 	{ "config-dir",         required_argument, NULL, 'c' },
 	{ "debug",              required_argument, NULL, 'd' },
 	{ "gcollect",           required_argument, NULL, 'g' },
@@ -235,6 +247,10 @@ static void write_versionfile(bool use_stdout);
 
 static void parse_cmdline_params(int argc, char **argv)
 {
+#if defined(WITH_STAPI) || defined(WITH_STAPI5)	
+	bg = 1;
+#endif
+	
 	int i;
 	while((i = getopt_long(argc, argv, short_options, long_options, NULL)) != EOF)
 	{
@@ -248,9 +264,15 @@ static void parse_cmdline_params(int argc, char **argv)
 		case 'B': // --pidfile
 			oscam_pidfile = optarg;
 			break;
+#if defined(WITH_STAPI) || defined(WITH_STAPI5)
+		case 'f': // --foreground
+			bg = 0;
+			break;
+#else
 		case 'b': // --daemon
 			bg = 1;
 			break;
+#endif
 		case 'c': // --config-dir
 			cs_strncpy(cs_confdir, optarg, sizeof(cs_confdir));
 			break;
