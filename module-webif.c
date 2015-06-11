@@ -3487,8 +3487,13 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			if(cfg.http_showpicons )
 			{
 				char picon_name[32];
-				snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%04X", clientcaid, clientsrvid);
+				snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%06X_%04X", clientcaid, clientprovid, clientsrvid);
 				int8_t picon_ok = picon_exists(picon_name);
+				if(!picon_ok)
+				{
+					snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%04X", clientcaid, clientsrvid);
+					picon_ok = picon_exists(picon_name);
+				}
 				if(!picon_ok)
 				{
 					snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "0000_%04X", clientsrvid);
@@ -4730,9 +4735,15 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							tpl_addVar(vars, TPLADD, "CLIENTTIMEONCHANNEL", sec2timeformat(vars, chsec));
 							if(cfg.http_showpicons && cl->last_srvid)
 							{
-								snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%04X", cl->last_caid, cl->last_srvid);
+								snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%06X_%04X", cl->last_caid, cl->last_provid, cl->last_srvid);
 								tpl_addVar(vars, TPLADD, "PICONNAME", picon_name);
 								int8_t picon_ok = picon_exists(picon_name);
+								if(!picon_ok)
+								{
+									snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "%04X_%04X", cl->last_caid, cl->last_srvid);
+									picon_ok = picon_exists(picon_name);
+									if(picon_ok) tpl_addVar(vars, TPLADD, "PICONNAME", picon_name);
+								}
 								if(!picon_ok)
 								{
 									snprintf(picon_name, sizeof(picon_name) / sizeof(char) - 1, "0000_%04X", cl->last_srvid);
