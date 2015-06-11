@@ -406,6 +406,7 @@ int32_t cs_auth_client(struct s_client *client, struct s_auth *account, const ch
 			if(client->typ == 'c')
 			{
 				client->last_caid = NO_CAID_VALUE;
+				client->last_provid = NO_PROVID_VALUE;
 				client->last_srvid = NO_SRVID_VALUE;
 				client->expirationdate = account->expirationdate;
 				client->disabled = account->disabled;
@@ -700,6 +701,7 @@ void free_client(struct s_client *cl)
 	{
 		cs_statistics(cl);
 		cl->last_caid = NO_CAID_VALUE;
+		cl->last_provid = NO_PROVID_VALUE;
 		cl->last_srvid = NO_SRVID_VALUE;
 		cs_statistics(cl);
 

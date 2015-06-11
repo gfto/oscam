@@ -884,6 +884,7 @@ int32_t network_tcp_connection_open(struct s_reader *rdr)
 	clear_block_delay(rdr);
 	client->last = client->login = time((time_t *)0);
 	client->last_caid = NO_CAID_VALUE;
+	client->last_provid = NO_PROVID_VALUE;
 	client->last_srvid = NO_SRVID_VALUE;
 	client->pfd = client->udp_fd;
 	rdr->tcp_connected = 1;
@@ -1093,6 +1094,7 @@ void reader_get_ecm(struct s_reader *reader, ECM_REQUEST *er)
 	{
 		cl->last_srvid = er->srvid;
 		cl->last_caid = er->caid;
+		cl->last_provid = er->prid;
 		casc_process_ecm(reader, er);
 		cl->lastecm = time((time_t *)0);
 		return;

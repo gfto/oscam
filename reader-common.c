@@ -416,6 +416,7 @@ int32_t cardreader_do_ecm(struct s_reader *reader, ECM_REQUEST *er, struct s_ecm
 		{
 			cl->last_srvid = er->srvid;
 			cl->last_caid = er->caid;
+			cl->last_provid = er->prid;
 			cl->last = time((time_t *)0);
 		}
 

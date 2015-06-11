@@ -2103,6 +2103,7 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 
 		client->last_srvid = i;
 		client->last_caid = m;
+		client->last_provid = er->prid;
 
 		int32_t ecm_len = (((er->ecm[1] & 0x0F) << 8) | er->ecm[2]) + 3;
 

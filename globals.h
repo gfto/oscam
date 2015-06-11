@@ -482,6 +482,7 @@ enum {E2_GLOBAL = 0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE, E
 #define MAX_LEN      256
 
 #define NO_CAID_VALUE  0xfffe
+#define NO_PROVID_VALUE  0xfffe
 #define NO_SRVID_VALUE 0xfffe
 
 // If NULL return empty string

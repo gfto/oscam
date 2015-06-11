@@ -2932,6 +2932,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 				if(cfg.usrfileflag) { cs_statistics(dvbapi_client);} // add to user log previous channel + time on channel
 				dvbapi_client->last_srvid = demux[demux_id].program_number; // set new channel srvid
 				dvbapi_client->last_caid = NO_CAID_VALUE; // FTA channels have no caid!
+				dvbapi_client->last_provid = NO_PROVID_VALUE; // FTA channels have no provid!				
 				dvbapi_client->lastswitch = dvbapi_client->last = time((time_t *)0); // reset idle-Time & last switch
 			}
 		}
