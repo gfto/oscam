@@ -677,7 +677,7 @@ int32_t cs_init_log(void)
 	if(logStarted == 0)
 	{
 		init_syslog_socket();
-		
+			
 		pthread_mutex_init(&log_mutex, NULL);
 
 		cs_pthread_cond_init(&log_thread_sleep_cond_mutex, &log_thread_sleep_cond);
@@ -702,6 +702,13 @@ int32_t cs_init_log(void)
 	int32_t rc = 0;
 	if(!cfg.disablelog) { rc = cs_open_logfiles(); }
 	logStarted = 1;
+	
+	if(cfg.initial_debuglevel > 0) 
+	{ 
+		cs_dblevel = cfg.initial_debuglevel;
+		cs_log("debug_level=%d", cs_dblevel);
+	}
+	
 	return rc;
 }
 

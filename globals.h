@@ -1689,6 +1689,7 @@ struct s_config
 	uint8_t         logtostdout;
 	uint8_t         logtosyslog;
 	int8_t          logduplicatelines;
+	int32_t         initial_debuglevel;
 	char			*sysloghost;
 	int32_t			syslogport;
 #if defined(WEBIF) || defined(MODULE_MONITOR)

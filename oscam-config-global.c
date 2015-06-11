@@ -306,6 +306,7 @@ static const struct config_list global_opts[] =
 #endif
 	DEF_OPT_FUNC("serverip"                 , OFS(srvip),               serverip_fn),
 	DEF_OPT_FUNC("logfile"                  , OFS(logfile),             logfile_fn),
+	DEF_OPT_INT32("initial_debuglevel"      , OFS(initial_debuglevel),  0), 
 	DEF_OPT_STR("sysloghost"                , OFS(sysloghost),          NULL),
 	DEF_OPT_INT32("syslogport"				, OFS(syslogport),			514),
 	DEF_OPT_INT8("logduplicatelines"        , OFS(logduplicatelines),   0),

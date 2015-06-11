@@ -513,13 +513,14 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	tpl_printf(vars, TPLADD, "MAXLOGSIZE", "%d", cfg.max_log_size);
 
 	tpl_addVar(vars, TPLADD, "LOGDUPSCHECKED", (cfg.logduplicatelines == 1) ? "checked" : "");
+	tpl_printf(vars, TPLADD, "INITIALDEBUGLEVEL", "%u", cfg.initial_debuglevel);
 
 	if(cfg.cwlogdir != NULL) { tpl_addVar(vars, TPLADD, "CWLOGDIR", cfg.cwlogdir); }
 	if(cfg.emmlogdir != NULL) { tpl_addVar(vars, TPLADD, "EMMLOGDIR", cfg.emmlogdir); }
 	tpl_addVar(vars, TPLADD, "ECMFMT", cfg.ecmfmt);
 	tpl_printf(vars, TPLADD, "LOGHISTORYSIZE", "%u", cfg.loghistorysize);
 	if(cfg.sysloghost != NULL) { tpl_addVar(vars, TPLADD, "SYSLOGHOST", cfg.sysloghost); }
-	tpl_printf(vars, TPLADD, "SYSLOGPORT", "%u", cfg.syslogport);	
+	tpl_printf(vars, TPLADD, "SYSLOGPORT", "%u", cfg.syslogport);
 
 
 	tpl_printf(vars, TPLADD, "CLIENTTIMEOUT", "%u", cfg.ctimeout);
