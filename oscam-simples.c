@@ -4,30 +4,34 @@
 /* Gets the servicename. Make sure that buf is at least 32 bytes large. */
 static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf, uint32_t buflen, bool return_unknown, bool ignore_provid, bool final_try)
 {
-	int32_t i;
+	int32_t i, j;
 	struct s_srvid *this;
 	buf[0] = '\0';
 
 	if(!srvid || (srvid >> 12) >= 16)  //cfg.srvid[16]
 		{ return (buf); }
 
-	if(cl && cl->last_srvidptr && cl->last_srvidptr->srvid == srvid && (ignore_provid || cl->last_srvidptr->provid == provid))
+	if(cl && cl->last_srvidptr && cl->last_srvidptr->srvid == srvid)
 		for(i = 0; i < cl->last_srvidptr->ncaid; i++)
-			if(cl->last_srvidptr->caid[i] == caid && cl->last_srvidptr->name)
-			{
-				cs_strncpy(buf, cl->last_srvidptr->name, buflen);
-				return (buf);
-			}
-
-	for(this = cfg.srvid[srvid >> 12]; this; this = this->next)
-		if(this->srvid == srvid && (ignore_provid || this->provid == provid))
-			for(i = 0; i < this->ncaid; i++)
-				if(this->caid[i] == caid && this->name && cl)
+			for(j = 0; j < cl->last_srvidptr->nprovid; j++)
+				if(cl->last_srvidptr->caid[i] == caid && (ignore_provid || cl->last_srvidptr->provid[j] == provid)
+					&& cl->last_srvidptr->name)
 				{
-					cs_strncpy(buf, this->name, buflen);
-					cl->last_srvidptr = this;
+					cs_strncpy(buf, cl->last_srvidptr->name, buflen);
 					return (buf);
 				}
+	if(cl)
+		for(this = cfg.srvid[srvid >> 12]; this; this = this->next)
+			if(this->srvid == srvid)
+				for(i = 0; i < this->ncaid; i++)
+					for(j = 0; j < cl->last_srvidptr->nprovid; j++)
+						if(this->caid[i] == caid && (ignore_provid || this->provid[j] == provid)
+							&& this->name)
+						{
+							cs_strncpy(buf, this->name, buflen);
+							cl->last_srvidptr = this;
+							return (buf);
+						}
 
 	if(!buf[0])
 	{

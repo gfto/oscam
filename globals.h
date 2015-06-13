@@ -1584,12 +1584,17 @@ struct s_auth
 	struct s_auth   *next;
 };
 
+
 struct s_srvid
 {
+#define S_SRVID_CAID_LIMIT 10
+#define S_SRVID_PROVID_LIMIT 5
+
 	uint16_t        srvid;
 	int8_t          ncaid;
-	uint32_t        provid;
-	uint16_t        caid[10];
+	uint16_t        caid[S_SRVID_CAID_LIMIT];
+	int8_t          nprovid;
+	uint32_t        provid[S_SRVID_PROVID_LIMIT];
 	char            *data;
 	char            *prov;
 	char            *name;

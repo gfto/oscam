@@ -371,7 +371,7 @@ int32_t init_srvid(void)
 
 	while(fgets(token, MAXLINESIZE, fp))
 	{
-		int32_t l, j, len = 0, len2, srvidtmp, providtmp=0;
+		int32_t l, j, len = 0, len2, srvidtmp;
 		uint32_t pos;
 		char *srvidasc, *providasc;
 		tmp = trim(token);
@@ -474,12 +474,6 @@ int32_t init_srvid(void)
 
 		*srvidasc++ = '\0';
 		srvidtmp = dyn_word_atob(srvidasc) & 0xFFFF;
-		if(providasc)
-		{
-			*providasc++ = '\0';
-			providtmp = dyn_word_atob(providasc) & 0xFFFFFF;
-		}
-
 		if(srvidtmp < 0)
 		{
 			NULLFREE(tmpptr);
@@ -489,16 +483,29 @@ int32_t init_srvid(void)
 		else
 		{
 			srvid->srvid = srvidtmp;
-			srvid->provid = providtmp;
-		}
-
+		}		
+		
 		srvid->ncaid = 0;
-		for(i = 0, ptr1 = strtok_r(token, ",", &saveptr1); (ptr1) && (i < 10) ; ptr1 = strtok_r(NULL, ",", &saveptr1), i++)
+		for(i = 0, ptr1 = strtok_r(token, ",", &saveptr1); (ptr1) && (i < S_SRVID_CAID_LIMIT) ; ptr1 = strtok_r(NULL, ",", &saveptr1), i++)
 		{
 			srvid->caid[i] = dyn_word_atob(ptr1);
 			srvid->ncaid = i + 1;
 			//cs_log_dbg(D_CLIENT, "ld caid: %04X srvid: %04X Prov: %s Chan: %s",srvid->caid[i],srvid->srvid,srvid->prov,srvid->name);
 		}
+							
+		srvid->nprovid = 0;
+		if(providasc)
+		{
+			*providasc++ = '\0';
+			saveptr1 = NULL;
+			
+			for(i = 0, ptr1 = strtok_r(providasc, ",", &saveptr1); (ptr1) && (i < S_SRVID_PROVID_LIMIT) ; ptr1 = strtok_r(NULL, ",", &saveptr1), i++)
+			{
+				srvid->provid[i] = dyn_word_atob(ptr1) & 0xFFFFFF;
+				srvid->nprovid = i + 1;
+			}
+		}
+				
 		nr++;
 
 		if(new_cfg_srvid[srvid->srvid >> 12])
