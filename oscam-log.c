@@ -108,17 +108,17 @@ void cs_reopen_log(void)
 	}
 }
 
-static void cs_write_log(char *txt, int8_t do_flush)
+static void cs_write_log(char *txt, int8_t do_flush, uint8_t hdr_date_offset, uint8_t hdr_time_offset)
 {
 	// filter out entries with leading 's' and forward to statistics
-	if(txt[0] == 's')
+	if(txt[hdr_date_offset] == 's')
 	{
 		if(fps)
 		{
 			switch_log(cfg.usrfile, &fps, cs_init_statistics);
 			if(fps)
 			{
-				fputs(txt + 1, fps); // remove the leading 's' and write to file
+				fputs(txt + hdr_date_offset + 1, fps); // remove the leading 's' and write to file
 				if(do_flush) { fflush(fps); }
 			}
 		}
@@ -132,13 +132,13 @@ static void cs_write_log(char *txt, int8_t do_flush)
 				switch_log(cfg.logfile, &fp, cs_open_logfiles);     // only call the switch code if lock = 1 is specified as otherwise we are calling it internally
 				if(fp)
 				{
-					fputs(txt, fp);
+					fputs(txt + hdr_date_offset, fp);
 					if(do_flush) { fflush(fp); }
 				}
 			}
 			if(cfg.logtostdout)
 			{
-				fputs(txt + 11, stdout);
+				fputs(txt + hdr_time_offset, stdout);
 				if(do_flush) { fflush(stdout); }
 			}
 		}
@@ -168,7 +168,7 @@ static void log_list_add(struct s_log *log)
 	{
 		NULLFREE(log->txt);
 		NULLFREE(log);
-		cs_write_log("-------------> Too much data in log_list, dropping log message.\n", 1);
+		cs_write_log("-------------> Too much data in log_list, dropping log message.\n", 1, 0, 0);
 	}
 	pthread_cond_signal(&log_thread_sleep_cond);
 }
@@ -177,7 +177,7 @@ static void cs_write_log_int(char *txt)
 {
 	if(exit_oscam == 1)
 	{
-		cs_write_log(txt, 1);
+		cs_write_log(txt, 1, 0, 0);
 	}
 	else
 	{
@@ -374,7 +374,7 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 	}
 	
 	strcat(txt, "\n");
-	cs_write_log(txt + log->header_date_offset, do_flush);
+	cs_write_log(txt, do_flush, log->header_date_offset, log->header_time_offset);
 
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 	if(loghist && !exit_oscam && cfg.loghistorysize)
@@ -705,7 +705,7 @@ void log_list_thread(void)
 
 			cs_strncpy(buf, log->txt, LOG_BUF_SIZE);
 			if(log->direct_log)
-				{ cs_write_log(buf, do_flush); }
+				{ cs_write_log(buf, do_flush, log->header_date_offset, log->header_time_offset); }
 			else
 				{ write_to_log(buf, log, do_flush); }
 			NULLFREE(log->txt);
