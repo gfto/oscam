@@ -4643,6 +4643,23 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 }
 
+static int8_t isValidCW(uint8_t *cw)
+{
+	if (((cw[0]+cw[1]+cw[2]) & 0xFF) != cw[3]) {
+		return 0;
+	}
+	if (((cw[4]+cw[5]+cw[6]) & 0xFF) != cw[7]) {
+		return 0;
+	}
+	if (((cw[8]+cw[9]+cw[10]) & 0xFF) != cw[11]) {
+		return 0;
+	}
+	if (((cw[12]+cw[13]+cw[14]) & 0xFF) != cw[15]) {
+		return 0;
+	}
+	return 1;
+}
+
 void dvbapi_write_ecminfo_file(struct s_client *client, ECM_REQUEST *er, uint8_t* lastcw0, uint8_t* lastcw1)
 {
 #define ECMINFO_TYPE_OSCAM		0
@@ -4794,8 +4811,8 @@ void dvbapi_write_ecminfo_file(struct s_client *client, ECM_REQUEST *er, uint8_t
 			time_t walltime;
 			struct tm lt;
 			char timebuf[32];
-				
-			fprintf(ecmtxt, "Signature OK\n"); //what does this mean?			
+
+			fprintf(ecmtxt, "Signature %s\n", (isValidCW(lastcw0) || isValidCW(lastcw1)) ? "OK" : "NOK");		
 			
 			if(reader_name != NULL)
 			{
