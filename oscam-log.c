@@ -368,8 +368,33 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 			
 		if (cfg.sysloghost != NULL && syslog_socket != -1)
 		{	
-			sendto(syslog_socket, txt + log->header_info_offset, strlen(txt + log->header_info_offset),
-					 0, (struct sockaddr*) &syslog_addr, sizeof(syslog_addr));
+			char tmp[128+LOG_BUF_SIZE];			
+			static char hostname[64];
+			static uint8_t have_hostname = 0;
+			time_t walltime;
+			struct tm lt;
+			char timebuf[32];
+						
+			if(!have_hostname)
+			{
+				if(gethostname(hostname, 64) != 0)
+				{
+					cs_strncpy(hostname, "unknown", 64);
+				}
+				
+				have_hostname = 1;
+			}
+										
+			walltime = cs_time();
+			localtime_r(&walltime, &lt);
+
+			if(strftime(timebuf, 32, "%b %d %H:%M:%S", &lt) == 0)
+			{
+				cs_strncpy(timebuf, "unknown", 32);
+			}			
+			
+			snprintf(tmp, sizeof(tmp), "%s %s oscam[%u]: %s", timebuf, hostname, getpid(), txt + log->header_info_offset);
+			sendto(syslog_socket, tmp, strlen(tmp), 0, (struct sockaddr*) &syslog_addr, sizeof(syslog_addr));
 		}
 	}
 	
