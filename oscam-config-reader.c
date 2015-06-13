@@ -789,7 +789,6 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_INT8("fix07"                , OFS(fix_07),                  1),
 	DEF_OPT_INT8("fix9993"              , OFS(fix_9993),                0),
 	DEF_OPT_INT8("readtiers"           	, OFS(readtiers),              	1),
-	DEF_OPT_INT8("minimize_emm_filter"  , OFS(minimize_emm_filter),    	0),
 	DEF_OPT_INT8("force_irdeto"         , OFS(force_irdeto),            0),
 	DEF_OPT_INT8("needsemmfirst"        , OFS(needsemmfirst),           0),
 	DEF_OPT_UINT32("ecmnotfoundlimit"   , OFS(ecmnotfoundlimit),        0),

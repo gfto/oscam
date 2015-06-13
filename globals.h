@@ -1459,8 +1459,6 @@ struct s_reader                                     //contains device info, read
 	int8_t          fix_07;
 	int8_t          fix_9993;
 	int8_t			readtiers;							// method to get videoguard tiers
-	int8_t			minimize_emm_filter;				// reduce videoguard shared and unique emm filters 
-														// (0=all serial positions, 1=only 1, 2=only 2)
 	uint8_t         ins7E[0x1A + 1];
 	uint8_t         ins7E11[0x01 + 1];
 	uint8_t         ins2e06[0x04 + 1];
