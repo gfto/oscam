@@ -987,6 +987,7 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 		rdr_log(reader, "classD1 ins4Ca: failed");
 		return ERROR;
 	}
+	memcpy(reader->payload4C, payload4C, 0xF);
 
 	if(reader->ins7E[0x1A])
 	{
