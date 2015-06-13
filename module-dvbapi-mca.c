@@ -527,32 +527,7 @@ void mca_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 	delayer(er);
 
-	FILE *ecmtxt;
-	if((ecmtxt = fopen(ECMINFO_FILE, "w")))
-	{
-		char tmp[25];
-		if(er->rc <= E_CACHEEX)
-		{
-			fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
-			fprintf(ecmtxt, "reader: %s\n", er->selected_reader->label);
-			if(is_cascading_reader(er->selected_reader))
-				{ fprintf(ecmtxt, "from: %s\n", er->selected_reader->device); }
-			else
-				{ fprintf(ecmtxt, "from: local\n"); }
-			fprintf(ecmtxt, "protocol: %s\n", reader_get_type_desc(er->selected_reader, 1));
-			fprintf(ecmtxt, "hops: %d\n", er->selected_reader->currenthops);
-			fprintf(ecmtxt, "ecm time: %.3f\n", (float) client->cwlastresptime / 1000);
-			fprintf(ecmtxt, "cw0: %s\n", cs_hexdump(1, demux[0].lastcw[0], 8, tmp, sizeof(tmp)));
-			fprintf(ecmtxt, "cw1: %s\n", cs_hexdump(1, demux[0].lastcw[1], 8, tmp, sizeof(tmp)));
-			fclose(ecmtxt);
-			ecmtxt = NULL;
-		}
-		else
-		{
-			fprintf(ecmtxt, "ECM information not found\n");
-			fclose(ecmtxt);
-		}
-	}
+	dvbapi_write_ecminfo_file(client, er, demux[0].lastcw[0], demux[0].lastcw[1]);
 
 	openxcas_busy = 0;
 

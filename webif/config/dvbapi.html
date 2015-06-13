@@ -30,3 +30,15 @@
 		</TR>
 		<TR><TD><A>Listen port:</A></TD><TD><input name="listen_port" class="short" type="text" maxlength="5" value="##LISTENPORT##"> TCP port to listen instead of camd.socket</TD></TR>
 		<TR><TD><A>Delayer:</A></TD><TD><input name="delayer" class="withunit short" type="text" maxlength="4" value="##DELAYER##"> ms</TD></TR>
+		<TR><TD><A>ecm.info type:</A></TD>
+			<TD>
+				<select name="ecminfo_type">
+					<option value="0" ##ECMINFOTYPESELECTED0##>0 - oscam</option>
+					<option value="1" ##ECMINFOTYPESELECTED1##>1 - oscam (ecmtime in ms)</option>
+					<option value="2" ##ECMINFOTYPESELECTED2##>2 - wicardd</option>
+					<option value="3" ##ECMINFOTYPESELECTED3##>3 - mgcamd</option>
+					<option value="4" ##ECMINFOTYPESELECTED4##>4 - cccam</option>
+					<option value="5" ##ECMINFOTYPESELECTED5##>5 - camd3</option>					
+				</select>
+			</TD>
+		</TR>

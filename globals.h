@@ -1867,6 +1867,7 @@ struct s_config
 	int32_t     dvbapi_listenport;                  // TCP port to listen instead of camd.socket (network mode, default=0 -> disabled)
 	SIDTABS     dvbapi_sidtabs;
 	int32_t     dvbapi_delayer;                     // delayer ms, minimum time to write cw
+	int8_t      dvbapi_ecminfo_type;
 #endif
 
 #ifdef CS_ANTICASC

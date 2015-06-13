@@ -4627,58 +4627,10 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		// reset idle-Time
 		client->last = time((time_t *)0); // ********* TO BE FIXED LATER ON ******
 
-		FILE *ecmtxt = NULL;
 		if (cfg.dvbapi_listenport && client_proto_version >= 2)
 			dvbapi_net_send(DVBAPI_ECM_INFO, demux[i].socket_fd, i, 0, NULL, client, er);
 		else if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
-			ecmtxt = fopen(ECMINFO_FILE, "w");
-		if(ecmtxt != NULL && er->rc < E_NOTFOUND)
-		{
-			char tmp[25];
-			fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
-			switch(er->rc)
-			{
-			case E_FOUND:
-				if(er->selected_reader)
-				{
-					fprintf(ecmtxt, "reader: %s\n", er->selected_reader->label);
-					if(is_network_reader(er->selected_reader))
-						{ fprintf(ecmtxt, "from: %s\n", er->selected_reader->device); }
-					else
-						{ fprintf(ecmtxt, "from: local\n"); }
-					fprintf(ecmtxt, "protocol: %s\n", reader_get_type_desc(er->selected_reader, 1));
-					fprintf(ecmtxt, "hops: %d\n", er->selected_reader->currenthops);
-				}
-				break;
-
-			case E_CACHE1:
-				fprintf(ecmtxt, "reader: Cache\n");
-				fprintf(ecmtxt, "from: cache1\n");
-				fprintf(ecmtxt, "protocol: none\n");
-				break;
-
-			case E_CACHE2:
-				fprintf(ecmtxt, "reader: Cache\n");
-				fprintf(ecmtxt, "from: cache2\n");
-				fprintf(ecmtxt, "protocol: none\n");
-				break;
-
-			case E_CACHEEX:
-				fprintf(ecmtxt, "reader: Cache\n");
-				fprintf(ecmtxt, "from: cache3\n");
-				fprintf(ecmtxt, "protocol: none\n");
-				break;
-			}
-			fprintf(ecmtxt, "ecm time: %.3f\n", (float) client->cwlastresptime / 1000);
-			fprintf(ecmtxt, "cw0: %s\n", cs_hexdump(1, demux[i].lastcw[0], 8, tmp, sizeof(tmp)));
-			fprintf(ecmtxt, "cw1: %s\n", cs_hexdump(1, demux[i].lastcw[1], 8, tmp, sizeof(tmp)));
-		}
-		if(ecmtxt)
-		{
-			int32_t ret = fclose(ecmtxt);
-			if(ret < 0) { cs_log("ERROR: Could not close ecmtxt fd (errno=%d %s)", errno, strerror(errno)); }
-			ecmtxt = NULL;
-		}
+			dvbapi_write_ecminfo_file(client, er, demux[i].lastcw[0], demux[i].lastcw[1]);
 
 	}
 	if(handled == 0)
@@ -4688,6 +4640,172 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	}
 
 }
+
+void dvbapi_write_ecminfo_file(struct s_client *client, ECM_REQUEST *er, uint8_t* lastcw0, uint8_t* lastcw1)
+{
+#define ECMINFO_TYPE_OSCAM		0
+#define ECMINFO_TYPE_OSCAM_MS	1
+#define ECMINFO_TYPE_WICARDD	2
+#define ECMINFO_TYPE_MGCAMD		3
+#define ECMINFO_TYPE_CCCAM		4
+#define ECMINFO_TYPE_CAMD3		5
+
+	FILE *ecmtxt = fopen(ECMINFO_FILE, "w");
+	if(ecmtxt != NULL && er->rc < E_NOTFOUND)
+	{
+		char tmp[25];
+		const char *reader_name = NULL, *from_name = NULL, *proto_name = NULL;
+		int8_t hops = 0;
+		const char *system_name = (er->selected_reader && er->selected_reader->csystem_active) ?
+								er->selected_reader->csystem->desc : "none";
+		
+		if(cfg.dvbapi_ecminfo_type <= ECMINFO_TYPE_WICARDD)
+		{
+			if(cfg.dvbapi_ecminfo_type == ECMINFO_TYPE_WICARDD)
+			{
+				fprintf(ecmtxt, "system: %s\n", system_name);
+			}
+
+			fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
+		}
+		else if(cfg.dvbapi_ecminfo_type == ECMINFO_TYPE_MGCAMD)
+		{
+			fprintf(ecmtxt, "===== %s ECM on CaID  0x%04X, pid 0x%04X =====\nprov: 0x%06X\n", system_name, er->caid, er->pid, (uint) er->prid);
+		}
+		else if(cfg.dvbapi_ecminfo_type == ECMINFO_TYPE_CCCAM)
+		{
+			char provider_name[128];
+			get_provider(er->caid, er->prid, provider_name, 128);
+			if(provider_name[0])
+			{
+				fprintf(ecmtxt, "provider: %s\n", provider_name);	
+			}
+			
+			fprintf(ecmtxt, "system: %s\ncaid: 0x%04X\nprovid: 0x%06X\npid: 0x%04X\n", system_name, er->caid, (uint) er->prid, er->pid);
+		}
+		else if(cfg.dvbapi_ecminfo_type == ECMINFO_TYPE_CAMD3)
+		{	
+			fprintf(ecmtxt, "CAID: 0x%04X, PID: 0x%04X, PROVIDER: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
+		}		
+					
+		switch(er->rc)
+		{
+		case E_FOUND:
+			if(er->selected_reader)
+			{
+				reader_name = er->selected_reader->label;
+				if(is_network_reader(er->selected_reader))
+					{ from_name = er->selected_reader->device; }
+				else
+					{ from_name = "local"; }
+				proto_name = reader_get_type_desc(er->selected_reader, 1);
+				hops = er->selected_reader->currenthops;
+			}
+			else
+			{
+				reader_name = "none";
+				from_name = "local";
+				proto_name = "none";	
+			}
+			break;
+        
+		case E_CACHE1:
+			reader_name = "Cache";
+			from_name = "cache1";
+			proto_name = "none";
+			break;
+       
+		case E_CACHE2:
+			reader_name = "Cache";
+			from_name = "cache2";
+			proto_name = "none";
+			break;
+        
+		case E_CACHEEX:
+			reader_name = "Cache";
+			from_name = "cache3";
+			proto_name = "none";
+			break;
+		}
+					
+		
+		if(cfg.dvbapi_ecminfo_type <= ECMINFO_TYPE_OSCAM_MS)
+		{
+			switch(er->rc)
+			{
+			case E_FOUND:
+				if(er->selected_reader)
+				{
+					fprintf(ecmtxt, "reader: %s\nfrom: %s\nprotocol: %s\nhops: %d\n", reader_name, from_name, proto_name, hops);
+				}
+				break;
+        	
+			case E_CACHE1:
+			case E_CACHE2:
+			case E_CACHEEX:
+				fprintf(ecmtxt, "reader: %s\nfrom: %s\nprotocol: %s\n", reader_name, from_name, proto_name);
+				break;
+			}
+			
+			if(cfg.dvbapi_ecminfo_type == ECMINFO_TYPE_OSCAM)
+				{ fprintf(ecmtxt, "ecm time: %.3f\n", (float) client->cwlastresptime / 1000); }
+			else
+				{ fprintf(ecmtxt, "ecm time: %d\n", client->cwlastresptime); }
+		}
+		
+		if(cfg.dvbapi_ecminfo_type == ECMINFO_TYPE_CAMD3)
+		{
+			fprintf(ecmtxt, "FROM: %s\n", reader_name);
+			fprintf(ecmtxt, "CW0: %s\n", cs_hexdump(1, lastcw0, 8, tmp, sizeof(tmp)));
+			fprintf(ecmtxt, "CW1: %s\n", cs_hexdump(1, lastcw1, 8, tmp, sizeof(tmp)));			
+		}
+		else
+		{
+			fprintf(ecmtxt, "cw0: %s\n", cs_hexdump(1, lastcw0, 8, tmp, sizeof(tmp)));
+			fprintf(ecmtxt, "cw1: %s\n", cs_hexdump(1, lastcw1, 8, tmp, sizeof(tmp)));
+		}
+		
+		if(cfg.dvbapi_ecminfo_type == ECMINFO_TYPE_WICARDD || cfg.dvbapi_ecminfo_type == ECMINFO_TYPE_MGCAMD)
+		{
+			time_t walltime;
+			struct tm lt;
+			char timebuf[32];
+				
+			fprintf(ecmtxt, "Signature OK\n"); //what does this mean?			
+			
+			if(reader_name != NULL)
+			{
+				fprintf(ecmtxt, "source: %s (%s at %s)\n", reader_name, proto_name, from_name);
+			}
+			
+			walltime = cs_time();
+			localtime_r(&walltime, &lt);
+
+			if(strftime(timebuf, 32, "%a %b %d %H:%M:%S %Y", &lt) != 0)
+			{
+				fprintf(ecmtxt, "%d msec -- %s\n", client->cwlastresptime, timebuf);
+			}
+		}
+
+		if(cfg.dvbapi_ecminfo_type == ECMINFO_TYPE_CCCAM)
+		{
+			if(reader_name != NULL)
+			{
+				fprintf(ecmtxt, "using: %s\address: %s\nhops: %d\n", proto_name, from_name, hops);
+			}
+			
+			fprintf(ecmtxt, "ecm time: %d\n", client->cwlastresptime);
+		}		
+	}
+	
+	if(ecmtxt)
+	{
+		int32_t ret = fclose(ecmtxt);
+		if(ret < 0) { cs_log("ERROR: Could not close ecmtxt fd (errno=%d %s)", errno, strerror(errno)); }
+		ecmtxt = NULL;
+	}	
+}
+
 
 void *dvbapi_start_handler(struct s_client *cl, uchar *UNUSED(mbuf), int32_t module_idx, void * (*_main_func)(void *))
 {

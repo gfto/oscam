@@ -1254,6 +1254,10 @@ static char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparam
 	tpl_printf(vars, TPLADD, "TMP", "REQMODESELECTED%d", cfg.dvbapi_requestmode);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
+	//ecminfo_type
+	tpl_printf(vars, TPLADD, "TMP", "ECMINFOTYPESELECTED%d", cfg.dvbapi_ecminfo_type);
+	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+
 	//TCP listen port
 	if(cfg.dvbapi_listenport > 0)
 		{ tpl_printf(vars, TPLADD, "LISTENPORT", "%d", cfg.dvbapi_listenport); }

@@ -300,6 +300,7 @@ void delayer(ECM_REQUEST *er);
 void check_add_emmpid(int32_t demux_index, uchar *filter, int32_t l, int32_t emmtype);
 void *dvbapi_start_handler(struct s_client *cl, uchar *mbuf, int32_t module_idx, void * (*_main_func)(void *));
 int32_t dvbapi_get_descindex(int32_t demux_index);
+void dvbapi_write_ecminfo_file(struct s_client *client, ECM_REQUEST *er, uint8_t* lastcw0, uint8_t* lastcw1);
 
 #if defined(WITH_AZBOX) || defined(WITH_MCA)
 #define USE_OPENXCAS 1
