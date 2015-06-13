@@ -34,7 +34,11 @@ static struct sockaddr_in syslog_addr;
 struct s_log
 {
 	char *txt;
-	int8_t header_len;
+	uint8_t header_len;
+	uint8_t header_logcount_offset;
+	uint8_t header_date_offset;
+	uint8_t header_time_offset;
+	uint8_t header_info_offset;
 	int8_t direct_log;
 	int8_t cl_typ;
 	char *cl_usr;
@@ -282,16 +286,18 @@ void cs_reinit_loghist(uint32_t size)
 
 static struct timeb log_ts;
 
-static int32_t get_log_header(char *txt, int32_t txt_size)
+static uint8_t get_log_header(char *txt, int32_t txt_size, uint8_t* hdr_logcount_offset,
+								uint8_t* hdr_date_offset, uint8_t* hdr_time_offset, uint8_t* hdr_info_offset)
 {
 	struct s_client *cl = cur_client();
 	struct tm lt;
-
+	int32_t tmp;
+		
 	cs_ftime(&log_ts);
 	time_t walltime = cs_walltime(&log_ts);
 	localtime_r(&walltime, &lt);
 
-	return snprintf(txt, txt_size,  "[LOG000]%4d/%02d/%02d %02d:%02d:%02d %8X %c ",
+	tmp = snprintf(txt, txt_size,  "[LOG000]%4d/%02d/%02d %02d:%02d:%02d %8X %c ",
 		lt.tm_year + 1900,
 		lt.tm_mon + 1,
 		lt.tm_mday,
@@ -301,6 +307,51 @@ static int32_t get_log_header(char *txt, int32_t txt_size)
 		cl ? cl->tid : 0,
 		cl ? cl->typ : ' '
 	);
+	
+	if(tmp == 39)
+	{
+		if(hdr_logcount_offset != NULL)
+		{
+			// depends on snprintf(...) format
+			(*hdr_logcount_offset) = 0;
+		}
+		if(hdr_date_offset != NULL)
+		{
+			// depends on snprintf(...) format
+			(*hdr_date_offset) = *hdr_logcount_offset + 8;
+		}
+		if(hdr_time_offset != NULL)
+		{
+			// depends on snprintf(...) format
+			(*hdr_time_offset) = *hdr_date_offset + 11;
+		}
+		if(hdr_info_offset != NULL)
+		{
+			// depends on snprintf(...) format
+			(*hdr_info_offset) = *hdr_time_offset + 9;
+		}
+		
+		return (uint8_t)tmp;
+	}
+	
+	if(hdr_logcount_offset != NULL)
+	{
+		(*hdr_logcount_offset) = 0;
+	}	
+	if(hdr_date_offset != NULL)
+	{
+		(*hdr_date_offset) = 0;
+	}
+	if(hdr_time_offset != NULL)
+	{
+		(*hdr_time_offset) = 0;
+	}
+	if(hdr_info_offset != NULL)
+	{
+		(*hdr_info_offset) = 0;
+	}	
+	
+	return 0;
 }
 
 static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
@@ -308,34 +359,37 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 	(void)log; // Prevent warning when WEBIF, MODULE_MONITOR and CS_ANTICASC are disabled
 
 	// anticascading messages go to their own log
-	if (!anticasc_logging(txt + 8))
+	if (!anticasc_logging(txt + log->header_date_offset))
 	{
 		if(cfg.logtosyslog)
-			{ syslog(LOG_INFO, "%s", txt + 29); }
+		{
+			syslog(LOG_INFO, "%s", txt + log->header_info_offset);
+		}
+			
+		if (cfg.sysloghost != NULL && syslog_socket != -1)
+		{	
+			sendto(syslog_socket, txt + log->header_info_offset, strlen(txt + log->header_info_offset),
+					 0, (struct sockaddr*) &syslog_addr, sizeof(syslog_addr));
+		}
 	}
 	
-	if (cfg.sysloghost != NULL && syslog_socket != -1)
-	{	
-		if (sendto(syslog_socket, txt + 8, strlen(txt) - 8, 0, (struct sockaddr*) &syslog_addr, sizeof(syslog_addr)) == -1)
-			perror("Send data error!");
-	}	
-	
 	strcat(txt, "\n");
-	cs_write_log(txt + 8, do_flush);
+	cs_write_log(txt + log->header_date_offset, do_flush);
 
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 	if(loghist && !exit_oscam && cfg.loghistorysize)
 	{
 		char *usrtxt = log->cl_text;
 		char *target_ptr = NULL;
-		int32_t target_len = strlen(usrtxt) + (strlen(txt) - 8) + 1;
+		int32_t target_len = strlen(usrtxt) + strlen(txt+log->header_date_offset) + 1;
 
 		cs_writelock(&loghistory_lock);
 		char *lastpos = loghist + (cfg.loghistorysize) - 1;
 		if(loghist + target_len + 1 >= lastpos)
 		{
-			strncpy(txt + 39, "Log entry too long!", strlen(txt) - 39); // we can assume that the min loghistorysize is always 1024 so we don't need to check if this new string fits into it!
-			target_len = strlen(usrtxt) + (strlen(txt) - 8) + 1;
+			// we can assume that the min loghistorysize is always 1024 so we don't need to check if this new string fits into it!
+			strncpy(txt + log->header_len, "Log entry too long!", strlen(txt) - log->header_len);
+			target_len = strlen(usrtxt) + strlen(txt+log->header_date_offset) + 1;
 		}
 		if(!loghistptr)
 			{ loghistptr = loghist;	}
@@ -355,7 +409,7 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 		}
 		++counter;
 		cs_writeunlock(&loghistory_lock);
-		snprintf(target_ptr, target_len + 1, "%s\t%s", usrtxt, txt + 8);
+		snprintf(target_ptr, target_len + 1, "%s\t%s", usrtxt, txt + log->header_date_offset);
 		ull2b_buf(counter, (uchar *)(loghistid + ((target_ptr-loghist)/3)));
 	}
 #endif
@@ -374,16 +428,21 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 				if(log->cl_usr && cl->account && strcmp(log->cl_usr, cl->account->usr))
 					{ continue; }
 			}
-			snprintf(sbuf, sizeof(sbuf), "%03d", cl->logcounter);
-			cl->logcounter = (cl->logcounter + 1) % 1000;
-			memcpy(txt + 4, sbuf, 3);
+			
+			if(log->header_len > 0)
+			{
+				snprintf(sbuf, sizeof(sbuf), "%03d", cl->logcounter);
+				cl->logcounter = (cl->logcounter + 1) % 1000;
+				memcpy(txt + log->header_logcount_offset, sbuf, 3);
+			}
+			
 			monitor_send_idx(cl, txt);
 		}
 	}
 #endif
 }
 
-static void write_to_log_int(char *txt, int8_t header_len)
+static void write_to_log_int(char *txt, uint8_t header_len, uint8_t hdr_logcount_offset, uint8_t hdr_date_offset, uint8_t hdr_time_offset, uint8_t hdr_info_offset)
 {
 #if !defined(WEBIF) && !defined(MODULE_MONITOR)
 	if(cfg.disablelog) { return; }
@@ -399,6 +458,10 @@ static void write_to_log_int(char *txt, int8_t header_len)
 	}
 	log->txt = newtxt;
 	log->header_len = header_len;
+	log->header_logcount_offset = hdr_logcount_offset;
+	log->header_date_offset = hdr_date_offset;
+	log->header_time_offset = hdr_time_offset;
+	log->header_info_offset = hdr_info_offset;		
 	log->direct_log = 0;
 	struct s_client *cl = cur_client();
 	log->cl_usr = "";
@@ -450,7 +513,7 @@ static char last_log_txt[LOG_BUF_SIZE];
 static struct timeb last_log_ts;
 static unsigned int last_log_duplicates;
 
-static void __cs_log_check_duplicates(int32_t hdr_len)
+static void __cs_log_check_duplicates(uint8_t hdr_len, uint8_t hdr_logcount_offset, uint8_t hdr_date_offset, uint8_t hdr_time_offset, uint8_t hdr_info_offset)
 {
 	bool repeated_line = strcmp(last_log_txt, log_txt + hdr_len) == 0;
 	if (last_log_duplicates > 0)
@@ -462,9 +525,10 @@ static void __cs_log_check_duplicates(int32_t hdr_len)
 		int64_t gone = comp_timeb(&log_ts, &last_log_ts);
 		if (!repeated_line || gone >= 60*1000)
 		{
-			int32_t dupl_header_len = get_log_header(dupl, sizeof(dupl));
+			uint8_t dupl_hdr_logcount_offset = 0, dupl_hdr_date_offset = 0, dupl_hdr_time_offset = 0, dupl_hdr_info_offset = 0;
+			uint8_t dupl_header_len = get_log_header(dupl, sizeof(dupl), &dupl_hdr_logcount_offset, &dupl_hdr_date_offset, &dupl_hdr_time_offset, &dupl_hdr_info_offset);
 			snprintf(dupl + dupl_header_len - 1, sizeof(dupl) - dupl_header_len, "        (-) -- Skipped %u duplicated log lines --", last_log_duplicates);
-			write_to_log_int(dupl, 0);
+			write_to_log_int(dupl, dupl_header_len, dupl_hdr_logcount_offset, dupl_hdr_date_offset, dupl_hdr_time_offset, dupl_hdr_info_offset);
 			last_log_duplicates = 0;
 			last_log_ts = log_ts;
 		}
@@ -472,14 +536,15 @@ static void __cs_log_check_duplicates(int32_t hdr_len)
 	if (!repeated_line)
 	{
 		memcpy(last_log_txt, log_txt + hdr_len, LOG_BUF_SIZE - hdr_len);
-		write_to_log_int(log_txt, hdr_len);
+		write_to_log_int(log_txt, hdr_len, hdr_logcount_offset, hdr_date_offset, hdr_time_offset, hdr_info_offset);
 	} else {
 		last_log_duplicates++;
 	}
 }
 
 #define __init_log_prefix(fmt) \
-	int32_t hdr_len = get_log_header(log_txt, sizeof(log_txt)); \
+	uint8_t hdr_logcount_offset = 0, hdr_date_offset = 0, hdr_time_offset = 0, hdr_info_offset = 0; \
+	uint8_t hdr_len = get_log_header(log_txt, sizeof(log_txt), &hdr_logcount_offset, &hdr_date_offset, &hdr_time_offset, &hdr_info_offset); \
 	int32_t log_prefix_len = 0; \
 	do { \
 		if (log_prefix) { \
@@ -499,9 +564,9 @@ static void __cs_log_check_duplicates(int32_t hdr_len)
 		if (cfg.logduplicatelines) \
 		{ \
 			memcpy(last_log_txt, log_txt + hdr_len, LOG_BUF_SIZE - hdr_len); \
-			write_to_log_int(log_txt, hdr_len); \
+			write_to_log_int(log_txt, hdr_len, hdr_logcount_offset, hdr_date_offset, hdr_time_offset, hdr_info_offset); \
 		} else { \
-			__cs_log_check_duplicates(hdr_len); \
+			__cs_log_check_duplicates(hdr_len, hdr_logcount_offset, hdr_date_offset, hdr_time_offset, hdr_info_offset); \
 		} \
 	} while(0)
 
@@ -523,7 +588,7 @@ void cs_log_hex(const char *log_prefix, const uint8_t *buf, int32_t n, const cha
 		for(i = 0; i < n; i += 16)
 		{
 			cs_hexdump(1, buf + i, (n - i > 16) ? 16 : n - i, log_txt + hdr_len + log_prefix_len, sizeof(log_txt) - (hdr_len + log_prefix_len));
-			write_to_log_int(log_txt, hdr_len);
+			write_to_log_int(log_txt, hdr_len, hdr_logcount_offset, hdr_date_offset, hdr_time_offset, hdr_info_offset);
 		}
 	}
 	pthread_mutex_unlock(&log_mutex);
