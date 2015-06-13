@@ -3377,6 +3377,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 
 		//reset caid/srevid template variables
 		tpl_addVar(vars, TPLADD, "CLIENTCAID", "");
+		tpl_addVar(vars, TPLADD, "CLIENTPROVID", "");
 		tpl_addVar(vars, TPLADD, "CLIENTSRVID", "");
 		tpl_addVar(vars, TPLADD, "LASTCHANNEL", "");
 		tpl_addVar(vars, TPLADD, "LASTCHANNELSORT", "");
@@ -3468,6 +3469,7 @@ static char *send_oscam_user_config(struct templatevars *vars, struct uriparams 
 			int clientsrvid = latestclient->last_srvid;
 			int clientprovid = latestclient->last_provid;
 			tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", clientcaid);
+			tpl_printf(vars, TPLADD, "CLIENTPROVID", "%06X", clientprovid);
 			tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", clientsrvid);
 
 			if(clientsrvid != NO_SRVID_VALUE || clientcaid != NO_CAID_VALUE)
@@ -4744,6 +4746,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						{
 							char channame[CS_SERVICENAME_SIZE];
 							tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", cl->last_caid);
+							tpl_printf(vars, TPLADD, "CLIENTPROVID", "%06X", cl->last_provid);
 							tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", cl->last_srvid);
 							tpl_printf(vars, TPLADD, "CLIENTSRVPROVIDER", "%s%s", cl->last_srvidptr && cl->last_srvidptr->prov ? xml_encode(vars, cl->last_srvidptr->prov) : "", cl->last_srvidptr && cl->last_srvidptr->prov ? ": " : "");
 							tpl_addVar(vars, TPLADD, "CLIENTSRVNAME",xml_encode(vars, get_servicename(cl, cl->last_srvid, cl->last_provid, cl->last_caid, channame, sizeof(channame))));
@@ -4807,12 +4810,14 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						else
 						{
 							tpl_addVar(vars, TPLADD, "CLIENTCAID", "0000");
+							tpl_addVar(vars, TPLADD, "CLIENTPROVID", "000000");
 							tpl_printf(vars, TPLADD, "CLIENTSRVID", "0000");
 						}
 					}
 					else
 					{
 						tpl_addVar(vars, TPLADD, "CLIENTCAID", "0000");
+						tpl_addVar(vars, TPLADD, "CLIENTPROVID", "000000");
 						tpl_addVar(vars, TPLADD, "CLIENTSRVID", "0000");
 						tpl_addVar(vars, TPLADD, "CURRENTPICON", "");
 						tpl_addVar(vars, TPLADD, "CLIENTSRVPROVIDER", "");

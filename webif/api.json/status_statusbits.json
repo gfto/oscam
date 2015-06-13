@@ -12,6 +12,7 @@
 "aufmt":"##CLIENTCAUHTTP##",
 "request": {
     "caid": "##CLIENTCAID##",
+    "provid": "##CLIENTPROVID##",
     "srvid": "##CLIENTSRVID##",
     "ecmtime": "##CLIENTLASTRESPONSETIME##",
     "ecmhistory": "##CLIENTLASTRESPONSETIMEHIST##",
