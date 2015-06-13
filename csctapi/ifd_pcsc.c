@@ -23,6 +23,13 @@
 #define ERR_INVALID -1
 #endif
 
+#if defined(__CYGWIN__)
+#undef OK
+#undef ERROR
+#undef LOBYTE
+#undef HIBYTE
+#endif
+
 #define OK 0
 #define ERROR 1
 
@@ -271,7 +278,7 @@ static int32_t pcsc_check_card_inserted(struct s_reader *pcsc_reader)
 	{
 		// try connecting to the card
 		rv = SCardConnect(crdr_data->hContext, crdr_data->pcsc_name, SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, &crdr_data->hCard, &crdr_data->dwActiveProtocol);
-		if(rv == (LONG)SCARD_E_NO_SMARTCARD)
+		if(rv == (SCARDHANDLE)SCARD_E_NO_SMARTCARD)
 		{
 			// no card in pcsc_reader
 			crdr_data->pcsc_has_card = 0;
@@ -283,7 +290,7 @@ static int32_t pcsc_check_card_inserted(struct s_reader *pcsc_reader)
 			// rdr_log_dbg(pcsc_reader, D_DEVICE, "PCSC card in %s removed / absent [dwstate=%lx rv=(%lx)]", crdr_data->pcsc_name, dwState, (unsigned long)rv );
 			return OK;
 		}
-		else if(rv == (LONG)SCARD_W_UNRESPONSIVE_CARD)
+		else if(rv == (SCARDHANDLE)SCARD_W_UNRESPONSIVE_CARD)
 		{
 			// there is a problem with the card in the pcsc_reader
 			crdr_data->pcsc_has_card = 0;
