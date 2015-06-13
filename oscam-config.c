@@ -505,6 +505,11 @@ int32_t init_srvid(void)
 				srvid->nprovid = i + 1;
 			}
 		}
+		else
+		{
+			srvid->provid[0] = 0;
+			srvid->nprovid = 1;
+		}
 				
 		nr++;
 
