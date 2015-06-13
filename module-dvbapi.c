@@ -4645,17 +4645,13 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 static int8_t isValidCW(uint8_t *cw)
 {
-	if (((cw[0]+cw[1]+cw[2]) & 0xFF) != cw[3]) {
-		return 0;
-	}
-	if (((cw[4]+cw[5]+cw[6]) & 0xFF) != cw[7]) {
-		return 0;
-	}
-	if (((cw[8]+cw[9]+cw[10]) & 0xFF) != cw[11]) {
-		return 0;
-	}
-	if (((cw[12]+cw[13]+cw[14]) & 0xFF) != cw[15]) {
-		return 0;
+	uint8_t i;
+	for(i = 0; i < 16; i += 4)
+	{
+		if(((cw[i] + cw[i + 1] + cw[i + 2]) & 0xff) != cw[i + 3])
+		{
+			return 0;
+		}
 	}
 	return 1;
 }
