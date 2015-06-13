@@ -24,7 +24,7 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 		for(this = cfg.srvid[srvid >> 12]; this; this = this->next)
 			if(this->srvid == srvid)
 				for(i = 0; i < this->ncaid; i++)
-					for(j = 0; j < cl->last_srvidptr->nprovid; j++)
+					for(j = 0; j < this->nprovid; j++)
 						if(this->caid[i] == caid && (ignore_provid || this->provid[j] == provid)
 							&& this->name)
 						{
