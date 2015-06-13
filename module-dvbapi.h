@@ -13,9 +13,15 @@
 #define STAPI       2
 #define COOLAPI     3
 
+#ifdef __CYGWIN__
+#define TMPDIR  "./"
+#define STANDBY_FILE    "./.pauseoscam"
+#define ECMINFO_FILE    "./ecm.info"
+#else
 #define TMPDIR  "/tmp/"
 #define STANDBY_FILE    "/tmp/.pauseoscam"
 #define ECMINFO_FILE    "/tmp/ecm.info"
+#endif
 
 #define MAX_DEMUX 16
 #define MAX_CAID 50

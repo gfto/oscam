@@ -4628,9 +4628,11 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		client->last = time((time_t *)0); // ********* TO BE FIXED LATER ON ******
 
 		if (cfg.dvbapi_listenport && client_proto_version >= 2)
-			dvbapi_net_send(DVBAPI_ECM_INFO, demux[i].socket_fd, i, 0, NULL, client, er);
+			{ dvbapi_net_send(DVBAPI_ECM_INFO, demux[i].socket_fd, i, 0, NULL, client, er); }
+#ifndef __CYGWIN__
 		else if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
-			dvbapi_write_ecminfo_file(client, er, demux[i].lastcw[0], demux[i].lastcw[1]);
+#endif
+			{ dvbapi_write_ecminfo_file(client, er, demux[i].lastcw[0], demux[i].lastcw[1]); }
 
 	}
 	if(handled == 0)
@@ -4656,9 +4658,18 @@ void dvbapi_write_ecminfo_file(struct s_client *client, ECM_REQUEST *er, uint8_t
 		char tmp[25];
 		const char *reader_name = NULL, *from_name = NULL, *proto_name = NULL;
 		int8_t hops = 0;
-		const char *system_name = (er->selected_reader && er->selected_reader->csystem_active) ?
-								er->selected_reader->csystem->desc : "none";
-		
+		int32_t from_port = 0;
+		const struct s_cardsystem *csystem = get_cardsystem_by_caid(er->caid);
+		char system_name[64];
+		if(snprintf(system_name, sizeof(system_name), "%s", csystem ? csystem->desc : "unknown") < 0)
+		{
+			cs_strncpy(system_name, "Unknown", sizeof(system_name));
+		}
+		else
+		{
+			system_name[0] = (char)toupper((int)system_name[0]);
+		}
+
 		if(cfg.dvbapi_ecminfo_type <= ECMINFO_TYPE_WICARDD)
 		{
 			if(cfg.dvbapi_ecminfo_type == ECMINFO_TYPE_WICARDD)
@@ -4666,11 +4677,20 @@ void dvbapi_write_ecminfo_file(struct s_client *client, ECM_REQUEST *er, uint8_t
 				fprintf(ecmtxt, "system: %s\n", system_name);
 			}
 
-			fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
+			fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\n", er->caid, er->pid);
+			
+			if(cfg.dvbapi_ecminfo_type == ECMINFO_TYPE_WICARDD)
+			{
+				fprintf(ecmtxt, "prov: %06X\n", (uint) er->prid);	
+			}
+			else
+			{
+				fprintf(ecmtxt, "prov: 0x%06X\n", (uint) er->prid);
+			}
 		}
 		else if(cfg.dvbapi_ecminfo_type == ECMINFO_TYPE_MGCAMD)
 		{
-			fprintf(ecmtxt, "===== %s ECM on CaID  0x%04X, pid 0x%04X =====\nprov: 0x%06X\n", system_name, er->caid, er->pid, (uint) er->prid);
+			fprintf(ecmtxt, "===== %s ECM on CaID  0x%04X, pid 0x%04X =====\nprov: %06X\n", system_name, er->caid, er->pid, (uint) er->prid);
 		}
 		else if(cfg.dvbapi_ecminfo_type == ECMINFO_TYPE_CCCAM)
 		{
@@ -4678,14 +4698,17 @@ void dvbapi_write_ecminfo_file(struct s_client *client, ECM_REQUEST *er, uint8_t
 			get_provider(er->caid, er->prid, provider_name, 128);
 			if(provider_name[0])
 			{
-				fprintf(ecmtxt, "provider: %s\n", provider_name);	
+				fprintf(ecmtxt, "system: %s\ncaid: 0x%04X\nprovider: %s\nprovid: 0x%06X\npid: 0x%04X\n", 
+							system_name, er->caid, provider_name, (uint) er->prid, er->pid);
 			}
-			
-			fprintf(ecmtxt, "system: %s\ncaid: 0x%04X\nprovid: 0x%06X\npid: 0x%04X\n", system_name, er->caid, (uint) er->prid, er->pid);
+			else
+			{
+				fprintf(ecmtxt, "system: %s\ncaid: 0x%04X\nprovid: 0x%06X\npid: 0x%04X\n", system_name, er->caid, (uint) er->prid, er->pid);
+			}
 		}
 		else if(cfg.dvbapi_ecminfo_type == ECMINFO_TYPE_CAMD3)
 		{	
-			fprintf(ecmtxt, "CAID: 0x%04X, PID: 0x%04X, PROVIDER: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
+			fprintf(ecmtxt, "CAID 0x%04X, PID 0x%04X, PROVIDER 0x%06X\n", er->caid, er->pid, (uint) er->prid);
 		}		
 					
 		switch(er->rc)
@@ -4698,6 +4721,7 @@ void dvbapi_write_ecminfo_file(struct s_client *client, ECM_REQUEST *er, uint8_t
 					{ from_name = er->selected_reader->device; }
 				else
 					{ from_name = "local"; }
+				from_port = er->selected_reader->r_port;
 				proto_name = reader_get_type_desc(er->selected_reader, 1);
 				hops = er->selected_reader->currenthops;
 			}
@@ -4775,7 +4799,7 @@ void dvbapi_write_ecminfo_file(struct s_client *client, ECM_REQUEST *er, uint8_t
 			
 			if(reader_name != NULL)
 			{
-				fprintf(ecmtxt, "source: %s (%s at %s)\n", reader_name, proto_name, from_name);
+				fprintf(ecmtxt, "source: %s (%s at %s:%d)\n", reader_name, proto_name, from_name, from_port);
 			}
 			
 			walltime = cs_time();
@@ -4791,7 +4815,7 @@ void dvbapi_write_ecminfo_file(struct s_client *client, ECM_REQUEST *er, uint8_t
 		{
 			if(reader_name != NULL)
 			{
-				fprintf(ecmtxt, "using: %s\address: %s\nhops: %d\n", proto_name, from_name, hops);
+				fprintf(ecmtxt, "using: %s\naddress: %s:%d\nhops: %d\n", proto_name, from_name, from_port, hops);
 			}
 			
 			fprintf(ecmtxt, "ecm time: %d\n", client->cwlastresptime);
