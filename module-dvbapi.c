@@ -598,8 +598,11 @@ int32_t dvbapi_net_send(uint32_t request, int32_t socket_fd, int32_t demux_index
 int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t caid, uint32_t provid, uchar *filt, uchar *mask, int32_t timeout, int32_t pidindex, int32_t type,
 	int8_t add_to_emm_list)
 {
-	openxcas_set_caid(demux[demux_id].ECMpids[pidindex].CAID);
-	openxcas_set_ecm_pid(pid);
+	if(USE_OPENXCAS && type == TYPE_ECM)
+	{
+		openxcas_set_caid(demux[demux_id].ECMpids[pidindex].CAID);
+		openxcas_set_ecm_pid(pid);
+	}
 	if (USE_OPENXCAS)
 		return 1;
 
