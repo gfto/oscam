@@ -485,7 +485,7 @@ int32_t init_srvid(void)
 			}
 			else
 			{
-				srvid->provid[i] = 0xFFFFFFFE;
+				srvid->provid[i] = 0;
 			}
 			
 			srvid->caid[i] = dyn_word_atob(ptr1) & 0xFFFF;

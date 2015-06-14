@@ -14,7 +14,7 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 	if(cl && cl->last_srvidptr && cl->last_srvidptr->srvid == srvid)
 		for(i = 0; i < cl->last_srvidptr->ncaid; i++)
 				if(cl->last_srvidptr->caid[i] == caid 
-					&& (ignore_provid || cl->last_srvidptr->provid[i] == provid || cl->last_srvidptr->provid[i] == 0xFFFFFFFE)
+					&& (ignore_provid || cl->last_srvidptr->provid[i] == provid)
 					&& cl->last_srvidptr->name)
 				{
 					cs_strncpy(buf, cl->last_srvidptr->name, buflen);
@@ -24,7 +24,7 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 		for(this = cfg.srvid[srvid >> 12]; this; this = this->next)
 			if(this->srvid == srvid)
 				for(i = 0; i < this->ncaid; i++)
-						if(this->caid[i] == caid && (ignore_provid || this->provid[i] == provid || this->provid[i] == 0xFFFFFFFE)
+						if(this->caid[i] == caid && (ignore_provid || this->provid[i] == provid)
 							&& this->name)
 						{
 							cs_strncpy(buf, this->name, buflen);
