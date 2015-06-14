@@ -28,6 +28,22 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 				if(this->caid[i].caid == caid && this->name)
 				{
 					provid_any_match = this;
+
+					if(this->caid[i].nprovid == 0)
+					{
+						provid_zero_match = this;
+						
+						if(0 == provid)
+						{
+							if(cl)
+							{ 
+								cl->last_srvidptr = this;
+								cl->last_srvidptr_search_provid = provid;
+							}
+							cs_strncpy(buf, this->name, buflen);
+							return (buf);
+						}					
+					}
 											
 					for(j = 0; j < this->caid[i].nprovid; j++)
 					{
