@@ -852,7 +852,7 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC("cooldown"             , 0,                            cooldown_fn),
 	DEF_OPT_FUNC("cooldowndelay"        , 0,                            cooldowndelay_fn),
 	DEF_OPT_FUNC("cooldowntime"         , 0,                            cooldowntime_fn),
-	DEF_OPT_UINT8("read_old_classes"    , OFS(read_old_classes),        0),
+	DEF_OPT_UINT8("read_old_classes"    , OFS(read_old_classes),        1),
 	DEF_LAST_OPT
 };
 
