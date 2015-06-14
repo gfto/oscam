@@ -392,7 +392,7 @@ int32_t init_srvid(void)
 		char tmptxt[128];
 
 		int32_t offset[4] = { -1, -1, -1, -1 };
-		char *ptr1, *ptr2, *searchptr[4] = { NULL, NULL, NULL, NULL };
+		char *ptr1 = NULL, *ptr2 = NULL, *searchptr[4] = { NULL, NULL, NULL, NULL };
 		char **ptrs[4] = { &srvid->prov, &srvid->name, &srvid->type, &srvid->desc };
 
 		for(i = 0, ptr1 = strtok_r(payload, "|", &saveptr1); ptr1 && (i < 4) ; ptr1 = strtok_r(NULL, "|", &saveptr1), ++i)
