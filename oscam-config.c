@@ -395,6 +395,13 @@ int32_t init_srvid(void)
 		char *ptr1 = NULL, *ptr2 = NULL, *searchptr[4] = { NULL, NULL, NULL, NULL };
 		char **ptrs[4] = { &srvid->prov, &srvid->name, &srvid->type, &srvid->desc };
 
+		// allow empty provider-name "||service name|"
+		if(payload[0] == '|')
+		{
+			memmove(payload+1, payload, strlen(payload)+1);
+			payload[0] = ' ';
+		}
+		
 		for(i = 0, ptr1 = strtok_r(payload, "|", &saveptr1); ptr1 && (i < 4) ; ptr1 = strtok_r(NULL, "|", &saveptr1), ++i)
 		{
 			// check if string is in cache
