@@ -512,18 +512,25 @@ int32_t init_srvid(void)
 					}
 					
 					ptr2 = prov+1;
-					for(j = 0;  j< srvid->caid[i].nprovid; j++)
+					for(j = 0;  j < srvid->caid[i].nprovid; j++)
 					{
 						srvid->caid[i].provid[j] = dyn_word_atob(ptr2) & 0xFFFFFF;
 						ptr2 = ptr2 + strlen(ptr2) + 1;
 					}
+				}
+				else
+				{
+					ptr2 = prov+2;
 				}
 				
 				prov[0] = '\0';
 			}
 
 			srvid->caid[i].caid = dyn_word_atob(ptr1) & 0xFFFF;
-			ptr1 = ptr1 + strlen(ptr1) + 1;			
+			if(prov)
+				{ ptr1 = ptr2; }
+			else 
+				{ ptr1 = ptr1 + strlen(ptr1) + 1; }
 		}
 			
 		nr++;
