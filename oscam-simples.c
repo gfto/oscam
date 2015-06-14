@@ -1,11 +1,11 @@
 #include "globals.h"
 #include "oscam-string.h"
 
-/* Gets the servicename. Make sure that buf is at least 32 bytes large. */
-static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf, uint32_t buflen, bool return_unknown, bool ignore_provid, bool final_try)
+/* Gets the servicename. */
+static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf, uint32_t buflen, bool return_unknown)
 {
 	int32_t i;
-	struct s_srvid *this;
+	struct s_srvid *this, *provid_zero_match = NULL, *provid_any_match = NULL;
 	buf[0] = '\0';
 
 	if(!srvid || (srvid >> 12) >= 16)  //cfg.srvid[16]
@@ -13,70 +13,83 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 
 	if(cl && cl->last_srvidptr && cl->last_srvidptr->srvid == srvid)
 		for(i = 0; i < cl->last_srvidptr->ncaid; i++)
-				if(cl->last_srvidptr->caid[i] == caid 
-					&& (ignore_provid || cl->last_srvidptr->provid[i] == provid)
-					&& cl->last_srvidptr->name)
+			if(cl->last_srvidptr->caid[i] == caid 
+				&& cl->last_srvidptr_search_provid == provid
+				&& cl->last_srvidptr->name)
+			{
+				cs_strncpy(buf, cl->last_srvidptr->name, buflen);
+				return (buf);
+			}
+
+	for(this = cfg.srvid[srvid >> 12]; this; this = this->next)
+		if(this->srvid == srvid)
+			for(i = 0; i < this->ncaid; i++)
+			{			
+				if(this->caid[i] == caid && this->name)
 				{
-					cs_strncpy(buf, cl->last_srvidptr->name, buflen);
-					return (buf);
-				}
-	if(cl)
-		for(this = cfg.srvid[srvid >> 12]; this; this = this->next)
-			if(this->srvid == srvid)
-				for(i = 0; i < this->ncaid; i++)
-						if(this->caid[i] == caid && (ignore_provid || this->provid[i] == provid)
-							&& this->name)
-						{
-							cs_strncpy(buf, this->name, buflen);
+					if(this->provid[i] == 0)
+						{ provid_zero_match = this; }
+						
+					provid_any_match = this;
+					
+					if(this->provid[i] == provid)
+					{
+						if(cl)
+						{ 
 							cl->last_srvidptr = this;
-							return (buf);
+							cl->last_srvidptr_search_provid = provid;
 						}
+						cs_strncpy(buf, this->name, buflen);
+						return (buf);
+					}
+				}
+			}
 
 	if(!buf[0])
 	{
-		if(!final_try)
+		if(provid != 0 && provid_zero_match != NULL)
 		{
-			if(provid != 0)
-			{
-				__get_servicename(cl, srvid, 0, caid, buf, buflen, false, false, true);
-				
-				if(!buf[0])
-				{
-					if(return_unknown)
-						{ snprintf(buf, buflen, "%04X:%06X:%04X unknown", caid, provid, srvid); }
-					if(cl) { cl->last_srvidptr = NULL; }					
-				}
-			}		
-			else
-			{
-				return __get_servicename(cl, srvid, 0, caid, buf, buflen, return_unknown, true, true);
+			if(cl)
+			{ 
+				cl->last_srvidptr = provid_zero_match;
+				cl->last_srvidptr_search_provid = provid;
 			}
-		}
-		else 
+			cs_strncpy(buf, provid_zero_match->name, buflen);
+			return (buf);			
+		}		
+		else if(provid == 0 && provid_any_match != NULL)
 		{
-			if(return_unknown)
-				{ snprintf(buf, buflen, "%04X:%06X:%04X unknown", caid, provid, srvid); }
-			if(cl) { cl->last_srvidptr = NULL; }
+			if(cl)
+			{ 
+				cl->last_srvidptr = provid_any_match;
+				cl->last_srvidptr_search_provid = provid;
+			}
+			cs_strncpy(buf, provid_any_match->name, buflen);
+			return (buf);
 		}
+
+		if(return_unknown)
+			{ snprintf(buf, buflen, "%04X:%06X:%04X unknown", caid, provid, srvid); }
+		if(cl) { cl->last_srvidptr = NULL; }
 	}
 	return (buf);
 }
 
 char *get_servicename(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf, uint32_t buflen)
 {
-	return __get_servicename(cl, srvid, provid, caid, buf, buflen, true, false, false);
+	return __get_servicename(cl, srvid, provid, caid, buf, buflen, true);
 }
 
 char *get_servicename_or_null(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf, uint32_t buflen)
 {
-	return __get_servicename(cl, srvid, provid, caid, buf, buflen, false, false, false);
+	return __get_servicename(cl, srvid, provid, caid, buf, buflen, false);
 }
 
 char *get_picon_servicename_or_null(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf, uint32_t buflen)
 {
 	uint32_t i, j;
 	
-	__get_servicename(cl, srvid, provid, caid, buf, buflen, false, false, false);
+	__get_servicename(cl, srvid, provid, caid, buf, buflen, false);
 	
 	char *tmp_buf;
 	

@@ -1034,6 +1034,7 @@ struct s_client
 	uint32_t        last_provid;
 	uint16_t        last_caid;
 	struct s_srvid  *last_srvidptr;
+	uint32_t        last_srvidptr_search_provid;
 	int32_t         tosleep;
 	struct s_auth   *account;
 	int32_t         udp_fd;
