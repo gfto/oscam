@@ -487,12 +487,13 @@ int32_t init_srvid(void)
 		
 		for(i = 0, ptr1 = strtok_r(token, ",", &saveptr1); (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1), i++)
 		{
+			char *prov = strchr(ptr1,'@');
+						
 			srvid->caid[i].nprovid = 0;
 			
-			char *prov = strchr(ptr1,'@'); 
 			if(prov && prov[1] != '\0' )
 			{
-				for(j = 0, ptr2 = strtok_r(prov+1, "@", &saveptr2); (ptr2); ptr2 = strtok_r(NULL, ",", &saveptr2), j++)
+				for(j = 0, ptr2 = strtok_r(prov+1, "@", &saveptr2); (ptr2); ptr2 = strtok_r(NULL, "@", &saveptr2), j++)
 				{
 					srvid->caid[i].nprovid++;
 				}
@@ -507,10 +508,12 @@ int32_t init_srvid(void)
 					return 0;
 				}
 				
-				for(j = 0, ptr2 = strtok_r(ptr1, "@", &saveptr2); (ptr2); ptr2 = strtok_r(NULL, ",", &saveptr2), j++)
+				for(j = 0, ptr2 = strtok_r(prov+1, "@", &saveptr2); (ptr2); ptr2 = strtok_r(NULL, "@", &saveptr2), j++)
 				{
 					srvid->caid[i].provid[j] = dyn_word_atob(ptr2) & 0xFFFFFF;
 				}
+				
+				prov[0] = '\0';
 			}
 
 			srvid->caid[i].caid = dyn_word_atob(ptr1) & 0xFFFF;
