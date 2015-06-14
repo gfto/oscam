@@ -488,24 +488,29 @@ int32_t init_srvid(void)
 		for(i = 0, ptr1 = strtok_r(token, ",", &saveptr1); (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1), i++)
 		{
 			srvid->caid[i].nprovid = 0;
-			for(j = 0, ptr2 = strtok_r(ptr1, "@", &saveptr2); (ptr2); ptr2 = strtok_r(NULL, ",", &saveptr2), j++)
-			{
-				srvid->caid[i].nprovid++;
-			}
-		
-			if(!cs_malloc(&srvid->caid[i].provid, sizeof(uint32_t) * srvid->caid[i].nprovid))
-			{
-				for(j = 0; j < i; j++)
-					{ NULLFREE(srvid->caid[i].provid); } 
-				NULLFREE(srvid->caid);
-				NULLFREE(tmpptr);
-				NULLFREE(srvid);
-				return 0;
-			}
 			
-			for(j = 0, ptr2 = strtok_r(ptr1, "@", &saveptr2); (ptr2); ptr2 = strtok_r(NULL, ",", &saveptr2), j++)
+			char *prov = strchr(ptr1,'@'); 
+			if(prov && prov[1] != '\0' )
 			{
-				srvid->caid[i].provid[j] = dyn_word_atob(ptr2) & 0xFFFFFF;
+				for(j = 0, ptr2 = strtok_r(prov+1, "@", &saveptr2); (ptr2); ptr2 = strtok_r(NULL, ",", &saveptr2), j++)
+				{
+					srvid->caid[i].nprovid++;
+				}
+		    	
+				if(!cs_malloc(&srvid->caid[i].provid, sizeof(uint32_t) * srvid->caid[i].nprovid))
+				{
+					for(j = 0; j < i; j++)
+						{ NULLFREE(srvid->caid[i].provid); } 
+					NULLFREE(srvid->caid);
+					NULLFREE(tmpptr);
+					NULLFREE(srvid);
+					return 0;
+				}
+				
+				for(j = 0, ptr2 = strtok_r(ptr1, "@", &saveptr2); (ptr2); ptr2 = strtok_r(NULL, ",", &saveptr2), j++)
+				{
+					srvid->caid[i].provid[j] = dyn_word_atob(ptr2) & 0xFFFFFF;
+				}
 			}
 
 			srvid->caid[i].caid = dyn_word_atob(ptr1) & 0xFFFF;
