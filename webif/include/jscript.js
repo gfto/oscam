@@ -1255,7 +1255,7 @@ function updateStatuspage(data) {
 			$(uid + " > td.statuscol9").attr('title', item.protocolext);
 		}
 		if (!is_nopoll('statuscol12')) {
-			$(uid + " > td.statuscol12").text(item.request.caid + ':' + item.request.provid + ':' + item.request.srvid);
+			$(uid + " > td.statuscol12").text(item.request.caid + '@' + item.request.provid + ':' + item.request.srvid);
 		}
 
 		if (!is_nopoll('statuscol13')) {
