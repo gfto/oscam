@@ -1513,10 +1513,15 @@ const struct s_cardreader *cardreaders[] =
 static void find_conf_dir(void) 
  {
 	static const char* confdirs[] = 
-		{ "/var/etc/oscam/oscam.conf", "/var/tuxbox/config/oscam.conf",
-		  "/var/etc/oscam.conf", "/var/keys/oscam.conf",
-		  "/var/oscam/oscam.conf", "/etc/tuxbox/config/oscam.conf",
-		  "/var/tuxbox/config/oscam.conf", NULL
+		{ "/etc/tuxbox/config/oscam.conf", 
+		  "/var/tuxbox/config/oscam.conf", 
+		  "/usr/keys/oscam.conf", 
+		  "/var/keys/oscam.conf",
+		  "/var/etc/oscam/oscam.conf",
+		  "/var/etc/oscam.conf",
+		  "/var/oscam/oscam.conf",
+		  "/config/oscam/oscam.conf",
+		  NULL
 		};
  	
 	char default_conf[128+16];
