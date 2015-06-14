@@ -313,12 +313,12 @@ static uint8_t get_log_header(char *txt, int32_t txt_size, uint8_t* hdr_logcount
 		if(hdr_logcount_offset != NULL)
 		{
 			// depends on snprintf(...) format
-			(*hdr_logcount_offset) = 0;
+			(*hdr_logcount_offset) = 4;
 		}
 		if(hdr_date_offset != NULL)
 		{
 			// depends on snprintf(...) format
-			(*hdr_date_offset) = *hdr_logcount_offset + 8;
+			(*hdr_date_offset) = *hdr_logcount_offset + 4;
 		}
 		if(hdr_time_offset != NULL)
 		{
