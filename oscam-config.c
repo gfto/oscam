@@ -373,7 +373,7 @@ int32_t init_srvid(void)
 	{
 		int32_t l, j, len = 0, len2, srvidtmp;
 		uint32_t pos;
-		char *srvidasc, *providasc;
+		char *srvidasc;
 		tmp = trim(token);
 
 		if(tmp[0] == '#') { continue; }
@@ -381,20 +381,7 @@ int32_t init_srvid(void)
 		if(!(srvidasc = strchr(token, ':'))) { continue; }
 		if(!(payload = strchr(token, '|'))) { continue; }
 		*payload++ = '\0';
-
-		char *aux = strchr(srvidasc+1,':');
-		if(aux)
-		{
-			//caid:opid:ident
-			providasc = srvidasc;
-			srvidasc = aux;
-		}
-		else
-		{
-			//caid:ident 
-			providasc = NULL;
-		}
-
+		
 		if(!cs_malloc(&srvid, sizeof(struct s_srvid)))
 		{
 			NULLFREE(token);
@@ -488,29 +475,23 @@ int32_t init_srvid(void)
 		srvid->ncaid = 0;
 		for(i = 0, ptr1 = strtok_r(token, ",", &saveptr1); (ptr1) && (i < S_SRVID_CAID_LIMIT) ; ptr1 = strtok_r(NULL, ",", &saveptr1), i++)
 		{
-			srvid->caid[i] = dyn_word_atob(ptr1);
-			srvid->ncaid = i + 1;
-			//cs_log_dbg(D_CLIENT, "ld caid: %04X srvid: %04X Prov: %s Chan: %s",srvid->caid[i],srvid->srvid,srvid->prov,srvid->name);
-		}
-							
-		srvid->nprovid = 0;
-		if(providasc)
-		{
-			*providasc++ = '\0';
-			saveptr1 = NULL;
-			
-			for(i = 0, ptr1 = strtok_r(providasc, ",", &saveptr1); (ptr1) && (i < S_SRVID_PROVID_LIMIT) ; ptr1 = strtok_r(NULL, ",", &saveptr1), i++)
+			char *prov = strchr(ptr1,'@');		
+			if(prov)
 			{
-				srvid->provid[i] = dyn_word_atob(ptr1) & 0xFFFFFF;
-				srvid->nprovid = i + 1;
-			}
-		}
-		else
-		{
-			srvid->provid[0] = 0;
-			srvid->nprovid = 1;
-		}
+				prov[0] = '\0';
 				
+				if(prov[1] != '\0')
+				 {	srvid->provid[i] = dyn_word_atob(prov+1) & 0xFFFFFF; }
+			}
+			else
+			{
+				srvid->provid[i] = 0xFFFFFFFE;
+			}
+			
+			srvid->caid[i] = dyn_word_atob(ptr1) & 0xFFFF;
+			srvid->ncaid = i + 1;
+		}
+			
 		nr++;
 
 		if(new_cfg_srvid[srvid->srvid >> 12])
