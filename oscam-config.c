@@ -373,7 +373,7 @@ int32_t init_srvid(void)
 	{
 		int32_t l, len = 0, len2, srvidtmp;
 		uint32_t pos;
-		char *srvidasc;
+		char *srvidasc, *prov;
 		tmp = trim(token);
 
 		if(tmp[0] == '#') { continue; }
@@ -485,38 +485,45 @@ int32_t init_srvid(void)
 			return 0;
 		}
 		
-		for(i = 0, ptr1 = strtok_r(token, ",", &saveptr1); (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1), i++)
+		ptr1 = token;
+		for(i = 0; i < srvid->ncaid; i++)
 		{
-			char *prov = strchr(ptr1,'@');
+			prov = strchr(ptr1,'@');
 						
 			srvid->caid[i].nprovid = 0;
 			
-			if(prov && prov[1] != '\0' )
+			if(prov)
 			{
-				for(j = 0, ptr2 = strtok_r(prov+1, "@", &saveptr2); (ptr2); ptr2 = strtok_r(NULL, "@", &saveptr2), j++)
+				if(prov[1] != '\0')
 				{
-					srvid->caid[i].nprovid++;
-				}
-		    	
-				if(!cs_malloc(&srvid->caid[i].provid, sizeof(uint32_t) * srvid->caid[i].nprovid))
-				{
-					for(j = 0; j < i; j++)
-						{ NULLFREE(srvid->caid[i].provid); } 
-					NULLFREE(srvid->caid);
-					NULLFREE(tmpptr);
-					NULLFREE(srvid);
-					return 0;
-				}
-				
-				for(j = 0, ptr2 = strtok_r(prov+1, "@", &saveptr2); (ptr2); ptr2 = strtok_r(NULL, "@", &saveptr2), j++)
-				{
-					srvid->caid[i].provid[j] = dyn_word_atob(ptr2) & 0xFFFFFF;
+					for(j = 0, ptr2 = strtok_r(prov+1, "@", &saveptr2); (ptr2); ptr2 = strtok_r(NULL, "@", &saveptr2), j++)
+					{
+						srvid->caid[i].nprovid++;
+					}
+		    		
+					if(!cs_malloc(&srvid->caid[i].provid, sizeof(uint32_t) * srvid->caid[i].nprovid))
+					{
+						for(j = 0; j < i; j++)
+							{ NULLFREE(srvid->caid[i].provid); } 
+						NULLFREE(srvid->caid);
+						NULLFREE(tmpptr);
+						NULLFREE(srvid);
+						return 0;
+					}
+					
+					ptr2 = prov+1;
+					for(j = 0;  j< srvid->caid[i].nprovid; j++)
+					{
+						srvid->caid[i].provid[j] = dyn_word_atob(ptr2) & 0xFFFFFF;
+						ptr2 = ptr2 + strlen(ptr2) + 1;
+					}
 				}
 				
 				prov[0] = '\0';
 			}
 
 			srvid->caid[i].caid = dyn_word_atob(ptr1) & 0xFFFF;
+			ptr1 = ptr1 + strlen(ptr1) + 1;			
 		}
 			
 		nr++;
