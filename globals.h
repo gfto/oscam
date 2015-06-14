@@ -732,7 +732,7 @@ struct s_module
 	void (*cleanup)(struct s_client *);
 	int32_t (*c_recv_chk)(struct s_client *, uchar *, int32_t *, uchar *, int32_t);
 	int32_t (*c_init)(struct s_client *);
-	int32_t (*c_send_ecm)(struct s_client *, struct ecm_request_t *, uchar *);
+	int32_t (*c_send_ecm)(struct s_client *, struct ecm_request_t *);
 	int32_t (*c_send_emm)(struct emm_packet_t *);
 	int32_t (*c_available)(struct s_reader *, int32_t, struct ecm_request_t *);             //Schlocke: available check for load-balancing,
 	// params:
@@ -832,7 +832,7 @@ struct s_cardsystem
 	int32_t (*get_tunemm_filter)(struct s_reader *, struct s_csystem_emm_filter **, unsigned int *);
 };
 
-#define MAX_ECM_SIZE 512
+#define MAX_ECM_SIZE 596
 
 typedef struct ecm_request_t
 {

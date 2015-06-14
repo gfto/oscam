@@ -249,7 +249,7 @@ int pandora_client_init(struct s_client *cl)
 	return (0);
 }
 
-static int pandora_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *UNUSED(buf))
+static int pandora_send_ecm(struct s_client *cl, ECM_REQUEST *er)
 {
 	uchar md5tmp[MD5_DIGEST_LENGTH];
 	uchar msgbuf[CWS_NETMSGSIZE];

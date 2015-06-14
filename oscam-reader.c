@@ -947,8 +947,6 @@ int32_t casc_process_ecm(struct s_reader *reader, ECM_REQUEST *er)
 		return -1;
 	}
 
-	uchar buf[512];
-
 	t = time((time_t *)0);
 	ECM_REQUEST *ecm;
 	for(i = 0; i < cfg.max_pending; i++)
@@ -1005,7 +1003,7 @@ int32_t casc_process_ecm(struct s_reader *reader, ECM_REQUEST *er)
 	rc = 0;
 	if(sflag)
 	{
-		if((rc = reader->ph.c_send_ecm(cl, &cl->ecmtask[n], buf)))
+		if((rc = reader->ph.c_send_ecm(cl, &cl->ecmtask[n])))
 			{ casc_check_dcw(reader, n, 0, cl->ecmtask[n].cw); }  // simulate "not found"
 		else
 			{ cl->last_idx = cl->ecmtask[n].idx; }

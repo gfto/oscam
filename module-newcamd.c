@@ -1549,7 +1549,7 @@ int32_t newcamd_client_init(struct s_client *client)
 	return (0);
 }
 
-static int32_t newcamd_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf)
+static int32_t newcamd_send_ecm(struct s_client *client, ECM_REQUEST *er)
 {
 	struct s_reader *rdr = client->reader;
 
@@ -1559,6 +1559,10 @@ static int32_t newcamd_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar 
 	// check server filters
 	if(!chk_rsfilter(rdr, er))
 		{ return (-1); }
+	
+	uint8_t *buf;
+	if(!cs_malloc(&buf, er->ecmlen))
+	{ return (-1); }
 
 	memcpy(buf, er->ecm, er->ecmlen);
 
@@ -1570,7 +1574,10 @@ static int32_t newcamd_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar 
 	client->ncd_header[9] = er->prid >> 8;
 	client->ncd_header[10] = er->prid & 0xFF;
 
-	return ((newcamd_send(buf, er->ecmlen, er->srvid) < 1) ? (-1) : 0);
+	int32_t rc = ((newcamd_send(buf, er->ecmlen, er->srvid) < 1) ? (-1) : 0);
+	
+	NULLFREE(buf);
+	return (rc);
 }
 
 

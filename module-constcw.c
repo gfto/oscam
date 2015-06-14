@@ -121,7 +121,7 @@ int32_t constcw_client_init(struct s_client *client)
 	return (0);
 }
 
-static int32_t constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *UNUSED(msgbuf))
+static int32_t constcw_send_ecm(struct s_client *client, ECM_REQUEST *er)
 {
 	time_t t;
 	struct s_reader *rdr = client->reader;

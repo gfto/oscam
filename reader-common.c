@@ -53,14 +53,19 @@ int32_t reader_cmd2icc(struct s_reader *reader, const uchar *buf, const int32_t 
 
 int32_t card_write(struct s_reader *reader, const uchar *cmd, const uchar *data, uchar *response, uint16_t *response_length)
 {
-	uchar buf[260];
+	int32_t datalen = MAX_ECM_SIZE; // default datalen is max ecm size defined
+	uchar buf[MAX_ECM_SIZE + CMD_LEN];
 	// always copy to be able to be able to use const buffer without changing all code
-	memcpy(buf, cmd, CMD_LEN);
+	memcpy(buf, cmd, CMD_LEN); // copy command
 
 	if(data)
 	{
-		if(cmd[4]) { memcpy(buf + CMD_LEN, data, cmd[4]); }
-		return (reader_cmd2icc(reader, buf, CMD_LEN + cmd[4], response, response_length));
+		if(cmd[4])
+		{
+			datalen = cmd[4];			
+		}
+		memcpy(buf + CMD_LEN, data, datalen);
+		return (reader_cmd2icc(reader, buf, CMD_LEN + datalen, response, response_length));
 	}
 	else
 		{ return (reader_cmd2icc(reader, buf, CMD_LEN, response, response_length)); }

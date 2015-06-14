@@ -170,7 +170,7 @@ static void *radegast_server(struct s_client *client, uchar *mbuf, int32_t n)
 	return NULL;
 }
 
-static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *UNUSED(buf))
+static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er)
 {	
 	uchar provid_buf[8];
 	uchar header[22] = "\x02\x01\x00\x06\x08\x30\x30\x30\x30\x30\x30\x30\x30\x07\x04\x30\x30\x30\x38\x08\x01\x02";

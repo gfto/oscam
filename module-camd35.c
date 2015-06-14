@@ -37,7 +37,7 @@
 //used variable ncd_skey for storing remote node id: ncd_skey[0..7] : 8
 //bytes node id ncd_skey[8] : 1=valid node id received
 
-#define REQ_SIZE    584     // 512 + 20 + 0x34
+#define REQ_SIZE    MAX_ECM_SIZE + 20 + 0x34
 
 static int32_t __camd35_send(struct s_client *cl, uchar *buf, int32_t buflen, int answer_awaited)
 {
@@ -705,7 +705,7 @@ static void *camd35_server(struct s_client *client, uchar *mbuf, int32_t n)
 	return NULL; //to prevent compiler message
 }
 
-static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf)
+static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er)
 {
 	static const char *typtext[] = {"ok", "invalid", "sleeping"};
 
@@ -727,11 +727,14 @@ static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *
 	client->lastcaid = er->caid;
 	client->lastpid = er->pid;
 
-
 	if(!camd35_tcp_connect(client)) { return -1; }
 
 	client->reader->card_status = CARD_INSERTED; //for udp
 
+	uint8_t *buf;
+	if(!cs_malloc(&buf, er->ecmlen + 20 + 15))
+	{ return -1; }
+	
 	memset(buf, 0, 20);
 	memset(buf + 20, 0xff, er->ecmlen + 15);
 	buf[1] = er->ecmlen;
@@ -742,7 +745,10 @@ static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *
 	buf[18] = 0xff;
 	buf[19] = 0xff;
 	memcpy(buf + 20, er->ecm, er->ecmlen);
-	return ((camd35_send(client, buf, 0) < 1) ? (-1) : 0);
+	int32_t rc = ((camd35_send(client, buf, 0) < 1) ? (-1) : 0);
+	
+	NULLFREE(buf);
+	return rc;
 }
 
 static int32_t camd35_send_emm(EMM_PACKET *ep)

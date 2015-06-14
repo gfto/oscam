@@ -33,7 +33,7 @@ static struct gbox_data local_gbox;
 static uint8_t local_gbox_initialized = 0;
 static time_t last_stats_written;
 
-static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSED(buf));
+static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er);
 
 char *get_gbox_tmp_fname(char *fext)
 {
@@ -1275,7 +1275,7 @@ void *gbox_rebroadcast_thread(struct gbox_rbc_thread_args *args)
 	if (er->rc >= E_NOTFOUND && time_to_timeout > GBOX_DEFAULT_CW_TIME)
 	{
  		cs_writelock(&peer->lock);
-		gbox_send_ecm(cli, er, NULL);
+		gbox_send_ecm(cli, er);
  		cs_writeunlock(&peer->lock);
 	}
 	cli->thread_active = 0;
@@ -1284,7 +1284,7 @@ void *gbox_rebroadcast_thread(struct gbox_rbc_thread_args *args)
 	return NULL;
 }
 
-static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *UNUSED(buf))
+static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er)
 {
 	if(!cli || !er || !cli->reader)
 		{ return -1; }

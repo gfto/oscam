@@ -1013,7 +1013,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 	int32_t curEcm88len = 0;
 	int32_t nanoLen = 0;
 	uchar *nextEcm;
-	uchar DE04[256];
+	uchar DE04[MAX_ECM_SIZE];
 	int32_t D2KeyID = 0;
 	int32_t curnumber_ecm = 0;
 	//nanoD2 d2 02 0d 02 -> D2 nano, len 2
@@ -1257,7 +1257,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 			}
 			ins88[2] = ecmf8Len ? 1 : 0;
 			ins88[3] = keynr;
-			ins88[4] = curEcm88len;
+			ins88[4] = (curEcm88len > 0xFF) ? 0x00 : curEcm88len;
 			//
 			// we should check the nano to make sure the ecm is valid
 			// we should look for at least 1 E3 nano, 1 EA nano and the F0 signature nano
@@ -1266,7 +1266,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 			if(DE04[0] == 0xDE)
 			{
 				uint32_t l = curEcm88len - 6;
-				if(l > 256 || curEcm88len <= 6)    //don't known if this is ok...
+				if(l > MAX_ECM_SIZE || curEcm88len <= 6)    //don't known if this is ok...
 				{
 					rdr_log(reader, "ecm invalid/too long! len=%d", curEcm88len);
 					return ERROR;

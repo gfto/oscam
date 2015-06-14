@@ -498,7 +498,7 @@ bool IO_Serial_Write(struct s_reader *reader, uint32_t delay, uint32_t timeout, 
 		rdr_log_dbg(reader, D_DEVICE, "Warning: write timeout 0 changed to %d us", timeout);
 	}
 	uint32_t count, to_send, i_w;
-	unsigned char data_w[512];
+	unsigned char data_w[MAX_ECM_SIZE];
 
 	to_send = (delay ? 1 : size); // calculate chars to send at one
 	rdr_log_dbg(reader, D_DEVICE, "Write timeout %d us, write delay %d us, to send %d char(s), chunksize %d char(s)", timeout, delay, size, to_send);

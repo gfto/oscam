@@ -1426,7 +1426,7 @@ static int8_t cc_request_timeout(struct s_client *cl)
  * reader
  * sends a ecm request to the connected CCCam Server
  */
-int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf)
+int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er)
 {
 	struct s_reader *rdr = cl->reader;
 
@@ -1535,9 +1535,6 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf)
 		cl->lastcaid = cur_er->caid;
 		cl->lastpid = cur_er->pid;
 		//sleepsend support end
-
-		if(buf)
-			{ memcpy(buf, cur_er->ecm, cur_er->ecmlen); }
 
 		struct cc_srvid cur_srvid;
 		cur_srvid.sid = cur_er->srvid;
@@ -2735,7 +2732,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 			cc->ecm_busy = 0;
 		}
 
-		cc_send_ecm(cl, NULL, NULL);
+		cc_send_ecm(cl, NULL);
 		break;
 
 	case MSG_CW_ECM:
@@ -2951,7 +2948,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 
 			//cc_abort_user_ecms();
 
-			cc_send_ecm(cl, NULL, NULL);
+			cc_send_ecm(cl, NULL);
 
 			if(cc->max_ecms)
 				{ cc->ecm_counter++; }
@@ -3190,7 +3187,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 			{
 				cc->ecm_busy = 0;
 			}
-			cc_send_ecm(cl, NULL, NULL);
+			cc_send_ecm(cl, NULL);
 		}
 		break;
 	}

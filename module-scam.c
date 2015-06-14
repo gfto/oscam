@@ -528,7 +528,7 @@ static void scam_client_send_hello(struct s_client *cl)
 	scam->dec_xor_offset = 0;
 }
 
-static int32_t scam_client_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *UNUSED(buf))
+static int32_t scam_client_send_ecm(struct s_client *cl, ECM_REQUEST *er)
 {				
 	// 2481A5	310A 
 	//				00C00000	enimga namespace

@@ -632,7 +632,7 @@ static bool _is_pid_ignored(ECM_REQUEST *er)
 	return false;
 }
 
-static int32_t ghttp_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *UNUSED(buf))
+static int32_t ghttp_send_ecm(struct s_client *client, ECM_REQUEST *er)
 {
 	uint32_t hash;
 	s_ghttp *context = (s_ghttp *)client->ghttp;

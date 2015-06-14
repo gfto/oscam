@@ -1239,9 +1239,15 @@ static int32_t oscam_ser_client_init(struct s_client *client)
 	return ((client->pfd > 0) ? 0 : 1);
 }
 
-static int32_t oscam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf)
+static int32_t oscam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er)
 {
 	char *tmp;
+	uchar *buf;
+	if(!cs_malloc(&buf, er->ecmlen + 12))
+	{
+		return(-1);
+	}
+	
 	switch(client->serialdata->oscam_ser_proto)
 	{
 	case P_HSIC:
@@ -1283,6 +1289,7 @@ static int32_t oscam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er, ucha
 		oscam_ser_send(client, buf, oscam_ser_alpha_convert(buf, 5 + er->ecmlen));
 		break;
 	}
+	NULLFREE(buf);
 	return (0);
 }
 
