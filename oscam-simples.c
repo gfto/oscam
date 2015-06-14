@@ -4,7 +4,7 @@
 /* Gets the servicename. */
 static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf, uint32_t buflen, bool return_unknown)
 {
-	int32_t i;
+	int32_t i, j;
 	struct s_srvid *this, *provid_zero_match = NULL, *provid_any_match = NULL;
 	buf[0] = '\0';
 
@@ -13,7 +13,7 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 
 	if(cl && cl->last_srvidptr && cl->last_srvidptr->srvid == srvid)
 		for(i = 0; i < cl->last_srvidptr->ncaid; i++)
-			if(cl->last_srvidptr->caid[i] == caid 
+			if(cl->last_srvidptr->caid[i].caid == caid 
 				&& cl->last_srvidptr_search_provid == provid
 				&& cl->last_srvidptr->name)
 			{
@@ -25,22 +25,25 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 		if(this->srvid == srvid)
 			for(i = 0; i < this->ncaid; i++)
 			{			
-				if(this->caid[i] == caid && this->name)
+				if(this->caid[i].caid == caid && this->name)
 				{
-					if(this->provid[i] == 0)
-						{ provid_zero_match = this; }
-						
 					provid_any_match = this;
-					
-					if(this->provid[i] == provid)
+											
+					for(j = 0; j < this->caid[i].nprovid; j++)
 					{
-						if(cl)
-						{ 
-							cl->last_srvidptr = this;
-							cl->last_srvidptr_search_provid = provid;
+						if(this->caid[i].provid[j] == 0)
+							{ provid_zero_match = this; }
+						
+						if(this->caid[i].provid[j] == provid)
+						{
+							if(cl)
+							{ 
+								cl->last_srvidptr = this;
+								cl->last_srvidptr_search_provid = provid;
+							}
+							cs_strncpy(buf, this->name, buflen);
+							return (buf);
 						}
-						cs_strncpy(buf, this->name, buflen);
-						return (buf);
 					}
 				}
 			}
@@ -70,7 +73,11 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 
 		if(return_unknown)
 			{ snprintf(buf, buflen, "%04X:%06X:%04X unknown", caid, provid, srvid); }
-		if(cl) { cl->last_srvidptr = NULL; }
+		if(cl)
+		{ 
+			cl->last_srvidptr = NULL;
+			cl->last_srvidptr_search_provid = provid;
+		}
 	}
 	return (buf);
 }

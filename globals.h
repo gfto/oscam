@@ -1586,19 +1586,24 @@ struct s_auth
 };
 
 
+struct s_srvid_caid
+{
+	uint16_t        caid;
+	uint16_t        nprovid;
+	uint32_t        *provid;
+};
+
 struct s_srvid
 {
-#define S_SRVID_CAID_LIMIT 10
-	uint16_t        srvid;
-	int8_t          ncaid;
-	uint16_t        caid[S_SRVID_CAID_LIMIT];
-	uint32_t        provid[S_SRVID_CAID_LIMIT];
-	char            *data;
-	char            *prov;
-	char            *name;
-	char            *type;
-	char            *desc;
-	struct s_srvid  *next;
+	uint16_t             srvid;
+	int8_t               ncaid;
+	struct s_srvid_caid  *caid;
+	char                 *data;
+	char                 *prov;
+	char                 *name;
+	char                 *type;
+	char                 *desc;
+	struct s_srvid       *next;
 };
 
 struct s_rlimit

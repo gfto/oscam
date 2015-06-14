@@ -353,8 +353,8 @@ int32_t init_srvid(void)
 	if(!fp)
 		{ return 0; }
 
-	int32_t nr = 0, i;
-	char *payload, *tmp, *saveptr1 = NULL, *token;
+	int32_t nr = 0, i, j;
+	char *payload, *tmp, *saveptr1 = NULL, *saveptr2 = NULL, *token;
 	if(!cs_malloc(&token, MAXLINESIZE))
 		{ return 0; }
 	struct s_srvid *srvid = NULL, *new_cfg_srvid[16], *last_srvid[16];
@@ -371,7 +371,7 @@ int32_t init_srvid(void)
 
 	while(fgets(token, MAXLINESIZE, fp))
 	{
-		int32_t l, j, len = 0, len2, srvidtmp;
+		int32_t l, len = 0, len2, srvidtmp;
 		uint32_t pos;
 		char *srvidasc;
 		tmp = trim(token);
@@ -392,7 +392,7 @@ int32_t init_srvid(void)
 		char tmptxt[128];
 
 		int32_t offset[4] = { -1, -1, -1, -1 };
-		char *ptr1, *searchptr[4] = { NULL, NULL, NULL, NULL };
+		char *ptr1, *ptr2, *searchptr[4] = { NULL, NULL, NULL, NULL };
 		char **ptrs[4] = { &srvid->prov, &srvid->name, &srvid->type, &srvid->desc };
 
 		for(i = 0, ptr1 = strtok_r(payload, "|", &saveptr1); ptr1 && (i < 4) ; ptr1 = strtok_r(NULL, "|", &saveptr1), ++i)
@@ -473,23 +473,42 @@ int32_t init_srvid(void)
 		}		
 		
 		srvid->ncaid = 0;
-		for(i = 0, ptr1 = strtok_r(token, ",", &saveptr1); (ptr1) && (i < S_SRVID_CAID_LIMIT) ; ptr1 = strtok_r(NULL, ",", &saveptr1), i++)
+		for(i = 0, ptr1 = strtok_r(token, ",", &saveptr1); (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1), i++)
 		{
-			char *prov = strchr(ptr1,'@');		
-			if(prov)
+			srvid->ncaid++;
+		}
+		
+		if(!cs_malloc(&srvid->caid, sizeof(struct s_srvid_caid) * srvid->ncaid))
+		{
+			NULLFREE(tmpptr);
+			NULLFREE(srvid);
+			return 0;
+		}
+		
+		for(i = 0, ptr1 = strtok_r(token, ",", &saveptr1); (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1), i++)
+		{
+			srvid->caid[i].nprovid = 0;
+			for(j = 0, ptr2 = strtok_r(ptr1, "@", &saveptr2); (ptr2); ptr2 = strtok_r(NULL, ",", &saveptr2), j++)
 			{
-				prov[0] = '\0';
-				
-				if(prov[1] != '\0')
-				 {	srvid->provid[i] = dyn_word_atob(prov+1) & 0xFFFFFF; }
+				srvid->caid[i].nprovid++;
 			}
-			else
+		
+			if(!cs_malloc(&srvid->caid[i].provid, sizeof(uint32_t) * srvid->caid[i].nprovid))
 			{
-				srvid->provid[i] = 0;
+				for(j = 0; j < i; j++)
+					{ NULLFREE(srvid->caid[i].provid); } 
+				NULLFREE(srvid->caid);
+				NULLFREE(tmpptr);
+				NULLFREE(srvid);
+				return 0;
 			}
 			
-			srvid->caid[i] = dyn_word_atob(ptr1) & 0xFFFF;
-			srvid->ncaid = i + 1;
+			for(j = 0, ptr2 = strtok_r(ptr1, "@", &saveptr2); (ptr2); ptr2 = strtok_r(NULL, ",", &saveptr2), j++)
+			{
+				srvid->caid[i].provid[j] = dyn_word_atob(ptr2) & 0xFFFFFF;
+			}
+
+			srvid->caid[i].caid = dyn_word_atob(ptr1) & 0xFFFF;
 		}
 			
 		nr++;
@@ -533,11 +552,15 @@ int32_t init_srvid(void)
 		{ cl->last_srvidptr = NULL; }
 
 	struct s_srvid *ptr;
+	
 	for(i = 0; i < 16; i++)
 	{
 		ptr = last_srvid[i];
 		while(ptr)    //cleanup old data:
 		{
+			for(j = 0; j < ptr->ncaid; j++)
+				{ add_garbage(ptr->caid[i].provid); }
+			add_garbage(ptr->caid);
 			add_garbage(ptr->data);
 			add_garbage(ptr);
 			ptr = ptr->next;
