@@ -564,7 +564,7 @@ int32_t init_srvid(void)
 		while(ptr)    //cleanup old data:
 		{
 			for(j = 0; j < ptr->ncaid; j++)
-				{ add_garbage(ptr->caid[i].provid); }
+				{ add_garbage(ptr->caid[j].provid); }
 			add_garbage(ptr->caid);
 			add_garbage(ptr->data);
 			add_garbage(ptr);
