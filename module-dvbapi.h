@@ -6,6 +6,7 @@
 
 #define TYPE_ECM 1
 #define TYPE_EMM 2
+#define TYPE_SDT 3
 
 //api
 #define DVBAPI_3    0
@@ -153,6 +154,7 @@ typedef struct demux_s
 	uint32_t enigma_namespace;
 	unsigned char lastcw[2][8];
 	int8_t emm_filter;
+	int8_t sdt_filter;
 	uchar hexserial[8];
 	struct s_reader *rdr;
 	char pmt_file[30];

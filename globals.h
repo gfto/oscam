@@ -1876,6 +1876,7 @@ struct s_config
 	SIDTABS     dvbapi_sidtabs;
 	int32_t     dvbapi_delayer;                     // delayer ms, minimum time to write cw
 	int8_t      dvbapi_ecminfo_type;
+	int8_t      dvbapi_read_sdt;
 #endif
 
 #ifdef CS_ANTICASC

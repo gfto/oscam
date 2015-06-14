@@ -1087,6 +1087,15 @@ void dvbapi_start_filter(int32_t demux_id, int32_t pidindex, uint16_t pid, uint1
 	dvbapi_set_filter(demux_id, selected_api, pid, caid, provid, filter, filter + 16, timeout, pidindex, type, 0);
 }
 
+void dvbapi_start_sdt_filter(int32_t demux_index)
+{
+	if(demux[demux_index].pidindex == -1)
+		{ return; }
+	
+	dvbapi_start_filter(demux_index, demux[demux_index].pidindex, 0x11, 0x001, 0x01, 0x00, 0x00, 0, TYPE_SDT);
+	demux[demux_index].sdt_filter = 0;
+}
+
 void dvbapi_start_emm_filter(int32_t demux_index)
 {
 	unsigned int j;
@@ -1526,7 +1535,10 @@ void dvbapi_stop_descrambling(int32_t demux_id)
 	demux[demux_id].pidindex = -1; // no ecmpid is to be descrambling since we start stop descrambling!
 	get_servicename(dvbapi_client, demux[demux_id].program_number, demux[demux_id].ECMpidcount > 0 ? demux[demux_id].ECMpids[i].PROVID : 0, demux[demux_id].ECMpidcount > 0 ? demux[demux_id].ECMpids[i].CAID : 0, channame, sizeof(channame));
 	cs_log_dbg(D_DVBAPI, "Demuxer %d stop descrambling program number %04X (%s)", demux_id, demux[demux_id].program_number, channame);
+	
 	dvbapi_stop_filter(demux_id, TYPE_EMM);
+	dvbapi_stop_filter(demux_id, TYPE_SDT);
+	
 	if(demux[demux_id].ECMpidcount > 0)
 	{
 		dvbapi_stop_filter(demux_id, TYPE_ECM);
@@ -2892,6 +2904,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		}
 	}
 
+	demux[demux_id].sdt_filter = -1;
+
 	if(cfg.dvbapi_au > 0 && demux[demux_id].EMMpidcount == 0) // only do emm setup if au enabled and not running!
 	{
 		demux[demux_id].emm_filter = -1; // to register first run emmfilter start
@@ -2940,6 +2954,116 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	return demux_id;
 }
 
+static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, uint8_t* source, uint32_t sourcelen)
+{
+	uint32_t offset = 0;
+	
+	if(sourcelen > buflen)
+		{ sourcelen = buflen; }
+		
+	if(sourcelen > 0 && source[0] < 0x20)
+	{
+		if(source[0] == 0x10)
+			{ offset = 3; }
+		else if(source[0] == 0x11) // Unicode - ignore it for now
+			{ return 0; }
+		else
+			{ offset = 1; }
+	}
+	
+	if(offset >= sourcelen)
+		{ return 0; }
+
+	memcpy(buf, source+offset, sourcelen-offset);
+	buf[sourcelen-offset] = '\0';	
+
+	return 1;
+}
+
+static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t length)
+{
+	uint8_t tag, data_length = 0, provider_name_length, service_name_length;
+	uint16_t service_id, descriptor_length, dpos;
+	uint32_t section_length, pos, pidindex;
+	char provider_name[64],  service_name[64], tmp[256];
+	FILE *fpsave;
+	
+	if(length < 3)
+		{ return; }
+		
+	if(buffer[0] != 0x42)
+		{ return; }
+	
+	section_length = b2i(2, buffer + 1) &0xFFF;
+	
+	if(section_length+3 != length)
+		{ return; }
+	
+	for(pos = 11; pos+5 < length; pos += descriptor_length)
+	{
+		service_id = b2i(2, buffer + pos);		
+		descriptor_length = b2i(2, buffer + pos + 3) &0xFFF;
+		
+		if((pos+5+descriptor_length) >= length)
+			{ return; }
+		
+		pos += 5;
+		
+		if(service_id != demux[demux_id].program_number)
+			{ continue; }	
+		
+		for(dpos = 0; dpos+1 < descriptor_length; dpos += (2 + data_length))
+		{
+			tag = buffer[pos+dpos];
+			data_length = buffer[pos+dpos+1];
+
+			if(dpos+1+data_length >= descriptor_length)
+				{ break; } 		
+		
+			if(tag != 0x48)
+				{ continue; }
+
+			if(dpos+3 >= descriptor_length)
+				{ break; }
+				
+			provider_name_length = buffer[pos+dpos+3];
+			if((dpos+4+provider_name_length+1) > descriptor_length)
+				{ break; }
+			
+			service_name_length = buffer[pos+dpos+4+provider_name_length];
+			if((dpos+4+provider_name_length+1+service_name_length) > descriptor_length)
+				{ break; }
+			
+			if(!dvbapi_extract_sdt_string(provider_name, sizeof(provider_name), buffer+pos+dpos+4, provider_name_length))
+				{ break; }
+				
+			if(!dvbapi_extract_sdt_string(service_name, sizeof(service_name), buffer+pos+dpos+4+provider_name_length+1, service_name_length))
+				{ break; }
+						
+			cs_log("sdt-info (provider: %s - channel: %s)", provider_name, service_name);
+
+			dvbapi_stop_filter(demux_id, TYPE_SDT);
+
+			pidindex = demux[demux_id].pidindex;
+			get_servicename_or_null(cur_client(), service_id, demux[demux_id].ECMpids[pidindex].PROVID,
+				demux[demux_id].ECMpids[pidindex].CAID, tmp, sizeof(tmp));
+			
+			if(tmp[0] == '\0')
+			{
+				get_config_filename(tmp, sizeof(tmp), "oscam.srvid");
+				
+				if((fpsave = fopen(tmp, "a")))
+				{
+					fprintf(fpsave, "\n%04X@%06X:%04X|%s|%s|\n", demux[demux_id].ECMpids[pidindex].CAID, 
+								demux[demux_id].ECMpids[pidindex].PROVID, service_id, provider_name, service_name);
+					fclose(fpsave);
+				}
+
+				init_srvid();
+			}
+		}
+	}
+}
 
 void dvbapi_handlesockmsg(unsigned char *buffer, uint32_t len, int32_t connfd)
 {
@@ -3617,6 +3741,11 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		}
 		dvbapi_process_emm(demux_id, filter_num, buffer, len);
 	}
+	
+	if(demux[demux_id].demux_fd[filter_num].type == TYPE_SDT)
+	{
+		dvbapi_parse_sdt(demux_id, buffer, len);
+	}	
 }
 
 static void *dvbapi_main_local(void *cli)
@@ -3805,13 +3934,25 @@ static void *dvbapi_main_local(void *cli)
 			
 			struct timeb now;
 			cs_ftime(&now);
+			int64_t gone;
+			int8_t do_emm_start = (cfg.dvbapi_au > 0 && demux[i].emm_filter == -1 && demux[i].EMMpidcount == 0 && emmcounter == 0);
+			int8_t do_sdt_start = (cfg.dvbapi_read_sdt && demux[i].sdt_filter == -1);
 			
-			if(cfg.dvbapi_au > 0 && demux[i].emm_filter == -1 && demux[i].EMMpidcount == 0 && emmcounter == 0)
+			if(do_emm_start || do_sdt_start)
 			{
-				int64_t gone = comp_timeb(&now, &demux[i].emmstart);
+				gone = comp_timeb(&now, &demux[i].emmstart);	
+			
 				if(gone > 30*1000){
-					cs_ftime(&demux[i].emmstart); // trick to let emm fetching start after 30 seconds to speed up zapping
-					dvbapi_start_filter(i, demux[i].pidindex, 0x001, 0x001, 0x01, 0x01, 0xFF, 0, TYPE_EMM); //CAT
+					
+					if(do_emm_start) {
+						cs_ftime(&demux[i].emmstart); // trick to let emm fetching start after 30 seconds to speed up zapping
+						dvbapi_start_filter(i, demux[i].pidindex, 0x001, 0x001, 0x01, 0x01, 0xFF, 0, TYPE_EMM); //CAT
+					}
+					
+					if(do_sdt_start)
+					{
+						dvbapi_start_sdt_filter(i);
+					}
 				}
 			}
 
@@ -3826,7 +3967,7 @@ static void *dvbapi_main_local(void *cli)
 				}
 				else
 				{
-					int64_t gone = comp_timeb(&now, &demux[i].emmstart);
+					gone = comp_timeb(&now, &demux[i].emmstart);
 					if(gone > 30*1000)
 					{
 						demux[i].emmstart = now;
@@ -3908,7 +4049,7 @@ static void *dvbapi_main_local(void *cli)
 					{
 						cs_ftime(&demux[i].decend);
 						demux[i].decodingtries = -1; // reset to first run again!
-						int64_t gone = comp_timeb(&demux[i].decend, &demux[i].decstart);
+						gone = comp_timeb(&demux[i].decend, &demux[i].decstart);
 						cs_log("Demuxer %d restarting decodingrequests after %"PRId64" ms with %d enabled and %d disabled ecmpids!", i, gone, number_of_enabled_pids,
 							(demux[i].ECMpidcount-number_of_enabled_pids));
 						dvbapi_try_next_caid(i, 0);
