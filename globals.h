@@ -2075,6 +2075,6 @@ static inline bool caid_is_cryptoworks(uint16_t caid) { return caid >> 8 == 0x0D
 static inline bool caid_is_betacrypt(uint16_t caid) { return caid >> 8 == 0x17; }
 static inline bool caid_is_nagra(uint16_t caid) { return caid >> 8 == 0x18; }
 static inline bool caid_is_bulcrypt(uint16_t caid) { return caid == 0x5581 || caid == 0x4AEE; }
-char *get_cardsystem_desc_by_caid(uint16_t caid);
+const char *get_cardsystem_desc_by_caid(uint16_t caid);
 
 #endif

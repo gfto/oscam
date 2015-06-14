@@ -4672,16 +4672,11 @@ void dvbapi_write_ecminfo_file(struct s_client *client, ECM_REQUEST *er, uint8_t
 		const char *reader_name = NULL, *from_name = NULL, *proto_name = NULL;
 		int8_t hops = 0;
 		int32_t from_port = 0;
-		const struct s_cardsystem *csystem = get_cardsystem_by_caid(er->caid);
 		char system_name[64];
-		if(snprintf(system_name, sizeof(system_name), "%s", csystem ? csystem->desc : "unknown") < 0)
-		{
-			cs_strncpy(system_name, "Unknown", sizeof(system_name));
-		}
-		else
-		{
-			system_name[0] = (char)toupper((int)system_name[0]);
-		}
+		const char* const_system_name = get_cardsystem_desc_by_caid(er->caid);
+		
+		cs_strncpy(system_name, const_system_name, sizeof(system_name));
+		system_name[0] = (char)toupper((int)system_name[0]);
 
 		if(cfg.dvbapi_ecminfo_type <= ECMINFO_TYPE_WICARDD)
 		{

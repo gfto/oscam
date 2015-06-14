@@ -223,7 +223,7 @@ void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *
 
 // Get a cardsystem name based on caid
 // used in webif/CCcam share and in dvbapi/ecminfo
-char *get_cardsystem_desc_by_caid(uint16_t caid)
+const char *get_cardsystem_desc_by_caid(uint16_t caid)
 {
         if(caid_is_seca(caid)) { return "seca"; }
         if(caid_is_viaccess(caid)) { return "viaccess"; }
