@@ -459,9 +459,15 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 				snprintf(sbuf, sizeof(sbuf), "%03d", cl->logcounter);
 				cl->logcounter = (cl->logcounter + 1) % 1000;
 				memcpy(txt + log->header_logcount_offset, sbuf, 3);
+				monitor_send_idx(cl, txt);
 			}
-			
-			monitor_send_idx(cl, txt);
+			else
+			{
+				char tmp_log[8+LOG_BUF_SIZE];
+				snprintf(tmp_log, sizeof(tmp_log), "[LOG%03d]%s", cl->logcounter, txt);
+				cl->logcounter = (cl->logcounter + 1) % 1000;
+				monitor_send_idx(cl, tmp_log);
+			}
 		}
 	}
 #endif
