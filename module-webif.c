@@ -4751,11 +4751,17 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 						{
 							char channame[CS_SERVICENAME_SIZE];
 							
+							get_servicename_or_null(cl, cl->last_srvid, cl->last_provid, cl->last_caid, channame, sizeof(channame));
+							if(channame[0] == '\0')
+							{
+								cs_strncpy(channame, "unknown", sizeof(channame));	
+							}
+
 							tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", cl->last_caid);
 							tpl_printf(vars, TPLADD, "CLIENTPROVID", "%06X", cl->last_provid);
 							tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", cl->last_srvid);
 							tpl_printf(vars, TPLADD, "CLIENTSRVPROVIDER", "%s%s", cl->last_srvidptr && cl->last_srvidptr->prov ? xml_encode(vars, cl->last_srvidptr->prov) : "", cl->last_srvidptr && cl->last_srvidptr->prov ? ": " : "");
-							tpl_addVar(vars, TPLADD, "CLIENTSRVNAME",xml_encode(vars, get_servicename(cl, cl->last_srvid, cl->last_provid, cl->last_caid, channame, sizeof(channame))));
+							tpl_addVar(vars, TPLADD, "CLIENTSRVNAME", xml_encode(vars, channame));
 							tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime ? cl->cwlastresptime : 1);
 							tpl_addVar(vars, TPLADD, "CLIENTSRVTYPE", cl->last_srvidptr && cl->last_srvidptr->type ? xml_encode(vars, cl->last_srvidptr->type) : "");
 							tpl_addVar(vars, TPLADD, "CLIENTSRVDESCRIPTION", cl->last_srvidptr && cl->last_srvidptr->desc ? xml_encode(vars, cl->last_srvidptr->desc) : "");
