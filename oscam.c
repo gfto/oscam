@@ -654,6 +654,7 @@ static void cs_reload_config(void)
 	
 	cs_accounts_chk();
 	reload_readerdb();
+	init_provid();
 	init_srvid();
 	init_tierid();
 	ac_init_stat();
@@ -1673,9 +1674,9 @@ int32_t main(int32_t argc, char *argv[])
 	init_readerdb();
 	cfg.account = init_userdb();
 	init_signal();
+	init_provid();
 	init_srvid();
 	init_tierid();
-	init_provid();
 
 	start_garbage_collector(gbdb);
 

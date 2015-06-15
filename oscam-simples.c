@@ -205,15 +205,46 @@ char *get_tiername(uint16_t tierid, uint16_t caid, char *buf)
 /* Gets the provider name. */
 char *get_provider(uint16_t caid, uint32_t provid, char *buf, uint32_t buflen)
 {
+	int32_t i;
 	struct s_provid *this = cfg.provid;
 
 	for(buf[0] = 0; this && (!buf[0]); this = this->next)
 	{
-		if(this->caid == caid && this->provid == provid)
+		if(this->caid == caid)
 		{
-			snprintf(buf, buflen, "%s%s%s%s%s", this->prov,
-					 this->sat[0] ? " / " : "", this->sat,
-					 this->lang[0] ? " / " : "", this->lang);
+			for(i=0; i<this->nprovid; i++)
+			{
+				if(this->provid[i] == provid)
+				{
+					snprintf(buf, buflen, "%s%s%s%s%s", this->prov,
+							 this->sat[0] ? " / " : "", this->sat,
+							 this->lang[0] ? " / " : "", this->lang);
+				}
+			}
+		}
+	}
+
+	if(!buf[0]) { snprintf(buf, buflen, "%04X:%06X unknown", caid, provid); }
+	if(!caid) { buf[0] = '\0'; }
+	return (buf);
+}
+
+char *get_providername(uint16_t caid, uint32_t provid, char *buf, uint32_t buflen)
+{
+	int32_t i;
+	struct s_provid *this = cfg.provid;
+
+	for(buf[0] = 0; this && (!buf[0]); this = this->next)
+	{
+		if(this->caid == caid)
+		{
+			for(i=0; i<this->nprovid; i++)
+			{
+				if(this->provid[i] == provid)
+				{
+					cs_strncpy(buf, this->prov, buflen);
+				}
+			}
 		}
 	}
 
@@ -225,18 +256,32 @@ char *get_provider(uint16_t caid, uint32_t provid, char *buf, uint32_t buflen)
 // Add provider description. If provider was already present, do nothing.
 void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *sat, const char *lang)
 {
+	int32_t i;
 	struct s_provid **ptr;
+	
 	for(ptr = &cfg.provid; *ptr; ptr = &(*ptr)->next)
 	{
-		if((*ptr)->caid == caid && (*ptr)->provid == provid)
-			{ return; }
+		if((*ptr)->caid == caid)
+		{
+			for(i=0; i<(*ptr)->nprovid; i++)
+			{
+			 	if((*ptr)->provid[i] == provid)
+				{ 
+					return;
+				}
+			}
+		}
 	}
 
 	struct s_provid *prov;
 	if(!cs_malloc(&prov, sizeof(struct s_provid)))
 		{ return; }
 
-	prov->provid = provid;
+	if(!cs_malloc(&prov->provid, sizeof(uint32_t)))
+		{ NULLFREE(prov); return; }
+		
+	prov->nprovid = 1;
+	prov->provid[0] = provid;
 	prov->caid = caid;
 	cs_strncpy(prov->prov, name, sizeof(prov->prov));
 	cs_strncpy(prov->sat, sat, sizeof(prov->sat));

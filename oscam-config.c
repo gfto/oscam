@@ -275,7 +275,6 @@ int32_t init_sidtab(void)
 	return (0);
 }
 
-//Todo #ifdef CCCAM
 int32_t init_provid(void)
 {
 	FILE *fp = open_config_file(cs_provid);
@@ -286,39 +285,70 @@ int32_t init_provid(void)
 	char *payload, *saveptr1 = NULL, *token;
 	if(!cs_malloc(&token, MAXLINESIZE))
 		{ return 0; }
-	static struct s_provid *provid = (struct s_provid *)0;
+	struct s_provid *provid = (struct s_provid *)0;
+	struct s_provid *new_cfg_provid = NULL, *last_provid;
 
 	nr = 0;
 	while(fgets(token, MAXLINESIZE, fp))
 	{
-
-		int32_t l;
+		int32_t i, l;
 		void *ptr;
-		char *tmp, *providasc;
+		char *tmp, *ptr1;
+		
 		tmp = trim(token);
 
 		if(tmp[0] == '#') { continue; }
 		if((l = strlen(tmp)) < 11) { continue; }
 		if(!(payload = strchr(token, '|'))) { continue; }
-		if(!(providasc = strchr(token, ':'))) { continue; }
 
 		*payload++ = '\0';
-
+		
 		if(!cs_malloc(&ptr, sizeof(struct s_provid)))
 		{
 			NULLFREE(token);
 			fclose(fp);
 			return (1);
 		}
+		
 		if(provid)
-			{ provid->next = ptr; }
+		{
+			provid->next = ptr;
+		}
 		else
-			{ cfg.provid = ptr; }
-
+		{ 
+			new_cfg_provid = ptr;
+		}
+			
 		provid = ptr;
+		
+		provid->nprovid = 0;
+		for(i = 0, ptr1 = strtok_r(token, ":@", &saveptr1); ptr1; ptr1 = strtok_r(NULL, ":@", &saveptr1), i++)
+		{
+			if(i==0)
+			{
+				provid->caid = a2i(ptr1, 3);
+				continue;	
+			}
+			
+			provid->nprovid++;
+		}
 
-		int32_t i;
-		char *ptr1;
+		if(!cs_malloc(&provid->provid, sizeof(uint32_t) * provid->nprovid))
+		{
+			NULLFREE(provid);
+			NULLFREE(token);
+			fclose(fp);
+			return (1);
+		}
+
+		ptr1 = token + strlen(token) + 1;
+		for(i = 0; i < provid->nprovid ; i++)
+		{
+			provid->provid[i] = a2i(ptr1, 3);
+			
+			ptr1 = ptr1 + strlen(ptr1) + 1;
+		}
+		
 		for(i = 0, ptr1 = strtok_r(payload, "|", &saveptr1); ptr1; ptr1 = strtok_r(NULL, "|", &saveptr1), i++)
 		{
 			switch(i)
@@ -334,16 +364,44 @@ int32_t init_provid(void)
 				break;
 			}
 		}
-
-		*providasc++ = '\0';
-		provid->provid = a2i(providasc, 3);
-		provid->caid = a2i(token, 3);
+		
 		nr++;
 	}
 	NULLFREE(token);
 	fclose(fp);
 	if(nr > 0)
 		{ cs_log("%d provid's loaded", nr); }
+	
+	if(new_cfg_provid == NULL)
+	{
+		if(!cs_malloc(&new_cfg_provid, sizeof(struct s_provid)))
+		{
+			return (1);
+		}		
+	}
+	
+	cs_writelock(&config_lock);
+	
+	//this allows reloading of provids, so cleanup of old data is needed:
+	last_provid = cfg.provid; //old data
+	cfg.provid = new_cfg_provid; //assign after loading, so everything is in memory
+
+	cs_writeunlock(&config_lock);
+
+	struct s_provid *ptr, *nptr;
+	
+	if(last_provid)
+	{
+		ptr = last_provid;
+		while(ptr)    //cleanup old data:
+		{
+			add_garbage(ptr->provid);
+			nptr = ptr->next;
+			add_garbage(ptr);
+			ptr = nptr;
+		}
+	}
+			
 	return (0);
 }
 
@@ -580,7 +638,7 @@ int32_t init_srvid(void)
 	for(cl = first_client->next; cl ; cl = cl->next)
 		{ cl->last_srvidptr = NULL; }
 
-	struct s_srvid *ptr;
+	struct s_srvid *ptr, *nptr;
 	
 	for(i = 0; i < 16; i++)
 	{
@@ -591,8 +649,9 @@ int32_t init_srvid(void)
 				{ add_garbage(ptr->caid[j].provid); }
 			add_garbage(ptr->caid);
 			add_garbage(ptr->data);
+			nptr = ptr->next;
 			add_garbage(ptr);
-			ptr = ptr->next;
+			ptr = nptr;
 		}
 	}
 

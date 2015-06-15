@@ -1624,7 +1624,8 @@ struct s_tierid
 struct s_provid
 {
 	uint16_t        caid;
-	uint32_t        provid;
+	uint16_t        nprovid;
+	uint32_t        *provid;
 	char            prov[33];
 	char            sat[33];
 	char            lang[33];
@@ -1710,7 +1711,6 @@ struct s_config
 	struct s_auth   *account;
 	struct s_srvid  *srvid[16];
 	struct s_tierid *tierid;
-	//Todo #ifdef CCCAM
 	struct s_provid *provid;
 	struct s_sidtab *sidtab;
 #ifdef MODULE_MONITOR
@@ -2066,6 +2066,7 @@ char *get_picon_servicename_or_null(struct s_client *cl, uint16_t srvid, uint32_
 int32_t picon_servicename_remve_hd(char *buf, uint32_t buflen);
 char *get_tiername(uint16_t tierid, uint16_t caid, char *buf);
 char *get_provider(uint16_t caid, uint32_t provid, char *buf, uint32_t buflen);
+char *get_providername(uint16_t caid, uint32_t provid, char *buf, uint32_t buflen);
 void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *sat, const char *lang);
 bool boxtype_is(const char *boxtype);
 bool boxname_is(const char *boxname);
