@@ -1857,6 +1857,14 @@ void dvbapi_read_priority(void)
 
 		for(i = 0; i < (int)strlen(token); i++)
 		{
+			if(token[i] == '@')
+			{
+				token[i] = ':';
+			}	
+		}
+		
+		for(i = 0; i < (int)strlen(token); i++)
+		{
 			if((token[i] == ':' || token[i] == ' ') && token[i + 1] == ':')  // if "::" or " :"
 			{
 				memmove(token + i + 2, token + i + 1, strlen(token) - i + 1); //insert extra position
