@@ -1095,7 +1095,7 @@ void dvbapi_start_sdt_filter(int32_t demux_index)
 	if(demux[demux_index].pidindex == -1)
 		{ return; }
 	
-	dvbapi_start_filter(demux_index, demux[demux_index].pidindex, 0x11, 0x001, 0x01, 0x00, 0x00, 0, TYPE_SDT);
+	dvbapi_start_filter(demux_index, demux[demux_index].pidindex, 0x11, 0x001, 0x01, 0x42, 0xFF, 0, TYPE_SDT);
 	demux[demux_index].sdt_filter = 0;
 }
 
