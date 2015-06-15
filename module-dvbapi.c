@@ -2002,7 +2002,7 @@ void dvbapi_read_priority(void)
 			for(i = 0; i < 16; i++)
 				for(this = cfg.srvid[i]; this != NULL; this = this->next)
 				{
-					if(strcmp(this->prov, c_srvid + 1) == 0)
+					if(this->name && strcmp(this->name, c_srvid + 1) == 0)
 					{
 						struct s_dvbapi_priority *entry2;
 						if(!cs_malloc(&entry2, sizeof(struct s_dvbapi_priority)))

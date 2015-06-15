@@ -388,6 +388,10 @@ int32_t init_provid(void)
 
 	cs_writeunlock(&config_lock);
 
+	struct s_client *cl;
+	for(cl = first_client->next; cl ; cl = cl->next)
+		{ cl->last_providptr = NULL; }
+
 	struct s_provid *ptr, *nptr;
 	
 	if(last_provid)
@@ -584,7 +588,7 @@ int32_t init_srvid(void)
 					if(!cs_malloc(&srvid->caid[i].provid, sizeof(uint32_t) * srvid->caid[i].nprovid))
 					{
 						for(j = 0; j < i; j++)
-							{ NULLFREE(srvid->caid[i].provid); } 
+							{ NULLFREE(srvid->caid[j].provid); } 
 						NULLFREE(srvid->caid);
 						NULLFREE(tmpptr);
 						NULLFREE(srvid);

@@ -1033,6 +1033,7 @@ struct s_client
 	uint16_t        last_srvid;
 	uint32_t        last_provid;
 	uint16_t        last_caid;
+	struct s_provid *last_providptr;
 	struct s_srvid  *last_srvidptr;
 	uint32_t        last_srvidptr_search_provid;
 	int32_t         tosleep;
@@ -2070,6 +2071,7 @@ char *get_provider(uint32_t provid, uint16_t caid, char *buf, uint32_t buflen);
 char *get_providername(uint32_t provid, uint16_t caid, char *buf, uint32_t buflen);
 char *get_providername_or_null(uint32_t provid, uint16_t caid, char *buf, uint32_t buflen);
 void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *sat, const char *lang);
+const char *get_cl_lastprovidername(struct s_client *cl);
 bool boxtype_is(const char *boxtype);
 bool boxname_is(const char *boxname);
 const char *boxtype_get(void);

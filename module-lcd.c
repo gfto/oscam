@@ -226,7 +226,7 @@ static void refresh_lcd_file(void)
 							type,
 							idx,
 							label,
-							cl->last_srvidptr && cl->last_srvidptr->prov ? cl->last_srvidptr->prov : "",
+							get_cl_lastprovidername(cl),
 							cl->last_srvidptr && cl->last_srvidptr->name ? cl->last_srvidptr->name : "",
 							cl->cwlastresptime);
 
