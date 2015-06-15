@@ -2417,7 +2417,7 @@ OUT:
 int32_t ecmfmt(uint16_t caid, uint16_t onid, uint32_t prid, uint16_t chid, uint16_t pid, uint16_t srvid, uint16_t l, char *ecmd5hex, char *csphash, char *cw, char *result, size_t size, uint16_t origin_peer, uint8_t distance)
 {
 	if(!cfg.ecmfmt)
-		{ return snprintf(result, size, "%04X&%06X/%04X/%04X/%02X:%s", caid, prid, chid, srvid, l, ecmd5hex); }
+		{ return snprintf(result, size, "%04X@%06X/%04X/%04X/%02X:%s", caid, prid, chid, srvid, l, ecmd5hex); }
 
 	uint32_t s = 0, zero = 0, flen = 0, value = 0;
 	char *c = cfg.ecmfmt, fmt[5] = "%04X";
