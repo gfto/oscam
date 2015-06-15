@@ -3066,7 +3066,7 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 				
 				if((fpsave = fopen(tmp, "a")))
 				{
-					fprintf(fpsave, "\n%04X@%06X|%s|\n", demux[demux_id].ECMpids[pidindex].CAID, 
+					fprintf(fpsave, "\n%04X@%06X|%s|", demux[demux_id].ECMpids[pidindex].CAID, 
 								demux[demux_id].ECMpids[pidindex].PROVID, provider_name);
 					fclose(fpsave);
 				}
@@ -3083,7 +3083,7 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 				
 				if(!access(tmp, F_OK) && (fpsave = fopen(tmp, "a")))
 				{
-					fprintf(fpsave, "\n%04X:%04X@%06X|%s|\n", service_id, demux[demux_id].ECMpids[pidindex].CAID, 
+					fprintf(fpsave, "\n%04X:%04X@%06X|%s|", service_id, demux[demux_id].ECMpids[pidindex].CAID, 
 								demux[demux_id].ECMpids[pidindex].PROVID, service_name);
 					fclose(fpsave);
 				}
@@ -3093,7 +3093,7 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 					
 					if((fpsave = fopen(tmp, "a")))
 					{
-						fprintf(fpsave, "\n%04X@%06X:%04X|%s|%s|\n", demux[demux_id].ECMpids[pidindex].CAID, 
+						fprintf(fpsave, "\n%04X@%06X:%04X|%s|%s|", demux[demux_id].ECMpids[pidindex].CAID, 
 									demux[demux_id].ECMpids[pidindex].PROVID, service_id, provider_name, service_name);
 						fclose(fpsave);
 					}					
