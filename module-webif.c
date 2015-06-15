@@ -113,7 +113,8 @@ static struct pstat p_stat_old;
 #define MNU_CFG_WHITELIST 25
 #define MNU_CFG_RATELIMIT 26
 #define MNU_CFG_FCSS 27
-#define MNU_CFG_TOTAL_ITEMS 28 // sum of items above. Use it for "All inactive" in function calls too.
+#define MNU_CFG_FSRVID2 28
+#define MNU_CFG_TOTAL_ITEMS 29 // sum of items above. Use it for "All inactive" in function calls too.
 
 static void set_status_info_var(struct templatevars *vars, char *varname, int no_data, char *fmt, double value) {
 	if (no_data)
@@ -5879,6 +5880,7 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 		{ "oscam.services",  MNU_CFG_FSERVICES, FTYPE_CONFIG },
 		{ "oscam.whitelist", MNU_CFG_WHITELIST, FTYPE_CONFIG },
 		{ "oscam.srvid",     MNU_CFG_FSRVID,    FTYPE_CONFIG },
+		{ "oscam.srvid2",    MNU_CFG_FSRVID2,   FTYPE_CONFIG },
 		{ "oscam.provid",    MNU_CFG_FPROVID,   FTYPE_CONFIG },
 		{ "oscam.tiers",     MNU_CFG_FTIERS,    FTYPE_CONFIG },
 		{ "oscam.ratelimit", MNU_CFG_RATELIMIT, FTYPE_CONFIG },
@@ -6000,6 +6002,7 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 					switch(menu_id)
 					{
 					case MNU_CFG_FSRVID:
+					case MNU_CFG_FSRVID2:
 						init_srvid();
 						break;
 					case MNU_CFG_FPROVID:
