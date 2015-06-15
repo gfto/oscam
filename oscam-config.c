@@ -407,18 +407,23 @@ int32_t init_provid(void)
 
 int32_t init_srvid(void)
 {
-	FILE *fp = open_config_file(cs_srid);
+	int8_t new_syntax = 1;
+	FILE *fp = open_config_file("oscam.srvid2");
+	if(!fp)
+		{ fp = open_config_file(cs_srid); new_syntax = 0; }
+
 	if(!fp)
 		{ return 0; }
 
 	int32_t nr = 0, i, j;
-	char *payload, *tmp, *saveptr1 = NULL, *saveptr2 = NULL, *token;
+	char *payload, *saveptr1 = NULL, *saveptr2 = NULL, *token;
+	const char *tmp;
 	if(!cs_malloc(&token, MAXLINESIZE))
 		{ return 0; }
 	struct s_srvid *srvid = NULL, *new_cfg_srvid[16], *last_srvid[16];
 	// A cache for strings within srvids. A checksum is calculated which is the start point in the array (some kind of primitive hash algo).
 	// From this point, a sequential search is done. This greatly reduces the amount of string comparisons.
-	char **stringcache[1024];
+	const char **stringcache[1024];
 	int32_t allocated[1024] = { 0 };
 	int32_t used[1024] = { 0 };
 	struct timeb ts, te;
@@ -450,8 +455,9 @@ int32_t init_srvid(void)
 		char tmptxt[128];
 
 		int32_t offset[4] = { -1, -1, -1, -1 };
-		char *ptr1 = NULL, *ptr2 = NULL, *searchptr[4] = { NULL, NULL, NULL, NULL };
-		char **ptrs[4] = { &srvid->prov, &srvid->name, &srvid->type, &srvid->desc };
+		char *ptr1 = NULL, *ptr2 = NULL;
+		const char *searchptr[4] = { NULL, NULL, NULL, NULL };
+		const char **ptrs[4] = { &srvid->prov, &srvid->name, &srvid->type, &srvid->desc };
 
 		// allow empty provider-name "||service name|"
 		if(payload[0] == '|')
@@ -460,7 +466,12 @@ int32_t init_srvid(void)
 			payload[0] = ' ';
 		}
 		
-		for(i = 0, ptr1 = strtok_r(payload, "|", &saveptr1); ptr1 && (i < 4) ; ptr1 = strtok_r(NULL, "|", &saveptr1), ++i)
+		if(new_syntax)
+		{
+			searchptr[0] = "";
+		}
+		
+		for(i = new_syntax ? 1 : 0, ptr1 = strtok_r(payload, "|", &saveptr1); ptr1 && (i < 4) ; ptr1 = strtok_r(NULL, "|", &saveptr1), ++i)
 		{
 			// check if string is in cache
 			len2 = strlen(ptr1);
@@ -525,7 +536,11 @@ int32_t init_srvid(void)
 		}
 
 		*srvidasc++ = '\0';
-		srvidtmp = dyn_word_atob(srvidasc) & 0xFFFF;
+		if(new_syntax)
+			{ srvidtmp = dyn_word_atob(token) & 0xFFFF; }
+		else
+			{ srvidtmp = dyn_word_atob(srvidasc) & 0xFFFF; }
+			
 		if(srvidtmp < 0)
 		{
 			NULLFREE(tmpptr);
@@ -538,7 +553,7 @@ int32_t init_srvid(void)
 		}		
 		
 		srvid->ncaid = 0;
-		for(i = 0, ptr1 = strtok_r(token, ",", &saveptr1); (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1), i++)
+		for(i = 0, ptr1 = strtok_r(new_syntax ? srvidasc : token, ",", &saveptr1); (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1), i++)
 		{
 			srvid->ncaid++;
 		}
@@ -550,7 +565,7 @@ int32_t init_srvid(void)
 			return 0;
 		}
 		
-		ptr1 = token;
+		ptr1 = new_syntax ? srvidasc : token;
 		for(i = 0; i < srvid->ncaid; i++)
 		{
 			prov = strchr(ptr1,'@');

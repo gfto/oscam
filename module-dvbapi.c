@@ -3048,18 +3048,47 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 			dvbapi_stop_filter(demux_id, TYPE_SDT);
 
 			pidindex = demux[demux_id].pidindex;
+
+			get_providername_or_null(demux[demux_id].ECMpids[pidindex].PROVID, 
+										demux[demux_id].ECMpids[pidindex].CAID, tmp, sizeof(tmp));
+			
+			if(tmp[0] == '\0')
+			{
+				get_config_filename(tmp, sizeof(tmp), "oscam.provid");
+				
+				if((fpsave = fopen(tmp, "a")))
+				{
+					fprintf(fpsave, "\n%04X@%06X|%s|\n", demux[demux_id].ECMpids[pidindex].CAID, 
+								demux[demux_id].ECMpids[pidindex].PROVID, provider_name);
+					fclose(fpsave);
+				}
+
+				init_provid();
+			}
+			
 			get_servicename_or_null(cur_client(), service_id, demux[demux_id].ECMpids[pidindex].PROVID,
 				demux[demux_id].ECMpids[pidindex].CAID, tmp, sizeof(tmp));
 			
 			if(tmp[0] == '\0')
 			{
-				get_config_filename(tmp, sizeof(tmp), "oscam.srvid");
+				get_config_filename(tmp, sizeof(tmp), "oscam.srvid2");
 				
-				if((fpsave = fopen(tmp, "a")))
+				if(!access(tmp, F_OK) && (fpsave = fopen(tmp, "a")))
 				{
-					fprintf(fpsave, "\n%04X@%06X:%04X|%s|%s|\n", demux[demux_id].ECMpids[pidindex].CAID, 
-								demux[demux_id].ECMpids[pidindex].PROVID, service_id, provider_name, service_name);
+					fprintf(fpsave, "\n%04X:%04X@%06X|%s|\n", service_id, demux[demux_id].ECMpids[pidindex].CAID, 
+								demux[demux_id].ECMpids[pidindex].PROVID, service_name);
 					fclose(fpsave);
+				}
+				else
+				{
+					get_config_filename(tmp, sizeof(tmp), "oscam.srvid");
+					
+					if((fpsave = fopen(tmp, "a")))
+					{
+						fprintf(fpsave, "\n%04X@%06X:%04X|%s|%s|\n", demux[demux_id].ECMpids[pidindex].CAID, 
+									demux[demux_id].ECMpids[pidindex].PROVID, service_id, provider_name, service_name);
+						fclose(fpsave);
+					}					
 				}
 
 				init_srvid();
@@ -4847,7 +4876,7 @@ void dvbapi_write_ecminfo_file(struct s_client *client, ECM_REQUEST *er, uint8_t
 		else if(cfg.dvbapi_ecminfo_type == ECMINFO_TYPE_CCCAM)
 		{
 			char provider_name[128];
-			get_provider(er->caid, er->prid, provider_name, 128);
+			get_providername(er->prid, er->caid, provider_name, sizeof(provider_name));
 			if(provider_name[0])
 			{
 				fprintf(ecmtxt, "system: %s\ncaid: 0x%04X\nprovider: %s\nprovid: 0x%06X\npid: 0x%04X\n", 

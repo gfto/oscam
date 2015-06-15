@@ -491,7 +491,7 @@ static void monitor_process_details_reader(struct s_client *cl)
 
 		char *entresname = get_tiername(item->id & 0xFFFF, item->caid, buf);
 		if(!entresname[0])
-			{ entresname = get_provider(item->caid, item->provid, buf, sizeof(buf)); }
+			{ entresname = get_provider(item->provid, item->caid, buf, sizeof(buf)); }
 
 		snprintf(tmpbuf, sizeof(tmpbuf) - 1, "%s Type: %s CAID: %04X Provid: %06X ID: %08X%08X Class: %08X StartDate: %s ExpireDate: %s Name: %s",
 				 item->end > now ? "active " : "expired",

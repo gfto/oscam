@@ -1,6 +1,29 @@
 #include "globals.h"
 #include "oscam-string.h"
 
+
+static const char *get_providername_int(uint32_t provid, uint16_t caid)
+{
+	int32_t i;
+	struct s_provid *this = cfg.provid;
+
+	for(; this; this = this->next)
+	{
+		if(this->caid == caid)
+		{
+			for(i=0; i<this->nprovid; i++)
+			{
+				if(this->provid[i] == provid)
+				{
+					return this->prov;
+				}
+			}
+		}
+	}
+
+	return "";
+}
+
 /* Gets the servicename. */
 static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf, uint32_t buflen, bool return_unknown)
 {
@@ -36,7 +59,9 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 						if(0 == provid)
 						{
 							if(cl)
-							{ 
+							{
+								if(this->prov[0] == '\0' || !strcmp(this->prov, " "))
+									{ this->prov = get_providername_int(provid, caid); } 
 								cl->last_srvidptr = this;
 								cl->last_srvidptr_search_provid = provid;
 							}
@@ -53,7 +78,9 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 						if(this->caid[i].provid[j] == provid)
 						{
 							if(cl)
-							{ 
+							{
+								if(this->prov[0] == '\0' || !strcmp(this->prov, " "))
+									{ this->prov = get_providername_int(provid, caid); } 
 								cl->last_srvidptr = this;
 								cl->last_srvidptr_search_provid = provid;
 							}
@@ -70,6 +97,8 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 		{
 			if(cl)
 			{ 
+				if(provid_zero_match->prov[0] == '\0' || !strcmp(provid_zero_match->prov, " "))
+					{ provid_zero_match->prov = get_providername_int(provid, caid); } 
 				cl->last_srvidptr = provid_zero_match;
 				cl->last_srvidptr_search_provid = provid;
 			}
@@ -80,6 +109,8 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 		{
 			if(cl)
 			{ 
+				if(provid_any_match->prov[0] == '\0' || !strcmp(provid_any_match->prov, " "))
+					{ provid_any_match->prov = get_providername_int(provid, caid); } 
 				cl->last_srvidptr = provid_any_match;
 				cl->last_srvidptr_search_provid = provid;
 			}
@@ -203,10 +234,15 @@ char *get_tiername(uint16_t tierid, uint16_t caid, char *buf)
 }
 
 /* Gets the provider name. */
-char *get_provider(uint16_t caid, uint32_t provid, char *buf, uint32_t buflen)
+char *get_provider(uint32_t provid, uint16_t caid, char *buf, uint32_t buflen)
 {
 	int32_t i;
 	struct s_provid *this = cfg.provid;
+
+	if(!caid) {
+		buf[0] = '\0';
+		return (buf);
+	}
 
 	for(buf[0] = 0; this && (!buf[0]); this = this->next)
 	{
@@ -225,14 +261,19 @@ char *get_provider(uint16_t caid, uint32_t provid, char *buf, uint32_t buflen)
 	}
 
 	if(!buf[0]) { snprintf(buf, buflen, "%04X:%06X unknown", caid, provid); }
-	if(!caid) { buf[0] = '\0'; }
+		
 	return (buf);
 }
 
-char *get_providername(uint16_t caid, uint32_t provid, char *buf, uint32_t buflen)
+char *__get_providername(uint32_t provid, uint16_t caid, char *buf, uint32_t buflen, bool return_unknown)
 {
 	int32_t i;
 	struct s_provid *this = cfg.provid;
+
+	if(!caid) {
+		buf[0] = '\0';
+		return (buf);
+	}
 
 	for(buf[0] = 0; this && (!buf[0]); this = this->next)
 	{
@@ -248,10 +289,21 @@ char *get_providername(uint16_t caid, uint32_t provid, char *buf, uint32_t bufle
 		}
 	}
 
-	if(!buf[0]) { snprintf(buf, buflen, "%04X:%06X unknown", caid, provid); }
-	if(!caid) { buf[0] = '\0'; }
+	if(!buf[0] && return_unknown) { snprintf(buf, buflen, "%04X:%06X unknown", caid, provid); }
+
 	return (buf);
 }
+
+char *get_providername(uint32_t provid, uint16_t caid, char *buf, uint32_t buflen)
+{
+	return __get_providername(provid, caid, buf, buflen, true);
+}
+
+char *get_providername_or_null(uint32_t provid, uint16_t caid, char *buf, uint32_t buflen)
+{
+	return __get_providername(provid, caid, buf, buflen, false);
+}
+
 
 // Add provider description. If provider was already present, do nothing.
 void add_provider(uint16_t caid, uint32_t provid, const char *name, const char *sat, const char *lang)

@@ -215,33 +215,18 @@ static void refresh_lcd_file(void)
 				seconds = now - cl->lastecm;
 
 				if(cl->typ == 'c' && seconds < 15)
-				{
-					char provname[33], *lastprov = NULL;
-							
+				{		
 					type = "U";
 					idx = count_u;
 					label = cl->account->usr;
 					count_u++;
-
-					
-					if(cl->last_srvidptr && cl->last_srvidptr->prov)
-					{
-						if(!strlen(cl->last_srvidptr->prov) || !strcmp(cl->last_srvidptr->prov, " "))
-						{
-							lastprov = get_providername(cl->last_caid, cl->last_provid, provname, sizeof(provname));
-						}
-						else
-						{
-							lastprov = cl->last_srvidptr->prov;
-						}
-					}
 							
 					get_servicename(cl, cl->last_srvid, cl->last_provid, cl->last_caid, channame, sizeof(channame));
 					fprintf(fpsave, "%s%d | %-10.10s | %-10.10s:%-17.17s| % 4d\n",
 							type,
 							idx,
 							label,
-							lastprov ? lastprov : "",
+							cl->last_srvidptr && cl->last_srvidptr->prov ? cl->last_srvidptr->prov : "",
 							cl->last_srvidptr && cl->last_srvidptr->name ? cl->last_srvidptr->name : "",
 							cl->cwlastresptime);
 
