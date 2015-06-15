@@ -2967,7 +2967,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, uint8_t* source, uint32_t sourcelen)
 {
-	uint32_t offset = 0;
+	uint32_t i, offset = 0;
 	
 	if(sourcelen > buflen)
 		{ sourcelen = buflen; }
@@ -2988,6 +2988,16 @@ static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, uint8_t* s
 	memcpy(buf, source+offset, sourcelen-offset);
 	buf[sourcelen-offset] = '\0';	
 
+	for(i=0; i<strlen(buf); i++)
+	{
+		if(((uint8_t)buf[i]) >= 0x80 && ((uint8_t)buf[i]) <= 0x9F)
+		{
+			buf[i] = ' ';
+		}	
+	}
+	
+	trim(buf);
+	
 	return 1;
 }
 
