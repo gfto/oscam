@@ -53,8 +53,8 @@ function cleaninsert(deleteinsert) {
 	var tmp_array = existing_inserts.slice();
 	existing_inserts.length = 0;
 	var i2 = 0;
- 	for (i = 0; i < tmp_array.length; i++) {
- 		if (tmp_array[i] != deleteinsert){
+	for (i = 0; i < tmp_array.length; i++) {
+		if (tmp_array[i] != deleteinsert){
 			existing_inserts[i2] = tmp_array[i];
 			i2++; 
 		}
@@ -250,7 +250,7 @@ $(function () {
 				$('#color' + i).val($('.colorPicker_def_color').css('color'));
 				$('#color' + i).change();
 				$('#fcolor' + i).val($('.colorPicker_def_fcolor').css('color'));   
-    			$('#fcolor' + i).change();
+				$('#fcolor' + i).change();
 				$('#beep' + i).prop('checked', false);
 				localStorage['regex' + i] = '';
 				localStorage['color' + i] = '';
@@ -1449,7 +1449,7 @@ function updateStatuspage(data) {
 		var rcon = (data.oscam.status.rca - data.oscam.status.rco);
 		if($("#rco").length) {
 			$("#rcc").text(data.oscam.status.rcc);
-			$("#rca").text(data.oscam.status.rca);	
+			$("#rca").text(data.oscam.status.rca);
 			$("#rco").text(rcon);
 		} else {
 			$("#rhead").html('Readers <span id="rcc">' + data.oscam.status.rcc + '</span>/' + data.oscam.status.rca + ' (<span id="rco">' + rcon + '</span> of ' + data.oscam.status.rca + ' CARDOK)');
@@ -1458,7 +1458,7 @@ function updateStatuspage(data) {
 		$("#rhead").html('Readers <span id="rcc">' + data.oscam.status.rcc + '</span>/' + data.oscam.status.rca);
 	} else {
 		$("#rcc").text(data.oscam.status.rcc);
-		$("#rca").text(data.oscam.status.rca);	
+		$("#rca").text(data.oscam.status.rca);
 	}
 
 	//update proxy-headline
@@ -1466,7 +1466,7 @@ function updateStatuspage(data) {
 		var pcon = (data.oscam.status.pca - data.oscam.status.pco);
 		if($("#pco").length) {
 			$("#pcc").text(data.oscam.status.pcc);
-			$("#pca").text(data.oscam.status.pca);	
+			$("#pca").text(data.oscam.status.pca);
 			$("#pco").text(pcon);
 		} else {
 			$("#phead").html('Proxies <span id="pcc">' + data.oscam.status.pcc + '</span>/' + data.oscam.status.pca + ' (<span id="pco">' + pcon + '</span> of ' + data.oscam.status.pca + ' online)');
@@ -1475,7 +1475,7 @@ function updateStatuspage(data) {
 		$("#phead").html('Proxies <span id="pcc">' + data.oscam.status.pcc + '</span>/' + data.oscam.status.pca);
 	} else {
 		$("#pcc").text(data.oscam.status.pcc);
-		$("#pca").text(data.oscam.status.pca);	
+		$("#pca").text(data.oscam.status.pca);
 	}
 
 	// update footer
@@ -1567,7 +1567,7 @@ function waitForMsg() {
 
 	if (lockpoll > 0) {
 		/* assumed that previous poll is not finnished yet we not
-	   call new data and just set the next intervall */
+		call new data and just set the next intervall */
 		clearTimeout(timer_ID);
 		timer_ID = setTimeout("waitForMsg()", pollintervall);
 		return;

@@ -59,7 +59,7 @@ h4 {
 p.text-large-red {
 	font-weight:700;
 	font-size:large;
-	color:red
+	color:#F00
 }
 /* file.html, script.html */
 #filename,#filesubmit {
@@ -126,7 +126,7 @@ a.tooltip1 span {
 	white-space:nowrap
 }
 a.tooltip1 {
-	color:red
+	color:#F00
 }
 a:hover span {
 	display:block;
@@ -144,7 +144,7 @@ a img.icon {
 	background-color:#A00
 }
 a:hover img.icon {
-	background-color:red
+	background-color:#F00
 }
 span a {
 	text-align:center
@@ -488,7 +488,7 @@ div.sidlist {
 }
 div.sidlistclose {
 	float:right;
-	background-color:red;
+	background-color:#F00;
 	color:#FFF
 }
 /* message.html */
@@ -777,14 +777,14 @@ span.span_notifier {
 	margin-left:2px;
 	padding:1px 3px;
 	color:#FFF;
-	background-color:red
+	background-color:#F00
 }
 /* module-webif.c value for STATUS item ( more info in Changeset 6668 by alno )
  * Class for formating values in statusview column "Idle"
  * In new WebIf column Idle is not used. Info about Idle is in title */
 span.idlesec_normal, span.idlesec_alert {
 	font-size:9px;
-	color:red
+	color:#F00
 }
 /* readerconfig_cccambit.html, user_edit_anticasc.html and user_edit_cccam.html */
 span.global_conf {
@@ -803,7 +803,7 @@ span.e_expired {background-color:#FFF3E7}
 svg.graph {background-color:#F0F0F0;font-family:Arial;font-size:9px}
 rect.graph_bg {fill:white}
 rect.graph_button {fill:#A9D0F5}
-text.graph_error {text-anchor:middle;fill:red}
+text.graph_error {text-anchor:middle;fill:#F00}
 text.graph_top_txt {text-anchor:end}
 text.graph_grid_txt {text-anchor:end;fill:gray}
 path.graph_grid {stroke-opacity:0.5;stroke-width:0.7px;stroke:gray}
@@ -837,15 +837,15 @@ path.graph_curve {stroke-opacity:0.8;stroke-width:0.7px;fill:none}
 	padding-left:10px;
 	padding-right:8px
 }
-.sorting-asc, .sorting-desc {background-color:#aaa}
+.sorting-asc, .sorting-desc {background-color:#AAA}
 .readers .td-sorting,
 .users tr.offline .td-sorting,
 .users tr.disabled .td-sorting,
-.statsbalance .td-sorting {background-color: #d9d9d9}
-.users tr.connected .td-sorting {background-color: #eaea95}
-.users tr.online .td-sorting {background-color: #a6ea95}
-.users tr.online td.usercol6.td-sorting {background-color:#c8c8c8}
-.users tr.expired .td-sorting {background-color: #eaa69f}
+.statsbalance .td-sorting {background-color: #D9D9D9}
+.users tr.connected .td-sorting {background-color: #EAEA95}
+.users tr.online .td-sorting {background-color: #A6EA95}
+.users tr.online td.usercol6.td-sorting {background-color:#C8C8C8}
+.users tr.expired .td-sorting {background-color: #EAA69F}
 
 /* **************** 17. POLLING */
 /*  for UL in logpoll.html */
@@ -877,10 +877,10 @@ input.regexinput {
 	margin-top:10px
 }
 .colorPicker_def_color {
-	color:#ddd
+	color:#DDD
 }
 .colorPicker_def_fcolor {
-	color:#00f
+	color:#00F
 }
 div.colorPicker-picker {
 	height:16px;
@@ -888,7 +888,7 @@ div.colorPicker-picker {
 	display:inline;
 	margin:3px;
 	padding:4px 8px;
-	border:1px solid #ccc;
+	border:1px solid #CCC;
 	cursor:pointer;
 	line-height:16px;
 	font-size:0.75em;
@@ -931,7 +931,7 @@ div.colorPicker-swatch {
 	height:22px
 }
 #inc:hover,#dec:hover,.regexbutton:hover {
-	background-color:red
+	background-color:#F00
 }
 #nav li.pollselect {
 	display:inline;
