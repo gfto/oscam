@@ -1003,6 +1003,7 @@ static const struct config_list dvbapi_opts[] =
 	DEF_OPT_INT32("listen_port"	, OFS(dvbapi_listenport),	0),
 	DEF_OPT_INT32("delayer"		, OFS(dvbapi_delayer),		0),
 	DEF_OPT_INT8("ecminfo_type"		, OFS(dvbapi_ecminfo_type),	0),	
+	DEF_OPT_INT8("ecminfo_hide_ms_name"	, OFS(dvbapi_ecminfo_hide_ms_name),	0),
 	DEF_OPT_STR("user"		, OFS(dvbapi_usr),		NULL),
 	DEF_OPT_INT8("read_sdt"     , OFS(dvbapi_read_sdt),	1),
 	DEF_OPT_FUNC("boxtype"		, OFS(dvbapi_boxtype),		dvbapi_boxtype_fn),

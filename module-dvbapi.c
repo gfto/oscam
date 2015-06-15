@@ -4988,7 +4988,14 @@ void dvbapi_write_ecminfo_file(struct s_client *client, ECM_REQUEST *er, uint8_t
 
 			if(strftime(timebuf, 32, "%a %b %d %H:%M:%S %Y", &lt) != 0)
 			{
-				fprintf(ecmtxt, "%d msec -- %s\n", client->cwlastresptime, timebuf);
+				if(cfg.dvbapi_ecminfo_hide_ms_name)
+				{
+					fprintf(ecmtxt, "%d -- %s\n", client->cwlastresptime, timebuf);
+				}
+				else
+				{
+					fprintf(ecmtxt, "%d msec -- %s\n", client->cwlastresptime, timebuf);
+				}
 			}
 		}
 
