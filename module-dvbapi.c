@@ -2991,12 +2991,58 @@ static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, uint8_t* s
 	return 1;
 }
 
+static void dvbapi_create_srvid_line(int32_t demux_id, char *buffer, uint32_t buflen)
+{
+	int32_t i, j;
+	uint16_t caid_done[32], cur_caid;
+	uint8_t caid_done_count = 0, skip_caid;
+	int32_t pos = 0;
+	
+	for(i=0; i < demux[demux_id].ECMpidcount && i < 32; i++)
+	{
+		skip_caid = 0;
+		
+		for(j=0; j < caid_done_count; j++)
+		{
+			if(caid_done[j] == demux[demux_id].ECMpids[i].CAID)
+			{
+				skip_caid = 1;
+				break;
+			}
+		}
+		
+		if(skip_caid)
+		{
+			continue;	
+		}
+		
+		cur_caid = demux[demux_id].ECMpids[i].CAID;
+		pos += snprintf(buffer+pos, buflen-pos, "%s%04X", caid_done_count > 0 ? "," : "", cur_caid);
+		
+		for(j=i; j < demux[demux_id].ECMpidcount; j++)
+		{
+			if(demux[demux_id].ECMpids[j].PROVID == 0)
+			{
+				continue;
+			}
+			
+			if(cur_caid == demux[demux_id].ECMpids[j].CAID)
+			{
+				pos += snprintf(buffer+pos, buflen-pos, "@%06X", demux[demux_id].ECMpids[j].PROVID);	
+			}
+		}
+		
+		caid_done[caid_done_count] = demux[demux_id].ECMpids[i].CAID;
+		caid_done_count++;
+	}	
+}
+
 static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t length)
 {
 	uint8_t tag, data_length = 0, provider_name_length, service_name_length;
 	uint16_t service_id, descriptor_length, dpos;
 	uint32_t section_length, pos, pidindex;
-	char provider_name[64],  service_name[64], tmp[256];
+	char provider_name[64],  service_name[64], tmp[256], srvid_line[1024];;
 	FILE *fpsave;
 	
 	if(length < 3)
@@ -3083,8 +3129,8 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 				
 				if(!access(tmp, F_OK) && (fpsave = fopen(tmp, "a")))
 				{
-					fprintf(fpsave, "\n%04X:%04X@%06X|%s|", service_id, demux[demux_id].ECMpids[pidindex].CAID, 
-								demux[demux_id].ECMpids[pidindex].PROVID, service_name);
+					dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
+					fprintf(fpsave, "\n%04X:%s|%s|", service_id, srvid_line, service_name);
 					fclose(fpsave);
 				}
 				else
@@ -3093,8 +3139,8 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 					
 					if((fpsave = fopen(tmp, "a")))
 					{
-						fprintf(fpsave, "\n%04X@%06X:%04X|%s|%s|", demux[demux_id].ECMpids[pidindex].CAID, 
-									demux[demux_id].ECMpids[pidindex].PROVID, service_id, provider_name, service_name);
+						dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
+						fprintf(fpsave, "\n%s:%04X|%s|%s|", srvid_line, service_id, provider_name, service_name);
 						fclose(fpsave);
 					}					
 				}
