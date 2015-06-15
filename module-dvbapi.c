@@ -3866,7 +3866,7 @@ static void *dvbapi_main_local(void *cli)
 	int32_t ids[maxpfdsize], fdn[maxpfdsize], type[maxpfdsize];
 	struct SOCKADDR servaddr;
 	ssize_t len = 0;
-	uchar mbuf[1024];
+	uchar mbuf[2048];
 
 	struct s_auth *account;
 	int32_t ok = 0;
