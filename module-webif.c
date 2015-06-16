@@ -4768,7 +4768,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 							tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", cl->last_caid);
 							tpl_printf(vars, TPLADD, "CLIENTPROVID", "%06X", cl->last_provid);
 							tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", cl->last_srvid);
-							tpl_printf(vars, TPLADD, "CLIENTSRVPROVIDER", "%s%s",  xml_encode(vars, lastprovidername), (lastprovidername[0] != '\0' && !strcmp(lastprovidername, " ")) ? ": " : "");
+							tpl_printf(vars, TPLADD, "CLIENTSRVPROVIDER", "%s%s",  xml_encode(vars, lastprovidername), (lastprovidername[0] != '\0' && strcmp(lastprovidername, " ")) ? ": " : "");
 							tpl_addVar(vars, TPLADD, "CLIENTSRVNAME", xml_encode(vars, channame));
 							tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime ? cl->cwlastresptime : 1);
 							tpl_addVar(vars, TPLADD, "CLIENTSRVTYPE", cl->last_srvidptr && cl->last_srvidptr->type ? xml_encode(vars, cl->last_srvidptr->type) : "");
