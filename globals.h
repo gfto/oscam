@@ -35,7 +35,6 @@
 #include <termios.h>
 #include <inttypes.h>
 #include <sys/utsname.h>
-#include <iconv.h>
 
 /*
  * The following hack is taken from Linux: include/linux/kconfig.h

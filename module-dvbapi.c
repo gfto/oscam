@@ -2969,7 +2969,7 @@ static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, uint8_t* s
 {
 	uint32_t i, offset = 0;
 	uint8_t char_mode = 0;
-	iconv_t conv;
+	//iconv_t conv;
 	char charset[64], *tmpbuf, *ptr_in, *ptr_out;
 	size_t in_bytes, out_bytes;
 	
@@ -3046,6 +3046,10 @@ static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, uint8_t* s
 	}
 	else
 	{
+		NULLFREE(tmpbuf);
+		return 0;
+		
+		/*			
 		conv = iconv_open("UTF-8", charset);
 		if(conv != (iconv_t)-1)
 		{
@@ -3063,7 +3067,7 @@ static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, uint8_t* s
 			cs_log_dbg(D_DVBAPI, "sdt-info error: iconv_open failed");
 			NULLFREE(tmpbuf);
 			return 0;
-		}		
+		}*/	
 	}
 	
 	cs_log_dump_dbg(D_DVBAPI, (uint8_t*)buf, strlen(buf), "sdt-info dbg: encoded string: ");

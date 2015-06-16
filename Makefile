@@ -40,12 +40,6 @@ CONF_DIR = /usr/local/etc
 LIB_PTHREAD = -lpthread
 LIB_DL = -ldl
 
-ifeq ($(uname_S),Cygwin)
-LIB_ICONV = -liconv
-else
-LIB_ICONV =
-endif
-
 LIB_RT :=
 ifeq ($(uname_S),Linux)
 ifeq "$(shell ./config.sh --enabled CLOCKFIX)" "Y"
@@ -56,7 +50,7 @@ ifeq ($(uname_S),FreeBSD)
 LIB_DL :=
 endif
 
-override STD_LIBS := $(LIB_PTHREAD) $(LIB_DL) $(LIB_ICONV) $(LIB_RT)
+override STD_LIBS := $(LIB_PTHREAD) $(LIB_DL) $(LIB_RT)
 override STD_DEFS := -D'CS_SVN_VERSION="$(SVN_REV)"'
 override STD_DEFS += -D'CS_CONFDIR="$(CONF_DIR)"'
 

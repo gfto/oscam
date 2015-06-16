@@ -532,10 +532,6 @@ if (HAVE_PTHREAD)
     set (pthread_link "pthread")
 endif (HAVE_PTHREAD)
 
-if (OSCamOperatingSystem MATCHES "Windows/Cygwin")
-	set (iconv_link "iconv")
-endif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
-
 if (WITH_SSL)
     target_link_libraries (${exe_name} ssl)
 endif (WITH_SSL)
@@ -611,7 +607,7 @@ elseif (OSCamOperatingSystem MATCHES "SU980")
     target_link_libraries (${exe_name} rt entropic)
 endif (OSCamOperatingSystem MATCHES "Linux")
 
-target_link_libraries (${exe_name} ${libusb_link} ${rt_link} ${setupapi_link} ${ole32_link} ${shell32_link} ${pthread_link} ${iconv_link} ${dl_link} ${xcas_link})
+target_link_libraries (${exe_name} ${libusb_link} ${rt_link} ${setupapi_link} ${ole32_link} ${shell32_link} ${pthread_link} ${dl_link} ${xcas_link})
 
 #----------------------- put svnversion in the build ------------------------------
 # at every target rebuild, we re-build the oscam.c compilation...
