@@ -532,7 +532,9 @@ if (HAVE_PTHREAD)
     set (pthread_link "pthread")
 endif (HAVE_PTHREAD)
 
-    set (iconv_link "iconv")
+if (OSCamOperatingSystem MATCHES "Windows/Cygwin")
+	set (iconv_link "iconv")
+endif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
 
 if (WITH_SSL)
     target_link_libraries (${exe_name} ssl)

@@ -39,7 +39,13 @@ CONF_DIR = /usr/local/etc
 
 LIB_PTHREAD = -lpthread
 LIB_DL = -ldl
+
+ifeq ($(uname_S),Cygwin)
 LIB_ICONV = -liconv
+else
+LIB_ICONV =
+endif
+
 LIB_RT :=
 ifeq ($(uname_S),Linux)
 ifeq "$(shell ./config.sh --enabled CLOCKFIX)" "Y"
