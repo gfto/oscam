@@ -297,7 +297,7 @@ static uint8_t get_log_header(char *txt, int32_t txt_size, uint8_t* hdr_logcount
 	time_t walltime = cs_walltime(&log_ts);
 	localtime_r(&walltime, &lt);
 
-	tmp = snprintf(txt, txt_size,  "[LOG000]%4d/%02d/%02d %02d:%02d:%02d %8X %c ",
+	tmp = snprintf(txt, txt_size,  "[LOG000]%04d/%02d/%02d %02d:%02d:%02d %08X %c ",
 		lt.tm_year + 1900,
 		lt.tm_mon + 1,
 		lt.tm_mday,
