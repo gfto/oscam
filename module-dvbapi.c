@@ -2965,39 +2965,110 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	return demux_id;
 }
 
-static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, uint8_t* source, uint32_t sourcelen)
+static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, uint8_t* source, uint32_t sourcelen, uint16_t caid, uint32_t provid)
 {
 	uint32_t i, offset = 0;
+	uint8_t char_mode = 0;
+	iconv_t conv;
+	char charset[64], *tmpbuf, *ptr_in, *ptr_out;
+	size_t in_bytes, out_bytes;
+	
+	charset[0] = '\0';
+	
+	if(!cs_malloc(&tmpbuf, buflen))
+	{
+		return 0;	
+	}
 	
 	if(sourcelen > buflen)
 		{ sourcelen = buflen; }
 		
 	if(sourcelen > 0 && source[0] < 0x20)
 	{
-		if(source[0] == 0x10)
-			{ offset = 3; }
-		else if(source[0] == 0x11) // Unicode - ignore it for now
-			{ return 0; }
+		if(source[0] >= 1 && source[0] <= 5)
+			{ offset = 1; snprintf(charset, sizeof(charset), "ISO-8859-%u", 4+source[0]); }
+		
+		else if(source[0] == 0x10)
+			{ offset = 3; snprintf(charset, sizeof(charset), "ISO-8859-%u", source[2]); }
+			
+		else if(source[0] == 0x11)
+			{ offset = 1; snprintf(charset, sizeof(charset), "ISO-10646/UTF8"); }
+		
 		else
-			{ offset = 1; }
+			{ NULLFREE(tmpbuf); return 0; }
+			
+		char_mode = source[0];
 	}
-	
+
 	if(offset >= sourcelen)
-		{ return 0; }
+		{ NULLFREE(tmpbuf); return 0; }
 
-	memcpy(buf, source+offset, sourcelen-offset);
-	buf[sourcelen-offset] = '\0';	
+	memcpy(tmpbuf, source+offset, sourcelen-offset);
+	tmpbuf[sourcelen-offset] = '\0';	
 
-	for(i=0; i<strlen(buf); i++)
+	if(char_mode != 0x11)
 	{
-		if(((uint8_t)buf[i]) >= 0x80 && ((uint8_t)buf[i]) <= 0x9F)
+		for(i=0; i<strlen(tmpbuf); i++)
 		{
-			buf[i] = ' ';
-		}	
+			if(((uint8_t)tmpbuf[i]) >= 0x80 && ((uint8_t)tmpbuf[i]) <= 0x9F)
+			{
+				tmpbuf[i] = ' ';
+			}	
+		}
 	}
 	
-	trim(buf);
+	memset(buf, 0, buflen);
 	
+	// some providers do not follow dvb standard, 
+	// and use another char table by default, fix them here
+	if(char_mode == 0)
+	{
+		if(caid == 0x0500 && provid == 0x030B00)
+			{ cs_strncpy(charset, "ISO-8859-9", sizeof(charset)); }
+	}
+	
+	ptr_in = tmpbuf;
+	in_bytes = sourcelen-offset;
+	ptr_out = buf;
+	out_bytes = buflen;
+	
+	cs_log_dbg(D_DVBAPI, "sdt-info dbg: char_mode: %u offset: %u - charset: %s", char_mode, offset, charset);
+	cs_log_dump_dbg(D_DVBAPI, (uint8_t*)tmpbuf, sourcelen-offset, "sdt-info dbg: raw string: ");
+	
+	if(charset[0] == '\0')
+	{
+		if(ISO6937toUTF8((const unsigned char**)&ptr_in, &in_bytes, (unsigned char**)&ptr_out, &out_bytes) == (size_t)(-1))
+		{
+			cs_log_dbg(D_DVBAPI, "sdt-info error: ISO6937toUTF8 failed");
+			NULLFREE(tmpbuf);
+			return 0;			
+		}
+	}
+	else
+	{
+		conv = iconv_open("UTF-8", charset);
+		if(conv != (iconv_t)-1)
+		{
+			if(iconv(conv, &ptr_in, &in_bytes, &ptr_out, &out_bytes) == (size_t)-1)
+			{
+				cs_log_dbg(D_DVBAPI, "sdt-info error: iconv failed");
+				iconv_close(conv);
+				NULLFREE(tmpbuf);
+				return 0;
+			}
+			iconv_close(conv);
+		}
+		else
+		{
+			cs_log_dbg(D_DVBAPI, "sdt-info error: iconv_open failed");
+			NULLFREE(tmpbuf);
+			return 0;
+		}		
+	}
+	
+	cs_log_dump_dbg(D_DVBAPI, (uint8_t*)buf, strlen(buf), "sdt-info dbg: encoded string: ");
+	
+	NULLFREE(tmpbuf);
 	return 1;
 }
 
@@ -3101,17 +3172,19 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 			if((dpos+4+provider_name_length+1+service_name_length) > descriptor_length)
 				{ break; }
 			
-			if(!dvbapi_extract_sdt_string(provider_name, sizeof(provider_name), buffer+pos+dpos+4, provider_name_length))
+			pidindex = demux[demux_id].pidindex;
+			
+			if(!dvbapi_extract_sdt_string(provider_name, sizeof(provider_name), buffer+pos+dpos+4, provider_name_length,
+					demux[demux_id].ECMpids[pidindex].CAID, demux[demux_id].ECMpids[pidindex].PROVID))
 				{ break; }
 				
-			if(!dvbapi_extract_sdt_string(service_name, sizeof(service_name), buffer+pos+dpos+4+provider_name_length+1, service_name_length))
+			if(!dvbapi_extract_sdt_string(service_name, sizeof(service_name), buffer+pos+dpos+4+provider_name_length+1, service_name_length,
+					demux[demux_id].ECMpids[pidindex].CAID, demux[demux_id].ECMpids[pidindex].PROVID))
 				{ break; }
 						
 			cs_log("sdt-info (provider: %s - channel: %s)", provider_name, service_name);
 
 			dvbapi_stop_filter(demux_id, TYPE_SDT);
-
-			pidindex = demux[demux_id].pidindex;
 
 			get_providername_or_null(demux[demux_id].ECMpids[pidindex].PROVID, 
 										demux[demux_id].ECMpids[pidindex].CAID, tmp, sizeof(tmp));
@@ -4044,7 +4117,9 @@ static void *dvbapi_main_local(void *cli)
 						cs_ftime(&demux[i].emmstart); // trick to let emm fetching start after 30 seconds to speed up zapping
 						dvbapi_start_filter(i, demux[i].pidindex, 0x001, 0x001, 0x01, 0x01, 0xFF, 0, TYPE_EMM); //CAT
 					}
-					
+				}
+				
+				if(gone > 10*1000){
 					if(do_sdt_start)
 					{
 						dvbapi_start_sdt_filter(i);
