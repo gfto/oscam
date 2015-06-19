@@ -353,7 +353,7 @@ struct cc_srvid *is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good)
 	return srvid;
 }
 
-#define BLOCKING_SECONDS 60
+#define BLOCKING_SECONDS 10
 
 void add_sid_block(struct cc_card *card, struct cc_srvid *srvid_blocked, bool temporary)
 {
