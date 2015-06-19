@@ -1301,7 +1301,9 @@ function updateStatuspage(data) {
 			} else {
 				// picon is not delivered in JSON - we set the text of column
 				if (item.request.chname && item.request.srvid != '0000') {
-					$(uid + " > td.statuscol13").html(item.request.chprovider + item.request.chname);
+					$(uid + " > td.statuscol13").html('<a href="files.html?file=oscam.srvid"/>');
+					$(uid + " > td.statuscol13 > a").html(item.request.chprovider + item.request.chname);
+					$(uid + " > td.statuscol13 > a").attr('title', item.request.chprovider + item.request.chname);
 				} else {
 					$(uid + " > td.statuscol13").html('');
 				}
