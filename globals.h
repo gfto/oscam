@@ -1435,6 +1435,7 @@ struct s_reader                                     //contains device info, read
 	struct timeb    lb_last;                        //time for oldest reader
 	LLIST           *lb_stat;                       //loadbalancer reader statistics
 	CS_MUTEX_LOCK   lb_stat_lock;
+	int32_t         lb_stat_busy;                   //do not add while saving
 #endif
 
 	AES_ENTRY       *aes_list;                      // multi AES linked list

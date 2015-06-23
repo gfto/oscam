@@ -31,6 +31,7 @@ extern CS_MUTEX_LOCK ecmcache_lock;
 extern struct ecm_request_t *ecmcwcache;
 
 static int32_t stat_load_save;
+
 static struct timeb last_housekeeping;
 
 void init_stat(void)
@@ -128,7 +129,7 @@ void load_stat_from_file(void)
 	int32_t type = 0;
 	char *ptr, *saveptr1 = NULL;
 	char *split[12];
-
+	
 	while(fgets(line, LINESIZE, file))
 	{
 		if(!line[0] || line[0] == '#' || line[0] == ';')
@@ -212,7 +213,7 @@ void load_stat_from_file(void)
 	}
 	fclose(file);
 	NULLFREE(line);
-
+	
 	cs_ftime(&te);
 #ifdef WITH_DEBUG
 	int64_t load_time = comp_timeb(&te, &ts);
@@ -264,11 +265,11 @@ static READER_STAT *get_stat_lock(struct s_reader *rdr, STAT_QUERY *q, int8_t lo
 	if(lock) { cs_readunlock(&rdr->lb_stat_lock); }
 
 	//Move stat to list start for faster access:
-	//  if (i > 10 && s) {
-	//      if (lock) cs_writelock(&rdr->lb_stat_lock);
-	//      ll_iter_move_first(&it);
-	//      if (lock) cs_writeunlock(&rdr->lb_stat_lock);
-	//  } Corsair removed, could cause crashes!
+	if (i > 10 && s && !rdr->lb_stat_busy) {
+		if (lock) cs_writelock(&rdr->lb_stat_lock);
+		ll_iter_move_first(&it);
+		if (lock) cs_writeunlock(&rdr->lb_stat_lock);
+	}
 
 	return s;
 }
@@ -341,6 +342,8 @@ static void save_stat_to_file_thread(void)
 
 		if(rdr->lb_stat)
 		{
+			rdr->lb_stat_busy = 1;
+			
 			cs_writelock(&rdr->lb_stat_lock);
 			LL_ITER it = ll_iter_create(rdr->lb_stat);
 			READER_STAT *s;
@@ -371,6 +374,8 @@ static void save_stat_to_file_thread(void)
 				//              }
 			}
 			cs_writeunlock(&rdr->lb_stat_lock);
+			
+			rdr->lb_stat_busy = 0;
 		}
 	}
 
@@ -405,6 +410,9 @@ static void inc_fail(READER_STAT *s)
 
 static READER_STAT *get_add_stat(struct s_reader *rdr, STAT_QUERY *q)
 {
+	if (rdr->lb_stat_busy)
+		return NULL;
+		
 	if(!rdr->lb_stat)
 	{
 		rdr->lb_stat = ll_create("lb_stat");
@@ -428,7 +436,7 @@ static READER_STAT *get_add_stat(struct s_reader *rdr, STAT_QUERY *q)
 			cs_ftime(&s->last_received);
 			s->fail_factor = 0;
 			s->ecm_count = 0;
-			ll_append(rdr->lb_stat, s);
+			ll_prepend(rdr->lb_stat, s);
 		}
 	}
 	cs_writeunlock(&rdr->lb_stat_lock);
@@ -477,7 +485,7 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 	//        - = causes loadbalancer to block this reader for this caid/prov/sid
 
 
-	if(!rdr || !er || !cfg.lb_mode || !er->ecmlen || !er->client)
+	if(!rdr || !er || !cfg.lb_mode || !er->ecmlen || !er->client || rdr->lb_stat_busy)
 		{ return; }
 
 	struct s_client *cl = rdr->client;
@@ -567,6 +575,7 @@ static void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, in
 	get_stat_query(er, &q);
 	READER_STAT *s;
 	s = get_add_stat(rdr, &q);
+	if (!s) return;
 
 	struct timeb now;
 	cs_ftime(&now);
@@ -656,6 +665,8 @@ int32_t clean_stat_by_rc(struct s_reader *rdr, int8_t rc, int8_t inverse)
 	int32_t count = 0;
 	if(rdr && rdr->lb_stat)
 	{
+		if (rdr->lb_stat_busy) return 0;
+		rdr->lb_stat_busy = 1;
 		cs_writelock(&rdr->lb_stat_lock);
 		READER_STAT *s;
 		LL_ITER itr = ll_iter_create(rdr->lb_stat);
@@ -668,6 +679,7 @@ int32_t clean_stat_by_rc(struct s_reader *rdr, int8_t rc, int8_t inverse)
 			}
 		}
 		cs_writeunlock(&rdr->lb_stat_lock);
+		rdr->lb_stat_busy = 0;
 	}
 	return count;
 }
@@ -690,7 +702,9 @@ int32_t clean_stat_by_id(struct s_reader *rdr, uint16_t caid, uint32_t prid, uin
 	int32_t count = 0;
 	if(rdr && rdr->lb_stat)
 	{
-
+		if (rdr->lb_stat_busy) return 0;
+		
+		rdr->lb_stat_busy = 1;
 		cs_writelock(&rdr->lb_stat_lock);
 		READER_STAT *s;
 		LL_ITER itr = ll_iter_create(rdr->lb_stat);
@@ -707,8 +721,8 @@ int32_t clean_stat_by_id(struct s_reader *rdr, uint16_t caid, uint32_t prid, uin
 				break; // because the entry should unique we can left here
 			}
 		}
-
 		cs_writeunlock(&rdr->lb_stat_lock);
+		rdr->lb_stat_busy = 0;
 	}
 	return count;
 }
@@ -1785,6 +1799,7 @@ static void housekeeping_stat_thread(void)
 	{
 		if(rdr->lb_stat)
 		{
+			rdr->lb_stat_busy = 1;
 			cs_writelock(&rdr->lb_stat_lock);
 			LL_ITER it = ll_iter_create(rdr->lb_stat);
 			READER_STAT *s;
@@ -1799,6 +1814,7 @@ static void housekeeping_stat_thread(void)
 				}
 			}
 			cs_writeunlock(&rdr->lb_stat_lock);
+			rdr->lb_stat_busy = 0;
 		}
 	}
 	cs_readunlock(&readerlist_lock);
