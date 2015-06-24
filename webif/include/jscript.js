@@ -1255,7 +1255,7 @@ function updateStatuspage(data) {
 			$(uid + " > td.statuscol9").attr('title', item.protocolext);
 		}
 		if (!is_nopoll('statuscol12')) {
-			$(uid + " > td.statuscol12").text(item.request.caid + '@' + item.request.provid + ':' + item.request.srvid);
+			$(uid + " > td.statuscol12").text(item.request.srvid + ':' + item.request.caid + '@' + item.request.provid);
 		}
 
 		if (!is_nopoll('statuscol13')) {
@@ -1269,7 +1269,7 @@ function updateStatuspage(data) {
 					var image = $(uid + " > td.statuscol13 > a > img.statususericon");
 					if (image.attr('src') != 'image?i=IC_' + item.request.picon) {
 						// set title of link as tooltip
-						$(uid + " > td.statuscol13 > a").attr('title', item.request.chprovider + item.request.chname);
+						$(uid + " > td.statuscol13 > a").attr('title', item.request.chname + item.request.chprovider);
 						image.hide();
 						image.attr('src', 'image?i=IC_' + item.request.picon);
 						image.fadeIn('slow');
@@ -1285,7 +1285,7 @@ function updateStatuspage(data) {
 						$(uid + " > td.statuscol13").append('<a href="files.html?file=oscam.srvid"/>');
 					}
 					// set title of link as tooltip
-					$(uid + " > td.statuscol13 > a").attr('title', item.request.chprovider + item.request.chname);
+					$(uid + " > td.statuscol13 > a").attr('title', item.request.chname + item.request.chprovider);
 
 					// just to be sure that class of image is set
 					if ($(uid + " > td.statuscol13 > a > img").length) {
@@ -1302,8 +1302,8 @@ function updateStatuspage(data) {
 				// picon is not delivered in JSON - we set the text of column
 				if (item.request.chname && item.request.srvid != '0000') {
 					$(uid + " > td.statuscol13").html('<a href="files.html?file=oscam.srvid"/>');
-					$(uid + " > td.statuscol13 > a").html(item.request.chprovider + item.request.chname);
-					$(uid + " > td.statuscol13 > a").attr('title', item.request.chprovider + item.request.chname);
+					$(uid + " > td.statuscol13 > a").html(item.request.chname + item.request.chprovider);
+					$(uid + " > td.statuscol13 > a").attr('title', item.request.chname + item.request.chprovider);
 				} else {
 					$(uid + " > td.statuscol13").html('');
 				}
