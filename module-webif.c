@@ -5878,6 +5878,7 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 {
 	bool writable = false;
 	const struct files *entry;
+	char fname[256];
 	static struct files config_files[] =
 	{
 		{ "oscam.version",   MNU_CFG_FVERSION,  FTYPE_VERSION },
@@ -5918,8 +5919,9 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 
 	tpl_addVar(vars, TPLADD, "APIFILENAME", "null");
 	tpl_addVar(vars, TPLADD, "APIWRITABLE", "0");
-
-	if(file_exists("oscam.srvid"))
+	
+	get_config_filename(fname, sizeof(fname), "oscam.srvid");
+	if(file_exists(fname))
 	{
 		tpl_printf(vars, TPLADD, "SRVID", "%s", "oscam.srvid");
 		tpl_printf(vars, TPLADD, "SRVIDSUB", "%s", "oscam.srvid2");
