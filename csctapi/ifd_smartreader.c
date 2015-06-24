@@ -34,6 +34,8 @@
 
 #define NUM_TXFERS 2
 
+static int8_t init_lock = 0;
+
 static CS_MUTEX_LOCK sr_lock;
 // to debug rdrtype and ftdi chip type string value in logs instead off the enumarated value
 static const char *const rdrtype_str[6] = {"SR","Infinity", "SRv2", "TripleP1", "TripleP2", "TripleP3"};
@@ -1706,6 +1708,7 @@ static int32_t SR_Close(struct s_reader *reader)
 		}
 	}
 
+	init_lock = 0;
 	reader->handle_nr = 0;
 	rdr_log(reader,"SR: smartreader closed");
 
@@ -1792,12 +1795,10 @@ int32_t sr_write_settings(struct s_reader *reader, struct s_cardreader_settings 
 	return OK;
 }
 
-static pthread_mutex_t init_lock_mutex;
-
 static int32_t sr_init_locks(struct s_reader *UNUSED(reader))
 {
-	
-	if (pthread_mutex_trylock(&init_lock_mutex)) {
+	if (!init_lock) {
+	    init_lock = 1;
 		cs_lock_create(&sr_lock, "sr_lock", 5000);
 	}
 
