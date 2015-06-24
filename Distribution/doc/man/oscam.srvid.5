@@ -5,13 +5,13 @@
 service ID mappings
 .SH DESCRIPTIONS
 .PP
-\fBCAID[,CAID]...\fP:\fBservice ID\fP|\fB[provider]\fP|\fB[name]\fP|\fB[type]\fP|\fB[description]\fP
+\fBCAID[,CAID]...\fP:\fBproviderID[,providerID]...\fP:\fBserviceID\fP|\fB[provider]\fP|\fB[name]\fP|\fB[type]\fP|\fB[description]\fP
 
 .RS 3n
-mapping between CAID, service ID, provider, name, type and description of service
+mapping between CAID, provider ID,service ID, provider, name, type and description of service
 .RE
 .SH ANNONTATIONS
-\fIPlease use Unix text file format only.\fR
+\fIPlease use Unix text file format only. Maximum: 10 CAIDs, 5 provider IDs\fR
 
 You only need the \fBoscam.srvid\fR when using the monitor or the web interface. 
 \fIFor saving memory consumption only insert the service IDs you really need.\fR Some 

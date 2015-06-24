@@ -18,16 +18,16 @@ service ID mappings
 
 <P>
 
-<B>CAID[,CAID]...</B>:<B>service ID</B>|<B>[provider]</B>|<B>[name]</B>|<B>[type]</B>|<B>[description]</B>
+<B>CAID[,CAID]...</B>:<B>providerID[,providerID]...</B>:<B>serviceID</B>|<B>[provider]</B>|<B>[name]</B>|<B>[type]</B>|<B>[description]</B>
 <P>
 <DL COMPACT><DT><DD>
-mapping between CAID, service ID, provider, name, type and description of service
+mapping between CAID, provider ID,service ID, provider, name, type and description of service
 </DL>
 
 <A NAME="lbAE">&nbsp;</A>
 <H2>ANNONTATIONS</H2>
 
-<I>Please use Unix text file format only.</I>
+<I>Please use Unix text file format only. Maximum: 10 CAIDs, 5 provider IDs</I>
 <P>
 You only need the <B>oscam.srvid</B> when using the monitor or the web interface. 
 <I>For saving memory consumption only insert the service IDs you really need.</I> Some 
