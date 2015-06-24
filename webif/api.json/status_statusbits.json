@@ -23,7 +23,7 @@
     "chantitle":"##LASTCHANNELTITLE##",
     "msvalue":"##MSVALUE##",
     "lbvalue":"##LBLRPSTRVALUE##",
-    "$": "##CLIENTSRVPROVIDER####CLIENTSRVNAME##"
+    "$": "##CLIENTSRVNAME####CLIENTSRVPROVIDER##"
 },
 "times": {
     "login": "##CLIENTLOGINDATE##",
