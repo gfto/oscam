@@ -66,6 +66,8 @@ enum refreshtypes { REFR_ACCOUNTS, REFR_READERS, REFR_CLIENTS, REFR_SERVER, REFR
 static struct pstat p_stat_cur;
 static struct pstat p_stat_old;
 
+static bool use_srvid2 = false;
+
 /* constants for menuactivating */
 #define MNU_STATUS 0
 #define MNU_CONFIG 1
@@ -4432,6 +4434,8 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	if(cfg.http_hide_idle_clients > 0) { tpl_addVar(vars, TPLADD, "HIDEIDLECLIENTSSELECTED1", "selected"); }
 	else { tpl_addVar(vars, TPLADD, "HIDEIDLECLIENTSSELECTED0", "selected"); }
 
+	tpl_addVar(vars, TPLADD, "SRVIDFILE", use_srvid2 ? "oscam.srvid2" : "oscam.srvid");	 
+
 	int32_t user_count_all = 0, user_count_shown = 0, user_count_active = 0;
 	int32_t reader_count_all = 0, reader_count_conn = 0, reader_count_off = 0;
 	int32_t proxy_count_all = 0, proxy_count_conn = 0, proxy_count_off = 0;
@@ -5196,7 +5200,6 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	int32_t expired_or_disabled_users = 0;
 	int32_t connected_users = 0;
 	int32_t online_users = 0;
-	char fname[256];
 	
 	for(account = cfg.account; (account); account = account->next)
 	{
@@ -5363,8 +5366,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 			tpl_printf(vars, TPLADD, "PCO", "%d", proxy_count_off);
 			tpl_printf(vars, TPLADD, "PCA", "%d", proxy_count_all);
 			tpl_printf(vars, TPLADD, "PICONENABLED", "%d", cfg.http_showpicons?1:0);
-			get_config_filename(fname, sizeof(fname), "oscam.srvid2");
-			tpl_printf(vars, TPLADD, "SRVIDFILE", "%s", file_exists(fname) ? "oscam.srvid2" : "oscam.srvid");
+			tpl_printf(vars, TPLADD, "SRVIDFILE", "%s", use_srvid2 ? "oscam.srvid2" : "oscam.srvid");
 			return tpl_getTpl(vars, "JSONSTATUS");
 		}
 	}
@@ -5876,9 +5878,8 @@ struct files
 
 static char *send_oscam_files(struct templatevars * vars, struct uriparams * params, int8_t apicall)
 {
-	bool writable = false, use_srvid2 = false;
+	bool writable = false;
 	const struct files *entry;
-	char fname[256];
 	static struct files config_files[] =
 	{
 		{ "oscam.version",   MNU_CFG_FVERSION,  FTYPE_VERSION },
@@ -5904,9 +5905,6 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 		{ NULL, 0, 0 },
 	};
 
-	get_config_filename(fname, sizeof(fname), "oscam.srvid2");
-	use_srvid2 = file_exists(fname);
-	
 	if(use_srvid2)
 	{
 		config_files[6].menu_id = MNU_CFG_FSRVID2;
@@ -8272,7 +8270,7 @@ void webif_client_init_lastreader(struct s_client * client, ECM_REQUEST * er, st
 
 void webif_init(void)
 {
-	char buf[8];
+	char buf[8], fname[256];
 	snprintf(buf, 8, "%'d", 7);
 	if(strcmp(buf, "7"))
 	{
@@ -8284,6 +8282,10 @@ void webif_init(void)
 		cs_log("http disabled");
 		return;
 	}
+	
+	get_config_filename(fname, sizeof(fname), "oscam.srvid2");
+	use_srvid2 = file_exists(fname);
+					
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
