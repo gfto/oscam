@@ -2965,112 +2965,102 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	return demux_id;
 }
 
-static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, uint8_t* source, uint32_t sourcelen, uint16_t caid, uint32_t provid)
+static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, uint8_t* source, uint32_t sourcelen)
 {
-	uint32_t i, offset = 0;
-	uint8_t char_mode = 0;
-	//iconv_t conv;
-	char charset[64], *tmpbuf, *ptr_in, *ptr_out;
+	uint32_t i, j, offset = 0;
+	int8_t iso_mode = -1;
+	char *tmpbuf, *ptr_in, *ptr_out;
 	size_t in_bytes, out_bytes;
-	
-	charset[0] = '\0';
 	
 	if(!cs_malloc(&tmpbuf, buflen))
 	{
 		return 0;	
 	}
 	
-	if(sourcelen > buflen)
-		{ sourcelen = buflen; }
+	if((sourcelen + 1) > buflen)
+		{ sourcelen = buflen - 1; }
 		
 	if(sourcelen > 0 && source[0] < 0x20)
 	{
 		if(source[0] >= 1 && source[0] <= 5)
-			{ offset = 1; snprintf(charset, sizeof(charset), "ISO-8859-%u", 4+source[0]); }
+			{ offset = 1; iso_mode = 4+source[0]; }
 		
 		else if(source[0] == 0x10)
-			{ offset = 3; snprintf(charset, sizeof(charset), "ISO-8859-%u", source[2]); }
+			{ offset = 3; iso_mode = source[2]; }
 			
 		else if(source[0] == 0x11)
-			{ offset = 1; snprintf(charset, sizeof(charset), "ISO-10646/UTF8"); }
+			{ offset = 1; iso_mode = - 2;}
 		
 		else
 			{ NULLFREE(tmpbuf); return 0; }
-			
-		char_mode = source[0];
 	}
 
 	if(offset >= sourcelen)
 		{ NULLFREE(tmpbuf); return 0; }
 
-	memcpy(tmpbuf, source+offset, sourcelen-offset);
-	tmpbuf[sourcelen-offset] = '\0';	
-
-	if(char_mode != 0x11)
+	if(iso_mode != -2)
 	{
-		for(i=0; i<strlen(tmpbuf); i++)
+		for(i=0, j=0; i<(sourcelen-offset); i++)
 		{
-			if(((uint8_t)tmpbuf[i]) >= 0x80 && ((uint8_t)tmpbuf[i]) <= 0x9F)
+			if(((uint8_t)source[offset+i]) >= 0x80 && ((uint8_t)source[offset+i]) <= 0x9F)
 			{
-				tmpbuf[i] = ' ';
-			}	
+				continue;
+			}
+			
+			tmpbuf[j] = source[offset+i];
+			j++;
 		}
-	}
-	
-	memset(buf, 0, buflen);
-	
-	// some providers do not follow dvb standard, 
-	// and use another char table by default, fix them here
-	if(char_mode == 0)
-	{
-		if(caid == 0x0500 && provid == 0x030B00)
-			{ cs_strncpy(charset, "ISO-8859-9", sizeof(charset)); }
-	}
-	
-	ptr_in = tmpbuf;
-	in_bytes = sourcelen-offset;
-	ptr_out = buf;
-	out_bytes = buflen;
-	
-	cs_log_dbg(D_DVBAPI, "sdt-info dbg: char_mode: %u offset: %u - charset: %s", char_mode, offset, charset);
-	cs_log_dump_dbg(D_DVBAPI, (uint8_t*)tmpbuf, sourcelen-offset, "sdt-info dbg: raw string: ");
-	
-	if(charset[0] == '\0')
-	{
-		if(ISO6937toUTF8((const unsigned char**)&ptr_in, &in_bytes, (unsigned char**)&ptr_out, &out_bytes) == (size_t)(-1))
-		{
-			cs_log_dbg(D_DVBAPI, "sdt-info error: ISO6937toUTF8 failed");
-			NULLFREE(tmpbuf);
-			return 0;			
-		}
+		tmpbuf[j] = '\0';
 	}
 	else
 	{
-		NULLFREE(tmpbuf);
-		return 0;
+		memcpy(buf, source+offset, sourcelen-offset);
+		buf[sourcelen-offset] = '\0';	
 		
-		/*			
-		conv = iconv_open("UTF-8", charset);
-		if(conv != (iconv_t)-1)
+		cs_log_dbg(D_DVBAPI, "sdt-info dbg: iso_mode: -2 offset: %u", offset);
+	}
+	
+#ifdef READ_SDT_CHARSETS
+	if(iso_mode != -2)
+	{
+		memset(buf, 0, buflen);
+		
+		ptr_in = tmpbuf;
+		in_bytes = strlen(tmpbuf);
+		ptr_out = buf;
+		out_bytes = buflen;
+		
+		cs_log_dbg(D_DVBAPI, "sdt-info dbg: iso_mode: %d offset: %u", iso_mode, offset);
+		cs_log_dump_dbg(D_DVBAPI, (uint8_t*)tmpbuf, in_bytes, "sdt-info dbg: raw string: ");
+		
+		if(iso_mode == -1)
 		{
-			if(iconv(conv, &ptr_in, &in_bytes, &ptr_out, &out_bytes) == (size_t)-1)
+			if(ISO6937toUTF8((const unsigned char**)&ptr_in, &in_bytes, (unsigned char**)&ptr_out, &out_bytes) == (size_t)(-1))
 			{
-				cs_log_dbg(D_DVBAPI, "sdt-info error: iconv failed");
-				iconv_close(conv);
+				cs_log_dbg(D_DVBAPI, "sdt-info error: ISO6937toUTF8 failed");
 				NULLFREE(tmpbuf);
 				return 0;
 			}
-			iconv_close(conv);
 		}
 		else
 		{
-			cs_log_dbg(D_DVBAPI, "sdt-info error: iconv_open failed");
-			NULLFREE(tmpbuf);
-			return 0;
-		}*/	
+			if(ISO8859toUTF8(iso_mode, (const unsigned char**)&ptr_in, &in_bytes, (unsigned char**)&ptr_out, &out_bytes) == (size_t)(-1))
+			{
+				cs_log_dbg(D_DVBAPI, "sdt-info error: ISO8859toUTF8 failed");
+				NULLFREE(tmpbuf);
+				return 0;
+			}
+		}
 	}
-	
+
 	cs_log_dump_dbg(D_DVBAPI, (uint8_t*)buf, strlen(buf), "sdt-info dbg: encoded string: ");
+#else
+	if(iso_mode != -2)
+	{
+		cs_strncpy(buf, tmpbuf, buflen);
+		cs_log_dbg(D_DVBAPI, "sdt-info warning: your build of oscam does not support iso-to-utf8 conversion, special chars may be corrupted!");
+	}
+#endif
 	
 	NULLFREE(tmpbuf);
 	return 1;
@@ -3178,12 +3168,10 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 			
 			pidindex = demux[demux_id].pidindex;
 			
-			if(!dvbapi_extract_sdt_string(provider_name, sizeof(provider_name), buffer+pos+dpos+4, provider_name_length,
-					demux[demux_id].ECMpids[pidindex].CAID, demux[demux_id].ECMpids[pidindex].PROVID))
+			if(!dvbapi_extract_sdt_string(provider_name, sizeof(provider_name), buffer+pos+dpos+4, provider_name_length))
 				{ break; }
 				
-			if(!dvbapi_extract_sdt_string(service_name, sizeof(service_name), buffer+pos+dpos+4+provider_name_length+1, service_name_length,
-					demux[demux_id].ECMpids[pidindex].CAID, demux[demux_id].ECMpids[pidindex].PROVID))
+			if(!dvbapi_extract_sdt_string(service_name, sizeof(service_name), buffer+pos+dpos+4+provider_name_length+1, service_name_length))
 				{ break; }
 						
 			cs_log("sdt-info (provider: %s - channel: %s)", provider_name, service_name);

@@ -703,6 +703,8 @@ int32_t b64decode(unsigned char *result)
 }
 
 
+#ifdef READ_SDT_CHARSETS
+
 // ISO_6937 function taken from VLC
 /*****************************************************************************
  * Local conversion routine from ISO_6937 to UTF-8 charset. Support for this
@@ -710,7 +712,7 @@ int32_t b64decode(unsigned char *result)
  * The conversion table adds Euro sign (0xA4) as per ETSI EN 300 468 Annex A
  *****************************************************************************/
 
-static const uint16_t to_ucs4[128] =
+static const uint16_t iso_6937_to_ucs4[128] =
 {
   /* 0x80 */ 0x0080, 0x0081, 0x0082, 0x0083, 0x0084, 0x0085, 0x0086, 0x0087,
   /* 0x88 */ 0x0088, 0x0089, 0x008a, 0x008b, 0x008c, 0x008d, 0x008e, 0x008f,
@@ -732,7 +734,7 @@ static const uint16_t to_ucs4[128] =
 
 /* The outer array range runs from 0xc1 to 0xcf, the inner range from 0x40
    to 0x7f.  */
-static const uint16_t to_ucs4_comb[15][64] =
+static const uint16_t iso_6937_to_ucs4_comb[15][64] =
 {
   /* 0xc1 */
   {
@@ -922,7 +924,7 @@ size_t ISO6937toUTF8( const unsigned char **inbuf, size_t *inbytesleft,
             break;        /* No space in outbuf for multibyte char */
         }
 
-        ch = to_ucs4[*iptr - 0x80];
+        ch = iso_6937_to_ucs4[*iptr - 0x80];
 
         if( ch == 0xffff )
         {
@@ -933,7 +935,7 @@ size_t ISO6937toUTF8( const unsigned char **inbuf, size_t *inbytesleft,
                 break;    /* No next character */
             }
             if ( iptr[1] < 0x40 || iptr[1] >= 0x80 ||
-                 !(ch = to_ucs4_comb[iptr[0] - 0xc1][iptr[1] - 0x40]) )
+                 !(ch = iso_6937_to_ucs4_comb[iptr[0] - 0xc1][iptr[1] - 0x40]) )
             {
                 err = EILSEQ;
                 break;   /* Illegal combination */
@@ -981,3 +983,125 @@ size_t ISO6937toUTF8( const unsigned char **inbuf, size_t *inbytesleft,
     return (size_t)(0);
 
 }
+
+#include "oscam-string-isotables.h"
+
+static const uint16_t *get_iso8859_table(int8_t iso_table_number)
+{
+	if(iso_table_number > 1 && iso_table_number < 17 && iso_table_number != 12)
+	{
+		if(iso_table_number < 12)
+			{ return iso_8859_to_unicode[iso_table_number - 2]; }
+		else
+			{ return iso_8859_to_unicode[iso_table_number - 3]; }
+	}
+			
+	else
+		{ return NULL; }
+}
+
+size_t ISO8859toUTF8(int8_t iso_table_number, const unsigned char **inbuf, size_t *inbytesleft,
+                             unsigned char **outbuf, size_t *outbytesleft )
+
+
+{
+    if( !inbuf || !(*inbuf) )
+        return (size_t)(0);    /* Reset state requested */
+
+    const unsigned char *iptr = *inbuf;
+    const unsigned char *iend = iptr + *inbytesleft;
+    unsigned char *optr = *outbuf;
+    unsigned char *oend = optr + *outbytesleft;
+    uint16_t ch;
+    int err = 0;
+    const uint16_t *iso_table = NULL;
+    
+    if( iso_table_number != 1 )
+    {
+    	iso_table = get_iso8859_table(iso_table_number);
+    	if ( iso_table == NULL )
+    	{
+    		errno = EINVAL;
+    		return (size_t)(-1);
+    	}
+    }
+
+    while ( iptr < iend )
+    {
+        if( *iptr < 0x80 )
+        {
+            if( optr >= oend )
+            {
+                err = E2BIG;
+                break;    /* No space in outbuf */
+            }
+            *optr++ = *iptr++;
+            continue;
+        }
+    	
+    	if( iso_table_number == 1 || *iptr < 0xA1 )
+    	{
+    		ch = *iptr;
+    	}
+    	else
+    	{
+        	ch = iso_table[*iptr - 0xA1];
+        }
+        
+		iptr++;
+		
+		if ( ch < 0x80 )
+		{
+			if ( optr >= oend )
+       		{
+            	err = E2BIG;
+            	break;        /* No space in outbuf for char */
+        	}
+        
+			optr[0] = ch & 0xff;
+			optr += 1;
+		}
+        else if ( ch < 0x800 )
+        {
+        	if ( optr + 1 >= oend )
+       		{
+            	err = E2BIG;
+            	break;        /* No space in outbuf for multibyte char */
+        	}
+        	
+            optr[1] = 0x80 | (ch & 0x3f);
+            optr[0] = 0xc0 | (ch >> 6);
+            optr += 2;
+        }
+        else
+        {
+			if ( optr + 2 >= oend )
+       		{
+            	err = E2BIG;
+            	break;        /* No space in outbuf for multibyte char */
+        	}
+        	
+            optr[2] = 0x80 | (ch & 0x3f);
+            ch >>= 6;
+            optr[1] = 0x80 | (ch & 0x3f);
+            optr[0] = 0xe0 | (ch >> 6);
+            optr += 3;
+        }
+
+    }
+    *inbuf = iptr;
+    *outbuf = optr;
+    *inbytesleft = iend - iptr;
+    *outbytesleft = oend - optr;
+
+    if( err )
+    {
+        errno = err;
+        return (size_t)(-1);
+    }
+
+    return (size_t)(0);
+
+}
+
+#endif
