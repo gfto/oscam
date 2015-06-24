@@ -10,6 +10,7 @@
     "curtime": "##CURTIME##",
     "readonly": "##APIREADONLY##",
     "piconenabled":"##PICONENABLED##",
+    "srvidfile":"##SRVIDFILE##",
     "lbdefined":"##LBISDEFINED##",
     "failbannotifier":"##FAILBANNOTIFIERPOLL##",
     "sysinfo":{

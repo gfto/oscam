@@ -5196,6 +5196,8 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	int32_t expired_or_disabled_users = 0;
 	int32_t connected_users = 0;
 	int32_t online_users = 0;
+	char fname[256];
+	
 	for(account = cfg.account; (account); account = account->next)
 	{
 		total_users++;
@@ -5361,6 +5363,8 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 			tpl_printf(vars, TPLADD, "PCO", "%d", proxy_count_off);
 			tpl_printf(vars, TPLADD, "PCA", "%d", proxy_count_all);
 			tpl_printf(vars, TPLADD, "PICONENABLED", "%d", cfg.http_showpicons?1:0);
+			get_config_filename(fname, sizeof(fname), "oscam.srvid2");
+			tpl_printf(vars, TPLADD, "SRVIDFILE", "%s", file_exists(fname) ? "oscam.srvid2" : "oscam.srvid");
 			return tpl_getTpl(vars, "JSONSTATUS");
 		}
 	}

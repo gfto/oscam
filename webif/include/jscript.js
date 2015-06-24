@@ -1190,7 +1190,7 @@ function updateStatuspage(data) {
 			}
 
 			if (!is_nopoll('statuscol13')) {
-				$(uid + " > td.statuscol13").append('<A HREF="files.html?file=oscam.srvid" TITLE="' + item.request + '"/>');
+				$(uid + " > td.statuscol13").append('<A HREF="files.html?file=' + data.oscam.srvidfile + '" TITLE="' + item.request + '"/>');
 			}
 
 			if (!is_nopoll('statuscol9')) {
@@ -1282,7 +1282,7 @@ function updateStatuspage(data) {
 
 					// if we have no link we create one
 					if (!$(uid + " > td.statuscol13 > a").length) {
-						$(uid + " > td.statuscol13").append('<a href="files.html?file=oscam.srvid"/>');
+						$(uid + " > td.statuscol13").append('<a href="files.html?file=' + data.oscam.srvidfile + '"/>');
 					}
 					// set title of link as tooltip
 					$(uid + " > td.statuscol13 > a").attr('title', item.request.chname + item.request.chprovider);
@@ -1301,7 +1301,7 @@ function updateStatuspage(data) {
 			} else {
 				// picon is not delivered in JSON - we set the text of column
 				if (item.request.chname && item.request.srvid != '0000') {
-					$(uid + " > td.statuscol13").html('<a href="files.html?file=oscam.srvid"/>');
+					$(uid + " > td.statuscol13").html('<a href="files.html?file=' + data.oscam.srvidfile + '"/>');
 					$(uid + " > td.statuscol13 > a").html(item.request.chname + item.request.chprovider);
 					$(uid + " > td.statuscol13 > a").attr('title', item.request.chname + item.request.chprovider);
 				} else {
