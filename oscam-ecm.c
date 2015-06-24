@@ -825,6 +825,7 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 		{
 			er_cl->cwlastresptime = client->cwlastresptime;
 			webif_client_add_lastresponsetime(er_cl, client->cwlastresptime, now, er->rc);
+			er_cl->last_providptr = client->last_providptr;
 			er_cl->last_srvidptr = client->last_srvidptr;
 		}
 	}
