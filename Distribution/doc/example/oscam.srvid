@@ -2,5 +2,6 @@
 # service ID configuration for web interface and monitor
 #
 
-0001,0002,0003:000a|provider 1|TV name|TV|TV package
-0004,0005,0006:000a|provider 2|radio name|radio|radio package
+0100:1111:provider 1|name 1|TV|TV Name 1
+0100@123456:1111:provider 2|name 2|TV|TV Name 2
+0100@123456,0200:654321:1111:provider 3|name 3|TV|TV Name 3
