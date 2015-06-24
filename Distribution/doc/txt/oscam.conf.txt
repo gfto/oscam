@@ -21,8 +21,9 @@ DESCRIPTIONS
        logfile = [filename][;syslog][;stdout]
 	  logging  targets,  default:/var/log/oscam.log. You can define a maximum of one filename and additionally to
 	  log to stdout or syslog (you can also only log to stdout or syslog and omit the filename).
-
-       sysloghost = hostname
+       PP initial_debuglevel = level
+	  set initial debug level for OSCam start, default:0
+       PP sysloghost = hostname
 	  set remote syslog host, default:none
 
        syslogport = port
