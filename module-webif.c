@@ -5872,7 +5872,7 @@ struct files
 
 static char *send_oscam_files(struct templatevars * vars, struct uriparams * params, int8_t apicall)
 {
-	bool writable = false;
+	bool writable = false, use_srvid2 = false;
 	const struct files *entry;
 	char fname[256];
 	static struct files config_files[] =
@@ -5900,6 +5900,15 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 		{ NULL, 0, 0 },
 	};
 
+	get_config_filename(fname, sizeof(fname), "oscam.srvid2");
+	use_srvid2 = file_exists(fname);
+	
+	if(use_srvid2)
+	{
+		config_files[6].menu_id = MNU_CFG_FSRVID2;
+		config_files[7].menu_id = MNU_CFG_FSRVID;
+	}
+	
 	if(cfg.http_css)
 	{
 		if(strchr(cfg.http_css,'/'))
@@ -5916,8 +5925,7 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 	tpl_addVar(vars, TPLADD, "APIFILENAME", "null");
 	tpl_addVar(vars, TPLADD, "APIWRITABLE", "0");
 	
-	get_config_filename(fname, sizeof(fname), "oscam.srvid2");
-	if(file_exists(fname))
+	if(use_srvid2)
 	{
 		tpl_printf(vars, TPLADD, "SRVID", "%s", "oscam.srvid2");
 		tpl_printf(vars, TPLADD, "SRVIDSUB", "%s", "oscam.srvid");
