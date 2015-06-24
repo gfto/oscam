@@ -18,8 +18,8 @@ static uint32_t poll_gsms_data (uint16_t *boxid, uint8_t *num, char *text)
 	FILE *fhandle = fopen(fname, "r");
 	if(!fhandle)
 		{
-		cs_log("Couldn't open %s: %s", fname, strerror(errno));
-		return -1;
+		//cs_log("Couldn't open %s: %s", fname, strerror(errno));
+		return -2;
 		}
 	uint32_t length1;
 	uint8_t length;
@@ -204,6 +204,7 @@ void gbox_init_send_gsms(void)
 	uint8_t num = 0;
 	uint8_t gsms_prot = 0;
 	uint8_t msg_type = 0;
+	uint32_t poll_result = 0;
 	char text[150];
 	memset(text, 0, sizeof(text));
 	char *fext= FILE_GSMS_TXT; 
@@ -214,9 +215,11 @@ void gbox_init_send_gsms(void)
 	gsms_unavail();
 	return;
 	}
-	if (poll_gsms_data( &boxid, &num, text))
+	poll_result = poll_gsms_data( &boxid, &num, text);
+	if(poll_result)
 	{
-	cs_log("ERROR polling file %s", fname);
+	if(poll_result != -2) 
+		{ cs_log("ERROR polling file %s", fname); }
 	return;
 	}
 	int8_t gsms_len = strlen(text);
