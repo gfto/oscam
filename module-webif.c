@@ -5919,6 +5919,17 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 	tpl_addVar(vars, TPLADD, "APIFILENAME", "null");
 	tpl_addVar(vars, TPLADD, "APIWRITABLE", "0");
 
+	if(file_exists("oscam.srvid"))
+	{
+		tpl_printf(vars, TPLADD, "SRVID", "%s", "oscam.srvid");
+		tpl_printf(vars, TPLADD, "SRVIDSUB", "%s", "oscam.srvid2");
+	}
+	else
+	{
+		tpl_printf(vars, TPLADD, "SRVID", "%s", "oscam.srvid2");
+		tpl_printf(vars, TPLADD, "SRVIDSUB", "%s", "oscam.srvid");
+	}
+
 	char *stoplog = getParam(params, "stoplog");
 	if(strlen(stoplog) > 0)
 		{ cs_disable_log(atoi(stoplog)); }
