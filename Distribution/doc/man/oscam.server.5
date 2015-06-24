@@ -164,6 +164,11 @@ set card init mode for AzBox internal reader, default:none
 1 = use GPIO to init the reader. This needs to be set on WRT54G router, default:0
 .RE
 .PP
+\fB ins2e06\fP = \fBpayload\fP
+.RS 3n
+add check control for pin payload (4 hex bytes) for NDS Videoguard 2 SCs, valid for physical readers only, default:none
+.RE
+.PP
 \fBins7e\fP = \fBpayload\fP
 .RS 3n
 add 26 hex-bytes payload for NDS Videoguard 2 SCs, valid for physical readers only, default:none
@@ -174,14 +179,9 @@ add 26 hex-bytes payload for NDS Videoguard 2 SCs, valid for physical readers on
 set TA1 byte for NDS Videoguard 2 SCs, valid for physical readers only, default:none
 .RE
 .PP
-\fBfix07\fP = \fBpayload\fP
+\fBfix07\fP = \fB0\fP|\fB1\fP
 .RS 3n
 1=enable 0x07 fix for NDS Videoguard 2 SCs, valid for physical readers only, default:1
-.RE
-.PP
-\fB\fP = \fBpayload\fP
-.RS 3n
-add check control for pin payload for NDS Videoguard 2 SCs, valid for physical readers only, default:none
 .RE
 .PP
 \fBforce_irdeto\fP = \fB0\fP|\fB1\fP

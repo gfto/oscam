@@ -137,17 +137,18 @@ DESCRIPTIONS
        use_gpio = 0|1
 	  1 = use GPIO to init the reader. This needs to be set on WRT54G router, default:0
 
+	ins2e06 = payload
+	  add  check control for pin payload (4 hex bytes) for NDS Videoguard 2 SCs, valid for physical readers only,
+	  default:none
+
        ins7e = payload
 	  add 26 hex-bytes payload for NDS Videoguard 2 SCs, valid for physical readers only, default:none
 
        ins7e11 = TA1 byte
 	  set TA1 byte for NDS Videoguard 2 SCs, valid for physical readers only, default:none
 
-       fix07 = payload
+       fix07 = 0|1
 	  1=enable 0x07 fix for NDS Videoguard 2 SCs, valid for physical readers only, default:1
-
-	= payload
-	  add check control for pin payload for NDS Videoguard 2 SCs, valid for physical readers only, default:none
 
        force_irdeto = 0|1
 	  1 = force Irdeto SC mode even if RSA key is set for Irdeto tunnled Nagravion SC, default:0
@@ -182,9 +183,9 @@ DESCRIPTIONS
 	   12 = NDS Videoguard 1+
 	    2 = NDS Videoguard 2
 
-       aeskeys	=  CAID #0@provid:AES key #0 CAID #0[,AES key #1 CAID #0],...[;CAID #1@provid:AES key #0 CAID #1[,AES
+       aeskeys = CAID #0@provid:AES key #0 CAID #0[,AES key #1 CAID #0],...[;CAID #1@provid:AES key #0	CAID  #1[,AES
        key #1 CAID #1],...]...
-	  multiple 16 bytes AES keys for Viaccess SCs (the used postprocessing AES key is specified  through  the  D2
+	  multiple  16	bytes  AES keys for Viaccess SCs (the used postprocessing AES key is specified through the D2
 	  nano of the ECM)
 
 	  special AES keys:
@@ -271,7 +272,7 @@ DESCRIPTIONS
 	  1 = define reader as fallback, standard and fallback reader must have the same group, default:0
 
        fallback_percaid = <CAID>[:<ident>[,ident]]...[;<CAID>[:<ident>[,ident]]...]....
-	  use  reader  as  fallback  for  defined CAIDs only, two-digit wildcard CAIDs are possible, fallback_percaid
+	  use reader as fallback for defined CAIDs only, two-digit  wildcard  CAIDs  are  possible,  fallback_percaid
 	  overrules fallback, default:none
 
 	   example: fallback_percaid = 1234:234567;89;10:345678
@@ -416,8 +417,8 @@ DESCRIPTIONS
 		    savenano = all
 
        readnano = [path]filename
-	  write file (usually a copy of a file saved by savenano) to your smartcard, if no  path  is  specified,  the
-	  specified  file  is  searched  for  in  the  configuration  directory,  only	valid  for  physical readers,
+	  write  file  (usually  a  copy of a file saved by savenano) to your smartcard, if no path is specified, the
+	  specified file  is  searched	for  in  the  configuration  directory,  only  valid  for  physical  readers,
 	  default:none
 
 	   example: readnano = write.emm
@@ -435,7 +436,7 @@ DESCRIPTIONS
 	  use this reader as local in loadbalancer's reader selection, default:none
 
        lb_whitelist_services = <services>,<services>...
-	  reader assignement to service group for channels which may never be blocked  by  the	loadbalancer  to  the
+	  reader  assignement  to  service  group  for channels which may never be blocked by the loadbalancer to the
 	  reader , default=none
 
        lb_weight = weight
@@ -444,7 +445,7 @@ DESCRIPTIONS
 	   It's an divider for the average responstime.
 
        lb_force_fallback = 0|1
-	  1  =	set  the  reader  always  as fallaback for load balacing without considering the reader's statistics,
+	  1 = set the reader always as fallaback for load  balacing  without  considering  the	reader's  statistics,
 	  default:0
 
        cccversion = <main version>.<version>.<sub version>
@@ -500,58 +501,58 @@ DESCRIPTIONS
 OVERCLOCKING
        ·  Dreambox and other internal readers
 
-	  For Dreambox and other internal readers the highest possible clockrate  will	be  auto  detected.  The  mhz
-	  parameter  lets  you	override  the values chosen by OSCam, if it differs from 357 and 358, but usually you
+	  For  Dreambox  and  other  internal  readers	the highest possible clockrate will be auto detected. The mhz
+	  parameter lets you override the values chosen by OSCam, if it differs from 357 and  358,  but  usually  you
 	  will not set any value for mhz.
 
-	  For certain Dreamboxes (especially PPC clones) the default mhz parameter leads to  slow  ECM	times  and/or
+	  For  certain	Dreamboxes  (especially  PPC clones) the default mhz parameter leads to slow ECM times and/or
 	  "not found" ECMs. By setting mhz to values like 200, 300, 400, ... 1600 you can find a value that works for
 	  your receiver and your card. The higher the mhz value, the slower the ECM time (strange enough).
 
-	  If you choose the value too low, your card is not recognized (no ATR	or  "card  not	supported").  If  you
+	  If  you  choose  the	value  too  low, your card is not recognized (no ATR or "card not supported"). If you
 	  choose the value too high, you get slow ECM times. Our experience is that either no mhz line, or a line mhz
 	  = 1000 works best.
 
        ·  Phoenix / Smartmouse reader
 
-	  Overclocking does not work with Windows and Mac OS X.  Set mhz equivalent to the frequency of  the  reader.
+	  Overclocking	does  not work with Windows and Mac OS X.  Set mhz equivalent to the frequency of the reader.
 	  OSCam can not set the frequency of the reader.
 
        ·  Smargo Smartreader+
 
-	  Use  protocol  =  smargo for the FDDI kernel drivers (no libusb needed) or (not recommended) use protocol =
+	  Use protocol = smargo for the FDDI kernel drivers (no libusb needed) or (not recommended)  use  protocol  =
 	  smartreader for OSCam's driver implementation based on libusb.
 
-	  Set the reader frequency with the native Smargo Smartreader+ tool (srp_tools).   If  not  setting  mhz  and
+	  Set  the  reader  frequency  with  the native Smargo Smartreader+ tool (srp_tools).  If not setting mhz and
 	  cardmhz, OSCam  tries  to  set the baudrate automatically, according to the maximum speed indicated by ATR.
 	  Overclocking is possible.
 
-       OSCam tries to set the baudrate automatically.  A standard serial port has limited baudrate  settings,  so  SC
-       overclocking  might  not work.  When using a serial reader the best way for overclocking is connecting it to a
+       OSCam  tries  to  set the baudrate automatically.  A standard serial port has limited baudrate settings, so SC
+       overclocking might not work.  When using a serial reader the best way for overclocking is connecting it	to  a
        FTDI based USB to serial port adapter.
 
        If overclocking does not work, verify the effective baudrate in the logfile.  If it deviates too much from the
-       requested  baudrate,  the  SC  will not be recognized (no ATR) and the value for mhz should be adjusted again.
+       requested baudrate, the SC will not be recognized (no ATR) and the value for mhz  should  be  adjusted  again.
        The higher the baudrate, the more accurate the effective baudrate can be.
 
 CACHE EXCHANGE
        ·  pull mode (on request: cache exchange from remote to local OSCam)
 
-	  ECM requests will be forwarded to the remote cache exchange partner. If the CW could not be  found  in  the
-	  cache  of  the  remote  exchange partner, a not found will be answered. If the CW could not be found in the
-	  cache of the remote exchange partner but a pending ECM request is open, the request  will  be  re-initiated
+	  ECM  requests  will  be forwarded to the remote cache exchange partner. If the CW could not be found in the
+	  cache of the remote exchange partner, a not found will be answered. If the CW could not  be  found  in  the
+	  cache  of  the  remote exchange partner but a pending ECM request is open, the request will be re-initiated
 	  after the wait time defined in cacheexwaittime.
 
        ·  push mode (continuous: cache exchange from remote to local OSCam)
 
-	  CWs  from  the  remote  cache  exchange partner will be forwarded to the local cache. Forwarding only works
-	  while the camd camd 3.5x / 3.57x or CCcam protocol connection between the local and remote OSCam  has  been
+	  CWs from the remote cache exchange partner will be forwarded to the  local  cache.  Forwarding  only	works
+	  while  the  camd camd 3.5x / 3.57x or CCcam protocol connection between the local and remote OSCam has been
 	  established.
 
        ·  reverse push mode (continuous: cache exchange from local to remote OSCam)
 
-	  CWs  from  the  local  cache	will be forwarded to the remote cache exchange partner. Forwarding only works
-	  while the camd camd 3.5x / 3.57x or CCcam protocol connection between the remote and local OSCam  has  been
+	  CWs from the local cache will be forwarded to the remote cache  exchange  partner.  Forwarding  only	works
+	  while  the  camd camd 3.5x / 3.57x or CCcam protocol connection between the remote and local OSCam has been
 	  established.
 
 EXAMPLES
@@ -668,8 +669,8 @@ EXAMPLES
 	   caid     = 1100
 
 SEE ALSO
-       list_smargo(1),	 oscam(1),  oscam.ac(5),  oscam.cacheex(5),  oscam.cert(5),  oscam.conf(5),  oscam.dvbapi(5),
-       oscam.guess(5),	oscam.ird(5),	oscam.provid(5),   oscam.ratelimit(5),	 oscam.services(5),   oscam.srvid(5),
+       list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cacheex(5),  oscam.cert(5),  oscam.conf(5),   oscam.dvbapi(5),
+       oscam.guess(5),	 oscam.ird(5),	 oscam.provid(5),   oscam.ratelimit(5),   oscam.services(5),  oscam.srvid(5),
        oscam.tiers(5), oscam.user(5), oscam.whitelist(5)
 
 
