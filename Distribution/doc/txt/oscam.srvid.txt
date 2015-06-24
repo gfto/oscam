@@ -14,7 +14,7 @@ DESCRIPTIONS
 	  mapping between CAID, provider ID,service ID, provider, name, type and description of service
 
 ANNONTATIONS
-       Please use Unix text file format only. Maximum: 10 CAIDs, 5 provider IDs
+       Please use Unix text file format only.
 
        You only need the oscam.srvid when using the monitor or the web interface.  For saving memory consumption only
        insert the service IDs you really need. Some external programs use their own oscam.srvid and do not  need  the
