@@ -134,6 +134,8 @@ ifeq ($(uname_S),Cygwin)
 DEFAULT_PCSC_LIB += -lwinscard
 endif
 
+DEFAULT_UTF8_FLAGS = -DWITH_UTF8
+
 # Function to initialize USE related variables
 #   Usage: $(eval $(call prepare_use_flags,FLAG_NAME,PLUS_TARGET_TEXT))
 define prepare_use_flags
@@ -164,6 +166,7 @@ $(eval $(call prepare_use_flags,SSL,ssl))
 $(eval $(call prepare_use_flags,LIBCRYPTO,))
 $(eval $(call prepare_use_flags,LIBUSB,libusb))
 $(eval $(call prepare_use_flags,PCSC,pcsc))
+$(eval $(call prepare_use_flags,UTF8))
 
 # Add PLUS_TARGET and EXTRA_TARGET to TARGET
 ifdef NO_PLUS_TARGET
@@ -630,6 +633,8 @@ OSCam build system documentation\n\
                          SSL_LDFLAGS='$(DEFAULT_SSL_FLAGS)'\n\
                          SSL_LIB='$(DEFAULT_SSL_LIB)'\n\
                      Using USE_SSL=1 adds to '-ssl' to PLUS_TARGET.\n\
+\n\
+   USE_UTF8=1       - Request UTF-8 enabled webif by default.\n\
 \n\
  Automatically intialized variables:\n\
 \n\

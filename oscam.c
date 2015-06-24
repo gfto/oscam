@@ -88,7 +88,11 @@ char  cs_confdir[128] = CS_CONFDIR;
 uint16_t cs_dblevel = 0; // Debug Level
 int32_t thread_pipe[2] = {0, 0};
 static int8_t cs_restart_mode = 1; //Restartmode: 0=off, no restart fork, 1=(default)restart fork, restart by webif, 2=like=1, but also restart on segfaults
+#ifdef WITH_UTF8
+uint8_t cs_http_use_utf8 = 1;
+#else
 uint8_t cs_http_use_utf8 = 0;
+#endif
 static int8_t cs_capture_SEGV;
 static int8_t cs_dump_stack;
 static uint16_t cs_waittime = 60;
