@@ -1,7 +1,6 @@
 #
-# service ID configuration for web interface and monitor
+# service ID configuration file for web interface and monitor
 #
 
-0100:1111:provider 1|name 1|TV|TV Name 1
-0100@123456:1111:provider 2|name 2|TV|TV Name 2
-0100@123456,0200:654321:1111:provider 3|name 3|TV|TV Name 3
+1111,2222:000A|provider A|Name C|TV|package E
+3333,4444,5555:000B|provider B|Name D|Radio|package F

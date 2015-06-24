@@ -18,10 +18,10 @@ service ID mappings
 
 <P>
 
-<B>CAID[@providerID][,CAID[@providerID]]...</B>:<B>serviceID</B>|<B>[provider]</B>|<B>[name]</B>|<B>[type]</B>|<B>[description]</B>
+<B>CAID[,CAID]...</B>:<B>service ID</B>|<B>[provider]</B>|<B>[name]</B>|<B>[type]</B>|<B>[description]</B>
 <P>
 <DL COMPACT><DT><DD>
-mapping between CAID, provider ID,service ID, provider, name, type and description of service
+mapping between CAID, service ID, provider, name, type and description of service
 </DL>
 
 <A NAME="lbAE">&nbsp;</A>
@@ -35,9 +35,9 @@ external programs use their own <B>oscam.srvid</B> and do not need the <B>oscam.
 <A NAME="lbAF">&nbsp;</A>
 <H2>EXAMPLES</H2>
 
-<BR>&nbsp;0100:1111:provider&nbsp;1|name&nbsp;1|TV|TV&nbsp;Name&nbsp;1
-<BR>&nbsp;<A HREF="mailto:0100@123456">0100@123456</A>:1111:provider&nbsp;2|name&nbsp;2|TV|TV&nbsp;Name&nbsp;2
-<BR>&nbsp;<A HREF="mailto:0100@123456">0100@123456</A>,0200:654321:1111:provider&nbsp;3|name&nbsp;3|TV|TV&nbsp;Name&nbsp;3
+<BR>&nbsp;0001,0002,0003:000a|my&nbsp;provider&nbsp;1|tv&nbsp;name&nbsp;1|tv|my&nbsp;tv&nbsp;package
+<BR>&nbsp;0004,0005,0006:000a|my&nbsp;provider&nbsp;2|radio&nbsp;name&nbsp;2|radio|my&nbsp;radio&nbsp;package
+<BR>&nbsp;0006:000b|my&nbsp;provider&nbsp;3|tv&nbsp;name&nbsp;3|&nbsp;
 <A NAME="lbAG">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
