@@ -2969,7 +2969,9 @@ static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, uint8_t* s
 {
 	uint32_t i, j, offset = 0;
 	int8_t iso_mode = -1;
-	char *tmpbuf, *ptr_in, *ptr_out;
+	char *tmpbuf;
+	const unsigned char *ptr_in;
+	unsigned char *ptr_out;
 	size_t in_bytes, out_bytes;
 	
 	if(!cs_malloc(&tmpbuf, buflen))
@@ -3025,9 +3027,9 @@ static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, uint8_t* s
 	{
 		memset(buf, 0, buflen);
 		
-		ptr_in = tmpbuf;
+		ptr_in = (const unsigned char *)tmpbuf;
 		in_bytes = strlen(tmpbuf);
-		ptr_out = buf;
+		ptr_out = (unsigned char *)buf;
 		out_bytes = buflen;
 		
 		cs_log_dbg(D_DVBAPI, "sdt-info dbg: iso_mode: %d offset: %u", iso_mode, offset);
@@ -3035,7 +3037,7 @@ static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, uint8_t* s
 		
 		if(iso_mode == -1)
 		{
-			if(ISO6937toUTF8((const unsigned char**)&ptr_in, &in_bytes, (unsigned char**)&ptr_out, &out_bytes) == (size_t)(-1))
+			if(ISO6937toUTF8(&ptr_in, &in_bytes, &ptr_out, &out_bytes) == (size_t)(-1))
 			{
 				cs_log_dbg(D_DVBAPI, "sdt-info error: ISO6937toUTF8 failed");
 				NULLFREE(tmpbuf);
@@ -3044,7 +3046,7 @@ static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, uint8_t* s
 		}
 		else
 		{
-			if(ISO8859toUTF8(iso_mode, (const unsigned char**)&ptr_in, &in_bytes, (unsigned char**)&ptr_out, &out_bytes) == (size_t)(-1))
+			if(ISO8859toUTF8(iso_mode, &ptr_in, &in_bytes, &ptr_out, &out_bytes) == (size_t)(-1))
 			{
 				cs_log_dbg(D_DVBAPI, "sdt-info error: ISO8859toUTF8 failed");
 				NULLFREE(tmpbuf);
@@ -3205,7 +3207,7 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 				if(!access(tmp, F_OK) && (fpsave = fopen(tmp, "a")))
 				{
 					dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
-					fprintf(fpsave, "\n%04X:%s|%s|", service_id, srvid_line, service_name);
+					fprintf(fpsave, "\n%04X:%s|%s|||%s", service_id, srvid_line, service_name, provider_name);
 					fclose(fpsave);
 				}
 				else

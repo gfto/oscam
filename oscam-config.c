@@ -439,6 +439,7 @@ int32_t init_srvid(void)
 	while(fgets(token, MAXLINESIZE, fp))
 	{
 		int32_t l, len = 0, len2, srvidtmp;
+		uint32_t k;
 		uint32_t pos;
 		char *srvidasc, *prov;
 		tmp = trim(token);
@@ -462,20 +463,40 @@ int32_t init_srvid(void)
 		char *ptr1 = NULL, *ptr2 = NULL;
 		const char *searchptr[4] = { NULL, NULL, NULL, NULL };
 		const char **ptrs[4] = { &srvid->prov, &srvid->name, &srvid->type, &srvid->desc };
-
-		// allow empty provider-name "||service name|"
-		if(payload[0] == '|')
+		uint32_t max_payload_length = MAXLINESIZE - (payload - token);
+		
+		if(new_syntax)
+		{
+			ptrs[0] = &srvid->name;
+			ptrs[1] = &srvid->type;
+			ptrs[2] = &srvid->desc;
+			ptrs[3] = &srvid->prov;
+		}
+		
+		// allow empty strings as "||"
+		if(payload[0] == '|' && (strlen(payload)+2 < max_payload_length))
 		{
 			memmove(payload+1, payload, strlen(payload)+1);
 			payload[0] = ' ';
 		}
 		
-		if(new_syntax)
+		for(k=1; ((k < max_payload_length) && (payload[k] != '\0')); k++)
 		{
-			searchptr[0] = "";
+			if(payload[k-1] == '|' && payload[k] == '|')
+			{
+				if(strlen(payload+k)+2 < max_payload_length-k)
+				{
+					memmove(payload+k+1, payload+k, strlen(payload+k)+1);
+					payload[k] = ' ';
+				}
+				else
+				{
+					break;
+				}	
+			}
 		}
-		
-		for(i = new_syntax ? 1 : 0, ptr1 = strtok_r(payload, "|", &saveptr1); ptr1 && (i < 4) ; ptr1 = strtok_r(NULL, "|", &saveptr1), ++i)
+	
+		for(i = 0, ptr1 = strtok_r(payload, "|", &saveptr1); ptr1 && (i < 4) ; ptr1 = strtok_r(NULL, "|", &saveptr1), ++i)
 		{
 			// check if string is in cache
 			len2 = strlen(ptr1);
