@@ -11,7 +11,7 @@
 #include "oscam-client.h"
 #include "oscam-time.h"
 
-static uint32_t poll_gsms_data (uint16_t *boxid, uint8_t *num, char *text)
+static int32_t poll_gsms_data (uint16_t *boxid, uint8_t *num, char *text)
 {
 	char *fext= FILE_GSMS_TXT; 
 	char *fname = get_gbox_tmp_fname(fext); 
@@ -204,7 +204,7 @@ void gbox_init_send_gsms(void)
 	uint8_t num = 0;
 	uint8_t gsms_prot = 0;
 	uint8_t msg_type = 0;
-	uint32_t poll_result = 0;
+	int32_t poll_result = 0;
 	char text[150];
 	memset(text, 0, sizeof(text));
 	char *fext= FILE_GSMS_TXT; 
