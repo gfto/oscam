@@ -1405,21 +1405,21 @@ void update_card_list(void)
 					{
 						if(chk_ctab(card->caid, &rdr->ctab))
 						{
-							int32_t ignore = 0;
+							int32_t dont_ignore = 0;
 
 							it2 = ll_iter_create(card->providers);
 							struct cc_provider *prov;
 							while((prov = ll_iter_next(&it2)))
 							{
 								uint32_t prid = prov->prov;
-								if(!chk_srvid_by_caid_prov(rc, card->caid, prid))
+								if(chk_srvid_by_caid_prov(rc, card->caid, prid))
 								{
-									ignore = 1;
+									dont_ignore = 1;
 									break;
 								}
 							}
 
-							if(!ignore)    //Filtered by service
+							if(dont_ignore)    //Filtered by service
 							{
 								add_card_to_serverlist(get_cardlist(card->caid, server_cards), card, 0);
 								count++;
