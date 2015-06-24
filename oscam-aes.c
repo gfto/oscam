@@ -145,7 +145,7 @@ void parse_aes_entry(AES_ENTRY **list, char *label, char *value)
 		key_id++;
 	}
 
-	cs_log("%d AES key(s) added on reader %s for %04x:%06x", nb_keys, label, caid, ident);
+	cs_log("%d AES key(s) added on reader %s for %04x@%06x", nb_keys, label, caid, ident);
 }
 
 /* Clears all entries from an AES list*/
@@ -205,7 +205,7 @@ static AES_ENTRY *aes_list_find(AES_ENTRY *list, uint16_t caid, uint32_t provid,
 	}
 	if(!current)
 	{
-		cs_log("AES Decrypt key %d not found for %04X:%06X (aka V %06X E%X ...) ", keyid, caid, provid, provid, keyid);
+		cs_log("AES Decrypt key %d not found for %04X@%06X (aka V %06X E%X ...) ", keyid, caid, provid, provid, keyid);
 		return NULL;
 	}
 	return current;

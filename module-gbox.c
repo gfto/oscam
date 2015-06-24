@@ -1389,7 +1389,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er)
 		memcpy(&send_buf_1[cont_1], peer->checkcode, 7);
 		cont_1 = cont_1 + 7;
 
-		cs_log_dbg(D_READER, "gbox sending ecm for %04X:%06X:%04X to %d cards -> %s", er->caid, er->prid , er->srvid, cont_card_1, cli->reader->label);
+		cs_log_dbg(D_READER, "gbox sending ecm for %04X@%06X:%04X to %d cards -> %s", er->caid, er->prid , er->srvid, cont_card_1, cli->reader->label);
 		uint32_t i = 0;
 		struct gbox_card_pending *pending = NULL;
 		struct timeb t_now;             

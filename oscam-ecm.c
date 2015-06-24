@@ -2002,7 +2002,7 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 	{
 		if(prid && prid != er->prid)
 		{
-			cs_log_dbg(D_TRACE, "provider fixed: %04X:%06X to %04X:%06X", er->caid, er->prid, er->caid, prid);
+			cs_log_dbg(D_TRACE, "provider fixed: %04X@%06X to %04X@%06X", er->caid, er->prid, er->caid, prid);
 			er->prid = prid;
 		}
 	}

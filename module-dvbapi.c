@@ -1288,7 +1288,7 @@ void dvbapi_add_ecmpid(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_
 				|| (joinentry->ecmpid && joinentry->ecmpid  != ecmpid)
 				|| (joinentry->srvid && joinentry->srvid != demux[demux_id].program_number))
 			{ continue; }
-		cs_log_dbg(D_DVBAPI, "Join ecmpid %04X:%06X:%04X to %04X:%06X:%04X",
+		cs_log_dbg(D_DVBAPI, "Join ecmpid %04X@%06X:%04X to %04X@%06X:%04X",
 					  caid, provid, ecmpid, joinentry->mapcaid, joinentry->mapprovid, joinentry->mapecmpid);
 		dvbapi_add_ecmpid_int(demux_id, joinentry->mapcaid, joinentry->mapecmpid, joinentry->mapprovid);
 	}
@@ -1786,7 +1786,7 @@ void dvbapi_process_emm(int32_t demux_index, int32_t filter_num, unsigned char *
 	struct s_dvbapi_priority *mapentry = dvbapi_check_prio_match_emmpid(filter->demux_id, filter->caid, filter->provid, 'm');
 	if(mapentry)
 	{
-		cs_log_dbg(D_DVBAPI, "Demuxer %d mapping EMM from %04X:%06X to %04X:%06X", demux_index, caid, provider, mapentry->mapcaid,
+		cs_log_dbg(D_DVBAPI, "Demuxer %d mapping EMM from %04X@%06X to %04X@%06X", demux_index, caid, provider, mapentry->mapcaid,
 					  mapentry->mapprovid);
 		caid = mapentry->mapcaid;
 		provider = mapentry->mapprovid;
@@ -2086,7 +2086,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 			cache = 2; //found cache entry with higher priority
 			demux[demux_index].ECMpids[n].status = prio * 2; // prioritize CAIDs which already decoded same caid:provid:srvid
 			if(c->chid < 0x10000) { demux[demux_index].ECMpids[n].CHID = c->chid; } // if chid registered in cache -> use it!
-			cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X:%06X:%04X (found caid/provid/srvid in cache - weight: %d)", demux_index, n,
+			cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X (found caid/provid/srvid in cache - weight: %d)", demux_index, n,
 				demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, demux[demux_index].ECMpids[n].status);
 			break;
 		}
@@ -2102,7 +2102,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 			{
 				cache = 1; //found cache entry
 				demux[demux_index].ECMpids[n].status = prio;
-				cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X:%06X:%04X (found caid/provid in cache - weight: %d)", demux_index, n,
+				cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X (found caid/provid in cache - weight: %d)", demux_index, n,
 					demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, demux[demux_index].ECMpids[n].status);
 			}
 		}
@@ -2170,7 +2170,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 					{
 						demux[demux_index].ECMpids[n].status = -1;
 					}
-					cs_log_dbg(D_DVBAPI, "Demuxer %d ignore ecmpid %d %04X:%06X:%04X:%04X (file)", demux_index, n, demux[demux_index].ECMpids[n].CAID,
+					cs_log_dbg(D_DVBAPI, "Demuxer %d ignore ecmpid %d %04X@%06X:%04X:%04X (file)", demux_index, n, demux[demux_index].ECMpids[n].CAID,
 								  demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) p->chid);
 					continue;
 				}
@@ -2195,7 +2195,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 									{ demux[demux_index].ECMpids[n].status += add_prio; }
 								//priority*ECMpidcount should overrule network reader
 								demux[demux_index].ECMpids[n].status += (prio * demux[demux_index].ECMpidcount) + (p_order--);
-								cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X:%06X:%04X:%04X (localrdr: %s weight: %d)", demux_index,
+								cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X:%04X (localrdr: %s weight: %d)", demux_index,
 											  n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
 											  demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) p->chid, rdr->label,
 											  demux[demux_index].ECMpids[n].status);
@@ -2211,7 +2211,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 								else if(cache && !demux[demux_index].ECMpids[n].status)
 									{ demux[demux_index].ECMpids[n].status += add_prio; }
 								demux[demux_index].ECMpids[n].status += prio + (p_order--);
-								cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X:%06X:%04X:%04X (rdr: %s weight: %d)", demux_index,
+								cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X:%04X (rdr: %s weight: %d)", demux_index,
 											  n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
 											  demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) p->chid, rdr->label,
 											  demux[demux_index].ECMpids[n].status);
@@ -2261,7 +2261,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 					if(matching_reader(er, rdr))
 					{
 						demux[demux_index].ECMpids[n].status += prio * 2;
-						cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X:%06X:%04X (localrdr: %s weight: %d)", demux_index,
+						cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X (localrdr: %s weight: %d)", demux_index,
 									  n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
 									  demux[demux_index].ECMpids[n].ECM_PID, rdr->label,
 									  demux[demux_index].ECMpids[n].status);
@@ -2273,7 +2273,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 					if(matching_reader(er, rdr))
 					{
 						demux[demux_index].ECMpids[n].status += prio;
-						cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X:%06X:%04X (rdr: %s weight: %d)", demux_index,
+						cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X (rdr: %s weight: %d)", demux_index,
 									  n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
 									  demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
 						break;
@@ -2307,14 +2307,14 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 				if((cfg.dvbapi_sidtabs.no & ((SIDTABBITS)1 << nr)) && (chk_srvid_match(&er, sidtab)))
 				{
 					demux[demux_index].ECMpids[n].status = -1; //ignore
-					cs_log_dbg(D_DVBAPI, "Demuxer %d ignore ecmpid %d %04X:%06X:%04X (service %s) pos %d", demux_index,
+					cs_log_dbg(D_DVBAPI, "Demuxer %d ignore ecmpid %d %04X@%06X:%04X (service %s) pos %d", demux_index,
 								  n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
 								  demux[demux_index].ECMpids[n].ECM_PID, sidtab->label, nr);
 				}
 				if((cfg.dvbapi_sidtabs.ok & ((SIDTABBITS)1 << nr)) && (chk_srvid_match(&er, sidtab)))
 				{
 					demux[demux_index].ECMpids[n].status = highest_prio++; //priority
-					cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X:%06X:%04X (service: %s position: %d)", demux_index,
+					cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X (service: %s position: %d)", demux_index,
 								  n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
 								  demux[demux_index].ECMpids[n].ECM_PID, sidtab->label,
 								  demux[demux_index].ECMpids[n].status);
@@ -2351,7 +2351,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 		}
 		if (match == 0)
 		{
-			cs_log_dbg(D_DVBAPI, "Demuxer %d ignore ecmpid %d %04X:%06X:%04X:%04X (no matching reader)", demux_index, n, demux[demux_index].ECMpids[n].CAID,
+			cs_log_dbg(D_DVBAPI, "Demuxer %d ignore ecmpid %d %04X@%06X:%04X:%04X (no matching reader)", demux_index, n, demux[demux_index].ECMpids[n].CAID,
 				demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, demux[demux_index].ECMpids[n].CHID);
 			demux[demux_index].ECMpids[n].status = -1;
 		}
@@ -2386,7 +2386,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 			if(match->pidx && match->pidx-1 != n) { continue; }
 			if(match->chid < 0x10000) { demux[demux_index].ECMpids[n].CHID = match->chid; }
 			demux[demux_index].ECMpids[n].status = ++highest_prio;
-			cs_log_dbg(D_DVBAPI, "Demuxer %d forced ecmpid %d %04X:%06X:%04X:%04X", demux_index, n, demux[demux_index].ECMpids[n].CAID,
+			cs_log_dbg(D_DVBAPI, "Demuxer %d forced ecmpid %d %04X@%06X:%04X:%04X", demux_index, n, demux[demux_index].ECMpids[n].CAID,
 						  demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) match->chid);
 			demux[demux_index].max_status = highest_prio; // register maxstatus
 			demux[demux_index].ECMpids[n].checked = 0; // set forced pid to prio run
@@ -2492,7 +2492,7 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 			mapentry = dvbapi_check_prio_match(demux_id, j, 'm');
 			if(mapentry)
 			{
-				cs_log_dbg(D_DVBAPI, "Demuxer %d mapping ecmpid %d from %04X:%06X to %04X:%06X", demux_id, j,
+				cs_log_dbg(D_DVBAPI, "Demuxer %d mapping ecmpid %d from %04X@%06X to %04X@%06X", demux_id, j,
 							  demux[demux_id].ECMpids[j].CAID, demux[demux_id].ECMpids[j].PROVID,
 							  mapentry->mapcaid, mapentry->mapprovid);
 				demux[demux_id].ECMpids[j].CAID = mapentry->mapcaid;
@@ -2785,7 +2785,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 						|| (addentry->ecmpid && !pmtpid && addentry->ecmpid != vpid) // some receivers dont forward pmtpid, use vpid instead
 						|| (addentry->srvid != demux[demux_id].program_number))
 					{ continue; }
-				cs_log_dbg(D_DVBAPI, "Demuxer %d fake ecmpid %04X:%06x:%04x for unencrypted stream on srvid %04X", demux_id, addentry->mapcaid, addentry->mapprovid,
+				cs_log_dbg(D_DVBAPI, "Demuxer %d fake ecmpid %04X@%06X:%04x for unencrypted stream on srvid %04X", demux_id, addentry->mapcaid, addentry->mapprovid,
 					addentry->mapecmpid, demux[demux_id].program_number);
 				dvbapi_add_ecmpid(demux_id, addentry->mapcaid, addentry->mapecmpid, addentry->mapprovid);
 				break;
@@ -2833,7 +2833,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 					|| (xtraentry->srvid && xtraentry->srvid != demux[demux_id].program_number))
 				{ continue; }
 
-			cs_log("Mapping ecmpid %04X:%06X:%04X:%04X to xtra demuxer/ca-devices", xtraentry->caid, xtraentry->provid, xtraentry->ecmpid, xtraentry->srvid);
+			cs_log("Mapping ecmpid %04X@%06X:%04X:%04X to xtra demuxer/ca-devices", xtraentry->caid, xtraentry->provid, xtraentry->ecmpid, xtraentry->srvid);
 
 			for(xtra_demux_id = 0; xtra_demux_id < MAX_DEMUX && demux[xtra_demux_id].program_number > 0; xtra_demux_id++)
 				{ ; }

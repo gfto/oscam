@@ -266,7 +266,7 @@ char *get_provider(uint32_t provid, uint16_t caid, char *buf, uint32_t buflen)
 		}
 	}
 
-	if(!buf[0]) { snprintf(buf, buflen, "%04X:%06X unknown", caid, provid); }
+	if(!buf[0]) { snprintf(buf, buflen, "%04X@%06X unknown", caid, provid); }
 		
 	return (buf);
 }
@@ -297,7 +297,7 @@ char *__get_providername(uint32_t provid, uint16_t caid, char *buf, uint32_t buf
 		}
 	}
 
-	if(!buf[0] && return_unknown) { snprintf(buf, buflen, "%04X:%06X unknown", caid, provid); }
+	if(!buf[0] && return_unknown) { snprintf(buf, buflen, "%04X@%06X unknown", caid, provid); }
 
 	return (buf);
 }

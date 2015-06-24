@@ -1350,13 +1350,13 @@ static void newcamd_report_cards(struct s_client *client)
 					if(!rdr->ftab.filts[j].nprids)
 					{
 						cd->provid = 0;
-						cs_log_dbg(D_CLIENT, "newcamd: extended: report card %04X:%06X svc", cd->caid, cd->provid);
+						cs_log_dbg(D_CLIENT, "newcamd: extended: report card %04X@%06X svc", cd->caid, cd->provid);
 						network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3, client->ncd_skey, COMMTYPE_SERVER, 0, cd);
 					}
 					for(k = 0; k < rdr->ftab.filts[j].nprids; k++)
 					{
 						cd->provid = rdr->ftab.filts[j].prids[k];
-						cs_log_dbg(D_CLIENT, "newcamd: extended: report card %04X:%06X svc", cd->caid, cd->provid);
+						cs_log_dbg(D_CLIENT, "newcamd: extended: report card %04X@%06X svc", cd->caid, cd->provid);
 						network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3, client->ncd_skey, COMMTYPE_SERVER, 0, cd);
 						flt = 1;
 					}
@@ -1372,13 +1372,13 @@ static void newcamd_report_cards(struct s_client *client)
 				if(!rdr->nprov)
 				{
 					cd->provid = 0;
-					cs_log_dbg(D_CLIENT, "newcamd: extended: report card %04X:%06X caid", cd->caid, cd->provid);
+					cs_log_dbg(D_CLIENT, "newcamd: extended: report card %04X@%06X caid", cd->caid, cd->provid);
 					network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3, client->ncd_skey, COMMTYPE_SERVER, 0, cd);
 				}
 				for(j = 0; j < rdr->nprov; j++)
 				{
 					cd->provid = (rdr->prid[j][1]) << 16 | (rdr->prid[j][2] << 8) | rdr->prid[j][3];
-					cs_log_dbg(D_CLIENT, "newcamd: extended: report card %04X:%06X caid", cd->caid, cd->provid);
+					cs_log_dbg(D_CLIENT, "newcamd: extended: report card %04X@%06X caid", cd->caid, cd->provid);
 					network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3, client->ncd_skey, COMMTYPE_SERVER, 0, cd);
 				}
 			}
@@ -1396,13 +1396,13 @@ static void newcamd_report_cards(struct s_client *client)
 					if(!ptr->num_provid)
 					{
 						cd->provid = 0;
-						cs_log_dbg(D_CLIENT, "newcamd: extended: report card %04X:%06X acs", cd->caid, cd->provid);
+						cs_log_dbg(D_CLIENT, "newcamd: extended: report card %04X@%06X acs", cd->caid, cd->provid);
 						network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3, client->ncd_skey, COMMTYPE_SERVER, 0, cd);
 					}
 					for(l = 0; l < ptr->num_provid; l++)
 					{
 						cd->provid = ptr->provid[l];
-						cs_log_dbg(D_CLIENT, "newcamd: extended: report card %04X:%06X acs", cd->caid, cd->provid);
+						cs_log_dbg(D_CLIENT, "newcamd: extended: report card %04X@%06X acs", cd->caid, cd->provid);
 						network_message_send(client->udp_fd, &client->ncd_msgid, buf, 3, client->ncd_skey, COMMTYPE_SERVER, 0, cd);
 					}
 				}

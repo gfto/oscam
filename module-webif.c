@@ -2590,7 +2590,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 				ecmcount += s->ecm_count;
 				if(!apicall)
 				{
-					tpl_printf(vars, TPLADD, "CHANNEL", "%04X:%06X:%04X:%04X", s->caid, s->prid, s->srvid, s->chid);
+					tpl_printf(vars, TPLADD, "CHANNEL", "%04X@%06X:%04X:%04X", s->caid, s->prid, s->srvid, s->chid);
 					tpl_addVar(vars, TPLADD, "CHANNELNAME", xml_encode(vars, get_servicename(cur_client(), s->srvid, s->prid, s->caid, channame, sizeof(channame))));
 					tpl_printf(vars, TPLADD, "ECMLEN", "%04hX", s->ecmlen);
 					tpl_addVar(vars, TPLADD, "RC", stxt[s->rc]);
@@ -4944,7 +4944,7 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 										if(active_ent)	{tpl_addVar(vars, TPLAPPEND, "TMPSPAN", "<BR><BR>");}
 										active_ent++;
 										localtime_r(&ent->end, &end_t);
-										tpl_printf(vars, TPLAPPEND, "TMPSPAN", "%04X:%06X<BR>exp:%04d/%02d/%02d",
+										tpl_printf(vars, TPLAPPEND, "TMPSPAN", "%04X@%06X<BR>exp:%04d/%02d/%02d",
 												   ent->caid, ent->provid,
 												   end_t.tm_year + 1900, end_t.tm_mon + 1, end_t.tm_mday);
 										tpl_printf(vars, TPLAPPEND, "ENTITLEMENTS", "%s{\"caid\":\"%04X\",\"provid\":\"%06X\",\"exp\":\"%04d/%02d/%02d\"}",
@@ -6684,7 +6684,7 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 						{ tpl_addVar(vars, TPLADD, "TYPE", cacheex_stats_entry->cache_direction == 0 ? pushing : getting); }
 					else
 						{ tpl_addVar(vars, TPLADD, "TYPE", ""); }
-					tpl_printf(vars, TPLADD, "NAME", "%04X:%06X:%04X", cacheex_stats_entry->cache_caid,
+					tpl_printf(vars, TPLADD, "NAME", "%04X@%06X:%04X", cacheex_stats_entry->cache_caid,
 							   cacheex_stats_entry->cache_prid,
 							   cacheex_stats_entry->cache_srvid);
 					if(cacheex_stats_entry->cache_direction == 0)

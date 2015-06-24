@@ -789,7 +789,7 @@ static struct s_cacheex_matcher *cacheex_matcher_read_int(void)
 		entry->valid_from = valid_from;
 		entry->valid_to = valid_to;
 
-		cs_log_dbg(D_TRACE, "cacheex-matcher: %c: %04X:%06X:%04X:%04X:%04X:%02X = %04X:%06X:%04X:%04X:%04X:%02X valid %d/%d",
+		cs_log_dbg(D_TRACE, "cacheex-matcher: %c: %04X@%06X:%04X:%04X:%04X:%02X = %04X@%06X:%04X:%04X:%04X:%02X valid %d/%d",
 					  entry->type, entry->caid, entry->provid, entry->srvid, entry->pid, entry->chid, entry->ecmlen,
 					  entry->to_caid, entry->to_provid, entry->to_srvid, entry->to_pid, entry->to_chid, entry->to_ecmlen,
 					  entry->valid_from, entry->valid_to);

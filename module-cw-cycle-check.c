@@ -196,7 +196,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 	struct s_cw_cycle_check *currentnode = NULL, *cwc = NULL;
 
 	/*for(list = cw_cc_list; list; list = list->next) { // List all Entrys in Log for DEBUG
-	    cs_log_dbg(D_CWC, "cyclecheck: [LIST] %04X:%06X:%04X OLD: %i Time: %ld DifftoNow: %ld Stage: %i cw: %s", list->caid, list->provid, list->sid, list->old, list->time, now - list->time, list->stage, cs_hexdump(0, list->cw, 16, cwstr, sizeof(cwstr)));
+	    cs_log_dbg(D_CWC, "cyclecheck: [LIST] %04X@%06X:%04X OLD: %i Time: %ld DifftoNow: %ld Stage: %i cw: %s", list->caid, list->provid, list->sid, list->old, list->time, now - list->time, list->stage, cs_hexdump(0, list->cw, 16, cwstr, sizeof(cwstr)));
 
 	}*/
 
@@ -249,7 +249,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 			{
 				if(cycletime_fr > 0 && next_cw_cycle_fr < 2)
 				{
-					cs_log_dbg(D_CWC, "cyclecheck [Use Info in Request] Client: %s cycletime: %isek - nextcwcycle: CW%i for %04X:%06X:%04X", user, cycletime_fr, next_cw_cycle_fr, er->caid, er->prid, er->srvid);
+					cs_log_dbg(D_CWC, "cyclecheck [Use Info in Request] Client: %s cycletime: %isek - nextcwcycle: CW%i for %04X@%06X:%04X", user, cycletime_fr, next_cw_cycle_fr, er->caid, er->prid, er->srvid);
 					cwc->stage = 3;
 					cwc->cycletime = cycletime_fr;
 					cwc->nextcyclecw = next_cw_cycle_fr;

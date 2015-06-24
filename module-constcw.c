@@ -64,7 +64,7 @@ int32_t constcw_analyse_file(uint16_t c_caid, uint32_t c_prid, uint16_t c_sid, u
 			int8_t i;
 			for(i = 0; i < 16; ++i)
 				{ dcw[i] = (uchar) cw[i]; }
-			cs_log("Entry found: %04X:%06X:%04X:%04X:%04X:%04X:%s", caid, provid, sid, pmtpid, ecmpid, vpid, cs_hexdump(1, dcw, 16, token, sizeof(token)));
+			cs_log("Entry found: %04X@%06X:%04X:%04X:%04X:%04X:%s", caid, provid, sid, pmtpid, ecmpid, vpid, cs_hexdump(1, dcw, 16, token, sizeof(token)));
 			return 1;
 		}
 	}
@@ -129,7 +129,7 @@ static int32_t constcw_send_ecm(struct s_client *client, ECM_REQUEST *er)
 
 	t = time(NULL);
 	// Check if DCW exist in the files
-	//cs_log("Searching ConstCW for ECM: %04X:%06X:%04X (%d)", er->caid, er->prid, er->srvid, er->l);
+	//cs_log("Searching ConstCW for ECM: %04X@%06X:%04X (%d)", er->caid, er->prid, er->srvid, er->l);
 
 	if(constcw_analyse_file(er->caid, er->prid, er->srvid, er->pmtpid, er->vpid, er->pid, cw) == 0)
 	{
