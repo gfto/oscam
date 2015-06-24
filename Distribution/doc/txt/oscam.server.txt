@@ -395,7 +395,7 @@ DESCRIPTIONS
 	   example: blockemm-bylen = 1-10,11-
 
        read_old_classes = 0|1 (Viaccess SCs only)
-	  0 = read only active entitlements (default) 1 = read all entitlements
+	  0 = read only active entitlements 1 = read all entitlements (default)
 
        saveemm-u = 0|1
 	  1 = save unique EMMs to log file, default:0
