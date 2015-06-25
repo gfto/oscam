@@ -465,7 +465,7 @@ static void emmcache_fn(const char *token, char *value, void *setting, FILE *f)
 		}
 		return;
 	}
-	if(rdr->cachemm || cfg.http_full_cfg)
+	if(rdr->cachemm || rdr->logemm || cfg.http_full_cfg)
 		{ fprintf_conf(f, token, "%d,%d,%d,%d\n", rdr->cachemm, rdr->rewritemm, rdr->logemm,rdr->deviceemm); }
 }
 
