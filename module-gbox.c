@@ -596,8 +596,6 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 			NULLFREE(peer->hostname);
 			if(!cs_malloc(&peer->hostname, hostname_len + 1))
 			{
-				//why unlock here?!
-				//cs_writeunlock(__func__, &peer->lock);
 				return -1;
 			}
 			memcpy(peer->hostname, data + payload_len - 1 - hostname_len, hostname_len);
@@ -717,8 +715,6 @@ static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 	if(!cs_malloc(&ere, sizeof(struct gbox_ecm_request_ext)))
 	{
 		NULLFREE(er);
-		//why unlock here?!
-		//cs_writeunlock(__func__, &peer->lock);
 		return -1;
 	}
 
@@ -1144,7 +1140,7 @@ static int8_t gbox_check_header(struct s_client *cli, struct s_client *proxy, uc
 static int32_t gbox_recv(struct s_client *cli, uchar *buf, int32_t l)
 {
 	uchar data[RECEIVE_BUFFER_SIZE];
-	int32_t n = l;
+	int32_t n = l, tmp;
 	int8_t ret = 0;
 
 	if(!cli->udp_fd || !cli->is_udp || cli->typ != 'c')
@@ -1173,9 +1169,11 @@ static int32_t gbox_recv(struct s_client *cli, uchar *buf, int32_t l)
 	struct gbox_peer *peer = proxy->gbox;
 				
 	cs_writelock(__func__, &peer->lock);
-	if(gbox_cmd_switch(proxy, data, n) < 0)
-		{ return -1; }
+	tmp = gbox_cmd_switch(proxy, data, n);
 	cs_writeunlock(__func__, &peer->lock);
+	
+	if(tmp < 0)
+		{ return -1; }
 				
 	//clients may timeout - dettach from peer's gbox/reader
 	cli->gbox = NULL;
