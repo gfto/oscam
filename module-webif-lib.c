@@ -807,13 +807,13 @@ static struct CRYPTO_dynlock_value *SSL_dyn_create_function(const char *file, in
 	if(!cs_malloc(&l, sizeof(struct CRYPTO_dynlock_value)))
 		{ return NULL; }
 
-	if(SAFE_MUTEX_INIT(&l->mutex, NULL))
+	if(pthread_mutex_init(&l->mutex, NULL))
 	{
 		// Initialization of mutex failed.
 		NULLFREE(l);
 		return (NULL);
 	}
-	SAFE_MUTEX_INIT(&l->mutex, NULL);
+
 	// just to remove compiler warnings...
 	if(file || line) { return l; }
 	return l;
