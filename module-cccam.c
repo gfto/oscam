@@ -2567,9 +2567,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 			if((l >= (4+8)) && strncmp(msg, "PARTNER:", 8) == 0)
 			{
 				//When Data starts with "PARTNER:" we have an Oscam-cccam-compatible client/server!
-				if((int32_t)(4 + 9 + sizeof(cc->remote_oscam) - 1) > l)
-					{ break; }
-				
+
 				strncpy(cc->remote_oscam, msg + 9, sizeof(cc->remote_oscam) - 1);
 				int32_t has_param = check_extended_mode(cl, msg);
 				if(!cc->is_oscam_cccam)
@@ -3886,7 +3884,7 @@ int32_t cc_cli_connect(struct s_client *cl)
 		return -2;
 	}
 	cc_crypt(&cc->block[DECRYPT], data, 20, DECRYPT);
-	cs_log_dump_dbg(D_CLIENT, data, 20, "cccam: login failed, usr/pwd invalid");
+	cs_log_dump_dbg(D_CLIENT, data, 20, "cccam: login data");
 
 	if(memcmp(data, buf, 5))    // check server response
 	{
