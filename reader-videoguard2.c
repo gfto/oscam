@@ -1222,6 +1222,8 @@ static int32_t videoguard2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 
 				return ERROR;
 			}
+			
+			memcpy(reader->VgLastPayload, buff_0F, 6);
 
 			// copy cw1 in place
 			memcpy(ea->cw + 0, rbuff + 5, 8);
