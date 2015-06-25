@@ -3124,6 +3124,8 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 	char provider_name[64],  service_name[64], tmp[256], srvid_line[1024];;
 	FILE *fpsave;
 	
+	cs_log_dump_dbg(D_DVBAPI, buffer, length, "sdt-info dbg: sdt data: ");
+	
 	if(length < 3)
 		{ return; }
 		
