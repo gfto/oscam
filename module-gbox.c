@@ -596,7 +596,8 @@ int32_t gbox_cmd_hello(struct s_client *cli, uchar *data, int32_t n)
 			NULLFREE(peer->hostname);
 			if(!cs_malloc(&peer->hostname, hostname_len + 1))
 			{
-				cs_writeunlock(&peer->lock);
+				//why unlock here?!
+				//cs_writeunlock(&peer->lock);
 				return -1;
 			}
 			memcpy(peer->hostname, data + payload_len - 1 - hostname_len, hostname_len);
@@ -683,6 +684,9 @@ static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 	peer = cli->gbox;
 	if (!peer || !peer->my_user) { return -1; }
 	cl = peer->my_user;
+	
+	if(n < 21)
+		{ return -1; }
 
 	// No ECMs with length < MIN_LENGTH expected
 	if ((((data[19] & 0x0f) << 8) | data[20]) < MIN_ECM_LENGTH) { return -1; }
@@ -712,8 +716,10 @@ static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 	struct gbox_ecm_request_ext *ere;
 	if(!cs_malloc(&ere, sizeof(struct gbox_ecm_request_ext)))
 	{
-        	cs_writeunlock(&peer->lock);
-              	return -1;
+		NULLFREE(er);
+		//why unlock here?!
+		//cs_writeunlock(&peer->lock);
+		return -1;
 	}
 
 	uchar *ecm = data + 18; //offset of ECM in gbx message
@@ -726,7 +732,10 @@ static int8_t gbox_incoming_ecm(struct s_client *cli, uchar *data, int32_t n)
 	if(peer->ecm_idx == 100) { peer->ecm_idx = 0; }
 
 	er->idx = peer->ecm_idx++;
-	er->ecmlen = (((ecm[1] & 0x0f) << 8) | ecm[2]) + 3;
+	er->ecmlen = SCT_LEN(ecm);
+
+	if(er->ecmlen < 3 || er->ecmlen > MAX_ECM_SIZE || er->ecmlen+18 > n)
+		{ NULLFREE(ere); NULLFREE(er); return -1; }
 
 	er->pid = b2i(2, data + 10);
 	er->srvid = b2i(2, data + 12);
