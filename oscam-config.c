@@ -380,13 +380,13 @@ int32_t init_provid(void)
 		}		
 	}
 	
-	cs_writelock(&config_lock);
+	cs_writelock(__func__, &config_lock);
 	
 	//this allows reloading of provids, so cleanup of old data is needed:
 	last_provid = cfg.provid; //old data
 	cfg.provid = new_cfg_provid; //assign after loading, so everything is in memory
 
-	cs_writeunlock(&config_lock);
+	cs_writeunlock(__func__, &config_lock);
 
 	struct s_client *cl;
 	for(cl = first_client->next; cl ; cl = cl->next)
@@ -667,12 +667,12 @@ int32_t init_srvid(void)
 		}
 	}
 
-	cs_writelock(&config_lock);
+	cs_writelock(__func__, &config_lock);
 	//this allows reloading of srvids, so cleanup of old data is needed:
 	memcpy(last_srvid, cfg.srvid, sizeof(last_srvid));  //old data
 	memcpy(cfg.srvid, new_cfg_srvid, sizeof(last_srvid));   //assign after loading, so everything is in memory
 
-	cs_writeunlock(&config_lock);
+	cs_writeunlock(__func__, &config_lock);
 
 	struct s_client *cl;
 	for(cl = first_client->next; cl ; cl = cl->next)
@@ -874,7 +874,7 @@ int32_t init_tierid(void)
 	fclose(fp);
 	if(nr > 0)
 		{ cs_log("%d tier-id's loaded", nr); }
-	cs_writelock(&config_lock);
+	cs_writelock(__func__, &config_lock);
 	//reload function:
 	tierid = cfg.tierid;
 	cfg.tierid = new_cfg_tierid;
@@ -885,7 +885,7 @@ int32_t init_tierid(void)
 		NULLFREE(tierid);
 		tierid = ptr;
 	}
-	cs_writeunlock(&config_lock);
+	cs_writeunlock(__func__, &config_lock);
 
 	return (0);
 }

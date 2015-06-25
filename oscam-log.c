@@ -20,7 +20,7 @@ char *LOG_LIST = "log_list";
 
 static FILE *fp;
 static FILE *fps;
-static int8_t logStarted;
+static int8_t logStarted = 0;
 static LLIST *log_list;
 static bool log_running;
 static int log_list_queued;
@@ -147,7 +147,10 @@ static void cs_write_log(char *txt, int8_t do_flush, uint8_t hdr_date_offset, ui
 
 static void log_list_flush(void)
 {
-	pthread_cond_signal(&log_thread_sleep_cond);
+	if(logStarted == 0)
+		{ return; }
+	
+	SAFE_COND_SIGNAL_NOLOG(&log_thread_sleep_cond);
 	int32_t i = 0;
 	while(ll_count(log_list) > 0 && i < 200)
 	{
@@ -158,6 +161,9 @@ static void log_list_flush(void)
 
 static void log_list_add(struct s_log *log)
 {
+	if(logStarted == 0)
+		{ return; }
+	
 	int32_t count = ll_count(log_list);
 	log_list_queued++;
 	if(count < MAX_LOG_LIST_BACKLOG)
@@ -170,7 +176,7 @@ static void log_list_add(struct s_log *log)
 		NULLFREE(log);
 		cs_write_log("-------------> Too much data in log_list, dropping log message.\n", 1, 0, 0);
 	}
-	pthread_cond_signal(&log_thread_sleep_cond);
+	SAFE_COND_SIGNAL_NOLOG(&log_thread_sleep_cond);
 }
 
 static void cs_write_log_int(char *txt)
@@ -249,7 +255,8 @@ void cs_reinit_loghist(uint32_t size)
 	{
 		if(cs_malloc(&tmp, size) && cs_malloc(&tmp3, size/3+8))
 		{
-			cs_writelock(&loghistory_lock);
+			if(logStarted)
+				{ cs_writelock_nolog(__func__, &loghistory_lock); }
 			tmp2 = loghist;
 			tmp4 = loghistid;
 			// On shrinking, the log is not copied and the order is reversed
@@ -276,7 +283,8 @@ void cs_reinit_loghist(uint32_t size)
 				cs_sleepms(20); // Monitor or webif may be currently outputting the loghistory but don't use locking so we sleep a bit...
 				cfg.loghistorysize = size;
 			}
-			cs_writeunlock(&loghistory_lock);
+			if(logStarted)
+				{ cs_writeunlock_nolog(__func__, &loghistory_lock); }
 			if(tmp2 != NULL) { add_garbage(tmp2); }
 			if(tmp4 != NULL) { add_garbage(tmp4); }
 		}
@@ -356,6 +364,9 @@ static uint8_t get_log_header(char *txt, int32_t txt_size, uint8_t* hdr_logcount
 
 static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 {
+	if(logStarted == 0)
+		{ return; }
+	
 	(void)log; // Prevent warning when WEBIF, MODULE_MONITOR and CS_ANTICASC are disabled
 
 	// anticascading messages go to their own log
@@ -408,7 +419,7 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 		char *target_ptr = NULL;
 		int32_t target_len = strlen(usrtxt) + strlen(txt+log->header_date_offset) + 1;
 
-		cs_writelock(&loghistory_lock);
+		cs_writelock_nolog(__func__, &loghistory_lock);
 		char *lastpos = loghist + (cfg.loghistorysize) - 1;
 		if(loghist + target_len + 1 >= lastpos)
 		{
@@ -433,7 +444,7 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 			*loghistptr = '\0';
 		}
 		++counter;
-		cs_writeunlock(&loghistory_lock);
+		cs_writeunlock_nolog(__func__, &loghistory_lock);
 		snprintf(target_ptr, target_len + 1, "%s\t%s", usrtxt, txt + log->header_date_offset);
 		ull2b_buf(counter, (uchar *)(loghistid + ((target_ptr-loghist)/3)));
 	}
@@ -603,14 +614,20 @@ static void __cs_log_check_duplicates(uint8_t hdr_len, uint8_t hdr_logcount_offs
 
 void cs_log_txt(const char *log_prefix, const char *fmt, ...)
 {
-	pthread_mutex_lock(&log_mutex);
+	if(logStarted == 0)
+		{ return; }
+	
+	SAFE_MUTEX_LOCK_NOLOG(&log_mutex);
 	__do_log();
-	pthread_mutex_unlock(&log_mutex);
+	SAFE_MUTEX_UNLOCK_NOLOG(&log_mutex);
 }
 
 void cs_log_hex(const char *log_prefix, const uint8_t *buf, int32_t n, const char *fmt, ...)
 {
-	pthread_mutex_lock(&log_mutex);
+	if(logStarted == 0)
+		{ return; }
+	
+	SAFE_MUTEX_LOCK_NOLOG(&log_mutex);
 	__do_log();
 	if(buf)
 	{
@@ -622,7 +639,7 @@ void cs_log_hex(const char *log_prefix, const uint8_t *buf, int32_t n, const cha
 			write_to_log_int(log_txt, hdr_len, hdr_logcount_offset, hdr_date_offset, hdr_time_offset, hdr_info_offset);
 		}
 	}
-	pthread_mutex_unlock(&log_mutex);
+	SAFE_MUTEX_UNLOCK_NOLOG(&log_mutex);
 }
 
 static void cs_close_log(void)
@@ -743,7 +760,7 @@ void log_list_thread(void)
 			NULLFREE(log);
 		}
 		if(!log_list_queued)  // The list is empty, sleep until new data comes in and we are woken up
-			sleepms_on_cond(&log_thread_sleep_cond_mutex, &log_thread_sleep_cond, 60 * 1000);
+			sleepms_on_cond(__func__, &log_thread_sleep_cond_mutex, &log_thread_sleep_cond, 60 * 1000);
 	}
 	while(log_running);
 	ll_destroy(&log_list);
@@ -769,23 +786,22 @@ static void init_syslog_socket(void)
 }
 
 int32_t cs_init_log(void)
-{
+{	
 	if(logStarted == 0)
 	{
 		init_syslog_socket();
-			
-		pthread_mutex_init(&log_mutex, NULL);
+		SAFE_MUTEX_INIT_NOLOG(&log_mutex, NULL);
 
-		cs_pthread_cond_init(&log_thread_sleep_cond_mutex, &log_thread_sleep_cond);
+		cs_pthread_cond_init_nolog(__func__, &log_thread_sleep_cond_mutex, &log_thread_sleep_cond);
 
 #if defined(WEBIF) || defined(MODULE_MONITOR)
-		cs_lock_create(&loghistory_lock, "loghistory_lock", 5000);
+		cs_lock_create_nolog(__func__, &loghistory_lock, "loghistory_lock", 5000);
 #endif
 
 		log_list = ll_create(LOG_LIST);
 		pthread_attr_t attr;
-		pthread_attr_init(&attr);
-		pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+		SAFE_ATTR_INIT_NOLOG(&attr);
+		SAFE_ATTR_SETSTACKSIZE_NOLOG(&attr, PTHREAD_STACK_SIZE);
 		int32_t ret = pthread_create(&log_thread, &attr, (void *)&log_list_thread, NULL);
 		if(ret)
 		{
@@ -794,6 +810,8 @@ int32_t cs_init_log(void)
 			cs_exit(1);
 		}
 		pthread_attr_destroy(&attr);
+		
+		logStarted = 1;
 	}
 	int32_t rc = 0;
 	if(!cfg.disablelog) { rc = cs_open_logfiles(); }
@@ -849,8 +867,8 @@ void log_free(void)
 	}
 	cs_close_log();
 	log_running = 0;
-	pthread_cond_signal(&log_thread_sleep_cond);
-	pthread_join(log_thread, NULL);
+	SAFE_COND_SIGNAL_NOLOG(&log_thread_sleep_cond);
+	SAFE_THREAD_JOIN_NOLOG(log_thread, NULL);
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 	NULLFREE(loghist);
 	NULLFREE(loghistid);

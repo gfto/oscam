@@ -1102,7 +1102,7 @@ int32_t init_config(void)
 
 	const struct config_sections *cur_section = oscam_conf; // Global
 	char *token;
-
+	
 	config_sections_set_defaults(oscam_conf, &cfg);
 
 	if(!fp)
@@ -1162,6 +1162,7 @@ int32_t init_config(void)
 			}
 			continue;
 		}
+
 		if(!valid_section)
 			{ continue; }
 		char *value = strchr(token, '=');

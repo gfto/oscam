@@ -2,9 +2,11 @@
 #include "oscam-time.h"
 
 static enum clock_type clock_type = CLOCK_TYPE_UNKNOWN;
+
 #if defined(CLOCKFIX)
 struct timeval lasttime; // holds previous time to detect systemtime adjustments due to eg transponder change on dvb receivers
 #endif
+
 int64_t comp_timeb(struct timeb *tpa, struct timeb *tpb)
 {
 	return (int64_t)(((int64_t)(tpa->time - tpb->time) * 1000ull) + ((int64_t) tpa->millitm - (int64_t) tpb->millitm));
@@ -264,32 +266,54 @@ int64_t add_ms_to_timeb_diff(struct timeb *tb, int32_t ms)
 #  endif
 #endif
 
-void __cs_pthread_cond_init(pthread_cond_t *cond)
+void __cs_pthread_cond_init(const char *n, pthread_cond_t *cond)
 {
 	pthread_condattr_t attr;
-	pthread_condattr_init(&attr); // init condattr with defaults
+	SAFE_CONDATTR_INIT_R(&attr, n); // init condattr with defaults
 #if 0
 #if defined(HAVE_pthread_condattr_setclock)
 	enum clock_type ctype = cs_getclocktype();
 	pthread_condattr_setclock(&attr, (ctype == CLOCK_TYPE_MONOTONIC) ? CLOCK_MONOTONIC : CLOCK_REALTIME);
 #endif
 #endif
-	pthread_cond_init(cond, &attr); // init thread with right clock assigned
+	SAFE_COND_INIT_R(cond, &attr, n); // init thread with right clock assigned
+	pthread_condattr_destroy(&attr);
 }
 
-void sleepms_on_cond(pthread_mutex_t *mutex, pthread_cond_t *cond, uint32_t msec)
+void __cs_pthread_cond_init_nolog(const char *n, pthread_cond_t *cond)
+{
+	pthread_condattr_t attr;
+	SAFE_CONDATTR_INIT_NOLOG_R(&attr, n); // init condattr with defaults
+#if 0
+#if defined(HAVE_pthread_condattr_setclock)
+	enum clock_type ctype = cs_getclocktype();
+	pthread_condattr_setclock(&attr, (ctype == CLOCK_TYPE_MONOTONIC) ? CLOCK_MONOTONIC : CLOCK_REALTIME);
+#endif
+#endif
+	SAFE_COND_INIT_NOLOG_R(cond, &attr, n); // init thread with right clock assigned
+	pthread_condattr_destroy(&attr);
+}
+
+
+void sleepms_on_cond(const char *n, pthread_mutex_t *mutex, pthread_cond_t *cond, uint32_t msec)
 {
 	struct timespec ts;
 	add_ms_to_timespec(&ts, msec);
-	pthread_mutex_lock(mutex);
+	SAFE_MUTEX_LOCK_R(mutex, n);
 	pthread_cond_timedwait(cond, mutex, &ts); // sleep on sleep_cond
-	pthread_mutex_unlock(mutex);
+	SAFE_MUTEX_UNLOCK_R(mutex, n);
 }
 
-void cs_pthread_cond_init(pthread_mutex_t *mutex, pthread_cond_t *cond)
+void cs_pthread_cond_init(const char *n, pthread_mutex_t *mutex, pthread_cond_t *cond)
 {
-	pthread_mutex_init(mutex, NULL);
-	__cs_pthread_cond_init(cond);
+	SAFE_MUTEX_INIT_R(mutex, NULL, n);
+	__cs_pthread_cond_init(n, cond);
+}
+
+void cs_pthread_cond_init_nolog(const char *n, pthread_mutex_t *mutex, pthread_cond_t *cond)
+{
+	SAFE_MUTEX_INIT_NOLOG_R(mutex, NULL, n);
+	__cs_pthread_cond_init(n, cond);
 }
 
 enum clock_type cs_getclocktype(void) {

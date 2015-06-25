@@ -182,13 +182,13 @@ uint32_t cs_getIPfromHost(const char *hostname)
 	//Resolve with gethostbyname:
 	if(cfg.resolve_gethostbyname)
 	{
-		cs_writelock(&gethostbyname_lock);
+		cs_writelock(__func__, &gethostbyname_lock);
 		struct hostent *rht = gethostbyname(hostname);
 		if(!rht)
 			{ cs_log("can't resolve %s", hostname); }
 		else
 			{ result = ((struct in_addr *)rht->h_addr)->s_addr; }
-		cs_writeunlock(&gethostbyname_lock);
+		cs_writeunlock(__func__, &gethostbyname_lock);
 	}
 	else     //Resolve with getaddrinfo:
 	{

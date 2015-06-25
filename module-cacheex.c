@@ -87,7 +87,7 @@ static int32_t cacheex_check_hitcache(ECM_REQUEST *er, struct s_client *cl)
 	search.caid = er->caid;
 	search.prid = er->prid;
 	search.srvid = er->srvid;
-	pthread_rwlock_rdlock(&hitcache_lock);
+	SAFE_RWLOCK_RDLOCK(&hitcache_lock);
 	result = find_hash_table(&ht_hitcache, &search, sizeof(HIT_KEY), &cacheex_compare_hitkey);
 	if(result){
 		struct timeb now;
@@ -100,11 +100,11 @@ static int32_t cacheex_check_hitcache(ECM_REQUEST *er, struct s_client *cl)
 			(!grp || !result->grp || (grp & result->grp))
 		)
 		{
-			pthread_rwlock_unlock(&hitcache_lock);
+			SAFE_RWLOCK_UNLOCK(&hitcache_lock);
 			return 1;
 		}
 	}
-	pthread_rwlock_unlock(&hitcache_lock);
+	SAFE_RWLOCK_UNLOCK(&hitcache_lock);
 	return 0;
 }
 
@@ -126,7 +126,7 @@ static void cacheex_add_hitcache(struct s_client *cl, ECM_REQUEST *er)
 	search.prid = er->prid;
 	search.srvid = er->srvid;
 
-	pthread_rwlock_wrlock(&hitcache_lock);
+	SAFE_RWLOCK_WRLOCK(&hitcache_lock);
 
 	result = find_hash_table(&ht_hitcache, &search, sizeof(HIT_KEY), &cacheex_compare_hitkey);
 	if(!result) {  //not found, add it!
@@ -146,7 +146,7 @@ static void cacheex_add_hitcache(struct s_client *cl, ECM_REQUEST *er)
 		cs_ftime(&result->time); //always update time;
 	}
 
-	pthread_rwlock_unlock(&hitcache_lock);
+	SAFE_RWLOCK_UNLOCK(&hitcache_lock);
 }
 
 static void cacheex_del_hitcache(ECM_REQUEST *er)
@@ -158,9 +158,9 @@ static void cacheex_del_hitcache(ECM_REQUEST *er)
 	search.prid = er->prid;
 	search.srvid = er->srvid;
 
-	pthread_rwlock_wrlock(&hitcache_lock);
+	SAFE_RWLOCK_WRLOCK(&hitcache_lock);
 	search_remove_elem_hash_table(&ht_hitcache, &search, sizeof(HIT_KEY), &cacheex_compare_hitkey);
-    pthread_rwlock_unlock(&hitcache_lock);
+    SAFE_RWLOCK_UNLOCK(&hitcache_lock);
 }
 
 void cacheex_cleanup_hitcache(bool force)
@@ -170,7 +170,7 @@ void cacheex_cleanup_hitcache(bool force)
 	struct timeb now;
 	int64_t gone;
 	int32_t timeout = (cfg.max_hitcache_time + (cfg.max_hitcache_time / 2))*1000;  //1,5
-	pthread_rwlock_wrlock(&hitcache_lock);
+	SAFE_RWLOCK_WRLOCK(&hitcache_lock);
 	i = get_first_node_list(&ll_hitcache);
 	while (i)
 	{
@@ -193,7 +193,7 @@ void cacheex_cleanup_hitcache(bool force)
 		}
 		i = i_next;
 	}
-	pthread_rwlock_unlock(&hitcache_lock);
+	SAFE_RWLOCK_UNLOCK(&hitcache_lock);
 }
 
 static int32_t cacheex_ecm_hash_calc(uchar *buf, int32_t n)
@@ -248,7 +248,7 @@ static void *chkcache_process(void)
 
 	while(cacheex_running)
 	{
-		cs_readlock(&ecmcache_lock);
+		cs_readlock(__func__, &ecmcache_lock);
 		for(er = ecmcwcache; er; er = er->next)
 		{
 			timeout = time(NULL)-((cfg.ctimeout+500)/1000+1);
@@ -325,7 +325,7 @@ static void *chkcache_process(void)
 					{ NULLFREE(ecm); }
 			}
 		}
-		cs_readunlock(&ecmcache_lock);
+		cs_readunlock(__func__, &ecmcache_lock);
 
 		cs_sleepms(10);
 	}
@@ -464,7 +464,7 @@ void cacheex_cache_push(ECM_REQUEST *er)
 
 	//cacheex=2 mode: push (server->remote)
 	struct s_client *cl;
-	cs_readlock(&clientlist_lock);
+	cs_readlock(__func__, &clientlist_lock);
 	for(cl = first_client->next; cl; cl = cl->next)
 	{
 		if(check_client(cl) && er->cacheex_src != cl)
@@ -492,12 +492,12 @@ void cacheex_cache_push(ECM_REQUEST *er)
 			}
 		}
 	}
-	cs_readunlock(&clientlist_lock);
+	cs_readunlock(__func__, &clientlist_lock);
 
 
 	//cacheex=3 mode: reverse push (reader->server)
-	cs_readlock(&readerlist_lock);
-	cs_readlock(&clientlist_lock);
+	cs_readlock(__func__, &readerlist_lock);
+	cs_readlock(__func__, &clientlist_lock);
 	struct s_reader *rdr;
 	for(rdr = first_active_reader; rdr; rdr = rdr->next)
 	{
@@ -520,8 +520,8 @@ void cacheex_cache_push(ECM_REQUEST *er)
 			}
 		}
 	}
-	cs_readunlock(&clientlist_lock);
-	cs_readunlock(&readerlist_lock);
+	cs_readunlock(__func__, &clientlist_lock);
+	cs_readunlock(__func__, &readerlist_lock);
 }
 
 
@@ -689,10 +689,10 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 	add_cache(er);
 	cacheex_add_stats(cl, er->caid, er->srvid, er->prid, 1);
 
-	cs_writelock(&ecm_pushed_deleted_lock);
+	cs_writelock(__func__, &ecm_pushed_deleted_lock);
 	er->next = ecm_pushed_deleted;
 	ecm_pushed_deleted = er;
-	cs_writeunlock(&ecm_pushed_deleted_lock);
+	cs_writeunlock(__func__, &ecm_pushed_deleted_lock);
 
 	return 1;  //NO free, we have to wait cache push out stuff ends.
 }
@@ -991,7 +991,7 @@ bool cacheex_check_queue_length(struct s_client *cl)
 				  cl->typ == 'c' ? "client" : "reader",
 				  username(cl), ll_count(cl->joblist));
 	// Thread down???
-	pthread_mutex_lock(&cl->thread_lock);
+	SAFE_MUTEX_LOCK(&cl->thread_lock);
 	if(cl && !cl->kill && cl->thread && cl->thread_active)
 	{
 		// Just test for invalid thread id:
@@ -1002,7 +1002,7 @@ bool cacheex_check_queue_length(struct s_client *cl)
 						  cl->typ == 'c' ? "client" : "reader", username(cl));
 		}
 	}
-	pthread_mutex_unlock(&cl->thread_lock);
+	SAFE_MUTEX_UNLOCK(&cl->thread_lock);
 	return 1;
 }
 

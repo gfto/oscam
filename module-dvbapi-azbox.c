@@ -115,7 +115,7 @@ static void *azbox_main_thread(void *cli)
 {
 	struct s_client *client = (struct s_client *) cli;
 	client->thread = pthread_self();
-	pthread_setspecific(getclient, cli);
+	SAFE_SETSPECIFIC(getclient, cli);
 	dvbapi_client = cli;
 
 	struct s_auth *account;

@@ -146,7 +146,7 @@ void cleanupcwcycle(void)
 	bool bcleanup = false;
 
 	//write lock
-	cs_writelock(&cwcycle_lock);
+	cs_writelock(__func__, &cwcycle_lock);
 	for(currentnode = cw_cc_list, prv = NULL; currentnode; prv = currentnode, currentnode = currentnode->next, count++)   // First Remove old Entrys
 	{
 		if((now - currentnode->time) <= kct)    // delete Entry which old to hold list small
@@ -165,7 +165,7 @@ void cleanupcwcycle(void)
 		bcleanup = true;
 		break; //we need only once, all follow to old
 	}
-	cs_writeunlock(&cwcycle_lock);
+	cs_writeunlock(__func__, &cwcycle_lock);
 	while(currentnode != NULL)
 	{
 		temp = currentnode->next;
@@ -204,7 +204,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 	{ return 3; } //cwc ign	
 
 	//read lock
-	cs_readlock(&cwcycle_lock);
+	cs_readlock(__func__, &cwcycle_lock);
 	for(currentnode = cw_cc_list; currentnode; currentnode = currentnode->next)
 	{
 		if(currentnode->caid != er->caid || currentnode->provid != er->prid || currentnode->sid != er->srvid || currentnode->chid != er->chid)
@@ -237,7 +237,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 				cw_cc_list_size--;
 			}
 			//now we have all data and can leave read lock
-			cs_readunlock(&cwcycle_lock);
+			cs_readunlock(__func__, &cwcycle_lock);
 
 			cs_hexdump(0, cwc->ecm_md5[cwc->cwc_hist_entry].md5, 16, cwc_md5, sizeof(cwc_md5));
 			cs_hexdump(0, (void *)&cwc->ecm_md5[cwc->cwc_hist_entry].csp_hash, 4, cwc_csp, sizeof(cwc_csp));
@@ -556,7 +556,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 
 	if(need_new_entry)
 	{
-		cs_readunlock(&cwcycle_lock);
+		cs_readunlock(__func__, &cwcycle_lock);
 		if(cw_cc_list_size <= mcl)    //only add when we have space
 		{
 			struct s_cw_cycle_check *new = NULL;
@@ -590,7 +590,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 				new->old = 0;
 				new->stage4_repeat = 0;
 				//write lock
-				cs_writelock(&cwcycle_lock);
+				cs_writelock(__func__, &cwcycle_lock);
 				if(cw_cc_list)    // the new entry on top
 				{
 					cw_cc_list->prev = new;
@@ -599,7 +599,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 				cw_cc_list = new;
 				cw_cc_list_size++;
 				//write unlock /
-				cs_writeunlock(&cwcycle_lock);
+				cs_writeunlock(__func__, &cwcycle_lock);
 
 				cs_log_dbg(D_CWC, "cyclecheck [Store New Entry] %s Time: %ld Stage: %i Cycletime: %i Locktime: %ld", er_ecmf, new->time, new->stage, new->cycletime, new->locktime);
 			}
@@ -630,7 +630,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 		memcpy(cwc->ecm_md5[cwc->cwc_hist_entry].cw, cw, sizeof(cwc->cw));
 		cwc->ecmlen = er->ecmlen;
 		//write lock /
-		cs_writelock(&cwcycle_lock);
+		cs_writelock(__func__, &cwcycle_lock);
 		if(cw_cc_list)    // the clone entry on top
 		{
 			cw_cc_list->prev = cwc;
@@ -639,7 +639,7 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 		cw_cc_list = cwc;
 		cw_cc_list_size++;
 		//write unlock /
-		cs_writeunlock(&cwcycle_lock);
+		cs_writeunlock(__func__, &cwcycle_lock);
 		cs_log_dbg(D_CWC, "cyclecheck [Update Entry and add on top] %s Time: %ld Stage: %i Cycletime: %i", er_ecmf, cwc->time, cwc->stage, cwc->cycletime);
 	}
 	else if(cwc)

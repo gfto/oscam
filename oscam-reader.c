@@ -1036,7 +1036,7 @@ void reader_get_ecm(struct s_reader *reader, ECM_REQUEST *er)
 	struct ecm_request_t *ecm;
 	time_t timeout;
 
-	cs_readlock(&ecmcache_lock);
+	cs_readlock(__func__, &ecmcache_lock);
 	for(ecm = ecmcwcache; ecm; ecm = ecm->next)
 	{
 		timeout = time(NULL) - ((cfg.ctimeout+500)/1000+1);
@@ -1054,15 +1054,15 @@ void reader_get_ecm(struct s_reader *reader, ECM_REQUEST *er)
 			ea = NULL;
 		}
 	}
-	cs_readunlock(&ecmcache_lock);
+	cs_readunlock(__func__, &ecmcache_lock);
 	if(ea)   //found ea in cached ecm, asking for this reader
 	{
 		ea_er->is_pending = true;
 
-		cs_readlock(&ea->ecmanswer_lock);
+		cs_readlock(__func__, &ea->ecmanswer_lock);
 		if(ea->rc < E_99)
 		{
-			cs_readunlock(&ea->ecmanswer_lock);
+			cs_readunlock(__func__, &ea->ecmanswer_lock);
 			cs_log_dbg(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [reader_get_ecm] ecm already sent to reader %s (%s)", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid, reader ? reader->label : "-", ea->rc==E_FOUND?"OK":"NOK");
 
 			//e.g. we cannot send timeout, because "ea_temp->er->client" could wait/ask other readers! Simply set not_found if different from E_FOUND!
@@ -1076,7 +1076,7 @@ void reader_get_ecm(struct s_reader *reader, ECM_REQUEST *er)
 			ea->pending->pending_next = ea_prev;
 			cs_log_dbg(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [reader_get_ecm] ecm already sent to reader %s... set as pending", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid, reader ? reader->label : "-");
 		}
-		cs_readunlock(&ea->ecmanswer_lock);
+		cs_readunlock(__func__, &ea->ecmanswer_lock);
 		return;
 	}
 
@@ -1210,8 +1210,8 @@ static void add_reader_to_active(struct s_reader *rdr)
 	if(rdr->next)
 		{ remove_reader_from_active(rdr); }
 
-	cs_writelock(&readerlist_lock);
-	cs_writelock(&clientlist_lock);
+	cs_writelock(__func__, &readerlist_lock);
+	cs_writelock(__func__, &clientlist_lock);
 
 	// search configured position:
 	LL_ITER it = ll_iter_create(configured_readers);
@@ -1276,8 +1276,8 @@ static void add_reader_to_active(struct s_reader *rdr)
 		first_active_reader = rdr;
 	}
 	rdr->active = 1;
-	cs_writeunlock(&clientlist_lock);
-	cs_writeunlock(&readerlist_lock);
+	cs_writeunlock(__func__, &clientlist_lock);
+	cs_writeunlock(__func__, &readerlist_lock);
 }
 
 /* Removes a reader from the list of active readers so that no ecms can be requested anymore. */
@@ -1285,7 +1285,7 @@ void remove_reader_from_active(struct s_reader *rdr)
 {
 	struct s_reader *rdr2, *prv = NULL;
 	//rdr_log(rdr, "CHECK: REMOVE READER FROM ACTIVE");
-	cs_writelock(&readerlist_lock);
+	cs_writelock(__func__, &readerlist_lock);
 	for(rdr2 = first_active_reader; rdr2 ; prv = rdr2, rdr2 = rdr2->next)
 	{
 		if(rdr2 == rdr)
@@ -1297,7 +1297,7 @@ void remove_reader_from_active(struct s_reader *rdr)
 	}
 	rdr->next = NULL;
 	rdr->active = 0;
-	cs_writeunlock(&readerlist_lock);
+	cs_writeunlock(__func__, &readerlist_lock);
 }
 
 /* Starts or restarts a cardreader without locking. If restart=1, the existing thread is killed before restarting,
@@ -1372,16 +1372,16 @@ static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart)
    if restart=0 the cardreader is only started. */
 int32_t restart_cardreader(struct s_reader *rdr, int32_t restart)
 {
-	cs_writelock(&system_lock);
+	cs_writelock(__func__, &system_lock);
 	int32_t result = restart_cardreader_int(rdr, restart);
-	cs_writeunlock(&system_lock);
+	cs_writeunlock(__func__, &system_lock);
 	return result;
 }
 
 void init_cardreader(void)
 {
 	cs_log_dbg(D_TRACE, "cardreader: Initializing");
-	cs_writelock(&system_lock);
+	cs_writelock(__func__, &system_lock);
 	struct s_reader *rdr;
 
 	cardreader_init_locks();
@@ -1395,7 +1395,7 @@ void init_cardreader(void)
 	}
 
 	load_stat_from_file();
-	cs_writeunlock(&system_lock);
+	cs_writeunlock(__func__, &system_lock);
 }
 
 void kill_all_readers(void)

@@ -128,7 +128,7 @@ void init_noncelocks(void)
 	int32_t i;
 	for(i = 0; i < AUTHNONCEHASHBUCKETS; ++i)
 	{
-		cs_lock_create(&nonce_lock[i], "nonce_lock", 5000);
+		cs_lock_create(__func__, &nonce_lock[i], "nonce_lock", 5000);
 		nonce_first[i] = NULL;
 	}
 }
@@ -139,7 +139,7 @@ void calculate_nonce(char *nonce, char *result, char *opaque)
 	struct s_nonce *noncelist, *prev, *foundnonce = NULL, *foundopaque = NULL, *foundexpired = NULL;
 	int32_t bucket = opaque[0] % AUTHNONCEHASHBUCKETS;
 	time_t now = time(NULL);
-	cs_writelock(&nonce_lock[bucket]);
+	cs_writelock(__func__, &nonce_lock[bucket]);
 	for(noncelist = nonce_first[bucket], prev = NULL; noncelist; prev = noncelist, noncelist = noncelist->next)
 	{
 		if(now > noncelist->expirationdate)
@@ -196,7 +196,7 @@ void calculate_nonce(char *nonce, char *result, char *opaque)
 			nonce_first[bucket] = noncelist;
 		}
 	}
-	cs_writeunlock(&nonce_lock[bucket]);
+	cs_writeunlock(__func__, &nonce_lock[bucket]);
 	while(foundexpired)
 	{
 		prev = foundexpired;
@@ -791,11 +791,11 @@ static void SSL_locking_function(int32_t mode, int32_t type, const char *file, i
 {
 	if(mode & CRYPTO_LOCK)
 	{
-		cs_writelock(&lock_cs[type]);
+		cs_writelock(__func__, &lock_cs[type]);
 	}
 	else
 	{
-		cs_writeunlock(&lock_cs[type]);
+		cs_writeunlock(__func__, &lock_cs[type]);
 	}
 	// just to remove compiler warnings...
 	if(file || line) { return; }
@@ -807,13 +807,13 @@ static struct CRYPTO_dynlock_value *SSL_dyn_create_function(const char *file, in
 	if(!cs_malloc(&l, sizeof(struct CRYPTO_dynlock_value)))
 		{ return NULL; }
 
-	if(pthread_mutex_init(&l->mutex, NULL))
+	if(SAFE_MUTEX_INIT(&l->mutex, NULL))
 	{
 		// Initialization of mutex failed.
 		NULLFREE(l);
 		return (NULL);
 	}
-	pthread_mutex_init(&l->mutex, NULL);
+	SAFE_MUTEX_INIT(&l->mutex, NULL);
 	// just to remove compiler warnings...
 	if(file || line) { return l; }
 	return l;
@@ -823,11 +823,11 @@ static void SSL_dyn_lock_function(int32_t mode, struct CRYPTO_dynlock_value *l, 
 {
 	if(mode & CRYPTO_LOCK)
 	{
-		pthread_mutex_lock(&l->mutex);
+		SAFE_MUTEX_LOCK(&l->mutex);
 	}
 	else
 	{
-		pthread_mutex_unlock(&l->mutex);
+		SAFE_MUTEX_UNLOCK(&l->mutex);
 	}
 	// just to remove compiler warnings...
 	if(file || line) { return; }
@@ -859,7 +859,7 @@ SSL_CTX *SSL_Webif_Init(void)
 
 	for(i = 0; i < num; ++i)
 	{
-		cs_lock_create(&lock_cs[i], "ssl_lock_cs", 10000);
+		cs_lock_create(__func__, &lock_cs[i], "ssl_lock_cs", 10000);
 	}
 	/* static lock callbacks */
 	CRYPTO_set_id_callback(SSL_id_function);

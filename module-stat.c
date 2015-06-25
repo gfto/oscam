@@ -193,7 +193,7 @@ void load_stat_from_file(void)
 				if(!rdr->lb_stat)
 				{
 					rdr->lb_stat = ll_create("lb_stat");
-					cs_lock_create(&rdr->lb_stat_lock, rdr->label, DEFAULT_LOCK_TIMEOUT);
+					cs_lock_create(__func__, &rdr->lb_stat_lock, rdr->label, DEFAULT_LOCK_TIMEOUT);
 				}
 
 				ll_append(rdr->lb_stat, s);
@@ -226,7 +226,7 @@ void lb_destroy_stats(struct s_reader *rdr)
 {
 	if(!rdr->lb_stat)
 		return;
-	cs_lock_destroy(&rdr->lb_stat_lock);
+	cs_lock_destroy(__func__, &rdr->lb_stat_lock);
 	ll_destroy_data(&rdr->lb_stat);
 }
 
@@ -238,10 +238,10 @@ static READER_STAT *get_stat_lock(struct s_reader *rdr, STAT_QUERY *q, int8_t lo
 	if(!rdr->lb_stat)
 	{
 		rdr->lb_stat = ll_create("lb_stat");
-		cs_lock_create(&rdr->lb_stat_lock, rdr->label, DEFAULT_LOCK_TIMEOUT);
+		cs_lock_create(__func__, &rdr->lb_stat_lock, rdr->label, DEFAULT_LOCK_TIMEOUT);
 	}
 
-	if(lock) { cs_readlock(&rdr->lb_stat_lock); }
+	if(lock) { cs_readlock(__func__, &rdr->lb_stat_lock); }
 
 	LL_ITER it = ll_iter_create(rdr->lb_stat);
 	READER_STAT *s;
@@ -262,13 +262,13 @@ static READER_STAT *get_stat_lock(struct s_reader *rdr, STAT_QUERY *q, int8_t lo
 				{ break; }
 		}
 	}
-	if(lock) { cs_readunlock(&rdr->lb_stat_lock); }
+	if(lock) { cs_readunlock(__func__, &rdr->lb_stat_lock); }
 
 	//Move stat to list start for faster access:
 	if (i > 10 && s && !rdr->lb_stat_busy) {
-		if (lock) cs_writelock(&rdr->lb_stat_lock);
+		if (lock) cs_writelock(__func__, &rdr->lb_stat_lock);
 		ll_iter_move_first(&it);
-		if (lock) cs_writeunlock(&rdr->lb_stat_lock);
+		if (lock) cs_writeunlock(__func__, &rdr->lb_stat_lock);
 	}
 
 	return s;
@@ -344,7 +344,7 @@ static void save_stat_to_file_thread(void)
 		{
 			rdr->lb_stat_busy = 1;
 			
-			cs_writelock(&rdr->lb_stat_lock);
+			cs_writelock(__func__, &rdr->lb_stat_lock);
 			LL_ITER it = ll_iter_create(rdr->lb_stat);
 			READER_STAT *s;
 			while((s = ll_iter_next(&it)))
@@ -368,12 +368,12 @@ static void save_stat_to_file_thread(void)
 
 				count++;
 				//              if (count % 500 == 0) { //Saving stats is using too much cpu and causes high file load. so we need a break
-				//                  cs_readunlock(&rdr->lb_stat_lock);
+				//                  cs_readunlock(__func__, &rdr->lb_stat_lock);
 				//                  cs_sleepms(100);
-				//                  cs_readlock(&rdr->lb_stat_lock);
+				//                  cs_readlock(__func__, &rdr->lb_stat_lock);
 				//              }
 			}
-			cs_writeunlock(&rdr->lb_stat_lock);
+			cs_writeunlock(__func__, &rdr->lb_stat_lock);
 			
 			rdr->lb_stat_busy = 0;
 		}
@@ -416,10 +416,10 @@ static READER_STAT *get_add_stat(struct s_reader *rdr, STAT_QUERY *q)
 	if(!rdr->lb_stat)
 	{
 		rdr->lb_stat = ll_create("lb_stat");
-		cs_lock_create(&rdr->lb_stat_lock, rdr->label, DEFAULT_LOCK_TIMEOUT);
+		cs_lock_create(__func__, &rdr->lb_stat_lock, rdr->label, DEFAULT_LOCK_TIMEOUT);
 	}
 
-	cs_writelock(&rdr->lb_stat_lock);
+	cs_writelock(__func__, &rdr->lb_stat_lock);
 
 	READER_STAT *s = get_stat_lock(rdr, q, 0);
 	if(!s)
@@ -439,7 +439,7 @@ static READER_STAT *get_add_stat(struct s_reader *rdr, STAT_QUERY *q)
 			ll_prepend(rdr->lb_stat, s);
 		}
 	}
-	cs_writeunlock(&rdr->lb_stat_lock);
+	cs_writeunlock(__func__, &rdr->lb_stat_lock);
 
 	return s;
 }
@@ -667,7 +667,7 @@ int32_t clean_stat_by_rc(struct s_reader *rdr, int8_t rc, int8_t inverse)
 	{
 		if (rdr->lb_stat_busy) return 0;
 		rdr->lb_stat_busy = 1;
-		cs_writelock(&rdr->lb_stat_lock);
+		cs_writelock(__func__, &rdr->lb_stat_lock);
 		READER_STAT *s;
 		LL_ITER itr = ll_iter_create(rdr->lb_stat);
 		while((s = ll_iter_next(&itr)))
@@ -678,7 +678,7 @@ int32_t clean_stat_by_rc(struct s_reader *rdr, int8_t rc, int8_t inverse)
 				count++;
 			}
 		}
-		cs_writeunlock(&rdr->lb_stat_lock);
+		cs_writeunlock(__func__, &rdr->lb_stat_lock);
 		rdr->lb_stat_busy = 0;
 	}
 	return count;
@@ -705,7 +705,7 @@ int32_t clean_stat_by_id(struct s_reader *rdr, uint16_t caid, uint32_t prid, uin
 		if (rdr->lb_stat_busy) return 0;
 		
 		rdr->lb_stat_busy = 1;
-		cs_writelock(&rdr->lb_stat_lock);
+		cs_writelock(__func__, &rdr->lb_stat_lock);
 		READER_STAT *s;
 		LL_ITER itr = ll_iter_create(rdr->lb_stat);
 		while((s = ll_iter_next(&itr)))
@@ -721,7 +721,7 @@ int32_t clean_stat_by_id(struct s_reader *rdr, uint16_t caid, uint32_t prid, uin
 				break; // because the entry should unique we can left here
 			}
 		}
-		cs_writeunlock(&rdr->lb_stat_lock);
+		cs_writeunlock(__func__, &rdr->lb_stat_lock);
 		rdr->lb_stat_busy = 0;
 	}
 	return count;
@@ -809,7 +809,7 @@ static int32_t lb_valid_btun(ECM_REQUEST *er, uint16_t caidto)
 	get_stat_query(er, &q);
 	q.caid = caidto;
 
-	cs_readlock(&readerlist_lock);
+	cs_readlock(__func__, &readerlist_lock);
 	for(rdr = first_active_reader; rdr ; rdr = rdr->next)
 	{
 		if(rdr->lb_stat && rdr->client)
@@ -817,12 +817,12 @@ static int32_t lb_valid_btun(ECM_REQUEST *er, uint16_t caidto)
 			s = get_stat(rdr, &q);
 			if(s && s->rc == E_FOUND)
 			{
-				cs_readunlock(&readerlist_lock);
+				cs_readunlock(__func__, &readerlist_lock);
 				return 1;
 			}
 		}
 	}
-	cs_readunlock(&readerlist_lock);
+	cs_readunlock(__func__, &readerlist_lock);
 	return 0;
 }
 
@@ -898,7 +898,7 @@ uint16_t get_rdr_caid(struct s_reader *rdr)
 
 static void reset_ecmcount_reader(READER_STAT *s, struct s_reader *rdr)
 {
-	cs_readlock(&rdr->lb_stat_lock);
+	cs_readlock(__func__, &rdr->lb_stat_lock);
 	if(rdr->lb_stat && rdr->client)
 	{
 		if(s)
@@ -906,12 +906,12 @@ static void reset_ecmcount_reader(READER_STAT *s, struct s_reader *rdr)
 			s->ecm_count = 0;
 		}
 	}
-	cs_readunlock(&rdr->lb_stat_lock);
+	cs_readunlock(__func__, &rdr->lb_stat_lock);
 }
 
 static void reset_avgtime_reader(READER_STAT *s, struct s_reader *rdr)
 {
-	cs_readlock(&rdr->lb_stat_lock);
+	cs_readlock(__func__, &rdr->lb_stat_lock);
 	if(rdr->lb_stat && rdr->client)
 	{
 		if(!s) { return; }
@@ -922,7 +922,7 @@ static void reset_avgtime_reader(READER_STAT *s, struct s_reader *rdr)
 		}
 		s->time_avg = UNDEF_AVG_TIME;
 	}
-	cs_readunlock(&rdr->lb_stat_lock);
+	cs_readunlock(__func__, &rdr->lb_stat_lock);
 }
 
 /* force_reopen=1 -> force opening of block readers
@@ -1794,13 +1794,13 @@ static void housekeeping_stat_thread(void)
 	struct s_reader *rdr;
 	set_thread_name(__func__);
 	LL_ITER itr = ll_iter_create(configured_readers);
-	cs_readlock(&readerlist_lock); //this avoids cleaning a reading during writing
+	cs_readlock(__func__, &readerlist_lock); //this avoids cleaning a reading during writing
 	while((rdr = ll_iter_next(&itr)))
 	{
 		if(rdr->lb_stat)
 		{
 			rdr->lb_stat_busy = 1;
-			cs_writelock(&rdr->lb_stat_lock);
+			cs_writelock(__func__, &rdr->lb_stat_lock);
 			LL_ITER it = ll_iter_create(rdr->lb_stat);
 			READER_STAT *s;
 			while((s = ll_iter_next(&it)))
@@ -1813,11 +1813,11 @@ static void housekeeping_stat_thread(void)
 					cleaned++;
 				}
 			}
-			cs_writeunlock(&rdr->lb_stat_lock);
+			cs_writeunlock(__func__, &rdr->lb_stat_lock);
 			rdr->lb_stat_busy = 0;
 		}
 	}
-	cs_readunlock(&readerlist_lock);
+	cs_readunlock(__func__, &readerlist_lock);
 	cs_log_dbg(D_LB, "loadbalancer cleanup: removed %d entries", cleaned);
 }
 
@@ -1896,7 +1896,7 @@ void update_ecmlen_from_stat(struct s_reader *rdr)
 	if(!rdr || !&rdr->lb_stat)
 		{ return; }
 
-	cs_readlock(&rdr->lb_stat_lock);
+	cs_readlock(__func__, &rdr->lb_stat_lock);
 	LL_ITER it = ll_iter_create(rdr->lb_stat);
 	READER_STAT *s;
 	while((s = ll_iter_next(&it)))
@@ -1907,7 +1907,7 @@ void update_ecmlen_from_stat(struct s_reader *rdr)
 				{ add_to_ecmlen(rdr, s); }
 		}
 	}
-	cs_readunlock(&rdr->lb_stat_lock);
+	cs_readunlock(__func__, &rdr->lb_stat_lock);
 }
 
 /**
@@ -2005,7 +2005,7 @@ static struct ecm_request_t *check_same_ecm(ECM_REQUEST *er)
 	uint8_t rdrs = 0;
 
 
-	cs_readlock(&ecmcache_lock);
+	cs_readlock(__func__, &ecmcache_lock);
 	for(ecm = ecmcwcache; ecm; ecm = ecm->next)
 	{
 		timeout = time(NULL) - ((cfg.ctimeout + 500) / 1000);
@@ -2036,11 +2036,11 @@ static struct ecm_request_t *check_same_ecm(ECM_REQUEST *er)
 
 		if(!rdrs)
 		{
-			cs_readunlock(&ecmcache_lock);
+			cs_readunlock(__func__, &ecmcache_lock);
 			return ecm;
 		}
 	}
-	cs_readunlock(&ecmcache_lock);
+	cs_readunlock(__func__, &ecmcache_lock);
 	return NULL; // nothing found so return null
 }
 

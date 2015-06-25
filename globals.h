@@ -228,6 +228,86 @@ typedef unsigned char uchar;
 //checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
 #define NULLFREE(X) {if (X) {void *tmpX=X; X=NULL; free(tmpX); }}
 
+//safe wrappers to pthread functions
+#define SAFE_PTHREAD_1ARG(a, b, c) { \
+	int32_t pter = a(b); \
+	if(pter != 0) \
+	{ \
+		c("FATAL ERROR: %s() failed in %s with error %d %s\n", #a, __func__, pter, strerror(pter)); \
+		cs_exit_oscam();\
+	} }
+
+#define SAFE_MUTEX_LOCK(a)			SAFE_PTHREAD_1ARG(pthread_mutex_lock, a, cs_log)
+#define SAFE_MUTEX_UNLOCK(a)		SAFE_PTHREAD_1ARG(pthread_mutex_unlock, a, cs_log)
+#define SAFE_COND_SIGNAL(a)			SAFE_PTHREAD_1ARG(pthread_cond_signal, a, cs_log)
+#define SAFE_COND_BROADCAST(a)		SAFE_PTHREAD_1ARG(pthread_cond_broadcast, a, cs_log)
+#define SAFE_RWLOCK_RDLOCK(a)		SAFE_PTHREAD_1ARG(pthread_rwlock_rdlock, a, cs_log)
+#define SAFE_RWLOCK_WRLOCK(a)		SAFE_PTHREAD_1ARG(pthread_rwlock_wrlock, a, cs_log)
+#define SAFE_RWLOCK_UNLOCK(a)		SAFE_PTHREAD_1ARG(pthread_rwlock_unlock, a, cs_log)
+#define SAFE_ATTR_INIT(a)			SAFE_PTHREAD_1ARG(pthread_attr_init, a, cs_log)
+#define SAFE_MUTEXATTR_INIT(a)		SAFE_PTHREAD_1ARG(pthread_mutexattr_init, a, cs_log)
+#define SAFE_CONDATTR_INIT(a)		SAFE_PTHREAD_1ARG(pthread_condattr_init, a, cs_log)
+
+#define SAFE_MUTEX_LOCK_NOLOG(a)	SAFE_PTHREAD_1ARG(pthread_mutex_lock, a, printf)
+#define SAFE_MUTEX_UNLOCK_NOLOG(a)	SAFE_PTHREAD_1ARG(pthread_mutex_unlock, a, printf)
+#define SAFE_COND_SIGNAL_NOLOG(a)	SAFE_PTHREAD_1ARG(pthread_cond_signal, a, printf)
+#define SAFE_MUTEX_UNLOCK_NOLOG(a)	SAFE_PTHREAD_1ARG(pthread_mutex_unlock, a, printf)
+#define SAFE_ATTR_INIT_NOLOG(a)		SAFE_PTHREAD_1ARG(pthread_attr_init, a, printf)
+#define SAFE_CONDATTR_INIT_NOLOG(a)	SAFE_PTHREAD_1ARG(pthread_condattr_init, a, printf)
+
+#define SAFE_PTHREAD_2ARG(a, b, c, d) { \
+	int32_t pter = a(b, c); \
+	if(pter != 0) \
+	{ \
+		d("FATAL ERROR: %s() failed in %s with error %d %s\n", #a, __func__, pter, strerror(pter)); \
+		cs_exit_oscam();\
+	} }
+
+#define SAFE_COND_WAIT(a,b)			SAFE_PTHREAD_2ARG(pthread_cond_wait, a, b, cs_log)
+#define SAFE_THREAD_JOIN(a,b)		SAFE_PTHREAD_2ARG(pthread_join, a, b, cs_log)
+#define SAFE_ATTR_SETSTACKSIZE(a,b)	SAFE_PTHREAD_2ARG(pthread_attr_setstacksize, a, b, cs_log)
+#define SAFE_SETSPECIFIC(a,b)		SAFE_PTHREAD_2ARG(pthread_setspecific, a, b, cs_log)
+#define SAFE_MUTEXATTR_SETTYPE(a,b)	SAFE_PTHREAD_2ARG(pthread_mutexattr_settype, a, b, cs_log)
+#define SAFE_MUTEX_INIT(a,b)		SAFE_PTHREAD_2ARG(pthread_mutex_init, a, b, cs_log)
+#define SAFE_COND_INIT(a,b)			SAFE_PTHREAD_2ARG(pthread_cond_init, a, b, cs_log)
+
+#define SAFE_MUTEX_INIT_NOLOG(a,b)			SAFE_PTHREAD_2ARG(pthread_mutex_init, a, b, printf)
+#define SAFE_COND_INIT_NOLOG(a,b)			SAFE_PTHREAD_2ARG(pthread_cond_init, a, b, printf)
+#define SAFE_THREAD_JOIN_NOLOG(a,b)			SAFE_PTHREAD_2ARG(pthread_join, a, b, printf)
+#define SAFE_ATTR_SETSTACKSIZE_NOLOG(a,b)	SAFE_PTHREAD_2ARG(pthread_attr_setstacksize, a, b, printf)
+
+#define SAFE_PTHREAD_1ARG_R(a, b, c, d) { \
+	int32_t pter = a(b); \
+	if(pter != 0) \
+	{ \
+		c("FATAL ERROR: %s() failed in %s (called from %s) with error %d %s\n", #a, __func__, d, pter, strerror(pter)); \
+		cs_exit_oscam();\
+	} }
+
+#define SAFE_MUTEX_LOCK_R(a, b)			SAFE_PTHREAD_1ARG_R(pthread_mutex_lock, a, cs_log, b)
+#define SAFE_MUTEX_UNLOCK_R(a, b)		SAFE_PTHREAD_1ARG_R(pthread_mutex_unlock, a, cs_log, b)
+#define SAFE_COND_SIGNAL_R(a, b)		SAFE_PTHREAD_1ARG_R(pthread_cond_signal, a, cs_log, b)
+#define SAFE_COND_BROADCAST_R(a, b)		SAFE_PTHREAD_1ARG_R(pthread_cond_broadcast, a, cs_log, b)
+#define SAFE_CONDATTR_INIT_R(a, b)		SAFE_PTHREAD_1ARG_R(pthread_condattr_init, a, cs_log, b)
+
+#define SAFE_MUTEX_LOCK_NOLOG_R(a, b)		SAFE_PTHREAD_1ARG_R(pthread_mutex_lock, a, printf, b)
+#define SAFE_MUTEX_UNLOCK_NOLOG_R(a, b)		SAFE_PTHREAD_1ARG_R(pthread_mutex_unlock, a, printf, b)
+#define SAFE_CONDATTR_INIT_NOLOG_R(a, b)	SAFE_PTHREAD_1ARG_R(pthread_condattr_init, a, printf, b)
+
+#define SAFE_PTHREAD_2ARG_R(a, b, c, d, e) { \
+	int32_t pter = a(b, c); \
+	if(pter != 0) \
+	{ \
+		d("FATAL ERROR: %s() failed in %s (called from %s) with error %d %s\n", #a, __func__, e, pter, strerror(pter)); \
+		cs_exit_oscam();\
+	} }
+
+#define SAFE_MUTEX_INIT_R(a,b,c)		SAFE_PTHREAD_2ARG_R(pthread_mutex_init, a, b, cs_log, c)
+#define SAFE_COND_INIT_R(a,b,c)			SAFE_PTHREAD_2ARG_R(pthread_cond_init, a, b, cs_log, c)
+
+#define SAFE_MUTEX_INIT_NOLOG_R(a,b,c)	SAFE_PTHREAD_2ARG_R(pthread_mutex_init, a, b, printf, c)
+#define SAFE_COND_INIT_NOLOG_R(a,b,c)	SAFE_PTHREAD_2ARG_R(pthread_cond_init, a, b, printf, c)
+
 /* ===========================
  *         constants
  * =========================== */

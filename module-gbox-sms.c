@@ -304,7 +304,7 @@ static void sms_mutex_init(void)
 	
 	if(!mutex_init)
 	{
-		pthread_mutex_init(&sms_mutex, NULL);
+		SAFE_MUTEX_INIT(&sms_mutex, NULL);
 		mutex_init = 1;
 	}	
 }
@@ -321,7 +321,7 @@ static void sms_sender(void)
 			gbox_init_send_gsms();
         } 		
 		
-		sleepms_on_cond(&sleep_cond_mutex, &sleep_cond, 1000);
+		sleepms_on_cond(__func__, &sleep_cond_mutex, &sleep_cond, 1000);
 	}
 	pthread_exit(NULL);
 }
@@ -332,25 +332,25 @@ void start_sms_sender(void)
 	
 	sms_mutex_init();
 	
-	pthread_mutex_lock(&sms_mutex);
+	SAFE_MUTEX_LOCK(&sms_mutex);
 	is_active = sms_sender_active;
 	if(!sms_sender_active)
 	{
 		sms_sender_active = 1;
 	}
-	pthread_mutex_unlock(&sms_mutex);
+	SAFE_MUTEX_UNLOCK(&sms_mutex);
 	
 	if(is_active)
 	{
 		return;	
 	}
 	
-	cs_pthread_cond_init(&sleep_cond_mutex, &sleep_cond);
+	cs_pthread_cond_init(__func__, &sleep_cond_mutex, &sleep_cond);
 
 	pthread_attr_t attr;
-	pthread_attr_init(&attr);
+	SAFE_ATTR_INIT(&attr);
 
-	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+	SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
 	int32_t ret = pthread_create(&sms_sender_thread, &attr, (void *)&sms_sender, NULL);
 	if(ret)
 	{
@@ -365,16 +365,16 @@ void stop_sms_sender(void)
 {
 	sms_mutex_init();
 	
-	pthread_mutex_lock(&sms_mutex);
+	SAFE_MUTEX_LOCK(&sms_mutex);
 	
 	if(sms_sender_active)
 	{
 		sms_sender_active = 0;
-		pthread_cond_signal(&sleep_cond);
-		pthread_join(sms_sender_thread, NULL);
+		SAFE_COND_SIGNAL(&sleep_cond);
+		SAFE_THREAD_JOIN(sms_sender_thread, NULL);
 	}
 	
-	pthread_mutex_unlock(&sms_mutex);
+	SAFE_MUTEX_UNLOCK(&sms_mutex);
 }
 
 

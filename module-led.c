@@ -183,9 +183,9 @@ static void arm_led_start_thread(void)
 		arm_led_actions = ll_create("arm_led_actions");
 	}
 	pthread_attr_t attr;
-	pthread_attr_init(&attr);
+	SAFE_ATTR_INIT(&attr);
 	cs_log("starting thread arm_led_thread");
-	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+	SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
 	int32_t ret = pthread_create(&arm_led_thread, &attr, arm_led_thread_main, NULL);
 	if(ret)
 	{

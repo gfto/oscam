@@ -203,11 +203,11 @@ static void coolapi_read_data(dmx_t *dmx, dmx_callback_data_t *data)
 
 	int32_t ret;
 
-	pthread_setspecific(getclient, dvbapi_client);
-	pthread_mutex_lock(&dmx->mutex);
+	SAFE_SETSPECIFIC(getclient, dvbapi_client);
+	SAFE_MUTEX_LOCK(&dmx->mutex);
 	memset(dmx->buffer, 0, 4096);
 	ret = coolapi_read(dmx, data);
-	pthread_mutex_unlock(&dmx->mutex);
+	SAFE_MUTEX_UNLOCK(&dmx->mutex);
 	if(ret > -1)
 		{ dvbapi_process_input(dmx->demux_id, dmx->filter_num, dmx->buffer, data->len); }
 }
@@ -331,7 +331,7 @@ int32_t coolapi_set_filter(int32_t fd, int32_t num, int32_t pid, uchar *flt, uch
 
 	cs_log_dbg(D_DVBAPI, "setting new filter fd=%08x demux=%d channel=%x num=%d pid=%04x flt=%x mask=%x", fd, dmx->demux_index, (int32_t) dmx->channel, num, pid, flt[0], mask[0]);
 
-	pthread_mutex_lock(&dmx->mutex);
+	SAFE_MUTEX_LOCK(&dmx->mutex);
 
 	filter_set_t filter;
 	dmx->filter_num = num;
@@ -365,7 +365,7 @@ int32_t coolapi_set_filter(int32_t fd, int32_t num, int32_t pid, uchar *flt, uch
 	result = cnxt_dmx_channel_ctrl(dmx->channel, 2, 0);
 	coolapi_check_error("cnxt_dmx_channel_ctrl", result);
 
-	pthread_mutex_unlock(&dmx->mutex);
+	SAFE_MUTEX_UNLOCK(&dmx->mutex);
 
 	S_COOL_FILTER *filter_item;
 	if(cs_malloc(&filter_item, sizeof(S_COOL_FILTER)))
@@ -399,7 +399,7 @@ int32_t coolapi_remove_filter(int32_t fd, int32_t num)
 
 	cs_log_dbg(D_DVBAPI, "removing filter fd=%08x num=%d pid=%04x on channel=%x", fd, num, dmx->pid, (int32_t) dmx->channel);
 
-	pthread_mutex_lock(&dmx->mutex);
+	SAFE_MUTEX_LOCK(&dmx->mutex);
 
 	if(dmx->filter)
 	{
@@ -482,7 +482,7 @@ int32_t coolapi_remove_filter(int32_t fd, int32_t num)
 		coolapi_check_error("cnxt_dmx_channel_ctrl", result);
 	}
 
-	pthread_mutex_unlock(&dmx->mutex);
+	SAFE_MUTEX_UNLOCK(&dmx->mutex);
 
 	dmx->pid = -1;
 	return 0;
@@ -515,9 +515,9 @@ int32_t coolapi_open_device(int32_t demux_index, int32_t demux_id)
 	dmx->opened = 1;
 
 	pthread_mutexattr_t attr;
-	pthread_mutexattr_init(&attr);
-	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK_NP);
-	pthread_mutex_init(&dmx->mutex, &attr);
+	SAFE_MUTEXATTR_INIT(&attr);
+	SAFE_MUTEXATTR_SETTYPE(&attr, PTHREAD_MUTEX_ERRORCHECK_NP);
+	SAFE_MUTEX_INIT(&dmx->mutex, &attr);
 
 	return dmx->fd;
 }

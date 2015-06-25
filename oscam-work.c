@@ -59,7 +59,7 @@ void free_joblist(struct s_client *cl)
 	if(cl->work_job_data)  // Free job_data that was not freed by work_thread
 		{ free_job_data(cl->work_job_data); }
 	cl->work_job_data = NULL;
-	pthread_mutex_unlock(&cl->thread_lock);
+	SAFE_MUTEX_UNLOCK(&cl->thread_lock);
 	pthread_mutex_destroy(&cl->thread_lock);
 }
 
@@ -102,7 +102,7 @@ void *work_thread(void *ptr)
 	struct job_data tmp_data;
 	struct pollfd pfd[1];
 
-	pthread_setspecific(getclient, cl);
+	SAFE_SETSPECIFIC(getclient, cl);
 	cl->thread = pthread_self();
 	cl->thread_active = 1;
 
@@ -127,9 +127,9 @@ void *work_thread(void *ptr)
 		{
 			if(!cl || cl->kill || !is_valid_client(cl))
 			{
-				pthread_mutex_lock(&cl->thread_lock);
+				SAFE_MUTEX_LOCK(&cl->thread_lock);
 				cl->thread_active = 0;
-				pthread_mutex_unlock(&cl->thread_lock);
+				SAFE_MUTEX_UNLOCK(&cl->thread_lock);
 				cs_log_dbg(D_TRACE, "ending thread (kill)");
 				__free_job_data(cl, data);
 				cl->work_mbuf = NULL; // Prevent free_client from freeing mbuf (->work_mbuf)
@@ -148,7 +148,7 @@ void *work_thread(void *ptr)
 			{
 				if(!cl->kill && cl->typ != 'r')
 					{ client_check_status(cl); } // do not call for physical readers as this might cause an endless job loop
-				pthread_mutex_lock(&cl->thread_lock);
+				SAFE_MUTEX_LOCK(&cl->thread_lock);
 				if(cl->joblist && ll_count(cl->joblist) > 0)
 				{
 					LL_ITER itr = ll_iter_create(cl->joblist);
@@ -157,7 +157,7 @@ void *work_thread(void *ptr)
 						{ set_work_thread_name(data); }
 					//cs_log_dbg(D_TRACE, "start next job from list action=%d", data->action);
 				}
-				pthread_mutex_unlock(&cl->thread_lock);
+				SAFE_MUTEX_UNLOCK(&cl->thread_lock);
 			}
 
 			if(!data)
@@ -169,13 +169,13 @@ void *work_thread(void *ptr)
 				pfd[0].fd = cl->pfd;
 				pfd[0].events = POLLIN | POLLPRI;
 
-				pthread_mutex_lock(&cl->thread_lock);
+				SAFE_MUTEX_LOCK(&cl->thread_lock);
 				cl->thread_active = 2;
-				pthread_mutex_unlock(&cl->thread_lock);
+				SAFE_MUTEX_UNLOCK(&cl->thread_lock);
 				rc = poll(pfd, 1, 3000);
-				pthread_mutex_lock(&cl->thread_lock);
+				SAFE_MUTEX_LOCK(&cl->thread_lock);
 				cl->thread_active = 1;
-				pthread_mutex_unlock(&cl->thread_lock);
+				SAFE_MUTEX_UNLOCK(&cl->thread_lock);
 				if(rc > 0)
 				{
 					cs_ftime(&end); // register end time
@@ -384,16 +384,16 @@ void *work_thread(void *ptr)
 		}
 
 		// Check for some race condition where while we ended, another thread added a job
-		pthread_mutex_lock(&cl->thread_lock);
+		SAFE_MUTEX_LOCK(&cl->thread_lock);
 		if(cl->joblist && ll_count(cl->joblist) > 0)
 		{
-			pthread_mutex_unlock(&cl->thread_lock);
+			SAFE_MUTEX_UNLOCK(&cl->thread_lock);
 			continue;
 		}
 		else
 		{
 			cl->thread_active = 0;
-			pthread_mutex_unlock(&cl->thread_lock);
+			SAFE_MUTEX_UNLOCK(&cl->thread_lock);
 			break;
 		}
 	}
@@ -441,7 +441,7 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 	data->len    = len;
 	cs_ftime(&data->time);
 
-	pthread_mutex_lock(&cl->thread_lock);
+	SAFE_MUTEX_LOCK(&cl->thread_lock);
 	if(cl && !cl->kill && cl->thread_active)
 	{
 		if(!cl->joblist)
@@ -449,7 +449,7 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 		ll_append(cl->joblist, data);
 		if(cl->thread_active == 2)
 			{ pthread_kill(cl->thread, OSCAM_SIGNAL_WAKEUP); }
-		pthread_mutex_unlock(&cl->thread_lock);
+		SAFE_MUTEX_UNLOCK(&cl->thread_lock);
 		cs_log_dbg(D_TRACE, "add %s job action %d queue length %d %s",
 					  action > ACTION_CLIENT_FIRST ? "client" : "reader", action,
 					  ll_count(cl->joblist), username(cl));
@@ -457,11 +457,11 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 	}
 
 	pthread_attr_t attr;
-	pthread_attr_init(&attr);
+	SAFE_ATTR_INIT(&attr);
 	/* pcsc doesn't like this either; segfaults on x86, x86_64 */
 	struct s_reader *rdr = cl->reader;
 	if(cl->typ != 'r' || !rdr || rdr->typ != R_PCSC)
-		{ pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE); }
+		{ SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE); }
 
 	if(action != ACTION_READER_CHECK_HEALTH)
 	{
@@ -483,6 +483,6 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 	pthread_attr_destroy(&attr);
 
 	cl->thread_active = 1;
-	pthread_mutex_unlock(&cl->thread_lock);
+	SAFE_MUTEX_UNLOCK(&cl->thread_lock);
 	return 1;
 }

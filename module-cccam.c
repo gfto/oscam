@@ -627,10 +627,10 @@ int32_t cc_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen)
 		{ return -1; }
 
 	if(!cl->cc) { return -1; }
-	cs_writelock(&cc->lockcmd);
+	cs_writelock(__func__, &cc->lockcmd);
 	if(!cl->cc)
 	{
-		cs_writeunlock(&cc->lockcmd);
+		cs_writeunlock(__func__, &cc->lockcmd);
 		return -1;
 	}
 
@@ -642,7 +642,7 @@ int32_t cc_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen)
 			{ cs_log_dbg(cl->typ == 'c' ? D_CLIENT : D_READER, "%s disconnected by remote server", getprefix()); }
 		else
 			{ cs_log_dbg(cl->typ == 'c' ? D_CLIENT : D_READER, "%s invalid header length (expected 4, read %d)", getprefix(), len); }
-		cs_writeunlock(&cc->lockcmd);
+		cs_writeunlock(__func__, &cc->lockcmd);
 		return -1;
 	}
 
@@ -656,7 +656,7 @@ int32_t cc_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen)
 	{
 		if(size > maxlen)
 		{
-			cs_writeunlock(&cc->lockcmd);
+			cs_writeunlock(__func__, &cc->lockcmd);
 			cs_log_dbg(cl->typ == 'c' ? D_CLIENT : D_READER, "%s message too big (size=%d max=%d)", getprefix(), size, maxlen);
 			return 0;
 		}
@@ -667,7 +667,7 @@ int32_t cc_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen)
 
 		if(len != size)
 		{
-			cs_writeunlock(&cc->lockcmd);
+			cs_writeunlock(__func__, &cc->lockcmd);
 			if(len <= 0)
 				{ cs_log_dbg(cl->typ == 'c' ? D_CLIENT : D_READER, "%s disconnected by remote", getprefix()); }
 			else
@@ -680,7 +680,7 @@ int32_t cc_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen)
 		len += 4;
 	}
 
-	cs_writeunlock(&cc->lockcmd);
+	cs_writeunlock(__func__, &cc->lockcmd);
 
 	//cs_log_dump_dbg(cl->typ=='c'?D_CLIENT:D_READER, buf, len, "cccam: full decrypted msg, len=%d:", len);
 
@@ -702,10 +702,10 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 	struct cc_data *cc = cl->cc;
 
 	if(!cl->cc || cl->kill) { return -1; }
-	cs_writelock(&cc->lockcmd);
+	cs_writelock(__func__, &cc->lockcmd);
 	if(!cl->cc || cl->kill)
 	{
-		cs_writeunlock(&cc->lockcmd);
+		cs_writeunlock(__func__, &cc->lockcmd);
 		return -1;
 	}
 
@@ -736,7 +736,7 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 	if(rdr) { rdr->last_s = time(NULL); }
 	if(cl) { cl->last = time(NULL); }
 
-	cs_writeunlock(&cc->lockcmd);
+	cs_writeunlock(__func__, &cc->lockcmd);
 
 	NULLFREE(netbuf);
 
@@ -746,7 +746,7 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 			{ cc_cli_close(cl, 1); }
 		else
 		{
-			cs_writeunlock(&cc->cards_busy);
+			cs_writeunlock(__func__, &cc->cards_busy);
 			cs_disconnect_client(cl);
 		}
 		n = -1;
@@ -1541,7 +1541,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er)
 		cur_srvid.chid = cur_er->chid;
 		cur_srvid.ecmlen = cur_er->ecmlen;
 
-		cs_readlock(&cc->cards_busy);
+		cs_readlock(__func__, &cc->cards_busy);
 
 		//forward_origin:
 		if(cfg.cc_forward_origin_card && cur_er->origin_reader == rdr
@@ -1617,7 +1617,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er)
 				if(!eei)
 				{
 					NULLFREE(ecmbuf);
-					cs_readunlock(&cc->cards_busy);
+					cs_readunlock(__func__, &cc->cards_busy);
 					break;
 				}
 			}
@@ -1635,7 +1635,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er)
 
 			//For EMM
 			set_au_data(cl, rdr, card, cur_er);
-			cs_readunlock(&cc->cards_busy);
+			cs_readunlock(__func__, &cc->cards_busy);
 
 			processed_ecms++;
 			if(cc->extended_mode)
@@ -1671,7 +1671,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er)
 				cur_er->rc = E_WAITING; //mark as waiting
 			}
 		}
-		cs_readunlock(&cc->cards_busy);
+		cs_readunlock(__func__, &cc->cards_busy);
 
 		//process next pending ecm!
 	}
@@ -1806,7 +1806,7 @@ int32_t cc_send_emm(EMM_PACKET *ep)
 	uint16_t caid = b2i(2, ep->caid);
 
 	//Last used card is first card of current_cards:
-	cs_readlock(&cc->cards_busy);
+	cs_readlock(__func__, &cc->cards_busy);
 
 	struct cc_card *emm_card = cc->last_emm_card;
 
@@ -1829,7 +1829,7 @@ int32_t cc_send_emm(EMM_PACKET *ep)
 	{
 		cs_log_dbg(D_EMM, "%s emm for client %8lX not possible, no card found!",
 					  getprefix(), (unsigned long)ep->client->thread);
-		cs_readunlock(&cc->cards_busy);
+		cs_readunlock(__func__, &cc->cards_busy);
 		return 0;
 	}
 
@@ -1857,7 +1857,7 @@ int32_t cc_send_emm(EMM_PACKET *ep)
 	emmbuf[11] = ep->emmlen & 0xff;
 	memcpy(emmbuf + 12, ep->emm, ep->emmlen);
 
-	cs_readunlock(&cc->cards_busy);
+	cs_readunlock(__func__, &cc->cards_busy);
 
 	ll_append(cc->pending_emms, emmbuf);
 	cc_send_pending_emms(cl);
@@ -1919,7 +1919,7 @@ void cc_free(struct s_client *cl)
 
 	cl->cc = NULL;
 
-	cs_writelock(&cc->lockcmd);
+	cs_writelock(__func__, &cc->lockcmd);
 
 	cs_log_dbg(D_TRACE, "exit cccam1/3");
 	cc_free_cardlist(cc->cards, 1);
@@ -1927,7 +1927,7 @@ void cc_free(struct s_client *cl)
 	free_extended_ecm_idx(cc);
 	ll_destroy_data(&cc->extended_ecm_idx);
 
-	cs_writeunlock(&cc->lockcmd);
+	cs_writeunlock(__func__, &cc->lockcmd);
 
 	cs_log_dbg(D_TRACE, "exit cccam2/3");
 
@@ -2306,7 +2306,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 
 		if(l == 0x48)    //72 bytes: normal server data
 		{
-			cs_writelock(&cc->cards_busy);
+			cs_writelock(__func__, &cc->cards_busy);
 			cc_free_cardlist(cc->cards, 0);
 			free_extended_ecm_idx(cc);
 			cc->last_emm_card = NULL;
@@ -2317,7 +2317,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 			cc->num_reshare1 = 0;
 			cc->num_reshare2 = 0;
 			cc->num_resharex = 0;
-			cs_writeunlock(&cc->cards_busy);
+			cs_writeunlock(__func__, &cc->cards_busy);
 
 			memcpy(cc->peer_node_id, data, 8);
 			memcpy(cc->peer_version, data + 8, 8);
@@ -2443,11 +2443,11 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 		rdr->tcp_connected = 2; //we have card
 		rdr->card_status = CARD_INSERTED;
 
-		cs_writelock(&cc->cards_busy);
+		cs_writelock(__func__, &cc->cards_busy);
 		struct cc_card *card = read_card(data, l - 4, buf[1] == MSG_NEW_CARD_SIDINFO);
 		if(!card)
 		{
-			cs_writeunlock(&cc->cards_busy);
+			cs_writeunlock(__func__, &cc->cards_busy);
 			break;
 		}
 		card->origin_reader = rdr;
@@ -2515,7 +2515,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 			}
 		}
 
-		cs_writeunlock(&cc->cards_busy);
+		cs_writeunlock(__func__, &cc->cards_busy);
 
 		break;
 	}
@@ -2524,9 +2524,9 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 	{
 		if(l < 8)
 			{ break; }
-		cs_writelock(&cc->cards_busy);
+		cs_writelock(__func__, &cc->cards_busy);
 		cc_card_removed(cl, b2i(4, buf + 4));
-		cs_writeunlock(&cc->cards_busy);
+		cs_writeunlock(__func__, &cc->cards_busy);
 		break;
 	}
 
@@ -2623,7 +2623,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 		if(cc->just_logged_in)
 			{ return -1; } // reader restart needed
 
-		cs_readlock(&cc->cards_busy);
+		cs_readlock(__func__, &cc->cards_busy);
 
 		struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl,
 										  cc->extended_mode ? cc->g_flag : 1, 1);
@@ -2737,7 +2737,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 			}
 		}
 		cc->cmd05NOK = 0;
-		cs_readunlock(&cc->cards_busy);
+		cs_readunlock(__func__, &cc->cards_busy);
 
 		if(!cc->extended_mode)
 		{
@@ -2887,7 +2887,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 			if(l < 20)
 				{ break; }
 			
-			cs_readlock(&cc->cards_busy);
+			cs_readlock(__func__, &cc->cards_busy);
 			cc->recv_ecmtask = -1;
 			eei = get_extended_ecm_idx(cl,
 									   cc->extended_mode ? cc->g_flag : 1, 1);
@@ -2977,7 +2977,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 								  ecm_idx, cs_hexdump(0, cc->dcw, 16, tmp_dbg, sizeof(tmp_dbg)));
 				}
 			}
-			cs_readunlock(&cc->cards_busy);
+			cs_readunlock(__func__, &cc->cards_busy);
 
 			if(!cc->extended_mode)
 			{
@@ -3396,9 +3396,9 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l)
 			}
 			else
 			{
-				//cs_writelock(&cc->cards_busy); maybe uninitialized
+				//cs_writelock(__func__, &cc->cards_busy); maybe uninitialized
 				cs_disconnect_client(cl);
-				//cs_writeunlock(&cc->cards_busy);
+				//cs_writeunlock(__func__, &cc->cards_busy);
 			}
 			cs_sleepms(150);
 			n = -1;
@@ -3437,8 +3437,8 @@ int32_t cc_recv(struct s_client *cl, uchar *buf, int32_t l)
 
 void cc_init_locks(struct cc_data *cc)
 {
-	cs_lock_create(&cc->lockcmd, "lockcmd", 5000);
-	cs_lock_create(&cc->cards_busy, "cards_busy", 10000);
+	cs_lock_create(__func__, &cc->lockcmd, "lockcmd", 5000);
+	cs_lock_create(__func__, &cc->cards_busy, "cards_busy", 10000);
 }
 
 #ifdef MODULE_CCCSHARE

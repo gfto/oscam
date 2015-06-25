@@ -830,7 +830,7 @@ static void scam_server_send_caidlist(struct s_client *cl)
 	uint32_t cardcount = 0;
 	struct s_reader *rdr = NULL;
 	
-	cs_readlock(&readerlist_lock);
+	cs_readlock(__func__, &readerlist_lock);
 	for(rdr = first_active_reader; rdr; rdr = rdr->next)
 	{
 		if(rdr->caid && chk_ctab(rdr->caid, &cl->ctab)) {
@@ -844,7 +844,7 @@ static void scam_server_send_caidlist(struct s_client *cl)
 			}
 		}
 	}
-	cs_readunlock(&readerlist_lock);
+	cs_readunlock(__func__, &readerlist_lock);
 
 	for(j=0; j < (int32_t)cardcount; j++) {
 		i = 0;

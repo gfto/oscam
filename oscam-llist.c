@@ -30,10 +30,10 @@ static void _destroy(LLIST *l)
 	if(!l) { return; }
 	if(!l->flag++)
 	{
-		cs_writelock(&l->lock); //just getting sure noone is using it
-		cs_writeunlock(&l->lock);
+		cs_writelock(__func__, &l->lock); //just getting sure noone is using it
+		cs_writeunlock(__func__, &l->lock);
 
-		cs_lock_destroy(&l->lock);
+		cs_lock_destroy(__func__, &l->lock);
 		add_garbage(l);
 	}
 }
@@ -43,7 +43,7 @@ LLIST *ll_create(const char *name)
 	LLIST *l;
 	if(!cs_malloc(&l, sizeof(LLIST)))
 		{ return NULL; }
-	cs_lock_create(&l->lock, name, 5000);
+	cs_lock_create(__func__, &l->lock, name, 5000);
 	return l;
 }
 
@@ -75,7 +75,7 @@ void ll_destroy_free_data(LLIST **pl)
 	*pl = NULL;
 
 	//*********************************
-	cs_writelock(&l->lock);
+	cs_writelock(__func__, &l->lock);
 
 	LL_NODE *n=l->initial, *nxt;
 	while(n)
@@ -89,15 +89,15 @@ void ll_destroy_free_data(LLIST **pl)
 	l->count = 0;
 	l->initial = 0;
 	l->last = 0;
-	cs_writeunlock(&l->lock);
+	cs_writeunlock(__func__, &l->lock);
 	//**********************************
 
 	if(!l->flag++)
 	{
-		cs_writelock(&l->lock); //just getting sure noone is using it
-		cs_writeunlock(&l->lock);
+		cs_writelock(__func__, &l->lock); //just getting sure noone is using it
+		cs_writeunlock(__func__, &l->lock);
 
-		cs_lock_destroy(&l->lock);
+		cs_lock_destroy(__func__, &l->lock);
 		NULLFREE(l);
 	}
 }
@@ -114,7 +114,7 @@ static void *ll_iter_next_nolock(LL_ITER *it)
 #endif
 
 		LL_NODE *ptr;
-		//cs_readlock(&it->l->lock);
+		//cs_readlock(__func__, &it->l->lock);
 		if(!it->cur && !it->prv)
 		{
 			it->cur = it->l->initial;
@@ -137,7 +137,7 @@ static void *ll_iter_next_nolock(LL_ITER *it)
 			}
 		}
 		it->ll_version = it->l->version;
-		//cs_readunlock(&it->l->lock);
+		//cs_readunlock(__func__, &it->l->lock);
 
 		if(it->cur)
 			{ return it->cur->obj; }
@@ -163,7 +163,7 @@ static void ll_clear_int(LLIST *l, int32_t clear_data)
 {
 	if(!l || l->flag) { return; }
 
-	cs_writelock(&l->lock);
+	cs_writelock(__func__, &l->lock);
 
 	LL_NODE *n = l->initial, *nxt;
 	while(n)
@@ -178,7 +178,7 @@ static void ll_clear_int(LLIST *l, int32_t clear_data)
 	l->count = 0;
 	l->initial = 0;
 	l->last = 0;
-	cs_writeunlock(&l->lock);
+	cs_writeunlock(__func__, &l->lock);
 }
 
 void ll_clear(LLIST *l)
@@ -219,10 +219,10 @@ LL_NODE *ll_append(LLIST *l, void *obj)
 {
 	if(l && obj && !l->flag)
 	{
-		cs_writelock(&l->lock);
+		cs_writelock(__func__, &l->lock);
 
 		LL_NODE *n = ll_append_nolock(l, obj);
-		cs_writeunlock(&l->lock);
+		cs_writeunlock(__func__, &l->lock);
 		return n;
 	}
 	return NULL;
@@ -237,7 +237,7 @@ LL_NODE *ll_prepend(LLIST *l, void *obj)
 			{ return NULL; }
 		new->obj = obj;
 
-		cs_writelock(&l->lock);
+		cs_writelock(__func__, &l->lock);
 
 		new->nxt = l->initial;
 
@@ -245,7 +245,7 @@ LL_NODE *ll_prepend(LLIST *l, void *obj)
 		if(!l->last)
 			{ l->last = l->initial; }
 		l->count++;
-		cs_writeunlock(&l->lock);
+		cs_writeunlock(__func__, &l->lock);
 
 		return new;
 	}
@@ -268,9 +268,9 @@ void *ll_iter_next(LL_ITER *it)
 {
 	if(it && it->l && !it->l->flag)
 	{
-		cs_readlock(&it->l->lock);
+		cs_readlock(__func__, &it->l->lock);
 		void *res = ll_iter_next_nolock(it);
-		cs_readunlock(&it->l->lock);
+		cs_readunlock(__func__, &it->l->lock);
 		return res;
 	}
 	return NULL;
@@ -333,10 +333,10 @@ void *ll_iter_next_remove(LL_ITER *it)
 {
 	if(it && it->l && !it->l->flag)
 	{
-		cs_writelock(&it->l->lock);
+		cs_writelock(__func__, &it->l->lock);
 		void *res = ll_iter_next_nolock(it);
 		ll_iter_remove_nolock(it);
-		cs_writeunlock(&it->l->lock);
+		cs_writeunlock(__func__, &it->l->lock);
 		return res;
 	}
 	return NULL;
@@ -363,7 +363,7 @@ void *ll_iter_peek(const LL_ITER *it, int32_t offset)
 {
 	if(it && it->l && !it->l->flag)
 	{
-		cs_readlock(&((LL_ITER *)it)->l->lock);
+		cs_readlock(__func__, &((LL_ITER *)it)->l->lock);
 
 		LL_NODE *n = it->cur;
 		int32_t i;
@@ -375,7 +375,7 @@ void *ll_iter_peek(const LL_ITER *it, int32_t offset)
 			else
 				{ break; }
 		}
-		cs_readunlock(&((LL_ITER *)it)->l->lock);
+		cs_readunlock(__func__, &((LL_ITER *)it)->l->lock);
 
 		if(!n)
 			{ return NULL; }
@@ -397,7 +397,7 @@ void ll_iter_insert(LL_ITER *it, void *obj)
 {
 	if(it && obj && !it->l->flag)
 	{
-		cs_writelock(&it->l->lock);
+		cs_writelock(__func__, &it->l->lock);
 
 		if(!it->cur || !it->cur->nxt)
 			{ ll_append_nolock(it->l, obj); }
@@ -406,7 +406,7 @@ void ll_iter_insert(LL_ITER *it, void *obj)
 			LL_NODE *n;
 			if(!cs_malloc(&n, sizeof(LL_NODE)))
 			{
-				cs_writeunlock(&it->l->lock);
+				cs_writeunlock(__func__, &it->l->lock);
 				return;
 			}
 
@@ -417,7 +417,7 @@ void ll_iter_insert(LL_ITER *it, void *obj)
 			it->l->count++;
 			it->ll_version = ++it->l->version;
 		}
-		cs_writeunlock(&it->l->lock);
+		cs_writeunlock(__func__, &it->l->lock);
 	}
 }
 
@@ -430,9 +430,9 @@ void *ll_iter_remove(LL_ITER *it)
 		LL_NODE *del = it->cur;
 		if(del)
 		{
-			cs_writelock(&it->l->lock);
+			cs_writelock(__func__, &it->l->lock);
 			obj = ll_iter_remove_nolock(it);
-			cs_writeunlock(&it->l->lock);
+			cs_writeunlock(__func__, &it->l->lock);
 		}
 	}
 
@@ -452,7 +452,7 @@ int32_t ll_iter_move_first(LL_ITER *it)
 				{ return 1; }
 
 			LL_NODE *prv = it->prv;
-			cs_writelock(&it->l->lock);
+			cs_writelock(__func__, &it->l->lock);
 			if(it->ll_version != it->l->version || !prv)        // List has been modified so it->prv might be wrong!
 			{
 				LL_NODE *n = it->l->initial;
@@ -464,7 +464,7 @@ int32_t ll_iter_move_first(LL_ITER *it)
 				}
 				if(n != move)
 				{
-					cs_writeunlock(&it->l->lock);
+					cs_writeunlock(__func__, &it->l->lock);
 					return moved;
 				}
 			}
@@ -481,7 +481,7 @@ int32_t ll_iter_move_first(LL_ITER *it)
 
 			it->ll_version = ++it->l->version;
 			it->prv = NULL;
-			cs_writeunlock(&it->l->lock);
+			cs_writeunlock(__func__, &it->l->lock);
 			moved = 1;
 		}
 	}
@@ -600,19 +600,19 @@ void **ll_sort(const LLIST *l, void *compare, int32_t *size)
 	int32_t i = 0;
 	LL_NODE *n;
 
-	cs_readlock(&((LLIST *)l)->lock);
+	cs_readlock(__func__, &((LLIST *)l)->lock);
 	*size = l->count;
 	void **p;
 	if(!cs_malloc(&p, l->count * sizeof(p[0])))
 	{
-		cs_readunlock(&((LLIST *)l)->lock);
+		cs_readunlock(__func__, &((LLIST *)l)->lock);
 		return NULL;
 	}
 	for(n = l->initial; n; n = n->nxt)
 	{
 		p[i++] = n->obj;
 	}
-	cs_readunlock(&((LLIST *)l)->lock);
+	cs_readunlock(__func__, &((LLIST *)l)->lock);
 #ifdef WITH_DEBUG
 	//  if (chk_debugLog(it->l))
 	//cs_log_dbg(D_TRACE, "sort: count %d size %d", l->count, sizeof(p[0]));
@@ -644,9 +644,9 @@ LL_LOCKITER *ll_li_create(LLIST *l, int32_t writelock)
 	li->l = l;
 	li->writelock = writelock;
 	if(writelock)
-		{ cs_writelock(&l->lock); }
+		{ cs_writelock(__func__, &l->lock); }
 	else
-		{ cs_readlock(&l->lock); }
+		{ cs_readlock(__func__, &l->lock); }
 	li->it = ll_iter_create(l);
 	return li;
 }
@@ -656,9 +656,9 @@ void ll_li_destroy(LL_LOCKITER *li)
 	if(li && li->l)
 	{
 		if(li->writelock)
-			{ cs_writeunlock(&li->l->lock); }
+			{ cs_writeunlock(__func__, &li->l->lock); }
 		else
-			{ cs_readunlock(&li->l->lock); }
+			{ cs_readunlock(__func__, &li->l->lock); }
 		li->l = NULL;
 		add_garbage(li);
 	}

@@ -4446,8 +4446,8 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 	struct s_client *cl;
 	int8_t filtered;
 
-	cs_readlock(&readerlist_lock);
-	cs_readlock(&clientlist_lock);
+	cs_readlock(__func__, &readerlist_lock);
+	cs_readlock(__func__, &clientlist_lock);
 	for(i = 0, cl = first_client; cl ; cl = cl->next, i++)
 	{
 		if(cl->kill) { continue; }
@@ -5122,8 +5122,8 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 #endif
 
 	}
-	cs_readunlock(&clientlist_lock);
-	cs_readunlock(&readerlist_lock);
+	cs_readunlock(__func__, &clientlist_lock);
+	cs_readunlock(__func__, &readerlist_lock);
 
 	uint8_t is_touch = 0;
 	if(config_enabled(TOUCH) && streq(tpl_getVar(vars, "SUBDIR"), TOUCH_SUBDIR))
@@ -7770,7 +7770,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 			char *result = NULL;
 
 			// WebIf allows modifying many things. Thus, all pages except images/css/static are expected to be non-threadsafe!
-			if(pgidx != 19 && pgidx != 20 && pgidx != 21 && pgidx != 27) { cs_writelock(&http_lock); }
+			if(pgidx != 19 && pgidx != 20 && pgidx != 21 && pgidx != 27) { cs_writelock(__func__, &http_lock); }
 			switch(pgidx)
 			{
 			case 0:
@@ -7870,7 +7870,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 				result = send_oscam_status(vars, &params, 0);
 				break;
 			}
-			if(pgidx != 19 && pgidx != 20 && pgidx != 21 && pgidx != 27) { cs_writeunlock(&http_lock); }
+			if(pgidx != 19 && pgidx != 20 && pgidx != 21 && pgidx != 27) { cs_writeunlock(__func__, &http_lock); }
 
 			if(result == NULL || !strcmp(result, "0") || strlen(result) == 0) { send_error500(f); }
 			else if(strcmp(result, "1"))
@@ -7906,15 +7906,15 @@ static void *serve_process(void *conn)
 
 #ifdef WITH_SSL
 	SSL *ssl = myconn->ssl;
-	pthread_setspecific(getssl, ssl);
+	SAFE_SETSPECIFIC(getssl, ssl);
 #endif
 	NULLFREE(myconn);
 
-	pthread_setspecific(getip, &in);
-	pthread_setspecific(getclient, cl);
+	SAFE_SETSPECIFIC(getip, &in);
+	SAFE_SETSPECIFIC(getclient, cl);
 
 	int8_t keepalive = 0;
-	pthread_setspecific(getkeepalive, &keepalive);
+	SAFE_SETSPECIFIC(getkeepalive, &keepalive);
 
 #ifdef WITH_SSL
 	if(ssl_active)
@@ -8032,7 +8032,7 @@ static void *http_server(void *UNUSED(d))
 	pthread_attr_t attr;
 	struct s_client *cl = create_client(first_client->ip);
 	if(cl == NULL) { return NULL; }
-	pthread_setspecific(getclient, cl);
+	SAFE_SETSPECIFIC(getclient, cl);
 	cl->typ = 'h';
 	int32_t s, reuse = 1;
 	struct s_connection *conn;
@@ -8048,7 +8048,7 @@ static void *http_server(void *UNUSED(d))
 
 	tpl_checkDiskRevisions();
 
-	cs_lock_create(&http_lock, "http_lock", 10000);
+	cs_lock_create(__func__, &http_lock, "http_lock", 10000);
 	init_noncelocks();
 	
 	memset(&p_stat_cur, 0x0, sizeof(p_stat_cur));
@@ -8198,8 +8198,8 @@ static void *http_server(void *UNUSED(d))
 				}
 			}
 #endif
-			pthread_attr_init(&attr);
-			pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+			SAFE_ATTR_INIT(&attr);
+			SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
 			int32_t ret = pthread_create(&workthread, &attr, serve_process, (void *)conn);
 			if(ret)
 			{
@@ -8287,8 +8287,8 @@ void webif_init(void)
 	use_srvid2 = file_exists(fname);
 					
 	pthread_attr_t attr;
-	pthread_attr_init(&attr);
-	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+	SAFE_ATTR_INIT(&attr);
+	SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
 	int32_t ret = pthread_create(&httpthread, &attr, http_server, NULL);
 	if(ret)
 	{
@@ -8305,7 +8305,7 @@ void webif_close(void)
 		{ return; }
 	shutdown(sock, 2);
 	close(sock);
-	pthread_join(httpthread, NULL);
+	SAFE_THREAD_JOIN(httpthread, NULL);
 }
 
 #endif

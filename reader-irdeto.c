@@ -584,7 +584,7 @@ int32_t irdeto_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, struct s_e
 	static const uchar sc_EcmCmd[] = { 0x05, 0x00, 0x00, 0x02, 0x00 };
 	uchar sc_Acs57Ecm[] = {0xD5, 0x00, 0x00, 0x02, 0x00};
 	uchar sc_Acs57_Cmd[] = { ACS57ECM, 0xFE, 0x00, 0x00, 0x00 };
-	uchar cta_cmd[272];
+	uchar cta_cmd[MAX_ECM_SIZE];
 	struct irdeto_data *csystem_data = reader->csystem_data;
 
 	int32_t i = 0, acspadd = 0;

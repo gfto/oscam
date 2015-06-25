@@ -39,13 +39,13 @@ LLIST *get_cardlist(uint16_t caid, LLIST **list)
 
 LLIST **get_and_lock_sharelist(void)
 {
-	cs_readlock(&cc_shares_lock);
+	cs_readlock(__func__, &cc_shares_lock);
 	return reported_carddatas_list;
 }
 
 void unlock_sharelist(void)
 {
-	cs_readunlock(&cc_shares_lock);
+	cs_readunlock(__func__, &cc_shares_lock);
 }
 
 void add_good_sids(struct s_sidtab *ptr, struct cc_card *card)
@@ -354,7 +354,7 @@ int32_t send_card_to_all_clients(struct cc_card *card)
 {
 	int32_t count = 0;
 	struct s_client *cl;
-	cs_readlock(&clientlist_lock);
+	cs_readlock(__func__, &clientlist_lock);
 	for(cl = first_client; cl; cl = cl->next)
 	{
 		if(cl->cc && cl->typ == 'c' && !cl->kill && get_module(cl)->num == R_CCCAM)  //CCCam-Client!
@@ -362,7 +362,7 @@ int32_t send_card_to_all_clients(struct cc_card *card)
 			count += send_card_to_client(card, cl);
 		}
 	}
-	cs_readunlock(&clientlist_lock);
+	cs_readunlock(__func__, &clientlist_lock);
 	return count;
 }
 
@@ -379,7 +379,7 @@ void send_remove_card_to_clients(struct cc_card *card)
 
 	struct s_client *cl;
 	struct s_clientmsg *clientmsg;
-	cs_readlock(&clientlist_lock);
+	cs_readlock(__func__, &clientlist_lock);
 	for(cl = first_client; cl; cl = cl->next)
 	{
 		struct cc_data *cc = cl->cc;
@@ -397,7 +397,7 @@ void send_remove_card_to_clients(struct cc_card *card)
 			}
 		}
 	}
-	cs_readunlock(&clientlist_lock);
+	cs_readunlock(__func__, &clientlist_lock);
 }
 
 
@@ -1174,7 +1174,7 @@ void update_card_list(void)
 		struct s_reader *rdr;
 		int32_t r = 0;
 
-		cs_readlock(&readerlist_lock);
+		cs_readlock(__func__, &readerlist_lock);
 
 		for(rdr = first_active_reader; rdr; rdr = rdr->next)
 		{
@@ -1398,7 +1398,7 @@ void update_card_list(void)
 				int32_t count = 0;
 				if(rcc && rcc->cards && !rc->kill)
 				{
-					cs_readlock(&rcc->cards_busy);
+					cs_readlock(__func__, &rcc->cards_busy);
 
 					it = ll_iter_create(rcc->cards);
 					while((card = ll_iter_next(&it)))
@@ -1426,19 +1426,19 @@ void update_card_list(void)
 							}
 						}
 					}
-					cs_readunlock(&rcc->cards_busy);
+					cs_readunlock(__func__, &rcc->cards_busy);
 				}
 				else
 					{ cs_log_dbg(D_TRACE, "reader %s not active!", rdr->label); }
 				cs_log_dbg(D_TRACE, "got %d cards from %s", count, rdr->label);
 			}
 		}
-		cs_readunlock(&readerlist_lock);
+		cs_readunlock(__func__, &readerlist_lock);
 	}
 
 	LLIST *new_cards = ll_create("new_cards"); //List of new (added) cards
 
-	cs_writelock(&cc_shares_lock);
+	cs_writelock(__func__, &cc_shares_lock);
 
 	//report reshare cards:
 	//cs_log_dbg(D_TRACE, "%s reporting %d cards", getprefix(), ll_count(server_cards));
@@ -1477,7 +1477,7 @@ void update_card_list(void)
 	ll_destroy(&new_cards);
 
 
-	cs_writeunlock(&cc_shares_lock);
+	cs_writeunlock(__func__, &cc_shares_lock);
 
 	cs_log_dbg(D_TRACE, "reported/updated +%d/-%d/dup %d of %d cards to sharelist",
 				  card_added_count, card_removed_count, card_dup_count, card_count);
@@ -1489,7 +1489,7 @@ int32_t cc_srv_report_cards(struct s_client *cl)
 	struct cc_card *card;
 	int32_t i, count = 0;
 	LL_ITER it;
-	cs_readlock(&cc_shares_lock);
+	cs_readlock(__func__, &cc_shares_lock);
 	for(i = 0; i < CAID_KEY; i++)
 	{
 		if(reported_carddatas_list[i])
@@ -1501,7 +1501,7 @@ int32_t cc_srv_report_cards(struct s_client *cl)
 			}
 		}
 	}
-	cs_readunlock(&cc_shares_lock);
+	cs_readunlock(__func__, &cc_shares_lock);
 	cs_log_dbg(D_TRACE, "reported %d cards for %s", count, username(cl));
 
 	return cl->cc && !cl->kill;
@@ -1554,7 +1554,7 @@ void share_updater(void)
 		struct s_reader *rdr;
 		struct cc_data *cc;
 
-		cs_readlock(&readerlist_lock);
+		cs_readlock(__func__, &readerlist_lock);
 
 		for(rdr = first_active_reader; rdr; rdr = rdr->next)
 		{
@@ -1595,7 +1595,7 @@ void share_updater(void)
 			}
 		}
 
-		cs_readunlock(&readerlist_lock);
+		cs_readunlock(__func__, &readerlist_lock);
 
 		//update cardlist if reader config has changed, also set interval to 1s / 30times
 		if(cur_check != last_check || last_sidtab_generation != cfg_sidtab_generation || last_check_rdroptions != cur_check_rdroptions)
@@ -1651,14 +1651,14 @@ void cccam_init_share(void)
 {
 
 	memset(reported_carddatas_list, 0, sizeof(reported_carddatas_list));
-	cs_lock_create(&cc_shares_lock, "cc_shares_lock", 200000);
+	cs_lock_create(__func__, &cc_shares_lock, "cc_shares_lock", 200000);
 
 	share_updater_thread = 0;
 	share_updater_thread_active = 1;
 	pthread_t temp;
 	pthread_attr_t attr;
-	pthread_attr_init(&attr);
-	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+	SAFE_ATTR_INIT(&attr);
+	SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
 	int32_t ret = pthread_create(&temp, &attr, (void *)&share_updater, NULL);
 	if(ret)
 		{ cs_log("ERROR: can't create share updater thread (errno=%d %s)", ret, strerror(ret)); }

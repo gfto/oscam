@@ -43,7 +43,7 @@ void add_garbage(void *data)
 		return;
 	}
 
-	pthread_mutex_lock(&add_lock);
+	SAFE_MUTEX_LOCK(&add_lock);
 	
 	int32_t bucket = counter++;
 	
@@ -52,7 +52,7 @@ void add_garbage(void *data)
 		counter = 0;
 	}
 	
-	pthread_mutex_unlock(&add_lock);
+	SAFE_MUTEX_UNLOCK(&add_lock);
 	
 	struct cs_garbage *garbage = (struct cs_garbage*)malloc(sizeof(struct cs_garbage));
 	if(garbage == NULL)
@@ -69,7 +69,7 @@ void add_garbage(void *data)
 	garbage->line = line;
 #endif
 
-	cs_writelock(&garbage_lock[bucket]);
+	cs_writelock(__func__, &garbage_lock[bucket]);
 
 #ifdef WITH_DEBUG
 	if(garbage_debug == 2)
@@ -82,7 +82,7 @@ void add_garbage(void *data)
 				cs_log("Found a try to add garbage twice. Not adding the element to garbage list...");
 				cs_log("Current garbage addition: %s, line %d.", file, line);
 				cs_log("Original garbage addition: %s, line %d.", garbagecheck->file, garbagecheck->line);
-				cs_writeunlock(&garbage_lock[bucket]);
+				cs_writeunlock(__func__, &garbage_lock[bucket]);
 				NULLFREE(garbage);
 				return;
 			}
@@ -94,7 +94,7 @@ void add_garbage(void *data)
 	garbage->next = garbage_first[bucket];  
 	garbage_first[bucket] = garbage;
 	
-	cs_writeunlock(&garbage_lock[bucket]);
+	cs_writeunlock(__func__, &garbage_lock[bucket]);
 }
 
 static pthread_cond_t sleep_cond;
@@ -114,7 +114,7 @@ static void garbage_collector(void)
 		for(i = 0; i < HASH_BUCKETS; ++i)
 		{
 			j = 0;
-			cs_writelock(&garbage_lock[i]);
+			cs_writelock(__func__, &garbage_lock[i]);
 			first = garbage_first[i];
 			
 			for(garbage = first, prev = NULL; garbage; prev = garbage, garbage = garbage->next,j++)
@@ -122,7 +122,7 @@ static void garbage_collector(void)
 				if(j==2)
  				{
 					j++;
-					cs_writeunlock(&garbage_lock[i]);
+					cs_writeunlock(__func__, &garbage_lock[i]);
 				}
 
 				if(garbage->time < deltime)     // all following elements are too new
@@ -141,7 +141,7 @@ static void garbage_collector(void)
 
 			if(j<3)
 			{
-				cs_writeunlock(&garbage_lock[i]);
+				cs_writeunlock(__func__, &garbage_lock[i]);
 			}
 
 			// list has been taken out before so we don't need a lock here anymore!
@@ -153,7 +153,7 @@ static void garbage_collector(void)
 				garbage = next;
 			}
 		}
-		sleepms_on_cond(&sleep_cond_mutex, &sleep_cond, 500);
+		sleepms_on_cond(__func__, &sleep_cond_mutex, &sleep_cond, 500);
 	}
 	pthread_exit(NULL);
 }
@@ -164,22 +164,22 @@ void start_garbage_collector(int32_t debug)
 	garbage_debug = debug;
 	int32_t i;
 	
-	pthread_mutex_init(&add_lock, NULL);
+	SAFE_MUTEX_INIT(&add_lock, NULL);
 	
 	for(i = 0; i < HASH_BUCKETS; ++i)
 	{
-		cs_lock_create(&garbage_lock[i], "garbage_lock", 9000);
+		cs_lock_create(__func__, &garbage_lock[i], "garbage_lock", 9000);
 
 		garbage_first[i] = NULL;
 	}
-	cs_pthread_cond_init(&sleep_cond_mutex, &sleep_cond);
+	cs_pthread_cond_init(__func__, &sleep_cond_mutex, &sleep_cond);
 
 	pthread_attr_t attr;
-	pthread_attr_init(&attr);
+	SAFE_ATTR_INIT(&attr);
 
 	garbage_collector_active = 1;
 
-	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+	SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
 	int32_t ret = pthread_create(&garbage_thread, &attr, (void *)&garbage_collector, NULL);
 	if(ret)
 	{
@@ -197,12 +197,12 @@ void stop_garbage_collector(void)
 		int32_t i;
 
 		garbage_collector_active = 0;
-		pthread_cond_signal(&sleep_cond);
+		SAFE_COND_SIGNAL(&sleep_cond);
 		cs_sleepms(1500);
-		pthread_cond_signal(&sleep_cond);
-		pthread_join(garbage_thread, NULL);
+		SAFE_COND_SIGNAL(&sleep_cond);
+		SAFE_THREAD_JOIN(garbage_thread, NULL);
 		for(i = 0; i < HASH_BUCKETS; ++i)
-			{ cs_writelock(&garbage_lock[i]); }
+			{ cs_writelock(__func__, &garbage_lock[i]); }
 
 		for(i = 0; i < HASH_BUCKETS; ++i)
 		{
@@ -217,8 +217,8 @@ void stop_garbage_collector(void)
 		
 		for(i = 0; i < HASH_BUCKETS; ++i)
 		{ 
-			cs_writeunlock(&garbage_lock[i]);
-			cs_lock_destroy(&garbage_lock[i]);
+			cs_writeunlock(__func__, &garbage_lock[i]);
+			cs_lock_destroy(__func__, &garbage_lock[i]);
 		}
 
  		pthread_mutex_destroy(&add_lock);

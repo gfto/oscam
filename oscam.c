@@ -648,7 +648,7 @@ static void cs_reload_config(void)
 	
 	if(!mutex_init)
 	{
-		pthread_mutex_init(&mutex, NULL);
+		SAFE_MUTEX_INIT(&mutex, NULL);
 		mutex_init = 1;
 	}
 	
@@ -665,7 +665,7 @@ static void cs_reload_config(void)
 	ac_init_stat();
 	cs_reopen_log(); // FIXME: aclog.log, emm logs, cw logs (?)
 	
-	pthread_mutex_unlock(&mutex);
+	SAFE_MUTEX_UNLOCK(&mutex);
 }
 
 /* Sets signal handlers to ignore for early startup of OSCam because for example log
@@ -942,10 +942,10 @@ void start_thread(void *startroutine, char *nameroutine)
 {
 	pthread_t temp;
 	pthread_attr_t attr;
-	pthread_attr_init(&attr);
+	SAFE_ATTR_INIT(&attr);
 	cs_log_dbg(D_TRACE, "starting thread %s", nameroutine);
-	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
-	cs_writelock(&system_lock);
+	SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
+	cs_writelock(__func__, &system_lock);
 	int32_t ret = pthread_create(&temp, &attr, startroutine, NULL);
 	if(ret)
 		{ cs_log("ERROR: can't create %s thread (errno=%d %s)", nameroutine, ret, strerror(ret)); }
@@ -955,7 +955,7 @@ void start_thread(void *startroutine, char *nameroutine)
 		pthread_detach(temp);
 	}
 	pthread_attr_destroy(&attr);
-	cs_writeunlock(&system_lock);
+	cs_writeunlock(__func__, &system_lock);
 }
 
 /* Allows to kill another thread specified through the client cl with locking.
@@ -1015,6 +1015,7 @@ static void cs_waitforcardinit(void)
 			//alarm(cfg.cmaxidle + cfg.ctimeout / 1000 + 1);
 		}
 		while(!card_init_done && !exit_oscam);
+		
 		if(cfg.waitforcards_extra_delay > 0 && !exit_oscam)
 			{ cs_sleepms(cfg.waitforcards_extra_delay); }
 		cs_log("init for all local cards done");
@@ -1251,7 +1252,7 @@ static void *reader_check(void)
 	struct s_client *cl;
 	struct s_reader *rdr;
 	set_thread_name(__func__);
-	cs_pthread_cond_init(&reader_check_sleep_cond_mutex, &reader_check_sleep_cond);
+	cs_pthread_cond_init(__func__, &reader_check_sleep_cond_mutex, &reader_check_sleep_cond);
 	while(!exit_oscam)
 	{
 		for(cl = first_client->next; cl ; cl = cl->next)
@@ -1259,7 +1260,7 @@ static void *reader_check(void)
 			if(!cl->thread_active)
 				{ client_check_status(cl); }
 		}
-		cs_readlock(&readerlist_lock);
+		cs_readlock(__func__, &readerlist_lock);
 		for(rdr = first_active_reader; rdr; rdr = rdr->next)
 		{
 			if(rdr->enable)
@@ -1271,8 +1272,8 @@ static void *reader_check(void)
 					{ client_check_status(cl); }
 			}
 		}
-		cs_readunlock(&readerlist_lock);
-		sleepms_on_cond(&reader_check_sleep_cond_mutex, &reader_check_sleep_cond, 1000);
+		cs_readunlock(__func__, &readerlist_lock);
+		sleepms_on_cond(__func__, &reader_check_sleep_cond_mutex, &reader_check_sleep_cond, 1000);
 	}
 	return NULL;
 }
@@ -1283,11 +1284,11 @@ static void * card_poll(void) {
 	struct s_client *cl;
 	struct s_reader *rdr;
 	pthread_mutex_t card_poll_sleep_cond_mutex;
-	pthread_mutex_init(&card_poll_sleep_cond_mutex, NULL);
-	pthread_cond_init(&card_poll_sleep_cond, NULL);
+	SAFE_MUTEX_INIT(&card_poll_sleep_cond_mutex, NULL);
+	SAFE_COND_INIT(&card_poll_sleep_cond, NULL);
 	set_thread_name(__func__);
 	while (!exit_oscam) {
-		cs_readlock(&readerlist_lock);
+		cs_readlock(__func__, &readerlist_lock);
 		for (rdr=first_active_reader; rdr; rdr=rdr->next) {
 			if (rdr->enable && rdr->card_status == CARD_INSERTED) {
 				cl = rdr->client;
@@ -1295,16 +1296,16 @@ static void * card_poll(void) {
 					{ add_job(cl, ACTION_READER_POLL_STATUS, 0, 0); }
 			}
 		}
-		cs_readunlock(&readerlist_lock);
+		cs_readunlock(__func__, &readerlist_lock);
 		struct timespec ts;
 		struct timeval tv;
 		gettimeofday(&tv, NULL);
 		ts.tv_sec = tv.tv_sec;
 		ts.tv_nsec = tv.tv_usec * 1000;
 		ts.tv_sec += 1;
-		pthread_mutex_lock(&card_poll_sleep_cond_mutex);
+		SAFE_MUTEX_LOCK(&card_poll_sleep_cond_mutex);
 		pthread_cond_timedwait(&card_poll_sleep_cond, &card_poll_sleep_cond_mutex, &ts); // sleep on card_poll_sleep_cond
-		pthread_mutex_unlock(&card_poll_sleep_cond_mutex);
+		SAFE_MUTEX_UNLOCK(&card_poll_sleep_cond_mutex);
 	}
 	return NULL;
 }
@@ -1639,15 +1640,16 @@ int32_t main(int32_t argc, char *argv[])
 	if(cs_confdir[strlen(cs_confdir) - 1] != '/') { strcat(cs_confdir, "/"); }
 	init_signal_pre(); // because log could cause SIGPIPE errors, init a signal handler first
 	init_first_client();
-	cs_lock_create(&system_lock, "system_lock", 5000);
-	cs_lock_create(&config_lock, "config_lock", 10000);
-	cs_lock_create(&gethostbyname_lock, "gethostbyname_lock", 10000);
-	cs_lock_create(&clientlist_lock, "clientlist_lock", 5000);
-	cs_lock_create(&readerlist_lock, "readerlist_lock", 5000);
-	cs_lock_create(&fakeuser_lock, "fakeuser_lock", 5000);
-	cs_lock_create(&ecmcache_lock, "ecmcache_lock", 5000);
-	cs_lock_create(&readdir_lock, "readdir_lock", 5000);
-	cs_lock_create(&cwcycle_lock, "cwcycle_lock", 5000);
+	cs_lock_create(__func__, &system_lock, "system_lock", 5000);
+	cs_lock_create(__func__, &config_lock, "config_lock", 10000);
+	cs_lock_create(__func__, &gethostbyname_lock, "gethostbyname_lock", 10000);
+	cs_lock_create(__func__, &clientlist_lock, "clientlist_lock", 5000);
+	cs_lock_create(__func__, &readerlist_lock, "readerlist_lock", 5000);
+	cs_lock_create(__func__, &fakeuser_lock, "fakeuser_lock", 5000);
+	cs_lock_create(__func__, &ecmcache_lock, "ecmcache_lock", 5000);
+	cs_lock_create(__func__, &ecm_pushed_deleted_lock, "ecm_pushed_deleted_lock", 5000);
+	cs_lock_create(__func__, &readdir_lock, "readdir_lock", 5000);
+	cs_lock_create(__func__, &cwcycle_lock, "cwcycle_lock", 5000);
 	init_cache();
 	cacheex_init_hitcache();
 	init_config();
@@ -1750,9 +1752,9 @@ int32_t main(int32_t argc, char *argv[])
 	// main loop function
 	process_clients();
 
-	pthread_cond_signal(&card_poll_sleep_cond); // Stop card_poll thread
+	SAFE_COND_SIGNAL(&card_poll_sleep_cond); // Stop card_poll thread
 	cw_process_thread_wakeup(); // Stop cw_process thread
-	pthread_cond_signal(&reader_check_sleep_cond); // Stop reader_check thread
+	SAFE_COND_SIGNAL(&reader_check_sleep_cond); // Stop reader_check thread
 
 	// Cleanup
 #ifdef MODULE_GBOX	

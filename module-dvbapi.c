@@ -1409,6 +1409,14 @@ static pthread_mutex_t lockindex;
 int32_t dvbapi_get_descindex(int32_t demux_index)
 {
 	int32_t i, j, idx = 1, fail = 1;
+	
+	static int8_t init_mutex = 0;
+	if(init_mutex == 0)
+	{
+		SAFE_MUTEX_INIT(&lockindex, NULL);
+		init_mutex = 1;	
+	}
+	
 	if(cfg.dvbapi_boxtype == BOXTYPE_NEUMO)
 	{
 		idx = 0;
@@ -1416,7 +1424,7 @@ int32_t dvbapi_get_descindex(int32_t demux_index)
 		idx++; // fixup
 		return idx;
 	}
-	pthread_mutex_lock(&lockindex); // to avoid race when readers become responsive!
+	SAFE_MUTEX_LOCK(&lockindex); // to avoid race when readers become responsive!
 	while(fail)
 	{
 		fail = 0;
@@ -1433,7 +1441,7 @@ int32_t dvbapi_get_descindex(int32_t demux_index)
 		}
 		cs_sleepms(1);
 	}
-	pthread_mutex_unlock(&lockindex); // and release it!
+	SAFE_MUTEX_UNLOCK(&lockindex); // and release it!
 	return idx;
 }
 
@@ -3398,7 +3406,7 @@ void event_handler(int32_t UNUSED(signal))
 	uchar mbuf[2048]; // dirty fix: larger buffer needed for CA PMT mode 6 with many parallel channels to decode
 	if(dvbapi_client != cur_client()) { return; }
 
-	pthread_mutex_lock(&event_handler_lock);
+	SAFE_MUTEX_LOCK(&event_handler_lock);
 
 	if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
 		{ pausecam = 0; }
@@ -3415,7 +3423,7 @@ void event_handler(int32_t UNUSED(signal))
 
 	if(cfg.dvbapi_boxtype == BOXTYPE_IPBOX || cfg.dvbapi_pmtmode == 1)
 	{
-		pthread_mutex_unlock(&event_handler_lock);
+		SAFE_MUTEX_UNLOCK(&event_handler_lock);
 		return;
 	}
 
@@ -3453,7 +3461,7 @@ void event_handler(int32_t UNUSED(signal))
 
 	if(disable_pmt_files)
 	{
-		pthread_mutex_unlock(&event_handler_lock);
+		SAFE_MUTEX_UNLOCK(&event_handler_lock);
 		return;
 	}
 
@@ -3461,7 +3469,7 @@ void event_handler(int32_t UNUSED(signal))
 	if(!dirp)
 	{
 		cs_log_dbg(D_DVBAPI, "opendir failed (errno=%d %s)", errno, strerror(errno));
-		pthread_mutex_unlock(&event_handler_lock);
+		SAFE_MUTEX_UNLOCK(&event_handler_lock);
 		return;
 	}
 
@@ -3549,7 +3557,7 @@ void event_handler(int32_t UNUSED(signal))
 			if(sscanf((char *)mbuf + j2, "%02X", &tmp) != 1)
 			{
 				cs_log_dbg(D_DVBAPI, "error parsing QboxHD pmt.tmp, data not valid in position %d", j2);
-				pthread_mutex_unlock(&event_handler_lock);
+				SAFE_MUTEX_UNLOCK(&event_handler_lock);
 				return;
 			}
 			else
@@ -3598,13 +3606,13 @@ void event_handler(int32_t UNUSED(signal))
 		}
 	}
 	closedir(dirp);
-	pthread_mutex_unlock(&event_handler_lock);
+	SAFE_MUTEX_UNLOCK(&event_handler_lock);
 }
 
 void *dvbapi_event_thread(void *cli)
 {
 	struct s_client *client = (struct s_client *) cli;
-	pthread_setspecific(getclient, client);
+	SAFE_SETSPECIFIC(getclient, client);
 	set_thread_name(__func__);
 	while(1)
 	{
@@ -3920,7 +3928,7 @@ static void *dvbapi_main_local(void *cli)
 	int32_t i, j;
 	struct s_client *client = (struct s_client *) cli;
 	client->thread = pthread_self();
-	pthread_setspecific(getclient, cli);
+	SAFE_SETSPECIFIC(getclient, cli);
 
 	dvbapi_client = cli;
 
@@ -3979,7 +3987,7 @@ static void *dvbapi_main_local(void *cli)
 		}
 	}
 
-	pthread_mutex_init(&event_handler_lock, NULL);
+	SAFE_MUTEX_INIT(&event_handler_lock, NULL);
 
 	for(i = 0; i < MAX_DEMUX; i++)  // init all demuxers!
 	{
@@ -4748,7 +4756,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 		if(er->rc < E_NOTFOUND && cfg.dvbapi_requestmode == 1 && er->caid != 0) // FOUND
 		{
-			pthread_mutex_lock(&demux[i].answerlock); // only process one ecm answer
+			SAFE_MUTEX_LOCK(&demux[i].answerlock); // only process one ecm answer
 			if(demux[i].ECMpids[j].checked != 4)
 			{
 
@@ -4787,7 +4795,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				cs_log_dbg(D_DVBAPI, "Demuxer %d descrambling PID %d CAID %04X PROVID %06X ECMPID %04X CHID %02X VPID %04X",
 					i, demux[i].pidindex, er->caid, er->prid, er->pid, er->chid, er->vpid);
 			}
-			pthread_mutex_unlock(&demux[i].answerlock); // and release it!
+			SAFE_MUTEX_UNLOCK(&demux[i].answerlock); // and release it!
 		}
 
 		if(er->rc >= E_NOTFOUND)    // not found on requestmode 0 + 1

@@ -90,7 +90,7 @@ void increment_n_request(struct s_client *cl){
 void update_n_request(void){
 	struct s_client *cl;
 
-	cs_readlock(&clientlist_lock);
+	cs_readlock(__func__, &clientlist_lock);
 	for(cl = first_client->next; cl; cl = cl->next)
 	{
 #ifdef CS_CACHEEX
@@ -110,7 +110,7 @@ void update_n_request(void){
 	first_client->n_request[0]=first_client->n_request[1];
 	first_client->n_request[1]=0;
 
-	cs_readunlock(&clientlist_lock);
+	cs_readunlock(__func__, &clientlist_lock);
 }
 
 static void *cw_process(void)
@@ -126,7 +126,7 @@ static void *cw_process(void)
 	int64_t time_to_check_cacheex_mode1_delay;
 #endif
 
-	cs_pthread_cond_init(&cw_process_sleep_cond_mutex, &cw_process_sleep_cond);
+	cs_pthread_cond_init(__func__, &cw_process_sleep_cond_mutex, &cw_process_sleep_cond);
 
 #ifdef CS_ANTICASC
 	int32_t ac_next;
@@ -146,7 +146,7 @@ static void *cw_process(void)
 	{
 		if(cw_process_wakeups == 0)    // No waiting wakeups, proceed to sleep
 		{
-			sleepms_on_cond(&cw_process_sleep_cond_mutex, &cw_process_sleep_cond, msec_wait);
+			sleepms_on_cond(__func__, &cw_process_sleep_cond_mutex, &cw_process_sleep_cond, msec_wait);
 		}
 		cw_process_wakeups = 0; // We've been woken up, reset the counter
 		if(exit_oscam)
@@ -161,7 +161,7 @@ static void *cw_process(void)
 		msec_wait = 0;
 
 		cs_ftime(&t_now);
-		cs_readlock(&ecmcache_lock);
+		cs_readlock(__func__, &ecmcache_lock);
 		for(er = ecmcwcache; er; er = er->next)
 		{
 
@@ -235,7 +235,7 @@ static void *cw_process(void)
 					{ next_check = time_to_check_ctimeout; }
 			}
 		}
-		cs_readunlock(&ecmcache_lock);
+		cs_readunlock(__func__, &ecmcache_lock);
 #ifdef CS_ANTICASC
 		if(cfg.ac_enabled && (ac_next = comp_timeb(&ac_time, &t_now)) <= 10)
 		{
@@ -249,26 +249,26 @@ static void *cw_process(void)
 			uint32_t count = 0;
 			struct ecm_request_t *ecm, *ecmt = NULL, *prv;
 
-			cs_readlock(&ecmcache_lock);
+			cs_readlock(__func__, &ecmcache_lock);
 			for(ecm = ecmcwcache, prv = NULL; ecm; prv = ecm, ecm = ecm->next, count++)
 			{
 				ecm_maxcachetime = t_now.time - ((cfg.ctimeout+500)/1000+3);  //to be sure no more access er!
 
 				if(ecm->tps.time < ecm_maxcachetime)
 				{
-					cs_readunlock(&ecmcache_lock);
-					cs_writelock(&ecmcache_lock);
+					cs_readunlock(__func__, &ecmcache_lock);
+					cs_writelock(__func__, &ecmcache_lock);
 					ecmt = ecm;
 					if(prv)
 						{ prv->next = NULL; }
 					else
 						{ ecmcwcache = NULL; }
-					cs_writeunlock(&ecmcache_lock);
+					cs_writeunlock(__func__, &ecmcache_lock);
 					break;
 				}
 			}
 			if(!ecmt)
-				{ cs_readunlock(&ecmcache_lock); }
+				{ cs_readunlock(__func__, &ecmcache_lock); }
 			ecmcwcache_size = count;
 
 			while(ecmt)
@@ -280,25 +280,25 @@ static void *cw_process(void)
 
 #ifdef CS_CACHEEX
 			ecmt=NULL;
-			cs_readlock(&ecm_pushed_deleted_lock);
+			cs_readlock(__func__, &ecm_pushed_deleted_lock);
 			for(ecm = ecm_pushed_deleted, prv = NULL; ecm; prv = ecm, ecm = ecm->next)
 			{
 				ecm_maxcachetime = t_now.time - ((cfg.ctimeout+500)/1000+3);
 				if(ecm->tps.time < ecm_maxcachetime)
 				{
-					cs_readunlock(&ecm_pushed_deleted_lock);
-					cs_writelock(&ecm_pushed_deleted_lock);
+					cs_readunlock(__func__, &ecm_pushed_deleted_lock);
+					cs_writelock(__func__, &ecm_pushed_deleted_lock);
 					ecmt = ecm;
 					if(prv)
 						{ prv->next = NULL; }
 					else
 						{ ecm_pushed_deleted = NULL; }
-					cs_writeunlock(&ecm_pushed_deleted_lock);
+					cs_writeunlock(__func__, &ecm_pushed_deleted_lock);
 					break;
 				}
 			}
 			if(!ecmt)
-				{ cs_readunlock(&ecm_pushed_deleted_lock); }
+				{ cs_readunlock(__func__, &ecm_pushed_deleted_lock); }
 
 			while(ecmt)
 			{
@@ -363,7 +363,7 @@ void cw_process_thread_start(void)
 void cw_process_thread_wakeup(void)
 {
 	cw_process_wakeups++; // Do not sleep...
-	pthread_cond_signal(&cw_process_sleep_cond);
+	SAFE_COND_SIGNAL(&cw_process_sleep_cond);
 }
 
 void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
@@ -500,7 +500,7 @@ void free_ecm(ECM_REQUEST *ecm)
 	while(ea)
 	{
 		nxt = ea->next;
-		cs_lock_destroy(&ea->ecmanswer_lock);
+		cs_lock_destroy(__func__, &ea->ecmanswer_lock);
 		add_garbage(ea);
 		ea = nxt;
 	}
@@ -543,7 +543,7 @@ void cleanup_ecmtasks(struct s_client *cl)
 	ECM_REQUEST *ecm;
 
 	//remove this clients ecm from queue. because of cache, just null the client:
-	cs_readlock(&ecmcache_lock);
+	cs_readlock(__func__, &ecmcache_lock);
 	for(ecm = ecmcwcache; ecm; ecm = ecm->next)
 	{
 		if(ecm->client == cl)
@@ -551,10 +551,10 @@ void cleanup_ecmtasks(struct s_client *cl)
 			ecm->client = NULL;
 		}
 	}
-	cs_readunlock(&ecmcache_lock);
+	cs_readunlock(__func__, &ecmcache_lock);
 
 	//remove client from rdr ecm-queue:
-	cs_readlock(&readerlist_lock);
+	cs_readlock(__func__, &readerlist_lock);
 	struct s_reader *rdr = first_active_reader;
 	while(rdr)
 	{
@@ -572,7 +572,7 @@ void cleanup_ecmtasks(struct s_client *cl)
 		}
 		rdr = rdr->next;
 	}
-	cs_readunlock(&readerlist_lock);
+	cs_readunlock(__func__, &readerlist_lock);
 
 }
 
@@ -912,7 +912,7 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 
   	//**global or user value?
-		cs_writelock(&clientlist_lock);
+		cs_writelock(__func__, &clientlist_lock);
 
 		max_active_sids = client->account->acosc_max_active_sids == -1 ? cfg.acosc_max_active_sids : client->account->acosc_max_active_sids;
 		info1 = client->account->acosc_max_active_sids == -1 ? "Globalvalue" : "Uservalue";
@@ -1006,9 +1006,9 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 							{ cs_log("[zaplist] ACoSC for Client: %s  max_activ_sids reached: %i:%i(%s) penalty: 3(%s) delay CW: %ims(%s)", username(client), active_sid_count, max_active_sids, info1, info2, delay, info4); }
 						if(client->account->acosc_penalty_active == 2)
 							{ cs_log("[zaplist] ACoSC for Client: %s  zap_limit reached: %i:%i(%s) penalty: 3(%s) delay CW: %ims(%s)", username(client), client->account->acosc_user_zap_count, zap_limit, info5, info2, delay, info4);	}
-						cs_writeunlock(&clientlist_lock);
+						cs_writeunlock(__func__, &clientlist_lock);
 						cs_sleepms(delay);
-						cs_writelock(&clientlist_lock);
+						cs_writelock(__func__, &clientlist_lock);
 						client->cwlastresptime += delay;
 						snprintf(sreason, sizeof(sreason)-1, " (%d ms penalty delay)", delay);
 						break;
@@ -1024,7 +1024,7 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 				client->account->acosc_penalty_active = 3;
 			}
 		}
-		cs_writeunlock(&clientlist_lock);
+		cs_writeunlock(__func__, &clientlist_lock);
 	}
 #endif
 
@@ -1240,10 +1240,10 @@ void add_cache_from_reader(ECM_REQUEST *er, struct s_reader *rdr, int32_t csp_ha
 		add_cache(ecm); //add cw to cache
 
 #ifdef CS_CACHEEX
-		cs_writelock(&ecm_pushed_deleted_lock);
+		cs_writelock(__func__, &ecm_pushed_deleted_lock);
 		ecm->next = ecm_pushed_deleted;
 		ecm_pushed_deleted = ecm;
-		cs_writeunlock(&ecm_pushed_deleted_lock);
+		cs_writeunlock(__func__, &ecm_pushed_deleted_lock);
 #else
 		NULLFREE(ecm);
 #endif
@@ -1305,12 +1305,12 @@ void chk_dcw(struct s_ecm_answer *ea)
 		if(ert->stage==1){
 			for(ea_list = ert->matching_rdr; ea_list; ea_list = ea_list->next)
 			{
-				cs_readlock(&ea_list->ecmanswer_lock);
+				cs_readlock(__func__, &ea_list->ecmanswer_lock);
 				if(((ea_list->status & (READER_CACHEEX | READER_FALLBACK | READER_ACTIVE))) == (READER_CACHEEX | READER_ACTIVE))
 					{ has_cacheex = 1; }
 				if((!(ea_list->status & READER_FALLBACK)  && ((ea_list->status & (REQUEST_SENT | REQUEST_ANSWERED | READER_CACHEEX | READER_ACTIVE)) == (REQUEST_SENT | READER_CACHEEX | READER_ACTIVE))) || ea_list->rc < E_NOTFOUND)
 					{ cacheex_left++; }
-				cs_readunlock(&ea_list->ecmanswer_lock);
+				cs_readunlock(__func__, &ea_list->ecmanswer_lock);
 			}
 
 			if(has_cacheex && !cacheex_left) { request_cw_from_readers(ert, 0); }
@@ -1343,7 +1343,7 @@ void chk_dcw(struct s_ecm_answer *ea)
 
 		for(ea_list = ert->matching_rdr; ea_list; ea_list = ea_list->next)
 		{
-			cs_readlock(&ea_list->ecmanswer_lock);
+			cs_readlock(__func__, &ea_list->ecmanswer_lock);
 
 			if((!(ea_list->status & READER_FALLBACK)  && ((ea_list->status & (REQUEST_SENT | REQUEST_ANSWERED | READER_LOCAL | READER_ACTIVE)) == (REQUEST_SENT | READER_LOCAL | READER_ACTIVE))) || ea_list->rc < E_NOTFOUND)
 				{ local_left++; }
@@ -1359,7 +1359,7 @@ void chk_dcw(struct s_ecm_answer *ea)
 			if(((ea_list->status & (READER_LOCAL | READER_FALLBACK | READER_ACTIVE))) == (READER_LOCAL | READER_ACTIVE))
 				{ has_local = 1; }
 
-			cs_readunlock(&ea_list->ecmanswer_lock);
+			cs_readunlock(__func__, &ea_list->ecmanswer_lock);
 		}
 
 		switch(ert->stage)
@@ -1554,12 +1554,12 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 	struct s_ecm_answer *ea = get_ecm_answer(reader, er);
 	if(!ea) { return 0; }
 
-	cs_writelock(&ea->ecmanswer_lock);
+	cs_writelock(__func__, &ea->ecmanswer_lock);
 
 	if((ea->status & REQUEST_ANSWERED))
 	{
 		cs_log_dbg(D_READER, "Reader %s already answer, skip this ecm answer!", reader ? reader->label : "-");
-		cs_writeunlock(&ea->ecmanswer_lock);
+		cs_writeunlock(__func__, &ea->ecmanswer_lock);
 		return 0;
 	}
 
@@ -1648,7 +1648,7 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 	if(cw) { memcpy(ea->cw, cw, 16); }
 	if(msglog) { memcpy(ea->msglog, msglog, MSGLOGSIZE); }
 
-	cs_writeunlock(&ea->ecmanswer_lock);
+	cs_writeunlock(__func__, &ea->ecmanswer_lock);
 
 	struct timeb tpe;
 	cs_ftime(&tpe);
@@ -2264,9 +2264,9 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 #ifdef CS_ANTICASC
 	if(cfg.acosc_enabled)
 	{
-		cs_writelock(&clientlist_lock);
+		cs_writelock(__func__, &clientlist_lock);
 		insert_zaplist(er, client);
-		cs_writeunlock(&clientlist_lock);
+		cs_writeunlock(__func__, &clientlist_lock);
 	}
 #endif
 
@@ -2277,8 +2277,8 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 	struct s_ecm_answer *ea, *prv = NULL;
 	struct s_reader *rdr;
 
-	cs_readlock(&readerlist_lock);
-	cs_readlock(&clientlist_lock);
+	cs_readlock(__func__, &readerlist_lock);
+	cs_readlock(__func__, &clientlist_lock);
 
 	for(rdr = first_active_reader; rdr; rdr = rdr->next)
 	{
@@ -2322,13 +2322,13 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 
 			ea->pending = NULL;
 			ea->is_pending = false;
-			cs_lock_create(&ea->ecmanswer_lock, "ecmanswer_lock", 5000);
+			cs_lock_create(__func__, &ea->ecmanswer_lock, "ecmanswer_lock", 5000);
 		}
 	}
 
 OUT:
-	cs_readunlock(&clientlist_lock);
-	cs_readunlock(&readerlist_lock);
+	cs_readunlock(__func__, &clientlist_lock);
+	cs_readunlock(__func__, &readerlist_lock);
 
 	lb_set_best_reader(er);
 
@@ -2391,11 +2391,11 @@ OUT:
 
 
 	//insert it in ecmcwcache!
-	cs_writelock(&ecmcache_lock);
+	cs_writelock(__func__, &ecmcache_lock);
 	er->next = ecmcwcache;
 	ecmcwcache = er;
 	ecmcwcache_size++;
-	cs_writeunlock(&ecmcache_lock);
+	cs_writeunlock(__func__, &ecmcache_lock);
 
 
 	er->rcEx = 0;

@@ -54,7 +54,7 @@ int32_t cs_readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result)
 	   However readdir is not guaranteed to be thread-safe and some implementations may use global state.
 	   Thus we use a lock as we have many plattforms... */
 	int32_t rc;
-	cs_writelock(&readdir_lock);
+	cs_writelock(__func__, &readdir_lock);
 	errno = 0;
 	*result = readdir(dirp);
 	rc = errno;
@@ -63,7 +63,7 @@ int32_t cs_readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result)
 		memcpy(entry, *result, sizeof(struct dirent));
 		*result = entry;
 	}
-	cs_writeunlock(&readdir_lock);
+	cs_writeunlock(__func__, &readdir_lock);
 	return rc;
 }
 

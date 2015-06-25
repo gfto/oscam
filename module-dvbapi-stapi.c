@@ -73,7 +73,7 @@ static void stapi_off(void)
 {
 	int32_t i;
 
-	pthread_mutex_lock(&filter_lock);
+	SAFE_MUTEX_LOCK(&filter_lock);
 
 	cs_log("stapi shutdown");
 
@@ -96,7 +96,7 @@ static void stapi_off(void)
 		}
 	}
 
-	pthread_mutex_unlock(&filter_lock);
+	SAFE_MUTEX_UNLOCK(&filter_lock);
 	sleep(2);
 	return;
 }
@@ -198,7 +198,7 @@ int32_t stapi_open(void)
 
 	if(i == 0) { return 0; }
 
-	pthread_mutex_init(&filter_lock, NULL);
+	SAFE_MUTEX_INIT(&filter_lock, NULL);
 
 	for(i = 0; i < PTINUM; i++)
 	{
@@ -472,7 +472,7 @@ static void *stapi_read_thread(void *sparam)
 	struct read_thread_param *para = sparam;
 	dev_index = para->id;
 
-	pthread_setspecific(getclient, para->cli);
+	SAFE_SETSPECIFIC(getclient, para->cli);
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	pthread_cleanup_push(stapi_cleanup_thread, (void *) dev_index);
 
@@ -532,7 +532,7 @@ static void *stapi_read_thread(void *sparam)
 		if(DataSize <= 0)
 			{ continue; }
 
-		pthread_mutex_lock(&filter_lock); // don't use cs_lock() here; multiple threads using same s_client struct
+		SAFE_MUTEX_LOCK(&filter_lock); // don't use cs_lock() here; multiple threads using same s_client struct
 		for(k = 0; k < NumFilterMatches; k++)
 		{
 			for(i = 0; i < MAX_DEMUX; i++)
@@ -549,7 +549,7 @@ static void *stapi_read_thread(void *sparam)
 				}
 			}
 		}
-		pthread_mutex_unlock(&filter_lock);
+		SAFE_MUTEX_UNLOCK(&filter_lock);
 	}
 	pthread_cleanup_pop(0);
 }

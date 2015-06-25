@@ -93,7 +93,7 @@ uint8_t check_is_pushed(void *cwp, struct s_client *cl){
 	CW* cw = (CW*)cwp;
 	bool pushed=false;
 
-	pthread_rwlock_rdlock(&cw->pushout_client_lock);
+	SAFE_RWLOCK_RDLOCK(&cw->pushout_client_lock);
 	for (cl_tmp = cw->pushout_client; cl_tmp; cl_tmp = cl_tmp->next_push) {
 		if(cl_tmp->cl==cl){
 			pushed=true;
@@ -102,8 +102,8 @@ uint8_t check_is_pushed(void *cwp, struct s_client *cl){
 	}
 
 	if(!pushed){
-		pthread_rwlock_unlock(&cw->pushout_client_lock);
-		pthread_rwlock_wrlock(&cw->pushout_client_lock);
+		SAFE_RWLOCK_UNLOCK(&cw->pushout_client_lock);
+		SAFE_RWLOCK_WRLOCK(&cw->pushout_client_lock);
 
 		struct s_pushclient *new_push_client;
 		if(cs_malloc(&new_push_client, sizeof(struct s_pushclient))){
@@ -113,10 +113,10 @@ uint8_t check_is_pushed(void *cwp, struct s_client *cl){
 			cw->pushout_client=new_push_client;
 		}
 
-		pthread_rwlock_unlock(&cw->pushout_client_lock);
+		SAFE_RWLOCK_UNLOCK(&cw->pushout_client_lock);
 		return 0;
 	}else{
-		pthread_rwlock_unlock(&cw->pushout_client_lock);
+		SAFE_RWLOCK_UNLOCK(&cw->pushout_client_lock);
 		return 1;
 	}
 }
@@ -192,7 +192,7 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 	CW *cw;
 	uint64_t grp = cl?cl->grp:0;
 
-	pthread_rwlock_rdlock(&cache_lock);
+	SAFE_RWLOCK_RDLOCK(&cache_lock);
 
 	result = find_hash_table(&ht_cache, &er->csp_hash, sizeof(int32_t),&compare_csp_hash);
 	cw = get_first_cw(result, er);
@@ -247,7 +247,7 @@ struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 	}
 
 out_err:
-	pthread_rwlock_unlock(&cache_lock);
+	SAFE_RWLOCK_UNLOCK(&cache_lock);
 	return ecm;
 }
 
@@ -310,7 +310,7 @@ void add_cache(ECM_REQUEST *er){
 	CW *cw = NULL;
 	bool add_new_cw=false;
 
-	pthread_rwlock_wrlock(&cache_lock);
+	SAFE_RWLOCK_WRLOCK(&cache_lock);
 
 	//add csp_hash to cache
 	result = find_hash_table(&ht_cache, &er->csp_hash, sizeof(int32_t), &compare_csp_hash);
@@ -323,7 +323,7 @@ void add_cache(ECM_REQUEST *er){
 			add_hash_table(&ht_cache, &result->ht_node, &ll_cache, &result->ll_node, result, &result->csp_hash, sizeof(int32_t));
 
 		}else{
-			pthread_rwlock_unlock(&cache_lock);
+			SAFE_RWLOCK_UNLOCK(&cache_lock);
 			cs_log("ERROR: NO added HASH to cache!!");
 			return;
 		}
@@ -338,7 +338,7 @@ void add_cache(ECM_REQUEST *er){
 	if(!cw){
 
 		if(count_hash_table(&result->ht_cw)>=10){  //max 10 different cws stored
-			pthread_rwlock_unlock(&cache_lock);
+			SAFE_RWLOCK_UNLOCK(&cache_lock);
 			return;
 		}
 
@@ -397,7 +397,7 @@ void add_cache(ECM_REQUEST *er){
 	if(cw->count>1)
 		sort_list(&result->ll_cw, count_sort);
 
-	pthread_rwlock_unlock(&cache_lock);
+	SAFE_RWLOCK_UNLOCK(&cache_lock);
 
 	cacheex_cache_add(er, result, cw, add_new_cw);
 }
@@ -412,7 +412,7 @@ void cleanup_cache(bool force){
 	int64_t gone_first, gone_upd;
 
 
-	pthread_rwlock_wrlock(&cache_lock);
+	SAFE_RWLOCK_WRLOCK(&cache_lock);
 
 	i = get_first_node_list(&ll_cache);
 	while (i) {
@@ -466,5 +466,5 @@ void cleanup_cache(bool force){
 	    i = i_next;
 	}
 
-	pthread_rwlock_unlock(&cache_lock);
+	SAFE_RWLOCK_UNLOCK(&cache_lock);
 }

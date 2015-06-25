@@ -176,7 +176,7 @@ void load_emmstat_from_file(void)
 				if(!rdr->emmstat)
 				{
 					rdr->emmstat = ll_create("emmstat");
-					cs_lock_create(&rdr->emmstat_lock, rdr->label, DEFAULT_LOCK_TIMEOUT);
+					cs_lock_create(__func__, &rdr->emmstat_lock, rdr->label, DEFAULT_LOCK_TIMEOUT);
 				}
 
 				ll_append(rdr->emmstat, s);
@@ -246,7 +246,7 @@ void save_emmstat_to_file(void)
 
 		if(rdr->emmstat)
 		{
-			cs_writelock(&rdr->emmstat_lock);
+			cs_writelock(__func__, &rdr->emmstat_lock);
 			LL_ITER it = ll_iter_create(rdr->emmstat);
 			struct s_emmstat *s;
 			while((s = ll_iter_next(&it)))
@@ -256,7 +256,7 @@ void save_emmstat_to_file(void)
 				result = fprintf(file, "%s,%s,%ld,%ld,%02X,%04X\n", rdr->label, tmp_emmd5, s->firstwritten.time, s->lastwritten.time, s->type, s->count);
 				if(result < 0)
 				{
-					cs_writeunlock(&rdr->emmstat_lock);
+					cs_writeunlock(__func__, &rdr->emmstat_lock);
 					fclose(file);
 					result = remove(fname);
 					if(!result)
@@ -271,7 +271,7 @@ void save_emmstat_to_file(void)
 				}	
 				count++;
 			}
-			cs_writeunlock(&rdr->emmstat_lock);
+			cs_writeunlock(__func__, &rdr->emmstat_lock);
 		}
 	}
 
@@ -468,7 +468,7 @@ int32_t remove_emm_stat(struct s_reader *rdr, uchar *emmd5)
 	int32_t count = 0;
 	if(rdr && rdr->emmstat)
 	{
-		cs_writelock(&rdr->emmstat_lock);
+		cs_writelock(__func__, &rdr->emmstat_lock);
 		struct s_emmstat *c;
 		LL_ITER itr = ll_iter_create(rdr->emmstat);
 		while((c = ll_iter_next(&itr)))
@@ -481,7 +481,7 @@ int32_t remove_emm_stat(struct s_reader *rdr, uchar *emmd5)
 			}
 		}
 
-		cs_writeunlock(&rdr->emmstat_lock);
+		cs_writeunlock(__func__, &rdr->emmstat_lock);
 	}
 	return count;
 }

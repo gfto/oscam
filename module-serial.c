@@ -145,7 +145,7 @@ static int32_t chk_ser_srvid(struct s_client *cl, uint16_t caid, uint16_t sid, u
 
 static void oscam_wait_ser_fork(void)
 {
-	pthread_mutex_lock(&mutex);
+	SAFE_MUTEX_LOCK(&mutex);
 	do
 	{
 		if(bcopy_end)
@@ -154,10 +154,10 @@ static void oscam_wait_ser_fork(void)
 			break;
 		}
 		else
-			{ pthread_cond_wait(&cond, &mutex); }
+			{ SAFE_COND_WAIT(&cond, &mutex); }
 	}
 	while(1);
-	pthread_mutex_unlock(&mutex);
+	SAFE_MUTEX_UNLOCK(&mutex);
 }
 
 static int32_t oscam_ser_alpha_convert(uchar *buf, int32_t l)
@@ -1144,7 +1144,7 @@ static void *oscam_ser_fork(void *pthreadparam)
 {
 	struct s_thread_param *pparam = (struct s_thread_param *) pthreadparam;
 	struct s_client *cl = create_client(get_null_ip());
-	pthread_setspecific(getclient, cl);
+	SAFE_SETSPECIFIC(getclient, cl);
 	cl->thread = pthread_self();
 	cl->typ = 'c';
 	cl->module_idx = pparam->module_idx;
@@ -1171,10 +1171,10 @@ static void *oscam_ser_fork(void *pthreadparam)
 	cs_log("serial: initialized (%s@%s)", cl->serialdata->oscam_ser_proto > P_MAX ?
 		   "auto" : proto_txt[cl->serialdata->oscam_ser_proto], cl->serialdata->oscam_ser_device);
 
-	pthread_mutex_lock(&mutex);
+	SAFE_MUTEX_LOCK(&mutex);
 	bcopy_end = 1;
-	pthread_mutex_unlock(&mutex);
-	pthread_cond_signal(&cond);
+	SAFE_MUTEX_UNLOCK(&mutex);
+	SAFE_COND_SIGNAL(&cond);
 
 	while(1)
 	{
@@ -1197,8 +1197,8 @@ void *init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t m
 	int32_t ret;
 	struct s_thread_param param;
 	pthread_attr_t attr;
-	pthread_attr_init(&attr);
-	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+	SAFE_ATTR_INIT(&attr);
+	SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
 	oscam_init_serialdata(&param.serialdata);
 	if(cfg.ser_device)
 		{ cs_strncpy(sdevice, cfg.ser_device, sizeof(sdevice)); }
@@ -1210,7 +1210,7 @@ void *init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t m
 	char cltype = 'c'; //now auto should work
 	if(bcopy_end == -1)  //mutex should be initialized only once
 	{
-		cs_pthread_cond_init(&mutex, &cond);
+		cs_pthread_cond_init(__func__, &mutex, &cond);
 		bcopy_end = 0;
 	}
 	while((p = strrchr(sdevice, ';')))

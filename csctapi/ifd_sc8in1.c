@@ -494,7 +494,7 @@ if (display) {
 		display->blocking = blocking;
 		display->next = NULL;
 		}
-		cs_writelock(&crdr_data->sc8in1_display_lock);
+		cs_writelock(__func__, &crdr_data->sc8in1_display_lock);
 		if(crdr_data->display == NULL)
 		{
 			crdr_data->display = display;
@@ -515,7 +515,7 @@ if (display) {
 				}
 			}
 		}
-		cs_writeunlock(&crdr_data->sc8in1_display_lock);
+		cs_writeunlock(__func__, &crdr_data->sc8in1_display_lock);
 	}
 	else
 	{
@@ -584,15 +584,15 @@ static void *mcr_update_display_thread(void *param)
 			lastStatisticUpdateTime = currentTime;
 		}
 
-		cs_writelock(&crdr_data->sc8in1_display_lock);
+		cs_writelock(__func__, &crdr_data->sc8in1_display_lock);
 		if(crdr_data->display != NULL)    // is there something to display?
 		{
-			cs_writeunlock(&crdr_data->sc8in1_display_lock);
+			cs_writeunlock(__func__, &crdr_data->sc8in1_display_lock);
 
 			display_sleep = crdr_data->display->char_change_time;
 
 			// display the next character
-			cs_writelock(&crdr_data->sc8in1_lock);
+			cs_writelock(__func__, &crdr_data->sc8in1_lock);
 			if(crdr_data->display->blocking)
 			{
 				uint16_t i = 0;
@@ -614,22 +614,22 @@ static void *mcr_update_display_thread(void *param)
 					rdr_log(reader, "SC8in1: Error in mcr_update_display_thread write");
 				}
 			}
-			cs_writeunlock(&crdr_data->sc8in1_lock);
+			cs_writeunlock(__func__, &crdr_data->sc8in1_lock);
 
 			// remove the display struct if the text has been shown completely
 			if(crdr_data->display->last_char == crdr_data->display->text_length)
 			{
-				cs_writelock(&crdr_data->sc8in1_display_lock);
+				cs_writelock(__func__, &crdr_data->sc8in1_display_lock);
 				struct s_sc8in1_display *next = crdr_data->display->next;
 				NULLFREE(crdr_data->display->text);
 				NULLFREE(crdr_data->display);
 				crdr_data->display = next;
-				cs_writeunlock(&crdr_data->sc8in1_display_lock);
+				cs_writeunlock(__func__, &crdr_data->sc8in1_display_lock);
 			}
 		}
 		else
 		{
-			cs_writeunlock(&crdr_data->sc8in1_display_lock);
+			cs_writeunlock(__func__, &crdr_data->sc8in1_display_lock);
 		}
 		cs_sleepms(display_sleep);
 	}
@@ -830,8 +830,8 @@ static int32_t Sc8in1_Init(struct s_reader *reader)
 			// Start display thread
 			crdr_data->display_running = 1;
 			pthread_attr_t attr;
-			pthread_attr_init(&attr);
-			pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+			SAFE_ATTR_INIT(&attr);
+			SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
 			if(pthread_create(&crdr_data->display_thread, &attr, mcr_update_display_thread, (void *)(reader)))
 				{ rdr_log(reader, "ERROR: can't create MCR_DISPLAY_THREAD thread"); }
 			else
@@ -1018,7 +1018,7 @@ static int32_t Sc8in1_Close(struct s_reader *reader)
 		{
 			// disable reader threads
 			crdr_data->display_running = 0;
-			pthread_join(crdr_data->display_thread, NULL);
+			SAFE_THREAD_JOIN(crdr_data->display_thread, NULL);
 		}
 		// disable other slots
 		struct s_reader *rdr;
@@ -1119,8 +1119,8 @@ static int32_t Sc8in1_InitLocks(struct s_reader *reader)
 				{ snprintf(buff, 128, "sc8in1_lock_%s", reader->device); }
 			if(cs_malloc(&buff2, 128))
 				{ snprintf(buff2, 128, "display_sc8in1_lock_%s", reader->device); }
-			cs_lock_create(&crdr_data->sc8in1_lock, ESTR(buff), 40000);
-			cs_lock_create(&crdr_data->sc8in1_display_lock, ESTR(buff2), 10000);
+			cs_lock_create(__func__, &crdr_data->sc8in1_lock, ESTR(buff), 40000);
+			cs_lock_create(__func__, &crdr_data->sc8in1_display_lock, ESTR(buff2), 10000);
 		}
 		else
 		{
@@ -1138,7 +1138,7 @@ static int32_t Sc8in1_InitLocks(struct s_reader *reader)
 static void sc8in1_lock(struct s_reader *reader)
 {
 	struct sc8in1_data *crdr_data = reader->crdr_data;
-	cs_writelock(&crdr_data->sc8in1_lock);
+	cs_writelock(__func__, &crdr_data->sc8in1_lock);
 	rdr_log_dbg(reader, D_ATR, "Locked for access of slot %i", reader->slot);
 	Sc8in1_Selectslot(reader, reader->slot);
 }
@@ -1146,7 +1146,7 @@ static void sc8in1_lock(struct s_reader *reader)
 static void sc8in1_unlock(struct s_reader *reader)
 {
 	struct sc8in1_data *crdr_data = reader->crdr_data;
-	cs_writeunlock(&crdr_data->sc8in1_lock);
+	cs_writeunlock(__func__, &crdr_data->sc8in1_lock);
 	rdr_log_dbg(reader, D_ATR, "Unlocked for access of slot %i", reader->slot);
 }
 
@@ -1169,11 +1169,11 @@ static void sc8in1_display(struct s_reader *reader, char *message)
 static int32_t sc8in1_init(struct s_reader *reader)
 {
 	struct sc8in1_data *crdr_data = reader->crdr_data;
-	cs_writelock(&crdr_data->sc8in1_lock);
+	cs_writelock(__func__, &crdr_data->sc8in1_lock);
 	if(reader->handle != 0)   //this reader is already initialized
 	{
 		rdr_log_dbg(reader, D_DEVICE, "%s Sc8in1 already open", __func__);
-		cs_writeunlock(&crdr_data->sc8in1_lock);
+		cs_writeunlock(__func__, &crdr_data->sc8in1_lock);
 		return OK;
 	}
 	//get physical device name
@@ -1194,7 +1194,7 @@ static int32_t sc8in1_init(struct s_reader *reader)
 		{
 			rdr_log(reader, "ERROR: Opening device %s with real device %s (errno=%d %s)", reader->device, deviceName, errno, strerror(errno));
 			reader->handle = 0;
-			cs_writeunlock(&crdr_data->sc8in1_lock);
+			cs_writeunlock(__func__, &crdr_data->sc8in1_lock);
 			return ERROR;
 		}
 	}
@@ -1202,18 +1202,18 @@ static int32_t sc8in1_init(struct s_reader *reader)
 	{
 		// serial port already initialized
 		rdr_log_dbg(reader, D_DEVICE, "%s another Sc8in1 already open", __func__);
-		cs_writeunlock(&crdr_data->sc8in1_lock);
+		cs_writeunlock(__func__, &crdr_data->sc8in1_lock);
 		return OK;
 	}
 	if(Phoenix_Init(reader))
 	{
 		rdr_log(reader, "ERROR: Phoenix_Init returns error");
 		Phoenix_Close(reader);
-		cs_writeunlock(&crdr_data->sc8in1_lock);
+		cs_writeunlock(__func__, &crdr_data->sc8in1_lock);
 		return ERROR;
 	}
 	int32_t ret = Sc8in1_Init(reader);
-	cs_writeunlock(&crdr_data->sc8in1_lock);
+	cs_writeunlock(__func__, &crdr_data->sc8in1_lock);
 	if(ret)
 	{
 		rdr_log(reader, "ERROR: Sc8in1_Init returns error");
@@ -1225,9 +1225,9 @@ static int32_t sc8in1_init(struct s_reader *reader)
 static int32_t sc8in1_close(struct s_reader *reader)
 {
 	struct sc8in1_data *crdr_data = reader->crdr_data;
-	cs_writelock(&crdr_data->sc8in1_lock);
+	cs_writelock(__func__, &crdr_data->sc8in1_lock);
 	int32_t retval = Sc8in1_Close(reader);
-	cs_writeunlock(&crdr_data->sc8in1_lock);
+	cs_writeunlock(__func__, &crdr_data->sc8in1_lock);
 	if(retval == ERROR)
 		{ return ERROR; }
 	return OK;
@@ -1236,9 +1236,9 @@ static int32_t sc8in1_close(struct s_reader *reader)
 static int32_t sc8in1_get_status(struct s_reader *reader, int32_t *in)
 {
 	struct sc8in1_data *crdr_data = reader->crdr_data;
-	cs_writelock(&crdr_data->sc8in1_lock);
+	cs_writelock(__func__, &crdr_data->sc8in1_lock);
 	int32_t ret = Sc8in1_GetStatus(reader, in);
-	cs_writeunlock(&crdr_data->sc8in1_lock);
+	cs_writeunlock(__func__, &crdr_data->sc8in1_lock);
 	return ret;
 }
 

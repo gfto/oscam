@@ -531,7 +531,7 @@ void cs_accounts_chk(void)
 {
 	struct s_auth *account1, *account2;
 	struct s_auth *new_accounts = init_userdb();
-	cs_writelock(&config_lock);
+	cs_writelock(__func__, &config_lock);
 	struct s_auth *old_accounts = cfg.account;
 	for(account1 = cfg.account; account1; account1 = account1->next)
 	{
@@ -556,5 +556,5 @@ void cs_accounts_chk(void)
 	cfg.account = new_accounts;
 	init_free_userdb(old_accounts);
 	ac_clear();
-	cs_writeunlock(&config_lock);
+	cs_writeunlock(__func__, &config_lock);
 }

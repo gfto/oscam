@@ -118,7 +118,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_
 	 */
 	struct s_client *cl;
 	struct s_auth *account;
-	cs_writelock(&fakeuser_lock);
+	cs_writelock(__func__, &fakeuser_lock);
 	for(cl = first_client->next; cl; cl = cl->next)
 	{
 		account = cl->account;
@@ -139,10 +139,10 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_
 				}
 				if(cfg.dropdups)
 				{
-					cs_writeunlock(&fakeuser_lock);
+					cs_writeunlock(__func__, &fakeuser_lock);
 					cs_sleepms(120); // sleep a bit to prevent against saturation from fast reconnecting clients
 					kill_thread(cl);
-					cs_writelock(&fakeuser_lock);
+					cs_writelock(__func__, &fakeuser_lock);
 				}
 			}
 			else
@@ -158,16 +158,16 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_
 				}
 				if(cfg.dropdups)
 				{
-					cs_writeunlock(&fakeuser_lock);     // we need to unlock here as cs_disconnect_client kills the current thread!
+					cs_writeunlock(__func__, &fakeuser_lock);     // we need to unlock here as cs_disconnect_client kills the current thread!
 					cs_sleepms(120); // sleep a bit to prevent against saturation from fast reconnecting clients
 					cs_disconnect_client(client);
-					cs_writelock(&fakeuser_lock);
+					cs_writelock(__func__, &fakeuser_lock);
 				}
 				break;
 			}
 		}
 	}
-	cs_writeunlock(&fakeuser_lock);
+	cs_writeunlock(__func__, &fakeuser_lock);
 }
 
 /* Resolves the ip of the hostname of the specified account and saves it in account->dynip.
@@ -239,12 +239,12 @@ struct s_client *create_client(IN_ADDR_T ip)
 	IP_ASSIGN(cl->ip, ip);
 	cl->account = first_client->account;
 	//master part
-	pthread_mutex_init(&cl->thread_lock, NULL);
+	SAFE_MUTEX_INIT(&cl->thread_lock, NULL);
 	cl->login = cl->last = time(NULL);
 	cl->tid = (uint32_t)(uintptr_t)cl;  // Use pointer adress of client as threadid (for monitor and log)
 	//Now add new client to the list:
 	struct s_client *last;
-	cs_writelock(&clientlist_lock);
+	cs_writelock(__func__, &clientlist_lock);
 	if(sizeof(uintptr_t) > 4)           // 64bit systems can have collisions because of the cast so lets check if there are some
 	{
 		int8_t found;
@@ -273,7 +273,7 @@ struct s_client *create_client(IN_ADDR_T ip)
 	int32_t bucket = (uintptr_t)cl / 16 % CS_CLIENT_HASHBUCKETS;
 	cl->nexthashed = first_client_hashed[bucket];
 	first_client_hashed[bucket] = cl;
-	cs_writeunlock(&clientlist_lock);
+	cs_writeunlock(__func__, &clientlist_lock);
 	return cl;
 }
 
@@ -636,14 +636,14 @@ void free_client(struct s_client *cl)
 
 	// Remove client from client list. kill_thread also removes this client, so here just if client exits itself...
 	struct s_client *prev, *cl2;
-	cs_writelock(&clientlist_lock);
+	cs_writelock(__func__, &clientlist_lock);
 	if(!cl->kill_started)
 	{
 		cl->kill_started = 1;
 	}
 	else
 	{
-		cs_writeunlock(&clientlist_lock);
+		cs_writeunlock(__func__, &clientlist_lock);
 		cs_log("[free_client] ERROR: free already started!");
 		return;
 	}
@@ -675,7 +675,7 @@ void free_client(struct s_client *cl)
 		if(cl == cl2)
 			{ prev->nexthashed = cl2->nexthashed; }
 	}
-	cs_writeunlock(&clientlist_lock);
+	cs_writeunlock(__func__, &clientlist_lock);
 
 	cleanup_ecmtasks(cl);
 

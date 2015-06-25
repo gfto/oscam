@@ -190,9 +190,9 @@ static int32_t ghttp_send_int(struct s_client *client, uchar *buf, int32_t l)
 static int32_t ghttp_send(struct s_client *client, uchar *buf, int32_t l)
 {
 	s_ghttp *context = (s_ghttp *)client->ghttp;
-	pthread_mutex_lock(&context->conn_mutex);
+	SAFE_MUTEX_LOCK(&context->conn_mutex);
 	int32_t ret = ghttp_send_int(client, buf, l);
-	pthread_mutex_unlock(&context->conn_mutex);
+	SAFE_MUTEX_UNLOCK(&context->conn_mutex);
 	return ret;
 }
 
@@ -238,9 +238,9 @@ static int32_t ghttp_recv_int(struct s_client *client, uchar *buf, int32_t l)
 static int32_t ghttp_recv(struct s_client *client, uchar *buf, int32_t l)
 {
 	s_ghttp *context = (s_ghttp *)client->ghttp;
-	pthread_mutex_lock(&context->conn_mutex);
+	SAFE_MUTEX_LOCK(&context->conn_mutex);
 	int32_t ret = ghttp_recv_int(client, buf, l);
-	pthread_mutex_unlock(&context->conn_mutex);
+	SAFE_MUTEX_UNLOCK(&context->conn_mutex);
 	return ret;
 }
 
