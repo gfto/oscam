@@ -2216,7 +2216,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	tpl_addVar(vars, TPLADD, "CLASS", value);
 	free_mk_t(value);
 
-	if(rdr->cachemm)
+	if(rdr->cachemm || rdr->logemm)
 		{ tpl_printf(vars, TPLADD, "EMMCACHE", "%d,%d,%d,%d", rdr->cachemm, rdr->rewritemm, rdr->logemm, rdr->deviceemm); }
 
 	//savenano
