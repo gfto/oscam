@@ -6,7 +6,7 @@
 #include "oscam-string.h"
 #include "oscam-time.h"
 
-#define HASH_BUCKETS 16
+#define HASH_BUCKETS 250
 
 struct cs_garbage
 {
@@ -14,13 +14,14 @@ struct cs_garbage
 	void *data;
 #ifdef WITH_DEBUG
 	char *file;
-	uint16_t line;
+	uint32_t line;
 #endif
 	struct cs_garbage *next;
 };
 
+static int32_t counter = 0;
+static pthread_mutex_t add_lock;
 static struct cs_garbage *garbage_first[HASH_BUCKETS];
-static struct cs_garbage *garbage_last[HASH_BUCKETS];
 static CS_MUTEX_LOCK garbage_lock[HASH_BUCKETS];
 static pthread_t garbage_thread;
 static int32_t garbage_collector_active;
@@ -42,9 +43,19 @@ void add_garbage(void *data)
 		return;
 	}
 
-	int32_t bucket = (uintptr_t)data / 16 % HASH_BUCKETS;
-	struct cs_garbage *garbage;
-	if(!cs_malloc(&garbage, sizeof(struct cs_garbage)))
+	pthread_mutex_lock(&add_lock);
+	
+	int32_t bucket = counter++;
+	
+	if(counter >= HASH_BUCKETS)
+	{
+		counter = 0;
+	}
+	
+	pthread_mutex_unlock(&add_lock);
+	
+	struct cs_garbage *garbage = (struct cs_garbage*)malloc(sizeof(struct cs_garbage));
+	if(garbage == NULL)
 	{
 		cs_log("*** MEMORY FULL -> FREEING DIRECT MAY LEAD TO INSTABILITY!!!! ***");
 		NULLFREE(data);
@@ -52,10 +63,12 @@ void add_garbage(void *data)
 	}
 	garbage->time = time(NULL);
 	garbage->data = data;
+	garbage->next = NULL;
 #ifdef WITH_DEBUG
 	garbage->file = file;
 	garbage->line = line;
 #endif
+
 	cs_writelock(&garbage_lock[bucket]);
 
 #ifdef WITH_DEBUG
@@ -78,9 +91,9 @@ void add_garbage(void *data)
 	}
 #endif
 
-	if(garbage_last[bucket]) { garbage_last[bucket]->next = garbage; }
-	else { garbage_first[bucket] = garbage; }
-	garbage_last[bucket] = garbage;
+	garbage->next = garbage_first[bucket];  
+	garbage_first[bucket] = garbage;
+	
 	cs_writeunlock(&garbage_lock[bucket]);
 }
 
@@ -89,49 +102,58 @@ static pthread_mutex_t sleep_cond_mutex;
 
 static void garbage_collector(void)
 {
-	int8_t i;
+	int32_t i,j;
 	struct cs_garbage *garbage, *next, *prev, *first;
 	set_thread_name(__func__);
+	int32_t timeout_time = 2*cfg.ctimeout/1000+6;
+		
 	while(garbage_collector_active)
 	{
-
+		time_t deltime = time(NULL) - timeout_time;
+		
 		for(i = 0; i < HASH_BUCKETS; ++i)
 		{
+			j = 0;
 			cs_writelock(&garbage_lock[i]);
 			first = garbage_first[i];
-			time_t deltime = time(NULL) - (2*cfg.ctimeout/1000 + 1);
-			for(garbage = first, prev = NULL; garbage; prev = garbage, garbage = garbage->next)
+			
+			for(garbage = first, prev = NULL; garbage; prev = garbage, garbage = garbage->next,j++)
 			{
-				if(deltime < garbage->time)     // all following elements are too new
+				if(j==2)
+ 				{
+					j++;
+					cs_writeunlock(&garbage_lock[i]);
+				}
+
+				if(garbage->time < deltime)     // all following elements are too new
 				{
 					if(prev)
 					{
-						garbage_first[i] = garbage;
 						prev->next = NULL;
+					}
+					else
+					{
+						garbage_first[i] = NULL;
 					}
 					break;
 				}
 			}
-			if(!garbage && garbage_first[i])        // end of list reached and everything is to be cleaned
+
+			if(j<3)
 			{
-				garbage = first;
-				garbage_first[i] = NULL;
-				garbage_last[i] = NULL;
+				cs_writeunlock(&garbage_lock[i]);
 			}
-			else if(prev) { garbage = first; }          // set back to beginning to cleanup all
-			else { garbage = NULL; }        // garbage not old enough yet => nothing to clean
-			cs_writeunlock(&garbage_lock[i]);
 
 			// list has been taken out before so we don't need a lock here anymore!
 			while(garbage)
 			{
 				next = garbage->next;
-				NULLFREE(garbage->data);
-				NULLFREE(garbage);
+				free(garbage->data);
+				free(garbage);
 				garbage = next;
 			}
 		}
-		sleepms_on_cond(&sleep_cond_mutex, &sleep_cond, 1000);
+		sleepms_on_cond(&sleep_cond_mutex, &sleep_cond, 500);
 	}
 	pthread_exit(NULL);
 }
@@ -140,10 +162,13 @@ void start_garbage_collector(int32_t debug)
 {
 
 	garbage_debug = debug;
-	int8_t i;
+	int32_t i;
+	
+	pthread_mutex_init(&add_lock, NULL);
+	
 	for(i = 0; i < HASH_BUCKETS; ++i)
 	{
-		cs_lock_create(&garbage_lock[i], "garbage_lock", 5000);
+		cs_lock_create(&garbage_lock[i], "garbage_lock", 9000);
 
 		garbage_first[i] = NULL;
 	}
@@ -169,9 +194,11 @@ void stop_garbage_collector(void)
 {
 	if(garbage_collector_active)
 	{
-		int8_t i;
+		int32_t i;
 
 		garbage_collector_active = 0;
+		pthread_cond_signal(&sleep_cond);
+		cs_sleepms(1500);
 		pthread_cond_signal(&sleep_cond);
 		pthread_join(garbage_thread, NULL);
 		for(i = 0; i < HASH_BUCKETS; ++i)
@@ -187,5 +214,15 @@ void stop_garbage_collector(void)
 				garbage_first[i] = next;
 			}
 		}
+		
+		for(i = 0; i < HASH_BUCKETS; ++i)
+		{ 
+			cs_writeunlock(&garbage_lock[i]);
+			cs_lock_destroy(&garbage_lock[i]);
+		}
+
+ 		pthread_mutex_destroy(&add_lock);
+ 		pthread_cond_destroy(&sleep_cond);
+		pthread_mutex_destroy(&sleep_cond_mutex);
 	}
 }
