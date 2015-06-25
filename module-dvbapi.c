@@ -2984,6 +2984,12 @@ static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, uint8_t* s
 	size_t in_bytes, out_bytes;
 #endif
 
+	if(sourcelen == 0)
+	{
+		buf[0] = '\0';
+		return 1;	
+	}
+	
 	if(!cs_malloc(&tmpbuf, buflen))
 	{
 		return 0;	
@@ -3236,6 +3242,8 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 
 				init_srvid();
 			}
+			
+			return;
 		}
 	}
 }
