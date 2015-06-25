@@ -392,6 +392,7 @@ static void write_versionfile(bool use_stdout)
 		write_conf(WITH_COOLAPI, "DVB API with COOLAPI support");
 		write_conf(WITH_STAPI, "DVB API with STAPI support");
 		write_conf(WITH_STAPI5, "DVB API with STAPI5 support");
+		write_conf(READ_SDT_CHARSETS, "DVB API read-sdt charsets");
 	}
 	write_conf(IRDETO_GUESSING, "Irdeto guessing");
 	write_conf(CS_ANTICASC, "Anti-cascading support");
