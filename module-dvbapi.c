@@ -2970,10 +2970,12 @@ static uint32_t dvbapi_extract_sdt_string(char *buf, uint32_t buflen, uint8_t* s
 	uint32_t i, j, offset = 0;
 	int8_t iso_mode = -1;
 	char *tmpbuf;
+#ifdef READ_SDT_CHARSETS
 	const unsigned char *ptr_in;
 	unsigned char *ptr_out;
 	size_t in_bytes, out_bytes;
-	
+#endif
+
 	if(!cs_malloc(&tmpbuf, buflen))
 	{
 		return 0;	
