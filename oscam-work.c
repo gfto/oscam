@@ -111,7 +111,7 @@ void *work_thread(void *ptr)
 	struct s_module *module = get_module(cl);
 	uint16_t bufsize = module->bufsize; //CCCam needs more than 1024bytes!
 	if(!bufsize)
-		{ bufsize = 1024; }
+		{ bufsize = DEFAULT_MODULE_BUFSIZE; }
 
 	uint8_t *mbuf;
 	if(!cs_malloc(&mbuf, bufsize))

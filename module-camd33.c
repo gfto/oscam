@@ -117,7 +117,7 @@ static void camd33_auth_client(uchar *camdbug)
 
 static void camd33_send_dcw(struct s_client *UNUSED(client), ECM_REQUEST *er)
 {
-	uchar mbuf[1024];
+	uchar mbuf[128];
 	mbuf[0] = 2;
 	memcpy(mbuf + 1, &er->msgid, 4);  // get pin
 	memcpy(mbuf + 5, er->cw, 16);
@@ -128,11 +128,15 @@ static void camd33_send_dcw(struct s_client *UNUSED(client), ECM_REQUEST *er)
 
 static void camd33_process_ecm(uchar *buf, int32_t l)
 {
-	ECM_REQUEST *er;
+	ECM_REQUEST *er;	
+	if(l < 7)
+		{ return; }
 	if(!(er = get_ecmtask()))
 		{ return; }
 	memcpy(&er->msgid, buf + 3, 4); // save pin
 	er->ecmlen = l - 7;
+	if(er->ecmlen < 0 || er->ecmlen > MAX_ECM_SIZE)
+		{ NULLFREE(er); return; }
 	er->caid = b2i(2, buf + 1);
 	memcpy(er->ecm , buf + 7, er->ecmlen);
 	get_cw(cur_client(), er);
@@ -141,8 +145,12 @@ static void camd33_process_ecm(uchar *buf, int32_t l)
 static void camd33_process_emm(uchar *buf, int32_t l)
 {
 	EMM_PACKET epg;
+	if(l < 7)
+		{ return; }
 	memset(&epg, 0, sizeof(epg));
 	epg.emmlen = l - 7;
+	if(epg.emmlen < 3 || epg.emmlen > MAX_EMM_SIZE)
+		{ return; }
 	memcpy(epg.caid     , buf + 1, 2);
 	memcpy(epg.hexserial, buf + 3, 4);
 	memcpy(epg.emm      , buf + 7, epg.emmlen);

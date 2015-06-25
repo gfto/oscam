@@ -37,6 +37,9 @@ static void azbox_openxcas_ecm_callback(int32_t stream_id, uint32_t UNUSED(seq),
 	openxcas_ecm_pid = pid;
 	openxcas_busy = 1;
 
+	if(l < 0 || l > MAX_ECM_SIZE)
+		{ return; }
+
 	ECM_REQUEST *er;
 	if(!(er = get_ecmtask()))
 		{ return; }
@@ -70,7 +73,10 @@ static void azbox_openxcas_ex_callback(int32_t stream_id, uint32_t seq, int32_t 
 	openxcas_ecm_pid = pid;
 	openxcas_cipher_idx = idx; // is this really cipher_idx?
 
-	ECM_REQUEST *er;
+	if(l < 0 || l > MAX_ECM_SIZE)
+		{ return; }
+
+	ECM_REQUEST *er;	
 	if(!(er = get_ecmtask()))
 		{ return; }
 

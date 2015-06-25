@@ -766,7 +766,7 @@ static void scam_server_recv_ecm(struct s_client *cl, uchar *buf, int32_t len)
 			case 0x34: // ecm
 				usedLen = dataLength;
 				if(usedLen > MAX_ECM_SIZE) {
-					usedLen = MAX_ECM_SIZE;
+					break;
 				}
 				er->ecmlen = usedLen;
 				memcpy(er->ecm, buf+pos+dataOffset, usedLen);

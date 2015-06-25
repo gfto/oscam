@@ -1248,14 +1248,25 @@ static void newcamd_process_ecm(struct s_client *cl, uchar *buf, int32_t len)
 {
 	int32_t pi;
 	ECM_REQUEST *er;
+	uint16_t ecmlen;
 
+	if(len < 5)
+		{ return; }
+
+	ecmlen = SCT_LEN((&buf[2]));
+	if(ecmlen < 3 || ecmlen > MAX_ECM_SIZE || ecmlen+2 > len)
+	{
+		return;
+	}
+	
 	if(!(er = get_ecmtask()))
 	{
 		return;
 	}
+	
 	// save client ncd_msgid
 	er->msgid = cl->ncd_msgid;
-	er->ecmlen = (((buf[3] & 0x0F) << 8) | buf[4]) + 3;
+	er->ecmlen = ecmlen;
 	cs_log_dbg(D_CLIENT, "ncd_process_ecm: er->msgid=%d len=%d ecmlen=%d", er->msgid, len, er->ecmlen);
 	er->srvid = cl->ncd_header[4] << 8 | cl->ncd_header[5];
 	er->caid = cl->ncd_header[6] << 8 | cl->ncd_header[7];
@@ -1270,16 +1281,22 @@ static void newcamd_process_ecm(struct s_client *cl, uchar *buf, int32_t len)
 	get_cw(cl, er);
 }
 
-static void newcamd_process_emm(uchar *buf)
+static void newcamd_process_emm(uchar *buf, int32_t len)
 {
 	int32_t ok = 1;
 	uint16_t caid = 0;
 	struct s_client *cl = cur_client();
 	EMM_PACKET epg;
 
+	if(len < 3)
+		{ return; }
+	
 	memset(&epg, 0, sizeof(epg));
 
 	epg.emmlen = buf[2] + 3;
+	if(epg.emmlen > MAX_EMM_SIZE || epg.emmlen > len)
+		{ return; }
+	
 	caid = cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].caid;
 	epg.caid[0] = (uchar)(caid >> 8);
 	epg.caid[1] = (uchar)(caid);
@@ -1487,7 +1504,7 @@ static void *newcamd_server(struct s_client *client, uchar *mbuf, int32_t len)
 
 	default:
 		if(mbuf[2] > 0x81 && mbuf[2] < 0x90)
-			{ newcamd_process_emm(mbuf + 2); }
+			{ newcamd_process_emm(mbuf + 2, len - 2); }
 		else
 		{
 			cs_log_dbg(D_CLIENT, "unknown newcamd command! (%d)", mbuf[2]);

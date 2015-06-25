@@ -320,6 +320,9 @@ static void mca_ecm_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t ci
 		return;
 	}
 
+	if(l < 0 || l > MAX_ECM_SIZE)
+		{ return; }
+
 	ECM_REQUEST *er;
 	if(!(er = get_ecmtask()))
 		{ return; }
@@ -353,6 +356,9 @@ static void mca_ex_callback(int32_t stream_id, uint32_t UNUSED(seq), int32_t idx
 	openxcas_ecm_pid = pid;
 	openxcas_cipher_idx = idx; // is this really cipher_idx?
 
+	if(l < 0 || l > MAX_ECM_SIZE)
+		{ return; }
+	
 	ECM_REQUEST *er;
 	if(!(er = get_ecmtask()))
 		{ return; }

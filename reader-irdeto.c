@@ -886,7 +886,7 @@ static int32_t irdeto_get_tunemm_filter(struct s_reader *rdr, struct s_csystem_e
 
 void irdeto_add_emm_header(EMM_PACKET *ep)
 {
-	uint8_t bt_emm[258];
+	uint8_t bt_emm[MAX_EMM_SIZE];
 	static const char *typtext[] = { "unknown", "unique", "shared", "global" };
 	memset(bt_emm, 0, sizeof(bt_emm));
 

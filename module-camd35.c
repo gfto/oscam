@@ -473,18 +473,23 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 static void camd35_process_ecm(uchar *buf, int buflen)
 {
 	ECM_REQUEST *er;
+	
 	if(!buf || buflen < 23)
 		{ return; }
-	uint16_t ecmlen = (((buf[21] & 0x0f) << 8) | buf[22]) + 3;
-	if(ecmlen + 20 > buflen)
+		
+	uint16_t ecmlen = SCT_LEN((&buf[20]));
+	
+	if(ecmlen > MAX_ECM_SIZE || ecmlen + 20 > buflen)
 		{ return; }
+	
 	if(!(er = get_ecmtask()))
 		{ return; }
-	//  er->l = buf[1];
-	//fix ECM LEN issue
+
 	er->ecmlen = ecmlen;
+	
 	if(!cs_malloc(&er->src_data, 0x34 + 20 + er->ecmlen))
-		{ return; }
+		{ NULLFREE(er); return; }
+		
 	memcpy(er->src_data, buf, 0x34 + 20 + er->ecmlen);  // save request
 	er->srvid = b2i(2, buf + 8);
 	er->caid = b2i(2, buf + 10);
@@ -501,6 +506,8 @@ static void camd35_process_emm(uchar *buf, int buflen, int emmlen)
 		{ return; }
 	memset(&epg, 0, sizeof(epg));
 	epg.emmlen = emmlen;
+	if(epg.emmlen < 0 || epg.emmlen > MAX_EMM_SIZE)
+		{ return; }
 	memcpy(epg.caid, buf + 10, 2);
 	memcpy(epg.provid, buf + 12 , 4);
 	memcpy(epg.emm, buf + 20, epg.emmlen);
@@ -753,12 +760,14 @@ static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er)
 
 static int32_t camd35_send_emm(EMM_PACKET *ep)
 {
-	uchar buf[512];
+	uint8_t *buf;
 	struct s_client *cl = cur_client();
-
 
 	if(!camd35_tcp_connect(cl)) { return 0; }
 	cl->reader->card_status = CARD_INSERTED; //for udp
+
+	if(!cs_malloc(&buf, ep->emmlen + 20 + 15))
+	{ return -1; }
 	
 	memset(buf, 0, 20);
 	memset(buf + 20, 0xff, ep->emmlen + 15);
@@ -769,7 +778,10 @@ static int32_t camd35_send_emm(EMM_PACKET *ep)
 	memcpy(buf + 12, ep->provid, 4);
 	memcpy(buf + 20, ep->emm, ep->emmlen);
 
-	return ((camd35_send_without_timeout(cl, buf, 0) < 1) ? 0 : 1);
+	int32_t rc = ((camd35_send_without_timeout(cl, buf, 0) < 1) ? 0 : 1);
+	
+	NULLFREE(buf);
+	return rc;	
 }
 
 static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t rc2 __attribute__((unused)))

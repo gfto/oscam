@@ -1906,6 +1906,7 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 	int32_t i, j, m;
 	time_t now = time((time_t *)0);
 	uint32_t line = 0;
+	uint16_t sct_len;
 
 	er->client = client;
 	er->rc = E_UNHANDLED; // set default rc status to unhandled
@@ -1925,11 +1926,30 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 		}
 	}
 
+	// ecmlen must be 0 (no ecm) or >2 (because SCT_LEN() needs at least 3 bytes)
+	if(er->ecmlen < 0 || er->ecmlen == 1 || er->ecmlen == 2)
+	{
+		er->rc = E_INVALID;
+		er->rcEx = E2_GLOBAL;
+		snprintf(er->msglog, sizeof(er->msglog), "ECM size %d invalid, ignored! client %s", er->ecmlen, username(client));
+	}
+
 	if(er->ecmlen > MAX_ECM_SIZE)
 	{
 		er->rc = E_INVALID;
 		er->rcEx = E2_GLOBAL;
-		snprintf(er->msglog, sizeof(er->msglog), "ECM size %d > Max Ecm size %d, ignored! client %s", er->ecmlen, MAX_ECM_SIZE, username(client));
+		snprintf(er->msglog, sizeof(er->msglog), "ECM size %d > Max ECM size %d, ignored! client %s", er->ecmlen, MAX_ECM_SIZE, username(client));
+	}
+
+	if(er->ecmlen > 2)
+	{
+		sct_len = SCT_LEN(er->ecm);
+		if(sct_len > er->ecmlen)
+		{
+			er->rc = E_INVALID;
+			er->rcEx = E2_GLOBAL;
+			snprintf(er->msglog, sizeof(er->msglog), "Real ECM size %d > ECM size %d, ignored! client %s", sct_len, er->ecmlen, username(client));		
+		}
 	}
 
 	if(!client->grp)

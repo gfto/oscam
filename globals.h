@@ -259,6 +259,9 @@ typedef unsigned char uchar;
 #define CS_DELAY          0
 #define CS_ECM_RINGBUFFER_MAX 0x10 // max size for ECM last responsetimes ringbuffer. Keep this set to power of 2 values!
 
+#define MAX_ECM_SIZE 596
+#define MAX_EMM_SIZE 258
+
 #ifndef PTHREAD_STACK_MIN
 #define PTHREAD_STACK_MIN 64000
 #endif
@@ -664,7 +667,7 @@ struct s_emmcache
 	uchar			emmd5[CS_EMMSTORESIZE];
 	uchar			type;
 	uchar			len;
-	uchar			emm[258];
+	uchar			emm[MAX_EMM_SIZE];
 	struct timeb    firstseen;
 	struct timeb    lastseen;
 };
@@ -715,6 +718,8 @@ struct ecm_request_t ;
 struct emm_packet_t ;
 struct s_ecm_answer ;
 struct demux_s ;
+
+#define DEFAULT_MODULE_BUFSIZE 1024
 
 struct s_module
 {
@@ -831,8 +836,6 @@ struct s_cardsystem
 	int32_t (*get_emm_filter)(struct s_reader *, struct s_csystem_emm_filter **, unsigned int *);
 	int32_t (*get_tunemm_filter)(struct s_reader *, struct s_csystem_emm_filter **, unsigned int *);
 };
-
-#define MAX_ECM_SIZE 596
 
 typedef struct ecm_request_t
 {
@@ -2010,10 +2013,9 @@ typedef struct cs_stat_query
 	int16_t         ecmlen;
 } STAT_QUERY;
 
-
 typedef struct emm_packet_t
 {
-	uchar           emm[258];
+	uchar           emm[MAX_EMM_SIZE];
 	int16_t         emmlen;
 	uchar           caid[2];
 	uchar           provid[4];

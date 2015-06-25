@@ -2058,13 +2058,17 @@ void cc_idle(void)
 	}
 }
 
-struct cc_card *read_card(uint8_t *buf, int32_t ext)
+struct cc_card *read_card(uint8_t *buf, int32_t buflen, int32_t ext)
 {
 	struct cc_card *card;
-	if(!cs_malloc(&card, sizeof(struct cc_card)))
+	int16_t nprov, nassign = 0, nreject = 0;
+	int32_t offset = 21;
+
+	if(buflen < 21)
 		{ return NULL; }
 
-	int32_t nprov, nassign = 0, nreject = 0, offset = 21;
+	if(!cs_malloc(&card, sizeof(struct cc_card)))
+		{ return NULL; }
 
 	card->providers = ll_create("providers");
 	card->badsids = ll_create("badsids");
@@ -2087,13 +2091,19 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext)
 
 	if(ext)
 	{
+		if(buflen < 23)
+			{ cc_free_card(card); return NULL; }
+		
 		nassign = buf[21];
 		nreject = buf[22];
 
 		offset += 2;
 	}
-
-	int32_t i;
+	
+	if(buflen < (offset + (nprov*7)))
+		{ cc_free_card(card); return NULL; }
+	
+	int16_t i;
 	for(i = 0; i < nprov; i++)    // providers
 	{
 		struct cc_provider *prov;
@@ -2110,13 +2120,14 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext)
 		offset += 7;
 	}
 
-	uint8_t *ptr = buf + offset;
-
 	if(ext)
 	{
+		if(buflen < (offset + (nassign*2) + (nreject*2)))
+			{ cc_free_card(card); return NULL; }
+		
 		for(i = 0; i < nassign; i++)
 		{
-			uint16_t sid = b2i(2, ptr);
+			uint16_t sid = b2i(2, buf + offset);
 			//cs_log_dbg(D_CLIENT, "      assigned sid = %04X, added to good sid list", sid);
 
 			struct cc_srvid *srvid;
@@ -2126,12 +2137,12 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext)
 			srvid->chid = 0;
 			srvid->ecmlen = 0;
 			ll_append(card->goodsids, srvid);
-			ptr += 2;
+			offset += 2;
 		}
 
 		for(i = 0; i < nreject; i++)
 		{
-			uint16_t sid = b2i(2, ptr);
+			uint16_t sid = b2i(2, buf + offset);
 			//cs_log_dbg(D_CLIENT, "      rejected sid = %04X, added to sid block list", sid);
 
 			struct cc_srvid_block *srvid;
@@ -2142,20 +2153,24 @@ struct cc_card *read_card(uint8_t *buf, int32_t ext)
 			srvid->ecmlen = 0;
 			srvid->blocked_till = 0;
 			ll_append(card->badsids, srvid);
-			ptr += 2;
+			offset += 2;
 		}
 	}
 
-	int32_t remote_count = ptr[0];
-	ptr++;
+	int16_t remote_count = buf[offset];
+	offset++;
+	
+	if(buflen < (offset + (remote_count*8)))
+		{ cc_free_card(card); return NULL; }
+		
 	for(i = 0; i < remote_count; i++)
 	{
 		uint8_t *remote_node;
 		if(!cs_malloc(&remote_node, 8))
 			{ break; }
-		memcpy(remote_node, ptr, 8);
+		memcpy(remote_node, buf + offset, 8);
 		ll_append(card->remote_nodes, remote_node);
-		ptr += 8;
+		offset += 8;
 	}
 	return card;
 }
@@ -2273,6 +2288,10 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 	cs_log_dbg(cl->typ == 'c' ? D_CLIENT : D_READER, "%s parse_msg=%d", getprefix(), buf[1]);
 
 	uint8_t *data = buf + 4;
+	
+	if(l < 4)
+		{ return -1; }
+	
 	memcpy(&cc->receive_buffer, data, l - 4);
 	cc->last_msg = buf[1];
 	switch(buf[1])
@@ -2405,6 +2424,9 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 	case MSG_NEW_CARD_SIDINFO:
 	case MSG_NEW_CARD:
 	{
+		if(l < 16)
+			{ break; }
+		
 		uint16_t caid = b2i(2, buf + 12);
 		//filter caid==0 and maxhop:
 		if(!caid || buf[14] >= rdr->cc_maxhops + 1)
@@ -2422,7 +2444,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 		rdr->card_status = CARD_INSERTED;
 
 		cs_writelock(&cc->cards_busy);
-		struct cc_card *card = read_card(data, buf[1] == MSG_NEW_CARD_SIDINFO);
+		struct cc_card *card = read_card(data, l - 4, buf[1] == MSG_NEW_CARD_SIDINFO);
 		if(!card)
 		{
 			cs_writeunlock(&cc->cards_busy);
@@ -2500,6 +2522,8 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 
 	case MSG_CARD_REMOVED:
 	{
+		if(l < 8)
+			{ break; }
 		cs_writelock(&cc->cards_busy);
 		cc_card_removed(cl, b2i(4, buf + 4));
 		cs_writeunlock(&cc->cards_busy);
@@ -2508,6 +2532,9 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 
 	case MSG_SLEEPSEND:
 		//Server sends SLEEPSEND:
+		if(l < 5)
+			{ break; }
+		
 		if(!cfg.c35_suppresscmd08)
 		{
 			if(buf[4] == 0xFF)
@@ -2526,36 +2553,23 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 		}
 		//NO BREAK!! NOK Handling needed!
 
-	case MSG_CACHE_PUSH:
-	{
-		if((l - 4) >= 18)
-		{
-			cc_cacheex_push_in(cl, data);
-		}
-		break;
-	}
-	
-	case MSG_CACHE_FILTER:
-	{
-		if((l - 4) >= 482)
-		{
-			cc_cacheex_filter_in(cl, data);
-		}
-		break;
-	}	
-
 	case MSG_CW_NOK1:
 	case MSG_CW_NOK2:
+		if(l < 2)
+			{ break; }
+		
 		if(l > 5)
 		{
 			//Received NOK with payload:
 			char *msg = (char *) buf + 4;
 
 			//Check for PARTNER connection:
-			if(strncmp(msg, "PARTNER:", 8) == 0)
+			if((l >= (4+8)) && strncmp(msg, "PARTNER:", 8) == 0)
 			{
 				//When Data starts with "PARTNER:" we have an Oscam-cccam-compatible client/server!
-
+				if((int32_t)(4 + 9 + sizeof(cc->remote_oscam) - 1) > l)
+					{ break; }
+				
 				strncpy(cc->remote_oscam, msg + 9, sizeof(cc->remote_oscam) - 1);
 				int32_t has_param = check_extended_mode(cl, msg);
 				if(!cc->is_oscam_cccam)
@@ -2734,20 +2748,43 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 
 		cc_send_ecm(cl, NULL);
 		break;
+		
+	case MSG_CACHE_PUSH:
+	{
+		if((l - 4) >= 18)
+		{
+			cc_cacheex_push_in(cl, data);
+		}
+		break;
+	}
+	
+	case MSG_CACHE_FILTER:
+	{
+		if((l - 4) >= 482)
+		{
+			cc_cacheex_filter_in(cl, data);
+		}
+		break;
+	}
 
 	case MSG_CW_ECM:
 		cc->just_logged_in = 0;
 		if(cl->typ == 'c')    //SERVER:
 		{
-			ECM_REQUEST *er;
+#define CCMSG_HEADER_LEN 17
 
+			ECM_REQUEST *er;
 			struct cc_card *server_card;
+			
+			if(l < CCMSG_HEADER_LEN)
+				{ break; }
+			
 			if(!cs_malloc(&server_card, sizeof(struct cc_card)))
 				{ break; }
 			server_card->id = buf[10] << 24 | buf[11] << 16 | buf[12] << 8
 							  | buf[13];
 			server_card->caid = b2i(2, data);
-#define CCMSG_HEADER_LEN 17
+
 			if((er = get_ecmtask()) && l > CCMSG_HEADER_LEN && MAX_ECM_SIZE > l - CCMSG_HEADER_LEN)
 			{
 				er->caid = b2i(2, buf + 4);
@@ -2849,6 +2886,9 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 		}
 		else     //READER:
 		{
+			if(l < 20)
+				{ break; }
+			
 			cs_readlock(&cc->cards_busy);
 			cc->recv_ecmtask = -1;
 			eei = get_extended_ecm_idx(cl,
@@ -2984,7 +3024,9 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 		{
 			cc->just_logged_in = 0;
 			l = l - 4;//Header Length=4 Byte
-
+			if(l < 0)
+				{ break; }
+			
 			cs_log_dbg(D_READER, "%s MSG_CMD_05 recvd, payload length=%d mode=%d",
 						  getprefix(), l, cc->cmd05_mode);
 			cc->cmd05_active = 1;
@@ -2996,6 +3038,9 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 		break;
 	case MSG_CMD_0B:
 	{
+		if(l < 20)
+			{ break; }
+		
 		// by Project:Keynation
 		cs_log_dbg(D_READER, "%s MSG_CMD_0B received (payload=%d)!",
 					  getprefix(), l - 4);
@@ -3023,6 +3068,8 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 	case MSG_CMD_0C:   //New CCCAM 2.2.0 Server/Client fake check!
 	{
 		int32_t len = l - 4;
+		if(len < 0)
+			{ break; }
 
 		if(cl->typ == 'c')    //Only im comming from "client"
 		{
@@ -3107,6 +3154,9 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 	case MSG_CMD_0D:   //key update for the active cmd0x0c algo
 	{
 		int32_t len = l - 4;
+		if(len < 0)
+			{ break; }
+		
 		if(cc->cmd0c_mode == MODE_CMD_0x0C_NONE)
 			{ break; }
 
@@ -3120,6 +3170,9 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 
 	case MSG_CMD_0E:
 	{
+		if(l < 2)
+			{ break; }
+		
 		cs_log_dbg(D_READER, "cccam 2.2.x commands not implemented: 0x%02X", buf[1]);
 		//Unkwon commands...need workout algo
 		if(cl->typ == 'c')  //client connection
@@ -3143,42 +3196,47 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 		if(cl->typ == 'c')    //EMM Request received
 		{
 			cc_cmd_send(cl, NULL, 0, MSG_EMM_ACK); //Send back ACK
-			if(l > 4)
+			
+			if(l < 16)
+				{ break; } 
+
+			cs_log_dbg(D_EMM, "%s EMM Request received!", getprefix());
+
+			if(!ll_count(cl->aureader_list))
 			{
-				cs_log_dbg(D_EMM, "%s EMM Request received!", getprefix());
-
-				if(!ll_count(cl->aureader_list))
-				{
-					cs_log_dbg(
-						D_EMM,
-						"%s EMM Request discarded because au is not assigned to an reader!",
-						getprefix());
-					return MSG_EMM_ACK;
-				}
-
-				EMM_PACKET *emm;
-				if(!cs_malloc(&emm, sizeof(EMM_PACKET)))
-					{ break; }
-				emm->caid[0] = buf[4];
-				emm->caid[1] = buf[5];
-				emm->provid[0] = buf[7];
-				emm->provid[1] = buf[8];
-				emm->provid[2] = buf[9];
-				emm->provid[3] = buf[10];
-				//emm->hexserial[0] = buf[11];
-				//emm->hexserial[1] = buf[12];
-				//emm->hexserial[2] = buf[13];
-				//emm->hexserial[3] = buf[14];
-				if(l <= 0xFF)
-					{ emm->emmlen = buf[15]; }
-				else
-					{ emm->emmlen = MIN(l - 16, (int32_t)sizeof(emm->emm)); }
-				memcpy(emm->emm, buf + 16, emm->emmlen);
-				//emm->type = UNKNOWN;
-				//emm->cidx = cs_idx;
-				do_emm(cl, emm);
-				NULLFREE(emm);
+				cs_log_dbg(
+					D_EMM,
+					"%s EMM Request discarded because au is not assigned to an reader!",
+					getprefix());
+				return MSG_EMM_ACK;
 			}
+
+			EMM_PACKET *emm;
+			if(!cs_malloc(&emm, sizeof(EMM_PACKET)))
+				{ break; }
+			emm->caid[0] = buf[4];
+			emm->caid[1] = buf[5];
+			emm->provid[0] = buf[7];
+			emm->provid[1] = buf[8];
+			emm->provid[2] = buf[9];
+			emm->provid[3] = buf[10];
+			//emm->hexserial[0] = buf[11];
+			//emm->hexserial[1] = buf[12];
+			//emm->hexserial[2] = buf[13];
+			//emm->hexserial[3] = buf[14];
+			if(l <= 0xFF)
+				{ emm->emmlen = buf[15]; }
+			else
+				{ emm->emmlen = MIN(l - 16, (int32_t)sizeof(emm->emm)); }
+			
+			if(emm->emmlen < 0 || emm->emmlen > MAX_EMM_SIZE || emm->emmlen+16 > l)
+				{ NULLFREE(emm); break;}
+				
+			memcpy(emm->emm, buf + 16, emm->emmlen);
+			//emm->type = UNKNOWN;
+			//emm->cidx = cs_idx;
+			do_emm(cl, emm);
+			NULLFREE(emm);
 		}
 		else     //Our EMM Request Ack!
 		{

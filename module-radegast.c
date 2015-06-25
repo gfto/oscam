@@ -108,23 +108,36 @@ static void radegast_process_ecm(uchar *buf, int32_t l)
 
 	if(!(er = get_ecmtask()))
 		{ return; }
-	for(i = 0; i < l; i += (sl + 2))
+	for(i = 0; i+1 < l; i += (sl + 2))
 	{
 		sl = buf[i + 1];
+		
 		switch(buf[i])
 		{
 		case  2:      // CAID (upper byte only, oldstyle)
+			if(i+2 >= l)
+				{ break; }
 			er->caid = buf[i + 2] << 8;
 			break;
 		case 10:      // CAID
+			if(i+3 >= l)
+				{ break; }
 			er->caid = b2i(2, buf + i + 2);
 			break;
 		case  3:      // ECM DATA
-			//er->ecmlen = sl;
+			if(i+4 >= l)
+				{ break; }
+				
 			er->ecmlen = (((buf[i + 1 + 2] & 0x0F) << 8) | buf[i + 2 + 2]) + 3;
+			
+			if(er->ecmlen < 3 || er->ecmlen > MAX_ECM_SIZE || i+2+er->ecmlen > l)
+				{ break; } 
+			
 			memcpy(er->ecm, buf + i + 2, er->ecmlen);
 			break;
 		case  6:      // PROVID (ASCII)
+			if(i+2+sl > l)
+				{ break; }
 			n = (sl > 6) ? 3 : (sl >> 1);
 			er->prid = cs_atoi((char *) buf + i + 2 + sl - (n << 1), n, 0);
 			break;

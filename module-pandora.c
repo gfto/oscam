@@ -31,6 +31,9 @@ static void pandora_process_request(struct s_client *cl, uchar *buf, int32_t l)
 	ECM_REQUEST *er;
 	uchar md5tmp[MD5_DIGEST_LENGTH];
 
+	if(l < 10 + CS_ECMSTORESIZE + 2)
+		{ return; }
+	
 	if(!(er = get_ecmtask()))
 		{ return; }
 	er->caid = b2i(2, buf + 1);
@@ -39,11 +42,16 @@ static void pandora_process_request(struct s_client *cl, uchar *buf, int32_t l)
 	//er->ecmcrc32 = crc32(0L, buf+10, CS_ECMSTORESIZE);
 	er->chid = b2i(2, buf + 10 + CS_ECMSTORESIZE);
 
-	if(l > 12 + CS_ECMSTORESIZE + 16)
+	if(!cl->pand_ignore_ecm && (l >= 10 + CS_ECMSTORESIZE + 2 + 2))
 	{
-		ecmlen = b2i(2, buf + 12 + CS_ECMSTORESIZE);
-		if((ecmlen > 320) || cl->pand_ignore_ecm)
-			{ er->ecmlen = 0; }
+		ecmlen = b2i(2, buf + 10 + CS_ECMSTORESIZE + 2);
+			
+		if(ecmlen < 0 || ecmlen > MAX_ECM_SIZE
+			|| ((10 + CS_ECMSTORESIZE + 2 + 2 + ecmlen) > CWS_NETMSGSIZE)
+			|| ((10 + CS_ECMSTORESIZE + 2 + 2 + ecmlen) > l))
+		{
+			er->ecmlen = 0;
+		}
 		else
 		{
 			if(!memcmp(buf + 10,
@@ -273,6 +281,8 @@ static int pandora_send_ecm(struct s_client *cl, ECM_REQUEST *er)
 	len = 12 + CS_ECMSTORESIZE;
 	if(cl->pand_send_ecm)
 	{
+		if(len+2+er->ecmlen > CWS_NETMSGSIZE)
+			{ return -1; }
 		msgbuf[12 + CS_ECMSTORESIZE] = er->ecmlen >> 8;
 		msgbuf[13 + CS_ECMSTORESIZE] = er->ecmlen & 0xFF;
 		memcpy(&msgbuf[14 + CS_ECMSTORESIZE], er->ecm, er->ecmlen);

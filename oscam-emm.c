@@ -317,6 +317,19 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 	bool lastseendone = false;
 
 	struct s_reader *aureader = NULL;
+	
+	if(ep->emmlen < 0)
+	{
+		cs_log("EMM size %d invalid, ignored! client %s", ep->emmlen, username(client));
+		return;
+	}
+
+	if(ep->emmlen > MAX_EMM_SIZE)
+	{
+		cs_log("EMM size %d > Max EMM size %d, ignored! client %s", ep->emmlen, MAX_EMM_SIZE, username(client));
+		return;
+	}
+	
 	cs_log_dump_dbg(D_EMM, ep->emm, ep->emmlen, "emm:");
 
 	int8_t assemble = 0;
