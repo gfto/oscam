@@ -1184,6 +1184,9 @@ static int32_t videoguard2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 		ind += t_len + 2;
 		}
 
+
+		memcpy(reader->VgLastPayload, buff_0F, 6);
+			
 		int32_t test_0F = 1;
 		if(!cw_is_valid(rbuff + 5))  //sky cards report 90 00 = ok but send cw = 00 when something goes wrong :(
 			{
@@ -1222,8 +1225,6 @@ static int32_t videoguard2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 
 				return ERROR;
 			}
-			
-			memcpy(reader->VgLastPayload, buff_0F, 6);
 
 			// copy cw1 in place
 			memcpy(ea->cw + 0, rbuff + 5, 8);
