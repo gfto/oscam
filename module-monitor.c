@@ -9,6 +9,7 @@
 #include "oscam-client.h"
 #include "oscam-config.h"
 #include "oscam-conf-chk.h"
+#include "oscam-lock.h"
 #include "oscam-net.h"
 #include "oscam-reader.h"
 #include "oscam-string.h"
@@ -17,6 +18,8 @@
 extern char *entitlement_type[];
 extern char *loghist;
 extern char *loghistptr;
+extern int8_t logStarted;
+extern CS_MUTEX_LOCK loghistory_lock;
 
 struct monitor_data
 {
@@ -607,37 +610,49 @@ static void monitor_logsend(char *flag)
 	int32_t i, d = 0;
 	if(!strcmp(flag, "on") && cfg.loghistorysize)
 	{
-		char *t_loghistptr = loghistptr, *ptr1 = NULL;
-		if(loghistptr >= loghist + (cfg.loghistorysize) - 1)
-			{ t_loghistptr = loghist; }
-		int32_t l1 = strlen(t_loghistptr + 1) + 2;
-		char *lastpos = loghist + (cfg.loghistorysize) - 1;
-
-		for(ptr1 = t_loghistptr + l1, i = 0; i < 200; i++, ptr1 = ptr1 + l1)
+		if(logStarted)
+			{ cs_readlock(__func__, &loghistory_lock); }
+		
+		if(loghist && loghistptr)
 		{
-			l1 = strlen(ptr1) + 1;
-			if(!d && ((ptr1 >= lastpos) || (l1 < 2)))
+			char *t_loghistptr = loghistptr, *ptr1 = NULL;
+			
+			if(loghistptr >= loghist + (cfg.loghistorysize) - 1)
+				{ t_loghistptr = loghist; }
+				
+			int32_t l1 = strlen(t_loghistptr + 1) + 2;
+			char *lastpos = loghist + (cfg.loghistorysize) - 1;
+        	
+			for(ptr1 = t_loghistptr + l1, i = 0; i < 200; i++, ptr1 = ptr1 + l1)
 			{
-				ptr1 = loghist;
 				l1 = strlen(ptr1) + 1;
-				d++;
-			}
-
-			if(d && ((ptr1 >= t_loghistptr) || (l1 < 2)))
-				{ break; }
-
-			char p_usr[32], p_txt[512];
-			size_t pos1 = strcspn(ptr1, "\t") + 1;
-
-			cs_strncpy(p_usr, ptr1 , pos1 > sizeof(p_usr) ? sizeof(p_usr) : pos1);
-
-			if((p_usr[0]) && ((cur_cl->monlvl > 1) || (cur_cl->account && !strcmp(p_usr, cur_cl->account->usr))))
-			{
-				snprintf(p_txt, sizeof(p_txt), "[LOG%03d]%s", cur_cl->logcounter, ptr1 + pos1);
-				cur_cl->logcounter = (cur_cl->logcounter + 1) % 1000;
-				monitor_send(p_txt);
-			}
+				if(!d && ((ptr1 >= lastpos) || (l1 < 2)))
+				{
+					ptr1 = loghist;
+					l1 = strlen(ptr1) + 1;
+					d++;
+				}
+        	
+				if(d && ((ptr1 >= t_loghistptr) || (l1 < 2)))
+					{ break; }
+        	
+				char p_usr[32], p_txt[512];
+				size_t pos1 = strcspn(ptr1, "\t") + 1;
+        	
+				cs_strncpy(p_usr, ptr1 , pos1 > sizeof(p_usr) ? sizeof(p_usr) : pos1);
+        	
+				if((p_usr[0]) && ((cur_cl->monlvl > 1) || (cur_cl->account && !strcmp(p_usr, cur_cl->account->usr))))
+				{
+					snprintf(p_txt, sizeof(p_txt), "[LOG%03d]%s", cur_cl->logcounter, ptr1 + pos1);
+					cur_cl->logcounter = (cur_cl->logcounter + 1) % 1000;
+					monitor_send(p_txt);
+				}
+			}   
 		}
+		
+		if(logStarted)
+			{ cs_readunlock(__func__, &loghistory_lock); }
+
 	}
 
 	cur_cl->log = 1;

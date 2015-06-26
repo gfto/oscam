@@ -17,10 +17,10 @@ extern char *syslog_ident;
 extern int32_t exit_oscam;
 
 char *LOG_LIST = "log_list";
+int8_t logStarted = 0;
 
 static FILE *fp;
 static FILE *fps;
-static int8_t logStarted = 0;
 static LLIST *log_list;
 static bool log_running;
 static int log_list_queued;
@@ -239,7 +239,7 @@ int32_t cs_open_logfiles(void)
 
 #if defined(WEBIF) || defined(MODULE_MONITOR)
 static uint64_t counter = 0;
-static CS_MUTEX_LOCK loghistory_lock;
+CS_MUTEX_LOCK loghistory_lock;
 // These are accessed in module-monitor and module-webif
 char *loghist = NULL;     // ptr of log-history
 char *loghistid = NULL;
@@ -257,13 +257,13 @@ void cs_reinit_loghist(uint32_t size)
 		{
 			if(logStarted)
 				{ cs_writelock_nolog(__func__, &loghistory_lock); }
+			
 			tmp2 = loghist;
 			tmp4 = loghistid;
 			// On shrinking, the log is not copied and the order is reversed
 			if(size < cfg.loghistorysize)
 			{
 				cfg.loghistorysize = size;
-				cs_sleepms(20); // Monitor or webif may be currently outputting the loghistory but don't use locking so we sleep a bit...
 				loghistptr = tmp;
 				loghist = tmp;
 				loghistid = tmp3;
@@ -280,11 +280,11 @@ void cs_reinit_loghist(uint32_t size)
 				}
 				loghist = tmp;
 				loghistid = tmp3;
-				cs_sleepms(20); // Monitor or webif may be currently outputting the loghistory but don't use locking so we sleep a bit...
 				cfg.loghistorysize = size;
 			}
 			if(logStarted)
 				{ cs_writeunlock_nolog(__func__, &loghistory_lock); }
+			
 			if(tmp2 != NULL) { add_garbage(tmp2); }
 			if(tmp4 != NULL) { add_garbage(tmp4); }
 		}
@@ -444,9 +444,11 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 			*loghistptr = '\0';
 		}
 		++counter;
-		cs_writeunlock_nolog(__func__, &loghistory_lock);
+		
 		snprintf(target_ptr, target_len + 1, "%s\t%s", usrtxt, txt + log->header_date_offset);
 		ull2b_buf(counter, (uchar *)(loghistid + ((target_ptr-loghist)/3)));
+		
+		cs_writeunlock_nolog(__func__, &loghistory_lock);
 	}
 #endif
 
