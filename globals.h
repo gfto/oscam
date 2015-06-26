@@ -308,6 +308,13 @@ typedef unsigned char uchar;
 #define SAFE_MUTEX_INIT_NOLOG_R(a,b,c)	SAFE_PTHREAD_2ARG_R(pthread_mutex_init, a, b, printf, c)
 #define SAFE_COND_INIT_NOLOG_R(a,b,c)	SAFE_PTHREAD_2ARG_R(pthread_cond_init, a, b, printf, c)
 
+#ifdef NO_PTHREAD_STACKSIZE
+#undef SAFE_ATTR_SETSTACKSIZE
+#undef SAFE_ATTR_SETSTACKSIZE_NOLOG
+#define SAFE_ATTR_SETSTACKSIZE(a,b)
+#define SAFE_ATTR_SETSTACKSIZE_NOLOG(a,b)
+#endif
+
 /* ===========================
  *         constants
  * =========================== */
