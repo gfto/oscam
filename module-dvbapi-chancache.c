@@ -151,7 +151,7 @@ struct s_channel_cache *dvbapi_find_channel_cache(int32_t demux_id, int32_t pidi
 
 #ifdef WITH_DEBUG
 				char buf[ECM_FMT_LEN];
-				ecmfmt(c->caid, 0, c->prid, c->chid, c->pid, c->srvid, 0, 0, 0, 0, buf, ECM_FMT_LEN, 0, 0);
+				ecmfmt(buf, ECM_FMT_LEN, c->caid, 0, c->prid, c->chid, c->pid, c->srvid, 0, 0, 0, 0, 0, 0, NULL);
 				cs_log_dbg(D_DVBAPI, "Demuxer %d found in channel cache: %s", demux_id, buf);
 #endif
 				return c;
@@ -200,7 +200,7 @@ int32_t dvbapi_edit_channel_cache(int32_t demux_id, int32_t pidindex, uint8_t ad
 		ll_append(channel_cache, c);
 #ifdef WITH_DEBUG
 		char buf[ECM_FMT_LEN];
-		ecmfmt(c->caid, 0, c->prid, c->chid, c->pid, c->srvid, 0, 0, 0, 0, buf, ECM_FMT_LEN, 0, 0);
+		ecmfmt(buf, ECM_FMT_LEN, c->caid, 0, c->prid, c->chid, c->pid, c->srvid, 0, 0, 0, 0, 0, 0, NULL);
 		cs_log_dbg(D_DVBAPI, "Demuxer %d added to channel cache: %s", demux_id, buf);
 #endif
 		count++;

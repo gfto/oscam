@@ -2435,101 +2435,157 @@ OUT:
 }
 
 
-int32_t ecmfmt(uint16_t caid, uint16_t onid, uint32_t prid, uint16_t chid, uint16_t pid, uint16_t srvid, uint16_t l, char *ecmd5hex, char *csphash, char *cw, char *result, size_t size, uint16_t origin_peer, uint8_t distance)
+int32_t ecmfmt(char *result, size_t size, uint16_t caid, uint16_t onid, uint32_t prid, uint16_t chid, uint16_t pid,
+		 uint16_t srvid, uint16_t l, char *ecmd5hex, char *csphash, char *cw, uint16_t origin_peer, uint8_t distance, char *payload)
 {
 	if(!cfg.ecmfmt)
-		{ return snprintf(result, size, "%04X@%06X/%04X/%04X/%02X:%s", caid, prid, chid, srvid, l, ecmd5hex); }
-
-	uint32_t s = 0, zero = 0, flen = 0, value = 0;
-	char *c = cfg.ecmfmt, fmt[5] = "%04X";
-	while(*c)
 	{
+		if(payload)
+		{
+			return snprintf(result, size, "%04X@%06X/%04X/%04X/%02X:%s:%s", caid, prid, chid, srvid, l, ecmd5hex, payload);	
+		}
+		else
+		{ 
+			return snprintf(result, size, "%04X@%06X/%04X/%04X/%02X:%s", caid, prid, chid, srvid, l, ecmd5hex);
+		}
+	}
+
+#define ECMFMT_NUMBER 0
+#define ECMFMT_STRING 1
+#define ECMFMT_CHAR 2
+	
+	uint8_t type = 0;
+	uint32_t ivalue = 0;
+	char *ifmt = NULL;
+	char *svalue = NULL, cvalue = '\0';
+	uint8_t hide_if_zero = 0;
+	
+	char *c;
+	uint32_t s = 0;
+		
+	for(c = cfg.ecmfmt; *c; c++)
+	{	
+		if(*c == '0')
+		{
+			hide_if_zero = 1;
+			continue;
+		}
+		
 		switch(*c)
 		{
-		case '0':
-			zero = 1;
-			value = 0;
-			break;
 		case 'c':
-			flen = 4;
-			value = caid;
+			type = ECMFMT_NUMBER;
+			ifmt = "%04X";
+			ivalue = caid;
 			break;
 		case 'o':
-			flen = 4;
-			value = onid;
+			type = ECMFMT_NUMBER;
+			ifmt = "%04X";
+			ivalue = onid;
 			break;
 		case 'p':
-			flen = 6;
-			value = prid;
+			type = ECMFMT_NUMBER;
+			ifmt = "%06X";
+			ivalue = prid;
 			break;
 		case 'i':
-			flen = 4;
-			value = chid;
+			type = ECMFMT_NUMBER;
+			ifmt = "%04X";
+			ivalue = chid;
 			break;
 		case 'd':
-			flen = 4;
-			value = pid;
+			type = ECMFMT_NUMBER;
+			ifmt = "%04X";
+			ivalue = pid;
 			break;
 		case 's':
-			flen = 4;
-			value = srvid;
+			type = ECMFMT_NUMBER;
+			ifmt = "%04X";
+			ivalue = srvid;
 			break;
 		case 'l':
-			flen = 2;
-			value = l;
+			type = ECMFMT_NUMBER;
+			ifmt = "%02X";
+			ivalue = l;
 			break;
 		case 'h':
-			flen = CS_ECMSTORESIZE;
+			type = ECMFMT_STRING;
+			svalue = ecmd5hex;
 			break;
 		case 'e':
-			flen = 5;
+			type = ECMFMT_STRING;
+			svalue = csphash;
 			break;
 		case 'w':
-			flen = 17;
+			type = ECMFMT_STRING;
+			svalue = cw;
 			break;
 		case 'j':
-			flen = 2;
-			value = distance;
+			type = ECMFMT_NUMBER;
+			ifmt = "%02X";
+			ivalue = distance;
 			break;
 		case 'g':
-			flen = 4;
-			value = origin_peer;
+			type = ECMFMT_NUMBER;
+			ifmt = "%04X";
+			ivalue = origin_peer;
 			break;
 		case '\\':
 			c++;
-			flen = 0;
-			value = *c;
+			type = ECMFMT_CHAR;
+			cvalue = *c;
+			
+			if(cvalue == '\0')
+				{ return s; }
+			break;
+		case 'y':
+			type = ECMFMT_STRING;
+			svalue = payload;
+			hide_if_zero = 1;
 			break;
 		default:
-			flen = 0;
-			value = *c;
+			type = ECMFMT_CHAR;
+			cvalue = *c;
 			break;
 		}
-		if(value)
-			{ zero = 0; }
 
-		if(!zero)
+		if(hide_if_zero)
 		{
-			//fmt[0] = '%';
-			if(flen)    //Build %04X / %06X / %02X
+			if(type == ECMFMT_NUMBER && ivalue == 0)
 			{
-				fmt[1] = '0';
-				fmt[2] = flen + '0';
-				fmt[3] = 'X';
-				fmt[4] = 0;
+				hide_if_zero = 0;
+				continue;
 			}
-			else
+			else if(type == ECMFMT_STRING && svalue == NULL)
 			{
-				fmt[1] = 'c';
-				fmt[2] = 0;
+				hide_if_zero = 0;
+				continue;
 			}
-			if(flen == CS_ECMSTORESIZE) { s += snprintf(result + s, size - s , "%s", ecmd5hex); }
-			else if(flen == 5)          { s += snprintf(result + s, size - s , "%s", csphash); }
-			else if(flen == 17)         { s += snprintf(result + s, size - s , "%s", cw); }
-			else                         { s += snprintf(result + s, size - s, fmt, value); }
 		}
-		c++;
+
+		switch(type)
+		{
+			case ECMFMT_NUMBER:
+				s += snprintf(result + s, size - s, ifmt, ivalue);
+				break;
+			
+			case ECMFMT_STRING:
+				s += snprintf(result + s, size - s , "%s", svalue);
+				break;
+				
+			case ECMFMT_CHAR:
+				if(size - s > 0)
+				{ 
+					result[s] = cvalue;
+					s++;
+				}
+				break;
+			
+			default:
+				break;		
+		}
 	}
+	
 	return s;
 }
 
@@ -2547,6 +2603,18 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 	char ecmd5hex[17 * 3];
 	char csphash[5 * 3] = { 0 };
 	char cwhex[17 * 3];
+	char *payload = NULL;
+#ifdef READER_VIDEOGUARD
+	char payload_string[17];
+	static const uint8_t nullBytes[6] = { 0, 0, 0, 0, 0, 0};
+	
+	if(ecm->selected_reader 
+		&& memcmp(ecm->selected_reader->VgLastPayload, nullBytes, 6))
+	{
+		cs_hexdump(0, ecm->selected_reader->VgLastPayload, 16, payload_string, sizeof(payload_string));
+		payload = payload_string;	
+	}
+#endif
 	cs_hexdump(0, ecm->ecmd5, 16, ecmd5hex, sizeof(ecmd5hex));
 #ifdef CS_CACHEEX
 	cs_hexdump(0, (void *)&ecm->csp_hash, 4, csphash, sizeof(csphash));
@@ -2555,11 +2623,11 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 #ifdef MODULE_GBOX
 	struct gbox_ecm_request_ext *ere = ecm->src_data;
 	if(ere && check_client(ecm->client) && get_module(ecm->client)->num == R_GBOX && ere->gbox_hops)
-		{ return ecmfmt(ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, result, size, ere->gbox_peer, ere->gbox_hops); }
+		{ return ecmfmt(result, size, ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, ere->gbox_peer, ere->gbox_hops, payload); }
 	else if (ecm->selected_reader && ecm->selected_reader->typ == R_GBOX && ecm->gbox_ecm_id)
-		{ return ecmfmt(ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, result, size, ecm->gbox_ecm_id, 0); }
+		{ return ecmfmt(result, size, ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, ecm->gbox_ecm_id, 0, payload); }
 	else
 #endif
-		return ecmfmt(ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, result, size, 0, 0);
+		return ecmfmt(result, size, ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, 0, 0, payload);
 }
 
