@@ -28,7 +28,7 @@ static int32_t garbage_collector_active;
 static int32_t garbage_debug;
 
 #ifdef WITH_DEBUG
-void add_garbage_debug(void *data, char *file, uint16_t line)
+void add_garbage_debug(void *data, char *file, uint32_t line)
 {
 #else
 void add_garbage(void *data)
