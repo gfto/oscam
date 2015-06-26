@@ -3225,50 +3225,56 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 			cs_log("sdt-info (provider: %s - channel: %s)", provider_name, service_name);
 
 			dvbapi_stop_filter(demux_id, TYPE_SDT);
-
-			get_providername_or_null(demux[demux_id].ECMpids[pidindex].PROVID, 
-										demux[demux_id].ECMpids[pidindex].CAID, tmp, sizeof(tmp));
 			
-			if(tmp[0] == '\0')
+			if(strlen(provider_name))
 			{
-				get_config_filename(tmp, sizeof(tmp), "oscam.provid");
+				get_providername_or_null(demux[demux_id].ECMpids[pidindex].PROVID, 
+											demux[demux_id].ECMpids[pidindex].CAID, tmp, sizeof(tmp));
 				
-				if((fpsave = fopen(tmp, "a")))
+				if(tmp[0] == '\0')
 				{
-					fprintf(fpsave, "\n%04X@%06X|%s|", demux[demux_id].ECMpids[pidindex].CAID, 
-								demux[demux_id].ECMpids[pidindex].PROVID, provider_name);
-					fclose(fpsave);
-				}
-
-				init_provid();
-			}
-			
-			get_servicename_or_null(cur_client(), service_id, demux[demux_id].ECMpids[pidindex].PROVID,
-				demux[demux_id].ECMpids[pidindex].CAID, tmp, sizeof(tmp));
-			
-			if(tmp[0] == '\0')
-			{
-				get_config_filename(tmp, sizeof(tmp), "oscam.srvid2");
-				
-				if(!access(tmp, F_OK) && (fpsave = fopen(tmp, "a")))
-				{
-					dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
-					fprintf(fpsave, "\n%04X:%s|%s|||%s", service_id, srvid_line, service_name, provider_name);
-					fclose(fpsave);
-				}
-				else
-				{
-					get_config_filename(tmp, sizeof(tmp), "oscam.srvid");
+					get_config_filename(tmp, sizeof(tmp), "oscam.provid");
 					
 					if((fpsave = fopen(tmp, "a")))
 					{
-						dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
-						fprintf(fpsave, "\n%s:%04X|%s|%s|", srvid_line, service_id, provider_name, service_name);
+						fprintf(fpsave, "\n%04X@%06X|%s|", demux[demux_id].ECMpids[pidindex].CAID, 
+									demux[demux_id].ECMpids[pidindex].PROVID, provider_name);
 						fclose(fpsave);
-					}					
+					}
+            	
+					init_provid();
 				}
+			}
 
-				init_srvid();
+			if(strlen(service_name))
+			{
+				get_servicename_or_null(cur_client(), service_id, demux[demux_id].ECMpids[pidindex].PROVID,
+					demux[demux_id].ECMpids[pidindex].CAID, tmp, sizeof(tmp));
+				
+				if(tmp[0] == '\0')
+				{
+					get_config_filename(tmp, sizeof(tmp), "oscam.srvid2");
+					
+					if(!access(tmp, F_OK) && (fpsave = fopen(tmp, "a")))
+					{
+						dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
+						fprintf(fpsave, "\n%04X:%s|%s|||%s", service_id, srvid_line, service_name, provider_name);
+						fclose(fpsave);
+					}
+					else
+					{
+						get_config_filename(tmp, sizeof(tmp), "oscam.srvid");
+						
+						if((fpsave = fopen(tmp, "a")))
+						{
+							dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
+							fprintf(fpsave, "\n%s:%04X|%s|%s|", srvid_line, service_id, provider_name, service_name);
+							fclose(fpsave);
+						}					
+					}
+            	
+					init_srvid();
+				}
 			}
 			
 			return;
