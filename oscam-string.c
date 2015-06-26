@@ -1105,3 +1105,76 @@ size_t ISO8859toUTF8(int8_t iso_table_number, const unsigned char **inbuf, size_
 }
 
 #endif
+
+size_t UnicodetoUTF8(const unsigned char **inbuf, size_t *inbytesleft, unsigned char **outbuf, size_t *outbytesleft)
+{
+    if( !inbuf || !(*inbuf) )
+        return (size_t)(0);    /* Reset state requested */
+
+    const unsigned char *iptr = *inbuf;
+    const unsigned char *iend = iptr + *inbytesleft;
+    unsigned char *optr = *outbuf;
+    unsigned char *oend = optr + *outbytesleft;
+    uint16_t ch;
+    int err = 0;
+
+    while ( iptr+1 < iend )
+    {
+    	ch = (iptr[0] << 8) | iptr[1];
+
+		iptr += 2;
+		
+		if ( ch < 0x80 )
+		{
+			if ( optr >= oend )
+       		{
+            	err = E2BIG;
+            	break;        /* No space in outbuf for char */
+        	}
+        
+			optr[0] = ch & 0xff;
+			optr += 1;
+		}
+        else if ( ch < 0x800 )
+        {
+        	if ( optr + 1 >= oend )
+       		{
+            	err = E2BIG;
+            	break;        /* No space in outbuf for multibyte char */
+        	}
+        	
+            optr[1] = 0x80 | (ch & 0x3f);
+            optr[0] = 0xc0 | (ch >> 6);
+            optr += 2;
+        }
+        else
+        {
+			if ( optr + 2 >= oend )
+       		{
+            	err = E2BIG;
+            	break;        /* No space in outbuf for multibyte char */
+        	}
+        	
+            optr[2] = 0x80 | (ch & 0x3f);
+            ch >>= 6;
+            optr[1] = 0x80 | (ch & 0x3f);
+            optr[0] = 0xe0 | (ch >> 6);
+            optr += 3;
+        }
+
+    }
+    *inbuf = iptr;
+    *outbuf = optr;
+    *inbytesleft = iend - iptr;
+    *outbytesleft = oend - optr;
+
+    if( err )
+    {
+        errno = err;
+        return (size_t)(-1);
+    }
+
+    return (size_t)(0);
+
+}
+
