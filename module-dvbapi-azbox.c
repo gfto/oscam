@@ -164,7 +164,7 @@ static void *azbox_main_thread(void *cli)
 				if(!cs_malloc(&dest, msg.buf_len + 7 - 12 - 4))
 					{ break; }
 
-				memcpy(dest, "\x00\xFF\xFF\x00\x00\x13\x00", 7);
+				memcpy(dest, "\x03\xFF\xFF\x00\x00\x13\x00", 7);
 
 				dest[1] = msg.buf[3];
 				dest[2] = msg.buf[4];
