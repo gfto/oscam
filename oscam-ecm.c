@@ -2582,9 +2582,10 @@ int32_t ecmfmt(char *result, size_t size, uint16_t caid, uint16_t onid, uint32_t
 				break;
 				
 			case ECMFMT_CHAR:
-				if(size - s > 0)
+				if(size - s > 1)
 				{ 
 					result[s] = cvalue;
+					result[s+1] = '\0';
 					s++;
 				}
 				break;
