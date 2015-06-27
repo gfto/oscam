@@ -3236,11 +3236,11 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 
 			dvbapi_stop_filter(demux_id, TYPE_SDT);
 			
-			if(strlen(provider_name) && (provid != NO_PROVID_VALUE && caid != NO_CAID_VALUE))
+			if(strlen(provider_name) && caid != NO_CAID_VALUE)
 			{
 				get_providername_or_null(provid, caid, tmp, sizeof(tmp));
 				
-				if(tmp[0] == '\0' && provid != NO_PROVID_VALUE)
+				if(tmp[0] == '\0')
 				{
 					get_config_filename(tmp, sizeof(tmp), "oscam.provid");
 					
@@ -3264,7 +3264,7 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 					
 					if(!access(tmp, F_OK) && (fpsave = fopen(tmp, "a")))
 					{
-						if(caid != NO_CAID_VALUE && provid != NO_PROVID_VALUE)
+						if(caid != NO_CAID_VALUE)
 						{
 							dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
 							
@@ -3288,7 +3288,7 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 						
 						if((fpsave = fopen(tmp, "a")))
 						{
-							if(caid != NO_CAID_VALUE && provid != NO_PROVID_VALUE)
+							if(caid != NO_CAID_VALUE)
 							{
 								dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
 								
@@ -3301,9 +3301,9 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 							else if(cfg.dvbapi_read_sdt > 1)
 							{
 								if(cfg.dvbapi_write_sdt_prov)
-									{ fprintf(fpsave, "\n%04X:%04X|%s|%s", caid, service_id, provider_name, service_name); }
+									{ fprintf(fpsave, "\n%04X@%06X:%04X|%s|%s", caid, provid, service_id, provider_name, service_name); }
 								else
-									{ fprintf(fpsave, "\n%04X:%04X||%s", caid, service_id, service_name); }
+									{ fprintf(fpsave, "\n%04X@%06X:%04X||%s", caid, provid, service_id, service_name); }
 							}
 							fclose(fpsave);
 						}					

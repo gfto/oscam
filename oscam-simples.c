@@ -5,15 +5,10 @@ static void cl_set_last_providptr(struct s_client *cl, uint32_t provid, uint16_t
 {
 	int32_t i;
 	struct s_provid *this = cfg.provid;
+	struct s_provid *zero_match = NULL;
 
 	cl->last_providptr = NULL;
-	
-	if(caid == NO_CAID_VALUE)
-		{ caid = 0; }
-		
-	if(provid == NO_PROVID_VALUE)
-		{ provid = 0; }
-		
+
 	if(!caid) {
 		return;
 	}
@@ -22,8 +17,14 @@ static void cl_set_last_providptr(struct s_client *cl, uint32_t provid, uint16_t
 	{
 		if(this->caid == caid)
 		{
+			if(this->nprovid == 0 )
+				{ zero_match = this; }
+					
 			for(i=0; i < this->nprovid; i++)
 			{
+				if(this->provid[i] == 0 )
+					{ zero_match = this; }
+				
 				if(this->provid[i] == provid)
 				{
 					cl->last_providptr = this;
@@ -33,14 +34,13 @@ static void cl_set_last_providptr(struct s_client *cl, uint32_t provid, uint16_t
 		}
 	}
 	
+	if(zero_match != NULL)
+		{ cl->last_providptr = zero_match; }	
 }
 
 /* Gets the servicename. */
 static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf, uint32_t buflen, bool return_unknown)
 {
-	if(caid == 0) caid = NO_CAID_VALUE;
-	if(provid == 0) provid = NO_PROVID_VALUE;
-	
 	int32_t i, j;
 	struct s_srvid *this, *provid_zero_match = NULL, *provid_any_match = NULL;
 	buf[0] = '\0';
@@ -72,7 +72,7 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 					{
 						provid_zero_match = this;
 						
-						if( provid == NO_PROVID_VALUE)
+						if(0 == provid)
 						{
 							if(cl)
 							{
@@ -87,7 +87,7 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 											
 					for(j = 0; j < this->caid[i].nprovid; j++)
 					{
-						if(this->caid[i].provid[j] == NO_PROVID_VALUE)
+						if(this->caid[i].provid[j] == 0)
 							{ provid_zero_match = this; }
 						
 						if(this->caid[i].provid[j] == provid)
@@ -107,7 +107,7 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 
 	if(!buf[0])
 	{
-		if(provid != NO_PROVID_VALUE && provid_zero_match != NULL)
+		if(provid != 0 && provid_zero_match != NULL)
 		{
 			if(cl)
 			{ 
@@ -118,7 +118,7 @@ static char *__get_servicename(struct s_client *cl, uint16_t srvid, uint32_t pro
 			cs_strncpy(buf, provid_zero_match->name, buflen);
 			return (buf);			
 		}		
-		else if(provid == NO_PROVID_VALUE && provid_any_match != NULL)
+		else if(provid == 0 && provid_any_match != NULL)
 		{
 			if(cl)
 			{ 
