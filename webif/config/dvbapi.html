@@ -1,7 +1,7 @@
 	<input name="part" type="hidden" value="dvbapi">
 	<input name="enabled" type="hidden" value="0">
 	<input name="au" type="hidden" value="0">
-	<input name="read_sdt" type="hidden" value="0">
+	<input name="write_sdt_prov" type="hidden" value="0">
 	<TABLE CLASS="config">
 		<TR><TH COLSPAN="2">Edit DVB Api Config</TH></TR>
 		<TR><TD><A>Enabled:</A></TD><TD><input name="enabled" type="checkbox" value="1" ##ENABLEDCHECKED##><label></label>
@@ -39,8 +39,18 @@
 					<option value="2" ##ECMINFOTYPESELECTED2##>2 - wicardd</option>
 					<option value="3" ##ECMINFOTYPESELECTED3##>3 - mgcamd</option>
 					<option value="4" ##ECMINFOTYPESELECTED4##>4 - cccam</option>
-					<option value="5" ##ECMINFOTYPESELECTED5##>5 - camd3</option>					
+					<option value="5" ##ECMINFOTYPESELECTED5##>5 - camd3</option>
 				</select>
 			</TD>
 		</TR>
-		<TR><TD><A>Detect channel name:</A></TD><TD><input name="read_sdt" type="checkbox" value="1" ##READSDTCHECKED##><label></label>
+		<TR><TD><A>Detect channel name:</A></TD>
+			<TD>
+				<select name="read_sdt">
+					<option value="0" ##READSDTSELECTED0##>0 - off</option>
+					<option value="1" ##READSDTSELECTED1##>1 - on (do not save FTA)</option>
+					<option value="2" ##READSDTSELECTED2##>2 - on (save FTA)</option>
+				</select>
+			</TD>
+		</TR>
+		<TR><TD><A>Write detected prov name to srvid:</A></TD><TD><input name="write_sdt_prov" type="checkbox" value="1" ##WRITESDTPROVCHECKED##><label></label>
+			

@@ -3267,11 +3267,18 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 						if(caid != NO_CAID_VALUE && provid != NO_PROVID_VALUE)
 						{
 							dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
-							fprintf(fpsave, "\n%04X:%s|%s|||%s", service_id, srvid_line, service_name, provider_name);
+							
+							if(cfg.dvbapi_write_sdt_prov)
+								{ fprintf(fpsave, "\n%04X:%s|%s|||%s", service_id, srvid_line, service_name, provider_name); }
+							else
+								{ fprintf(fpsave, "\n%04X:%s|%s", service_id, srvid_line, service_name); }
 						}
-						else
+						else if(cfg.dvbapi_read_sdt > 1)
 						{
-							fprintf(fpsave, "\n%04X:%04X@%06X|%s|||%s", service_id, caid, provid, service_name, provider_name);
+							if(cfg.dvbapi_write_sdt_prov)
+								{ fprintf(fpsave, "\n%04X:%04X@%06X|%s|||%s", service_id, caid, provid, service_name, provider_name); }
+							else
+								{ fprintf(fpsave, "\n%04X:%04X@%06X|%s", service_id, caid, provid, service_name); }
 						}
 						fclose(fpsave);
 					}
@@ -3284,11 +3291,19 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 							if(caid != NO_CAID_VALUE && provid != NO_PROVID_VALUE)
 							{
 								dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
-								fprintf(fpsave, "\n%s:%04X|%s|%s|", srvid_line, service_id, provider_name, service_name);
+								
+								if(cfg.dvbapi_write_sdt_prov)
+									{ fprintf(fpsave, "\n%s:%04X|%s|%s|", srvid_line, service_id, provider_name, service_name); }
+								
+								else 
+									{ fprintf(fpsave, "\n%s:%04X||%s|", srvid_line, service_id, service_name); }
 							}
-							else
+							else if(cfg.dvbapi_read_sdt > 1)
 							{
-								fprintf(fpsave, "\n%04X:%04X|%s|%s", caid, service_id, provider_name, service_name);
+								if(cfg.dvbapi_write_sdt_prov)
+									{ fprintf(fpsave, "\n%04X:%04X|%s|%s", caid, service_id, provider_name, service_name); }
+								else
+									{ fprintf(fpsave, "\n%04X:%04X||%s", caid, service_id, service_name); }
 							}
 							fclose(fpsave);
 						}					

@@ -1970,6 +1970,7 @@ struct s_config
 	int32_t     dvbapi_delayer;                     // delayer ms, minimum time to write cw
 	int8_t      dvbapi_ecminfo_type;
 	int8_t      dvbapi_read_sdt;
+	int8_t      dvbapi_write_sdt_prov;
 #endif
 
 #ifdef CS_ANTICASC
