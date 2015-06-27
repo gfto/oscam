@@ -66,6 +66,16 @@ set PID file, overrides pidfile of \fBoscam.conf\fR, default:none
 .RS 3n
 read configuration from <directory>, default:see CS_CONFDIR in \fBglobals.h\fR,
 while starting OSCam prints warnings on invalid keywords, comment lines start with \fB#\fP character.
+
+Autodiscover of the following directories will be done:
+
+ /etc/tuxbox/config/oscam.conf
+ /var/etc/oscam.conf
+ /var/etc/oscam/oscam.conf
+ /var/keys/oscam.conf
+ /var/oscam/oscam.conf
+ /var/tuxbox/config/oscam.conf
+
 .RE
 .PP
 \fB-d\fP|\fB--debug\fP <level>
