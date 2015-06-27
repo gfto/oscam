@@ -285,14 +285,14 @@ int32_t init_provid(void)
 	char *payload, *saveptr1 = NULL, *token;
 	if(!cs_malloc(&token, MAXLINESIZE))
 		{ return 0; }
-	struct s_provid *provid = (struct s_provid *)0;
+	struct s_provid *provid_ptr = NULL;
 	struct s_provid *new_cfg_provid = NULL, *last_provid;
 
 	nr = 0;
 	while(fgets(token, MAXLINESIZE, fp))
 	{
 		int32_t i, l;
-		void *ptr;
+		struct s_provid *new_provid = NULL;
 		char *tmp, *ptr1;
 		
 		tmp = trim(token);
@@ -303,48 +303,37 @@ int32_t init_provid(void)
 
 		*payload++ = '\0';
 		
-		if(!cs_malloc(&ptr, sizeof(struct s_provid)))
+		if(!cs_malloc(&new_provid, sizeof(struct s_provid)))
 		{
 			NULLFREE(token);
 			fclose(fp);
 			return (1);
 		}
-		
-		if(provid)
-		{
-			provid->next = ptr;
-		}
-		else
-		{ 
-			new_cfg_provid = ptr;
-		}
-			
-		provid = ptr;
-		
-		provid->nprovid = 0;
+				
+		new_provid->nprovid = 0;
 		for(i = 0, ptr1 = strtok_r(token, ":@", &saveptr1); ptr1; ptr1 = strtok_r(NULL, ":@", &saveptr1), i++)
 		{
 			if(i==0)
 			{
-				provid->caid = a2i(ptr1, 3);
+				new_provid->caid = a2i(ptr1, 3);
 				continue;	
 			}
 			
-			provid->nprovid++;
+			new_provid->nprovid++;
 		}
 
-		if(!cs_malloc(&provid->provid, sizeof(uint32_t) * provid->nprovid))
+		if(!cs_malloc(&new_provid->provid, sizeof(uint32_t) * new_provid->nprovid))
 		{
-			NULLFREE(provid);
+			NULLFREE(new_provid);
 			NULLFREE(token);
 			fclose(fp);
 			return (1);
 		}
 
 		ptr1 = token + strlen(token) + 1;
-		for(i = 0; i < provid->nprovid ; i++)
+		for(i = 0; i < new_provid->nprovid ; i++)
 		{
-			provid->provid[i] = a2i(ptr1, 3);
+			new_provid->provid[i] = a2i(ptr1, 3);
 			
 			ptr1 = ptr1 + strlen(ptr1) + 1;
 		}
@@ -354,21 +343,40 @@ int32_t init_provid(void)
 			switch(i)
 			{
 			case 0:
-				cs_strncpy(provid->prov, trim(ptr1), sizeof(provid->prov));
+				cs_strncpy(new_provid->prov, trim(ptr1), sizeof(new_provid->prov));
 				break;
 			case 1:
-				cs_strncpy(provid->sat, trim(ptr1), sizeof(provid->sat));
+				cs_strncpy(new_provid->sat, trim(ptr1), sizeof(new_provid->sat));
 				break;
 			case 2:
-				cs_strncpy(provid->lang, trim(ptr1), sizeof(provid->lang));
+				cs_strncpy(new_provid->lang, trim(ptr1), sizeof(new_provid->lang));
 				break;
 			}
 		}
 		
+		if(strlen(new_provid->prov) == 0)
+		{
+			NULLFREE(new_provid->provid);
+			NULLFREE(new_provid);
+			continue;
+		}
+		
 		nr++;
+				
+		if(provid_ptr)
+		{
+			provid_ptr->next = new_provid;
+		}
+		else
+		{ 
+			new_cfg_provid = new_provid;
+		}	
+		provid_ptr = new_provid;
 	}
+	
 	NULLFREE(token);
 	fclose(fp);
+	
 	if(nr > 0)
 		{ cs_log("%d provid's loaded", nr); }
 	
