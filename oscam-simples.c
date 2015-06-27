@@ -35,7 +35,7 @@ static void cl_set_last_providptr(struct s_client *cl, uint32_t provid, uint16_t
 	}
 	
 	if(zero_match != NULL)
-		{ cl->last_providptr = zero_match; }	
+		{ cl->last_providptr = zero_match; }
 }
 
 /* Gets the servicename. */
@@ -286,6 +286,7 @@ char *__get_providername(uint32_t provid, uint16_t caid, char *buf, uint32_t buf
 	uint8_t found = 0;
 	int32_t i;
 	struct s_provid *this = cfg.provid;
+	struct s_provid *zero_match = NULL;
 
 	if(!caid) {
 		buf[0] = '\0';
@@ -296,8 +297,14 @@ char *__get_providername(uint32_t provid, uint16_t caid, char *buf, uint32_t buf
 	{
 		if(this->caid == caid)
 		{
+			if(this->nprovid == 0 )
+				{ zero_match = this; }
+			
 			for(i=0; i<this->nprovid && !found; i++)
 			{
+				if(this->provid[i] == 0 )
+					{ zero_match = this; }
+				
 				if(this->provid[i] == provid)
 				{
 					cs_strncpy(buf, this->prov, buflen);
@@ -305,6 +312,12 @@ char *__get_providername(uint32_t provid, uint16_t caid, char *buf, uint32_t buf
 				}
 			}
 		}
+	}
+	
+	if(!found && zero_match != NULL)
+	{
+		cs_strncpy(buf, zero_match->prov, buflen);
+		found = 1;		
 	}
 
 	if(!buf[0] && return_unknown) { snprintf(buf, buflen, "%04X@%06X unknown", caid, provid); }
