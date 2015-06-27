@@ -2456,7 +2456,7 @@ int32_t ecmfmt(char *result, size_t size, uint16_t caid, uint16_t onid, uint32_t
 	
 	uint8_t type = 0;
 	uint32_t ivalue = 0;
-	char *ifmt = NULL;
+	char *ifmt = NULL, *sfmt = NULL;
 	char *svalue = NULL, cvalue = '\0';
 	uint8_t hide_if_zero = 0;
 	
@@ -2470,6 +2470,8 @@ int32_t ecmfmt(char *result, size_t size, uint16_t caid, uint16_t onid, uint32_t
 			hide_if_zero = 1;
 			continue;
 		}
+		
+		sfmt = NULL;
 		
 		switch(*c)
 		{
@@ -2541,7 +2543,13 @@ int32_t ecmfmt(char *result, size_t size, uint16_t caid, uint16_t onid, uint32_t
 		case 'y':
 			type = ECMFMT_STRING;
 			svalue = payload;
-			hide_if_zero = 1;
+			sfmt = "0F06%s";
+			if(payload == NULL && !hide_if_zero)
+			{
+				type = ECMFMT_NUMBER;
+				ifmt = "0F06%012X";
+				ivalue = 0;
+			}
 			break;
 		default:
 			type = ECMFMT_CHAR;
@@ -2570,7 +2578,7 @@ int32_t ecmfmt(char *result, size_t size, uint16_t caid, uint16_t onid, uint32_t
 				break;
 			
 			case ECMFMT_STRING:
-				s += snprintf(result + s, size - s , "%s", svalue);
+				s += snprintf(result + s, size - s , sfmt != NULL ? sfmt : "%s", svalue);
 				break;
 				
 			case ECMFMT_CHAR:
