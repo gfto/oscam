@@ -816,6 +816,12 @@ DESCRIPTIONS
 	   1 = enabled without saving FTA channels
 	   2 = enabled with saving FTA channel, too
 
+       write_sdt_prov = 0|1
+	  mode writing provider name into oscam.srvid2 file:
+
+	   0 = disabled (default)
+	   1 = enabled
+
        cw_delay = milli-seconds
 	  delay of CW writing, default:none
 
