@@ -2547,7 +2547,7 @@ int32_t ecmfmt(char *result, size_t size, uint16_t caid, uint16_t onid, uint32_t
 			if(payload == NULL && !hide_if_zero)
 			{
 				type = ECMFMT_NUMBER;
-				ifmt = "0F06%012X";
+				ifmt = "0F06%06X";
 				ivalue = 0;
 			}
 			break;
@@ -2613,13 +2613,13 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 	char cwhex[(16*2)+1];
 	char *payload = NULL;
 #ifdef READER_VIDEOGUARD
-	char payload_string[(6*2)+1];
+	char payload_string[(3*2)+1];
 	static const uint8_t nullBytes[6] = { 0, 0, 0, 0, 0, 0};
 	
 	if(ecm->selected_reader
 		&& memcmp(ecm->selected_reader->VgLastPayload, nullBytes, 6))
 	{
-		cs_hexdump(0, ecm->selected_reader->VgLastPayload, 6, payload_string, sizeof(payload_string));
+		cs_hexdump(0, ecm->selected_reader->VgLastPayload, 3, payload_string, sizeof(payload_string));
 		payload = payload_string;	
 	}
 #endif
