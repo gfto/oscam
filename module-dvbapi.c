@@ -3155,14 +3155,37 @@ static void dvbapi_create_srvid_line(int32_t demux_id, char *buffer, uint32_t bu
 	}	
 }
 
+static const char *dvbapi_get_service_type(uint8_t service_type_id)
+{
+	switch(service_type_id)
+	{
+		case 0x01:
+		case 0x11:
+		default:
+			return "TV";
+			
+		case 0x02:
+		case 0x07:
+		case 0x0A:
+			return "Radio";
+			
+		case 0x03:
+			return "Teletext";
+		
+		case 0x0C:
+			return "Data";
+	}
+}
+
 static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t length)
 {
-	uint8_t tag, data_length = 0, provider_name_length, service_name_length;
+	uint8_t tag, data_length = 0, provider_name_length, service_name_length, service_type;
 	uint16_t service_id, descriptor_length, dpos;
 	int32_t provid, caid;
 	uint32_t section_length, pos;
 	int32_t pidindex;
-	char provider_name[64],  service_name[64], tmp[256], srvid_line[1024];;
+	char provider_name[64],  service_name[64], tmp[256], srvid_line[1024];
+	const char *type;
 	FILE *fpsave;
 	
 	cs_log_dump_dbg(D_DVBAPI, buffer, length, "sdt-info dbg: sdt data: ");
@@ -3204,7 +3227,9 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 
 			if(dpos+3 >= descriptor_length)
 				{ break; }
-				
+			
+			service_type = buffer[pos+dpos+2];
+			
 			provider_name_length = buffer[pos+dpos+3];
 			if((dpos+4+provider_name_length+1) > descriptor_length)
 				{ break; }
@@ -3268,6 +3293,8 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 				
 				if(tmp[0] == '\0')
 				{
+					type = dvbapi_get_service_type(service_type);
+					
 					get_config_filename(tmp, sizeof(tmp), "oscam.srvid2");
 					
 					if(!access(tmp, F_OK) && (fpsave = fopen(tmp, "a")))
@@ -3277,16 +3304,16 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 							dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
 							
 							if(cfg.dvbapi_write_sdt_prov)
-								{ fprintf(fpsave, "\n%04X:%s|%s|||%s", service_id, srvid_line, service_name, provider_name); }
+								{ fprintf(fpsave, "\n%04X:%s|%s|%s||%s", service_id, srvid_line, service_name, type, provider_name); }
 							else
-								{ fprintf(fpsave, "\n%04X:%s|%s", service_id, srvid_line, service_name); }
+								{ fprintf(fpsave, "\n%04X:%s|%s|%s", service_id, srvid_line, service_name, type); }
 						}
 						else if(cfg.dvbapi_read_sdt > 1)
 						{
 							if(cfg.dvbapi_write_sdt_prov)
-								{ fprintf(fpsave, "\n%04X:%04X@%06X|%s|||%s", service_id, caid, provid, service_name, provider_name); }
+								{ fprintf(fpsave, "\n%04X:%04X@%06X|%s|%s||%s", service_id, caid, provid, service_name, type, provider_name); }
 							else
-								{ fprintf(fpsave, "\n%04X:%04X@%06X|%s", service_id, caid, provid, service_name); }
+								{ fprintf(fpsave, "\n%04X:%04X@%06X|%s|%s", service_id, caid, provid, service_name, type); }
 						}
 						fclose(fpsave);
 					}
@@ -3301,17 +3328,17 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 								dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
 								
 								if(cfg.dvbapi_write_sdt_prov)
-									{ fprintf(fpsave, "\n%s:%04X|%s|%s|", srvid_line, service_id, provider_name, service_name); }
+									{ fprintf(fpsave, "\n%s:%04X|%s|%s|%s", srvid_line, service_id, provider_name, service_name, type); }
 								
 								else 
-									{ fprintf(fpsave, "\n%s:%04X||%s|", srvid_line, service_id, service_name); }
+									{ fprintf(fpsave, "\n%s:%04X||%s|%s", srvid_line, service_id, service_name, type); }
 							}
 							else if(cfg.dvbapi_read_sdt > 1)
 							{
 								if(cfg.dvbapi_write_sdt_prov)
-									{ fprintf(fpsave, "\n%04X@%06X:%04X|%s|%s", caid, provid, service_id, provider_name, service_name); }
+									{ fprintf(fpsave, "\n%04X@%06X:%04X|%s|%s|%s", caid, provid, service_id, provider_name, service_name, type); }
 								else
-									{ fprintf(fpsave, "\n%04X@%06X:%04X||%s", caid, provid, service_id, service_name); }
+									{ fprintf(fpsave, "\n%04X@%06X:%04X||%s|%s", caid, provid, service_id, service_name, type); }
 							}
 							fclose(fpsave);
 						}					
