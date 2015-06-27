@@ -1092,9 +1092,6 @@ void dvbapi_start_filter(int32_t demux_id, int32_t pidindex, uint16_t pid, uint1
 
 void dvbapi_start_sdt_filter(int32_t demux_index)
 {
-	if(demux[demux_index].pidindex == -1)
-		{ return; }
-	
 	dvbapi_start_filter(demux_index, demux[demux_index].pidindex, 0x11, 0x001, 0x01, 0x42, 0xFF, 0, TYPE_SDT);
 	demux[demux_index].sdt_filter = 0;
 }
@@ -3162,7 +3159,9 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 {
 	uint8_t tag, data_length = 0, provider_name_length, service_name_length;
 	uint16_t service_id, descriptor_length, dpos;
-	uint32_t section_length, pos, pidindex;
+	int32_t provid, caid;
+	uint32_t section_length, pos;
+	int32_t pidindex;
 	char provider_name[64],  service_name[64], tmp[256], srvid_line[1024];;
 	FILE *fpsave;
 	
@@ -3216,6 +3215,17 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 			
 			pidindex = demux[demux_id].pidindex;
 			
+			if (pidindex !=-1)
+			{
+				provid = demux[demux_id].ECMpids[pidindex].PROVID;
+				caid = demux[demux_id].ECMpids[pidindex].CAID;
+			}
+			else
+			{
+				caid = (demux[demux_id].ECMpids[0].CAID == 0 ? NO_CAID_VALUE : demux[demux_id].ECMpids[0].CAID);
+				provid = (demux[demux_id].ECMpids[0].PROVID == 0 ? NO_PROVID_VALUE : demux[demux_id].ECMpids[0].PROVID);
+			}
+			
 			if(!dvbapi_extract_sdt_string(provider_name, sizeof(provider_name), buffer+pos+dpos+4, provider_name_length))
 				{ break; }
 				
@@ -3226,19 +3236,17 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 
 			dvbapi_stop_filter(demux_id, TYPE_SDT);
 			
-			if(strlen(provider_name))
+			if(strlen(provider_name) && (provid != NO_PROVID_VALUE && caid != NO_CAID_VALUE))
 			{
-				get_providername_or_null(demux[demux_id].ECMpids[pidindex].PROVID, 
-											demux[demux_id].ECMpids[pidindex].CAID, tmp, sizeof(tmp));
+				get_providername_or_null(provid, caid, tmp, sizeof(tmp));
 				
-				if(tmp[0] == '\0')
+				if(tmp[0] == '\0' && provid != NO_PROVID_VALUE)
 				{
 					get_config_filename(tmp, sizeof(tmp), "oscam.provid");
 					
 					if((fpsave = fopen(tmp, "a")))
 					{
-						fprintf(fpsave, "\n%04X@%06X|%s|", demux[demux_id].ECMpids[pidindex].CAID, 
-									demux[demux_id].ECMpids[pidindex].PROVID, provider_name);
+						fprintf(fpsave, "\n%04X@%06X|%s|", caid, provid, provider_name);
 						fclose(fpsave);
 					}
             	
@@ -3248,8 +3256,7 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 
 			if(strlen(service_name))
 			{
-				get_servicename_or_null(cur_client(), service_id, demux[demux_id].ECMpids[pidindex].PROVID,
-					demux[demux_id].ECMpids[pidindex].CAID, tmp, sizeof(tmp));
+				get_servicename_or_null(cur_client(), service_id, provid, caid, tmp, sizeof(tmp));
 				
 				if(tmp[0] == '\0')
 				{
@@ -3257,8 +3264,15 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 					
 					if(!access(tmp, F_OK) && (fpsave = fopen(tmp, "a")))
 					{
-						dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
-						fprintf(fpsave, "\n%04X:%s|%s|||%s", service_id, srvid_line, service_name, provider_name);
+						if(caid != NO_CAID_VALUE && provid != NO_PROVID_VALUE)
+						{
+							dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
+							fprintf(fpsave, "\n%04X:%s|%s|||%s", service_id, srvid_line, service_name, provider_name);
+						}
+						else
+						{
+							fprintf(fpsave, "\n%04X:%04X@%06X|%s|||%s", service_id, caid, provid, service_name, provider_name);
+						}
 						fclose(fpsave);
 					}
 					else
@@ -3267,8 +3281,15 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 						
 						if((fpsave = fopen(tmp, "a")))
 						{
-							dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
-							fprintf(fpsave, "\n%s:%04X|%s|%s|", srvid_line, service_id, provider_name, service_name);
+							if(caid != NO_CAID_VALUE && provid != NO_PROVID_VALUE)
+							{
+								dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
+								fprintf(fpsave, "\n%s:%04X|%s|%s|", srvid_line, service_id, provider_name, service_name);
+							}
+							else
+							{
+								fprintf(fpsave, "\n%04X:%04X|%s|%s", caid, service_id, provider_name, service_name);
+							}
 							fclose(fpsave);
 						}					
 					}
