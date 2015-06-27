@@ -1165,6 +1165,15 @@ verified on HD models only
 pc is for generic pc support (currently supported on VDR with vdr-plugin-dvbapi)
 .RE
 .PP
+\fBread_sdt\fP = \fB0\fP|\fB1\fP|\fB2\fP
+.RS 3n
+mode of provider and channel name detection via SDT:
+
+ \fB0\fP = disabled (default)
+ \fB1\fP = enabled without saving FTA channels
+ \fB2\fP = enabled with saving FTA channel, too
+.RE
+.PP
 \fBcw_delay\fP = \fBmilli-seconds\fP
 .RS 3n
 delay of CW writing, default:none
