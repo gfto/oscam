@@ -8,6 +8,12 @@ static void cl_set_last_providptr(struct s_client *cl, uint32_t provid, uint16_t
 
 	cl->last_providptr = NULL;
 	
+	if(caid == NO_CAID_VALUE)
+		{ caid = 0; }
+		
+	if(provid == NO_PROVID_VALUE)
+		{ provid = 0; }
+		
 	if(!caid) {
 		return;
 	}
