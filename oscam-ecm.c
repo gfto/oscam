@@ -2600,18 +2600,18 @@ uint8_t checkCWpart(uchar *cw, int8_t part)
 
 int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 {
-	char ecmd5hex[17 * 3];
-	char csphash[5 * 3] = { 0 };
-	char cwhex[17 * 3];
+	char ecmd5hex[(16*2)+1];
+	char csphash[(4*2)+1] = { 0 };
+	char cwhex[(16*2)+1];
 	char *payload = NULL;
 #ifdef READER_VIDEOGUARD
-	char payload_string[17];
+	char payload_string[(6*2)+1];
 	static const uint8_t nullBytes[6] = { 0, 0, 0, 0, 0, 0};
 	
-	if(ecm->selected_reader 
+	if(ecm->selected_reader
 		&& memcmp(ecm->selected_reader->VgLastPayload, nullBytes, 6))
 	{
-		cs_hexdump(0, ecm->selected_reader->VgLastPayload, 16, payload_string, sizeof(payload_string));
+		cs_hexdump(0, ecm->selected_reader->VgLastPayload, 6, payload_string, sizeof(payload_string));
 		payload = payload_string;	
 	}
 #endif
