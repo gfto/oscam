@@ -3222,8 +3222,16 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 			}
 			else
 			{
-				caid = (demux[demux_id].ECMpids[0].CAID == 0 ? NO_CAID_VALUE : demux[demux_id].ECMpids[0].CAID);
-				provid = (demux[demux_id].ECMpids[0].PROVID == 0 ? NO_PROVID_VALUE : demux[demux_id].ECMpids[0].PROVID);
+				if(demux[demux_id].ECMpids[0].CAID == 0)
+				{
+					caid = NO_CAID_VALUE;
+					provid = NO_PROVID_VALUE;
+				}
+				else
+				{
+					caid = demux[demux_id].ECMpids[0].CAID;
+					provid = demux[demux_id].ECMpids[0].PROVID;	
+				}
 			}
 			
 			if(!dvbapi_extract_sdt_string(provider_name, sizeof(provider_name), buffer+pos+dpos+4, provider_name_length))
