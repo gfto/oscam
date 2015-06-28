@@ -2156,13 +2156,16 @@ struct cc_card *read_card(uint8_t *buf, int32_t buflen, int32_t ext)
 			offset += 2;
 		}
 	}
-
+	
+	if(buflen < (offset + 1))
+		{ cc_free_card(card); return NULL; }
+	
 	int16_t remote_count = buf[offset];
 	offset++;
 	
 	if(buflen < (offset + (remote_count*8)))
 		{ cc_free_card(card); return NULL; }
-		
+	
 	for(i = 0; i < remote_count; i++)
 	{
 		uint8_t *remote_node;
