@@ -3116,6 +3116,12 @@ static void dvbapi_create_srvid_line(int32_t demux_id, char *buffer, uint32_t bu
 	uint8_t caid_done_count = 0, skip_caid;
 	int32_t pos = 0;
 	
+	if(demux[demux_id].ECMpidcount == 0)
+	{
+		snprintf(buffer, buflen, "%04X@%06X", NO_CAID_VALUE, NO_PROVID_VALUE);
+		return;	
+	}
+	
 	for(i=0; i < demux[demux_id].ECMpidcount && i < 32; i++)
 	{
 		skip_caid = 0;
@@ -3135,7 +3141,7 @@ static void dvbapi_create_srvid_line(int32_t demux_id, char *buffer, uint32_t bu
 		}
 		
 		cur_caid = demux[demux_id].ECMpids[i].CAID;
-		pos += snprintf(buffer+pos, buflen-pos, "%s%04X", caid_done_count > 0 ? "," : "", cur_caid);
+		pos += snprintf(buffer+pos, buflen-pos, "%s%04X", caid_done_count > 0 ? "," : "", cur_caid == 0 ? NO_CAID_VALUE : cur_caid);
 		
 		for(j=i; j < demux[demux_id].ECMpidcount; j++)
 		{
@@ -3186,7 +3192,8 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 	int32_t pidindex;
 	char provider_name[64],  service_name[64], tmp[256], srvid_line[1024];
 	const char *type;
-	FILE *fpsave;
+	FILE *fpsave = NULL;
+	int8_t did_save_srvid = 0;
 	
 	cs_log_dump_dbg(D_DVBAPI, buffer, length, "sdt-info dbg: sdt data: ");
 	
@@ -3247,7 +3254,7 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 			}
 			else
 			{
-				if(demux[demux_id].ECMpids[0].CAID == 0)
+				if(demux[demux_id].ECMpidcount == 0 || demux[demux_id].ECMpids[0].CAID == 0)
 				{
 					caid = NO_CAID_VALUE;
 					provid = NO_PROVID_VALUE;
@@ -3281,9 +3288,9 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 					{
 						fprintf(fpsave, "\n%04X@%06X|%s|", caid, provid, provider_name);
 						fclose(fpsave);
+						
+						init_provid();
 					}
-            	
-					init_provid();
 				}
 			}
 
@@ -3299,7 +3306,7 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 					
 					if(!access(tmp, F_OK) && (fpsave = fopen(tmp, "a")))
 					{
-						if(caid != NO_CAID_VALUE)
+						if((caid != NO_CAID_VALUE) || (cfg.dvbapi_read_sdt > 1))
 						{
 							dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
 							
@@ -3307,15 +3314,9 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 								{ fprintf(fpsave, "\n%04X:%s|%s|%s||%s", service_id, srvid_line, service_name, type, provider_name); }
 							else
 								{ fprintf(fpsave, "\n%04X:%s|%s|%s", service_id, srvid_line, service_name, type); }
+								
+							did_save_srvid = 1;
 						}
-						else if(cfg.dvbapi_read_sdt > 1)
-						{
-							if(cfg.dvbapi_write_sdt_prov)
-								{ fprintf(fpsave, "\n%04X:%04X@%06X|%s|%s||%s", service_id, caid, provid, service_name, type, provider_name); }
-							else
-								{ fprintf(fpsave, "\n%04X:%04X@%06X|%s|%s", service_id, caid, provid, service_name, type); }
-						}
-						fclose(fpsave);
 					}
 					else
 					{
@@ -3323,7 +3324,7 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 						
 						if((fpsave = fopen(tmp, "a")))
 						{
-							if(caid != NO_CAID_VALUE)
+							if((caid != NO_CAID_VALUE) || (cfg.dvbapi_read_sdt > 1))
 							{
 								dvbapi_create_srvid_line(demux_id, srvid_line, sizeof(srvid_line));
 								
@@ -3332,19 +3333,17 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 								
 								else 
 									{ fprintf(fpsave, "\n%s:%04X||%s|%s", srvid_line, service_id, service_name, type); }
+									
+								did_save_srvid = 1;
 							}
-							else if(cfg.dvbapi_read_sdt > 1)
-							{
-								if(cfg.dvbapi_write_sdt_prov)
-									{ fprintf(fpsave, "\n%04X@%06X:%04X|%s|%s|%s", caid, provid, service_id, provider_name, service_name, type); }
-								else
-									{ fprintf(fpsave, "\n%04X@%06X:%04X||%s|%s", caid, provid, service_id, service_name, type); }
-							}
-							fclose(fpsave);
-						}					
+						}
 					}
+					
+					if(fpsave)
+						{ fclose(fpsave); }
             	
-					init_srvid();
+					if(did_save_srvid)
+						{ init_srvid(); }
 				}
 			}
 			
