@@ -255,7 +255,8 @@ static char *monitor_client_info(char id, struct s_client *cl, char *sbuf)
 
 	if(cl)
 	{
-		char ldate[16], ltime[16], *usr;
+		char ldate[16], ltime[16];
+		const char *usr;
 		int32_t lsec, isec, con, cau, lrt = - 1;
 		time_t now;
 		struct tm lt;

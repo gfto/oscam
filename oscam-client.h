@@ -11,7 +11,7 @@ struct s_auth *get_account_by_name(char *name);
 int8_t is_valid_client(struct s_client *client);
 const char *remote_txt(void);
 const char *client_get_proto(struct s_client *cl);
-char *username(struct s_client *client);
+const char *username(struct s_client *client);
 void init_first_client(void);
 struct s_client *create_client(IN_ADDR_T ip);
 int32_t cs_auth_client(struct s_client *client, struct s_auth *account, const char *e_txt);

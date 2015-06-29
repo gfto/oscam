@@ -192,7 +192,7 @@ static void cs_user_resolve(struct s_auth *account)
 
 /* Returns the username from the client. You will always get a char reference back (no NULLs but it may be string containting "NULL")
    which you should never modify and not free()! */
-char *username(struct s_client *client)
+const char *username(struct s_client *client)
 {
 	if(!check_client(client))
 		{ return "NULL"; }

@@ -4335,7 +4335,7 @@ static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * p
 static char *send_oscam_status(struct templatevars * vars, struct uriparams * params, int32_t apicall)
 {
 	int32_t i;
-	char *usr;
+	const char *usr;
 	int32_t lsec, isec, chsec, con, cau = 0;
 	time_t now = time((time_t *)0);
 	struct tm lt;
@@ -6891,7 +6891,7 @@ static char *send_oscam_api(struct templatevars * vars, FILE * f, struct uripara
 		int32_t isec;
 		int32_t shown;
 		time_t now = time((time_t *)0);
-		char *usr;
+		const char *usr;
 		struct s_client *cl;
 		for(i = 0, cl = first_client; cl ; cl = cl->next, i++)
 		{

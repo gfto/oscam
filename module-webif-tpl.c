@@ -718,11 +718,13 @@ void urldecode(char *s)
 }
 
 /* Encode values in a http url. Do not call free() or realloc on the returned reference or you will get memory corruption! */
-char *urlencode(struct templatevars *vars, char *str)
+char *urlencode(struct templatevars *vars, const char *str)
 {
 	char *buf;
 	if(!cs_malloc(&buf, strlen(str) * 3 + 1)) { return ""; }
-	char *pstr = str, *pbuf = buf;
+	const char *pstr = str;
+	char *pbuf = buf;
+	
 	while(*pstr)
 	{
 		if(isalnum((uchar)*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~') { *pbuf++ = *pstr; }
