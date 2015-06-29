@@ -128,8 +128,6 @@ static char *prog_name;
 static char *stb_boxtype;
 static char *stb_boxname;
 
-static uint32_t oscam_stacksize = 0;
-
 /*****************************************************************************
         Statics
 *****************************************************************************/
@@ -940,44 +938,14 @@ void set_thread_name(const char *UNUSED(thread_name)) { }
 #endif
 
 
-static void fix_stacksize(void)
-{
-	// Changing the default stack size is generally a bad idea.
-	// We are doing it anyway at the moment, because we are using several threads,
-	// and are running on machnies with little RAM.
-	// HOWEVER, as we do not know which minimal stack size is needed to run
-	// oscam without SEQFAULT (stack overflow), this is risky business.
-	// If after a code change SEQFAULTs related to stack overflow appear,
-	// increase OSCAM_STACK_MIN or remove the calls to SAFE_ATTR_SETSTACKSIZE.
-	
-#ifndef PTHREAD_STACK_MIN
-#define PTHREAD_STACK_MIN 64000
-#endif
-#define OSCAM_STACK_MIN PTHREAD_STACK_MIN+32768
-	
-	if(oscam_stacksize < OSCAM_STACK_MIN)
-	{
-		long pagesize = sysconf(_SC_PAGESIZE);
-		if(pagesize < 1)
-			{ pagesize = 1; }
-		
-		oscam_stacksize = ((OSCAM_STACK_MIN / pagesize) + 1) * pagesize;
-	}
-}
-
 /* Starts a thread named nameroutine with the start function startroutine. */
-int32_t start_thread(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread, int8_t modify_stacksize)
+int32_t start_thread(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread)
 {
 	pthread_t temp;	
-	pthread_attr_t attr;
-
+	
 	cs_log_dbg(D_TRACE, "starting thread %s", nameroutine);
-
-	SAFE_ATTR_INIT(&attr);
-	if(modify_stacksize)
-		{ SAFE_ATTR_SETSTACKSIZE(&attr, oscam_stacksize); }
-			
-	int32_t ret = pthread_create(pthread == NULL ? &temp : pthread, &attr, startroutine, arg);
+		
+	int32_t ret = pthread_create(pthread == NULL ? &temp : pthread, NULL, startroutine, arg);
 	if(ret)
 		{ cs_log("ERROR: can't create %s thread (errno=%d %s)", nameroutine, ret, strerror(ret)); }
 	else
@@ -985,31 +953,22 @@ int32_t start_thread(char *nameroutine, void *startroutine, void *arg, pthread_t
 		cs_log_dbg(D_TRACE, "%s thread started", nameroutine);
 		pthread_detach(pthread == NULL ? temp : *pthread);
 	}
-	
-	pthread_attr_destroy(&attr);
-	
+
 	return ret;
 }
 
-int32_t start_thread_nolog(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread, int8_t modify_stacksize)
+int32_t start_thread_nolog(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread)
 {
 	pthread_t temp;	
-	pthread_attr_t attr;
-
-	SAFE_ATTR_INIT(&attr);
-	if(modify_stacksize)
-		{ SAFE_ATTR_SETSTACKSIZE(&attr, oscam_stacksize); }
-		
-	int32_t ret = pthread_create(pthread == NULL ? &temp : pthread, &attr, startroutine, arg);
+	
+	int32_t ret = pthread_create(pthread == NULL ? &temp : pthread, NULL, startroutine, arg);
 	if(ret)
 		{ fprintf(stderr, "ERROR: can't create %s thread (errno=%d %s)", nameroutine, ret, strerror(ret)); }
 	else
 	{
 		pthread_detach(pthread == NULL ? temp : *pthread);
 	}
-	
-	pthread_attr_destroy(&attr);
-	
+
 	return ret;
 }
 
@@ -1616,8 +1575,6 @@ int32_t main(int32_t argc, char *argv[])
 	struct timespec start_ts;
 	cs_gettime(&start_ts); // Initialize clock_type
 
-	fix_stacksize();
-
 	if(pthread_key_create(&getclient, NULL))
 	{
 		fprintf(stderr, "Could not create getclient, exiting...");
@@ -1778,7 +1735,7 @@ int32_t main(int32_t argc, char *argv[])
 
 	webif_init();
 
-	start_thread("reader check", (void *) &reader_check, NULL, NULL, 1);
+	start_thread("reader check", (void *) &reader_check, NULL, NULL);
 	cw_process_thread_start();
 	checkcache_process_thread_start();
 
@@ -1797,7 +1754,7 @@ int32_t main(int32_t argc, char *argv[])
 
 	ac_init();
 
-	start_thread("card poll", (void *) &card_poll, NULL, NULL, 1);
+	start_thread("card poll", (void *) &card_poll, NULL, NULL);
 
 	for(i = 0; i < CS_MAX_MOD; i++)
 	{

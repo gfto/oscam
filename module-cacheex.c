@@ -335,7 +335,7 @@ static void *chkcache_process(void)
 
 void checkcache_process_thread_start(void)
 {
-	start_thread("chkcache_process", (void *) &chkcache_process, NULL, NULL, 1);
+	start_thread("chkcache_process", (void *) &chkcache_process, NULL, NULL);
 }
 
 void cacheex_init(void)

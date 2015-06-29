@@ -1649,7 +1649,6 @@ struct cc_card **get_sorted_card_copy(LLIST *cards, int32_t reverse, int32_t *si
 
 void cccam_init_share(void)
 {
-
 	memset(reported_carddatas_list, 0, sizeof(reported_carddatas_list));
 	cs_lock_create(__func__, &cc_shares_lock, "cc_shares_lock", 200000);
 
@@ -1657,7 +1656,7 @@ void cccam_init_share(void)
 	share_updater_thread_active = 1;
 	
 	pthread_t temp;
-	int32_t ret = start_thread("share updater", (void *)&share_updater, NULL, &temp, 1);
+	int32_t ret = start_thread("share updater", (void *)&share_updater, NULL, &temp);
 	if(!ret)
 	{
 		share_updater_thread = temp;

@@ -460,20 +460,13 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 		return 1;
 	}
 
-
-	/* pcsc doesn't like this; segfaults on x86, x86_64 */
-	int8_t modify_stacksize = 0;
-	struct s_reader *rdr = cl->reader;
-	if(cl->typ != 'r' || !rdr || rdr->typ != R_PCSC)
-		{ modify_stacksize = 1; }
-
 	if(action != ACTION_READER_CHECK_HEALTH)
 	{
 		cs_log_dbg(D_TRACE, "start %s thread action %d",
 					  action > ACTION_CLIENT_FIRST ? "client" : "reader", action);
 	}
 
-	int32_t ret = start_thread("client work", work_thread, (void *)data, &cl->thread, modify_stacksize);
+	int32_t ret = start_thread("client work", work_thread, (void *)data, &cl->thread);
 	if(ret)
 	{
 		cs_log("ERROR: can't create thread for %s (errno=%d %s)",

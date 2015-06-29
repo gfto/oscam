@@ -802,7 +802,7 @@ int32_t cs_init_log(void)
 
 		log_list = ll_create(LOG_LIST);
 
-		int32_t ret = start_thread_nolog("logging", (void *)&log_list_thread, NULL, &log_thread, 1);
+		int32_t ret = start_thread_nolog("logging", (void *)&log_list_thread, NULL, &log_thread);
 		if(ret)
 		{
 			cs_exit(1);
