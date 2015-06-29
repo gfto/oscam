@@ -235,45 +235,32 @@ struct s_client *create_client(IN_ADDR_T ip)
 		cs_log("max connections reached (out of memory) -> reject client %s", IP_ISSET(ip) ? cs_inet_ntoa(ip) : "with null address");
 		return NULL;
 	}
+	
 	//client part
 	IP_ASSIGN(cl->ip, ip);
 	cl->account = first_client->account;
+	
 	//master part
 	SAFE_MUTEX_INIT(&cl->thread_lock, NULL);
 	cl->login = cl->last = time(NULL);
-	cl->tid = (uint32_t)(uintptr_t)cl;  // Use pointer adress of client as threadid (for monitor and log)
+	cl->tid = (uint32_t)rand();
+	
 	//Now add new client to the list:
 	struct s_client *last;
 	cs_writelock(__func__, &clientlist_lock);
-	if(sizeof(uintptr_t) > 4)           // 64bit systems can have collisions because of the cast so lets check if there are some
-	{
-		int8_t found;
-		do
-		{
-			found = 0;
-			for(last = first_client; last; last = last->next)
-			{
-				if(last->tid == cl->tid)
-				{
-					found = 1;
-					break;
-				}
-			}
-			if(found || cl->tid == 0)
-			{
-				cl->tid = (uint32_t)rand();
-			}
-		}
-		while(found || cl->tid == 0);
-	}
+	
 	for(last = first_client; last && last->next; last = last->next)
 		{ ; } //ends with cl on last client
+		
 	if (last)
 		last->next = cl;
+		
 	int32_t bucket = (uintptr_t)cl / 16 % CS_CLIENT_HASHBUCKETS;
 	cl->nexthashed = first_client_hashed[bucket];
 	first_client_hashed[bucket] = cl;
+	
 	cs_writeunlock(__func__, &clientlist_lock);
+	
 	return cl;
 }
 
