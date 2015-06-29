@@ -539,13 +539,14 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 			if(emmstat)
 			{
 				rdr_log_dbg(aureader, D_EMM, "emm count %d rewrite %d", emmstat->count, aureader->rewritemm);
-			}
-			if(emmstat->count >= aureader->rewritemm)
-			{
-				reader_log_emm(aureader, ep, emmstat->count, 2, NULL);
-				writeemm = 0; // dont write emm!
-				saveemm(aureader, ep, "emmcache");
-				continue; // found emm match needs no further handling, proceed with next reader!
+				
+				if(emmstat->count >= aureader->rewritemm)
+				{
+					reader_log_emm(aureader, ep, emmstat->count, 2, NULL);
+					writeemm = 0; // dont write emm!
+					saveemm(aureader, ep, "emmcache");
+					continue; // found emm match needs no further handling, proceed with next reader!
+				}
 			}
 		}
 		
