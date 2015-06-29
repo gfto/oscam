@@ -8233,7 +8233,7 @@ static void *http_server(void *UNUSED(d))
 			}
 #endif
 
-			int32_t ret = start_thread("webif workthread", serve_process, (void *)conn, NULL);
+			int32_t ret = start_thread("webif workthread", serve_process, (void *)conn, NULL, 1);
 			if(ret)
 			{
 				NULLFREE(conn);
@@ -8315,7 +8315,7 @@ void webif_init(void)
 	get_config_filename(fname, sizeof(fname), "oscam.srvid2");
 	use_srvid2 = file_exists(fname);		
 
-	if(start_thread("http", http_server, NULL, &httpthread) == 0)
+	if(start_thread("http", http_server, NULL, &httpthread, 0) == 0)
 	{
 		httpthread_running = 1;
 	}

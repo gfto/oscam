@@ -346,7 +346,7 @@ void start_sms_sender(void)
 		return;	
 	}
 	
-	int32_t ret = start_thread("sms sender", (void *)&sms_sender, NULL, &sms_sender_thread);
+	int32_t ret = start_thread("sms sender", (void *)&sms_sender, NULL, &sms_sender_thread, 0);
 	if(ret)
 	{
 		sms_sender_active = 0;

@@ -466,7 +466,7 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 					  action > ACTION_CLIENT_FIRST ? "client" : "reader", action);
 	}
 
-	int32_t ret = start_thread("client work", work_thread, (void *)data, &cl->thread);
+	int32_t ret = start_thread("client work", work_thread, (void *)data, &cl->thread, 1);
 	if(ret)
 	{
 		cs_log("ERROR: can't create thread for %s (errno=%d %s)",

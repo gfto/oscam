@@ -183,7 +183,7 @@ static void arm_led_start_thread(void)
 		arm_led_actions = ll_create("arm_led_actions");
 	}
 
-	start_thread("arm led", arm_led_thread_main, NULL, &arm_led_thread);
+	start_thread("arm led", arm_led_thread_main, NULL, &arm_led_thread, 1);
 }
 
 static void arm_led(int32_t led, int32_t action)

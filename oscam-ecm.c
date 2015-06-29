@@ -357,7 +357,7 @@ static void *cw_process(void)
 
 void cw_process_thread_start(void)
 {
-	start_thread("cw_process", (void *) &cw_process, NULL, NULL);
+	start_thread("cw_process", (void *) &cw_process, NULL, NULL, 1);
 }
 
 void cw_process_thread_wakeup(void)

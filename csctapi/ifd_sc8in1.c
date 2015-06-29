@@ -830,7 +830,7 @@ static int32_t Sc8in1_Init(struct s_reader *reader)
 			// Start display thread
 			crdr_data->display_running = 1;
 
-			start_thread("mcr_update_display", mcr_update_display_thread, (void *)(reader), &crdr_data->display_thread);
+			start_thread("mcr_update_display", mcr_update_display_thread, (void *)(reader), &crdr_data->display_thread, 0);
 		}
 	}
 

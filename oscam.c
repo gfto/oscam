@@ -939,7 +939,7 @@ void set_thread_name(const char *UNUSED(thread_name)) { }
 
 
 /* Starts a thread named nameroutine with the start function startroutine. */
-int32_t start_thread(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread)
+int32_t start_thread(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread, int8_t detach)
 {
 	pthread_t temp;	
 	
@@ -951,13 +951,15 @@ int32_t start_thread(char *nameroutine, void *startroutine, void *arg, pthread_t
 	else
 	{
 		cs_log_dbg(D_TRACE, "%s thread started", nameroutine);
-		pthread_detach(pthread == NULL ? temp : *pthread);
+		
+		if(detach)
+			{ pthread_detach(pthread == NULL ? temp : *pthread); }
 	}
 
 	return ret;
 }
 
-int32_t start_thread_nolog(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread)
+int32_t start_thread_nolog(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread, int8_t detach)
 {
 	pthread_t temp;	
 	
@@ -966,7 +968,8 @@ int32_t start_thread_nolog(char *nameroutine, void *startroutine, void *arg, pth
 		{ fprintf(stderr, "ERROR: can't create %s thread (errno=%d %s)", nameroutine, ret, strerror(ret)); }
 	else
 	{
-		pthread_detach(pthread == NULL ? temp : *pthread);
+		if(detach)
+			{ pthread_detach(pthread == NULL ? temp : *pthread); }
 	}
 
 	return ret;
@@ -1735,7 +1738,7 @@ int32_t main(int32_t argc, char *argv[])
 
 	webif_init();
 
-	start_thread("reader check", (void *) &reader_check, NULL, NULL);
+	start_thread("reader check", (void *) &reader_check, NULL, NULL, 1);
 	cw_process_thread_start();
 	checkcache_process_thread_start();
 
@@ -1754,7 +1757,7 @@ int32_t main(int32_t argc, char *argv[])
 
 	ac_init();
 
-	start_thread("card poll", (void *) &card_poll, NULL, NULL);
+	start_thread("card poll", (void *) &card_poll, NULL, NULL, 1);
 
 	for(i = 0; i < CS_MAX_MOD; i++)
 	{

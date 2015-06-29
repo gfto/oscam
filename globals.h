@@ -2156,8 +2156,8 @@ void    cs_restart_oscam(void);
 int32_t cs_get_restartmode(void);
 
 void set_thread_name(const char *thread_name);
-int32_t start_thread(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread);
-int32_t start_thread_nolog(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread);
+int32_t start_thread(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread, int8_t detach);
+int32_t start_thread_nolog(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread, int8_t detach);
 void kill_thread(struct s_client *cl);
 
 struct s_module *get_module(struct s_client *cl);
