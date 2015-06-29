@@ -211,14 +211,11 @@ int32_t stapi_open(void)
 		para->id = i;
 		para->cli = cur_client();
 
-		int32_t ret = pthread_create(&dev_list[i].thread, NULL, stapi_read_thread, (void *)para);
+		int32_t ret = start_thread("stapi read", stapi_read_thread, (void *)para, &dev_list[i].thread, 1);
 		if(ret)
 		{
-			cs_log("ERROR: can't create stapi read thread (errno=%d %s)", ret, strerror(ret));
 			return 0;
 		}
-		else
-			{ pthread_detach(dev_list[i].thread); }
 	}
 
 	atexit(stapi_off);

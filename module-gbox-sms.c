@@ -305,6 +305,7 @@ static void sms_mutex_init(void)
 	if(!mutex_init)
 	{
 		SAFE_MUTEX_INIT(&sms_mutex, NULL);
+		cs_pthread_cond_init(__func__, &sleep_cond_mutex, &sleep_cond);
 		mutex_init = 1;
 	}	
 }
@@ -338,27 +339,20 @@ void start_sms_sender(void)
 	{
 		sms_sender_active = 1;
 	}
-	SAFE_MUTEX_UNLOCK(&sms_mutex);
 	
 	if(is_active)
 	{
+		SAFE_MUTEX_UNLOCK(&sms_mutex);
 		return;	
 	}
 	
-	cs_pthread_cond_init(__func__, &sleep_cond_mutex, &sleep_cond);
-
-	pthread_attr_t attr;
-	SAFE_ATTR_INIT(&attr);
-
-	SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
-	int32_t ret = pthread_create(&sms_sender_thread, &attr, (void *)&sms_sender, NULL);
+	int32_t ret = start_thread("sms sender", (void *)&sms_sender, NULL, &sms_sender_thread, 1);
 	if(ret)
 	{
-		cs_log("ERROR: can't create sms_sender_thread thread (errno=%d %s)", ret, strerror(ret));
-		pthread_attr_destroy(&attr);
-		cs_exit(1);
+		sms_sender_active = 0;
 	}
-	pthread_attr_destroy(&attr);
+	
+	SAFE_MUTEX_UNLOCK(&sms_mutex);
 }
 
 void stop_sms_sender(void)

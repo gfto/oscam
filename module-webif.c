@@ -60,6 +60,7 @@ static uint8_t useLocal = 1;
 #define PRINTF_LOCAL_F useLocal ? "%'.0f" : "%.0f"
 #define PRINTF_LOCAL_MB useLocal ? "%'.2f MB" : "%.2f MB"
 
+static int8_t httpthread_running = 0;
 static pthread_t httpthread;
 static int32_t sock;
 enum refreshtypes { REFR_ACCOUNTS, REFR_READERS, REFR_CLIENTS, REFR_SERVER, REFR_ANTICASC, REFR_SERVICES };
@@ -8063,8 +8064,6 @@ static void create_rand_str(char *dst, int32_t size)
 
 static void *http_server(void *UNUSED(d))
 {
-	pthread_t workthread;
-	pthread_attr_t attr;
 	struct s_client *cl = create_client(first_client->ip);
 	if(cl == NULL) { return NULL; }
 	SAFE_SETSPECIFIC(getclient, cl);
@@ -8233,17 +8232,12 @@ static void *http_server(void *UNUSED(d))
 				}
 			}
 #endif
-			SAFE_ATTR_INIT(&attr);
-			SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
-			int32_t ret = pthread_create(&workthread, &attr, serve_process, (void *)conn);
+
+			int32_t ret = start_thread("webif workthread", serve_process, (void *)conn, NULL, 1);
 			if(ret)
 			{
-				cs_log("ERROR: can't create thread for webif (errno=%d %s)", ret, strerror(ret));
 				NULLFREE(conn);
 			}
-			else
-				{ pthread_detach(workthread); }
-			pthread_attr_destroy(&attr);
 		}
 	}
 	// Wait a bit so that we don't close ressources while http threads are active
@@ -8319,28 +8313,24 @@ void webif_init(void)
 	}
 	
 	get_config_filename(fname, sizeof(fname), "oscam.srvid2");
-	use_srvid2 = file_exists(fname);
-					
-	pthread_attr_t attr;
-	SAFE_ATTR_INIT(&attr);
-	SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
-	int32_t ret = pthread_create(&httpthread, &attr, http_server, NULL);
-	if(ret)
+	use_srvid2 = file_exists(fname);		
+
+	if(start_thread("http", http_server, NULL, &httpthread, 1) == 0)
 	{
-		cs_log("ERROR: Can't start http server (errno=%d %s)", ret, strerror(ret));
-		pthread_attr_destroy(&attr);
-		return;
+		httpthread_running = 1;
 	}
-	pthread_attr_destroy(&attr);
 }
 
 void webif_close(void)
 {
 	if(!sock)
 		{ return; }
+		
 	shutdown(sock, 2);
 	close(sock);
-	SAFE_THREAD_JOIN(httpthread, NULL);
+	
+	if(httpthread_running)
+		{ SAFE_THREAD_JOIN(httpthread, NULL); }
 }
 
 #endif

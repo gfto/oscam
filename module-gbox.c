@@ -1436,10 +1436,6 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er)
 		if(er->gbox_ecm_status < GBOX_ECM_ANSWERED)
 		{ 
 			//Create thread to rebroacast ecm after time
-			pthread_t rbc_thread;
-			pthread_attr_t attr;
-			SAFE_ATTR_INIT(&attr);
-			SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
 			struct gbox_rbc_thread_args args;
 			args.cli = cli;
 			args.er = er;
@@ -1452,16 +1448,11 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er)
 			else
 				{ args.waittime = GBOX_REBROADCAST_TIMEOUT; }
 			cs_log_dbg(D_READER, "Creating rebroadcast thread with waittime: %d", args.waittime);
-			int32_t ret = pthread_create(&rbc_thread, &attr, (void *)gbox_rebroadcast_thread, &args);
+			int32_t ret = start_thread("rebroadcast", (void *)gbox_rebroadcast_thread, &args, NULL, 1);
 			if(ret)
 			{
-				cs_log("Can't create gbox rebroadcast thread (errno=%d %s)", ret, strerror(ret));
-				pthread_attr_destroy(&attr);
 				return -1;
 			}
-			else
-				{ pthread_detach(rbc_thread); }
-			pthread_attr_destroy(&attr);
 		}
 		else
 			{ er->gbox_ecm_status--; }

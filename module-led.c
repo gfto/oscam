@@ -182,21 +182,8 @@ static void arm_led_start_thread(void)
 	{
 		arm_led_actions = ll_create("arm_led_actions");
 	}
-	pthread_attr_t attr;
-	SAFE_ATTR_INIT(&attr);
-	cs_log("starting thread arm_led_thread");
-	SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
-	int32_t ret = pthread_create(&arm_led_thread, &attr, arm_led_thread_main, NULL);
-	if(ret)
-	{
-		cs_log("ERROR: can't create arm_led_thread thread (errno=%d %s)", ret, strerror(ret));
-	}
-	else
-	{
-		cs_log("arm_led_thread thread started");
-		pthread_detach(arm_led_thread);
-	}
-	pthread_attr_destroy(&attr);
+
+	start_thread("arm led", arm_led_thread_main, NULL, &arm_led_thread, 1);
 }
 
 static void arm_led(int32_t led, int32_t action)

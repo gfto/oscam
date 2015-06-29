@@ -1196,9 +1196,6 @@ void *init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t m
 	char sdevice[512];
 	int32_t ret;
 	struct s_thread_param param;
-	pthread_attr_t attr;
-	SAFE_ATTR_INIT(&attr);
-	SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
 	oscam_init_serialdata(&param.serialdata);
 	if(cfg.ser_device)
 		{ cs_strncpy(sdevice, cfg.ser_device, sizeof(sdevice)); }
@@ -1206,7 +1203,6 @@ void *init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t m
 		{ memset(sdevice, 0, sizeof(sdevice)); }
 	param.module_idx = module_idx;
 	char *p;
-	pthread_t temp;
 	char cltype = 'c'; //now auto should work
 	if(bcopy_end == -1)  //mutex should be initialized only once
 	{
@@ -1218,35 +1214,28 @@ void *init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t m
 		*p = 0;
 		if(!(p + 1) || (!(p + 1)[0])) { return NULL; }
 		if(!oscam_ser_parse_url(p + 1, &param.serialdata, &cltype)) { return NULL; }
-		ret = pthread_create(&temp, &attr, oscam_ser_fork, (void *) &param);
+		ret = start_thread("oscam_ser_fork", oscam_ser_fork, (void *) &param, NULL, 1);
 		if(ret)
 		{
-			cs_log("ERROR: can't create serial reader thread (errno=%d %s)", ret, strerror(ret));
-			pthread_attr_destroy(&attr);
 			return NULL;
 		}
 		else
 		{
 			oscam_wait_ser_fork();
-			pthread_detach(temp);
 		}
 	}
 
 	if(!sdevice[0]) { return NULL; }
 	if(!oscam_ser_parse_url(sdevice, &param.serialdata, &cltype)) { return NULL; }
-	ret = pthread_create(&temp, &attr, oscam_ser_fork, (void *) &param);
+	ret = start_thread("oscam_ser_fork", oscam_ser_fork, (void *) &param, NULL, 1);
 	if(ret)
 	{
-		cs_log("ERROR: can't create serial reader thread (errno=%d %s)", ret, strerror(ret));
-		pthread_attr_destroy(&attr);
 		return NULL;
 	}
 	else
 	{
 		oscam_wait_ser_fork();
-		pthread_detach(temp);
 	}
-	pthread_attr_destroy(&attr);
 	return NULL;
 }
 

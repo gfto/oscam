@@ -801,17 +801,12 @@ int32_t cs_init_log(void)
 #endif
 
 		log_list = ll_create(LOG_LIST);
-		pthread_attr_t attr;
-		SAFE_ATTR_INIT_NOLOG(&attr);
-		SAFE_ATTR_SETSTACKSIZE_NOLOG(&attr, PTHREAD_STACK_SIZE);
-		int32_t ret = pthread_create(&log_thread, &attr, (void *)&log_list_thread, NULL);
+
+		int32_t ret = start_thread_nolog("logging", (void *)&log_list_thread, NULL, &log_thread, 1);
 		if(ret)
 		{
-			fprintf(stderr, "ERROR: Can't create logging thread (errno=%d %s)", ret, strerror(ret));
-			pthread_attr_destroy(&attr);
 			cs_exit(1);
 		}
-		pthread_attr_destroy(&attr);
 		
 		logStarted = 1;
 	}

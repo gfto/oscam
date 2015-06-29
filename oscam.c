@@ -128,6 +128,8 @@ static char *prog_name;
 static char *stb_boxtype;
 static char *stb_boxname;
 
+static uint32_t oscam_stacksize = 0;
+
 /*****************************************************************************
         Statics
 *****************************************************************************/
@@ -937,25 +939,78 @@ void set_thread_name(const char *thread_name)
 void set_thread_name(const char *UNUSED(thread_name)) { }
 #endif
 
-/* Starts a thread named nameroutine with the start function startroutine. */
-void start_thread(void *startroutine, char *nameroutine)
+
+static void fix_stacksize(void)
 {
-	pthread_t temp;
+	// Changing the default stack size is generally a bad idea.
+	// We are doing it anyway at the moment, because we are using several threads,
+	// and are running on machnies with little RAM.
+	// HOWEVER, as we do not know which minimal stack size is needed to run
+	// oscam without SEQFAULT (stack overflow), this is risky business.
+	// If after a code change SEQFAULTs related to stack overflow appear,
+	// increase OSCAM_STACK_MIN or remove the calls to SAFE_ATTR_SETSTACKSIZE.
+	
+#ifndef PTHREAD_STACK_MIN
+#define PTHREAD_STACK_MIN 64000
+#endif
+#define OSCAM_STACK_MIN PTHREAD_STACK_MIN+32768
+	
+	if(oscam_stacksize < OSCAM_STACK_MIN)
+	{
+		long pagesize = sysconf(_SC_PAGESIZE);
+		if(pagesize < 1)
+			{ pagesize = 1; }
+		
+		oscam_stacksize = ((OSCAM_STACK_MIN / pagesize) + 1) * pagesize;
+	}
+}
+
+/* Starts a thread named nameroutine with the start function startroutine. */
+int32_t start_thread(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread, int8_t modify_stacksize)
+{
+	pthread_t temp;	
 	pthread_attr_t attr;
-	SAFE_ATTR_INIT(&attr);
+
 	cs_log_dbg(D_TRACE, "starting thread %s", nameroutine);
-	SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
-	cs_writelock(__func__, &system_lock);
-	int32_t ret = pthread_create(&temp, &attr, startroutine, NULL);
+
+	SAFE_ATTR_INIT(&attr);
+	if(modify_stacksize)
+		{ SAFE_ATTR_SETSTACKSIZE(&attr, oscam_stacksize); }
+			
+	int32_t ret = pthread_create(pthread == NULL ? &temp : pthread, &attr, startroutine, arg);
 	if(ret)
 		{ cs_log("ERROR: can't create %s thread (errno=%d %s)", nameroutine, ret, strerror(ret)); }
 	else
 	{
 		cs_log_dbg(D_TRACE, "%s thread started", nameroutine);
-		pthread_detach(temp);
+		pthread_detach(pthread == NULL ? temp : *pthread);
 	}
+	
 	pthread_attr_destroy(&attr);
-	cs_writeunlock(__func__, &system_lock);
+	
+	return ret;
+}
+
+int32_t start_thread_nolog(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread, int8_t modify_stacksize)
+{
+	pthread_t temp;	
+	pthread_attr_t attr;
+
+	SAFE_ATTR_INIT(&attr);
+	if(modify_stacksize)
+		{ SAFE_ATTR_SETSTACKSIZE(&attr, oscam_stacksize); }
+		
+	int32_t ret = pthread_create(pthread == NULL ? &temp : pthread, &attr, startroutine, arg);
+	if(ret)
+		{ printf("ERROR: can't create %s thread (errno=%d %s)", nameroutine, ret, strerror(ret)); }
+	else
+	{
+		pthread_detach(pthread == NULL ? temp : *pthread);
+	}
+	
+	pthread_attr_destroy(&attr);
+	
+	return ret;
 }
 
 /* Allows to kill another thread specified through the client cl with locking.
@@ -1304,7 +1359,7 @@ static void * card_poll(void) {
 		ts.tv_nsec = tv.tv_usec * 1000;
 		ts.tv_sec += 1;
 		SAFE_MUTEX_LOCK(&card_poll_sleep_cond_mutex);
-		pthread_cond_timedwait(&card_poll_sleep_cond, &card_poll_sleep_cond_mutex, &ts); // sleep on card_poll_sleep_cond
+		SAFE_COND_TIMEDWAIT(&card_poll_sleep_cond, &card_poll_sleep_cond_mutex, &ts); // sleep on card_poll_sleep_cond
 		SAFE_MUTEX_UNLOCK(&card_poll_sleep_cond_mutex);
 	}
 	return NULL;
@@ -1561,6 +1616,8 @@ int32_t main(int32_t argc, char *argv[])
 	struct timespec start_ts;
 	cs_gettime(&start_ts); // Initialize clock_type
 
+	fix_stacksize();
+
 	if(pthread_key_create(&getclient, NULL))
 	{
 		fprintf(stderr, "Could not create getclient, exiting...");
@@ -1721,7 +1778,7 @@ int32_t main(int32_t argc, char *argv[])
 
 	webif_init();
 
-	start_thread((void *) &reader_check, "reader check");
+	start_thread("reader check", (void *) &reader_check, NULL, NULL, 1);
 	cw_process_thread_start();
 	checkcache_process_thread_start();
 
@@ -1740,7 +1797,7 @@ int32_t main(int32_t argc, char *argv[])
 
 	ac_init();
 
-	start_thread((void *) &card_poll, "card poll");
+	start_thread("card poll", (void *) &card_poll, NULL, NULL, 1);
 
 	for(i = 0; i < CS_MAX_MOD; i++)
 	{

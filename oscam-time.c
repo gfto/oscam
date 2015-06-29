@@ -273,7 +273,7 @@ void __cs_pthread_cond_init(const char *n, pthread_cond_t *cond)
 #if 0
 #if defined(HAVE_pthread_condattr_setclock)
 	enum clock_type ctype = cs_getclocktype();
-	pthread_condattr_setclock(&attr, (ctype == CLOCK_TYPE_MONOTONIC) ? CLOCK_MONOTONIC : CLOCK_REALTIME);
+	SAFE_CONDATTR_SETCLOCK_R(&attr, (ctype == CLOCK_TYPE_MONOTONIC) ? CLOCK_MONOTONIC : CLOCK_REALTIME, n);
 #endif
 #endif
 	SAFE_COND_INIT_R(cond, &attr, n); // init thread with right clock assigned
@@ -287,7 +287,7 @@ void __cs_pthread_cond_init_nolog(const char *n, pthread_cond_t *cond)
 #if 0
 #if defined(HAVE_pthread_condattr_setclock)
 	enum clock_type ctype = cs_getclocktype();
-	pthread_condattr_setclock(&attr, (ctype == CLOCK_TYPE_MONOTONIC) ? CLOCK_MONOTONIC : CLOCK_REALTIME);
+	SAFE_CONDATTR_SETCLOCK_NOLOG_R(&attr, (ctype == CLOCK_TYPE_MONOTONIC) ? CLOCK_MONOTONIC : CLOCK_REALTIME, n);
 #endif
 #endif
 	SAFE_COND_INIT_NOLOG_R(cond, &attr, n); // init thread with right clock assigned
@@ -300,7 +300,7 @@ void sleepms_on_cond(const char *n, pthread_mutex_t *mutex, pthread_cond_t *cond
 	struct timespec ts;
 	add_ms_to_timespec(&ts, msec);
 	SAFE_MUTEX_LOCK_R(mutex, n);
-	pthread_cond_timedwait(cond, mutex, &ts); // sleep on sleep_cond
+	SAFE_COND_TIMEDWAIT_R(cond, mutex, &ts, n); // sleep on sleep_cond
 	SAFE_MUTEX_UNLOCK_R(mutex, n);
 }
 

@@ -4126,15 +4126,11 @@ static void *dvbapi_main_local(void *cli)
 	}
 	else
 	{
-		pthread_t event_thread;
-		int32_t ret = pthread_create(&event_thread, NULL, dvbapi_event_thread, (void *) dvbapi_client);
+		int32_t ret = start_thread("dvbapi event", dvbapi_event_thread, (void *) dvbapi_client, NULL, 1);
 		if(ret)
 		{
-			cs_log("ERROR: Can't create dvbapi event thread (errno=%d %s)", ret, strerror(ret));
 			return NULL;
 		}
-		else
-			{ pthread_detach(event_thread); }
 	}
 
 	if(listenfd != -1)
@@ -5278,14 +5274,11 @@ void *dvbapi_start_handler(struct s_client *cl, uchar *UNUSED(mbuf), int32_t mod
 		cl = create_client(get_null_ip());
 		cl->module_idx = module_idx;
 		cl->typ = 'c';
-		int32_t ret = pthread_create(&cl->thread, NULL, _main_func, (void *) cl);
+		int32_t ret = start_thread("dvbapi handler", _main_func, (void *) cl, &cl->thread, 1);
 		if(ret)
 		{
-			cs_log("ERROR: Can't create dvbapi handler thread (errno=%d %s)", ret, strerror(ret));
 			return NULL;
 		}
-		else
-			{ pthread_detach(cl->thread); }
 	}
 
 	return NULL;

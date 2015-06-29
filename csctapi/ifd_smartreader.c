@@ -108,7 +108,7 @@ static int32_t smart_read(struct s_reader *reader, unsigned char *buff, uint32_t
 				break;
 			struct timespec ts;
 			add_ms_to_timespec(&ts, timeout_ms - gone);
-			pthread_cond_timedwait(&crdr_data->g_read_cond, &crdr_data->g_read_mutex, &ts);
+			SAFE_COND_TIMEDWAIT(&crdr_data->g_read_cond, &crdr_data->g_read_mutex, &ts);
 			cs_ftime(&now);
 		}
 
@@ -1245,7 +1245,7 @@ static void *ReaderThread(void *p)
 		{
 			struct timespec timeout;
 			add_ms_to_timespec(&timeout, 2000);
-			pthread_cond_timedwait(&crdr_data->g_usb_cond, &crdr_data->g_usb_mutex, &timeout);
+			SAFE_COND_TIMEDWAIT(&crdr_data->g_usb_cond, &crdr_data->g_usb_mutex, &timeout);
 		}
 		SAFE_MUTEX_UNLOCK(&crdr_data->g_usb_mutex);
 	}
@@ -1397,11 +1397,9 @@ static int32_t SR_Init(struct s_reader *reader)
 	cs_pthread_cond_init(__func__, &crdr_data->g_usb_mutex, &crdr_data->g_usb_cond);
 
 	cs_writeunlock(__func__, &sr_lock);
-	rdr_log_dbg(reader, D_IFD, "Creating smartreader thread.");
-	ret = pthread_create(&crdr_data->rt, NULL, ReaderThread, (void *)(reader));
+	ret = start_thread("smartreader", ReaderThread, (void *)(reader), &crdr_data->rt, 1);
 	if(ret)
 	{
-		rdr_log(reader, "ERROR: Can't create smartreader thread (errno=%d %s)", ret, strerror(ret));
 		--init_count;
 		--current_count;
 		return ERROR;

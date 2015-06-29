@@ -47,7 +47,8 @@ static void free_job_data(struct job_data *data)
 
 void free_joblist(struct s_client *cl)
 {
-	pthread_mutex_trylock(&cl->thread_lock);
+	int32_t lock_status = pthread_mutex_trylock(&cl->thread_lock);
+	
 	LL_ITER it = ll_iter_create(cl->joblist);
 	struct job_data *data;
 	while((data = ll_iter_next(&it)))
@@ -59,7 +60,10 @@ void free_joblist(struct s_client *cl)
 	if(cl->work_job_data)  // Free job_data that was not freed by work_thread
 		{ free_job_data(cl->work_job_data); }
 	cl->work_job_data = NULL;
-	SAFE_MUTEX_UNLOCK(&cl->thread_lock);
+	
+	if(lock_status == 0)
+		{ SAFE_MUTEX_UNLOCK(&cl->thread_lock); }
+	
 	pthread_mutex_destroy(&cl->thread_lock);
 }
 
@@ -456,12 +460,12 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 		return 1;
 	}
 
-	pthread_attr_t attr;
-	SAFE_ATTR_INIT(&attr);
-	/* pcsc doesn't like this either; segfaults on x86, x86_64 */
+
+	/* pcsc doesn't like this; segfaults on x86, x86_64 */
+	int8_t modify_stacksize = 0;
 	struct s_reader *rdr = cl->reader;
 	if(cl->typ != 'r' || !rdr || rdr->typ != R_PCSC)
-		{ SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE); }
+		{ modify_stacksize = 1; }
 
 	if(action != ACTION_READER_CHECK_HEALTH)
 	{
@@ -469,18 +473,13 @@ int32_t add_job(struct s_client *cl, enum actions action, void *ptr, int32_t len
 					  action > ACTION_CLIENT_FIRST ? "client" : "reader", action);
 	}
 
-	int32_t ret = pthread_create(&cl->thread, &attr, work_thread, (void *)data);
+	int32_t ret = start_thread("client work", work_thread, (void *)data, &cl->thread, modify_stacksize);
 	if(ret)
 	{
 		cs_log("ERROR: can't create thread for %s (errno=%d %s)",
 			   action > ACTION_CLIENT_FIRST ? "client" : "reader", ret, strerror(ret));
 		free_job_data(data);
 	}
-	else
-	{
-		pthread_detach(cl->thread);
-	}
-	pthread_attr_destroy(&attr);
 
 	cl->thread_active = 1;
 	SAFE_MUTEX_UNLOCK(&cl->thread_lock);

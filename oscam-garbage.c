@@ -160,7 +160,6 @@ static void garbage_collector(void)
 
 void start_garbage_collector(int32_t debug)
 {
-
 	garbage_debug = debug;
 	int32_t i;
 	
@@ -174,20 +173,13 @@ void start_garbage_collector(int32_t debug)
 	}
 	cs_pthread_cond_init(__func__, &sleep_cond_mutex, &sleep_cond);
 
-	pthread_attr_t attr;
-	SAFE_ATTR_INIT(&attr);
-
 	garbage_collector_active = 1;
 
-	SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
-	int32_t ret = pthread_create(&garbage_thread, &attr, (void *)&garbage_collector, NULL);
+	int32_t ret = start_thread("garbage", (void *)&garbage_collector, NULL, &garbage_thread, 1);
 	if(ret)
 	{
-		cs_log("ERROR: can't create garbagecollector thread (errno=%d %s)", ret, strerror(ret));
-		pthread_attr_destroy(&attr);
 		cs_exit(1);
 	}
-	pthread_attr_destroy(&attr);
 }
 
 void stop_garbage_collector(void)

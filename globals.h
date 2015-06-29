@@ -270,11 +270,14 @@ typedef unsigned char uchar;
 #define SAFE_MUTEXATTR_SETTYPE(a,b)	SAFE_PTHREAD_2ARG(pthread_mutexattr_settype, a, b, cs_log)
 #define SAFE_MUTEX_INIT(a,b)		SAFE_PTHREAD_2ARG(pthread_mutex_init, a, b, cs_log)
 #define SAFE_COND_INIT(a,b)			SAFE_PTHREAD_2ARG(pthread_cond_init, a, b, cs_log)
+#define SAFE_CONDATTR_SETCLOCK(a,b)	SAFE_PTHREAD_2ARG(pthread_condattr_setclock, a, b, cs_log)
 
 #define SAFE_MUTEX_INIT_NOLOG(a,b)			SAFE_PTHREAD_2ARG(pthread_mutex_init, a, b, printf)
 #define SAFE_COND_INIT_NOLOG(a,b)			SAFE_PTHREAD_2ARG(pthread_cond_init, a, b, printf)
 #define SAFE_THREAD_JOIN_NOLOG(a,b)			SAFE_PTHREAD_2ARG(pthread_join, a, b, printf)
 #define SAFE_ATTR_SETSTACKSIZE_NOLOG(a,b)	SAFE_PTHREAD_2ARG(pthread_attr_setstacksize, a, b, printf)
+#define SAFE_CONDATTR_SETCLOCK_NOLOG(a,b)	SAFE_PTHREAD_2ARG(pthread_condattr_setclock, a, b, printf)
+
 
 #define SAFE_PTHREAD_1ARG_R(a, b, c, d) { \
 	int32_t pter = a(b); \
@@ -304,9 +307,28 @@ typedef unsigned char uchar;
 
 #define SAFE_MUTEX_INIT_R(a,b,c)		SAFE_PTHREAD_2ARG_R(pthread_mutex_init, a, b, cs_log, c)
 #define SAFE_COND_INIT_R(a,b,c)			SAFE_PTHREAD_2ARG_R(pthread_cond_init, a, b, cs_log, c)
+#define SAFE_CONDATTR_SETCLOCK_R(a,b,c)	SAFE_PTHREAD_2ARG(pthread_condattr_setclock, a, b, cs_log, c)
 
 #define SAFE_MUTEX_INIT_NOLOG_R(a,b,c)	SAFE_PTHREAD_2ARG_R(pthread_mutex_init, a, b, printf, c)
 #define SAFE_COND_INIT_NOLOG_R(a,b,c)	SAFE_PTHREAD_2ARG_R(pthread_cond_init, a, b, printf, c)
+#define SAFE_CONDATTR_SETCLOCK_NOLOG_R(a,b,c)	SAFE_PTHREAD_2ARG(pthread_condattr_setclock, a, b, printf, c)
+
+#define SAFE_COND_TIMEDWAIT(a, b, c) { \
+	int32_t pter = pthread_cond_timedwait(a, b, c); \
+	if(pter != 0 && pter != ETIMEDOUT) \
+	{ \
+		cs_log("FATAL ERROR: pthread_cond_timedwait failed in %s with error %d %s\n", __func__, pter, strerror(pter)); \
+		cs_exit_oscam();\
+	} }
+
+#define SAFE_COND_TIMEDWAIT_R(a, b, c, d) { \
+	int32_t pter = pthread_cond_timedwait(a, b, c); \
+	if(pter != 0 && pter != ETIMEDOUT) \
+	{ \
+		cs_log("FATAL ERROR: pthread_cond_timedwait failed in %s (called from %s) with error %d %s\n", __func__, d, pter, strerror(pter)); \
+		cs_exit_oscam();\
+	} }
+
 
 #ifdef NO_PTHREAD_STACKSIZE
 #undef SAFE_ATTR_SETSTACKSIZE
@@ -348,11 +370,6 @@ typedef unsigned char uchar;
 
 #define MAX_ECM_SIZE 596
 #define MAX_EMM_SIZE 258
-
-#ifndef PTHREAD_STACK_MIN
-#define PTHREAD_STACK_MIN 64000
-#endif
-#define PTHREAD_STACK_SIZE PTHREAD_STACK_MIN+32768
 
 #define CS_EMMCACHESIZE  512 //nr of EMMs that each reader will cache
 #define MSGLOGSIZE 64   //size of string buffer for a ecm to return messages
@@ -2146,7 +2163,8 @@ void    cs_restart_oscam(void);
 int32_t cs_get_restartmode(void);
 
 void set_thread_name(const char *thread_name);
-void start_thread(void *startroutine, char *nameroutine);
+int32_t start_thread(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread, int8_t modify_stacksize);
+int32_t start_thread_nolog(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread, int8_t modify_stacksize);
 void kill_thread(struct s_client *cl);
 
 struct s_module *get_module(struct s_client *cl);

@@ -829,16 +829,8 @@ static int32_t Sc8in1_Init(struct s_reader *reader)
 
 			// Start display thread
 			crdr_data->display_running = 1;
-			pthread_attr_t attr;
-			SAFE_ATTR_INIT(&attr);
-			SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
-			if(pthread_create(&crdr_data->display_thread, &attr, mcr_update_display_thread, (void *)(reader)))
-				{ rdr_log(reader, "ERROR: can't create MCR_DISPLAY_THREAD thread"); }
-			else
-			{
-				rdr_log(reader, "MCR_DISPLAY_THREAD thread started");
-			}
-			pthread_attr_destroy(&attr);
+
+			start_thread("mcr_update_display", mcr_update_display_thread, (void *)(reader), &crdr_data->display_thread, 1);
 		}
 	}
 

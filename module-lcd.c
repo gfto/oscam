@@ -252,7 +252,7 @@ void lcd_thread_start(void)
 	if(cfg.enablelcd)
 	{
 		running = 1;
-		start_thread((void *) &refresh_lcd_file, "LCD");
+		start_thread("LCD", (void *) &refresh_lcd_file, NULL, NULL, 1);
 	}
 }
 

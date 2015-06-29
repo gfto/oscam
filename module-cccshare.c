@@ -1655,20 +1655,13 @@ void cccam_init_share(void)
 
 	share_updater_thread = 0;
 	share_updater_thread_active = 1;
+	
 	pthread_t temp;
-	pthread_attr_t attr;
-	SAFE_ATTR_INIT(&attr);
-	SAFE_ATTR_SETSTACKSIZE(&attr, PTHREAD_STACK_SIZE);
-	int32_t ret = pthread_create(&temp, &attr, (void *)&share_updater, NULL);
-	if(ret)
-		{ cs_log("ERROR: can't create share updater thread (errno=%d %s)", ret, strerror(ret)); }
-	else
+	int32_t ret = start_thread("share updater", (void *)&share_updater, NULL, &temp, 1);
+	if(!ret)
 	{
-		cs_log_dbg(D_TRACE, "share updater thread started");
-		pthread_detach(temp);
 		share_updater_thread = temp;
 	}
-	pthread_attr_destroy(&attr);
 }
 
 void cccam_done_share(void)
