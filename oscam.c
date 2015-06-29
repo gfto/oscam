@@ -1002,7 +1002,7 @@ int32_t start_thread_nolog(char *nameroutine, void *startroutine, void *arg, pth
 		
 	int32_t ret = pthread_create(pthread == NULL ? &temp : pthread, &attr, startroutine, arg);
 	if(ret)
-		{ printf("ERROR: can't create %s thread (errno=%d %s)", nameroutine, ret, strerror(ret)); }
+		{ fprintf(stderr, "ERROR: can't create %s thread (errno=%d %s)", nameroutine, ret, strerror(ret)); }
 	else
 	{
 		pthread_detach(pthread == NULL ? temp : *pthread);

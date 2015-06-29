@@ -456,7 +456,7 @@ static void stapi_cleanup_thread(void *dev)
 	int32_t ErrorCode;
 	ErrorCode = oscam_stapi_Close(dev_list[dev_index].SessionHandle);
 
-	printf("liboscam_stapi: PTI %s closed - %d\n", dev_list[dev_index].name, ErrorCode);
+	cs_log("liboscam_stapi: PTI %s closed - %d\n", dev_list[dev_index].name, ErrorCode);
 	dev_list[dev_index].SessionHandle = 0;
 }
 
