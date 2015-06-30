@@ -1537,32 +1537,35 @@ const struct s_cardreader *cardreaders[] =
 static void find_conf_dir(void) 
  {
 	static const char* confdirs[] = 
-		{ "/etc/tuxbox/config/oscam.conf", 
-		  "/var/tuxbox/config/oscam.conf", 
-		  "/usr/keys/oscam.conf", 
-		  "/var/keys/oscam.conf",
-		  "/var/etc/oscam/oscam.conf",
-		  "/var/etc/oscam.conf",
-		  "/var/oscam/oscam.conf",
-		  "/config/oscam/oscam.conf",
+		{ "/etc/tuxbox/config/", 
+		  "/var/tuxbox/config/", 
+		  "/usr/keys/", 
+		  "/var/keys/",
+		  "/var/etc/oscam/",
+		  "/var/etc/",
+		  "/var/oscam/",
+		  "/config/oscam/",
 		  NULL
 		};
  	
-	char default_conf[128+16];
+	char conf_file[128+16];
  	int32_t i;
  	
 	if(cs_confdir[strlen(cs_confdir) - 1] != '/')
 		{ strcat(cs_confdir, "/"); }
  	
-	if(snprintf(default_conf, sizeof(default_conf), "%soscam.conf", cs_confdir) < 0)
+	if(snprintf(conf_file, sizeof(conf_file), "%soscam.conf", cs_confdir) < 0)
 		{ return; }
 	
-	if(!access(default_conf, F_OK))
+	if(!access(conf_file, F_OK))
 		{ return; }
 	
 	for(i=0; confdirs[i] != NULL; i++)
 	{
-		if (!access(confdirs[i], F_OK)) 
+		if(snprintf(conf_file, sizeof(conf_file), "%soscam.conf", confdirs[i]) < 0)
+			{ return; }
+		
+		if (!access(conf_file, F_OK)) 
 		{
 			cs_strncpy(cs_confdir, confdirs[i], sizeof(cs_confdir));
 			return;
