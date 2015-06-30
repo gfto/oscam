@@ -800,37 +800,38 @@ static int32_t dvbapi_detect_api(void)
 	return 1;
 }
 
-static int32_t dvbapi_read_device(int32_t dmx_fd, unsigned char *buf, int32_t length)
+static int32_t dvbapi_read_device(int32_t dmx_fd, unsigned char *buf, uint32_t length)
 {
-	int32_t len, rc;
+	int32_t readed;
+	uint32_t count = 0;
 	struct pollfd pfd[1];
 
 	pfd[0].fd = dmx_fd;
 	pfd[0].events = (POLLIN | POLLPRI);
 
-	rc = poll(pfd, 1, 7000);
-	if(rc < 1)
+	while (count < length ) 
 	{
-		cs_log("ERROR: Read on %d timed out (errno=%d %s)", dmx_fd, errno, strerror(errno));
-		return -1;
-	}
-
-	len = read(dmx_fd, buf, length);
-		
-	if(len < 1)
-	{ 
-		if(errno == EOVERFLOW)
+		if (poll(pfd,1,1))
 		{
-			cs_log("fd %d no valid data present since receiver reported an internal bufferoverflow!", dmx_fd);
-			return 0;
-		}
-		else if(errno != EBADF && errno !=EINVAL) // dont throw errors on invalid fd or invalid argument
-		{
-			cs_log("ERROR: Read error on fd %d (errno=%d %s)", dmx_fd, errno, strerror(errno));
-		}
+			if (pfd[0].revents & POLLIN)
+			{
+				readed = read(dmx_fd, &buf[count], length-count);
+				if (readed < 0)
+				{
+                    if(errno == EINTR || errno == EAGAIN) { continue; }  // try again in case of interrupt
+					cs_log("ERROR: Read error on fd %d (errno=%d %s)", dmx_fd, errno, strerror(errno));
+					return (errno == EOVERFLOW ? 0 : -1);
+				}
+				if (readed > 0)
+				{
+					count += readed;
+				}
+			}
+        }
+		else break;
 	}
-	else { cs_log_dump_dbg(D_TRACE, buf, len, "Readed:"); }
-	return len;
+	cs_log_dump_dbg(D_TRACE, buf, count, "Received:");
+	return count;
 }
 
 int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter)
