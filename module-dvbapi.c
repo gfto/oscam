@@ -811,22 +811,27 @@ static int32_t dvbapi_read_device(int32_t dmx_fd, unsigned char *buf, uint32_t l
 
 	while (count < length ) 
 	{
-		if (poll(pfd,1,1))
+		if (poll(pfd,1,1)) // fd ready for reading?
 		{
-			if (pfd[0].revents & POLLIN)
+			if (pfd[0].revents & (POLLIN | POLLPRI)) // is there data to read? 
 			{
 				readed = read(dmx_fd, &buf[count], length-count);
-				if (readed < 0)
+				if(readed < 0) // error occured while reading
 				{
                     if(errno == EINTR || errno == EAGAIN) { continue; }  // try again in case of interrupt
 					cs_log("ERROR: Read error on fd %d (errno=%d %s)", dmx_fd, errno, strerror(errno));
 					return (errno == EOVERFLOW ? 0 : -1);
 				}
-				if (readed > 0)
+				if(readed > 0) // succesfull read
 				{
 					count += readed;
 				}
+				if(readed == 0) // nothing to read left
+				{
+					break;
+				}
 			}
+			else return -1; // other events than pollin/pri means bad news -> abort!
         }
 		else break;
 	}
