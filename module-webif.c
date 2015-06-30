@@ -8159,6 +8159,11 @@ static void *http_server(void *UNUSED(d))
 	}
 
 #ifdef WITH_SSL
+	if(pthread_key_create(&getssl, NULL))
+	{
+		cs_log("Could not create getssl");
+	}
+	
 	SSL_CTX *ctx = NULL;
 	if(cfg.http_use_ssl)
 	{
