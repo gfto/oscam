@@ -1537,15 +1537,16 @@ const struct s_cardreader *cardreaders[] =
 static void find_conf_dir(void) 
  {
 	static const char* confdirs[] = 
-		{ "/etc/tuxbox/config/", 
-		  "/var/tuxbox/config/", 
-		  "/usr/keys/", 
-		  "/var/keys/",
-		  "/var/etc/oscam/",
-		  "/var/etc/",
-		  "/var/oscam/",
-		  "/config/oscam/",
-		  NULL
+		{	"/etc/tuxbox/config/", 
+			"/etc/tuxbox/config/oscam/",
+			"/var/tuxbox/config/", 
+			"/usr/keys/", 
+			"/var/keys/",
+			"/var/etc/oscam/",
+			"/var/etc/",
+			"/var/oscam/",
+			"/config/oscam/",
+			NULL
 		};
  	
 	char conf_file[128+16];
