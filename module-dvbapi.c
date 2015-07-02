@@ -4131,7 +4131,7 @@ static void *dvbapi_main_local(void *cli)
 	}
 	else
 	{
-		int32_t ret = start_thread("dvbapi event", dvbapi_event_thread, (void *) dvbapi_client, NULL, 1, 1);
+		int32_t ret = start_thread("dvbapi event", dvbapi_event_thread, (void *) dvbapi_client, NULL, 1, 0);
 		if(ret)
 		{
 			return NULL;
@@ -5279,7 +5279,7 @@ void *dvbapi_start_handler(struct s_client *cl, uchar *UNUSED(mbuf), int32_t mod
 		cl = create_client(get_null_ip());
 		cl->module_idx = module_idx;
 		cl->typ = 'c';
-		int32_t ret = start_thread("dvbapi handler", _main_func, (void *) cl, &cl->thread, 1, 1);
+		int32_t ret = start_thread("dvbapi handler", _main_func, (void *) cl, &cl->thread, 1, 0);
 		if(ret)
 		{
 			return NULL;

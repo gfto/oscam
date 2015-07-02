@@ -255,7 +255,7 @@ int32_t stapi_open(void)
 		para->id = i;
 		para->cli = cur_client();
 
-		int32_t ret = start_thread("stapi read", stapi_read_thread, (void *)para, &dev_list[i].thread, 1, 1);
+		int32_t ret = start_thread("stapi read", stapi_read_thread, (void *)para, &dev_list[i].thread, 1, 0);
 		if(ret)
 		{
 			return 0;

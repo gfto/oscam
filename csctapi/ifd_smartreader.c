@@ -1397,7 +1397,7 @@ static int32_t SR_Init(struct s_reader *reader)
 	cs_pthread_cond_init(__func__, &crdr_data->g_usb_mutex, &crdr_data->g_usb_cond);
 
 	cs_writeunlock(__func__, &sr_lock);
-	ret = start_thread("smartreader", ReaderThread, (void *)(reader), &crdr_data->rt, 0, 1);
+	ret = start_thread("smartreader", ReaderThread, (void *)(reader), &crdr_data->rt, 0, 0);
 	if(ret)
 	{
 		--init_count;
