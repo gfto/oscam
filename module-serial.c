@@ -1214,7 +1214,7 @@ void *init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t m
 		*p = 0;
 		if(!(p + 1) || (!(p + 1)[0])) { return NULL; }
 		if(!oscam_ser_parse_url(p + 1, &param.serialdata, &cltype)) { return NULL; }
-		ret = start_thread("oscam_ser_fork", oscam_ser_fork, (void *) &param, NULL, 1);
+		ret = start_thread("oscam_ser_fork", oscam_ser_fork, (void *) &param, NULL, 1, 1);
 		if(ret)
 		{
 			return NULL;
@@ -1227,7 +1227,7 @@ void *init_oscam_ser(struct s_client *UNUSED(cl), uchar *UNUSED(mbuf), int32_t m
 
 	if(!sdevice[0]) { return NULL; }
 	if(!oscam_ser_parse_url(sdevice, &param.serialdata, &cltype)) { return NULL; }
-	ret = start_thread("oscam_ser_fork", oscam_ser_fork, (void *) &param, NULL, 1);
+	ret = start_thread("oscam_ser_fork", oscam_ser_fork, (void *) &param, NULL, 1, 1);
 	if(ret)
 	{
 		return NULL;

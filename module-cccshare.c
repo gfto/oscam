@@ -1656,7 +1656,7 @@ void cccam_init_share(void)
 	share_updater_thread_active = 1;
 	
 	pthread_t temp;
-	int32_t ret = start_thread("share updater", (void *)&share_updater, NULL, &temp, 1);
+	int32_t ret = start_thread("share updater", (void *)&share_updater, NULL, &temp, 1, 1);
 	if(!ret)
 	{
 		share_updater_thread = temp;

@@ -392,7 +392,7 @@ void save_stat_to_file(int32_t thread)
 {
 	stat_load_save = 0;
 	if(thread)
-		{ start_thread("save lb stats", (void *)&save_stat_to_file_thread, NULL, NULL, 1); }
+		{ start_thread("save lb stats", (void *)&save_stat_to_file_thread, NULL, NULL, 1, 1); }
 	else
 		{ save_stat_to_file_thread(); }
 }
@@ -1830,7 +1830,7 @@ static void housekeeping_stat(int32_t force)
 		{ return; }
 
 	last_housekeeping = now;
-	start_thread("housekeeping lb stats", (void *)&housekeeping_stat_thread, NULL, NULL, 1);
+	start_thread("housekeeping lb stats", (void *)&housekeeping_stat_thread, NULL, NULL, 1, 1);
 }
 
 static int compare_stat(READER_STAT **ps1, READER_STAT **ps2)

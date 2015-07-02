@@ -1448,7 +1448,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er)
 			else
 				{ args.waittime = GBOX_REBROADCAST_TIMEOUT; }
 			cs_log_dbg(D_READER, "Creating rebroadcast thread with waittime: %d", args.waittime);
-			int32_t ret = start_thread("rebroadcast", (void *)gbox_rebroadcast_thread, &args, NULL, 1);
+			int32_t ret = start_thread("rebroadcast", (void *)gbox_rebroadcast_thread, &args, NULL, 1, 1);
 			if(ret)
 			{
 				return -1;

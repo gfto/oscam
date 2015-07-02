@@ -267,6 +267,7 @@ typedef unsigned char uchar;
 
 #define SAFE_COND_WAIT(a,b)			SAFE_PTHREAD_2ARG(pthread_cond_wait, a, b, cs_log)
 #define SAFE_THREAD_JOIN(a,b)		SAFE_PTHREAD_2ARG(pthread_join, a, b, cs_log)
+#define SAFE_ATTR_SETSTACKSIZE(a,b) SAFE_PTHREAD_2ARG(pthread_attr_setstacksize, a, b, cs_log)
 #define SAFE_SETSPECIFIC(a,b)		SAFE_PTHREAD_2ARG(pthread_setspecific, a, b, cs_log)
 #define SAFE_MUTEXATTR_SETTYPE(a,b)	SAFE_PTHREAD_2ARG(pthread_mutexattr_settype, a, b, cs_log)
 #define SAFE_MUTEX_INIT(a,b)		SAFE_PTHREAD_2ARG(pthread_mutex_init, a, b, cs_log)
@@ -276,6 +277,7 @@ typedef unsigned char uchar;
 #define SAFE_MUTEX_INIT_NOLOG(a,b)			SAFE_PTHREAD_2ARG(pthread_mutex_init, a, b, fprintf_stderr)
 #define SAFE_COND_INIT_NOLOG(a,b)			SAFE_PTHREAD_2ARG(pthread_cond_init, a, b, fprintf_stderr)
 #define SAFE_THREAD_JOIN_NOLOG(a,b)			SAFE_PTHREAD_2ARG(pthread_join, a, b, fprintf_stderr)
+#define SAFE_ATTR_SETSTACKSIZE_NOLOG(a,b)   SAFE_PTHREAD_2ARG(pthread_attr_setstacksize, a, b, fprintf_stderr)
 #define SAFE_CONDATTR_SETCLOCK_NOLOG(a,b)	SAFE_PTHREAD_2ARG(pthread_condattr_setclock, a, b, fprintf_stderr)
 
 
@@ -329,6 +331,12 @@ typedef unsigned char uchar;
 		cs_exit_oscam();\
 	} }
 
+#ifdef NO_PTHREAD_STACKSIZE
+#undef SAFE_ATTR_SETSTACKSIZE
+#undef SAFE_ATTR_SETSTACKSIZE_NOLOG
+#define SAFE_ATTR_SETSTACKSIZE(a,b)
+#define SAFE_ATTR_SETSTACKSIZE_NOLOG(a,b)
+#endif
 
 /* ===========================
  *         constants
@@ -2156,8 +2164,8 @@ void    cs_restart_oscam(void);
 int32_t cs_get_restartmode(void);
 
 void set_thread_name(const char *thread_name);
-int32_t start_thread(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread, int8_t detach);
-int32_t start_thread_nolog(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread, int8_t detach);
+int32_t start_thread(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread, int8_t detach, int8_t modify_stacksize);
+int32_t start_thread_nolog(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread, int8_t detach, int8_t modify_stacksize);
 void kill_thread(struct s_client *cl);
 
 struct s_module *get_module(struct s_client *cl);

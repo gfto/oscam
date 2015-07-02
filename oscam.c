@@ -128,6 +128,8 @@ static char *prog_name;
 static char *stb_boxtype;
 static char *stb_boxname;
 
+static uint32_t oscam_stacksize = 0;
+	
 /*****************************************************************************
         Statics
 *****************************************************************************/
@@ -938,14 +940,48 @@ void set_thread_name(const char *UNUSED(thread_name)) { }
 #endif
 
 
-/* Starts a thread named nameroutine with the start function startroutine. */
-int32_t start_thread(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread, int8_t detach)
+static void fix_stacksize(void)
 {
-	pthread_t temp;	
+// Changing the default stack size is generally a bad idea.
+// We are doing it anyway at the moment, because we are using several threads,
+// and are running on machnies with little RAM.
+// HOWEVER, as we do not know which minimal stack size is needed to run
+// oscam without SEQFAULT (stack overflow), this is risky business.
+// If after a code change SEQFAULTs related to stack overflow appear,
+// increase OSCAM_STACK_MIN or remove the calls to SAFE_ATTR_SETSTACKSIZE.
+
+#ifndef PTHREAD_STACK_MIN
+#define PTHREAD_STACK_MIN 64000
+#endif
+#define OSCAM_STACK_MIN PTHREAD_STACK_MIN+32768
+   
+	if(oscam_stacksize < OSCAM_STACK_MIN)
+	{
+		long pagesize = sysconf(_SC_PAGESIZE);
+		if(pagesize < 1)
+		{
+			oscam_stacksize = OSCAM_STACK_MIN;
+			return;
+		}
+		
+		oscam_stacksize = (((OSCAM_STACK_MIN) / pagesize) + 1) * pagesize;
+	}
+}
+
+/* Starts a thread named nameroutine with the start function startroutine. */
+int32_t start_thread(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread, int8_t detach, int8_t modify_stacksize)
+{
+	pthread_t temp;
+	pthread_attr_t attr;
 	
 	cs_log_dbg(D_TRACE, "starting thread %s", nameroutine);
-		
-	int32_t ret = pthread_create(pthread == NULL ? &temp : pthread, NULL, startroutine, arg);
+
+	SAFE_ATTR_INIT(&attr);
+	
+	if(modify_stacksize)
+ 		{ SAFE_ATTR_SETSTACKSIZE(&attr, oscam_stacksize); }
+ 		
+	int32_t ret = pthread_create(pthread == NULL ? &temp : pthread, &attr, startroutine, arg);
 	if(ret)
 		{ cs_log("ERROR: can't create %s thread (errno=%d %s)", nameroutine, ret, strerror(ret)); }
 	else
@@ -956,14 +992,22 @@ int32_t start_thread(char *nameroutine, void *startroutine, void *arg, pthread_t
 			{ pthread_detach(pthread == NULL ? temp : *pthread); }
 	}
 
+	pthread_attr_destroy(&attr);
+
 	return ret;
 }
 
-int32_t start_thread_nolog(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread, int8_t detach)
+int32_t start_thread_nolog(char *nameroutine, void *startroutine, void *arg, pthread_t *pthread, int8_t detach, int8_t modify_stacksize)
 {
 	pthread_t temp;	
+	pthread_attr_t attr;
 	
-	int32_t ret = pthread_create(pthread == NULL ? &temp : pthread, NULL, startroutine, arg);
+	SAFE_ATTR_INIT(&attr);
+	
+	if(modify_stacksize)
+ 		{ SAFE_ATTR_SETSTACKSIZE(&attr, oscam_stacksize); }
+ 		
+	int32_t ret = pthread_create(pthread == NULL ? &temp : pthread, &attr, startroutine, arg);
 	if(ret)
 		{ fprintf(stderr, "ERROR: can't create %s thread (errno=%d %s)", nameroutine, ret, strerror(ret)); }
 	else
@@ -971,6 +1015,8 @@ int32_t start_thread_nolog(char *nameroutine, void *startroutine, void *arg, pth
 		if(detach)
 			{ pthread_detach(pthread == NULL ? temp : *pthread); }
 	}
+	
+	pthread_attr_destroy(&attr);
 
 	return ret;
 }
@@ -1576,6 +1622,8 @@ static void find_conf_dir(void)
 
 int32_t main(int32_t argc, char *argv[])
 {
+	fix_stacksize();
+		
 	run_tests();
 	int32_t i, j;
 	prog_name = argv[0];
@@ -1742,7 +1790,7 @@ int32_t main(int32_t argc, char *argv[])
 
 	webif_init();
 
-	start_thread("reader check", (void *) &reader_check, NULL, NULL, 1);
+	start_thread("reader check", (void *) &reader_check, NULL, NULL, 1, 1);
 	cw_process_thread_start();
 	checkcache_process_thread_start();
 
@@ -1761,7 +1809,7 @@ int32_t main(int32_t argc, char *argv[])
 
 	ac_init();
 
-	start_thread("card poll", (void *) &card_poll, NULL, NULL, 1);
+	start_thread("card poll", (void *) &card_poll, NULL, NULL, 1, 1);
 
 	for(i = 0; i < CS_MAX_MOD; i++)
 	{
