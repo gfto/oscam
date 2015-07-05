@@ -283,6 +283,7 @@ SRC-$(CONFIG_LCDSUPPORT) += module-lcd.c
 SRC-$(CONFIG_LEDSUPPORT) += module-led.c
 SRC-$(CONFIG_MODULE_MONITOR) += module-monitor.c
 SRC-$(CONFIG_MODULE_NEWCAMD) += module-newcamd.c
+SRC-$(CONFIG_MODULE_NEWCAMD) += module-newcamd-des.c
 SRC-$(CONFIG_MODULE_PANDORA) += module-pandora.c
 SRC-$(CONFIG_MODULE_GHTTP) += module-ghttp.c
 SRC-$(CONFIG_MODULE_RADEGAST) += module-radegast.c

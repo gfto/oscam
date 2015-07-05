@@ -52,12 +52,12 @@ static inline void xxor(uint8_t *data, int32_t len, const uint8_t *v1, const uin
 
 static void scam_generate_deskey(char *keyString, uint8_t *desKey)
 {
-	uint8_t iv[8], key[8], *tmpKey;
+	uint8_t iv[8], *tmpKey;
 	int32_t i, passLen, alignedPassLen;
+	uint32_t key_schedule[32];
 	
 	memset(iv, 0, 8);
 	memset(desKey, 0, 8);
-	memset(key, 0, 8);
 	
 	passLen = keyString == NULL ? 0 : strlen(keyString);
 	if(passLen > 1024) {
@@ -86,9 +86,8 @@ static void scam_generate_deskey(char *keyString, uint8_t *desKey)
 	xxor(desKey,8,tmpKey,iv);	
 	
 	for(i=0; i<alignedPassLen; i+=8) {
-		memcpy(key, &tmpKey[i], 8);
-		doPC1(key);	
-		des(key,DES_ECS2_CRYPT,&tmpKey[i]);
+		des_set_key(&tmpKey[i], key_schedule);
+		des(&tmpKey[i], key_schedule, 1);
 		xxor(desKey,8,desKey,&tmpKey[i]);
 	}
 	

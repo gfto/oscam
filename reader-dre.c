@@ -299,15 +299,13 @@ static unsigned char DESkeys[16 * 8] =
 
 static void DREover(const unsigned char *ECMdata, unsigned char *DW)
 {
-	uchar key[8];
+	uint32_t key_schedule[32];
 	if(ECMdata[2] >= (43 + 4) && ECMdata[40] == 0x3A && ECMdata[41] == 0x4B)
 	{
-		memcpy(key, &DESkeys[(ECMdata[42] & 0x0F) * 8], 8);
+		des_set_key(&DESkeys[(ECMdata[42] & 0x0F) * 8], key_schedule);
 
-		doPC1(key);
-
-		des(key, DES_ECS2_DECRYPT, DW); // even DW post-process
-		des(key, DES_ECS2_DECRYPT, DW + 8); // odd DW post-process
+		des(DW, key_schedule, 0); // even DW post-process
+		des(DW + 8, key_schedule, 0);  // odd DW post-process
 	};
 };
 

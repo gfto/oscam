@@ -1,29 +1,37 @@
 #ifndef CSCRYPT_DES_H_
 #define CSCRYPT_DES_H_
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
-#define DES_IP              1
-#define DES_IP_1            2
-#define DES_RIGHT           4
-#define DES_HASH            8
-
-#define DES_ECM_CRYPT       0
-#define DES_ECM_HASH        DES_HASH
-#define DES_ECS2_DECRYPT    (DES_IP | DES_IP_1 | DES_RIGHT)
-#define DES_ECS2_CRYPT      (DES_IP | DES_IP_1)
-
-	extern void doPC1(unsigned char data[]);
-	extern void des(unsigned char key[], unsigned char mode, unsigned char data[]);
-	extern void des_cbc_encrypt(unsigned char *data, const unsigned char *iv, const unsigned char *okey, int len);
-	extern void des_cbc_decrypt(unsigned char *data, unsigned char *iv, const unsigned char *okey, int len);
-	extern unsigned char *des_key_spread(unsigned char *normal, unsigned char *spread);
-	extern void des_random_get(unsigned char *buffer, unsigned char len);
+	// sets parity for a 8-byte des key
+	void des_set_odd_parity(uint8_t* key);
 	
-#ifdef  __cplusplus
-}
-#endif
+	// checks parity for a 8-byte des key
+	// returns 0 if parity is not ok
+	// returns 1 if parity is ok
+	int8_t check_parity(const uint8_t* key);
+	
+	// matches the given 8-byte des key against known weak keys
+	// return 0 if key is not weak
+	// return 1 if key is weak
+	int8_t des_is_weak_key(const uint8_t* key);
+
+	// expands the given 8-byte des key "key" 
+	// into "shedule", which must be of type "uint32_t schedule[32]"
+	// always returns 0
+	int8_t des_set_key(const uint8_t* key, uint32_t* schedule);
+
+	// crypts 8 bytes of "data" with key shedule "ks"
+	// encrypt = 1 -> encrypt
+	// encrypt = 0 -> decrypt
+	void des(uint8_t* data, const uint32_t* schedule, int8_t encrypt);
+
+	// these functions take a 8-byte des key and crypt data of any length ("len")
+	void des_ecb_encrypt(uint8_t* data, const uint8_t* key, int32_t len);
+	void des_ecb_decrypt(uint8_t* data, const uint8_t* key, int32_t len);
+
+	void des_cbc_encrypt(uint8_t* data, const uint8_t* iv, const uint8_t* key, int32_t len);
+	void des_cbc_decrypt(uint8_t* data, const uint8_t* iv, const uint8_t* key, int32_t len);
+	
+	void des_ede2_cbc_encrypt(uint8_t* data, const uint8_t* iv, const uint8_t* key1, const uint8_t* key2, int32_t len);
+	void des_ede2_cbc_decrypt(uint8_t* data, const uint8_t* iv, const uint8_t* key1, const uint8_t* key2, int32_t len);
 
 #endif
