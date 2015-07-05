@@ -154,6 +154,7 @@ MESSAGE                       include/message.html
 MESSAGEBIT                    include/message_bit.html
 NOENTITLEMENTS                include/noentitlements.html
 POLL                          include/poll.html
+POLLINGSET                    include/pollingset.html
 PROTOCCCAMPIC                 include/protocccampic.html                                  MODULE_CCCAM
 PROTONEWCAMDPIC               include/protonewcamdpic.html                                MODULE_NEWCAMD
 PROTOOTHERPIC                 include/protootherpic.html

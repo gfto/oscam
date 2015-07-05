@@ -7,6 +7,7 @@
 	var parameters = '?part=status';
 	var stoppoll = 0;
 	var pollintervall = 0;
+	var polling = 0;
 	var pollrefresh = '##POLLREFRESHTIME##';
 
 	</script>
@@ -21,7 +22,7 @@
 		<LI><B>##HTTPOSCAMLABEL## r##CS_SVN_VERSION##</B></LI>
 		<LI CLASS="configmenu"><A HREF="http://www.streamboard.tv/oscam/timeline" TARGET="_blank">Timeline</A></LI>
 		<LI CLASS="configmenu"><A HREF="#statusfooter">Status</A></LI>
-		<LI ID="poll" CLASS="pollselect" style="display: none;">Pollintervall:<input type="text" name="pintervall" class="pintervall" value="" readonly>sec.<button id="dec">&ndash;</button><button id="inc">+</button></LI>
+##TPLPOLLINGSET##
 	</UL>
 </DIV>
 ##TPLMESSAGE##

@@ -146,16 +146,33 @@ function runden(value) {
 $(function () {
 	// Pollinterval UP
 	$("#inc").click(function () {
-		if (pollintervall > 98000) return;
+		if (pollintervall > 98000 || polling) return;
 		$(":text[name='pintervall']").val(Number($(":text[name='pintervall']").val()) + 1);
 		pollintervall = $(":text[name='pintervall']").val() * 1000;
 		if (!nostorage) {
 			sessionStorage.pollintervall = pollintervall;
 		}
 	});
+	// Pollinterval PAUSE
+	$("#polling").click(function () {
+		if (polling < 1) {
+			polling = 1;
+			$(":text[name='pintervall']").val('--');
+			$('#polling').attr('style','background-image:url(image?i=ICENA); background-color:#0A0');
+		} else {
+			polling = 0;
+			$(":text[name='pintervall']").val(pollintervall/1000);
+			$('#polling').attr('style','background-image:url(image?i=ICDIS)');
+			clearTimeout(timer_ID);
+			timer_ID = setTimeout("waitForMsg()", pollintervall);
+		}
+		if (!nostorage) {
+			sessionStorage.polling = polling;
+		}
+	});
 	// Pollinterval DOWN
 	$("#dec").click(function () {
-		if (pollintervall < 2000) return;
+		if (pollintervall < 2000 || polling) return;
 		$(":text[name='pintervall']").val(Number($(":text[name='pintervall']").val()) - 1);
 		pollintervall = $(":text[name='pintervall']").val() * 1000;
 		if (!nostorage) {
@@ -1583,8 +1600,8 @@ function waitForMsg() {
 		cache: false,
 		success: function (data) {
 			setPollerr(0);
+			if ((!pollrefresh || polling ) && page != 'livelog') return;
 			updatePage(data);
-			if (!pollrefresh && page != 'livelog') return;
 			if (!stoppoll) {
 				clearTimeout(timer_ID);
 				timer_ID = setTimeout("waitForMsg()", pollintervall);
@@ -1609,6 +1626,7 @@ function setPollrefresh() {
 		if (!nostorage) {
 			if (sessionStorage.pollintervall) pollintervall = sessionStorage.pollintervall;
 			else sessionStorage.pollintervall = pollintervall;
+			if (sessionStorage.polling == 1) polling = 1;
 		}
 	}
 }
@@ -1720,9 +1738,15 @@ $(document).ready(function () {
 		// if pollrefresh set to 0 hide pollselector
 		setPollrefresh();
 		if (pollrefresh) {
-			$(":text[name='pintervall']").val(pollintervall / 1000);
+			if (polling) {
+				$(":text[name='pintervall']").val('--');
+				$('#polling').attr('style','background-image:url(image?i=ICENA); background-color:#0A0');
+			} else {
+				$(":text[name='pintervall']").val(pollintervall / 1000);
+				$('#polling').attr('style','background-image:url(image?i=ICDIS)');
+				waitForMsg();
+			}
 			$("#poll").show();
-			waitForMsg();
 		}
 	}
 });

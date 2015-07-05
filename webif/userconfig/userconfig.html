@@ -7,6 +7,7 @@
 	var parameters = "?part=userstats";
 	var stoppoll = 0;
 	var pollintervall = 0;
+	var polling = 0;
 	var pollrefresh = '##POLLREFRESHTIME##';
 	existing_inserts = new Array(##EXISTING_INS##);
 
@@ -43,7 +44,7 @@
 			<LI CLASS="configmenu"><A HREF="userconfig.html?action=reinit">Reinit User DB</A></LI>
 			<LI CLASS="configmenu"><A HREF="userconfig.html?action=resetalluserstats" onclick="return confirm('Reset Userstats ?')">Reset Userstats</A></LI>
 			<LI CLASS="configmenu"><A TARGET="_blank" HREF="graph.svg?type=users&amp;hidelabels=1">Show Graphs</A></LI>
-			<LI ID="poll" CLASS="pollselect" style="display: none;">Pollintervall:<input type="text" name="pintervall" class="pintervall" value="" readonly>sec.<button id="dec">&ndash;</button><button id="inc">+</button></LI>
+##TPLPOLLINGSET##
 		</UL>
 	</DIV>
 ##TPLMESSAGE##

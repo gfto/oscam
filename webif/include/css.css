@@ -356,12 +356,7 @@ tr.expired td {background-color:#FBA}
 tr.connected td {background-color:#FFA}
 tr.disabled td {}
 tr.disabled td:first-child img.icon,
-tr.disabledreader td:first-child img.icon {background-color:#A00}
-tr.online td:first-child img.icon,
-tr.offline td:first-child img.icon,
-tr.expired td:first-child img.icon,
-tr.connected td:first-child img.icon,
-tr.enabledreader td:first-child img.icon {background-color:#0A0}
+tr.disabledreader td:first-child img.icon {background-color:#0A0}
 /* colors for status rows in status.html depend on status */
 tr.a td {background-color:#3F0}
 tr.c td {background-color:#F1F5E6}
@@ -917,9 +912,8 @@ div.colorPicker-swatch {
 	line-height:12px
 }
 /* User-Page polling */
-#inc,#dec,.regexbutton {
-	padding:0 3px;
-	margin:-3px 3px;
+#inc,#polling,#dec,.regexbutton {
+	margin:-3px 2px;
 	border:none;
 	background-color:#A00;
 	color:#FFF;
@@ -928,13 +922,17 @@ div.colorPicker-swatch {
 	font-size:14px;
 	font-weight:700;
 	width:22px;
-	height:22px
+	height:22px;
+	line-height:0px
 }
-#inc:hover,#dec:hover,.regexbutton:hover {
-	background-color:#F00
+#inc:hover,#polling:hover,#dec:hover,.regexbutton:hover {
+	background-color:#F00 !important
+}
+#poll button {
+	margin-bottom:1px;
+	vertical-align:middle
 }
 #nav li.pollselect {
-	display:inline;
 	position:absolute;
 	right:10px
 }
