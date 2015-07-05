@@ -917,7 +917,6 @@ div.colorPicker-swatch {
 #inc,#polling,#dec,.regexbutton {
 	margin:-3px 2px;
 	border:none;
-	background-color:#A00;
 	color:#FFF;
 	cursor:pointer;
 	border-radius:4px;
@@ -927,8 +926,25 @@ div.colorPicker-swatch {
 	height:22px;
 	line-height:0px
 }
-#inc:hover,#polling:hover,#dec:hover,.regexbutton:hover {
-	background-color:#F00 !important
+#inc,#dec,.regexbutton {
+	background-color:#A00
+}
+#inc:hover,#dec:hover,.regexbutton:hover {
+	background-color:#F00
+}
+.pollingenabled{
+	background:url(image?i=ICDIS);
+	background-color:#A00
+}
+.pollingenabled:hover{
+	background-color:#F00
+}
+.pollingdisabled{
+	background:url(image?i=ICENA);
+	background-color:#0A0
+}
+.pollingdisabled:hover{
+	background-color:#0D0
 }
 #poll button {
 	margin-bottom:1px;

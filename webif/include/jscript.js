@@ -158,11 +158,11 @@ $(function () {
 		if (polling < 1) {
 			polling = 1;
 			$(":text[name='pintervall']").val('--');
-			$('#polling').attr('style','background-image:url(image?i=ICENA); background-color:#0A0');
+			$('#polling').attr('class','pollingdisabled');
 		} else {
 			polling = 0;
 			$(":text[name='pintervall']").val(pollintervall/1000);
-			$('#polling').attr('style','background-image:url(image?i=ICDIS)');
+			$('#polling').attr('class','pollingenabled');
 			clearTimeout(timer_ID);
 			timer_ID = setTimeout("waitForMsg()", pollintervall);
 		}
@@ -1740,10 +1740,10 @@ $(document).ready(function () {
 		if (pollrefresh) {
 			if (polling) {
 				$(":text[name='pintervall']").val('--');
-				$('#polling').attr('style','background-image:url(image?i=ICENA); background-color:#0A0');
+				$('#polling').attr('class','pollingdisabled');
 			} else {
 				$(":text[name='pintervall']").val(pollintervall / 1000);
-				$('#polling').attr('style','background-image:url(image?i=ICDIS)');
+				$('#polling').attr('class','pollingenabled');
 				waitForMsg();
 			}
 			$("#poll").show();
