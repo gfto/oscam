@@ -370,7 +370,7 @@ typedef unsigned char uchar;
 #define CS_ECM_RINGBUFFER_MAX 0x10 // max size for ECM last responsetimes ringbuffer. Keep this set to power of 2 values!
 
 #define MAX_ECM_SIZE 596
-#define MAX_EMM_SIZE 258
+#define MAX_EMM_SIZE 512
 
 #define CS_EMMCACHESIZE  512 //nr of EMMs that each reader will cache
 #define MSGLOGSIZE 64   //size of string buffer for a ecm to return messages

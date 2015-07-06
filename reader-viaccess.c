@@ -1678,6 +1678,16 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		{
 			nanoF0Data = emmParsed;
 		}
+		else if(emmParsed[0] == 0x46)
+		{
+			char *tmpbuf;
+			if(cs_malloc(&tmpbuf, emmParsed[1]))
+			{
+				cs_strncpy(tmpbuf, (char *) emmParsed+2, emmParsed[1]);
+				rdr_log(reader, "Viaccess EMM-text: %s", tmpbuf);
+				NULLFREE(tmpbuf);
+			}
+		}	
 		else
 		{
 			/* other nanos */
