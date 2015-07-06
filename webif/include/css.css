@@ -354,11 +354,11 @@ tr.online td {background-color:#BFA}
 tr.offline td {}
 tr.expired td {background-color:#FBA}
 tr.connected td {background-color:#FFA}
-tr.disabled td {}
+/*tr.disabled td {}
 tr.disabled td:first-child img.icon,
 tr.disabledreader td:first-child img.icon {background-color:#0A0}
 tr.disabled td:first-child a:hover img.icon,
-tr.disabledreader td:first-child a:hover img.icon {background-color:#0D0}
+tr.disabledreader td:first-child a:hover img.icon {background-color:#0D0}*/
 /* colors for status rows in status.html depend on status */
 tr.a td {background-color:#3F0}
 tr.c td {background-color:#F1F5E6}
@@ -728,6 +728,12 @@ div.extract pre.script {
 
 /* **************** 13. IMAGE */
 /* generaly settings for images */
+td.readercol0 a img.icon,
+td.usercol0 a img.icon {
+	width:44px;
+	height:22px;
+	background-color:transparent
+}
 img {
 	border:0 solid
 }
@@ -922,10 +928,11 @@ div.colorPicker-swatch {
 	border-radius:4px;
 	font-size:14px;
 	font-weight:700;
-	width:22px;
 	height:22px;
 	line-height:0px
 }
+#inc,#dec,.regexbutton{width:22px;}
+
 #inc,#dec,.regexbutton {
 	background-color:#A00
 }
@@ -934,17 +941,13 @@ div.colorPicker-swatch {
 }
 .pollingenabled{
 	background:url(image?i=ICDIS);
-	background-color:#A00
-}
-.pollingenabled:hover{
-	background-color:#F00
+	background-color:transparent;
+	width:44px;
 }
 .pollingdisabled{
 	background:url(image?i=ICENA);
-	background-color:#0A0
-}
-.pollingdisabled:hover{
-	background-color:#0D0
+	background-color:transparent;
+	width:44px;
 }
 #poll button {
 	margin-bottom:1px;
@@ -1077,3 +1080,4 @@ only screen and (min-device-width : 320px) and (max-device-width : 568px) and (o
 		height:508px
  	}
 }
+
