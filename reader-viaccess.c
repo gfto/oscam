@@ -1989,6 +1989,7 @@ static int32_t viaccess_reassemble_emm(struct s_reader *rdr, struct s_client *cl
 			{
 				return 0;
 			}
+			memset(&r_emm->emm[0], 0, sizeof(r_emm->emm)); // zero it!  
 			memcpy(&r_emm->emm[0], &buffer[0], *len); // put the fresh new shared emm
 			r_emm->emmlen = *len; // put the emmlen indicating that this shared emm isnt being reassembled
 			rdr_log_dump_dbg(rdr, D_EMM, r_emm->emm, r_emm->emmlen, "%s: received fresh emm-gh for provid %06X", __func__, provid);
