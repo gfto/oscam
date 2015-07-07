@@ -826,7 +826,7 @@ static int32_t dvbapi_read_device(int32_t dmx_fd, unsigned char *buf, uint32_t l
 				{
 					count += readed;
 				}
-				if(readed == 0) // nothing to read left
+				if(readed == 0 && count > 0) // nothing to read left
 				{
 					break;
 				}
