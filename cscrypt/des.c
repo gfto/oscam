@@ -595,7 +595,7 @@ static uint32_t _lrotr(uint32_t i) {
 	return((i>>4) | ((i&0xff)<<28));
 }
 
-static void des_encrypt_int(uint32_t* data, const uint32_t* ks, int8_t encrypt)
+static void des_encrypt_int(uint32_t* data, const uint32_t* ks, int8_t do_encrypt)
 {
 	uint32_t l,r,t,u;
 	int32_t i;
@@ -630,7 +630,7 @@ static void des_encrypt_int(uint32_t* data, const uint32_t* ks, int8_t encrypt)
 	l&=0xffffffff;
 	r&=0xffffffff;
 
-	if (encrypt) {
+	if (do_encrypt) {
 		for (i=0; i < 32; i+=8) {
 			{ u=(r^ks[i+0 ]); t=r^ks[i+0+1]; t=(_lrotr(t)); l^= des_SPtrans[1][(t )&0x3f]| des_SPtrans[3][(t>> 8)&0x3f]| des_SPtrans[5][(t>>16)&0x3f]| des_SPtrans[7][(t>>24)&0x3f]| des_SPtrans[0][(u )&0x3f]| des_SPtrans[2][(u>> 8)&0x3f]| des_SPtrans[4][(u>>16)&0x3f]| des_SPtrans[6][(u>>24)&0x3f]; };
 			{ u=(l^ks[i+2 ]); t=l^ks[i+2+1]; t=(_lrotr(t)); r^= des_SPtrans[1][(t )&0x3f]| des_SPtrans[3][(t>> 8)&0x3f]| des_SPtrans[5][(t>>16)&0x3f]| des_SPtrans[7][(t>>24)&0x3f]| des_SPtrans[0][(u )&0x3f]| des_SPtrans[2][(u>> 8)&0x3f]| des_SPtrans[4][(u>>16)&0x3f]| des_SPtrans[6][(u>>24)&0x3f]; };
@@ -677,7 +677,7 @@ static void des_encrypt_int(uint32_t* data, const uint32_t* ks, int8_t encrypt)
 	l=r=t=u=0;
 }
 
-void des(uint8_t* data, const uint32_t* schedule, int8_t encrypt)
+void des(uint8_t* data, const uint32_t* schedule, int8_t do_encrypt)
 {
 	uint32_t l, ll[2];
 	int32_t inIndex;
@@ -692,7 +692,7 @@ void des(uint8_t* data, const uint32_t* schedule, int8_t encrypt)
 	l = Get32bits(data, inIndex+4);
 	ll[1]=l;
 
-	des_encrypt_int(ll, schedule, encrypt);
+	des_encrypt_int(ll, schedule, do_encrypt);
 
 	l=ll[0];
 

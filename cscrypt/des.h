@@ -22,7 +22,7 @@
 	// crypts 8 bytes of "data" with key shedule "ks"
 	// encrypt = 1 -> encrypt
 	// encrypt = 0 -> decrypt
-	void des(uint8_t* data, const uint32_t* schedule, int8_t encrypt);
+	void des(uint8_t* data, const uint32_t* schedule, int8_t do_encrypt);
 
 	// these functions take a 8-byte des key and crypt data of any length ("len")
 	void des_ecb_encrypt(uint8_t* data, const uint8_t* key, int32_t len);
