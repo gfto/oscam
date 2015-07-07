@@ -7926,7 +7926,7 @@ static int32_t process_request(FILE * f, IN_ADDR_T in)
 		}
 		NULLFREE(filebuf);
 	}
-	while(*keepalive == 1);
+	while(*keepalive == 1 && !exit_oscam);
 	return 0;
 }
 

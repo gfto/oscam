@@ -25,6 +25,8 @@
 #include "oscam-work.h"
 #include "reader-irdeto.h"
 
+extern int32_t exit_oscam;
+
 #if defined (__CYGWIN__)
 #define F_NOTIFY 0
 #define F_SETSIG 0
@@ -3732,7 +3734,7 @@ void *dvbapi_event_thread(void *cli)
 	struct s_client *client = (struct s_client *) cli;
 	SAFE_SETSPECIFIC(getclient, client);
 	set_thread_name(__func__);
-	while(1)
+	while(!exit_oscam)
 	{
 		cs_sleepms(750);
 		event_handler(0);
@@ -4149,7 +4151,7 @@ static void *dvbapi_main_local(void *cli)
 	system("pzapit -rz");
 #endif
 	cs_ftime(&start); // register start time
-	while(1)
+	while(!exit_oscam)
 	{
 		if(pausecam)  // for dbox2, STAPI or PC in standby mode dont parse any ecm/emm or try to start next filter
 			{ continue; }

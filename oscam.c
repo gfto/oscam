@@ -1873,6 +1873,9 @@ int32_t main(int32_t argc, char *argv[])
 	if(oscam_pidfile)
 		{ unlink(oscam_pidfile); }
 
+	// sleep a bit, so hopefully all threads are stopped when we continue
+	cs_sleepms(200);
+
 	free_cache();
 	cacheex_free_hitcache();
 	webif_tpls_free();

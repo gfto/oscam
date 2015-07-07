@@ -11,6 +11,8 @@
 #include "oscam-string.h"
 #include "oscam-time.h"
 
+extern int32_t exit_oscam;
+
 #define MAX_STREAMPIDS MAX_DEMUX
 
 struct tTkdDescInfo
@@ -522,7 +524,7 @@ static void *stapi_read_thread(void *sparam)
 
 	int32_t error_count = 0;
 
-	while(1)
+	while(!exit_oscam)
 	{
 		QueryBufferHandle = 0;
 		ErrorCode = oscam_stapi5_SignalWaitBuffer(dev_list[dev_index].SignalHandle, &QueryBufferHandle, 1000);

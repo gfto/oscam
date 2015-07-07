@@ -111,8 +111,12 @@ void webif_tpls_prepare(void)
 
 void webif_tpls_free(void)
 {
-	int32_t i;
-	for(i = 0; i < tpls_count; ++i)
+	int32_t i, tmp;
+	
+	tmp = tpls_count;
+	tpls_count = 0;
+	
+	for(i = 0; i < tmp; ++i)
 	{
 		NULLFREE(tpls[i].extra_data);
 	}

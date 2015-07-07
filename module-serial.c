@@ -9,6 +9,8 @@
 #include "oscam-time.h"
 #include "oscam-reader.h"
 
+extern int32_t exit_oscam;
+
 #define HSIC_CRC 0xA5
 #define SSSP_MAX_PID 8
 
@@ -1176,7 +1178,7 @@ static void *oscam_ser_fork(void *pthreadparam)
 	SAFE_MUTEX_UNLOCK(&mutex);
 	SAFE_COND_SIGNAL(&cond);
 
-	while(1)
+	while(!exit_oscam)
 	{
 		cl->login = time((time_t *)0);
 		cl->pfd = init_oscam_ser_device(cl);
