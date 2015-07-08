@@ -4383,9 +4383,8 @@ static void *dvbapi_main_local(void *cli)
 				cs_log("ERROR: error on poll of %d fd's (errno=%d %s)", pfdcount, errno, strerror(errno));
 				break;
 			}
-			if(rc > 0)
+			if(rc > 0) // we have fd's with changes!
 			{
-				cs_log("We have %d fd's with fresh data", rc);
 				break;
 			}
 		}
