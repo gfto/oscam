@@ -4371,9 +4371,9 @@ static void *dvbapi_main_local(void *cli)
 		}
 
 		rc = 0;
-		while(!(listenfd == -1 && cfg.dvbapi_pmtmode == 6) && pfdcount > 0)
+		while(!(listenfd == -1 && cfg.dvbapi_pmtmode == 6))
 		{
-			rc = poll(pfd2, pfdcount, 7000);
+			rc = poll(pfd2, pfdcount, 500);
 			if(rc < 0) // error occured while polling for fd's with fresh data
 			{ 
 				if(errno == EINTR || errno == EAGAIN) // try again in case of interrupt
@@ -4383,7 +4383,7 @@ static void *dvbapi_main_local(void *cli)
 				cs_log("ERROR: error on poll of %d fd's (errno=%d %s)", pfdcount, errno, strerror(errno));
 				break;
 			}
-			if(rc > 0) // we have fd's with changes!
+			else
 			{
 				break;
 			}
