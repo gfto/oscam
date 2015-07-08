@@ -813,7 +813,7 @@ static int32_t dvbapi_read_device(int32_t dmx_fd, unsigned char *buf, uint32_t l
 
 	while (count < length ) 
 	{
-		if (poll(pfd,1,1)) // fd ready for reading?
+		if (poll(pfd,1,0)) // fd ready for reading?
 		{
 			if (pfd[0].revents & (POLLIN | POLLPRI)) // is there data to read? 
 			{
@@ -4370,13 +4370,24 @@ static void *dvbapi_main_local(void *cli)
 			}
 		}
 
-		while(1)
+		rc = 0;
+		while(!(listenfd == -1 && cfg.dvbapi_pmtmode == 6) && pfdcount > 0)
 		{
-			rc = poll(pfd2, pfdcount, 300);
-			if(listenfd == -1 && cfg.dvbapi_pmtmode == 6) { break; }
-			if(rc < 0)
-				{ continue; }
-			break;
+			rc = poll(pfd2, pfdcount, 7000);
+			if(rc < 0) // error occured while polling for fd's with fresh data
+			{ 
+				if(errno == EINTR || errno == EAGAIN) // try again in case of interrupt
+				{ 
+					continue; 
+				}
+				cs_log("ERROR: error on poll of %d fd's (errno=%d %s)", pfdcount, errno, strerror(errno));
+				break;
+			}
+			if(rc > 0)
+			{
+				cs_log("We have %d fd's with fresh data", rc);
+				break;
+			}
 		}
 
 		if(rc > 0)
