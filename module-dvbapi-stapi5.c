@@ -597,7 +597,10 @@ static void *stapi_read_thread(void *sparam)
 		}
 		SAFE_MUTEX_UNLOCK(&filter_lock);
 	}
+	
 	pthread_cleanup_pop(0);
+	
+	return NULL;
 }
 
 int32_t stapi_init_descrambler(int32_t dev_index)

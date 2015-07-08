@@ -507,8 +507,8 @@ int8_t des_is_weak_key(const uint8_t* key)
 	return 0;
 }
 
-static uint32_t Get32bits(const uint8_t* key, int32_t index) {
-	return(((key[index+3]&0xff)<<24) + ((key[index+2]&0xff)<<16) + ((key[index+1]&0xff)<<8) + (key[index]&0xff));
+static uint32_t Get32bits(const uint8_t* key, int32_t kindex) {
+	return(((key[kindex+3]&0xff)<<24) + ((key[kindex+2]&0xff)<<16) + ((key[kindex+1]&0xff)<<8) + (key[kindex]&0xff));
 }
 
 int8_t des_set_key(const uint8_t* key, uint32_t* schedule)

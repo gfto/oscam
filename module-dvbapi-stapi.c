@@ -550,7 +550,10 @@ static void *stapi_read_thread(void *sparam)
 		}
 		SAFE_MUTEX_UNLOCK(&filter_lock);
 	}
+	
 	pthread_cleanup_pop(0);
+	
+	return NULL;
 }
 
 #define ASSOCIATE 1
