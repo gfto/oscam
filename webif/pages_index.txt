@@ -134,6 +134,8 @@ LOGOBITSVG                    images/ICMLOGO.svg
 ICREF                         images/ICREF.svg
 ICRES                         images/ICRES.svg
 ICSTA                         images/ICSTA.svg
+ICSTART                       images/ICSTART.svg
+ICSTOP                        images/ICSTOP.svg
 ICSPAC                        images/ICSPAC.gif
 
 BODY                          include/body.html
