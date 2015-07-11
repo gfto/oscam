@@ -133,10 +133,10 @@ ICKIL                         images/ICKIL.svg
 LOGOBITSVG                    images/ICMLOGO.svg
 ICREF                         images/ICREF.svg
 ICRES                         images/ICRES.svg
+ICSPAC                        images/ICSPAC.gif
 ICSTA                         images/ICSTA.svg
 ICSTART                       images/ICSTART.svg
 ICSTOP                        images/ICSTOP.svg
-ICSPAC                        images/ICSPAC.gif
 
 BODY                          include/body.html
 CCENTITLEMENTS                include/cccamentitlements.html                              MODULE_CCCAM

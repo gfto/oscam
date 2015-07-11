@@ -278,7 +278,6 @@ table.scanusb {}
 /* On/Off button for readers and users in readers.html and userconfig.html*/
 td.readercol0 a img.icon,
 td.usercol0 a img.icon {
-	width:28px;
 	background-color:#0A0
 }
 td.readercol0 a:hover img.icon,
@@ -933,21 +932,33 @@ div.colorPicker-swatch {
 	border-radius:4px;
 	font-size:14px;
 	font-weight:700;
+	width:22px;
 	height:22px;
 	line-height:0px
 }
-#inc,#polling,#dec,.regexbutton {
-	background-color:#A00;
-	width:22px
+#inc,#dec,.regexbutton {
+	background-color:#A00
 }
-#inc:hover,#polling:hover,#dec:hover,.regexbutton:hover {
+#inc:hover,#dec:hover,.regexbutton:hover {
 	background-color:#F00
 }
 .pollingenabled {
-	background:url(image?i=ICSTOP);
+	background-image:url(image?i=ICSTOP);
+	background-repeat:no-repeat;
+	background-position:center;
+	background-color:#A00
 }
 .pollingdisabled {
-	background:url(image?i=ICSTART);
+	background-image:url(image?i=ICSTART);
+	background-repeat:no-repeat;
+	background-position:center;
+	background-color:#0A0
+}
+.pollingenabled:hover {
+ 	background-color:#F00
+}
+.pollingdisabled:hover {
+ 	background-color:#0D0
 }
 #poll button {
 	margin-bottom:1px;
