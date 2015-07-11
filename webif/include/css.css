@@ -275,6 +275,16 @@ table.statsbalance td:last-child a {
 }
 /* scanusb.html */
 table.scanusb {}
+/* On/Off button for readers and users in readers.html and userconfig.html*/
+td.readercol0 a img.icon,
+td.usercol0 a img.icon {
+	width:28px;
+	background-color:#0A0
+}
+td.readercol0 a:hover img.icon,
+td.usercol0 a:hover img.icon {
+	background-color:#00D814
+}
 
 /* ------- USERS ------- */
 /* userconfig.html */
@@ -354,11 +364,12 @@ tr.online td {background-color:#BFA}
 tr.offline td {}
 tr.expired td {background-color:#FBA}
 tr.connected td {background-color:#FFA}
-/*tr.disabled td {}
+/* color of button for readers and user row in readers.html and userconfig.html*/
+tr.disabled td {}
 tr.disabled td:first-child img.icon,
-tr.disabledreader td:first-child img.icon {background-color:#0A0}
+tr.disabledreader td:first-child img.icon {background-color:#B0B0B0}
 tr.disabled td:first-child a:hover img.icon,
-tr.disabledreader td:first-child a:hover img.icon {background-color:#0D0}*/
+tr.disabledreader td:first-child a:hover img.icon {background-color:#CECECE}
 /* colors for status rows in status.html depend on status */
 tr.a td {background-color:#3F0}
 tr.c td {background-color:#F1F5E6}
@@ -597,7 +608,7 @@ select {
 }
 /* settings for select in script.html */
 #scriptselect {
-	height: 22px;
+	height: 22px
 }
 /* generaly settings for all input */
 input,textarea {
@@ -723,17 +734,11 @@ div.extract pre {
 	white-space:pre
 }
 div.extract pre.script {
-	min-height: 100px;
+	min-height: 100px
 }
 
 /* **************** 13. IMAGE */
 /* generaly settings for images */
-td.readercol0 a img.icon,
-td.usercol0 a img.icon {
-	width:44px;
-	height:22px;
-	background-color:transparent
-}
 img {
 	border:0 solid
 }
@@ -758,7 +763,7 @@ img.usericon, img.readericon {
 	max-width:150px
 }
 /* ECM Restarticon */
-.statusecminfo img{
+.statusecminfo img {
 	vertical-align:middle
 }
 /* logo IC_LOGO.tpL */
@@ -931,23 +936,18 @@ div.colorPicker-swatch {
 	height:22px;
 	line-height:0px
 }
-#inc,#dec,.regexbutton{width:22px;}
-
-#inc,#dec,.regexbutton {
-	background-color:#A00
+#inc,#polling,#dec,.regexbutton {
+	background-color:#A00;
+	width:22px
 }
-#inc:hover,#dec:hover,.regexbutton:hover {
+#inc:hover,#polling:hover,#dec:hover,.regexbutton:hover {
 	background-color:#F00
 }
-.pollingenabled{
-	background:url(image?i=ICDIS);
-	background-color:transparent;
-	width:44px;
+.pollingenabled {
+	background:url(image?i=ICSTOP);
 }
-.pollingdisabled{
-	background:url(image?i=ICENA);
-	background-color:transparent;
-	width:44px;
+.pollingdisabled {
+	background:url(image?i=ICSTART);
 }
 #poll button {
 	margin-bottom:1px;
