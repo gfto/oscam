@@ -254,13 +254,45 @@ static void rsakey_fn(const char *token, char *value, void *setting, FILE *f)
 		{ fprintf_conf(f, "rsakey", "\n"); }
 }
 
+static void deskey_fn(const char *token, char *value, void *setting, FILE *f)
+{
+	struct s_reader *rdr = setting;
+	if(value)
+	{
+		int32_t len = strlen(value);
+		if(((len % 16) != 0) || (len == 0))
+		{
+			memset(rdr->des_key, 0, sizeof(rdr->des_key));
+		}
+		else
+		{
+			if(key_atob_l(value, rdr->des_key, len))
+			{
+				fprintf(stderr, "reader 3DES key parse error, %s=%s\n", token, value);
+				memset(rdr->des_key, 0, sizeof(rdr->des_key));
+			}
+		}
+		return;
+	}
+	int32_t len = check_filled(rdr->des_key, sizeof(rdr->des_key));
+	if(len > 0)
+	{
+		if(len > 16) { len = 32; }
+		else { len = 16; }
+		char tmp[len * 2 + 1];
+		fprintf_conf(f, "deskey", "%s\n", cs_hexdump(0, rdr->des_key, len, tmp, sizeof(tmp)));
+	}
+	else if(cfg.http_full_cfg)
+		{ fprintf_conf(f, "deskey", "\n"); }
+}
+
 static void boxkey_fn(const char *token, char *value, void *setting, FILE *f)
 {
 	struct s_reader *rdr = setting;
 	if(value)
 	{
 		int32_t len = strlen(value);
-		if(len != 16 && len != 32)
+		if(((len % 8) != 0) || (len == 0))
 		{
 			memset(rdr->boxkey, 0, sizeof(rdr->boxkey));
 		}
@@ -277,8 +309,6 @@ static void boxkey_fn(const char *token, char *value, void *setting, FILE *f)
 	int32_t len = check_filled(rdr->boxkey, sizeof(rdr->boxkey));
 	if(len > 0)
 	{
-		if(len > 8) { len = 16; }
-		else { len = 8; }
 		char tmp[len * 2 + 1];
 		fprintf_conf(f, "boxkey", "%s\n", cs_hexdump(0, rdr->boxkey, len, tmp, sizeof(tmp)));
 	}
@@ -783,6 +813,7 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC("boxid"                , 0,                            boxid_fn),
 	DEF_OPT_FUNC("boxkey"               , 0,                            boxkey_fn),
 	DEF_OPT_FUNC("rsakey"               , 0,                            rsakey_fn),
+	DEF_OPT_FUNC("deskey"               , 0,                            deskey_fn),
 	DEF_OPT_FUNC_X("ins7e"              , OFS(ins7E),                   ins7E_fn, SIZEOF(ins7E)),
 	DEF_OPT_FUNC_X("ins7e11"            , OFS(ins7E11),                 ins7E_fn, SIZEOF(ins7E11)),
 	DEF_OPT_FUNC_X("ins2e06"            , OFS(ins2e06),                 ins7E_fn, SIZEOF(ins2e06)),
@@ -874,7 +905,7 @@ static bool reader_check_setting(const struct config_list *UNUSED(clist), void *
 	static const char *hw_only_settings[] =
 	{
 		"readnano", "resetcycle", "smargopatch", "autospeed", "sc8in1_dtrrts_patch", "boxid","fix07",
-		"fix9993", "rsakey", "ins7e", "ins7e11", "ins2e06", "force_irdeto", "needsemmfirst", "boxkey",
+		"fix9993", "rsakey", "deskey", "ins7e", "ins7e11", "ins2e06", "force_irdeto", "needsemmfirst", "boxkey",
 		"atr", "detect", "nagra_read", "mhz", "cardmhz", "readtiers", "read_old_classes",
 #ifdef WITH_AZBOX
 		"mode",

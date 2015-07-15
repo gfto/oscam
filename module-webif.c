@@ -2007,12 +2007,17 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 		for(i = 0; i < len; i++) { tpl_printf(vars, TPLAPPEND, "RSAKEY", "%02X", rdr->rsa_mod[i]); }
 	}
 
+	// 3DES Key
+	len = check_filled(rdr->des_key, 16);
+	if((len > 0) && ((len % 16) == 0))
+	{
+		for(i = 0; i < len; i++) { tpl_printf(vars, TPLAPPEND, "DESKEY", "%02X", rdr->des_key[i]); }
+	}
+
 	// BoxKey
 	len = check_filled(rdr->boxkey, sizeof(rdr->boxkey));
-	if( len > 0)
+	if((len > 0) && ((len % 4) == 0))
 	{
-		if(len > 8) { len = 16; }
-		else { len = 8; }
 		for(i = 0; i < len ; i++)
 			{ tpl_printf(vars, TPLAPPEND, "BOXKEY", "%02X", rdr->boxkey[i]); }
 	}

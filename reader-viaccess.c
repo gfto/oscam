@@ -4,6 +4,7 @@
 #include "oscam-time.h"
 #include "oscam-emm.h"
 #include "reader-common.h"
+#include "cscrypt/des.h"
 
 struct geo_cache
 {
@@ -1010,6 +1011,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 	uint32_t provid = 0;
 	int32_t rc = 0;
 	int32_t hasD2 = 0;
+	uchar hasE0 = 0;
 	int32_t curEcm88len = 0;
 	int32_t nanoLen = 0;
 	uchar *nextEcm;
@@ -1026,8 +1028,6 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 
 	nextEcm = ecm88Data;
 	
-	int8_t nanoE0 = 0;
-
 	while(ecm88Len > 0 && !rc)
 	{
 
@@ -1177,9 +1177,10 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 			}
 			
 			// E0 (seen so far in logs: E0020002 or E0022002, but not in all cases delivers invalid cw so just detect!)
-			if(ecm88Data[0] == 0xE0 && ecm88Data[1] == 0x02 && (ecm88Data[2] == 0x00 || ecm88Data[2] == 0x20) && ecm88Data[3] == 0x02)
+			if(ecm88Data[0] == 0xE0 && ecm88Data[1] == 0x02)
 			{
-				nanoE0 = 1; // flag possible nanoe0 in use
+				rdr_log_dbg(reader, D_READER,"[viaccess-reader] nano E0 ECM detected!");
+				hasE0=1;
 			}
 			
 
@@ -1303,17 +1304,6 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 					rc = 1;
 				}
 				break;
-				
-			case 0xff: // nanoe0 responds FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
-				if(cta_res[1] == 0xff && nanoE0)
-				{
-					rdr_log(reader, "This ECM is using nano E0 and the controlword we received was invalid!");
-					ecm88Data = nextEcm;
-					ecm88Len -= curEcm88len;
-					nanoE0 = 0; // reset detection for next ecm
-				}
-				break;
-					
 					
 			default :
 				ecm88Data = nextEcm;
@@ -1358,7 +1348,27 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 			hdSurEncPhase2_D2_13_15(ea->cw);
 		}
 	}
-
+	
+	if ( hasE0 && reader->initCA28 )
+	{
+		rdr_log_dbg(reader, D_READER, "Decrypting nano E0 encrypted cw.");
+		cs_ddump_mask(D_ATR,ea->cw, 16, "cw before nano E0 processing :");
+		uint8_t returnedcw[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; 
+        memcpy(returnedcw,ea->cw,16);
+		// Processing 3DES
+		// Processing even cw
+		des(returnedcw, reader->key_schedule1, 0);  //decrypt
+		des(returnedcw, reader->key_schedule2, 1);  //crypt
+		des(returnedcw, reader->key_schedule1, 0);  //decrypt
+		// Processing odd cw
+		des(returnedcw+8, reader->key_schedule1, 0);  //decrypt
+		des(returnedcw+8, reader->key_schedule2, 1);  //crypt
+		des(returnedcw+8, reader->key_schedule1, 0);  //decrypt
+		
+		// returning value
+		memcpy(ea->cw,returnedcw, 16);      
+	}
+	
 	return (rc ? OK : ERROR);
 }
 
@@ -1961,6 +1971,35 @@ static int32_t viaccess_card_info(struct s_reader *reader)
 		write_cmd(insa4, NULL); // select next provider
 	}
 	//return ERROR;
+	// Start process init CA 28
+	reader->initCA28=0;
+	int32_t lenboxkey = check_filled(reader->boxkey, sizeof(reader->boxkey));
+	int32_t lendeskey = check_filled(reader->des_key, sizeof(reader->des_key));
+	if ((lenboxkey > 0) && (lendeskey > 0))
+	{
+		uchar ins28[] = { 0xCA, 0x28, 0x00, 0x00, 0x04 }; //Init for nanoE0 ca28
+		ins28[4] = (uchar) lenboxkey;
+		uchar ins28_data[4];
+		memcpy(ins28_data, reader->boxkey, lenboxkey);
+		write_cmd(ins28, ins28_data); // unlock card to reply on E002xxyy
+		if((cta_res[cta_lr - 2] == 0x90) && (cta_res[cta_lr - 1] == 0))
+		{
+			rdr_log(reader, "CA 28 initialisation successful!");
+			// init 3DES key
+			des_set_key(reader->des_key, reader->key_schedule1);
+			des_set_key(reader->des_key+8, reader->key_schedule2);
+			reader->initCA28=1;
+		}
+		else
+		{
+			rdr_log(reader, "CA 28 initialisation failed! CA 28 refused");
+		}
+	}	    
+	else
+	{
+		rdr_log(reader, "CA 28 initialisation failed! No boxkey or deskey!");
+	}
+	//end process init CA 28
 	return OK;
 }
 

@@ -1411,9 +1411,10 @@ struct s_reader                                     //contains device info, read
 	CAIDTAB         ctab;
 	uint32_t        boxid;
 	int8_t          nagra_read;                     // read nagra ncmed records: 0 Disabled (default), 1 read all records, 2 read valid records only
-	uint8_t         boxkey[16];                      // n3 boxkey 8byte, seca sessionkey 16byte
+	uint8_t         boxkey[16];                      // n3 boxkey 8 bytes, seca sessionkey 16 bytes, viaccess camid 4 bytes
 	int8_t          force_irdeto;
 	uchar           rsa_mod[120];                   // rsa modulus for nagra cards.
+	uint8_t         des_key[32];                    // 3des key for Viaccess 16 bytes
 	uchar           atr[64];
 	uchar           card_atr[64];                   // ATR readed from card
 	int8_t          card_atr_length;                // length of ATR
@@ -1577,6 +1578,11 @@ struct s_reader                                     //contains device info, read
 	uint8_t         ins2e06[0x04 + 1];
 	int8_t          ins7e11_fast_reset;
 	uint8_t         sc8in1_dtrrts_patch; // fix for kernel commit 6a1a82df91fa0eb1cc76069a9efe5714d087eccd
+#ifdef READER_VIACCESS	
+	unsigned char	initCA28; 							// To set when CA28 succeed
+	uint32_t 		key_schedule1[32];
+	uint32_t 		key_schedule2[32];
+#endif
 #ifdef MODULE_GBOX
 	uint8_t		gbox_maxdist;
 	uint8_t		gbox_maxecmsend;
