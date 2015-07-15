@@ -159,10 +159,12 @@ $(function () {
 			polling = 1;
 			$(":text[name='pintervall']").val('--');
 			$('#polling').attr('class','pollingdisabled');
+			$('#inc, #dec').attr('disabled','disabled');
 		} else {
 			polling = 0;
 			$(":text[name='pintervall']").val(pollintervall/1000);
 			$('#polling').attr('class','pollingenabled');
+			$('#inc, #dec').removeAttr('disabled');
 			clearTimeout(timer_ID);
 			timer_ID = setTimeout("waitForMsg()", pollintervall);
 		}
@@ -1741,9 +1743,11 @@ $(document).ready(function () {
 			if (polling) {
 				$(":text[name='pintervall']").val('--');
 				$('#polling').attr('class','pollingdisabled');
+				$('#inc, #dec').attr('disabled','disabled');
 			} else {
 				$(":text[name='pintervall']").val(pollintervall / 1000);
 				$('#polling').attr('class','pollingenabled');
+				$('#inc, #dec').removeAttr('disabled');
 				waitForMsg();
 			}
 			$("#poll").show();

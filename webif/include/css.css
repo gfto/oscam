@@ -942,6 +942,12 @@ div.colorPicker-swatch {
 #inc:hover,#dec:hover,.regexbutton:hover {
 	background-color:#F00
 }
+#inc[disabled],
+#dec[disabled] {
+	color: #6D6C6D;
+	cursor: inherit;
+	background-color: #DDD;
+}
 .pollingenabled {
 	background-image:url(image?i=ICSTOP);
 	background-repeat:no-repeat;
@@ -952,13 +958,13 @@ div.colorPicker-swatch {
 	background-image:url(image?i=ICSTART);
 	background-repeat:no-repeat;
 	background-position:center;
-	background-color:#0A0
+	background-color:#A00
 }
 .pollingenabled:hover {
  	background-color:#F00
 }
 .pollingdisabled:hover {
- 	background-color:#0D0
+ 	background-color:#F00
 }
 #poll button {
 	margin-bottom:1px;
