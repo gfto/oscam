@@ -163,6 +163,9 @@ DESCRIPTIONS
        rsakey = RSA key
 	  RSA key for Nagravision/Tiger SCs, CAM key data for Irdeto SCs, Conax SCs, default:none
 
+       deskey = DES key
+	  DES key for Viaccess SCs post-processing, default:none
+
        fix9993 = 0|1
 	  1 = enable fix for 9993 error with CAID 0919 SCs, default:0
 
