@@ -2471,7 +2471,7 @@ static char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams
 		{
 			int32_t retval = 0;
 			uint32_t caid, provid, sid, cid, len;
-			sscanf(record, "%4x:%6x:%4x:%4x:%4x", &caid, &provid, &sid, &cid, &len);
+			sscanf(record, "%4x@%6x:%4x:%4x:%4x", &caid, &provid, &sid, &cid, &len);
 			retval = clean_stat_by_id(rdr, caid, provid, sid, cid, len);
 			cs_log("Reader %s stats %d entr%s deleted by WebIF from %s",
 				   rdr->label, retval,
