@@ -29,7 +29,7 @@
 #define ECM_PIDS 30
 #define MAX_FILTER 24
 
-#define BOX_COUNT 6
+#define BOX_COUNT 7
 
 #define BOXTYPE_DREAMBOX    1
 #define BOXTYPE_DUCKBOX 2

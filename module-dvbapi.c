@@ -178,6 +178,7 @@ static const struct box_devices devices[BOX_COUNT] =
 {
 	/* QboxHD (dvb-api-3)*/     { "/tmp/virtual_adapter/",  "ca%d",         "demux%d",      "/tmp/camd.socket", DVBAPI_3    },
 	/* dreambox (dvb-api-3)*/   { "/dev/dvb/adapter%d/",    "ca%d",         "demux%d",      "/tmp/camd.socket", DVBAPI_3    },
+	/* wetek (dvb-api-3)*/      { "/dev/dvb/",              "ca%d",         "demux%d",      "/tmp/camd.socket", DVBAPI_3    },
 	/* dreambox (dvb-api-1)*/   { "/dev/dvb/card%d/",       "ca%d",         "demux%d",      "/tmp/camd.socket", DVBAPI_1    },
 	/* neumo (dvb-api-1)*/      { "/dev/",                  "demuxapi",     "demuxapi",     "/tmp/camd.socket", DVBAPI_1    },
 #ifdef WITH_STAPI5
@@ -185,7 +186,7 @@ static const struct box_devices devices[BOX_COUNT] =
 #else
 	/* sh4      (stapi)*/       { "/dev/stapi/",            "stpti4_ioctl", "stpti4_ioctl", "/tmp/camd.socket", STAPI       },
 #endif
-	/* coolstream*/             { "/dev/cnxt/",             "null",         "null",         "/tmp/camd.socket", COOLAPI     }
+	/* coolstream*/             { "/dev/cnxt/",             "null",         "null",         "/tmp/camd.socket", COOLAPI     },
 };
 
 static int32_t selected_box = -1;
