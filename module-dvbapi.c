@@ -174,6 +174,12 @@ struct s_client *dvbapi_client;
 
 const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "dm7000", "qboxhd", "coolstream", "neumo", "pc", "pc-nodmx" };
 
+
+// when updating devices[BOX_COUNT] make sure to update these index defines
+#define BOX_INDEX_QBOXHD 0
+#define BOX_INDEX_DREAMBOX_DVBAPI3 1
+#define BOX_INDEX_COOLSTREAM 6
+
 static const struct box_devices devices[BOX_COUNT] =
 {
 	/* QboxHD (dvb-api-3)*/     { "/tmp/virtual_adapter/",  "ca%d",         "demux%d",      "/tmp/camd.socket", DVBAPI_3    },
@@ -726,7 +732,7 @@ static int32_t dvbapi_detect_api(void)
 {
 #ifdef WITH_COOLAPI
 	selected_api = COOLAPI;
-	selected_box = 5;
+	selected_box = BOX_INDEX_COOLSTREAM;
 	disable_pmt_files = 1;
 	cfg.dvbapi_listenport = 0;
 	cs_log("Detected Coolstream API");
@@ -734,7 +740,7 @@ static int32_t dvbapi_detect_api(void)
 #else
 	if (cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX || cfg.dvbapi_boxtype == BOXTYPE_PC ) {
 		selected_api = DVBAPI_3;
-		selected_box = 1;
+		selected_box = BOX_INDEX_DREAMBOX_DVBAPI3;
 		if (cfg.dvbapi_listenport)
 		{
 			cs_log("Using TCP listen socket, API forced to DVBAPIv3 (%d), userconfig boxtype: %d", selected_api, cfg.dvbapi_boxtype);
@@ -763,7 +769,7 @@ static int32_t dvbapi_detect_api(void)
 		if (i == 1) { // We need boxnum 1 only
 			struct stat sb;
 			if (stat(device_path, &sb) > 0 && S_ISSOCK(sb.st_mode)) {
-				selected_box = 0;
+				selected_box = BOX_INDEX_QBOXHD;
 				disable_pmt_files = 1;
 				is_samygo = 1;
 				devnum = i;
@@ -788,7 +794,7 @@ static int32_t dvbapi_detect_api(void)
 	if(ret < 0) { cs_log("ERROR: Could not close demuxer fd (errno=%d %s)", errno, strerror(errno)); } // log it here since some needed var are not inited before!
 	if(is_samygo){ cs_log("SAMYGO detected."); } // log it here since some needed var are not inited before!
 #if defined(WITH_STAPI) || defined(WITH_STAPI5)
-	if(devnum == 4 && stapi_open() == 0)
+	if(selected_api == STAPI && stapi_open() == 0)
 	{
 		cs_log("ERROR: stapi: setting up stapi failed.");
 		return 0;
