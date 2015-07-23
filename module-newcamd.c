@@ -865,6 +865,13 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 			int32_t n;
 			if(!cfg.ncd_ptab.ports[cl->port_idx].ncd)
 				{ continue; }
+			
+			if(cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].caid == 0)
+			{
+				aureader = rdr;
+				break;				
+			}
+			
 			for(n = 0; n < cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].nprids; n++)
 			{
 				if(emm_reader_match(rdr, cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].caid, cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].prids[n]))
