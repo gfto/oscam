@@ -866,8 +866,9 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 			if(!cfg.ncd_ptab.ports[cl->port_idx].ncd)
 				{ continue; }
 			
-			if(cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].caid == 0)
-			{
+			if(cfg.ncd_ptab.ports[cl->port_idx].ncd->ncd_ftab.filts[0].caid == 0
+				&& !rdr->audisabled && (is_network_reader(rdr) || rdr->card_status == CARD_INSERTED) )
+			{			
 				aureader = rdr;
 				break;				
 			}
