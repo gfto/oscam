@@ -176,7 +176,6 @@ const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipb
 
 
 // when updating devices[BOX_COUNT] make sure to update these index defines
-#define BOX_INDEX_QBOXHD 0
 #define BOX_INDEX_DREAMBOX_DVBAPI3 1
 #define BOX_INDEX_COOLSTREAM 6
 
@@ -766,10 +765,9 @@ static int32_t dvbapi_detect_api(void)
 		strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path) - 1);
 		// FIXME: *THIS SAMYGO CHECK IS UNTESTED*
 		// FIXME: Detect samygo, checking if default DVBAPI_3 device paths are sockets
-		if (i == 1) { // We need boxnum 1 only
+		if (i == BOX_INDEX_DREAMBOX_DVBAPI3) { // We need BOX_INDEX_DREAMBOX_DVBAPI3 only
 			struct stat sb;
 			if (stat(device_path, &sb) > 0 && S_ISSOCK(sb.st_mode)) {
-				selected_box = BOX_INDEX_QBOXHD;
 				disable_pmt_files = 1;
 				is_samygo = 1;
 				devnum = i;
