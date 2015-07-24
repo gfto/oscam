@@ -1405,7 +1405,7 @@ void update_card_list(void)
 					{
 						if(chk_ctab(card->caid, &rdr->ctab))
 						{
-							int32_t dont_ignore = 0;
+							int32_t dont_ignore = ll_count(card->providers) ?  0 : 1;
 
 							it2 = ll_iter_create(card->providers);
 							struct cc_provider *prov;
