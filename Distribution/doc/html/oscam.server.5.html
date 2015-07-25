@@ -244,7 +244,7 @@ set TA1 byte for NDS Videoguard 2 SCs, valid for physical readers only, default:
 
 <B>nagra_read</B> = <B>0</B>|<B>1</B>|<B>2</B>
 <DL COMPACT><DT><DD>
-read Nagravison records (on NCMED cards only):
+read Nagravison records (on NCMED SCs only):
 <P>
 <BR>&nbsp;<B>0</B>&nbsp;=&nbsp;disabled&nbsp;(default)
 <BR>&nbsp;<B>1</B>&nbsp;=&nbsp;read&nbsp;all&nbsp;records&nbsp;with&nbsp;expired&nbsp;rights
@@ -267,13 +267,6 @@ DES key for Viaccess SCs post-processing, default:none
 
 <P>
 
-<B>fix9993</B> = <B>0</B>|<B>1</B>
-<DL COMPACT><DT><DD>
-1 = enable fix for 9993 error with CAID 0919 SCs, default:0
-</DL>
-
-<P>
-
 <B>boxkey</B> = <B>box key</B>
 <DL COMPACT><DT><DD>
 box key for Nagravision SCs / CAM key for Irdeto SCs
@@ -284,6 +277,24 @@ box key for Nagravision SCs / CAM key for Irdeto SCs
 <B>pincode</B> = <B>pincode</B>
 <DL COMPACT><DT><DD>
 pincode for Conax, Cryptoworks and Viaccess SCs, default:none
+</DL>
+
+<P>
+
+<B>fix9993</B> = <B>0</B>|<B>1</B>
+<DL COMPACT><DT><DD>
+1 = enable fix for 9993 error with CAID 0919 Videoguard SCs, default:0
+</DL>
+
+<P>
+
+<B>readtiers</B> = <B>0</B>|<B>1</B>|<B>2</B>
+<DL COMPACT><DT><DD>
+method to get tiers of NDS Videoguard SCs:
+<P>
+<BR>&nbsp;<B>0</B>&nbsp;=&nbsp;disabled&nbsp;(default)
+<BR>&nbsp;<B>1</B>&nbsp;=&nbsp;ins70&nbsp;method
+<BR>&nbsp;<B>2</B>&nbsp;=&nbsp;ins76&nbsp;method
 </DL>
 
 <P>

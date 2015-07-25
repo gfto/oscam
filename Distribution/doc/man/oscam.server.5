@@ -191,7 +191,7 @@ set TA1 byte for NDS Videoguard 2 SCs, valid for physical readers only, default:
 .PP
 \fBnagra_read\fP = \fB0\fP|\fB1\fP|\fB2\fP
 .RS 3n
-read Nagravison records (on NCMED cards only):
+read Nagravison records (on NCMED SCs only):
 
  \fB0\fP = disabled (default)
  \fB1\fP = read all records with expired rights
@@ -208,11 +208,6 @@ RSA key for Nagravision/Tiger SCs, CAM key data for Irdeto SCs, Conax SCs, defau
 DES key for Viaccess SCs post-processing, default:none
 .RE
 .PP
-\fBfix9993\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = enable fix for 9993 error with CAID 0919 SCs, default:0
-.RE
-.PP
 \fBboxkey\fP = \fBbox key\fP
 .RS 3n
 box key for Nagravision SCs / CAM key for Irdeto SCs
@@ -221,6 +216,20 @@ box key for Nagravision SCs / CAM key for Irdeto SCs
 \fBpincode\fP = \fBpincode\fP
 .RS 3n
 pincode for Conax, Cryptoworks and Viaccess SCs, default:none
+.RE
+.PP
+\fBfix9993\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = enable fix for 9993 error with CAID 0919 Videoguard SCs, default:0
+.RE
+.PP
+\fBreadtiers\fP = \fB0\fP|\fB1\fP|\fB2\fP
+.RS 3n
+method to get tiers of NDS Videoguard SCs:
+
+ \fB0\fP = disabled (default)
+ \fB1\fP = ins70 method
+ \fB2\fP = ins76 method
 .RE
 .PP
 \fBboxid\fP = \fBNDS box ID\fP
