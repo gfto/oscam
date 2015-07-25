@@ -4477,7 +4477,45 @@ static void *dvbapi_main_local(void *cli)
 				{
 					int32_t demux_index = ids[i];
 					int32_t n = fdn[i];
-					dvbapi_stop_filternum(demux_index, n); // stop filter since its giving errors and wont return anything good.
+					
+					if(cfg.dvbapi_boxtype != BOXTYPE_SAMYGO)
+					{
+						dvbapi_stop_filternum(demux_index, n); // stop filter since its giving errors and wont return anything good.
+					}
+					else
+					{
+						int32_t ret, pid;
+						uchar filter[32];
+						struct dmx_sct_filter_params sFP;
+			
+						cs_log_dbg(D_DVBAPI, "re-opening connection to demux socket");
+						close(demux[demux_index].demux_fd[n].fd);
+						demux[demux_index].demux_fd[n].fd  = -1;
+						
+						ret = dvbapi_open_device(0, demux[demux_index].demux_index, demux[demux_index].adapter_index);
+						if(ret != -1)
+						{
+							demux[demux_index].demux_fd[n].fd = ret;
+											
+							pid = demux[demux_index].curindex;
+
+							memset(filter, 0, 32);
+							memset(&sFP, 0, sizeof(sFP));
+							
+							filter[0] = 0x80;
+							filter[16] = 0xF0;
+							
+							sFP.pid            = demux[demux_index].ECMpids[pid].ECM_PID;
+							sFP.timeout        = 3000;
+							sFP.flags          = DMX_IMMEDIATE_START;			
+							memcpy(sFP.filter.filter, filter, 16);
+							memcpy(sFP.filter.mask, filter + 16, 16);
+							ret = dvbapi_ioctl(demux[demux_index].demux_fd[n].fd, DMX_SET_FILTER, &sFP);
+						}
+						
+						if(ret == -1)
+							dvbapi_stop_filternum(demux_index, n); // stop filter since its giving errors and wont return anything good.
+					}
 				}
 				continue; // continue with other events
 			}
