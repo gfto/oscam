@@ -43,7 +43,8 @@
 #define BOXTYPE_NEUMO   10
 #define BOXTYPE_PC      11
 #define BOXTYPE_PC_NODMX    12
-#define BOXTYPES        12
+#define BOXTYPE_SAMYGO  13
+#define BOXTYPES        13
 #define DMXMD5HASHSIZE  16  // use MD5() 
 #define REMOVED_STREAMPID_INDEX 1
 #define REMOVED_STREAMPID_LASTINDEX 2

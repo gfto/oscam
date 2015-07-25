@@ -68,7 +68,6 @@ const char *streamtxt[] = {
 								"MPEG-4 audiostream ",
 							};
 
-static int is_samygo;
 
 void flush_read_fd(int32_t demux_index, int32_t num, int fd)
 {
@@ -94,7 +93,7 @@ static int dvbapi_ioctl(int fd, uint32_t request, ...)
 	int ret = 0;
 	va_list args; 
 	va_start(args, request);
-	if (!is_samygo)
+	if (!(cfg.dvbapi_boxtype == BOXTYPE_SAMYGO))
 	{
 		void *param = va_arg(args, void *);
 		ret = ioctl(fd, request, param);
@@ -105,18 +104,18 @@ static int dvbapi_ioctl(int fd, uint32_t request, ...)
 		{
 			case DMX_SET_FILTER:
 			{
-				struct dmxSctFilterParams *sFP = va_arg(args, struct dmxSctFilterParams *);
+				struct dmx_sct_filter_params *sFP = va_arg(args, struct dmx_sct_filter_params *);
 				// prepare packet
-				unsigned char packet[sizeof(request) + sizeof(struct dmxSctFilterParams)];
+				unsigned char packet[sizeof(request) + sizeof(struct dmx_sct_filter_params)];
 				memcpy(&packet, &request, sizeof(request));
-				memcpy(&packet[sizeof(request)], sFP, sizeof(struct dmxSctFilterParams));
+				memcpy(&packet[sizeof(request)], sFP, sizeof(struct dmx_sct_filter_params));
 				ret = send(fd, packet, sizeof(packet), 0);
 				break;
 			}
 			case DMX_SET_FILTER1:
 			{
-				struct dmx_sct_filter_params *sFP = va_arg(args, struct dmx_sct_filter_params *);
-				ret = send(fd, sFP, sizeof(struct dmx_sct_filter_params), 0);
+				struct dmxSctFilterParams *sFP = va_arg(args, struct dmxSctFilterParams *);
+				ret = send(fd, sFP, sizeof(struct dmxSctFilterParams), 0);
 				break;
 			}
 			case DMX_STOP:
@@ -127,12 +126,28 @@ static int dvbapi_ioctl(int fd, uint32_t request, ...)
 			}
 			case CA_SET_PID:
 			{
-				ret = 1;
+				ca_pid_t *ca_pid2 = va_arg(args, ca_pid_t *);
+				
+				// preparing packet
+				unsigned char packet[sizeof(request) + sizeof(ca_pid_t)];
+				memcpy(&packet[0], &request, sizeof(request));
+				memcpy(&packet[sizeof(request)], ca_pid2, sizeof(ca_pid_t));
+
+				// sending data to UDP
+				ret = send(fd, &packet[0], sizeof(packet), 0);
 				break;
 			}
 			case CA_SET_DESCR:
 			{
-				ret = 1;
+				ca_descr_t *ca_descr = va_arg(args, ca_descr_t *);
+
+				// preparing packet
+				unsigned char packet[sizeof(request) + sizeof(ca_descr_t)];
+				memcpy(&packet[0], &request, sizeof(request));
+				memcpy(&packet[sizeof(request)], ca_descr, sizeof(ca_descr_t));
+
+				// sending data to UDP
+				ret = send(fd, &packet[0], sizeof(packet), 0);
 				break;
 			}
 		}
@@ -172,10 +187,11 @@ DEMUXTYPE demux[MAX_DEMUX];
 struct s_dvbapi_priority *dvbapi_priority;
 struct s_client *dvbapi_client;
 
-const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "dm7000", "qboxhd", "coolstream", "neumo", "pc", "pc-nodmx" };
+const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "dm7000", "qboxhd", "coolstream", "neumo", "pc", "pc-nodmx", "samygo" };
 
 
 // when updating devices[BOX_COUNT] make sure to update these index defines
+#define BOX_INDEX_QBOXHD 0
 #define BOX_INDEX_DREAMBOX_DVBAPI3 1
 #define BOX_INDEX_COOLSTREAM 6
 
@@ -750,6 +766,15 @@ static int32_t dvbapi_detect_api(void)
 		}
 		return 1;
 	}
+	else if(cfg.dvbapi_boxtype == BOXTYPE_SAMYGO)
+	{
+		selected_api = DVBAPI_3;
+		selected_box = BOX_INDEX_QBOXHD;
+		cfg.dvbapi_listenport = 0;
+		disable_pmt_files = 1;
+		cs_log("Using SamyGO dvbapi v0.1");
+		return 1;
+	} 
 	else
 	{
 		cfg.dvbapi_listenport = 0;
@@ -763,17 +788,7 @@ static int32_t dvbapi_detect_api(void)
 		snprintf(device_path2, sizeof(device_path2), devices[i].demux_device, 0);
 		snprintf(device_path, sizeof(device_path), devices[i].path, n);
 		strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path) - 1);
-		// FIXME: *THIS SAMYGO CHECK IS UNTESTED*
-		// FIXME: Detect samygo, checking if default DVBAPI_3 device paths are sockets
-		if (i == BOX_INDEX_DREAMBOX_DVBAPI3) { // We need BOX_INDEX_DREAMBOX_DVBAPI3 only
-			struct stat sb;
-			if (stat(device_path, &sb) > 0 && S_ISSOCK(sb.st_mode)) {
-				disable_pmt_files = 1;
-				is_samygo = 1;
-				devnum = i;
-				break;
-			}
-		}
+		
 		if((dmx_fd = open(device_path, O_RDWR | O_NONBLOCK)) > 0)
 		{
 			devnum = i;
@@ -790,7 +805,7 @@ static int32_t dvbapi_detect_api(void)
 		{ selected_api = devices[selected_box].api; }
 	
 	if(ret < 0) { cs_log("ERROR: Could not close demuxer fd (errno=%d %s)", errno, strerror(errno)); } // log it here since some needed var are not inited before!
-	if(is_samygo){ cs_log("SAMYGO detected."); } // log it here since some needed var are not inited before!
+
 #if defined(WITH_STAPI) || defined(WITH_STAPI5)
 	if(selected_api == STAPI && stapi_open() == 0)
 	{
@@ -873,21 +888,48 @@ int32_t dvbapi_open_device(int32_t type, int32_t num, int32_t adapter)
 		if(cfg.dvbapi_boxtype == BOXTYPE_PC)
 			{ num = 0; }
 
+		if(cfg.dvbapi_boxtype == BOXTYPE_SAMYGO)
+			{ num = 0; }
+
 		snprintf(device_path2, sizeof(device_path2), devices[selected_box].ca_device, num + ca_offset);
 		snprintf(device_path, sizeof(device_path), devices[selected_box].path, adapter);
 
 		strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path) - 1);
 	}
 
-	if (is_samygo) {
-		struct sockaddr_un saddr;
-		memset(&saddr, 0, sizeof(saddr));
-		saddr.sun_family = AF_UNIX;
-		strncpy(saddr.sun_path, device_path, sizeof(saddr.sun_path) - 1);
-		dmx_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-		ret = connect(dmx_fd, (struct sockaddr *)&saddr, sizeof(saddr));
-		if (ret < 0)
-			close(dmx_fd);
+	if (cfg.dvbapi_boxtype == BOXTYPE_SAMYGO) {
+		
+		if(type == 0)
+		{
+			struct sockaddr_un saddr;
+			memset(&saddr, 0, sizeof(saddr));
+			saddr.sun_family = AF_UNIX;
+			strncpy(saddr.sun_path, device_path, sizeof(saddr.sun_path) - 1);
+			dmx_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+			ret = connect(dmx_fd, (struct sockaddr *)&saddr, sizeof(saddr));
+			if (ret < 0)
+				{ close(dmx_fd); }
+		}
+		else if(type == 1)
+		{
+			int32_t udp_port = 9000;
+			struct sockaddr_in saddr;
+			memset(&saddr, 0, sizeof(saddr));		    
+		    saddr.sin_family = AF_INET;
+		    saddr.sin_port = htons(udp_port + adapter);
+		    saddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+			dmx_fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		    set_nonblock(dmx_fd, true);
+		    ret = connect(dmx_fd, (struct sockaddr *) &saddr, sizeof(saddr));
+		    if(ret < 0)
+		  		{ close(dmx_fd); }
+		
+			cs_log_dbg(D_DVBAPI, "NET DEVICE open (port = %d) fd %d", udp_port + adapter, dmx_fd);	
+		}
+		else
+		{
+			ret = -1;
+		}
 	} else {
 		dmx_fd = ret = open(device_path, O_RDWR | O_NONBLOCK);
 	}
@@ -2441,11 +2483,12 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 	// int32_t ca_pmt_cmd_id = buffer[i + 5];
 	uint32_t descriptor_length = 0;
 	uint32_t j, u;
+	uint8_t skip_border = cfg.dvbapi_boxtype == BOXTYPE_SAMYGO ? 0x05 : 0x02; // skip input values <0x05 on samygo
 
 	if(info_length < 1)
 		{ return; }
 
-	if((buffer[0] < 0x02) && info_length > 0) // skip input values like 0x00 and 0x01 
+	if((buffer[0] < skip_border) && info_length > 0) // skip input values like 0x00 and 0x01 
 	{
 		buffer++;
 		info_length--;
@@ -2611,7 +2654,8 @@ static void getDemuxOptions(int32_t demux_id, unsigned char *buffer, uint16_t *c
 		*ca_mask = (1 << *adapter_index); // use adapter_index as ca_mask (used as index for ca_fd[] array)
 	}
 
-	if((cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) && buffer[7] == 0x82 && buffer[8] == 0x02)
+	if((cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX || cfg.dvbapi_boxtype == BOXTYPE_SAMYGO)
+		 && buffer[7] == 0x82 && buffer[8] == 0x02)
 	{
 		*demux_index = buffer[9]; // it is always 0 but you never know
 		*adapter_index = buffer[10]; // adapter index can be 0,1,2
@@ -2684,7 +2728,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		if(cfg.dvbapi_boxtype == BOXTYPE_IPBOX_PMT) demux_index = i; // fixup for ipbox
 
 		bool full_check = 1, matched = 0;
-		if (config_enabled(WITH_COOLAPI) || is_samygo)
+		if (config_enabled(WITH_COOLAPI) || cfg.dvbapi_boxtype == BOXTYPE_SAMYGO)
 			full_check = 0;
 
 		if (full_check)
@@ -3533,7 +3577,7 @@ void event_handler(int32_t UNUSED(signal))
 
 	SAFE_MUTEX_LOCK(&event_handler_lock);
 
-	if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
+	if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX || cfg.dvbapi_boxtype == BOXTYPE_SAMYGO)
 		{ pausecam = 0; }
 	else
 	{
@@ -5089,6 +5133,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 #ifndef __CYGWIN__
 		else if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
 #endif
+		if(cfg.dvbapi_boxtype != BOXTYPE_SAMYGO)
 			{ dvbapi_write_ecminfo_file(client, er, demux[i].lastcw[0], demux[i].lastcw[1]); }
 
 	}

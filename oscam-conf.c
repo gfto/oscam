@@ -172,7 +172,9 @@ void config_list_save_ex(FILE *f, const struct config_list *clist, void *config_
 		case OPT_INT8:
 		{
 			int8_t val = *(int8_t *)var;
-			if(save_all || val != c->def.d_int8)
+			
+			// always save pmt_mode, because external tools parse it
+			if(save_all || val != c->def.d_int8 || !strcmp(c->config_name, "pmt_mode"))
 				{ fprintf_conf(f, c->config_name, "%d\n", val); }
 			continue;
 		}
