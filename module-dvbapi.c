@@ -4276,7 +4276,7 @@ static void *dvbapi_main_local(void *cli)
 			cs_ftime(&now);
 			int64_t gone;
 			int8_t do_emm_start = (cfg.dvbapi_au > 0 && demux[i].emm_filter == -1 && demux[i].EMMpidcount == 0 && emmcounter == 0);
-			int8_t do_sdt_start = (cfg.dvbapi_read_sdt && demux[i].sdt_filter == -1);
+			int8_t do_sdt_start = (cfg.dvbapi_read_sdt && demux[i].sdt_filter == -1 && cfg.dvbapi_boxtype != BOXTYPE_SAMYGO);
 			
 			if(do_emm_start || do_sdt_start)
 			{
