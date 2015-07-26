@@ -640,7 +640,7 @@ static void mk_user_ftab(FILTER *filt)
 	cs_log_dbg(D_CLIENT, "client[%8lX].%s nfilts=%d, filt.caid=%04X", (unsigned long)pthread_self(),
 				  cl->account->usr, cl->ftab.nfilts, filt->caid);
 
-	if(!filt->caid && cl->ftab.filts)
+	if(!filt->caid && cl->ftab.nfilts)
 	{
 		int32_t fcaids;
 		for(i = fcaids = 0; i < cl->ftab.nfilts; i++)
@@ -924,8 +924,14 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 			else
 				mk_user_ftab(&usr_filter);
 
-			if(!cfg.ncd_mgclient)
-				ftab_add(&cl->ftab, &usr_filter); //We cannot filter all cards!
+			ftab_clear(&cl->ftab);
+			ftab_add(&cl->ftab, &usr_filter);
+
+			if(cfg.ncd_mgclient)
+			{
+				ftab_clear(&cl->ftab); //We cannot filter all cards!
+				memset(&usr_filter, 0, sizeof(FILTER));
+			}
 
 			mbuf[0] = MSG_CARD_DATA;
 			mbuf[1] = 0x00;
@@ -1071,7 +1077,7 @@ static void newcamd_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 	cl_msgid = er->msgid;
 	mbuf[0] = er->ecm[0];
-	if((client->ftab.filts && client->ftab.filts[0].nprids == 0) || (er->rc >= E_NOTFOUND /*not found*/))
+	if(!client->ftab.filts || client->ftab.filts[0].nprids == 0 || er->rc >= E_NOTFOUND /*not found*/)
 	{
 		len = 3;
 		mbuf[1] = mbuf[2] = 0x00;
