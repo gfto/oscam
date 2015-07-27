@@ -109,6 +109,7 @@ pthread_key_t getclient;
 static int32_t bg;
 static int32_t gbdb;
 static int32_t max_pending = 32;
+static int8_t do_write_versionfile = 1;
 
 //ecms list
 CS_MUTEX_LOCK ecmcache_lock;
@@ -218,9 +219,9 @@ static void show_usage(void)
 
 /* Keep the options sorted */
 #if defined(WITH_STAPI) || defined(WITH_STAPI5)
-static const char short_options[] = "aB:fc:d:g:hI:p:r:Sst:uVw:";
+static const char short_options[] = "aB:fc:d:g:hI:np:r:Sst:uVw:";
 #else
-static const char short_options[] = "aB:bc:d:g:hI:p:r:Sst:uVw:";
+static const char short_options[] = "aB:bc:d:g:hI:np:r:Sst:uVw:";
 #endif
 
 /* Keep the options sorted by short option */
@@ -238,6 +239,7 @@ static const struct option long_options[] =
 	{ "gcollect",           required_argument, NULL, 'g' },
 	{ "help",               no_argument,       NULL, 'h' },
 	{ "syslog-ident",       required_argument, NULL, 'I' },
+	{ "no-versionfile",     no_argument,       NULL, 'n' },	
 	{ "pending-ecm",        required_argument, NULL, 'p' },
 	{ "restart",            required_argument, NULL, 'r' },
 	{ "show-sensitive",     no_argument,       NULL, 'S' },
@@ -294,6 +296,9 @@ static void parse_cmdline_params(int argc, char **argv)
 			break;
 		case 'I': // --syslog-ident
 			syslog_ident = optarg;
+			break;
+		case 'n': // --no-versionfile
+			do_write_versionfile = 0;
 			break;
 		case 'p': // --pending-ecm
 			max_pending = atoi(optarg) <= 0 ? 32 : MIN(atoi(optarg), 4096);
@@ -1762,7 +1767,8 @@ int32_t main(int32_t argc, char *argv[])
 	init_len4caid();
 	init_irdeto_guess_tab();
 
-	write_versionfile(false);
+	if(do_write_versionfile)
+		{ write_versionfile(false); }
 
 	led_init();
 	led_status_default();
