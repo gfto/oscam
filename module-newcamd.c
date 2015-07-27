@@ -917,20 +917,19 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 							  MSG_CARD_DATA_REQ, mbuf[2]);
 				return -1;
 			}
-
-			// set userfilter for au enabled clients
-			if(aureader)
-				mk_user_au_ftab(aureader, &usr_filter);
-			else
-				mk_user_ftab(&usr_filter);
-
+			
+			mk_user_ftab(&usr_filter);		
 			ftab_clear(&cl->ftab);
 			ftab_add(&cl->ftab, &usr_filter);
+			pufilt = &cl->ftab.filts[0];
+			
+			// set userfilter for au enabled clients
+			if(aureader)
+				mk_user_au_ftab(aureader, pufilt);
 
 			if(cfg.ncd_mgclient)
 			{
 				ftab_clear(&cl->ftab); //We cannot filter all cards!
-				memset(&usr_filter, 0, sizeof(FILTER));
 			}
 
 			mbuf[0] = MSG_CARD_DATA;
