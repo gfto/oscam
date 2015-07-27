@@ -105,6 +105,15 @@ static int dvbapi_ioctl(int fd, uint32_t request, ...)
 			case DMX_SET_FILTER:
 			{
 				struct dmx_sct_filter_params *sFP = va_arg(args, struct dmx_sct_filter_params *);
+				
+				//fix filter for samygo
+				//note: we only have 14 available filter bytes (instead of 16) on samygo 
+				memmove(&sFP->filter.filter[3], &sFP->filter.filter[1], 13);
+				memset(&sFP->filter.filter[1], 0, 2);
+				
+				memmove(&sFP->filter.mask[3], &sFP->filter.mask[1], 13);
+				memset(&sFP->filter.mask[1], 0, 2);
+				
 				// prepare packet
 				unsigned char packet[sizeof(request) + sizeof(struct dmx_sct_filter_params)];
 				memcpy(&packet, &request, sizeof(request));
@@ -114,8 +123,8 @@ static int dvbapi_ioctl(int fd, uint32_t request, ...)
 			}
 			case DMX_SET_FILTER1:
 			{
-				struct dmxSctFilterParams *sFP = va_arg(args, struct dmxSctFilterParams *);
-				ret = send(fd, sFP, sizeof(struct dmxSctFilterParams), 0);
+				cs_log("error: samygo does not support DMX_SET_FILTER1");
+				ret = -1;
 				break;
 			}
 			case DMX_STOP:
