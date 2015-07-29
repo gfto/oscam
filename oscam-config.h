@@ -36,6 +36,7 @@ void ratelimit_read(void);
 int32_t init_provid(void);
 int32_t init_srvid(void);
 int32_t init_tierid(void);
+int32_t init_fakecws(void);
 void    init_len4caid(void);
 
 /* Shared parser functions */

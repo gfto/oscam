@@ -625,7 +625,7 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 		cs_log_dbg(D_CACHEEX, "CACHEX received, but invalid client state %s", username(cl));
 		return 0;
 	}
-
+	
 	uint8_t i, c;
 	uint8_t null = 0;
 	for(i = 0; i < 16; i += 4)
@@ -651,7 +651,6 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 		return 0;
 	}
 
-
 	if(get_odd_even(er)==0){
 		cs_log_dbg(D_CACHEEX, "push received ecm with null odd/even byte from %s", csp ? "csp" : username(cl));
 		cl->cwcacheexerr++;
@@ -659,7 +658,6 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 			{ cl->account->cwcacheexerr++; }
 		return 0;
 	}
-
 
 	if(!chk_halfCW(er, er->cw)){
 		log_cacheex_cw(er, "bad half cw");
@@ -670,6 +668,18 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 		return 0;
 	}
 
+	if(!csp && ((cl->reader && cl->reader->cacheex.block_fakecws) 
+				|| (!cl->reader && cl->account && cl->account->cacheex.block_fakecws)))
+	{
+		if(chk_is_fakecw(er->cw))
+		{
+			cs_log_dbg(D_CACHEEX, "push received fake cw from %s", csp ? "csp" : username(cl));
+			cl->cwcacheexerr++;
+			if(cl->account)
+				{ cl->account->cwcacheexerr++; }
+			return 0;
+		}
+	}
 
 	er->grp |= cl->grp;  //ok for mode2 reader too: cl->reader->grp
 	er->rc = E_CACHEEX;

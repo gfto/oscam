@@ -119,7 +119,8 @@ static bool use_srvid2 = false;
 #define MNU_CFG_RATELIMIT 26
 #define MNU_CFG_FCSS 27
 #define MNU_CFG_FSRVID2 28
-#define MNU_CFG_TOTAL_ITEMS 29 // sum of items above. Use it for "All inactive" in function calls too.
+#define MNU_CFG_FFAKECWS 29
+#define MNU_CFG_TOTAL_ITEMS 30 // sum of items above. Use it for "All inactive" in function calls too.
 
 static void set_status_info_var(struct templatevars *vars, char *varname, int no_data, char *fmt, double value) {
 	if (no_data)
@@ -1903,6 +1904,7 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	tpl_addVar(vars, TPLADD, "DCCHECKED", (rdr->cacheex.drop_csp == 1) ? "checked" : "");
 	tpl_addVar(vars, TPLADD, "ARCHECKED", (rdr->cacheex.allow_request == 1) ? "checked" : "");
 	tpl_addVar(vars, TPLADD, "AFCHECKED", (rdr->cacheex.allow_filter == 1) ? "checked" : "");
+	tpl_addVar(vars, TPLADD, "BLOCKFAKECWSCHECKED", (rdr->cacheex.block_fakecws == 1) ? "checked" : "");
 #endif
 
 	// BoxID
@@ -3014,6 +3016,7 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 	tpl_addVar(vars, TPLADD, "DCCHECKED", (account->cacheex.drop_csp == 1) ? "checked" : "");
 	tpl_addVar(vars, TPLADD, "ARCHECKED", (account->cacheex.allow_request == 1) ? "checked" : "");
 	tpl_addVar(vars, TPLADD, "AFCHECKED", (account->cacheex.allow_filter == 1) ? "checked" : "");
+	tpl_addVar(vars, TPLADD, "BLOCKFAKECWSCHECKED", (account->cacheex.block_fakecws == 1) ? "checked" : "");
 	tpl_addVar(vars, TPLADD, "NWTCHECKED", (account->no_wait_time == 1) ? "checked" : "");
 	
 #endif
@@ -5938,6 +5941,7 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 #ifdef HAVE_DVBAPI
 		{ "oscam.dvbapi",    MNU_CFG_FDVBAPI,   FTYPE_CONFIG },
 #endif
+		{ "oscam.fakecws",   MNU_CFG_FFAKECWS,  FTYPE_CONFIG },
 #ifdef CS_ANTICASC
 		{ "anticasc",        MNU_CFG_FACLOG,    FTYPE_ANTICASC },
 #endif
@@ -6083,6 +6087,9 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 						break;
 					case MNU_CFG_WHITELIST:
 						global_whitelist_read();
+						break;
+					case MNU_CFG_FFAKECWS:
+						init_fakecws();
 						break;
 					default:
 						break;

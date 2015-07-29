@@ -1363,6 +1363,7 @@ typedef struct ce_csp_t
 	uint8_t         allow_reforward;
 	uint8_t         drop_csp;
 	uint8_t         allow_filter;
+	uint8_t         block_fakecws;
 } CECSP;
 
 struct s_emmlen_range
@@ -1736,6 +1737,17 @@ struct s_rlimit
 	struct s_rlimit *next;
 };
 
+struct s_cw
+{
+	uint8_t cw[16];
+};
+
+struct s_fakecws
+{
+	uint32_t count;
+	struct s_cw *data;	
+};
+
 struct s_tierid
 {
 	uint16_t        tierid;
@@ -2090,6 +2102,9 @@ struct s_config
 
 	//Ratelimit list
 	struct s_rlimit *ratelimit_list;
+	
+	// fake cws
+	struct s_fakecws fakecws;
 };
 
 struct s_clientinit

@@ -22,6 +22,7 @@ extern uint16_t len4caid[256];
 #define cs_sidt             "oscam.services"
 #define cs_whitelist        "oscam.whitelist"
 #define cs_provid           "oscam.provid"
+#define cs_fakecws          "oscam.fakecws"
 
 uint32_t cfg_sidtab_generation = 1;
 
@@ -704,6 +705,99 @@ int32_t init_srvid(void)
 	}
 
 	return (0);
+}
+
+int32_t init_fakecws(void)
+{
+	int32_t nr = 0, alloccount = 0, i;
+	char *token, cw_string[64]; 
+	uint8_t cw[16], wrong_checksum, c;
+	FILE *fp;
+
+	cs_writelock(__func__, &config_lock);
+	cfg.fakecws.count = 0;
+	NULLFREE(cfg.fakecws.data);
+	cs_writeunlock(__func__, &config_lock);
+	
+	fp = open_config_file(cs_fakecws);
+	if(!fp)
+		{ return 0; }
+	
+	if(!cs_malloc(&token, MAXLINESIZE))
+		{ return 0; }
+	
+	while(fgets(token, MAXLINESIZE, fp))
+	{
+		if(sscanf(token, " %62s ", cw_string) == 1)
+		{
+			if(strlen(cw_string) == 32)
+			{
+				alloccount++;
+			}
+			else
+			{
+				cs_log("skipping fake cw %s because of wrong length (%d != 32)!", cw_string, strlen(cw_string));
+			}
+		}
+	} 
+
+	if(alloccount < 1 || !cs_malloc(&cfg.fakecws.data, sizeof(struct s_cw)*alloccount))
+	{
+		NULLFREE(token);
+		fclose(fp);
+		return 0;
+	}
+	
+	fseek(fp, 0, SEEK_SET);
+
+	while(fgets(token, MAXLINESIZE, fp) && nr < alloccount)
+	{
+		if(sscanf(token, " %62s ", cw_string) == 1)
+		{
+			if(strlen(cw_string) == 32)
+			{
+				if(cs_atob(cw, cw_string, 16) == 16)
+				{
+					wrong_checksum = 0;
+					
+					for(i = 0; i < 16; i += 4)
+					{
+						c = ((cw[i] + cw[i + 1] + cw[i + 2]) & 0xff);
+						if(cw[i + 3] != c)
+						{
+							wrong_checksum = 1;
+						}
+					}
+					
+					if(wrong_checksum)
+					{
+						cs_log("skipping fake cw %s because of wrong checksum!", cw_string);
+					}
+					else
+					{
+						memcpy(cfg.fakecws.data[nr].cw, cw, 16);
+						nr++;
+					}
+				}
+				else
+				{
+					cs_log("skipping fake cw %s because it contains invalid characters!", cw_string);
+				}
+			}
+		}
+	}
+	
+	NULLFREE(token);
+	fclose(fp);
+	
+	if(nr > 0)
+		{ cs_log("%d fakecws's loaded", nr); }
+	
+	cs_writelock(__func__, &config_lock);
+	cfg.fakecws.count = nr;
+	cs_writeunlock(__func__, &config_lock);
+			
+	return 0;
 }
 
 static struct s_rlimit *ratelimit_read_int(void)

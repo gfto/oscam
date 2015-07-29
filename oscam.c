@@ -665,6 +665,7 @@ static void cs_reload_config(void)
 	init_provid();
 	init_srvid();
 	init_tierid();
+	init_fakecws();
 	ac_init_stat();
 	cs_reopen_log(); // FIXME: aclog.log, emm logs, cw logs (?)
 	
@@ -1754,6 +1755,7 @@ int32_t main(int32_t argc, char *argv[])
 	init_provid();
 	init_srvid();
 	init_tierid();
+	init_fakecws();
 
 	start_garbage_collector(gbdb);
 

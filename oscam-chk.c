@@ -5,6 +5,7 @@
 #include "oscam-chk.h"
 #include "oscam-ecm.h"
 #include "oscam-client.h"
+#include "oscam-lock.h"
 #include "oscam-net.h"
 #include "oscam-string.h"
 #include "module-stat.h"
@@ -1089,4 +1090,23 @@ uint16_t caidvaluetab_get_value(CAIDVALUETAB *cv, uint16_t caid, uint16_t defaul
 			return cvdata->value;
 	}
 	return default_value;
+}
+
+
+int32_t chk_is_fakecw(uint8_t *cw)
+{
+	uint32_t i, is_fakecw = 0;
+
+	cs_readlock(__func__, &config_lock);
+	for(i=0; i<cfg.fakecws.count; i++)
+	{
+		if(memcmp(cw, cfg.fakecws.data[i].cw, 16) == 0)
+		{
+			is_fakecw = 1;
+			break;
+		}	
+	}
+	cs_readunlock(__func__, &config_lock);
+	
+	return is_fakecw;
 }

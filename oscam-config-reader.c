@@ -806,7 +806,8 @@ static const struct config_list reader_opts[] =
 	DEF_OPT_FUNC("cacheex_ecm_filter"       , OFS(cacheex.filter_caidtab),  cacheex_hitvaluetab_fn),
 	DEF_OPT_UINT8("cacheex_allow_request"   , OFS(cacheex.allow_request),   0),
 	DEF_OPT_UINT8("cacheex_drop_csp"        , OFS(cacheex.drop_csp),        0),
-	DEF_OPT_UINT8("cacheex_allow_filter", OFS(cacheex.allow_filter),    1),	
+	DEF_OPT_UINT8("cacheex_allow_filter", OFS(cacheex.allow_filter),    1),
+	DEF_OPT_UINT8("cacheex_block_fakecws",OFS(cacheex.block_fakecws),   0),
 #endif
 	DEF_OPT_FUNC("caid"                 , OFS(ctab),                    reader_caid_fn),
 	DEF_OPT_FUNC("atr"                  , 0,                            atr_fn),

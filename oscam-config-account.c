@@ -371,6 +371,7 @@ static const struct config_list account_opts[] =
 	DEF_OPT_UINT8("cacheex_allow_request"   , OFS(cacheex.allow_request),   0),
 	DEF_OPT_UINT8("no_wait_time"        , OFS(no_wait_time),            0),
 	DEF_OPT_UINT8("cacheex_allow_filter", OFS(cacheex.allow_filter),    1),	
+	DEF_OPT_UINT8("cacheex_block_fakecws",OFS(cacheex.block_fakecws),   0),	
 #endif
 #ifdef MODULE_CCCAM
 	DEF_OPT_INT32("cccmaxhops"          , OFS(cccmaxhops),              DEFAULT_CC_MAXHOPS),
