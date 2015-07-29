@@ -579,28 +579,24 @@ static int32_t newcamd_recv(struct s_client *client, uchar *buf, int32_t UNUSED(
 static void mk_user_au_ftab(struct s_reader *aureader, FILTER *filt)
 {
 	int32_t i, j, found;
-	struct s_client *cl = cur_client();
-	FILTER client_filter;
-	FILTER *pufilt = &client_filter;
+	FILTER old_filter;
 
+	memcpy(&old_filter, filt, sizeof(old_filter));
 	memset(filt, 0, sizeof(*filt));
-	memset(&client_filter, 0, sizeof(client_filter));
-
-	if(cl->ftab.filts) client_filter = cl->ftab.filts[0];
 
 	filt->caid = aureader->caid;
 	if(filt->caid == 0)
-		filt->caid = client_filter.caid;
+		filt->caid = old_filter.caid;
 
-	for(i = 0; i < aureader->nprov; i++)
+	for(i = 0; i < aureader->nprov && filt->nprids < CS_MAXPROV; i++)
 		{ filt->prids[filt->nprids++] = b2i(3, &aureader->prid[i][1]); }
 
-	for(i = 0; i < pufilt->nprids; i++)
+	for(i = 0; i < old_filter.nprids && filt->nprids < CS_MAXPROV; i++)
 	{
 		for(j = found = 0; (!found) && (j < filt->nprids); j++)
-			if(pufilt->prids[i] == filt->prids[j]) { found = 1; }
+			if(old_filter.prids[i] == filt->prids[j]) { found = 1; }
 		if(!found)
-			{ filt->prids[filt->nprids++] = pufilt->prids[i]; }
+			{ filt->prids[filt->nprids++] = old_filter.prids[i]; }
 	}
 }
 
@@ -667,7 +663,7 @@ static void mk_user_ftab(FILTER *filt)
 	if(!cl->ftab.nfilts)
 	{
 		int32_t add;
-		for(i = 0; i < psfilt->nprids; i++)
+		for(i = 0; i < psfilt->nprids && filt->nprids < CS_MAXPROV; i++)
 		{
 			// use server PROVID(s) (and only those which are in user's groups)
 			add = 0;
@@ -707,12 +703,12 @@ static void mk_user_ftab(FILTER *filt)
 		cs_log_dbg(D_CLIENT, "client caid %d: %04X", j, ucaid);
 		if(!ucaid || ucaid == filt->caid)
 		{
-			for(i = 0; i < psfilt->nprids; i++)
+			for(i = 0; i < psfilt->nprids && filt->nprids < CS_MAXPROV; i++)
 			{
 				cs_log_dbg(D_CLIENT, "search server provid %d: %06X", i, psfilt->prids[i]);
 				if(cl->ftab.filts[j].nprids)
 				{
-					for(k = 0; k < cl->ftab.filts[j].nprids; k++)
+					for(k = 0; k < cl->ftab.filts[j].nprids && filt->nprids < CS_MAXPROV; k++)
 						if(cl->ftab.filts[j].prids[k] == psfilt->prids[i])
 							{ filt->prids[filt->nprids++] = cl->ftab.filts[j].prids[k]; }
 				}
@@ -903,7 +899,7 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 	{
 		FILTER usr_filter;
 		FILTER *pufilt = &usr_filter;
-
+		
 		nc_des_login_key_get(deskey, passwdcrypt, strlen((char *)passwdcrypt), key);
 		memcpy(cl->ncd_skey, key, 16);
 
@@ -918,18 +914,19 @@ static int8_t newcamd_auth_client(IN_ADDR_T ip, uint8_t *deskey)
 				return -1;
 			}
 			
-			mk_user_ftab(&usr_filter);		
-			ftab_clear(&cl->ftab);
-			ftab_add(&cl->ftab, &usr_filter);
-			pufilt = &cl->ftab.filts[0];
+			mk_user_ftab(&usr_filter);
 			
 			// set userfilter for au enabled clients
 			if(aureader)
-				mk_user_au_ftab(aureader, pufilt);
-
-			if(cfg.ncd_mgclient)
 			{
-				ftab_clear(&cl->ftab); //We cannot filter all cards!
+				mk_user_au_ftab(aureader, &usr_filter);
+			}
+			
+			ftab_clear(&cl->ftab);
+
+			if(!cfg.ncd_mgclient)
+			{
+				ftab_add(&cl->ftab, &usr_filter);
 			}
 
 			mbuf[0] = MSG_CARD_DATA;
