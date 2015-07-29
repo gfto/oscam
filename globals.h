@@ -317,7 +317,10 @@ typedef unsigned char uchar;
 #define SAFE_CONDATTR_SETCLOCK_NOLOG_R(a,b,c)	SAFE_PTHREAD_2ARG(pthread_condattr_setclock, a, b, fprintf_stderr, c)
 
 #define SAFE_COND_TIMEDWAIT(a, b, c) { \
-	int32_t pter = pthread_cond_timedwait(a, b, c); \
+	int32_t pter; \
+	if((c)->tv_nsec < 0) (c)->tv_nsec = 0; \
+	if((c)->tv_nsec > 999999999) (c)->tv_nsec = 999999999; \
+	pter = pthread_cond_timedwait(a, b, c); \
 	if(pter != 0 && pter != ETIMEDOUT) \
 	{ \
 		cs_log("FATAL ERROR: pthread_cond_timedwait failed in %s with error %d %s\n", __func__, pter, strerror(pter)); \
@@ -325,7 +328,10 @@ typedef unsigned char uchar;
 	} }
 
 #define SAFE_COND_TIMEDWAIT_R(a, b, c, d) { \
-	int32_t pter = pthread_cond_timedwait(a, b, c); \
+	int32_t pter; \
+	if((c)->tv_nsec < 0) (c)->tv_nsec = 0; \
+	if((c)->tv_nsec > 999999999) (c)->tv_nsec = 999999999; \
+	pter = pthread_cond_timedwait(a, b, c); \
 	if(pter != 0 && pter != ETIMEDOUT) \
 	{ \
 		cs_log("FATAL ERROR: pthread_cond_timedwait failed in %s (called from %s) with error %d %s\n", __func__, d, pter, strerror(pter)); \
