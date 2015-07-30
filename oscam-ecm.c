@@ -1028,15 +1028,7 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 	}
 #endif
 
-	ac_chk(client, er, 1);
-	int32_t is_fake = 0;
-	if(er->rc == E_FAKE)
-	{
-		is_fake = 1;
-		er->rc = E_FOUND;
-	}
-
-	if(cfg.double_check &&  er->rc == E_FOUND && er->selected_reader && is_double_check_caid(er))
+	if(cfg.double_check && er->rc == E_FOUND && er->selected_reader && is_double_check_caid(er))
 	{
 		if(er->checked == 0)   //First CW, save it and wait for next one
 		{
@@ -1062,6 +1054,14 @@ int32_t send_dcw(struct s_client *client, ECM_REQUEST *er)
 			er->rc = E_UNHANDLED;
 			goto ESC;
 		}
+	}
+
+	ac_chk(client, er, 1);
+	int32_t is_fake = 0;
+	if(er->rc == E_FAKE)
+	{
+		is_fake = 1;
+		er->rc = E_FOUND;
 	}
 
 	get_module(client)->send_dcw(client, er);
