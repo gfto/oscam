@@ -671,8 +671,8 @@ static int32_t cacheex_add_to_cache_int(struct s_client *cl, ECM_REQUEST *er, in
 		return 0;
 	}
 
-	if(!csp && ((cl->reader && cl->reader->cacheex.block_fakecws) 
-				|| (!cl->reader && cl->account && cl->account->cacheex.block_fakecws)))
+	if((csp && cfg.csp.block_fakecws) || (cl->reader && cl->reader->cacheex.block_fakecws) 
+				|| (!cl->reader && cl->account && cl->account->cacheex.block_fakecws))
 	{
 		if(chk_is_fakecw(er->cw))
 		{

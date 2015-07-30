@@ -614,6 +614,7 @@ static const struct config_list cache_opts[] =
 	DEF_OPT_UINT8("csp_allow_reforward"	, OFS(csp.allow_reforward),	0),
 	DEF_OPT_FUNC("cacheex_cw_check"		, OFS(cacheex_cwcheck_tab),	cacheex_cwcheck_tab_fn),
 	DEF_OPT_UINT8("wait_until_ctimeout"     , OFS(wait_until_ctimeout),	0),
+	DEF_OPT_UINT8("csp_block_fakecws"     , OFS(csp.block_fakecws),	0),
 #endif
 #ifdef CW_CYCLE_CHECK
 	DEF_OPT_INT8("cwcycle_check_enable"	, OFS(cwcycle_check_enable),	0),

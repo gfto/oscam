@@ -807,6 +807,7 @@ static char *send_oscam_config_cache(struct templatevars *vars, struct uriparams
 	
 	tpl_addVar(vars, TPLADD, "ARCHECKED", (cfg.csp.allow_request == 1) ? "checked" : "");
 	tpl_addVar(vars, TPLADD, "ARFCHECKED", (cfg.csp.allow_reforward == 1) ? "checked" : "");
+	tpl_addVar(vars, TPLADD, "BLOCKFAKECWSCHECKED", (cfg.csp.block_fakecws == 1) ? "checked" : "");
 #endif
 
 #ifdef CW_CYCLE_CHECK
