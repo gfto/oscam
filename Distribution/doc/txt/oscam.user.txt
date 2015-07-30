@@ -38,6 +38,9 @@ DESCRIPTIONS
        allowedtimeframe = hh:mm-hh:mm
 	  account enabled from hh:mm to hh:mm, default:none
 
+       max_connections = count
+	  maximum allowed connections per user when unique level will be adducted, default:1
+
        uniq = 0|1|2|4
 	  unique level:
 
@@ -194,8 +197,7 @@ DESCRIPTIONS
 	  user assingment to reader groups, default:none, required
 
        betatunnel = <CAID>.<ServiceID>:<target CAID>[,<CAID>.<ServiceID>: <target CAID>]...
-	  Define  Betacrypt  tunneling.  The ServiceID can also be used for wildcarded
-	  CAIDs.
+	  Define Betacrypt tunneling.  The ServiceID can also be used for wildcarded CAIDs.
 
 	   example: betatunnel = 0100.0001:0200,0300.0004:0500
 		    betatunnel = 0600.FFFF:0700
@@ -204,7 +206,7 @@ DESCRIPTIONS
 
 
        emmreassembly = 0|1||2
-	  EMM reassembly, should be set for Viaccess and Cryptoworks readers if the client that you are using  to  send  EMMs  is
+	  EMM  reassembly,  should  be	set for Viaccess and Cryptoworks readers if the client that you are using to send EMMs is
 	  reassembling them instead of just sending them to OSCam for processing.
 
 	    0: disabled
@@ -279,8 +281,8 @@ EXAMPLES
 	uniq	   = 1
 
 SEE ALSO
-       list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cacheex(5), oscam.cert(5), oscam.conf(5), oscam.dvbapi(5), oscam.guess(5),
-       oscam.ird(5), oscam.provid(5), oscam.ratelimit(5),  oscam.server(5),  oscam.services(5),  oscam.tiers(5),  oscam.srvid(5),
+       list_smargo(1), oscam(1), oscam.ac(5), oscam.cacheex(5), oscam.cert(5),	oscam.conf(5),	oscam.dvbapi(5),  oscam.guess(5),
+       oscam.ird(5),  oscam.provid(5),	oscam.ratelimit(5),  oscam.server(5),  oscam.services(5), oscam.tiers(5), oscam.srvid(5),
        oscam.whitelist(5)
 
 
