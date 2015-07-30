@@ -190,7 +190,7 @@ void stop_garbage_collector(void)
 
 		garbage_collector_active = 0;
 		SAFE_COND_SIGNAL(&sleep_cond);
-		cs_sleepms(1500);
+		cs_sleepms(500);
 		SAFE_COND_SIGNAL(&sleep_cond);
 		SAFE_THREAD_JOIN(garbage_thread, NULL);
 		for(i = 0; i < HASH_BUCKETS; ++i)
