@@ -1950,6 +1950,7 @@ void get_cw(struct s_client *client, ECM_REQUEST *er)
 			er->rcEx = E2_GLOBAL;
 			snprintf(er->msglog, sizeof(er->msglog), "Real ECM size %d > ECM size %d, ignored! client %s", sct_len, er->ecmlen, username(client));		
 		}
+		er->ecmlen = sct_len;
 	}
 
 	if(!client->grp)
