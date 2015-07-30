@@ -736,7 +736,7 @@ int32_t init_fakecws(void)
 			}
 			else
 			{
-				cs_log("skipping fake cw %s because of wrong length (%d != 32)!", cw_string, strlen(cw_string));
+				cs_log("skipping fake cw %s because of wrong length (%u != 32)!", cw_string, strlen(cw_string));
 			}
 		}
 	} 
