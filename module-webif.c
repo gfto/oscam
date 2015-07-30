@@ -6712,7 +6712,12 @@ static char *send_oscam_cacheex(struct templatevars * vars, struct uriparams * p
 		{
 			cacheex_name_link_tpl = "SREADER";
 			tpl_addVar(vars, TPLADD, "TYPE", "csp");
-			tpl_addVar(vars, TPLADD, "NAME", "csp");
+			if(!apicall) {
+				tpl_addVar(vars, TPLADD, "READERNAME", "csp");
+				tpl_addVar(vars, TPLADD, "READERNAMEENC", "csp");
+			} else { 
+				tpl_addVar(vars, TPLADD, "NAME", "csp");
+			}
 			tpl_addVar(vars, TPLADD, "IP", cs_inet_ntoa(cl->ip));
 			tpl_addVar(vars, TPLADD, "NODE", "csp");
 			if(cl->cwcacheexping)
