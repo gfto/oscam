@@ -1661,6 +1661,7 @@ struct s_auth
 	CLASSTAB        cltab;
 	TUNTAB          ttab;
 	int8_t          preferlocalcards;
+	uint32_t        max_connections;
 #ifdef CS_ANTICASC
 	int32_t         ac_fakedelay;                   // When this is -1, the global ac_fakedelay is used
 	int32_t         ac_users;                       // 0 - unlimited

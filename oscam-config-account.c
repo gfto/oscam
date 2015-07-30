@@ -363,6 +363,7 @@ static const struct config_list account_opts[] =
 	DEF_OPT_FUNC_X("ident"              , OFS(ftab),                    ftab_fn, FTAB_ACCOUNT | FTAB_PROVID),
 	DEF_OPT_FUNC_X("chid"               , OFS(fchid),                   ftab_fn, FTAB_ACCOUNT | FTAB_CHID),
 	DEF_OPT_FUNC("class"                , OFS(cltab),                   class_fn),
+	DEF_OPT_UINT32("max_connections"    , OFS(max_connections),         1),
 #ifdef CS_CACHEEX
 	DEF_OPT_INT8("cacheex"              , OFS(cacheex.mode),            0),
 	DEF_OPT_INT8("cacheex_maxhop"       , OFS(cacheex.maxhop),          0),

@@ -118,6 +118,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_
 	 */
 	struct s_client *cl;
 	struct s_auth *account;
+	uint32_t con_count = 1;
 	cs_writelock(__func__, &fakeuser_lock);
 	for(cl = first_client->next; cl; cl = cl->next)
 	{
@@ -126,6 +127,12 @@ static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, IN_
 				&& uniq < 5 && ((uniq % 2) || !IP_EQUAL(cl->ip, ip)))
 		{
 			char buf[20];
+			
+			con_count++;
+			
+			if(con_count <= account->max_connections)
+				{ continue; }
+			
 			if(uniq  == 3 || uniq == 4)
 			{
 				cl->dup = 1;

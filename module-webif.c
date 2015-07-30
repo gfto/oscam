@@ -2951,6 +2951,9 @@ static char *send_oscam_user_config_edit(struct templatevars *vars, struct uripa
 		tpl_printf(vars, TPLADD, "SLEEPSEND", "selected");
 	}
 
+	//max_connections
+	tpl_printf(vars, TPLADD, "MAXCONNECTIONS", "%d", account->max_connections);
+			
 	//User Max Idle
 	tpl_printf(vars, TPLADD, "UMAXIDLE", "%d", account->umaxidle);
 
