@@ -655,7 +655,7 @@ char *mk_t_cacheex_valuetab(CECSPVALUETAB *tab)
 			{ ptr += snprintf(ptr, size - (ptr - buf), "$%04X", tab->srvid[i]); }
 		if(tab->awtime[i] > 0)
 			{ ptr += snprintf(ptr, size - (ptr - buf), ":%d", tab->awtime[i]); }
-		if(!tab->dwtime[i] > 0)
+		if(!(tab->dwtime[i] > 0))
 			{ ptr += snprintf(ptr, size - (ptr - buf), ":0"); }
 		if(tab->dwtime[i] > 0)
 		{

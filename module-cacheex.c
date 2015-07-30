@@ -594,10 +594,13 @@ bool cacheex_is_match_alias(struct s_client *cl, ECM_REQUEST *er)
 static void log_cacheex_cw(ECM_REQUEST *er, char *reason)
 {
 	uint8_t *data;
-	uchar remotenodeid[16];
+	uint8_t remotenodeid[8];
 	data = ll_last_element(er->csp_lastnodes);
 	if(data)
-		memcpy(remotenodeid, data, 8);
+		{ memcpy(remotenodeid, data, 8); }
+	else
+		{ memset(remotenodeid, 0 , 8); }
+	
 	char buf_ecm[109];
 	format_ecm(er, buf_ecm, 109);
 	cs_log_dbg(D_CACHEEX,"got pushed ecm [%s]: %s - odd/even 0x%x - CSP cw: %s - pushed from %s, at hop %d, origin node-id %" PRIu64 "X",
