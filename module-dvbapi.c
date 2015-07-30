@@ -5244,6 +5244,8 @@ void dvbapi_write_ecminfo_file(struct s_client *client, ECM_REQUEST *er, uint8_t
 			{
 				fprintf(ecmtxt, "prov: 0x%06X\n", (uint) er->prid);
 			}
+			
+			fprintf(ecmtxt, "chid: 0x%04X\n", er->chid);
 		}
 		else if(cfg.dvbapi_ecminfo_type == ECMINFO_TYPE_MGCAMD)
 		{
