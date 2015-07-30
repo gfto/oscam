@@ -230,6 +230,7 @@ static void rsakey_fn(const char *token, char *value, void *setting, FILE *f)
 		int32_t len = strlen(value);
 		if(len != 128 && len != 240)
 		{
+			rdr->rsa_mod_length = 0;
 			memset(rdr->rsa_mod, 0, 120);
 		}
 		else
@@ -237,16 +238,19 @@ static void rsakey_fn(const char *token, char *value, void *setting, FILE *f)
 			if(key_atob_l(value, rdr->rsa_mod, len))
 			{
 				fprintf(stderr, "reader rsakey parse error, %s=%s\n", token, value);
+				rdr->rsa_mod_length = 0;
 				memset(rdr->rsa_mod, 0, sizeof(rdr->rsa_mod));
+			}
+			else
+			{
+				rdr->rsa_mod_length = len/2;	
 			}
 		}
 		return;
 	}
-	int32_t len = check_filled(rdr->rsa_mod, 120);
+	int32_t len = rdr->rsa_mod_length;
 	if(len > 0)
 	{
-		if(len > 64) { len = 120; }
-		else { len = 64; }
 		char tmp[len * 2 + 1];
 		fprintf_conf(f, "rsakey", "%s\n", cs_hexdump(0, rdr->rsa_mod, len, tmp, sizeof(tmp)));
 	}
@@ -260,8 +264,9 @@ static void deskey_fn(const char *token, char *value, void *setting, FILE *f)
 	if(value)
 	{
 		int32_t len = strlen(value);
-		if(((len % 16) != 0) || (len == 0))
+		if(((len % 16) != 0) || len == 0 || len > 64)
 		{
+			rdr->des_key_length = 0;
 			memset(rdr->des_key, 0, sizeof(rdr->des_key));
 		}
 		else
@@ -269,16 +274,19 @@ static void deskey_fn(const char *token, char *value, void *setting, FILE *f)
 			if(key_atob_l(value, rdr->des_key, len))
 			{
 				fprintf(stderr, "reader 3DES key parse error, %s=%s\n", token, value);
+				rdr->des_key_length = 0;
 				memset(rdr->des_key, 0, sizeof(rdr->des_key));
+			}
+			else
+			{
+				rdr->des_key_length = len/2;
 			}
 		}
 		return;
 	}
-	int32_t len = check_filled(rdr->des_key, sizeof(rdr->des_key));
+	int32_t len = rdr->des_key_length;
 	if(len > 0)
 	{
-		if(len > 16) { len = 32; }
-		else { len = 16; }
 		char tmp[len * 2 + 1];
 		fprintf_conf(f, "deskey", "%s\n", cs_hexdump(0, rdr->des_key, len, tmp, sizeof(tmp)));
 	}
@@ -292,8 +300,9 @@ static void boxkey_fn(const char *token, char *value, void *setting, FILE *f)
 	if(value)
 	{
 		int32_t len = strlen(value);
-		if(((len % 8) != 0) || (len == 0))
+		if(((len % 8) != 0) || len == 0 || len > 32)
 		{
+			rdr->boxkey_length = 0;
 			memset(rdr->boxkey, 0, sizeof(rdr->boxkey));
 		}
 		else
@@ -301,12 +310,17 @@ static void boxkey_fn(const char *token, char *value, void *setting, FILE *f)
 			if(key_atob_l(value, rdr->boxkey, len))
 			{
 				fprintf(stderr, "reader boxkey parse error, %s=%s\n", token, value);
+				rdr->boxkey_length = 0;
 				memset(rdr->boxkey, 0, sizeof(rdr->boxkey));
+			}
+			else
+			{
+				rdr->boxkey_length = len/2;	
 			}
 		}
 		return;
 	}
-	int32_t len = check_filled(rdr->boxkey, sizeof(rdr->boxkey));
+	int32_t len = rdr->boxkey_length;
 	if(len > 0)
 	{
 		char tmp[len * 2 + 1];

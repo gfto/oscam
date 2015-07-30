@@ -722,7 +722,7 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 	else if((!memcmp(atr + 4, "IRDETO", 6)) && ((atr[14] == 0x03) && (atr[15] == 0x84) && (atr[16] == 0x55)))
 	{
 		rdr_log(reader, "detect irdeto tunneled nagra card");
-		if(check_filled(reader->rsa_mod, 64) == 0)
+		if(!array_has_nonzero_byte(reader->rsa_mod, 64))
 		{
 			rdr_log(reader, "no rsa key configured -> using irdeto mode");
 			return ERROR;

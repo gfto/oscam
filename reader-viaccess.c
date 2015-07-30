@@ -1973,14 +1973,14 @@ static int32_t viaccess_card_info(struct s_reader *reader)
 	//return ERROR;
 	// Start process init CA 28
 	reader->initCA28=0;
-	int32_t lenboxkey = check_filled(reader->boxkey, sizeof(reader->boxkey));
-	int32_t lendeskey = check_filled(reader->des_key, sizeof(reader->des_key));
-	if ((lenboxkey > 0) && (lendeskey > 0))
+	int32_t lenboxkey = reader->boxkey_length;
+	int32_t lendeskey = reader->des_key_length;
+	if ((lenboxkey >= 4) && (lendeskey > 0))
 	{
 		uchar ins28[] = { 0xCA, 0x28, 0x00, 0x00, 0x04 }; //Init for nanoE0 ca28
 		ins28[4] = (uchar) lenboxkey;
 		uchar ins28_data[4];
-		memcpy(ins28_data, reader->boxkey, lenboxkey);
+		memcpy(ins28_data, reader->boxkey, 4);
 		write_cmd(ins28, ins28_data); // unlock card to reply on E002xxyy
 		if((cta_res[cta_lr - 2] == 0x90) && (cta_res[cta_lr - 1] == 0))
 		{

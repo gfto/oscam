@@ -290,7 +290,7 @@ static int32_t griffin_card_init(struct s_reader *rdr, ATR *newatr)
 
 	for(i = 0 ; i < CS_MAXPROV; i++)
 	{
-		if(check_filled(rdr->sa[i], 4))
+		if(array_has_nonzero_byte(rdr->sa[i], 4))
 		{
 			rdr_log_sensitive(rdr, "CAID: 0x%04X, Serial: {%s}, HexSerial: {%02X %02X %02X %02X} Addr: {%02X %02X %02X %02X}",
 							  rdr->caid, serial,

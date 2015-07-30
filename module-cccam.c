@@ -4067,7 +4067,7 @@ void cc_cleanup(struct s_client *cl)
 
 void cc_update_nodeid(void)
 {
-	if(check_filled(cfg.cc_fixed_nodeid, sizeof(cfg.cc_fixed_nodeid)))
+	if(array_has_nonzero_byte(cfg.cc_fixed_nodeid, sizeof(cfg.cc_fixed_nodeid)))
 	{
 		memcpy(cc_node_id, cfg.cc_fixed_nodeid, 8);
 		return;

@@ -222,7 +222,7 @@ void config_list_save_ex(FILE *f, const struct config_list *clist, void *config_
 		case OPT_HEX_ARRAY:
 		{
 			uint8_t *hex_array = var;
-			uint32_t ok = check_filled(hex_array, c->def.array_size);
+			uint32_t ok = array_has_nonzero_byte(hex_array, c->def.array_size);
 			if(save_all || ok)
 			{
 				fprintf_conf(f, c->config_name, "%s", ""); // it should not have \n at the end

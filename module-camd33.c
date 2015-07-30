@@ -183,7 +183,7 @@ static void camd33_server_init(struct s_client *UNUSED(client))
 
 void module_camd33(struct s_module *ph)
 {
-	cfg.c33_crypted = check_filled(cfg.c33_key, sizeof(cfg.c33_key));
+	cfg.c33_crypted = array_has_nonzero_byte(cfg.c33_key, sizeof(cfg.c33_key));
 	ph->ptab.nports = 1;
 	ph->ptab.ports[0].s_port = cfg.c33_port;
 

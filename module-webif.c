@@ -2001,24 +2001,22 @@ static char *send_oscam_reader_config(struct templatevars *vars, struct uriparam
 	}
 
 	// RSA Key
-	int32_t len = check_filled(rdr->rsa_mod, 120);
+	int32_t len = rdr->rsa_mod_length;
 	if(len > 0)
 	{
-		if(len > 64) { len = 120; }
-		else { len = 64; }
 		for(i = 0; i < len; i++) { tpl_printf(vars, TPLAPPEND, "RSAKEY", "%02X", rdr->rsa_mod[i]); }
 	}
 
 	// 3DES Key
-	len = check_filled(rdr->des_key, 16);
-	if((len > 0) && ((len % 16) == 0))
+	len = rdr->des_key_length;
+	if(len > 0)
 	{
 		for(i = 0; i < len; i++) { tpl_printf(vars, TPLAPPEND, "DESKEY", "%02X", rdr->des_key[i]); }
 	}
 
 	// BoxKey
-	len = check_filled(rdr->boxkey, sizeof(rdr->boxkey));
-	if((len > 0) && ((len % 4) == 0))
+	len = rdr->boxkey_length;
+	if(len > 0)
 	{
 		for(i = 0; i < len ; i++)
 			{ tpl_printf(vars, TPLAPPEND, "BOXKEY", "%02X", rdr->boxkey[i]); }

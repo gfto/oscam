@@ -355,19 +355,22 @@ int32_t boundary(int32_t exp, int32_t n)
 	return (((n - 1) >> exp) + 1) << exp;
 }
 
-/* Checks an array if it is filled (a value > 0) and number of filled bytes.
+/* Checks whether an array has at least one non-zero byte.
    length specifies the maximum length to check for. */
-int32_t check_filled(uchar *value, int32_t length)
+int32_t array_has_nonzero_byte(uchar *value, int32_t length)
 {
 	if(!value)
 		{ return 0; }
-	int32_t i, j = 0;
-	for(i = 0; i < length; ++i)
+	
+	int32_t i;
+	for(i = 0; i < length; i++)
 	{
 		if(value[i] > 0)
-			{ j++; }
+		{
+			return 1;
+		}
 	}
-	return j;
+	return 0;
 }
 
 #define RAND_POOL_SIZE 64
