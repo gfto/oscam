@@ -268,7 +268,6 @@ typedef unsigned char uchar;
 
 #define SAFE_COND_WAIT(a,b)			SAFE_PTHREAD_2ARG(pthread_cond_wait, a, b, cs_log)
 #define SAFE_THREAD_JOIN(a,b)		SAFE_PTHREAD_2ARG(pthread_join, a, b, cs_log)
-#define SAFE_ATTR_SETSTACKSIZE(a,b) SAFE_PTHREAD_2ARG(pthread_attr_setstacksize, a, b, cs_log)
 #define SAFE_SETSPECIFIC(a,b)		SAFE_PTHREAD_2ARG(pthread_setspecific, a, b, cs_log)
 #define SAFE_MUTEXATTR_SETTYPE(a,b)	SAFE_PTHREAD_2ARG(pthread_mutexattr_settype, a, b, cs_log)
 #define SAFE_MUTEX_INIT(a,b)		SAFE_PTHREAD_2ARG(pthread_mutex_init, a, b, cs_log)
@@ -278,9 +277,7 @@ typedef unsigned char uchar;
 #define SAFE_MUTEX_INIT_NOLOG(a,b)			SAFE_PTHREAD_2ARG(pthread_mutex_init, a, b, fprintf_stderr)
 #define SAFE_COND_INIT_NOLOG(a,b)			SAFE_PTHREAD_2ARG(pthread_cond_init, a, b, fprintf_stderr)
 #define SAFE_THREAD_JOIN_NOLOG(a,b)			SAFE_PTHREAD_2ARG(pthread_join, a, b, fprintf_stderr)
-#define SAFE_ATTR_SETSTACKSIZE_NOLOG(a,b)   SAFE_PTHREAD_2ARG(pthread_attr_setstacksize, a, b, fprintf_stderr)
 #define SAFE_CONDATTR_SETCLOCK_NOLOG(a,b)	SAFE_PTHREAD_2ARG(pthread_condattr_setclock, a, b, fprintf_stderr)
-
 
 #define SAFE_PTHREAD_1ARG_R(a, b, c, d) { \
 	int32_t pter = a(b); \
@@ -336,6 +333,20 @@ typedef unsigned char uchar;
 	{ \
 		cs_log("FATAL ERROR: pthread_cond_timedwait failed in %s (called from %s) with error %d %s\n", __func__, d, pter, strerror(pter)); \
 		cs_exit_oscam();\
+	} }
+
+#define SAFE_ATTR_SETSTACKSIZE(a,b) { \
+	int32_t pter = pthread_attr_setstacksize(a, b); \
+	if(pter != 0) \
+	{ \
+		cs_log("WARNING: pthread_attr_setstacksize() failed in %s with error %d %s\n", __func__, pter, strerror(pter)); \
+	} }
+	
+#define SAFE_ATTR_SETSTACKSIZE_NOLOG(a,b) { \
+	int32_t pter = pthread_attr_setstacksize(a, b); \
+	if(pter != 0) \
+	{ \
+		fprintf_stderr("WARNING: pthread_attr_setstacksize() failed in %s with error %d %s\n", __func__, pter, strerror(pter)); \
 	} }
 
 #ifdef NO_PTHREAD_STACKSIZE
