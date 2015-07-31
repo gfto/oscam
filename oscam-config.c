@@ -709,14 +709,21 @@ int32_t init_srvid(void)
 
 int32_t init_fakecws(void)
 {
-	int32_t nr = 0, alloccount = 0, i;
+	int32_t nr = 0, i, index;
+	uint32_t alloccount[0x100], count[0x100], tmp = 0;
 	char *token, cw_string[64]; 
-	uint8_t cw[16], wrong_checksum, c;
+	uint8_t cw[16], wrong_checksum, c, have_fakecw = 0;
 	FILE *fp;
 
+	memset(alloccount, 0, sizeof(count));
+	memset(count, 0, sizeof(alloccount));
+
 	cs_writelock(__func__, &config_lock);
-	cfg.fakecws.count = 0;
-	NULLFREE(cfg.fakecws.data);
+	for(i=0; i<0x100; i++)
+	{
+		cfg.fakecws[i].count = 0;
+		NULLFREE(cfg.fakecws[i].data);
+	}
 	cs_writeunlock(__func__, &config_lock);
 	
 	fp = open_config_file(cs_fakecws);
@@ -727,30 +734,6 @@ int32_t init_fakecws(void)
 		{ return 0; }
 	
 	while(fgets(token, MAXLINESIZE, fp))
-	{
-		if(sscanf(token, " %62s ", cw_string) == 1)
-		{
-			if(strlen(cw_string) == 32)
-			{
-				alloccount++;
-			}
-			else
-			{
-				cs_log("skipping fake cw %s because of wrong length (%u != 32)!", cw_string, (uint32_t)strlen(cw_string));
-			}
-		}
-	} 
-
-	if(alloccount < 1 || !cs_malloc(&cfg.fakecws.data, sizeof(struct s_cw)*alloccount))
-	{
-		NULLFREE(token);
-		fclose(fp);
-		return 0;
-	}
-	
-	fseek(fp, 0, SEEK_SET);
-
-	while(fgets(token, MAXLINESIZE, fp) && nr < alloccount)
 	{
 		if(sscanf(token, " %62s ", cw_string) == 1)
 		{
@@ -775,13 +758,72 @@ int32_t init_fakecws(void)
 					}
 					else
 					{
-						memcpy(cfg.fakecws.data[nr].cw, cw, 16);
-						nr++;
+						index = ((cw[0]&0xF)<<4) | (cw[8]&0xF);
+						alloccount[index]++;
+						have_fakecw = 1;
 					}
 				}
 				else
 				{
 					cs_log("skipping fake cw %s because it contains invalid characters!", cw_string);
+				}
+			}
+			else
+			{
+				cs_log("skipping fake cw %s because of wrong length (%u != 32)!", cw_string, (uint32_t)strlen(cw_string));
+			}
+		}
+	}
+
+	if(!have_fakecw)
+	{
+		NULLFREE(token);
+		fclose(fp);
+		return 0;
+	}
+
+	for(i=0; i<0x100; i++)
+	{
+		if(alloccount[i] && !cs_malloc(&cfg.fakecws[i].data, sizeof(struct s_cw)*alloccount[i]))
+		{
+			alloccount[i] = 0;
+		}
+	}
+	
+	fseek(fp, 0, SEEK_SET);
+
+	while(fgets(token, MAXLINESIZE, fp))
+	{
+		if(sscanf(token, " %62s ", cw_string) == 1)
+		{
+			if(strlen(cw_string) == 32)
+			{
+				if(cs_atob(cw, cw_string, 16) == 16)
+				{
+					wrong_checksum = 0;
+					
+					for(i = 0; i < 16; i += 4)
+					{
+						c = ((cw[i] + cw[i + 1] + cw[i + 2]) & 0xff);
+						if(cw[i + 3] != c)
+						{
+							wrong_checksum = 1;
+						}
+					}
+					
+					if(!wrong_checksum)
+					{
+						index = ((cw[0]&0xF)<<4) | (cw[8]&0xF);
+						
+						if(count[index] < alloccount[index])
+						{
+							memcpy(cfg.fakecws[index].data[count[index]].cw, cw, 16);
+							count[index]++;
+							nr++;
+						}
+						else
+						{ cs_log("ALLOC OVERFFLOW!! index: %d - count: %u - alloccount: %u", index, count[index], alloccount[index]); }
+					}
 				}
 			}
 		}
@@ -792,9 +834,19 @@ int32_t init_fakecws(void)
 	
 	if(nr > 0)
 		{ cs_log("%d fakecws's loaded", nr); }
-	
+		
+	for(i=0; i<0x100; i++)
+	{
+		if(count[i] > tmp)
+			{ tmp = count[i]; }
+	}
+	cs_log("max %d fakecw compares required", tmp);
+
 	cs_writelock(__func__, &config_lock);
-	cfg.fakecws.count = nr;
+	for(i=0; i<0x100; i++)
+	{
+		cfg.fakecws[i].count = count[i];
+	}
 	cs_writeunlock(__func__, &config_lock);
 			
 	return 0;

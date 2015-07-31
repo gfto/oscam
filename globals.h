@@ -2119,7 +2119,7 @@ struct s_config
 	struct s_rlimit *ratelimit_list;
 	
 	// fake cws
-	struct s_fakecws fakecws;
+	struct s_fakecws fakecws[0x100];
 };
 
 struct s_clientinit
