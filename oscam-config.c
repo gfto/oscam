@@ -709,8 +709,8 @@ int32_t init_srvid(void)
 
 int32_t init_fakecws(void)
 {
-	int32_t nr = 0, i, index;
-	uint32_t alloccount[0x100], count[0x100], tmp = 0;
+	int32_t nr = 0, i, j, index;
+	uint32_t alloccount[0x100], count[0x100], tmp, max_compares = 0, average_compares = 0;
 	char *token, cw_string[64]; 
 	uint8_t cw[16], wrong_checksum, c, have_fakecw = 0;
 	FILE *fp;
@@ -835,19 +835,34 @@ int32_t init_fakecws(void)
 	if(nr > 0)
 		{ cs_log("%d fakecws's loaded", nr); }
 		
-	for(i=0; i<0x100; i++)
-	{
-		if(count[i] > tmp)
-			{ tmp = count[i]; }
-	}
-	cs_log("max %d fakecw compares required", tmp);
-
+	
 	cs_writelock(__func__, &config_lock);
 	for(i=0; i<0x100; i++)
 	{
 		cfg.fakecws[i].count = count[i];
 	}
 	cs_writeunlock(__func__, &config_lock);
+	
+	
+	for(i=0; i<0x100; i++)
+	{
+		if(count[i] > max_compares)
+			{ max_compares = count[i]; }
+	}
+	
+	for(i=0; i<(0x100-1); i++) {
+		for(j=i+1; j<0x100; j++) {
+			if(count[j] < count[i]) {
+				tmp = count[i];
+				count[i] = count[j];
+				count[j] = tmp;
+			}
+		}
+	}
+    average_compares = ((count[0x100/2] + count[0x100/2 - 1]) / 2);
+
+
+	cs_log("max %d fakecw compares required, on average: %d compares", max_compares, average_compares);
 			
 	return 0;
 }
