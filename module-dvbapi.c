@@ -1627,7 +1627,6 @@ void dvbapi_stop_descrambling(int32_t demux_id)
 int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 {
 	int32_t started = 0; // in case ecmfilter started = 1
-	int32_t fake_ecm = 0;
 	ECM_REQUEST *er;
 	struct s_reader *rdr;
 	if(!(er = get_ecmtask())) { return started; }
@@ -1737,7 +1736,6 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 			started = 1;
 
 			request_cw(dvbapi_client, er, demux_id, 0); // do not register ecm since this try!
-			fake_ecm = 1;
 			break; // we started an ecmfilter so stop looking for next matching reader!
 		}
 		if(match)   // if matching reader found check for irdeto cas if local irdeto card check if it received emms in last 60 minutes
@@ -1777,7 +1775,7 @@ int32_t dvbapi_start_descrambling(int32_t demux_id, int32_t pid, int8_t checked)
 		demux[demux_id].ECMpids[pid].status = -1; // flag this pid as unusable
 		dvbapi_edit_channel_cache(demux_id, pid, 0); // remove this pid from channelcache
 	}
-	if(!fake_ecm) { NULLFREE(er); }
+	NULLFREE(er);
 	return started;
 }
 
