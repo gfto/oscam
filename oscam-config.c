@@ -709,7 +709,7 @@ int32_t init_srvid(void)
 
 int32_t init_fakecws(void)
 {
-	int32_t nr = 0, i, j, index;
+	int32_t nr = 0, i, j, idx;
 	uint32_t alloccount[0x100], count[0x100], tmp, max_compares = 0, average_compares = 0;
 	char *token, cw_string[64]; 
 	uint8_t cw[16], wrong_checksum, c, have_fakecw = 0;
@@ -758,8 +758,8 @@ int32_t init_fakecws(void)
 					}
 					else
 					{
-						index = ((cw[0]&0xF)<<4) | (cw[8]&0xF);
-						alloccount[index]++;
+						idx = ((cw[0]&0xF)<<4) | (cw[8]&0xF);
+						alloccount[idx]++;
 						have_fakecw = 1;
 					}
 				}
@@ -813,16 +813,14 @@ int32_t init_fakecws(void)
 					
 					if(!wrong_checksum)
 					{
-						index = ((cw[0]&0xF)<<4) | (cw[8]&0xF);
+						idx = ((cw[0]&0xF)<<4) | (cw[8]&0xF);
 						
-						if(count[index] < alloccount[index])
+						if(count[idx] < alloccount[idx])
 						{
-							memcpy(cfg.fakecws[index].data[count[index]].cw, cw, 16);
-							count[index]++;
+							memcpy(cfg.fakecws[idx].data[count[idx]].cw, cw, 16);
+							count[idx]++;
 							nr++;
 						}
-						else
-						{ cs_log("ALLOC OVERFFLOW!! index: %d - count: %u - alloccount: %u", index, count[index], alloccount[index]); }
 					}
 				}
 			}

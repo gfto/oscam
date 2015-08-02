@@ -1095,12 +1095,12 @@ uint16_t caidvaluetab_get_value(CAIDVALUETAB *cv, uint16_t caid, uint16_t defaul
 int32_t chk_is_fakecw(uint8_t *cw)
 {
 	uint32_t i, is_fakecw = 0;
-	uint32_t index = ((cw[0]&0xF)<<4) | (cw[8]&0xF); 
+	uint32_t idx = ((cw[0]&0xF)<<4) | (cw[8]&0xF); 
 	
 	cs_readlock(__func__, &config_lock);
-	for(i=0; i<cfg.fakecws[index].count; i++)
+	for(i=0; i<cfg.fakecws[idx].count; i++)
 	{
-		if(memcmp(cw, cfg.fakecws[index].data[i].cw, 16) == 0)
+		if(memcmp(cw, cfg.fakecws[idx].data[i].cw, 16) == 0)
 		{
 			is_fakecw = 1;
 			break;
