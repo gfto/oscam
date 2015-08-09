@@ -424,10 +424,13 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 			{
 				if(now > cwc->locktime)
 				{
+					int16_t diff = now - cwc->time - cwc->cycletime;
 					if(cwc->stage <= 0)    // stage 0 is passed; we update the cw's and time and store cycletime
 					{
-						if(cwc->cycletime == now - cwc->time)    // if we got a stable cycletime we go to stage 1
+						// if(cwc->cycletime == now - cwc->time)    // if we got a stable cycletime we go to stage 1
+						if(diff > -2 && diff < 2)    // if we got a stable cycletime we go to stage 1
 						{
+							cwc->cycletime = now - cwc->time;
 							cs_log_dbg(D_CWC, "cyclecheck [Set Stage 1] %s Cycletime: %i Lockdiff: %ld", cwc_ecmf, cwc->cycletime, now - cwc->locktime);
 							cwc->stage++; // increase stage
 						}
@@ -439,8 +442,10 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 					}
 					else if(cwc->stage == 1)     // stage 1 is passed; we update the cw's and time and store cycletime
 					{
-						if(cwc->cycletime == now - cwc->time)    // if we got a stable cycletime we go to stage 2
+						// if(cwc->cycletime == now - cwc->time)    // if we got a stable cycletime we go to stage 2
+						if(diff > -2 && diff < 2)    // if we got a stable cycletime we go to stage 2
 						{
+							cwc->cycletime = now - cwc->time;
 							cs_log_dbg(D_CWC, "cyclecheck [Set Stage 2] %s Cycletime: %i Lockdiff: %ld", cwc_ecmf, cwc->cycletime, now - cwc->locktime);
 							cwc->stage++; // increase stage
 						}
@@ -452,8 +457,10 @@ static int32_t checkcwcycle_int(ECM_REQUEST *er, char *er_ecmf , char *user, uch
 					}
 					else if(cwc->stage == 2)     // stage 2 is passed; we update the cw's and compare cycletime
 					{
-						if(cwc->cycletime == now - cwc->time && cwc->cycletime > 0)    // if we got a stable cycletime we go to stage 3
+						// if(cwc->cycletime == now - cwc->time && cwc->cycletime > 0)    // if we got a stable cycletime we go to stage 3
+						if(diff > -2 && diff < 2 && cwc->cycletime > 0)    // if we got a stable cycletime we go to stage 3
 						{
+							cwc->cycletime = now - cwc->time;
 							n = memcmp(cwc->cw, cw, 8);
 							m = memcmp(cwc->cw + 8, cw + 8, 8);
 							if(n == 0)
