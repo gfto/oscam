@@ -72,55 +72,58 @@ static struct pstat p_stat_old;
 static bool use_srvid2 = false;
 
 /* constants for menuactivating */
-#define MNU_STATUS 0
-#define MNU_CONFIG 1
-#define MNU_READERS 2
-#define MNU_USERS 3
-#define MNU_SERVICES 4
-#define MNU_FILES 5
-#define MNU_FAILBAN 6
-#define MNU_CACHEEX 7
-#define MNU_SCRIPT 8
-#define MNU_SHUTDOWN 9
-#define MNU_LIVELOG 10
+#define MNU_STATUS 		0
+#define MNU_LIVELOG 	1
+#define MNU_CONFIG		2
+#define MNU_READERS		3
+#define MNU_USERS		4
+#define MNU_SERVICES	5
+#define MNU_FILES		6
+#define MNU_FAILBAN		7
+#define MNU_CACHEEX		8
+#define MNU_SCRIPT		9
+#define MNU_SHUTDOWN	10
 #define MNU_TOTAL_ITEMS 11 // sum of items above
-/* constants for submenuactivating */
-#define MNU_CFG_GLOBAL 0
-#define MNU_CFG_LOADBAL 1
-#define MNU_CFG_CAMD33 2
-#define MNU_CFG_CAMD35 3
-#define MNU_CFG_CAMD35TCP 4
-#define MNU_CFG_NEWCAMD 5
-#define MNU_CFG_RADEGAST 6
-#define MNU_CFG_CCCAM 7
-#define MNU_CFG_ANTICASC 8
-#define MNU_CFG_MONITOR 9
-#define MNU_CFG_SERIAL 10
-#define MNU_CFG_DVBAPI 11
-#define MNU_CFG_WEBIF 12
-#define MNU_CFG_LCD 13
-#define MNU_CFG_GBOX 14
-#define MNU_CFG_SCAM 15
 
-#define MNU_CFG_FVERSION 12
-#define MNU_CFG_FCONF 13
-#define MNU_CFG_FUSER 14
-#define MNU_CFG_FSERVER 15
-#define MNU_CFG_FSERVICES 16
-#define MNU_CFG_FSRVID 17
-#define MNU_CFG_FPROVID 18
-#define MNU_CFG_FTIERS 19
-#define MNU_CFG_FLOGFILE 20
-#define MNU_CFG_FUSERFILE 21
-#define MNU_CFG_FACLOG 22
-#define MNU_CFG_FDVBAPI 23
-#define MNU_CFG_CACHE 24
-#define MNU_CFG_WHITELIST 25
-#define MNU_CFG_RATELIMIT 26
-#define MNU_CFG_FCSS 27
-#define MNU_CFG_FSRVID2 28
-#define MNU_CFG_FFAKECWS 29
-#define MNU_CFG_TOTAL_ITEMS 30 // sum of items above. Use it for "All inactive" in function calls too.
+/* constants for config.html submenuactivating */
+#define MNU_CFG_GLOBAL 		0
+#define MNU_CFG_ANTICASC	1
+#define MNU_CFG_CACHE		2
+#define MNU_CFG_LOADBAL		3
+#define MNU_CFG_CAMD33		4
+#define MNU_CFG_CAMD35		5
+#define MNU_CFG_CAMD35TCP	6
+#define MNU_CFG_CCCAM		7
+#define MNU_CFG_NEWCAMD		8
+#define MNU_CFG_GBOX		9
+#define MNU_CFG_RADEGAST	10
+#define MNU_CFG_SCAM		11
+#define MNU_CFG_SERIAL		12
+#define MNU_CFG_DVBAPI		13
+#define MNU_CFG_LCD			14
+#define MNU_CFG_MONITOR		15
+#define MNU_CFG_WEBIF		16
+
+/* constants for files.html submenuactivating */
+#define MNU_CFG_FVERSION	0
+#define MNU_CFG_FCONF		1
+#define MNU_CFG_FUSER		2
+#define MNU_CFG_FSERVER 	3
+#define MNU_CFG_FSRVID		4
+#define MNU_CFG_FDVBAPI		5
+#define MNU_CFG_FACLOG		6
+#define MNU_CFG_FLOGFILE	7
+#define MNU_CFG_FUSERFILE	8
+#define MNU_CFG_FSERVICES	9
+#define MNU_CFG_FPROVID		10
+#define MNU_CFG_FTIERS		11
+#define MNU_CFG_FRATELIMIT	12
+#define MNU_CFG_FWHITELIST	13
+#define MNU_CFG_FSRVID2		14
+#define MNU_CFG_FFAKECWS	15
+#define MNU_CFG_FCSS		16
+
+#define MNU_CFG_TOTAL_ITEMS 17 // sum of config or files submenuactivating above. Use it for "All inactive" in function calls too.
 
 static void set_status_info_var(struct templatevars *vars, char *varname, int no_data, char *fmt, double value) {
 	if (no_data)
@@ -4242,7 +4245,7 @@ static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * p
 #ifdef WITH_DEBUG
 	tpl_addVar(vars, TPLADD, "LOG_DEBUGMENU", tpl_getTpl(vars, "LOGDEBUGMENU"));
 #endif
-	tpl_addVar(vars, TPLADD, "TITLEADD10", "Move mouse over log-window to stop scroll");
+	tpl_addVar(vars, TPLADD, "TITLEADD1", "Move mouse over log-window to stop scroll");
 
 	if(strcmp(getParam(params, "lastid"), "start") == 0){
 		setActiveMenu(vars, MNU_LIVELOG); 
@@ -5926,47 +5929,52 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 {
 	bool writable = false;
 	const struct files *entry;
-	static struct files config_files[] =
+	static struct files config_files[] = 
 	{
-		{ "oscam.version",   MNU_CFG_FVERSION,  FTYPE_VERSION },
-		{ "oscam.conf",      MNU_CFG_FCONF,     FTYPE_CONFIG },
-		{ "oscam.user",      MNU_CFG_FUSER,     FTYPE_CONFIG },
-		{ "oscam.server",    MNU_CFG_FSERVER,   FTYPE_CONFIG },
-		{ "oscam.services",  MNU_CFG_FSERVICES, FTYPE_CONFIG },
-		{ "oscam.whitelist", MNU_CFG_WHITELIST, FTYPE_CONFIG },
-		{ "oscam.srvid",     MNU_CFG_FSRVID,    FTYPE_CONFIG },
-		{ "oscam.srvid2",    MNU_CFG_FSRVID2,   FTYPE_CONFIG },
-		{ "oscam.provid",    MNU_CFG_FPROVID,   FTYPE_CONFIG },
-		{ "oscam.tiers",     MNU_CFG_FTIERS,    FTYPE_CONFIG },
-		{ "oscam.ratelimit", MNU_CFG_RATELIMIT, FTYPE_CONFIG },
-		{ "css_file_name",   MNU_CFG_FCSS,      FTYPE_CONFIG },
+	// id are used
+	// new entry after last entry before first ifdef entry
+	// ifdef must be add to end
+		{ "oscam.version",   MNU_CFG_FVERSION,  FTYPE_VERSION },	// id 0
+		{ "oscam.conf",      MNU_CFG_FCONF,     FTYPE_CONFIG },		// id 1
+		{ "oscam.user",      MNU_CFG_FUSER,     FTYPE_CONFIG },		// id 2
+		{ "oscam.server",    MNU_CFG_FSERVER,   FTYPE_CONFIG },		// id 3
+		{ "oscam.srvid",     MNU_CFG_FSRVID,    FTYPE_CONFIG },		// id 4
+		{ "oscam.srvid2",    MNU_CFG_FSRVID2,   FTYPE_CONFIG },		// id 5
+		{ "logfile",         MNU_CFG_FLOGFILE,  FTYPE_LOGFILE },	// id 6
+		{ "userfile",        MNU_CFG_FUSERFILE, FTYPE_USERFILE },	// id 7
+		{ "css_file_name",   MNU_CFG_FCSS,      FTYPE_CONFIG },		// id 8
+		{ "oscam.services",  MNU_CFG_FSERVICES, FTYPE_CONFIG },		// id 9
+		{ "oscam.provid",    MNU_CFG_FPROVID,   FTYPE_CONFIG },		// id 10
+		{ "oscam.tiers",     MNU_CFG_FTIERS,    FTYPE_CONFIG },		// id 11
+		{ "oscam.ratelimit", MNU_CFG_FRATELIMIT,FTYPE_CONFIG },		// id 12
+		{ "oscam.whitelist", MNU_CFG_FWHITELIST,FTYPE_CONFIG },		// id 13
 #ifdef HAVE_DVBAPI
 		{ "oscam.dvbapi",    MNU_CFG_FDVBAPI,   FTYPE_CONFIG },
 #endif
+#ifdef CS_CACHEEX
 		{ "oscam.fakecws",   MNU_CFG_FFAKECWS,  FTYPE_CONFIG },
+#endif
 #ifdef CS_ANTICASC
 		{ "anticasc",        MNU_CFG_FACLOG,    FTYPE_ANTICASC },
 #endif
-		{ "logfile",         MNU_CFG_FLOGFILE,  FTYPE_LOGFILE },
-		{ "userfile",        MNU_CFG_FUSERFILE, FTYPE_USERFILE },
 		{ NULL, 0, 0 },
 	};
 
 	if(use_srvid2)
 	{
-		config_files[6].menu_id = MNU_CFG_FSRVID2;
-		config_files[7].menu_id = MNU_CFG_FSRVID;
+		config_files[4].menu_id = MNU_CFG_FSRVID2;
+		config_files[5].menu_id = MNU_CFG_FSRVID;
 	}
 	
 	if(cfg.http_css)
 	{
 		if(strchr(cfg.http_css,'/'))
-			config_files[10].file = strrchr(cfg.http_css, '/')+1;
+			config_files[8].file = strrchr(cfg.http_css, '/')+1;
 		else if(strchr(cfg.http_css,'\\'))
-			config_files[10].file = strrchr(cfg.http_css, '\\')+1;
+			config_files[8].file = strrchr(cfg.http_css, '\\')+1;
 		else
-			config_files[10].file = cfg.http_css;
-		tpl_addVar(vars, TPLADD, "FILE_USER_CSS", xml_encode(vars, config_files[10].file));
+			config_files[8].file = cfg.http_css;
+		tpl_addVar(vars, TPLADD, "FILE_USER_CSS", xml_encode(vars, config_files[8].file));
 	}
 
 	if(!apicall) { setActiveMenu(vars, MNU_FILES); }
@@ -6043,7 +6051,7 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 
 	if(cfg.http_css)
 	{
-		tpl_addVar(vars, TPLADD, "FILEEDITCSS_SHOW", tpl_getTpl(vars, "FILEEDITCSS"));
+		tpl_addVar(vars, TPLADD, "VIEW_FILEMENUCSS", tpl_getTpl(vars, "FILEMENUCSS"));
 	}
 
 	if(!strstr(targetfile, "/dev/"))
@@ -6087,7 +6095,7 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 					case MNU_CFG_FDVBAPI:
 						dvbapi_read_priority();
 						break;
-					case MNU_CFG_WHITELIST:
+					case MNU_CFG_FWHITELIST:
 						global_whitelist_read();
 						break;
 					case MNU_CFG_FFAKECWS:

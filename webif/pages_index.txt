@@ -107,12 +107,13 @@ FAILBAN                       failban/failban.html
 FAILBANBIT                    failban/failban_failbanrow.html
 
 FILE                          files/file.html
-FILEEDITCSS                   files/file_edit_css.html
+FILEMENUCSS                   files/file_edit_css.html
 FILTERFORM                    files/file_filterform.html
 WRITEPROTECTION               files/file_writeprotection.html
 FILEMENU                      files/menu.html
-FILEMENUDVBAPI                files/menu_dvbapi.html                                      HAVE_DVBAPI
 FILEMENUANTICASC              files/menu_anticasc.html                                    CS_ANTICASC
+FILEMENUDVBAPI                files/menu_dvbapi.html                                      HAVE_DVBAPI
+FILEMENUFAKECWS               files/menu_fakecws.html                                     CS_CACHEEX
 
 AUTOCONF                      ghttp/autoconf.html                                         MODULE_GHTTP
 PREAUTOCONF                   ghttp/pre_autoconf.html                                     MODULE_GHTTP
