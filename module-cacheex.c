@@ -42,7 +42,9 @@ typedef struct hit_key_t {
 typedef struct cache_hit_t {
 	HIT_KEY			key;
 	struct timeb	time;
+	struct timeb	max_hitcache_time;
 	uint64_t		grp;
+	uint64_t		grp_last_max_hitcache_time;
 	node			ht_node;
 	node			ll_node;
 } CACHE_HIT;
@@ -94,6 +96,7 @@ static int32_t cacheex_check_hitcache(ECM_REQUEST *er, struct s_client *cl)
 		cs_ftime(&now);
 		int64_t gone = comp_timeb(&now, &result->time);
 		uint64_t grp = cl?cl->grp:0;
+
 		if(
 			gone <= (cfg.max_hitcache_time*1000)
 			&&
@@ -136,27 +139,43 @@ static void cacheex_add_hitcache(struct s_client *cl, ECM_REQUEST *er)
 			result->key.caid = er->caid;
 			result->key.prid = er->prid;
 			result->key.srvid = er->srvid;
+			cs_ftime(&result->max_hitcache_time);
 			add_hash_table(&ht_hitcache, &result->ht_node, &ll_hitcache, &result->ll_node, result, &result->key, sizeof(HIT_KEY));
 		}
 	}
 
 	if(result)
 	{
-		if(cl) result->grp |= cl->grp;
+		if(cl){
+			result->grp |= cl->grp;
+			result->grp_last_max_hitcache_time |= cl->grp;
+		}
 		cs_ftime(&result->time); //always update time;
 	}
 
 	SAFE_RWLOCK_UNLOCK(&hitcache_lock);
 }
 
-static void cacheex_del_hitcache(ECM_REQUEST *er)
+static void cacheex_del_hitcache(struct s_client *cl, ECM_REQUEST *er)
 {
 	HIT_KEY search;
+	CACHE_HIT *result;
 
 	memset(&search, 0, sizeof(HIT_KEY));
 	search.caid = er->caid;
 	search.prid = er->prid;
 	search.srvid = er->srvid;
+
+	if(cl && cl->grp)
+		{
+			result = find_hash_table(&ht_hitcache, &search, sizeof(HIT_KEY), &cacheex_compare_hitkey);
+			while(result)
+			{
+				result->grp &= ~cl->grp;
+				result->grp_last_max_hitcache_time &= ~cl->grp;
+				result = find_hash_table(&ht_hitcache, &search, sizeof(HIT_KEY), &cacheex_compare_hitkey);
+			}
+		}
 
 	SAFE_RWLOCK_WRLOCK(&hitcache_lock);
 	search_remove_elem_hash_table(&ht_hitcache, &search, sizeof(HIT_KEY), &cacheex_compare_hitkey);
@@ -168,8 +187,9 @@ void cacheex_cleanup_hitcache(bool force)
 	CACHE_HIT *cachehit;
 	node *i,*i_next;
 	struct timeb now;
-	int64_t gone;
+	int64_t gone, gone_max_hitcache_time;
 	int32_t timeout = (cfg.max_hitcache_time + (cfg.max_hitcache_time / 2))*1000;  //1,5
+	int32_t clean_grp = (cfg.max_hitcache_time * 1000);
 	SAFE_RWLOCK_WRLOCK(&hitcache_lock);
 	i = get_first_node_list(&ll_hitcache);
 	while (i)
@@ -185,11 +205,18 @@ void cacheex_cleanup_hitcache(bool force)
 		
 		cs_ftime(&now);
 		gone = comp_timeb(&now, &cachehit->time);
+		gone_max_hitcache_time = comp_timeb(&now, &cachehit->max_hitcache_time);
+
 		if(force || gone>timeout)
 		{
 			remove_elem_list(&ll_hitcache, &cachehit->ll_node);
 			remove_elem_hash_table(&ht_hitcache, &cachehit->ht_node);
 			NULLFREE(cachehit);
+		}
+		else if(gone_max_hitcache_time >= clean_grp){
+			cachehit->grp = cachehit->grp_last_max_hitcache_time;
+			cachehit->grp_last_max_hitcache_time = 0;
+			cs_ftime(&cachehit->max_hitcache_time);
 		}
 		i = i_next;
 	}
@@ -298,7 +325,7 @@ static void *chkcache_process(void)
 					{
 						//add_hitcache already called, but we have to remove it because cacheex not coming before wait_time
 						if(ecm->prid==er->prid && ecm->srvid==er->srvid)
-							{ cacheex_del_hitcache(ecm); }
+							{ cacheex_del_hitcache(er->client, ecm); }
 					}
 				}
 				//END check for add_hitcache
