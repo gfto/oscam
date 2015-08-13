@@ -822,11 +822,6 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 		rdr->hexserial[6] = 0;
 		rdr->hexserial[7] = 0;
 
-		rdr->blockemm = 0;
-		rdr->blockemm |= (buf[128] == 1) ? 0 : EMM_GLOBAL;
-		rdr->blockemm |= (buf[129] == 1) ? 0 : EMM_SHARED;
-		rdr->blockemm |= (buf[130] == 1) ? 0 : EMM_UNIQUE;
-		rdr->blockemm |= (buf[127] == 1) ? 0 : EMM_UNKNOWN;
 		cs_log("%s CMD05 AU request for caid: %04X auprovid: %06X",
 			   rdr->label,
 			   rdr->caid,
