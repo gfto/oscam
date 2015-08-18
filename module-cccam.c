@@ -2671,9 +2671,20 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 				{
 					move_card_to_end(cl, card);
 					if(cwlastresptime < 5000)
-						{ add_sid_block(card, &srvid, true); }
+					{
+						add_sid_block(card, &srvid, true);
+					}
 					else
-						{ card->rating--; }
+					{
+						if(card->rating <= MIN_RATING)
+						{
+							add_sid_block(card, &srvid, true);
+						}
+						else
+						{
+							card->rating--;
+						}
+					}
 				}
 				else if(cacheex_get_rdr_mode(rdr) != 1)
 				{
@@ -2681,9 +2692,20 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 					{
 						move_card_to_end(cl, card);
 						if(cwlastresptime < 5000)
-							{ add_sid_block(card, &srvid, true); }
+						{
+							add_sid_block(card, &srvid, true);
+						}
 						else
-							{ card->rating--; }
+						{
+							if(card->rating <= MIN_RATING)
+							{
+								add_sid_block(card, &srvid, true);
+							}
+							else
+							{
+								card->rating--;
+							}
+						}
 					}
 					else
 					{
