@@ -5158,11 +5158,11 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				delay = delayentry->delay;
 				cs_log_dbg(D_DVBAPI, "specific delay: write cw %d ms after ecmrequest", delay);
 			}
-			else if (cfg.dvbapi_delayer > 0)
-			{
-				delay = cfg.dvbapi_delayer;
-				cs_log_dbg(D_DVBAPI, "generic delay: write cw %d ms after ecmrequest", delay);
-			}
+		}
+		else if (cfg.dvbapi_delayer > 0)
+		{
+			delay = cfg.dvbapi_delayer;
+			cs_log_dbg(D_DVBAPI, "generic delay: write cw %d ms after ecmrequest", delay);
 		}
 
 		delayer(er, delay);
