@@ -529,9 +529,26 @@ static void *mca_main_thread(void *cli)
 
 void mca_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
-	cs_log_dbg(D_DVBAPI, "send_dcw");
+	struct s_dvbapi_priority *delayentry = dvbapi_check_prio_match(i, demux[i].pidindex, 'd');
+	uint32_t delay = 0;
 
-	delayer(er);
+	cs_log_dbg(D_DVBAPI, "send_dcw");
+		
+	if(delayentry)
+	{
+		if(delayentry->delay < 1000)
+		{
+			delay = delayentry->delay;
+			cs_log_dbg(D_DVBAPI, "specific delay: write cw %d ms after ecmrequest", delay);
+		}
+	}
+	else if (cfg.dvbapi_delayer > 0)
+	{
+		delay = cfg.dvbapi_delayer;
+		cs_log_dbg(D_DVBAPI, "generic delay: write cw %d ms after ecmrequest", delay);
+	}
+		
+	delayer(er, delay);
 
 	dvbapi_write_ecminfo_file(client, er, demux[0].lastcw[0], demux[0].lastcw[1]);
 
