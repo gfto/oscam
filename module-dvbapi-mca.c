@@ -529,7 +529,7 @@ static void *mca_main_thread(void *cli)
 
 void mca_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
-	struct s_dvbapi_priority *delayentry = dvbapi_check_prio_match(i, demux[i].pidindex, 'd');
+	struct s_dvbapi_priority *delayentry = dvbapi_check_prio_match(0, demux[0].pidindex, 'd');
 	uint32_t delay = 0;
 
 	cs_log_dbg(D_DVBAPI, "send_dcw");
