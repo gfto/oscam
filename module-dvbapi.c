@@ -4881,16 +4881,16 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid)
 	}
 }
 
-void delayer(ECM_REQUEST *er)
+void delayer(ECM_REQUEST *er, uint32_t delay)
 {
-	if(cfg.dvbapi_delayer <= 0) { return; }
+	if(delay <= 0) { return; }
 
 	struct timeb tpe;
 	cs_ftime(&tpe);
 	int64_t gone = comp_timeb(&tpe, &er->tps);
-	if( gone < cfg.dvbapi_delayer)
+	if( gone < delay)
 	{
-		cs_log_dbg(D_DVBAPI, "delayer: gone=%"PRId64" ms, cfg=%d ms -> delay=%"PRId64" ms", gone, cfg.dvbapi_delayer, cfg.dvbapi_delayer - gone);
+		cs_log_dbg(D_DVBAPI, "delayer: gone=%"PRId64" ms, cfg=%d ms -> delay=%"PRId64" ms", gone, delay, delay - gone);
 		cs_sleepms(cfg.dvbapi_delayer - gone);
 	}
 }
@@ -5149,16 +5149,23 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		if(nocw_write || demux[i].pidindex != j) { continue; }  // cw was already written by another filter or current pid isnt pid used to descramble so it ends here!
 
 		struct s_dvbapi_priority *delayentry = dvbapi_check_prio_match(i, demux[i].pidindex, 'd');
+		uint32_t delay = 0;
+		
 		if(delayentry)
 		{
 			if(delayentry->delay < 1000)
 			{
-				cs_log_dbg(D_DVBAPI, "wait %d ms", delayentry->delay);
-				cs_sleepms(delayentry->delay);
+				delay = delayentry->delay;
+				cs_log_dbg(D_DVBAPI, "specific delay: write cw %d ms after ecmrequest", delay);
+			}
+			else if (cfg.dvbapi_delayer > 0)
+			{
+				delay = cfg.dvbapi_delayer;
+				cs_log_dbg(D_DVBAPI, "generic delay: write cw %d ms after ecmrequest", delay);
 			}
 		}
 
-		delayer(er);
+		delayer(er, delay);
 
 		switch(selected_api)
 		{

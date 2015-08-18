@@ -305,7 +305,7 @@ int8_t is_ca_used(uint8_t cadevice, int32_t pid);
 const char *dvbapi_get_client_name(void);
 void rotate_emmfilter(int32_t demux_id);
 uint16_t dvbapi_get_client_proto_version(void);
-void delayer(ECM_REQUEST *er);
+void delayer(ECM_REQUEST *er, uint32_t delay);
 void check_add_emmpid(int32_t demux_index, uchar *filter, int32_t l, int32_t emmtype);
 void *dvbapi_start_handler(struct s_client *cl, uchar *mbuf, int32_t module_idx, void * (*_main_func)(void *));
 int32_t dvbapi_get_descindex(int32_t demux_index);
