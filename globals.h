@@ -1326,6 +1326,7 @@ struct ecmrl
 {
 	struct timeb    last;
 	uchar           kindecm;
+	bool			once;
 	uchar           ecmd5[CS_ECMSTORESIZE];
 	uint16_t        caid;
 	uint32_t        provid;

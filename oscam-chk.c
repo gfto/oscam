@@ -951,7 +951,7 @@ int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 		return 0;
 	}
 
-	if(!reader_slots_available(rdr, er))  // check free slots
+	if(!reader_slots_available(rdr, er)&& er->ecmlen > 0)  // check free slots, er->ecmlen>0 trick to skip this test for matching readers in dvbapi module
 	{
 		return 0;
 	}

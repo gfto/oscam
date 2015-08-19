@@ -83,6 +83,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 			reader->rlecmh[h].last.time = -1;
 			reader->rlecmh[h].srvid = -1;
 			reader->rlecmh[h].kindecm = 0;
+			reader->rlecmh[h].once = 0;
 		}
 		if(reader->rlecmh[h].last.time == -1) { continue; }
 		if(reader->rlecmh[h].ratelimitecm < maxecms) { maxecms = reader->rlecmh[h].ratelimitecm; }  // we found a more critical ratelimit srvid
@@ -100,8 +101,7 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 				&& (!reader->rlecmh[h].chid || (reader->rlecmh[h].chid == rl.chid)))
 		{
 			int64_t gone = comp_timeb(&actualtime, &reader->rlecmh[h].last);
-			cs_log_dbg(D_CLIENT, "ratelimiter found srvid %04X for %"PRId64" ms in slot %d/%d of reader %s", er->srvid,
-						  gone, h + 1, MAXECMRATELIMIT, reader->label);
+			cs_log_dbg(D_CLIENT, "ratelimiter found srvid %04X for %"PRId64" ms in slot %d/%d of reader %s", er->srvid, gone, h + 1, MAXECMRATELIMIT, reader->label);
 
 			// check ecmunique if enabled and ecmunique time is done
 			if(reader_mode && reader->ecmunique)
@@ -109,10 +109,11 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 				gone = comp_timeb(&actualtime, &reader->rlecmh[h].last);
 				if(gone < reader->ratelimittime)
 				{
-					if(memcmp(reader->rlecmh[h].ecmd5, er->ecmd5, CS_ECMSTORESIZE))
-					{
+					if(memcmp(reader->rlecmh[h].ecmd5, er->ecmd5, CS_ECMSTORESIZE)) //some boxes seem to send different ecms but asking in fact for same cw!
+					{   // different ecm request than one in the slot!
 						if(er->ecm[0] == reader->rlecmh[h].kindecm)
 						{
+							// same ecm type!
 							char ecmd5[17 * 3];
 							cs_hexdump(0, reader->rlecmh[h].ecmd5, 16, ecmd5, sizeof(ecmd5));
 							cs_log_dbg(D_CLIENT, "ratelimiter ecm %s in this slot for next %d ms!", ecmd5,
@@ -127,24 +128,29 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 							ecm = check_cache(erold, erold->client); //CHECK IF FOUND ECM IN CACHE
 							NULLFREE(erold);
 							if(ecm)   //found in cache
-								{ write_ecm_answer(reader, er, ecm->rc, ecm->rcEx, ecm->cw, NULL); }
+								{ write_ecm_answer(reader, er, ecm->rc, ecm->rcEx, ecm->cw, NULL); } // return controlword of the ecm sitting in the slot!
 							else
 								{ write_ecm_answer(reader, er, E_NOTFOUND, E2_RATELIMIT, NULL, "Ratelimiter: no slots free!"); }
 
 							NULLFREE(ecm);
 							return -2;
 						}
-						continue;
 					}
 				}
-				if((er->ecm[0] == reader->rlecmh[h].kindecm)
-						&& (gone <= (reader->ratelimittime + reader->srvidholdtime)))
+				if((er->ecm[0] != reader->rlecmh[h].kindecm) && (gone <= reader->ratelimittime))
 				{
-
-					cs_log_dbg(D_CLIENT, "ratelimiter srvid %04X ecm type %s, only allowing %s for next %d ms in slot %d/%d of reader %s -> skipping this slot!", reader->rlecmh[h].srvid, (reader->rlecmh[h].kindecm == 0x80 ? "even" : "odd"), (reader->rlecmh[h].kindecm == 0x80 ? "odd" : "even"),
-								  (int)(reader->rlecmh[h].ratelimittime + reader->rlecmh[h].srvidholdtime - gone),
-								  h + 1, maxecms, reader->label);
-					continue;
+					if(!reader->rlecmh[h].once) // 1 premature ecmtype change is allowed (useful right after zapping to a channel!)
+					{
+						reader->rlecmh[h].once = 1;
+						cs_log_dbg(D_CLIENT, "ratelimiter changing slot %d srvid %04X ecmtype once from %s to %s!", h+1, er->srvid,
+							(reader->rlecmh[h].kindecm == 0x80 ? "even":"odd"), (er->ecm[0] == 0x80 ? "even":"odd"));
+					}
+					else
+					{
+						cs_log_dbg(D_CLIENT, "ratelimiter srvid %04X only allowing ecmtype %s for next %d ms in slot %d/%d of reader %s -> skipping this slot!", reader->rlecmh[h].srvid,
+							(reader->rlecmh[h].kindecm == 0x80 ? "even" : "odd"), (int)(reader->rlecmh[h].ratelimittime - gone), h + 1, maxecms, reader->label);
+							continue;
+					}
 				}
 			}
 
@@ -155,8 +161,10 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 					if(reader->rlecmh[foundspace].last.time == -1)
 					{
 						reader->rlecmh[foundspace] = reader->rlecmh[h]; // replace ecm request info
-						reader->rlecmh[h].srvid = -1;
 						reader->rlecmh[h].last.time = -1;
+						reader->rlecmh[h].srvid = -1;
+						reader->rlecmh[h].kindecm = 0;
+						reader->rlecmh[h].once = 0;
 						if(foundspace < maxecms)
 						{
 							cs_log_dbg(D_CLIENT, "ratelimiter moved srvid %04X to slot %d/%d of reader %s", er->srvid, foundspace + 1, maxecms, reader->label);
@@ -178,6 +186,9 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 			else
 			{
 				reader->rlecmh[h].last.time = -1; // free this slot since we are over ratelimit!
+				reader->rlecmh[h].srvid = -1;
+				reader->rlecmh[h].kindecm = 0;
+				reader->rlecmh[h].once = 0;
 				cs_log_dbg(D_CLIENT, "ratelimiter removed srvid %04X from slot %d/%d of reader %s", er->srvid, h + 1, maxecms, reader->label);
 				return -1; // sorry, ratelimit!
 			}
@@ -186,10 +197,9 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 
 	// srvid not found in slots!
 
+	// do we use cooldown at all, are we in cooldown fase?
 	if((reader->cooldown[0] && reader->cooldownstate == 1) || !reader->cooldown[0])
 	{
-		; // do we use cooldown at all, are we in cooldown fase?
-
 		// we are in cooldown or no cooldown configured!
 		if(totalecms + 1 > maxecms || totalecms + 1 > rl.ratelimitecm)  // check if this channel fits in!
 		{
@@ -256,6 +266,8 @@ static void sort_ecmrl(struct s_reader *reader)
 	{
 		reader->rlecmh[i].last.time = -1;
 		reader->rlecmh[i].srvid = -1;
+		reader->rlecmh[i].kindecm = 0;
+		reader->rlecmh[i].once = 0;
 	}
 
 }
@@ -1003,8 +1015,11 @@ int32_t casc_process_ecm(struct s_reader *reader, ECM_REQUEST *er)
 	rc = 0;
 	if(sflag)
 	{
-		if((rc = reader->ph.c_send_ecm(cl, &cl->ecmtask[n])))
-			{ casc_check_dcw(reader, n, 0, cl->ecmtask[n].cw); }  // simulate "not found"
+		rc = reader->ph.c_send_ecm(cl, &cl->ecmtask[n]);
+		if(rc <= 0)
+		{ 
+			casc_check_dcw(reader, n, 0, cl->ecmtask[n].cw); // simulate "not found"
+		}  
 		else
 			{ cl->last_idx = cl->ecmtask[n].idx; }
 		reader->last_s = t;   // used for inactive_timeout and reconnect_timeout in TCP reader
@@ -1050,7 +1065,7 @@ void reader_get_ecm(struct s_reader *reader, ECM_REQUEST *er)
 		{
 			//check if ask this reader
 			ea = get_ecm_answer(reader, ecm);
-			if(ea && !ea->is_pending && (ea->status & REQUEST_SENT) && ea->rc!=E_TIMEOUT) { break; }
+			if(ea && !ea->is_pending && (ea->status & REQUEST_SENT) && ea->rc!=E_TIMEOUT && ea->rcEx != E2_RATELIMIT) { break; }
 			ea = NULL;
 		}
 	}
