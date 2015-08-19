@@ -4891,7 +4891,7 @@ void delayer(ECM_REQUEST *er, uint32_t delay)
 	if( gone < delay)
 	{
 		cs_log_dbg(D_DVBAPI, "delayer: gone=%"PRId64" ms, cfg=%d ms -> delay=%"PRId64" ms", gone, delay, delay - gone);
-		cs_sleepms(cfg.dvbapi_delayer - gone);
+		cs_sleepms(delay - gone);
 	}
 }
 
