@@ -1016,7 +1016,7 @@ int32_t casc_process_ecm(struct s_reader *reader, ECM_REQUEST *er)
 	if(sflag)
 	{
 		rc = reader->ph.c_send_ecm(cl, &cl->ecmtask[n]);
-		if(rc <= 0)
+		if(rc != 0)
 		{ 
 			casc_check_dcw(reader, n, 0, cl->ecmtask[n].cw); // simulate "not found"
 		}  
