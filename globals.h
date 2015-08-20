@@ -237,7 +237,6 @@ typedef unsigned char uchar;
 	if(pter != 0) \
 	{ \
 		c("FATAL ERROR: %s() failed in %s with error %d %s\n", #a, __func__, pter, strerror(pter)); \
-		cs_exit_oscam();\
 	} }
 
 #define SAFE_MUTEX_LOCK(a)			SAFE_PTHREAD_1ARG(pthread_mutex_lock, a, cs_log)
@@ -263,7 +262,6 @@ typedef unsigned char uchar;
 	if(pter != 0) \
 	{ \
 		d("FATAL ERROR: %s() failed in %s with error %d %s\n", #a, __func__, pter, strerror(pter)); \
-		cs_exit_oscam();\
 	} }
 
 #define SAFE_COND_WAIT(a,b)			SAFE_PTHREAD_2ARG(pthread_cond_wait, a, b, cs_log)
@@ -284,7 +282,6 @@ typedef unsigned char uchar;
 	if(pter != 0) \
 	{ \
 		c("FATAL ERROR: %s() failed in %s (called from %s) with error %d %s\n", #a, __func__, d, pter, strerror(pter)); \
-		cs_exit_oscam();\
 	} }
 
 #define SAFE_MUTEX_LOCK_R(a, b)			SAFE_PTHREAD_1ARG_R(pthread_mutex_lock, a, cs_log, b)
@@ -302,7 +299,6 @@ typedef unsigned char uchar;
 	if(pter != 0) \
 	{ \
 		d("FATAL ERROR: %s() failed in %s (called from %s) with error %d %s\n", #a, __func__, e, pter, strerror(pter)); \
-		cs_exit_oscam();\
 	} }
 
 #define SAFE_MUTEX_INIT_R(a,b,c)		SAFE_PTHREAD_2ARG_R(pthread_mutex_init, a, b, cs_log, c)
@@ -321,7 +317,6 @@ typedef unsigned char uchar;
 	if(pter != 0 && pter != ETIMEDOUT) \
 	{ \
 		cs_log("FATAL ERROR: pthread_cond_timedwait failed in %s with error %d %s\n", __func__, pter, strerror(pter)); \
-		cs_exit_oscam();\
 	} }
 
 #define SAFE_COND_TIMEDWAIT_R(a, b, c, d) { \
@@ -332,7 +327,6 @@ typedef unsigned char uchar;
 	if(pter != 0 && pter != ETIMEDOUT) \
 	{ \
 		cs_log("FATAL ERROR: pthread_cond_timedwait failed in %s (called from %s) with error %d %s\n", __func__, d, pter, strerror(pter)); \
-		cs_exit_oscam();\
 	} }
 
 #define SAFE_ATTR_SETSTACKSIZE(a,b) { \
