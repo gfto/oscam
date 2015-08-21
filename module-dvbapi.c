@@ -5782,7 +5782,7 @@ int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, int32_t idx)
 				}
 				else if(removed == 1)
 				{
-					if (idx > 0 && (uint) idx != listitem->caindex)
+					if (idx >= 0 && (uint) idx != listitem->caindex)
 					{
 						return REMOVED_STREAMPID_INDEX;
 					}
@@ -5811,7 +5811,8 @@ void disable_unused_streampids(int16_t demux_id)
 	int32_t i,n;
 	struct s_streampid *listitem;
 	// search for old enabled streampids on all ca devices that have to be disabled, index 0 is skipped as it belongs to fta!
-	for(i = 0; i < MAX_DEMUX && idx; i++){
+	for(i = 0; i < MAX_DEMUX && idx; i++)
+	{
 		if(!((demux[demux_id].ca_mask & (1 << i)) == (uint) (1 << i))) continue; // continue if ca is unused by this demuxer
 		
 		LL_ITER itr;
