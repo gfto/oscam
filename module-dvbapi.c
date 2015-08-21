@@ -1486,14 +1486,18 @@ int32_t dvbapi_get_descindex(int32_t demux_index)
 		return idx;
 	}
 	SAFE_MUTEX_LOCK(&lockindex); // to avoid race when readers become responsive!
+	
 	while(fail)
 	{
 		fail = 0;
 		for(i = 0; i < MAX_DEMUX && !fail; i++)
 		{
-			for(j = 0; j < demux[i].ECMpidcount && !fail; j++)
+			if(demux[i].program_number == 0) { continue; }  // skip empty demuxers 
+			if(demux[i].ca_mask != demux[demux_index].ca_mask) continue; // skip demuxer using other ca device
+			
+			for(j = 0; j < demux[i].ECMpidcount && !fail; j++) // search for new unique index
 			{
-				if(demux[i].ECMpids[j].index == idx)
+				if(demux[i].ECMpids[j].index == idx) 
 				{
 					fail = 1;
 					idx++;
@@ -1502,6 +1506,7 @@ int32_t dvbapi_get_descindex(int32_t demux_index)
 		}
 		cs_sleepms(1);
 	}
+	
 	SAFE_MUTEX_UNLOCK(&lockindex); // and release it!
 	return idx;
 }
@@ -5691,18 +5696,19 @@ int32_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid)
 		demux[demux_index].ECMpids[pid].index = idx;
 		cs_log_dbg(D_DVBAPI, "Demuxer %d PID: %d CAID: %04X ECMPID: %04X is using index %d", demux_index, pid,
 					  demux[demux_index].ECMpids[pid].CAID, demux[demux_index].ECMpids[pid].ECM_PID, idx - 1);
-	}
 
-	for(n = 0; n < demux[demux_index].STREAMpidcount; n++)
-	{
-		if(!demux[demux_index].ECMpids[pid].streams || ((demux[demux_index].ECMpids[pid].streams & (1 << n)) == (uint) (1 << n))){
-			dvbapi_set_pid(demux_index, n, idx - 1, true); // enable streampid
-		}
-		else{
+		for(n = 0; n < demux[demux_index].STREAMpidcount; n++)
+		{
+			if(!demux[demux_index].ECMpids[pid].streams || ((demux[demux_index].ECMpids[pid].streams & (1 << n)) == (uint) (1 << n)))
+			{
+				dvbapi_set_pid(demux_index, n, idx - 1, true); // enable streampid
+			}
+			else
+			{
 			dvbapi_set_pid(demux_index, n, idx - 1, false); // disable streampid
-		} 
-	}
-
+			} 
+		}
+	}	
 	return idx - 1; // return caindexer
 }
 
