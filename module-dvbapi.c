@@ -5822,6 +5822,11 @@ void disable_unused_streampids(int16_t demux_id)
 			if (i != listitem->cadevice) continue; // ca doesnt match
 			if (!((listitem->activeindexers & (1 << (idx-1))) == (uint) (1 << (idx-1)))) continue; // index doesnt match
 			for(n = 0; n < demux[demux_id].STREAMpidcount; n++){
+				if(demux[demux_id].ECMpidcount == 0) // FTA? -> disable stream!
+				{
+					n = demux[demux_id].STREAMpidcount;
+					break;
+				}
 				if (listitem->streampid == demux[demux_id].STREAMpids[n]){ // check if pid matches with current streampid on demuxer
 					break;
 				}
@@ -5830,6 +5835,27 @@ void disable_unused_streampids(int16_t demux_id)
 				demux[demux_id].STREAMpids[n] = listitem->streampid; // put it temp here!
 				dvbapi_set_pid(demux_id, n, idx - 1, false); // no match found so disable this now unused streampid
 				demux[demux_id].STREAMpids[n] = 0; // remove temp!
+			}
+		}
+		
+		for(n = 0; n < demux[demux_id].STREAMpidcount && demux[demux_id].ECMpidcount != 0; n++) // ECMpidcount != 0 -> skip enabling on fta
+		{
+			ll_iter_reset(&itr);
+			if(!demux[demux_id].ECMpids[ecmpid].streams || ((demux[demux_id].ECMpids[ecmpid].streams & (1 << n)) == (uint) (1 << n)))
+			{
+				while((listitem = ll_iter_next(&itr)))
+				{
+					if (i != listitem->cadevice) continue; // ca doesnt match
+					if (!((listitem->activeindexers & (1 << (idx-1))) == (uint) (1 << (idx-1)))) continue; // index doesnt match
+					if (listitem->streampid == demux[demux_id].STREAMpids[n]) // check if pid matches with current streampid on demuxer
+					{ 
+						break;
+					}
+				}
+				if(!listitem) // if streampid not listed -> enable it!
+				{
+					dvbapi_set_pid(demux_id, n, idx - 1, true); // enable streampid
+				}
 			}
 		}
 	}
