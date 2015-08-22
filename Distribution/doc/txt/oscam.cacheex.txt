@@ -1,4 +1,4 @@
-oscam.cacheex(5)													oscam.cacheex(5)
+oscam.cacheex(5)				       File Formats Manual					 oscam.cacheex(5)
 
 
 
@@ -9,8 +9,8 @@ SYNOPSIS
        ECM length matching
 
 DESCRIPTIONS
-       m:[CAID][:][provider  ID][:][service  ID][:][ECM PID][:][CHID][:][ECM length 1[,ECM length 2]...]]=[CAID][:][provider ID][:][ser‐
-       vice ID][:][ECM PID][:][CHID][:][ECM length 1[,ECM length 2]...]]
+       m:[CAID][:][provider  ID][:][service  ID][:][ECM  PID][:][CHID][:][ECM  length  1[,ECM  length  2]...]]=[CAID][:][provider
+       ID][:][service ID][:][ECM PID][:][CHID][:][ECM length 1[,ECM length 2]...]]
 	   ECM length matching from remote cache exchange partner to local
 	   cache, for cache exchange pull mode (cacheex = 1) only
 
@@ -22,9 +22,10 @@ EXAMPLES
 				   # ECM length 93
 
 SEE ALSO
-       list_smargo(1),	 oscam(1),   oscam.ac(5),   oscam.cert(5),   oscam.conf(5),   oscam.dvbapi(5),	 oscam.guess(5),   oscam.ird(5),
-       oscam.provid(5), oscam.ratelimit(5), oscam.server(5), oscam.services(5), oscam.user(5)
+       list_smargo(1), oscam(1), oscam.ac(5), oscam.cert(5), oscam.conf(5),  oscam.dvbapi(5),  oscam.fakecws(5),  oscam.guess(5),
+       oscam.ird(5),	 oscam.provid(5),    oscam.ratelimit(5),    oscam.server(5),	oscam.services(5),    oscam.srvid    (5),
+       oscam.srvid2(5),oscam.user(5)
 
 
 
-															oscam.cacheex(5)
+														 oscam.cacheex(5)

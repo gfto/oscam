@@ -216,6 +216,11 @@ cache exchange incoming ECM filter setting (mode 3 only) for Cardservproxy, defa
 1= allow cache exchange filter (for cache exchange mode 3 only), default:1
 .RE
 .PP
+\fBcacheex_block_fakecws\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = enable fake DCWs blocking (for cache exchange mode 3 only), get fake DCWs form \fBoscam.fakecws\fP, default:0
+.RE
+.PP
 \fBsleep\fP = \fBminutes\fP
 .RS 3n
 time waiting for inactive user, default:none
@@ -376,4 +381,4 @@ CCcam stealth:
  ident      = 0100:000000
  uniq       = 1
 .SH "SEE ALSO"
-\fBlist_smargo\fR(1), \fBoscam\fR(1), \fBoscam.ac\fR(5), \fBoscam.cacheex\fR(5), \fBoscam.cert\fR(5), \fBoscam.conf\fR(5), \fBoscam.dvbapi\fR(5), \fBoscam.guess\fR(5), \fBoscam.ird\fR(5), \fBoscam.provid\fR(5), \fBoscam.ratelimit\fR(5), \fBoscam.server\fR(5), \fBoscam.services\fR(5), \fBoscam.tiers\fR(5), \fBoscam.srvid\fR(5), \fBoscam.whitelist\fR(5)
+\fBlist_smargo\fR(1), \fBoscam\fR(1), \fBoscam.ac\fR(5), \fBoscam.cacheex\fR(5), \fBoscam.cert\fR(5), \fBoscam.conf\fR(5), \fBoscam.dvbapi\fR(5), \fBoscam.fakecws\fR(5), \fBoscam.guess\fR(5), \fBoscam.ird\fR(5), \fBoscam.provid\fR(5), \fBoscam.ratelimit\fR(5), \fBoscam.server\fR(5), \fBoscam.services\fR(5), \fBoscam.tiers\fR(5), \fBoscam.srvid\fR(5), \fBoscam.srvid2\fR(5), \fBoscam.whitelist\fR(5)
