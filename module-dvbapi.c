@@ -702,6 +702,8 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 			else
 				ret = dvbapi_ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER, &sFP2);
 		}
+		memcpy(demux[demux_id].demux_fd[n].filter, sFP2.filter.filter, 16);
+		memcpy(demux[demux_id].demux_fd[n].mask, sFP2.filter.mask, 16);
 		break;
 
 	case DVBAPI_1:
@@ -716,6 +718,8 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 		sFP1.flags          = DMX_IMMEDIATE_START;
 		memcpy(sFP1.filter.filter, filt, 16);
 		memcpy(sFP1.filter.mask, mask, 16);
+		memcpy(demux[demux_id].demux_fd[n].filter, sFP1.filter.filter, 16);
+		memcpy(demux[demux_id].demux_fd[n].mask, sFP1.filter.mask, 16);
 		ret = dvbapi_ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER1, &sFP1);
 
 		break;
@@ -723,7 +727,11 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 	case STAPI:
 		ret = stapi_set_filter(demux_id, pid, filt, mask, n, demux[demux_id].pmt_file);
 		if(ret != 0)
-			{ demux[demux_id].demux_fd[n].fd = ret; }
+		{ 
+			demux[demux_id].demux_fd[n].fd = ret;
+			memcpy(demux[demux_id].demux_fd[n].filter, filt, 16);
+			memcpy(demux[demux_id].demux_fd[n].mask, mask, 16);
+		}
 		else
 			{ ret = -1; } // error setting filter!
 		break;
@@ -732,7 +740,11 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 	case COOLAPI:
 		demux[demux_id].demux_fd[n].fd = coolapi_open_device(demux[demux_id].demux_index, demux_id);
 		if(demux[demux_id].demux_fd[n].fd > 0)
-			{ ret = coolapi_set_filter(demux[demux_id].demux_fd[n].fd, n, pid, filt, mask, type); }
+		{ 
+			ret = coolapi_set_filter(demux[demux_id].demux_fd[n].fd, n, pid, filt, mask, type);
+			memcpy(demux[demux_id].demux_fd[n].filter, filt, 16);
+			memcpy(demux[demux_id].demux_fd[n].mask, mask, 16);
+		}
 		break;
 #endif
 	default:
@@ -2143,6 +2155,11 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 	{
 		demux[demux_index].ECMpids[n].status = 0;
 		demux[demux_index].ECMpids[n].checked = 0;
+		demux[demux_index].ECMpids[n].irdeto_curindex = 0xFE;
+		demux[demux_index].ECMpids[n].irdeto_maxindex = 0;
+		demux[demux_index].ECMpids[n].irdeto_cycle = 0xFE;
+		demux[demux_index].ECMpids[n].tries = 0xFE;
+		demux[demux_index].ECMpids[n].table = 0;
 	}
 
 	demux[demux_index].max_status = 0;
@@ -3809,6 +3826,15 @@ void *dvbapi_event_thread(void *cli)
 void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, int32_t len)
 {	
 	int32_t pid = demux[demux_id].demux_fd[filter_num].pidindex;
+	if(!USE_OPENXCAS)
+	{
+		int32_t filt_match = filtermatch(buffer, filter_num, demux_id, len);
+		if(!filt_match)
+		{
+			cs_log_dbg(D_DVBAPI,"Receiver returned data that was not matching to the filter -> delivered filter data discarded!");
+			return;
+		}
+	}
 	struct s_ecmpids *curpid = NULL;
 	if(pid != -1)
 	{
@@ -5594,6 +5620,8 @@ int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t
 			else
 				ret = dvbapi_ioctl(fd, DMX_SET_FILTER, &sFP2);
 		}
+		memcpy(demux[demux_index].demux_fd[num].filter, sFP2.filter.filter, 16);
+		memcpy(demux[demux_index].demux_fd[num].mask, sFP2.filter.mask, 16);
 		break;
 	}
 
@@ -5606,12 +5634,16 @@ int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t
 		sFP1.flags = DMX_IMMEDIATE_START;
 		memcpy(sFP1.filter.filter, filter, 16);
 		memcpy(sFP1.filter.mask, mask, 16);
+		memcpy(demux[demux_index].demux_fd[num].filter, sFP1.filter.filter, 16);
+		memcpy(demux[demux_index].demux_fd[num].mask, sFP1.filter.mask, 16);
 		ret = dvbapi_ioctl(fd, DMX_SET_FILTER1, &sFP1);
 		break;
 	}
 #if defined(WITH_STAPI) || defined(WITH_STAPI5)
 	case STAPI:
 	{
+		memcpy(demux[demux_index].demux_fd[num].filter, filter, 16);
+		memcpy(demux[demux_index].demux_fd[num].mask, mask, 16);
 		ret = stapi_activate_section_filter(fd, filter, mask);
 		break;
 	}
@@ -6031,6 +6063,30 @@ void rotate_emmfilter(int32_t demux_id)
 			ll_iter_remove_data(&itr);
 		}
 	}
+}
+
+int32_t filtermatch(uchar *buffer, int32_t filter_num, int32_t demux_id, int32_t len)
+{
+	int32_t i, k, match;
+	uint8_t flt, mask;
+	match = 1;
+	for(i = 0, k = 0; i < 16 && k < len && len > 3 && match; i++, k++)
+	{
+		mask = demux[demux_id].demux_fd[filter_num].mask[i];
+		if(k == 1) //skip len bytes
+		{
+			k += 2; 
+		} 
+		if(!mask)
+		{ 
+			continue; 
+		}
+		flt = (demux[demux_id].demux_fd[filter_num].filter[i]&mask);
+		cs_log_dbg(D_DVBAPI,"Demuxer %d filter%d[%d] = %02X, filter mask[%d] = %02X, flt&mask = %02X , buffer[%d] = %02X, buffer[%d] & mask = %02X ****", demux_id, filter_num+1, i,
+			demux[demux_id].demux_fd[filter_num].filter[i], i, mask, flt&mask, k, buffer[k], k, buffer[k] & mask); 
+		match = (flt == (buffer[k] & mask));
+	}
+	return (match && i == 16); // 0 = delivered data does not match with filter, 1 = delivered data matches with filter
 }
 
 uint16_t dvbapi_get_client_proto_version(void)

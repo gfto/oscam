@@ -111,6 +111,8 @@ typedef struct filter_s
 	uint32_t provid;
 	uint16_t type;
 	int32_t count;
+	uchar	filter[16];
+	uchar	mask[16];
 	uchar   ecmd5[CS_ECMSTORESIZE]; // last requested ecm md5
 #if defined(WITH_STAPI) || defined(WITH_STAPI5)
 	int32_t NumSlots;
@@ -304,6 +306,7 @@ void disable_unused_streampids(int16_t demux_id);
 int8_t is_ca_used(uint8_t cadevice, int32_t pid);
 const char *dvbapi_get_client_name(void);
 void rotate_emmfilter(int32_t demux_id);
+int32_t filtermatch(uchar *buffer, int32_t filter_num, int32_t demux_id, int32_t len);
 uint16_t dvbapi_get_client_proto_version(void);
 void delayer(ECM_REQUEST *er, uint32_t delay);
 void check_add_emmpid(int32_t demux_index, uchar *filter, int32_t l, int32_t emmtype);
