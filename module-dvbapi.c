@@ -655,6 +655,8 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 	demux[demux_id].demux_fd[n].caid     = caid;
 	demux[demux_id].demux_fd[n].provid   = provid;
 	demux[demux_id].demux_fd[n].type     = type;
+	memcpy(demux[demux_id].demux_fd[n].filter, filt, 16); // copy filter to check later on if receiver delivered accordingly
+	memcpy(demux[demux_id].demux_fd[n].mask, mask, 16); // copy mask to check later on if receiver delivered accordingly
 
 	switch(api)
 	{
@@ -702,8 +704,6 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 			else
 				ret = dvbapi_ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER, &sFP2);
 		}
-		memcpy(demux[demux_id].demux_fd[n].filter, sFP2.filter.filter, 16);
-		memcpy(demux[demux_id].demux_fd[n].mask, sFP2.filter.mask, 16);
 		break;
 
 	case DVBAPI_1:
@@ -718,8 +718,6 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 		sFP1.flags          = DMX_IMMEDIATE_START;
 		memcpy(sFP1.filter.filter, filt, 16);
 		memcpy(sFP1.filter.mask, mask, 16);
-		memcpy(demux[demux_id].demux_fd[n].filter, sFP1.filter.filter, 16);
-		memcpy(demux[demux_id].demux_fd[n].mask, sFP1.filter.mask, 16);
 		ret = dvbapi_ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER1, &sFP1);
 
 		break;
@@ -729,8 +727,6 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 		if(ret != 0)
 		{ 
 			demux[demux_id].demux_fd[n].fd = ret;
-			memcpy(demux[demux_id].demux_fd[n].filter, filt, 16);
-			memcpy(demux[demux_id].demux_fd[n].mask, mask, 16);
 		}
 		else
 			{ ret = -1; } // error setting filter!
@@ -742,8 +738,6 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 		if(demux[demux_id].demux_fd[n].fd > 0)
 		{ 
 			ret = coolapi_set_filter(demux[demux_id].demux_fd[n].fd, n, pid, filt, mask, type);
-			memcpy(demux[demux_id].demux_fd[n].filter, filt, 16);
-			memcpy(demux[demux_id].demux_fd[n].mask, mask, 16);
 		}
 		break;
 #endif
@@ -5579,7 +5573,9 @@ int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t
 {
 
 	int32_t ret = -1;
-
+	memcpy(demux[demux_index].demux_fd[num].filter, filter, 16); // copy filter to check later on if receiver delivered accordingly
+	memcpy(demux[demux_index].demux_fd[num].mask, mask, 16); // copy mask to check later on if receiver delivered accordingly
+	
 	switch(selected_api)
 	{
 	case DVBAPI_3:
@@ -5620,8 +5616,6 @@ int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t
 			else
 				ret = dvbapi_ioctl(fd, DMX_SET_FILTER, &sFP2);
 		}
-		memcpy(demux[demux_index].demux_fd[num].filter, sFP2.filter.filter, 16);
-		memcpy(demux[demux_index].demux_fd[num].mask, sFP2.filter.mask, 16);
 		break;
 	}
 
@@ -5634,16 +5628,12 @@ int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t
 		sFP1.flags = DMX_IMMEDIATE_START;
 		memcpy(sFP1.filter.filter, filter, 16);
 		memcpy(sFP1.filter.mask, mask, 16);
-		memcpy(demux[demux_index].demux_fd[num].filter, sFP1.filter.filter, 16);
-		memcpy(demux[demux_index].demux_fd[num].mask, sFP1.filter.mask, 16);
 		ret = dvbapi_ioctl(fd, DMX_SET_FILTER1, &sFP1);
 		break;
 	}
 #if defined(WITH_STAPI) || defined(WITH_STAPI5)
 	case STAPI:
 	{
-		memcpy(demux[demux_index].demux_fd[num].filter, filter, 16);
-		memcpy(demux[demux_index].demux_fd[num].mask, mask, 16);
 		ret = stapi_activate_section_filter(fd, filter, mask);
 		break;
 	}
@@ -6082,8 +6072,8 @@ int32_t filtermatch(uchar *buffer, int32_t filter_num, int32_t demux_id, int32_t
 			continue; 
 		}
 		flt = (demux[demux_id].demux_fd[filter_num].filter[i]&mask);
-		cs_log_dbg(D_DVBAPI,"Demuxer %d filter%d[%d] = %02X, filter mask[%d] = %02X, flt&mask = %02X , buffer[%d] = %02X, buffer[%d] & mask = %02X ****", demux_id, filter_num+1, i,
-			demux[demux_id].demux_fd[filter_num].filter[i], i, mask, flt&mask, k, buffer[k], k, buffer[k] & mask); 
+		//cs_log_dbg(D_DVBAPI,"Demuxer %d filter%d[%d] = %02X, filter mask[%d] = %02X, flt&mask = %02X , buffer[%d] = %02X, buffer[%d] & mask = %02X", demux_id, filter_num+1, i,
+		//	demux[demux_id].demux_fd[filter_num].filter[i], i, mask, flt&mask, k, buffer[k], k, buffer[k] & mask); 
 		match = (flt == (buffer[k] & mask));
 	}
 	return (match && i == 16); // 0 = delivered data does not match with filter, 1 = delivered data matches with filter
