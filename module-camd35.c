@@ -799,7 +799,6 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 		rdr->nprov = 0; //reset if number changes on reader change
 		rdr->nprov = buf[47];
 		rdr->caid = b2i(2, buf + 20);
-		rdr->auprovid = b2i(4, buf + 12);
 
 		int32_t i;
 		for(i = 0; i < rdr->nprov; i++)
@@ -822,6 +821,15 @@ static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc,
 		rdr->hexserial[6] = 0;
 		rdr->hexserial[7] = 0;
 
+		if(cfg.getblockemmauprovid)
+		{
+			rdr->blockemm = 0;
+			rdr->blockemm |= (buf[128] == 1) ? 0 : EMM_GLOBAL;
+			rdr->blockemm |= (buf[129] == 1) ? 0 : EMM_SHARED;
+			rdr->blockemm |= (buf[130] == 1) ? 0 : EMM_UNIQUE;
+			rdr->blockemm |= (buf[127] == 1) ? 0 : EMM_UNKNOWN;
+			rdr->auprovid = b2i(4, buf + 12);
+		}
 		cs_log("%s CMD05 AU request for caid: %04X auprovid: %06X",
 			   rdr->label,
 			   rdr->caid,

@@ -60,6 +60,7 @@ CONFIGGLOBAL                  config/global.html
 ENABLELEDBIT                  config/global_enableledbit.html                             LEDSUPPORT
 LOCALCARDS                    config/global_localcards.html                               WITH_CARDREADER
 SUPPRESSCMD08                 config/global_suppresscmd08.html                            MODULE_CAMD35,MODULE_CAMD35_TCP
+GETBLOCKEMMAUPROVID           config/global_getblockemmauprovid.html                      MODULE_CAMD35,MODULE_CAMD35_TCP
 UNLOCKPARENTAL                config/global_unlockparental.html                           READER_SECA,READER_VIACCESS
 CONFIGLCD                     config/lcd.html                                             LCDSUPPORT
 CONFIGLOADBALANCER            config/loadbalancer.html                                    WITH_LB

@@ -563,6 +563,10 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	if(cfg.c35_suppresscmd08)
 		{ tpl_addVar(vars, TPLADD, "SUPPRESSCMD08", "checked"); }
 
+	if(cfg.getblockemmauprovid > 0)
+	{
+		tpl_addVar(vars, TPLADD, "GETBLOCKEMMAUPROVID", "checked");
+	}
 
 	if(cfg.reader_restart_seconds)
 		{ tpl_printf(vars, TPLADD, "READERRESTARTSECONDS", "%d", cfg.reader_restart_seconds); }

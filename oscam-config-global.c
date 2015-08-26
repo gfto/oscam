@@ -365,6 +365,7 @@ static const struct config_list global_opts[] =
 	DEF_OPT_INT32("failbantime"             , OFS(failbantime),         0),
 	DEF_OPT_INT32("failbancount"            , OFS(failbancount),        0),
 	DEF_OPT_INT8("suppresscmd08"            , OFS(c35_suppresscmd08),   0),
+	DEF_OPT_INT8("getblockemmauprovid"      , OFS(getblockemmauprovid), 0),
 	DEF_OPT_INT8("double_check"             , OFS(double_check),        0),
 	DEF_LAST_OPT
 };
