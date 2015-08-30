@@ -1499,7 +1499,11 @@ int32_t dvbapi_get_descindex(int32_t demux_index)
 		for(i = 0; i < MAX_DEMUX && !fail; i++)
 		{
 			if(demux[i].program_number == 0) { continue; }  // skip empty demuxers 
-			if(demux[i].ca_mask != demux[demux_index].ca_mask) continue; // skip demuxer using other ca device
+			
+			if(demux[i].ca_mask != demux[demux_index].ca_mask && (!(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)))
+			{
+				continue; // skip demuxer using other ca device
+			}
 			
 			for(j = 0; j < demux[i].ECMpidcount && !fail; j++) // search for new unique index
 			{
