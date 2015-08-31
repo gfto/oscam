@@ -2158,7 +2158,7 @@ struct cc_card *read_card(uint8_t *buf, int32_t buflen, int32_t ext)
 	}
 	
 	if(buflen < (offset + 1))
-		{ cc_free_card(card); return NULL; }
+		{ return card; }
 	
 	int16_t remote_count = buf[offset];
 	offset++;
