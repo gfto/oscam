@@ -351,12 +351,35 @@ void chk_ftab(char *value, FTAB *ftab)
 
 void chk_cltab(char *classasc, CLASSTAB *clstab)
 {
-	int32_t i;
-	char *ptr1, *saveptr1 = NULL;
-	CLASSTAB newclstab;
+	int32_t max_an = 0, max_bn = 0;
+	char *ptr1, *saveptr1 = NULL, *classasc_org;
+	CLASSTAB newclstab, oldclstab;
 	memset(&newclstab, 0, sizeof(newclstab));
 	newclstab.an = newclstab.bn = 0;
-	for(i = 0, ptr1 = strtok_r(classasc, ",", &saveptr1); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok_r(NULL, ",", &saveptr1))
+	
+	if(!cs_malloc(&classasc_org, sizeof(char)*strlen(classasc)+1))
+		{ return; }
+	
+	cs_strncpy(classasc_org, classasc, sizeof(char)*strlen(classasc)+1);
+	
+	for(ptr1 = strtok_r(classasc, ",", &saveptr1); ptr1; ptr1 = strtok_r(NULL, ",", &saveptr1))
+	{
+		ptr1 = trim(ptr1);
+		if(ptr1[0] == '!')
+			{ max_bn++; }
+		else
+			{ max_an++; }
+	}
+
+	if(max_an && !cs_malloc(&newclstab.aclass, sizeof(uchar)*max_an))
+		{ NULLFREE(classasc_org); return; }	
+
+	if(max_bn && !cs_malloc(&newclstab.aclass, sizeof(uchar)*max_bn))
+		{ NULLFREE(newclstab.aclass); NULLFREE(classasc_org); return; }	
+	
+	classasc = classasc_org;
+
+	for(ptr1 = strtok_r(classasc, ",", &saveptr1); ptr1; ptr1 = strtok_r(NULL, ",", &saveptr1))
 	{
 		ptr1 = trim(ptr1);
 		if(ptr1[0] == '!')
@@ -364,7 +387,14 @@ void chk_cltab(char *classasc, CLASSTAB *clstab)
 		else
 			{ newclstab.aclass[newclstab.an++] = (uchar)a2i(ptr1, 2); }
 	}
+	
+	NULLFREE(classasc_org);
+	
+	memcpy(&oldclstab, clstab, sizeof(CLASSTAB));
 	memcpy(clstab, &newclstab, sizeof(CLASSTAB));
+	
+	NULLFREE(oldclstab.aclass);
+	NULLFREE(oldclstab.bclass);
 }
 
 void chk_port_tab(char *portasc, PTAB *ptab)

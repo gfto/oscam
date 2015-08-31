@@ -373,7 +373,6 @@ typedef unsigned char uchar;
 #define CS_LOGFILE    "/var/log/oscam.log"
 #endif
 #define CS_QLEN       128 // size of request queue
-#define CS_MAXCAIDTAB 32  // max. caid-defs/user
 #define CS_MAXPROV    32
 #define CS_MAXPORTS   32  // max server ports
 #define CS_CLIENT_HASHBUCKETS 32
@@ -668,8 +667,8 @@ typedef struct s_classtab
 {
 	uchar           an;
 	uchar           bn;
-	uchar           aclass[31];
-	uchar           bclass[31];
+	uchar           *aclass;
+	uchar           *bclass;
 } CLASSTAB;
 
 typedef struct s_caidtab_data
