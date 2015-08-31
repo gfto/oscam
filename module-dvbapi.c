@@ -4269,6 +4269,11 @@ static void *dvbapi_main_local(void *cli)
 					cs_log("PMT6 CA PMT Server connected on fd %d!", listenfd);
 				}
 			}
+			if(listenfd == -1) // not connected!
+			{
+				cs_sleepms(1000);
+				continue; // start fresh connect attempt!
+			}
 
 		}
 		pfdcount = (listenfd > -1) ? 1 : 0;
