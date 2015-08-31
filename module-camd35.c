@@ -639,7 +639,7 @@ static int32_t camd35_client_init(struct s_client *cl)
 
 	rdr_log(cl->reader, "proxy %s:%d", cl->reader->device, cl->reader->r_port);
 
-	if(cacheex_get_rdr_mode(cl->reader) < 2)
+	if(!cl->is_udp && cacheex_get_rdr_mode(cl->reader) < 2)
 		setsockopt(cl->udp_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&no_delay, sizeof(no_delay));
 
 	if(cl->reader->keepalive)
