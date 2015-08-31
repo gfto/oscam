@@ -1167,6 +1167,7 @@ struct s_client
 	int32_t         udp_fd;
 	struct SOCKADDR udp_sa;
 	socklen_t       udp_sa_len;
+	int8_t          tcp_nodelay;
 	int8_t          log;
 	int32_t         logcounter;
 	int32_t         cwfound;            // count found ECMs per client

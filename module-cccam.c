@@ -3502,6 +3502,7 @@ int32_t cc_srv_wakeup_readers(struct s_client *cl)
 int32_t cc_srv_connect(struct s_client *cl)
 {
 	int32_t i, ccversion_pos, ccbuild_pos;
+	int32_t no_delay = 1;
 	uint8_t data[16];
 	char usr[21], pwd[65], tmp_dbg[17];
 	struct s_auth *account;
@@ -3675,6 +3676,12 @@ int32_t cc_srv_connect(struct s_client *cl)
 		{ return -1; }
 	snprintf(cc->prefix, strlen(cl->account->usr) + 20, "cccam(s) %s:", cl->account->usr);
 
+	if(cl->tcp_nodelay == 0 && cl->account->cacheex.mode < 2)
+	{
+		setsockopt(cl->udp_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&no_delay, sizeof(no_delay));
+		cl->tcp_nodelay = 1;
+	}
+
 	//Starting readers to get cards:
 	cc_srv_wakeup_readers(cl);
 
@@ -3839,6 +3846,10 @@ int32_t cc_cli_connect(struct s_client *cl)
 		block_connect(rdr);
 		return -1;
 	}
+	
+	int32_t no_delay = 1;
+	if(cacheex_get_rdr_mode(rdr) < 2)
+		setsockopt(cl->udp_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&no_delay, sizeof(no_delay));
 
 	// get init seed
 	if((n = cc_recv_to(cl, data, 16)) != 16)

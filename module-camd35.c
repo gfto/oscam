@@ -107,7 +107,7 @@ int32_t camd35_send_without_timeout(struct s_client *cl, uchar *buf, int32_t buf
 
 static int32_t camd35_auth_client(struct s_client *cl, uchar *ucrc)
 {
-	int32_t rc = 1;
+	int32_t rc = 1, no_delay = 1;
 	uint32_t crc;
 	struct s_auth *account;
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
@@ -128,6 +128,13 @@ static int32_t camd35_auth_client(struct s_client *cl, uchar *ucrc)
 				{
 					return 1;
 				}
+				
+				if(!cl->is_udp && cl->tcp_nodelay == 0 && cl->account->cacheex.mode < 2)
+				{
+					setsockopt(cl->udp_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&no_delay, sizeof(no_delay));
+					cl->tcp_nodelay = 1;
+				}
+				
 				return 0;
 			}
 		}
@@ -619,8 +626,9 @@ static void camd35_send_keepalive_answer(struct s_client *cl)
 
 static int32_t camd35_client_init(struct s_client *cl)
 {
-
 	unsigned char md5tmp[MD5_DIGEST_LENGTH];
+	int32_t no_delay = 1;
+			   
 	cs_strncpy((char *)cl->upwd, cl->reader->r_pwd, sizeof(cl->upwd));
 	i2b_buf(4, crc32(0L, MD5((unsigned char *)cl->reader->r_usr, strlen(cl->reader->r_usr), md5tmp), 16), cl->ucrc);
 	if (!aes_set_key_alloc(&cl->aes_keys, (char *)MD5(cl->upwd, strlen((char *)cl->upwd), md5tmp)))
@@ -630,6 +638,9 @@ static int32_t camd35_client_init(struct s_client *cl)
 	cl->crypted=1;
 
 	rdr_log(cl->reader, "proxy %s:%d", cl->reader->device, cl->reader->r_port);
+
+	if(cacheex_get_rdr_mode(cl->reader) < 2)
+		setsockopt(cl->udp_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&no_delay, sizeof(no_delay));
 
 	if(cl->reader->keepalive)
 		camd35_send_keepalive(cl);
