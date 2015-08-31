@@ -503,6 +503,9 @@ int32_t init_free_userdb(struct s_auth *ptr)
 		ftab_clear(&ptr->fchid);
 		tuntab_clear(&ptr->ttab);
 		caidtab_clear(&ptr->ctab);
+#ifdef CS_CACHEEX
+		cecspvaluetab_clear(&ptr->cacheex.filter_caidtab);
+#endif
 #ifdef WITH_LB
 		caidvaluetab_clear(&ptr->lb_nbest_readers_tab);
 #endif
