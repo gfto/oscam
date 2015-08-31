@@ -3676,7 +3676,10 @@ int32_t cc_srv_connect(struct s_client *cl)
 		{ return -1; }
 	snprintf(cc->prefix, strlen(cl->account->usr) + 20, "cccam(s) %s:", cl->account->usr);
 
-	if(cl->tcp_nodelay == 0 && cl->account->cacheex.mode < 2)
+	#ifdef CS_CACHEEX
+	if(cl->account->cacheex.mode < 2)
+	#endif
+	if(cl->tcp_nodelay == 0)
 	{
 		setsockopt(cl->udp_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&no_delay, sizeof(no_delay));
 		cl->tcp_nodelay = 1;
