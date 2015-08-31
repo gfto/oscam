@@ -270,7 +270,7 @@ static int32_t scam_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen)
 	if(handle <= 0 || maxlen < 3)
 		{ cs_log("scam_msg_recv: fd is 0"); return -1; }
 
-	len = recv(handle, buf, 2, MSG_WAITALL);
+	len = cs_recv(handle, buf, 2, MSG_WAITALL);
 	if(len != 2)		// invalid header length read
 	{
 		if(len <= 0)
@@ -289,7 +289,7 @@ static int32_t scam_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen)
 	int32_t headerSize = buf[1]&0x80 ? (2 + (buf[1]&~0x80)) : 2;
 	if(headerSize > 2) {
 		if(maxlen < headerSize+1) { return -1; }
-		len = recv(handle, buf+2, headerSize-2, MSG_WAITALL);
+		len = cs_recv(handle, buf+2, headerSize-2, MSG_WAITALL);
 		if(len != headerSize-2)		// invalid header length read
 		{
 			if(len <= 0)
@@ -317,7 +317,7 @@ static int32_t scam_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen)
 			return 0;
 		}
 
-		len = recv(handle, buf + dataOffset, dataLength, MSG_WAITALL);
+		len = cs_recv(handle, buf + dataOffset, dataLength, MSG_WAITALL);
 		if((uint32_t)len != dataLength)
 		{
 			if(len <= 0) {

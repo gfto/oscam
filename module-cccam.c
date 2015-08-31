@@ -588,7 +588,7 @@ int32_t cc_recv_to(struct s_client *cl, uint8_t *buf, int32_t len)
 		else
 			{ return (-2); } //timeout!!
 	}
-	return recv(cl->udp_fd, buf, len, MSG_WAITALL);
+	return cs_recv(cl->udp_fd, buf, len, MSG_WAITALL);
 }
 
 /**
@@ -634,7 +634,7 @@ int32_t cc_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen)
 		return -1;
 	}
 
-	len = recv(handle, buf, 4, MSG_WAITALL);
+	len = cs_recv(handle, buf, 4, MSG_WAITALL);
 
 	if(len != 4)    // invalid header length read
 	{
@@ -661,7 +661,7 @@ int32_t cc_msg_recv(struct s_client *cl, uint8_t *buf, int32_t maxlen)
 			return 0;
 		}
 
-		len = recv(handle, buf + 4, size, MSG_WAITALL);
+		len = cs_recv(handle, buf + 4, size, MSG_WAITALL);
 		if(rdr && buf[1] == MSG_CW_ECM)
 			{ rdr->last_g = time(NULL); }
 

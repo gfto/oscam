@@ -27,7 +27,7 @@ static int32_t camd33_recv(struct s_client *client, uchar *buf, int32_t l)
 {
 	int32_t n;
 	if(!client->pfd) { return (-1); }
-	if((n = recv(client->pfd, buf, l, 0)) > 0)
+	if((n = cs_recv(client->pfd, buf, l, 0)) > 0)
 	{
 		client->last = time((time_t *) 0);
 		if(client->crypted)

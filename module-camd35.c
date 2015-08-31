@@ -151,10 +151,10 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 			{
 				//read minimum packet size (4 byte ucrc + 32 byte data) to detect packet size (tcp only)
 
-				//rs = recv(client->udp_fd, buf, client->is_udp ? l : 36, 0);
+				//rs = cs_recv(client->udp_fd, buf, client->is_udp ? l : 36, 0);
 				if(client->is_udp){
 					while (1){
-					rs = recv(client->udp_fd, buf, l, 0);
+					rs = cs_recv(client->udp_fd, buf, l, 0);
 						if (rs < 0){
 							if(errno == EINTR) { continue; }  // try again in case of interrupt
 							if(errno == EAGAIN) { continue; }  //EAGAIN needs select procedure again
@@ -167,7 +167,7 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 					rs = 0;
 					do
 					{
-						readed = recv(client->udp_fd, buf+rs, tot, 0);
+						readed = cs_recv(client->udp_fd, buf+rs, tot, 0);
 						if (readed < 0){
 							if(errno == EINTR) { continue; }  // try again in case of interrupt
 							if(errno == EAGAIN) { continue; }  //EAGAIN needs select procedure again
@@ -228,11 +228,11 @@ static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 			if(!(client->is_udp && client->typ == 'c') && (rs < n) && ((n - 32) > 0))
 			{
 
-				//len = recv(client->udp_fd, buf+32, n-32, 0); // read the rest of the packet
+				//len = cs_recv(client->udp_fd, buf+32, n-32, 0); // read the rest of the packet
 				int32_t tot=n-32, readed=0;
 				len = 0;
 				do{
-					readed = recv(client->udp_fd, buf+32+len, tot, 0); // read the rest of the packet
+					readed = cs_recv(client->udp_fd, buf+32+len, tot, 0); // read the rest of the packet
 					if (readed < 0){
 						if(errno == EINTR) { continue; }  // try again in case of interrupt
 						if(errno == EAGAIN) { continue; }  //EAGAIN needs select procedure again

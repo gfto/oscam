@@ -677,3 +677,42 @@ int32_t start_listener(struct s_module *module, struct s_port *port)
 
 	return port->fd;
 }
+
+#ifdef __CYGWIN__
+/**
+ * Workaround missing MSG_WAITALL implementation under Cygwin.
+ */
+ssize_t cygwin_recv(int sock, void *buf, int count, int tflags)
+{
+    char *bp = buf;
+    int n = 0;
+
+    if ((n = recv(sock, bp, count, tflags)) < 0)
+    {
+    	return(n);
+    }
+
+    if (n < count && (tflags & MSG_WAITALL))
+    {
+    	cs_log_dbg(D_TRACE, "Cygwin socket read retry. Got %d expected %d", n, count);
+
+    	int n2 = recv(sock, bp + n, count - n, tflags);
+		if (n2 < 0 || n + n2 != count)
+		{
+			cs_log_dbg(D_TRACE, "Cygwin socket read retry failed. Got %d", n2);
+			if (n2 < 0)
+			{
+				return(n2);
+			}
+		}
+		else
+		{
+			cs_log_dbg(D_TRACE, "Cygwin socket read retry success. Got %d - Total: %d", n2, n + n2);
+		}
+
+		n+= n2;
+    }
+
+    return n;
+}
+#endif /* __CYGWIN__ */

@@ -43,4 +43,8 @@ int32_t process_input(uint8_t *buf, int32_t buflen, int32_t timeout);
 int32_t accept_connection(struct s_module *module, int8_t module_idx, int8_t port_idx);
 int32_t start_listener(struct s_module *module, struct s_port *port);
 
+#ifdef __CYGWIN__
+ssize_t cygwin_recv(int sock, void *buf, int count, int tflags);
+#endif
+
 #endif

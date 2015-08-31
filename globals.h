@@ -229,6 +229,12 @@ typedef unsigned char uchar;
 //checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
 #define NULLFREE(X) {if (X) {void *tmpX=X; X=NULL; free(tmpX); }}
 
+#ifdef __CYGWIN__
+#define cs_recv(a,b,c,d) cygwin_recv(a,b,c,d)
+#else
+#define cs_recv(a,b,c,d) recv(a,b,c,d)
+#endif
+
 //safe wrappers to pthread functions
 #define fprintf_stderr(fmt, params...)	fprintf(stderr, fmt, ##params)
 

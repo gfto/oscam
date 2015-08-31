@@ -235,7 +235,7 @@ static int32_t network_message_receive(int32_t handle, uint16_t *netMsgId, uint8
 
 	if(!buffer || handle < 0)
 		{ return -1; }
-	len = recv(handle, netbuf, 2, 0);
+	len = cs_recv(handle, netbuf, 2, 0);
 	cs_log_dbg(D_CLIENT, "nmr(): len=%d, errno=%d", len, (len == -1) ? errno : 0);
 	if(!len)
 	{
@@ -262,7 +262,7 @@ static int32_t network_message_receive(int32_t handle, uint16_t *netMsgId, uint8
 		return -1;
 	}
 
-	len = recv(handle, netbuf + 2, (netbuf[0] << 8) | netbuf[1], 0);
+	len = cs_recv(handle, netbuf + 2, (netbuf[0] << 8) | netbuf[1], 0);
 	if(!len)
 	{
 		cs_log_dbg(D_CLIENT, "nmr: 2 return 0");

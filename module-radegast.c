@@ -22,12 +22,12 @@ static int32_t radegast_recv(struct s_client *client, uchar *buf, int32_t l)
 	if(!client->pfd) { return (-1); }
 	if(client->typ == 'c')     // server code
 	{
-		if((n = recv(client->pfd, buf, l, 0)) > 0)
+		if((n = cs_recv(client->pfd, buf, l, 0)) > 0)
 			{ client->last = time((time_t *) 0); }
 	}
 	else      // client code
 	{
-		if((n = recv(client->pfd, buf, l, 0)) > 0)
+		if((n = cs_recv(client->pfd, buf, l, 0)) > 0)
 		{
 			cs_log_dump_dbg(D_CLIENT, buf, n, "radegast: received %d bytes from %s", n, remote_txt());
 			client->last = time((time_t *) 0);

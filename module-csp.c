@@ -137,7 +137,7 @@ static int32_t csp_recv(struct s_client *client, uchar *buf, int32_t l)
 	}
 	else
 	{
-		rs = recv(client->udp_fd, buf, client->is_udp ? l : 36, 0);
+		rs = cs_recv(client->udp_fd, buf, client->is_udp ? l : 36, 0);
 	}
 	//cs_log_dump_dbg(D_TRACE, buf, rs, "received %d bytes from csp", rs);
 

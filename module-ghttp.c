@@ -213,7 +213,7 @@ static int32_t ghttp_recv_int(struct s_client *client, uchar *buf, int32_t l)
 		n = SSL_read(context->ssl_handle, buf, l);
 #endif
 	}
-	else { n = recv(client->pfd, buf, l, 0); }
+	else { n = cs_recv(client->pfd, buf, l, 0); }
 
 	if(n > 0)
 	{
