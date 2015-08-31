@@ -3501,12 +3501,12 @@ int32_t cc_srv_wakeup_readers(struct s_client *cl)
 
 int32_t cc_srv_connect(struct s_client *cl)
 {
-	int32_t i;
+	int32_t i, ccversion_pos, ccbuild_pos;
 	uint8_t data[16];
 	char usr[21], pwd[65], tmp_dbg[17];
 	struct s_auth *account;
 	struct cc_data *cc;
-
+	
 	if(!cs_malloc(&cc, sizeof(struct cc_data)))
 		{ return -1; }
 
@@ -3687,15 +3687,31 @@ int32_t cc_srv_connect(struct s_client *cl)
 
 	// recv cli data
 	memset(buf, 0, CC_MAXMSGSIZE);
-	i = cc_msg_recv(cl, buf, CC_MAXMSGSIZE);
+	i = cc_msg_recv(cl, buf, CC_MAXMSGSIZE-1);
 	if(i < 0)
 		{ return -1; }
 	cs_log_dump_dbg(D_CLIENT, buf, i, "cccam: cli data:");
+	
+	if(i < 66)
+		{ cs_log_dbg(D_CLIENT, "cccam: cli data too small"); return -1; }
+		
 	memcpy(cc->peer_node_id, buf + 24, 8);
 	//chk_peer_node_for_oscam(cc);
 
-	strncpy(cc->remote_version, (char *)buf + 33, sizeof(cc->remote_version) - 1);
-	strncpy(cc->remote_build, (char *)buf + 65, sizeof(cc->remote_build) - 1);
+	ccversion_pos = 33;
+	while(ccversion_pos+1 < i && ccversion_pos < 33+5 && buf[ccversion_pos] == 0)
+	{
+		ccversion_pos++;
+	}
+
+	ccbuild_pos = 65;
+	while(ccbuild_pos+1 < i && ccbuild_pos < 65+5 && buf[ccbuild_pos] == 0)
+	{
+		ccbuild_pos++;
+	}
+
+	strncpy(cc->remote_version, (char *)buf + ccversion_pos, sizeof(cc->remote_version) - 1);
+	strncpy(cc->remote_build, (char *)buf + ccbuild_pos, sizeof(cc->remote_build) - 1);
 
 	cs_log_dbg(D_CLIENT, "%s client '%s' (%s) running v%s (%s)", getprefix(), buf + 4,
 				  cs_hexdump(0, cc->peer_node_id, 8, tmp_dbg, sizeof(tmp_dbg)), cc->remote_version, cc->remote_build);
