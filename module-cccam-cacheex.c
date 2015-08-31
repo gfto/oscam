@@ -42,7 +42,7 @@ void cc_cacheex_filter_out(struct s_client *cl)
 		return;
 	}
 
-	i2b_buf(2, (uint16_t)filter->cevnum, buf + i);
+	i2b_buf(2, filter->cevnum, buf + i);
 	i += 2;
 
 	int32_t max_filters = 30;
@@ -51,9 +51,6 @@ void cc_cacheex_filter_out(struct s_client *cl)
 		if(filter->cevnum > j){
 			CECSPVALUETAB_DATA *d = &filter->cevdata[j];
 			i2b_buf(4, d->caid, buf + i);
-		}
-		else{
-			i2b_buf(4, 0000, buf + i);
 		}
 		i += 4;
 	}
@@ -64,9 +61,6 @@ void cc_cacheex_filter_out(struct s_client *cl)
 			CECSPVALUETAB_DATA *d = &filter->cevdata[j];
 			i2b_buf(4, d->cmask, buf + i);
 		}
-		else{
-			i2b_buf(4, 0000, buf + i);
-		}
 		i += 4;
 	}
 
@@ -76,9 +70,6 @@ void cc_cacheex_filter_out(struct s_client *cl)
 			CECSPVALUETAB_DATA *d = &filter->cevdata[j];
 			i2b_buf(4, d->prid, buf + i);
 		}
-		else{
-			i2b_buf(4, 0000, buf + i);
-		}
 		i += 4;
 	}
 
@@ -87,9 +78,6 @@ void cc_cacheex_filter_out(struct s_client *cl)
 		if(filter->cevnum > j){
 			CECSPVALUETAB_DATA *d = &filter->cevdata[j];
 			i2b_buf(4, d->srvid, buf + i);
-		}
-		else{
-			i2b_buf(4, 0000, buf + i);
 		}
 		i += 4;
 	}

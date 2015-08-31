@@ -44,7 +44,7 @@ void camd35_cacheex_send_push_filter(struct s_client *cl, uint8_t mode)
 		return;
 	}
 
-	i2b_buf(2, (uint16_t)filter->cevnum, buf + i);
+	i2b_buf(2, filter->cevnum, buf + i);
 	i += 2;
 
 	int32_t max_filters = 15;
@@ -53,9 +53,6 @@ void camd35_cacheex_send_push_filter(struct s_client *cl, uint8_t mode)
 		if(filter->cevnum > j){
 			CECSPVALUETAB_DATA *d = &filter->cevdata[j];
 			i2b_buf(4, d->caid, buf + i);
-		}
-		else{
-			i2b_buf(4, 0000, buf + i);
 		}
 		i += 4;
 	}
@@ -66,9 +63,6 @@ void camd35_cacheex_send_push_filter(struct s_client *cl, uint8_t mode)
 			CECSPVALUETAB_DATA *d = &filter->cevdata[j];
 			i2b_buf(4, d->cmask, buf + i);
 		}
-		else{
-			i2b_buf(4, 0000, buf + i);
-		}
 		i += 4;
 	}
 
@@ -78,9 +72,6 @@ void camd35_cacheex_send_push_filter(struct s_client *cl, uint8_t mode)
 			CECSPVALUETAB_DATA *d = &filter->cevdata[j];
 			i2b_buf(4, d->prid, buf + i);
 		}
-		else{
-			i2b_buf(4, 0000, buf + i);
-		}
 		i += 4;
 	}
 
@@ -89,9 +80,6 @@ void camd35_cacheex_send_push_filter(struct s_client *cl, uint8_t mode)
 		if(filter->cevnum > j){
 			CECSPVALUETAB_DATA *d = &filter->cevdata[j];
 			i2b_buf(4, d->srvid, buf + i);
-		}
-		else{
-			i2b_buf(4, 0000, buf + i);
 		}
 		i += 4;
 	}
