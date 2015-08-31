@@ -2,6 +2,7 @@
 
 #include "globals.h"
 #ifdef MODULE_SERIAL
+#include "oscam-config.h"
 #include "oscam-client.h"
 #include "oscam-ecm.h"
 #include "oscam-net.h"
@@ -22,7 +23,8 @@ extern int32_t exit_oscam;
 #define P_ALPHA     6   // AlphaStar Receivers
 #define P_DSR95_OLD 7   // DSR9500 without SID
 #define P_GBOX      8   // Arion with gbox
-#define P_MAX       P_GBOX
+#define P_TWIN      9   // Twin Protocol
+#define P_MAX       P_TWIN
 #define P_AUTO      0xFF
 
 #define P_DSR_AUTO    0
@@ -41,7 +43,7 @@ extern int32_t exit_oscam;
 #define IS_BAD  0xFF    // incoming data is unknown
 
 static const char *const proto_txt[] = {"unknown", "hsic", "sssp", "bomba", "dsr9500", "gs",
-										"alpha", "dsr9500old", "gbox"
+										"alpha", "dsr9500old", "gbox", "twin"
 									   };
 static const char *const dsrproto_txt[] = {"unknown", "samsung", "openbox", "pioneer",
 		"extended", "unknown"
@@ -502,6 +504,9 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
 						case P_ALPHA:
 							if(buf[0] == 0x88) { p = P_ALPHA; }
 							break;
+						case P_TWIN:
+							if((buf[0] == 0xF7) && (buf[1] == 0x00) && (buf[2] == 0x16)) { p = P_TWIN; }
+							break;
 						}
 					}
 					if((serialdata->oscam_ser_proto != p) && (serialdata->oscam_ser_proto != P_AUTO))
@@ -578,6 +583,9 @@ static int32_t oscam_ser_recv(struct s_client *client, uchar *xbuf, int32_t l)
 				case P_ALPHA  :
 					r = (buf[1] << 8) | buf[2];
 					break; // should be 16 always
+				case P_TWIN  :
+					r = 16;
+					break;
 				}
 			break;
 		case 3:       // STAGE 3: get the rest ...
@@ -1258,6 +1266,25 @@ static int32_t oscam_ser_client_init(struct s_client *client)
 	return ((client->pfd > 0) ? 0 : 1);
 }
 
+static int32_t oscam_ser_twin_send(struct s_client *client, ECM_REQUEST *er)
+{
+	struct ecmtw tw;
+	tw = get_twin(er);
+	cs_debug_mask(D_CLIENT, "found channel: %04X:%06X:%04X:%04X:%04X", tw.caid, tw.provid, tw.deg, tw.freq, tw.srvid);
+	uint8_t wbuf[32];
+	wbuf[0] = 7;
+	wbuf[1] = 6;
+	wbuf[2] = tw.deg>>8;
+	wbuf[3] = tw.deg&0xff;
+	wbuf[4] = tw.freq>>8;
+	wbuf[5] = tw.freq&0xff;
+	wbuf[6] = tw.srvid>>8;
+	wbuf[7] = tw.srvid&0xff;
+	wbuf[8] = wbuf[0]^wbuf[1]^wbuf[2]^wbuf[3]^wbuf[4]^wbuf[5]^wbuf[6]^wbuf[7];
+	oscam_ser_send(client, wbuf, 9);
+	return(0);
+}
+
 static int32_t oscam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er)
 {
 	char *tmp;
@@ -1307,6 +1334,9 @@ static int32_t oscam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er)
 		memcpy(buf + 5, er->ecm, er->ecmlen);
 		oscam_ser_send(client, buf, oscam_ser_alpha_convert(buf, 5 + er->ecmlen));
 		break;
+	case P_TWIN:
+		oscam_ser_twin_send(client, er);
+		break;
 	}
 	NULLFREE(buf);
 	return (0);
@@ -1351,6 +1381,12 @@ static void oscam_ser_process_dcw(uchar *dcw, int32_t *rc, uchar *buf, int32_t l
 			*rc = 1;
 		}
 		break;
+	case P_TWIN:
+		if ((l >= 19) && (buf[0] == 0xF7))
+		{
+			memcpy(dcw, buf + 3, 16);
+			*rc = 1;
+		}
 	}
 }
 

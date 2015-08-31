@@ -1339,6 +1339,17 @@ struct ecmrl
 };
 #define MAXECMRATELIMIT 20
 
+#ifdef MODULE_SERIAL
+struct ecmtw
+{
+	uint16_t        caid;
+	uint32_t        provid;
+	uint16_t        srvid;
+	uint16_t        deg;
+	uint16_t        freq;
+};
+#endif
+
 typedef struct ce_csp_tab
 {
 	uint16_t    n;
@@ -1765,6 +1776,14 @@ struct s_fakecws
 	struct s_cw *data;	
 };
 
+#ifdef MODULE_SERIAL
+struct s_twin
+{
+	struct ecmtw    tw;
+	struct s_twin *next;
+};
+#endif
+
 struct s_tierid
 {
 	uint16_t        tierid;
@@ -2123,6 +2142,10 @@ struct s_config
 	
 	// fake cws
 	struct s_fakecws fakecws[0x100];
+
+#ifdef MODULE_SERIAL
+	struct s_twin *twin_list;
+#endif
 };
 
 struct s_clientinit

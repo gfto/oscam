@@ -1775,6 +1775,10 @@ int32_t main(int32_t argc, char *argv[])
 
 	global_whitelist_read();
 	ratelimit_read();
+	
+#ifdef MODULE_SERIAL
+	twin_read();
+#endif
 
 	for(i = 0; i < CS_MAX_MOD; i++)
 	{

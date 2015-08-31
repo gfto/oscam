@@ -115,6 +115,7 @@ FILEMENU                      files/menu.html
 FILEMENUANTICASC              files/menu_anticasc.html                                    CS_ANTICASC
 FILEMENUDVBAPI                files/menu_dvbapi.html                                      HAVE_DVBAPI
 FILEMENUFAKECWS               files/menu_fakecws.html                                     CS_CACHEEX
+FILEMENUTWIN                  files/menu_twin.html                                        MODULE_SERIAL
 
 AUTOCONF                      ghttp/autoconf.html                                         MODULE_GHTTP
 PREAUTOCONF                   ghttp/pre_autoconf.html                                     MODULE_GHTTP

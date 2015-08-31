@@ -23,6 +23,7 @@ extern uint16_t len4caid[256];
 #define cs_whitelist        "oscam.whitelist"
 #define cs_provid           "oscam.provid"
 #define cs_fakecws          "oscam.fakecws"
+#define cs_twin             "oscam.twin"
 
 uint32_t cfg_sidtab_generation = 1;
 
@@ -1330,3 +1331,125 @@ void init_len4caid(void)
 		{ cs_log("%d lengths for caid guessing loaded", nr); }
 	return;
 }
+
+#ifdef MODULE_SERIAL
+static struct s_twin *twin_read_int(void)
+{
+	FILE *fp = open_config_file(cs_twin);
+	if(!fp)
+		{ return NULL; }
+	char token[1024], str1[1024];
+	int32_t i, ret, count = 0;
+	struct s_twin *new_twin = NULL, *entry, *last = NULL;
+	uint32_t line = 0;
+
+	while(fgets(token, sizeof(token), fp))
+	{
+		line++;
+		if(strlen(token) <= 1) { continue; }
+		if(token[0] == '#' || token[0] == '/') { continue; }
+		if(strlen(token) > 1024) { continue; }
+
+		for(i = 0; i < (int)strlen(token); i++)
+		{
+			if((token[i] == ':' || token[i] == ' ') && token[i + 1] == ':')
+			{
+				memmove(token + i + 2, token + i + 1, strlen(token) - i + 1);
+				token[i + 1] = '0';
+			}
+			if(token[i] == '#' || token[i] == '/' || token[i] == '"')
+			{
+				token[i] = '\0';
+				break;
+			}
+		}
+
+		uint32_t caid = 0, provid = 0, srvid = 0, deg = 0, freq = 0;
+//		char hdeg[4], hfreq[4], hsrvid[4];
+		memset(str1, 0, sizeof(str1));
+
+		ret = sscanf(token, "%4x:%6x:%d:%d:%d", &caid, &provid, &deg, &freq, &srvid);
+		if(ret < 1) { continue; }
+// 		snprintf(hdeg, 4, "%x", deg);
+// 		sscanf(hdeg, "%4x", &deg);
+// 		snprintf(hfreq, 4, "%x", freq);
+// 		sscanf(hfreq, "%4x", &freq);
+// 		snprintf(hsrvid, 4, "%x", srvid);
+// 		sscanf(hsrvid, "%4x", &srvid);
+		strncat(str1, ",", sizeof(str1) - strlen(str1) - 1);
+		if(!cs_malloc(&entry, sizeof(struct s_twin)))
+		{
+			fclose(fp);
+			return new_twin;
+		}
+
+		count++;
+		entry->tw.caid = caid;
+		entry->tw.provid = provid;
+		entry->tw.srvid = srvid;
+		entry->tw.deg = deg;
+		entry->tw.freq = freq;
+
+		cs_debug_mask(D_TRACE, "channel: %04X:%06X:%d:%d:%d", entry->tw.caid, entry->tw.provid, entry->tw.deg,
+					  entry->tw.freq, entry->tw.srvid);
+
+		if(!new_twin)
+		{
+			new_twin = entry;
+			last = new_twin;
+		}
+		else
+		{
+			last->next = entry;
+			last = entry;
+		}
+	}
+
+	if(count)
+		{ cs_log("%d entries read from %s", count, cs_twin); }
+
+	fclose(fp);
+
+	return new_twin;
+}
+
+void twin_read(void)
+{
+
+	struct s_twin *entry, *old_list;
+
+	old_list = cfg.twin_list;
+	cfg.twin_list = twin_read_int();
+
+	while(old_list)
+	{
+		entry = old_list->next;
+		free(old_list);
+		old_list = entry;
+	}
+}
+
+struct ecmtw get_twin(ECM_REQUEST *er)
+{
+	struct ecmtw tmp;
+	memset(&tmp, 0, sizeof(tmp));
+	if(!cfg.twin_list)
+	{
+		cs_log("twin_list not found!");
+		return tmp;
+	}
+	struct s_twin *entry = cfg.twin_list;
+	while(entry)
+	{
+		if(entry->tw.caid == er->caid && entry->tw.provid == er->prid && entry->tw.srvid == er->srvid)
+		{
+			break;
+		}
+		entry = entry->next;
+	}
+
+	if(entry) { tmp = entry->tw; }
+
+	return (tmp);
+}
+#endif

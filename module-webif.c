@@ -122,8 +122,9 @@ static bool use_srvid2 = false;
 #define MNU_CFG_FSRVID2		14
 #define MNU_CFG_FFAKECWS	15
 #define MNU_CFG_FCSS		16
+#define MNU_CFG_FTWIN		17
 
-#define MNU_CFG_TOTAL_ITEMS 17 // sum of config or files submenuactivating above. Use it for "All inactive" in function calls too.
+#define MNU_CFG_TOTAL_ITEMS 18 // sum of config or files submenuactivating above. Use it for "All inactive" in function calls too.
 
 static void set_status_info_var(struct templatevars *vars, char *varname, int no_data, char *fmt, double value) {
 	if (no_data)
@@ -5953,13 +5954,16 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 		{ "oscam.ratelimit", MNU_CFG_FRATELIMIT,FTYPE_CONFIG },		// id 12
 		{ "oscam.whitelist", MNU_CFG_FWHITELIST,FTYPE_CONFIG },		// id 13
 #ifdef HAVE_DVBAPI
-		{ "oscam.dvbapi",    MNU_CFG_FDVBAPI,   FTYPE_CONFIG },
+		{ "oscam.dvbapi",    MNU_CFG_FDVBAPI,   FTYPE_CONFIG },		// id 14
 #endif
 #ifdef CS_CACHEEX
-		{ "oscam.fakecws",   MNU_CFG_FFAKECWS,  FTYPE_CONFIG },
+		{ "oscam.fakecws",   MNU_CFG_FFAKECWS,  FTYPE_CONFIG },		// id 15
 #endif
 #ifdef CS_ANTICASC
-		{ "anticasc",        MNU_CFG_FACLOG,    FTYPE_ANTICASC },
+		{ "anticasc",        MNU_CFG_FACLOG,    FTYPE_ANTICASC },	// id 16
+#endif
+#ifdef MODULE_SERIAL
+		{ "oscam.twin",      MNU_CFG_FTWIN,     FTYPE_CONFIG },		// id 17
 #endif
 		{ NULL, 0, 0 },
 	};
