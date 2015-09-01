@@ -1079,6 +1079,9 @@ void free_reader(struct s_reader *rdr)
 	ftab_clear(&rdr->fchid);
 	ftab_clear(&rdr->ftab);
 
+    NULLFREE(rdr->cltab.aclass);
+ 	NULLFREE(rdr->cltab.bclass);
+
 	caidtab_clear(&rdr->ctab);
 #ifdef CS_CACHEEX	
 	cecspvaluetab_clear(&rdr->cacheex.filter_caidtab);

@@ -727,6 +727,9 @@ void free_client(struct s_client *cl)
 	tuntab_clear(&cl->ttab);
 	caidtab_clear(&cl->ctab);
 
+    NULLFREE(cl->cltab.aclass);
+ 	NULLFREE(cl->cltab.bclass);
+
 	NULLFREE(cl->cw_rass);
 	ll_destroy_data(&cl->ra_buf);
 	NULLFREE(cl->aes_keys);
