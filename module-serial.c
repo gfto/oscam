@@ -1263,6 +1263,16 @@ static int32_t oscam_ser_client_init(struct s_client *client)
 	if((!client->reader->device[0])) { cs_disconnect_client(client); }
 	if(!oscam_ser_parse_url(client->reader->device, client->serialdata, NULL)) { cs_disconnect_client(client); }
 	client->pfd = init_oscam_ser_device(client);
+
+	if(client->serialdata->oscam_ser_proto == P_TWIN)
+	{
+		if(client->pfd > 0)
+		{
+			client->reader->tcp_connected = 1;
+			client->reader->card_status = CARD_INSERTED;
+		}
+	}
+	
 	return ((client->pfd > 0) ? 0 : 1);
 }
 
