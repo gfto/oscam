@@ -374,7 +374,7 @@ void chk_cltab(char *classasc, CLASSTAB *clstab)
 	if(max_an && !cs_malloc(&newclstab.aclass, sizeof(uchar)*max_an))
 		{ NULLFREE(classasc_org); return; }	
 
-	if(max_bn && !cs_malloc(&newclstab.aclass, sizeof(uchar)*max_bn))
+	if(max_bn && !cs_malloc(&newclstab.bclass, sizeof(uchar)*max_bn))
 		{ NULLFREE(newclstab.aclass); NULLFREE(classasc_org); return; }	
 	
 	classasc = classasc_org;
