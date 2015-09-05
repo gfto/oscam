@@ -2599,6 +2599,7 @@ void request_cw(struct s_client *client, ECM_REQUEST *er, int32_t demux_id, uint
 	if(!USE_OPENXCAS && filternum < 0)
 	{
 		cs_log_dbg(D_DVBAPI, "Demuxer %d not requesting cw -> ecm filter was killed!", demux_id);
+		NULLFREE(er);
 		return;
 	}
 
