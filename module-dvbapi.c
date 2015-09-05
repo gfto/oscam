@@ -2603,11 +2603,11 @@ void request_cw(struct s_client *client, ECM_REQUEST *er, int32_t demux_id, uint
 	}
 
 	cs_log_dbg(D_DVBAPI, "Demuxer %d get controlword!", demux_id);
+	memset(demux[demux_id].demux_fd[filternum].ecmd5, 0, CS_ECMSTORESIZE); // zero out ecmcheck!
 	get_cw(client, er);
-
-	if (!USE_OPENXCAS) {
-		if(delayed_ecm_check) { memcpy(demux[demux_id].demux_fd[filternum].ecmd5, er->ecmd5, CS_ECMSTORESIZE); }  // register this ecm as latest request for this filter
-		else { memset(demux[demux_id].demux_fd[filternum].ecmd5, 0, CS_ECMSTORESIZE); } // zero out ecmcheck!
+	if(!USE_OPENXCAS && delayed_ecm_check) // register this ecm as latest request for this filter
+	{ 
+		memcpy(demux[demux_id].demux_fd[filternum].ecmd5, er->ecmd5, CS_ECMSTORESIZE);
 	}
 
 #ifdef WITH_DEBUG
