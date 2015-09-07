@@ -271,6 +271,10 @@ mode for duplicate client connections (requirement: uniq > 0):
 .RS 3n
 ECM will be send to two or more readers with the same SC and the CWs will be verified against each other for defined CAID or first two bytes of CAID, \fBlb_nbest_readers\fP must be set to 2 or higher, default:none
 .RE
+\fBgetblockemmauprovid\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = server overrides EMM blocking defined on client site, default:0
+.RE
 .PP
 \fBlb_mode\fP = \fBmode\fP
 .RS 3n
