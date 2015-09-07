@@ -38,13 +38,14 @@ DESCRIPTIONS
 	    e = CSP hash
 	    g = ID of origin gbox peer
 	    h = checksum
-	    i = Channel ID
+	    i = channel ID
 	    j = distance of gbox hops
 	    l = length
 	    o = ONID
 	    p = provider ID
 	    s = service ID
 	    w = CW
+	    y = payload
 
 	  use a value as prefix to hide variable with this value, control characters will be escaped by "\"
 
