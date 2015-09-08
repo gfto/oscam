@@ -2276,16 +2276,13 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 					matching_done = 1;
 					for(rdr = first_active_reader; rdr ; rdr = rdr->next)
 					{
-						if(cfg.preferlocalcards && !is_network_reader(rdr)
-								&& rdr->card_status == CARD_INSERTED)   // cfg.preferlocalcards = 1 local reader
+						if(cfg.preferlocalcards == 2 && !is_network_reader(rdr)) // cfg.preferlocalcards 2 = local reader
 						{
-
 							if(matching_reader(er, rdr))
 							{
 								if(cache == 2 && demux[demux_index].ECMpids[n].status == 1)
 								{ 
 									demux[demux_index].ECMpids[n].status++;
-									demux[demux_index].ECMpids[n].status += cache;
 								}
 								else if(cache && !demux[demux_index].ECMpids[n].status)
 								{ 
@@ -2299,20 +2296,40 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 											  demux[demux_index].ECMpids[n].status);
 							}
 						}
-						else        // cfg.preferlocalcards = 0 or cfg.preferlocalcards = 1 and no local reader
+						else if(cfg.preferlocalcards == 1 && cacheex_reader(rdr))
 						{
 							if(matching_reader(er, rdr))
 							{
 								if(cache == 2 && demux[demux_index].ECMpids[n].status == 1)
-									{ demux[demux_index].ECMpids[n].status++; }
+								{ 
+									demux[demux_index].ECMpids[n].status++;
+								}
 								else if(cache && !demux[demux_index].ECMpids[n].status)
-									{ demux[demux_index].ECMpids[n].status += add_prio; }
+								{ 
+									demux[demux_index].ECMpids[n].status += add_prio;
+								}
 								demux[demux_index].ECMpids[n].status += prio + (p_order--);
-								cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X:%04X (rdr: %s weight: %d)", demux_index,
+								cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X:%04X (cacheexrdr: %s weight: %d)", demux_index,
 											  n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
 											  demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) p->chid, rdr->label,
 											  demux[demux_index].ECMpids[n].status);
 							}
+						}
+						else if(matching_reader(er, rdr))
+						{
+							if(cache == 2 && demux[demux_index].ECMpids[n].status == 1)
+							{ 
+								demux[demux_index].ECMpids[n].status++;
+							}
+							else if(cache && !demux[demux_index].ECMpids[n].status)
+							{ 
+								demux[demux_index].ECMpids[n].status += add_prio;
+							}
+							demux[demux_index].ECMpids[n].status += prio + (p_order--);
+							cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X:%04X (rdr: %s weight: %d)", demux_index,
+										  n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
+										  demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) p->chid, rdr->label,
+										  demux[demux_index].ECMpids[n].status);
 						}
 					}
 				}
@@ -2350,28 +2367,31 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 
 			for(rdr = first_active_reader; rdr ; rdr = rdr->next)
 			{
-				if(cfg.preferlocalcards
-						&& !is_network_reader(rdr)
-						&& rdr->card_status == CARD_INSERTED)   // cfg.preferlocalcards = 1 local reader
+				if(cfg.preferlocalcards == 2 && !is_network_reader(rdr)) // cfg.preferlocalcards 2 = local reader
 				{
 					if(matching_reader(er, rdr))
 					{
-						demux[demux_index].ECMpids[n].status += prio * 2 + cache;
+						demux[demux_index].ECMpids[n].status += prio * 3;
 						cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X (localrdr: %s weight: %d)", demux_index,
 									  n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
 									  demux[demux_index].ECMpids[n].ECM_PID, rdr->label,
 									  demux[demux_index].ECMpids[n].status);
 					}
 				}
-				else        // cfg.preferlocalcards = 0 or cfg.preferlocalcards = 1 and no local reader
+				else if(cfg.preferlocalcards == 1 && cacheex_reader(rdr))
 				{
-					if(matching_reader(er, rdr))
-					{
-						demux[demux_index].ECMpids[n].status += prio;
-						cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X (rdr: %s weight: %d)", demux_index,
+					demux[demux_index].ECMpids[n].status += prio * 2;
+					cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X (cacheexrdr: %s weight: %d)", demux_index,
+									  n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
+									  demux[demux_index].ECMpids[n].ECM_PID, rdr->label,
+									  demux[demux_index].ECMpids[n].status);
+				}
+				else if(matching_reader(er, rdr))
+				{
+					demux[demux_index].ECMpids[n].status += prio;
+					cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X (rdr: %s weight: %d)", demux_index,
 									  n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
 									  demux[demux_index].ECMpids[n].ECM_PID, rdr->label, demux[demux_index].ECMpids[n].status);
-					}
 				}
 			}
 		}
@@ -3975,6 +3995,16 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		memcpy(er->ecm, buffer, er->ecmlen);
 
 		chid = get_subid(er); // fetch chid or fake chid
+		uint32_t fixedprovid = chk_provid(er->ecm, er->caid);
+		if(fixedprovid != er->prid)
+		{
+			cs_log_dbg(D_DVBAPI, "Fixing provid ecmpid %d from %06X -> %06X", pid, curpid->PROVID, fixedprovid);
+			curpid->PROVID = fixedprovid;
+			cs_log_dbg(D_DVBAPI, "Fixing provid filter %d from %06X -> %06X", filter_num+1, demux[demux_id].demux_fd[filter_num].provid, fixedprovid);
+			demux[demux_id].demux_fd[filter_num].provid = fixedprovid;
+			cs_log_dbg(D_DVBAPI, "Fixing provid ecmrequest from %06X -> %06X", er->prid, fixedprovid);
+			er->prid = fixedprovid;
+		}
 		er->chid = chid;
 		
 		if(len == 0) // only used on receiver internal bufferoverflow to get quickly fresh ecm filterdata otherwise freezing! 
