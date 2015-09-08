@@ -113,7 +113,10 @@ typedef struct filter_s
 	int32_t count;
 	uchar	filter[16];
 	uchar	mask[16];
-	uchar   ecmd5[CS_ECMSTORESIZE]; // last requested ecm md5
+	uchar   lastecmd5[CS_ECMSTORESIZE]; // last requested ecm md5
+	int32_t lastresult;
+	uchar	prevecmd5[CS_ECMSTORESIZE]; // previous requested ecm md5
+	int32_t prevresult;
 #if defined(WITH_STAPI) || defined(WITH_STAPI5)
 	int32_t NumSlots;
 	uint32_t    SlotHandle[10];
