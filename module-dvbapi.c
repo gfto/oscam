@@ -1082,14 +1082,16 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 	if(retfd < 0) { return retfd; }  // error on close filter fd
 	
 	// code below runs only if nothing has gone wrong
+	
 	if(demux[demux_index].demux_fd[num].type == TYPE_ECM)   //ecm filter stopped: reset index!
 	{
 		int32_t oldpid = demux[demux_index].demux_fd[num].pidindex;
 		int32_t curpid = demux[demux_index].pidindex;
 		int32_t idx = demux[demux_index].ECMpids[oldpid].index;
 		demux[demux_index].ECMpids[oldpid].index = 0;
-			
+		
 		// workaround: below dont run on stapi since it handles it own pids.... stapi need to be better integrated in oscam dvbapi.
+		
 		if(idx && selected_api != STAPI) // if in use
 		{
 			int32_t i;
@@ -1645,7 +1647,15 @@ void dvbapi_stop_descrambling(int32_t demux_id)
 	{
 		dvbapi_stop_filter(demux_id, TYPE_ECM);
 	}
-
+	
+	if(selected_api == STAPI) // just disable all streams since stapi enables them all while writing first found cw too!
+	{
+		for(i = 0; i < demux[demux_id].STREAMpidcount; i++)
+		{
+			dvbapi_set_pid(demux_id, i, -1, false); // disable streampid
+		}
+	}
+	
 	memset(&demux[demux_id], 0 , sizeof(DEMUXTYPE));
 	demux[demux_id].pidindex = -1;
 	demux[demux_id].curindex = -1;
