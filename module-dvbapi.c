@@ -651,14 +651,6 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 	}
 	n = i;
 
-	demux[demux_id].demux_fd[n].pidindex = pidindex;
-	demux[demux_id].demux_fd[n].pid      = pid;
-	demux[demux_id].demux_fd[n].caid     = caid;
-	demux[demux_id].demux_fd[n].provid   = provid;
-	demux[demux_id].demux_fd[n].type     = type;
-	memcpy(demux[demux_id].demux_fd[n].filter, filt, 16); // copy filter to check later on if receiver delivered accordingly
-	memcpy(demux[demux_id].demux_fd[n].mask, mask, 16); // copy mask to check later on if receiver delivered accordingly
-
 	switch(api)
 	{
 	case DVBAPI_3:
@@ -755,6 +747,17 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 	else
 	{
 		cs_log("ERROR: Could not start demux filter (api: %d errno=%d %s)", selected_api, errno, strerror(errno));
+	}
+	
+	if(ret != -1) // only register if filter was set successfully
+	{
+		demux[demux_id].demux_fd[n].pidindex = pidindex;
+		demux[demux_id].demux_fd[n].pid      = pid;
+		demux[demux_id].demux_fd[n].caid     = caid;
+		demux[demux_id].demux_fd[n].provid   = provid;
+		demux[demux_id].demux_fd[n].type     = type;
+		memcpy(demux[demux_id].demux_fd[n].filter, filt, 16); // copy filter to check later on if receiver delivered accordingly
+		memcpy(demux[demux_id].demux_fd[n].mask, mask, 16); // copy mask to check later on if receiver delivered accordingly
 	}
 	return ret;
 }
