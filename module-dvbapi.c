@@ -1053,7 +1053,10 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 #ifndef WITH_COOLAPI // no fd close for coolapi and stapi, all others do close fd!
 		if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
 		{
-			if(selected_api == STAPI) { retfd = 0; }  // stapi closes its own filter fd!
+			if(selected_api == STAPI)
+			{ 
+				retfd = 0;	// stapi closes its own filter fd!
+			}  
 			else
 			{
 				flush_read_fd(demux_index, num, fd); // flush filter input buffer in attempt to avoid overflow receivers internal buffer
@@ -1069,14 +1072,16 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 			cs_log("ERROR: Demuxer %d could not close fd of Filter %d (fd=%d api:%d errno=%d %s)", demux_index, num + 1, fd,
 				   selected_api, errno, strerror(errno));
 		}
-
+		
 		if(demux[demux_index].demux_fd[num].type == TYPE_ECM)   //ecm filter stopped: reset index!
 		{
 			int32_t oldpid = demux[demux_index].demux_fd[num].pidindex;
 			int32_t curpid = demux[demux_index].pidindex;
 			int32_t idx = demux[demux_index].ECMpids[oldpid].index;
 			demux[demux_index].ECMpids[oldpid].index = 0;
-			if(idx) // if in use
+			
+			// workaround: below dont run on stapi since it handles it own pids.... stapi need to be better integrated in oscam dvbapi.
+			if(idx && selected_api != STAPI) // if in use
 			{
 				int32_t i;
 				for(i = 0; i < demux[demux_index].STREAMpidcount; i++)
@@ -3927,7 +3932,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 				demux_id, (0xFF - curpid->tries));
 			if(curpid)
 			{ 
-				curpid->tries--;
+				if(selected_api != STAPI) curpid->tries--;   // dont use filter killer on stapi: they are notorius for delivering bad filter data!
 			}
 			return;
 		}
@@ -5961,6 +5966,8 @@ int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, int32_t idx)
 
 void disable_unused_streampids(int16_t demux_id)
 {
+	if(selected_api == STAPI) return; // stapi handles pids itself!
+	
 	if(!ll_activestreampids) return;
 	if(ll_count(ll_activestreampids) == 0) return; // no items in list? 
 	
