@@ -640,7 +640,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 	if (USE_OPENXCAS)
 		return 1;
 
-	int32_t ret = -1, n = -1, i;
+	int32_t ret = -1, n = -1, i, filterfd = -1;
 
 	for(i = 0; i < maxfilter && demux[demux_id].demux_fd[i].fd > 0; i++) { ; }
 
@@ -655,9 +655,9 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 	{
 	case DVBAPI_3:
 		if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-			ret = demux[demux_id].demux_fd[n].fd = DUMMY_FD;
+			ret = filterfd = DUMMY_FD;
 		else
-			ret = demux[demux_id].demux_fd[n].fd = dvbapi_open_device(0, demux[demux_id].demux_index, demux[demux_id].adapter_index);
+			ret = filterfd = dvbapi_open_device(0, demux[demux_id].demux_index, demux[demux_id].adapter_index);
 		if(ret < 0) { return ret; }  // return if device cant be opened!
 		struct dmx_sct_filter_params sFP2;
 
@@ -686,7 +686,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 			//structure, which is incorrect (it should be  dmxSctFilterParams).
 			//The only way to get it right is to call DMX_SET_FILTER1 with the argument
 			//expected by DMX_SET_FILTER. Otherwise, the timeout parameter is not passed correctly.
-			ret = dvbapi_ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER1, &sFP2);
+			ret = dvbapi_ioctl(filterfd, DMX_SET_FILTER1, &sFP2);
 		}
 		else
 		{
@@ -695,12 +695,12 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
 				ret = dvbapi_net_send(DVBAPI_DMX_SET_FILTER, demux[demux_id].socket_fd, demux_id, n, (unsigned char *) &sFP2, NULL, NULL);
 			else
-				ret = dvbapi_ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER, &sFP2);
+				ret = dvbapi_ioctl(filterfd, DMX_SET_FILTER, &sFP2);
 		}
 		break;
 
 	case DVBAPI_1:
-		ret = demux[demux_id].demux_fd[n].fd = dvbapi_open_device(0, demux[demux_id].demux_index, demux[demux_id].adapter_index);
+		ret = filterfd = dvbapi_open_device(0, demux[demux_id].demux_index, demux[demux_id].adapter_index);
 		if(ret < 0) { return ret; }  // return if device cant be opened!
 		struct dmxSctFilterParams sFP1;
 
@@ -711,26 +711,28 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 		sFP1.flags          = DMX_IMMEDIATE_START;
 		memcpy(sFP1.filter.filter, filt, 16);
 		memcpy(sFP1.filter.mask, mask, 16);
-		ret = dvbapi_ioctl(demux[demux_id].demux_fd[n].fd, DMX_SET_FILTER1, &sFP1);
+		ret = dvbapi_ioctl(filterfd, DMX_SET_FILTER1, &sFP1);
 
 		break;
 #if defined(WITH_STAPI) || defined(WITH_STAPI5)
 	case STAPI:
-		ret = stapi_set_filter(demux_id, pid, filt, mask, n, demux[demux_id].pmt_file);
-		if(ret != 0)
+		ret = filterfd = stapi_set_filter(demux_id, pid, filt, mask, n, demux[demux_id].pmt_file);
+		if(ret <= 0)
 		{ 
-			demux[demux_id].demux_fd[n].fd = ret;
+			ret = -1; // error setting filter!
 		}
-		else
-			{ ret = -1; } // error setting filter!
 		break;
 #endif
 #ifdef WITH_COOLAPI
 	case COOLAPI:
-		demux[demux_id].demux_fd[n].fd = coolapi_open_device(demux[demux_id].demux_index, demux_id);
-		if(demux[demux_id].demux_fd[n].fd > 0)
+		ret = filterfd = coolapi_open_device(demux[demux_id].demux_index, demux_id);
+		if(ret > 0)
 		{ 
-			ret = coolapi_set_filter(demux[demux_id].demux_fd[n].fd, n, pid, filt, mask, type);
+			ret = coolapi_set_filter(filterfd, n, pid, filt, mask, type);
+		}
+		else
+		{
+			ret = -1; // fail
 		}
 		break;
 #endif
@@ -739,6 +741,15 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 	}
 	if(ret != -1)  // filter set successful
 	{
+		// only register if filter was set successful
+		demux[demux_id].demux_fd[n].fd 		 = filterfd;
+		demux[demux_id].demux_fd[n].pidindex = pidindex;
+		demux[demux_id].demux_fd[n].pid      = pid;
+		demux[demux_id].demux_fd[n].caid     = caid;
+		demux[demux_id].demux_fd[n].provid   = provid;
+		demux[demux_id].demux_fd[n].type     = type;
+		memcpy(demux[demux_id].demux_fd[n].filter, filt, 16); // copy filter to check later on if receiver delivered accordingly
+		memcpy(demux[demux_id].demux_fd[n].mask, mask, 16); // copy mask to check later on if receiver delivered accordingly
 		cs_log_dbg(D_DVBAPI, "Demuxer %d Filter %d started successfully (caid %04X provid %06X pid %04X)", demux_id, n + 1, caid, provid, pid);
 		if(type == TYPE_EMM && add_to_emm_list){ 
 			add_emmfilter_to_list(demux_id, filt, caid, provid, pid, n + 1, true);
@@ -749,16 +760,6 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 		cs_log("ERROR: Could not start demux filter (api: %d errno=%d %s)", selected_api, errno, strerror(errno));
 	}
 	
-	if(ret != -1) // only register if filter was set successfully
-	{
-		demux[demux_id].demux_fd[n].pidindex = pidindex;
-		demux[demux_id].demux_fd[n].pid      = pid;
-		demux[demux_id].demux_fd[n].caid     = caid;
-		demux[demux_id].demux_fd[n].provid   = provid;
-		demux[demux_id].demux_fd[n].type     = type;
-		memcpy(demux[demux_id].demux_fd[n].filter, filt, 16); // copy filter to check later on if receiver delivered accordingly
-		memcpy(demux[demux_id].demux_fd[n].mask, mask, 16); // copy mask to check later on if receiver delivered accordingly
-	}
 	return ret;
 }
 
@@ -1070,80 +1071,81 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 		else
 			retfd = 0;
 #endif
-		if(retfd)
-		{
-			cs_log("ERROR: Demuxer %d could not close fd of Filter %d (fd=%d api:%d errno=%d %s)", demux_index, num + 1, fd,
-				   selected_api, errno, strerror(errno));
-		}
-		
-		if(demux[demux_index].demux_fd[num].type == TYPE_ECM)   //ecm filter stopped: reset index!
-		{
-			int32_t oldpid = demux[demux_index].demux_fd[num].pidindex;
-			int32_t curpid = demux[demux_index].pidindex;
-			int32_t idx = demux[demux_index].ECMpids[oldpid].index;
-			demux[demux_index].ECMpids[oldpid].index = 0;
+	}
+	
+	if(retfd)
+	{
+		cs_log("ERROR: Demuxer %d could not close fd of Filter %d (fd=%d api:%d errno=%d %s)", demux_index, num + 1, fd,
+			   selected_api, errno, strerror(errno));
+	}
+	if(retfilter < 0) { return retfilter; }  // error on remove filter
+	if(retfd < 0) { return retfd; }  // error on close filter fd
+	
+	// code below runs only if nothing has gone wrong
+	if(demux[demux_index].demux_fd[num].type == TYPE_ECM)   //ecm filter stopped: reset index!
+	{
+		int32_t oldpid = demux[demux_index].demux_fd[num].pidindex;
+		int32_t curpid = demux[demux_index].pidindex;
+		int32_t idx = demux[demux_index].ECMpids[oldpid].index;
+		demux[demux_index].ECMpids[oldpid].index = 0;
 			
-			// workaround: below dont run on stapi since it handles it own pids.... stapi need to be better integrated in oscam dvbapi.
-			if(idx && selected_api != STAPI) // if in use
+		// workaround: below dont run on stapi since it handles it own pids.... stapi need to be better integrated in oscam dvbapi.
+		if(idx && selected_api != STAPI) // if in use
+		{
+			int32_t i;
+			for(i = 0; i < demux[demux_index].STREAMpidcount; i++)
 			{
-				int32_t i;
-				for(i = 0; i < demux[demux_index].STREAMpidcount; i++)
+				int8_t match = 0;
+				// check streams of old disabled ecmpid
+				if(!demux[demux_index].ECMpids[oldpid].streams || ((demux[demux_index].ECMpids[oldpid].streams & (1 << i)) == (uint) (1 << i)))
 				{
-					int8_t match = 0;
-					// check streams of old disabled ecmpid
-					if(!demux[demux_index].ECMpids[oldpid].streams || ((demux[demux_index].ECMpids[oldpid].streams & (1 << i)) == (uint) (1 << i)))
+					// check if new ecmpid is using same streams
+					if(curpid != -1 && (!demux[demux_index].ECMpids[curpid].streams || ((demux[demux_index].ECMpids[curpid].streams & (1 << i)) == (uint) (1 << i))))
 					{
-						// check if new ecmpid is using same streams
-						if(curpid != -1 && (!demux[demux_index].ECMpids[curpid].streams || ((demux[demux_index].ECMpids[curpid].streams & (1 << i)) == (uint) (1 << i))))
-						{
-							continue; // found same stream on old and new ecmpid -> skip! (and leave it enabled!)
-						}
-						int32_t pidtobestopped = demux[demux_index].STREAMpids[i];
-						int32_t j, k, otherdemuxpid, otherdemuxidx;
+						continue; // found same stream on old and new ecmpid -> skip! (and leave it enabled!)
+					}
+					int32_t pidtobestopped = demux[demux_index].STREAMpids[i];
+					int32_t j, k, otherdemuxpid, otherdemuxidx;
+					
+					for(j = 0; j < MAX_DEMUX; j++) // check other demuxers for same streampid with same index
+					{
+						if(demux[j].program_number == 0) { continue; }  					// skip empty demuxers
+						if(demux_index == j) { continue; } 									// skip same demuxer
+						if(demux[j].ca_mask != demux[demux_index].ca_mask) { continue;}		// skip streampid running on other ca device
 						
-						for(j = 0; j < MAX_DEMUX; j++) // check other demuxers for same streampid with same index
+						otherdemuxpid = demux[j].pidindex;
+						if(otherdemuxpid == -1) { continue; }          						// Other demuxer not descrambling yet
+						otherdemuxidx = demux[j].ECMpids[otherdemuxpid].index;
+						if(!otherdemuxidx || otherdemuxidx != idx) { continue; } 			// Other demuxer has no index yet, or index is different
+							
+						for(k = 0; k < demux[j].STREAMpidcount; k++)
 						{
-							if(demux[j].program_number == 0) { continue; }  					// skip empty demuxers
-							if(demux_index == j) { continue; } 									// skip same demuxer
-							if(demux[j].ca_mask != demux[demux_index].ca_mask) { continue;}		// skip streampid running on other ca device
-							
-							otherdemuxpid = demux[j].pidindex;
-							if(otherdemuxpid == -1) { continue; }          						// Other demuxer not descrambling yet
-
-							otherdemuxidx = demux[j].ECMpids[otherdemuxpid].index;
-							if(!otherdemuxidx || otherdemuxidx != idx) { continue; } 			// Other demuxer has no index yet, or index is different
-							
-							for(k = 0; k < demux[j].STREAMpidcount; k++)
+							if(!demux[j].ECMpids[otherdemuxpid].streams || ((demux[j].ECMpids[otherdemuxpid].streams & (1 << k)) == (uint) (1 << k)))
 							{
-								if(!demux[j].ECMpids[otherdemuxpid].streams || ((demux[j].ECMpids[otherdemuxpid].streams & (1 << k)) == (uint) (1 << k)))
+								if(demux[j].STREAMpids[k] == pidtobestopped)
 								{
-									if(demux[j].STREAMpids[k] == pidtobestopped)
-									{
-										continue; // found same streampid enabled with same index on one or more other demuxers -> skip! (and leave it enabled!)
-									}
+									continue; // found same streampid enabled with same index on one or more other demuxers -> skip! (and leave it enabled!)
 								}
-								match = 1; // matching stream found
 							}
+							match = 1; // matching stream found
 						}
+					}
 						
-						if(!match)
-						{
-							dvbapi_set_pid(demux_index, i, idx - 1, false); // disable streampid since its not used by this pid (or by the new ecmpid or any other demuxer!) 
-						}
+					if(!match)
+					{
+						dvbapi_set_pid(demux_index, i, idx - 1, false); // disable streampid since its not used by this pid (or by the new ecmpid or any other demuxer!) 
 					}
 				}
 			}
 		}
-
-		if(demux[demux_index].demux_fd[num].type == TYPE_EMM)   // If emm type remove from emm filterlist
-		{
-			remove_emmfilter_from_list(demux_index, demux[demux_index].demux_fd[num].caid, demux[demux_index].demux_fd[num].provid, demux[demux_index].demux_fd[num].pid, num + 1);
-		}
-		demux[demux_index].demux_fd[num].fd = 0;
-		demux[demux_index].demux_fd[num].type = 0;
 	}
-	if(retfilter < 0) { return retfilter; }  // error on remove filter
-	if(retfd < 0) { return retfd; }  // error on close filter fd
+
+	if(demux[demux_index].demux_fd[num].type == TYPE_EMM)   // If emm type remove from emm filterlist
+	{
+		remove_emmfilter_from_list(demux_index, demux[demux_index].demux_fd[num].caid, demux[demux_index].demux_fd[num].provid, demux[demux_index].demux_fd[num].pid, num + 1);
+	}
+	demux[demux_index].demux_fd[num].fd = 0;
+	demux[demux_index].demux_fd[num].type = 0;
 	return 1; // all ok!
 }
 
@@ -5710,8 +5712,6 @@ int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t
 {
 
 	int32_t ret = -1;
-	memcpy(demux[demux_index].demux_fd[num].filter, filter, 16); // copy filter to check later on if receiver delivered accordingly
-	memcpy(demux[demux_index].demux_fd[num].mask, mask, 16); // copy mask to check later on if receiver delivered accordingly
 	
 	switch(selected_api)
 	{
@@ -5784,6 +5784,11 @@ int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t
 	*/
 	default:
 		break;
+	}
+	if(ret!=-1) // only change filter/mask for comparing if box returned no errors!
+	{
+		memcpy(demux[demux_index].demux_fd[num].filter, filter, 16); // copy filter to check later on if receiver delivered accordingly
+		memcpy(demux[demux_index].demux_fd[num].mask, mask, 16); // copy mask to check later on if receiver delivered accordingly
 	}
 	return ret;
 }
