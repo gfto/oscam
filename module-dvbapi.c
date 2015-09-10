@@ -1050,10 +1050,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 		default:
 			break;
 		}
-		if(retfilter < 0)
-		{
-			cs_log("ERROR: Demuxer %d could not stop Filter %d (fd:%d api:%d errno=%d %s)", demux_index, num + 1, fd, selected_api, errno, strerror(errno));
-		}
+		
 #ifndef WITH_COOLAPI // no fd close for coolapi and stapi, all others do close fd!
 		if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
 		{
@@ -1072,14 +1069,23 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 			retfd = 0;
 #endif
 	}
-	
-	if(retfd)
+	else // fd <=0
 	{
+		return 1; // filter was already killed!
+	}
+	
+	if(retfilter < 0) // error on remove filter
+	{
+		cs_log("ERROR: Demuxer %d could not stop Filter %d (fd:%d api:%d errno=%d %s)", demux_index, num + 1, fd, selected_api, errno, strerror(errno));
+		return retfilter;
+	}
+	
+	if(retfd < 0) // error on close filter fd
+	{ 
 		cs_log("ERROR: Demuxer %d could not close fd of Filter %d (fd=%d api:%d errno=%d %s)", demux_index, num + 1, fd,
 			   selected_api, errno, strerror(errno));
+		return retfd;
 	}
-	if(retfilter < 0) { return retfilter; }  // error on remove filter
-	if(retfd < 0) { return retfd; }  // error on close filter fd
 	
 	// code below runs only if nothing has gone wrong
 	
@@ -1146,8 +1152,8 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 	{
 		remove_emmfilter_from_list(demux_index, demux[demux_index].demux_fd[num].caid, demux[demux_index].demux_fd[num].provid, demux[demux_index].demux_fd[num].pid, num + 1);
 	}
-	demux[demux_index].demux_fd[num].fd = 0;
 	demux[demux_index].demux_fd[num].type = 0;
+	demux[demux_index].demux_fd[num].fd = 0;
 	return 1; // all ok!
 }
 
