@@ -2879,7 +2879,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 			openxcas_set_sid(program_number);
 
-			demux[i].stopdescramble = 0; // dont stop current demuxer!		
+			demux[i].stopdescramble = 0; // dont stop current demuxer!
+			if(demux[i].ECMpidcount != 0 && demux[i].pidindex != -1 ) { demux[i].running = 1; }  // mark demuxer as already running
 			break; // no need to explore other demuxers since we have a found!
 		}
 	}
@@ -2890,7 +2891,12 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		for(j = 0; j < MAX_DEMUX; j++)
 		{
 			if(demux[j].program_number == 0) { continue; }
-			if(demux[j].stopdescramble == 1) { dvbapi_stop_descrambling(j); }  // Stop descrambling and remove all demuxer entries not in new PMT.
+			if(demux[j].stopdescramble == 1) // Stop descrambling and remove all demuxer entries not in new PMT. 
+			{ 
+				dvbapi_stop_descrambling(j);
+				continue;
+			}  
+			if(demux[j].ECMpidcount != 0 && demux[j].pidindex != -1 ) { demux[j].running = 1; }  // mark demuxers that are already running
 		}
 		start_descrambling = 1; // flag that demuxer descrambling is to be executed!
 		pmt_stopmarking = 0; // flag that demuxers may be marked for stop decoding again
