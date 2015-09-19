@@ -424,10 +424,20 @@ int32_t init_srvid(void)
 	int8_t new_syntax = 1;
 	FILE *fp = open_config_file("oscam.srvid2");
 	if(!fp)
-		{ fp = open_config_file(cs_srid); new_syntax = 0; }
+	{ 
+		fp = open_config_file(cs_srid);
+		if(fp)
+		{
+			new_syntax = 0;
+		}
+	}
 
 	if(!fp)
-		{ return 0; }
+	{ 
+		fp = create_config_file("oscam.srvid2");
+		flush_config_file(fp, "oscam.srvid2");
+		return 0;
+	}
 
 	int32_t nr = 0, i, j;
 	char *payload, *saveptr1 = NULL, *saveptr2 = NULL, *token;
