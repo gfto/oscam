@@ -257,7 +257,7 @@ static int32_t network_message_receive(int32_t handle, uint16_t *netMsgId, uint8
 	}
 	if(((netbuf[0] << 8) | netbuf[1]) > CWS_NETMSGSIZE - 2)
 	{
-		cs_log_dbg(D_CLIENT, "nmr: received data len=%d lonage than CWS_NETMSGSIZE=%d", ((netbuf[0] << 8) | netbuf[1]), CWS_NETMSGSIZE);
+		cs_log_dbg(D_CLIENT, "nmr: received data len=%d longer than CWS_NETMSGSIZE=%d", ((netbuf[0] << 8) | netbuf[1]), CWS_NETMSGSIZE);
 		cs_log_dbg(D_CLIENT, "nmr: 1 return -1");
 		return -1;
 	}

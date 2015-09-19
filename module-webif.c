@@ -123,8 +123,9 @@ static bool use_srvid2 = false;
 #define MNU_CFG_FFAKECWS	15
 #define MNU_CFG_FCSS		16
 #define MNU_CFG_FTWIN		17
+#define MNU_CFG_FKEYCW 18
 
-#define MNU_CFG_TOTAL_ITEMS 18 // sum of config or files submenuactivating above. Use it for "All inactive" in function calls too.
+#define MNU_CFG_TOTAL_ITEMS 19 // sum of config or files submenuactivating above. Use it for "All inactive" in function calls too.
 
 static void set_status_info_var(struct templatevars *vars, char *varname, int no_data, char *fmt, double value) {
 	if (no_data)
@@ -5964,6 +5965,9 @@ static char *send_oscam_files(struct templatevars * vars, struct uriparams * par
 #endif
 #ifdef MODULE_SERIAL
 		{ "oscam.twin",      MNU_CFG_FTWIN,     FTYPE_CONFIG },		// id 17
+#endif
+#ifdef MODULE_CONSTCW
+		{ "constant.cw",     MNU_CFG_FKEYCW,    FTYPE_CONFIG },     // id 18
 #endif
 		{ NULL, 0, 0 },
 	};
