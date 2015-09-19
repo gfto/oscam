@@ -1112,6 +1112,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 					{
 						continue; // found same stream on old and new ecmpid -> skip! (and leave it enabled!)
 					}
+					
 					int32_t pidtobestopped = demux[demux_index].STREAMpids[i];
 					int32_t j, k, otherdemuxpid, otherdemuxidx;
 					
@@ -4071,7 +4072,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 
 		chid = get_subid(er); // fetch chid or fake chid
 		uint32_t fixedprovid = chk_provid(er->ecm, er->caid);
-		if(fixedprovid != er->prid)
+		if(fixedprovid && fixedprovid != er->prid)
 		{
 			cs_log_dbg(D_DVBAPI, "Fixing provid ecmpid %d from %06X -> %06X", pid, curpid->PROVID, fixedprovid);
 			curpid->PROVID = fixedprovid;
