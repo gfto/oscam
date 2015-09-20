@@ -5829,7 +5829,7 @@ int32_t dvbapi_check_ecm_delayed_delivery(int32_t demux_index, ECM_REQUEST *er)
 		cs_log_dbg(D_DVBAPI, "Demuxer %d requested controlword for ecm %s on fd %d", demux_index, ecmd5, demux[demux_index].demux_fd[filternum].fd);
 		unsigned char md5tmp[MD5_DIGEST_LENGTH]; 
 		MD5(er->ecm, er->ecmlen, md5tmp);
-		ret = memcmp(demux[demux_index].demux_fd[filternum].lastecmd5, md5tmp, CS_ECMSTORESIZE); // 1 = no response on the ecm we request last for this fd!
+		ret = (memcmp(demux[demux_index].demux_fd[filternum].lastecmd5, md5tmp, CS_ECMSTORESIZE) !=0 ? 1:0); // 1 = no response on the ecm we request last for this fd!
 	}
 	
 	if(memcmp(er->cw, nullcw, 8) == 0 && memcmp(er->cw+8, nullcw, 8) == 0) {return 5;} // received a null cw -> not usable!
@@ -5866,6 +5866,10 @@ int32_t dvbapi_get_filternum(int32_t demux_index, ECM_REQUEST *er, int32_t type)
 					((demux[demux_index].demux_fd[n].caid == er->caid) || (demux[demux_index].demux_fd[n].caid == er->ocaid))) // current ecm pid?
 			{
 				fd = demux[demux_index].demux_fd[n].fd; // found!
+				if(demux[demux_index].demux_fd[n].caid == er->ocaid)
+				{
+					memset(demux[demux_index].demux_fd[n].lastecmd5, 0, CS_ECMSTORESIZE); // clear ecmd5 hash since betatunnelled ecms hash different!
+				}
 				break;
 			}
 		}
