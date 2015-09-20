@@ -745,7 +745,7 @@ static int32_t nagra2_card_init(struct s_reader *reader, ATR *newatr)
 		}
 		memcpy(reader->rom, cta_res + 2, 15);
 	}
-	else if(memcmp(atr + 7, "pp", 2) == 0 && ((atr[9]&0x0F) >= 10))
+	else if(memcmp(atr + 7, "pp", 2) == 0 && ((atr[9]&0x0F) >= 10) && (!reader->deprecated))
 	{
 		rdr_log(reader, "detect seca/nagra tunneled card");
 
