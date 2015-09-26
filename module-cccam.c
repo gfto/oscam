@@ -2025,15 +2025,12 @@ void cc_idle(void)
 	time_t now = time(NULL);
 	if(rdr->cc_keepalive)
 	{
-		if(cc->answer_on_keepalive + 55 <= now)
+		if(cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) > 0)
 		{
-			if(cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) > 0)
-			{
-				cs_log_dbg(D_READER, "cccam: keepalive");
-				cc->answer_on_keepalive = now;
-			}
-			return;
+			cs_log_dbg(D_READER, "cccam: keepalive");
+			cc->answer_on_keepalive = now;
 		}
+		return;
 	}
 	else
 	{
@@ -3028,15 +3025,22 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 		if(cl->typ != 'c')
 		{
 			cs_log_dbg(D_READER, "cccam: keepalive ack");
+			//Checking if last answer is one minute ago:
+			if(cc->answer_on_keepalive + 65 <= time(NULL)) // 1min = 60 + maxlag(5s)
+			{
+				cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
+				cs_log_dbg(D_CLIENT, "cccam: READER KEEPALIVE TO SERVER");
+				cc->answer_on_keepalive = time(NULL);
+			}
 		}
 		else
 		{
 			//Checking if last answer is one minute ago:
-			if(cc->just_logged_in || cc->answer_on_keepalive + 55 <= time(NULL))
+			if(cc->just_logged_in || cc->answer_on_keepalive + 65 <= time(NULL)) // 1min = 60 + maxlag(5s)
 			{
-				cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
-				cs_log_dbg(D_CLIENT, "cccam: keepalive");
-				cc->answer_on_keepalive = time(NULL);
+					cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
+					cs_log_dbg(D_CLIENT, "cccam: SERVER KEEPALIVE TO READER");
+					cc->answer_on_keepalive = time(NULL);
 			}
 		}
 		cc->just_logged_in = 0;

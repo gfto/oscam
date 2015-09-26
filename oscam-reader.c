@@ -1136,7 +1136,7 @@ void reader_do_idle(struct s_reader *reader)
 		if(time_diff > reader->tcp_ito)
 		{
 			struct s_client *cl = reader->client;
-			if(check_client(cl) && reader->tcp_connected && reader->ph.type == MOD_CONN_TCP)
+			if(check_client(cl) && reader->tcp_connected && reader->ph.type == MOD_CONN_TCP && !reader->keepalive) // JMF FIX : reader keepalive to no close
 			{
 				rdr_log_dbg(reader, D_READER, "inactive_timeout, close connection (fd=%d)", cl->pfd);
 				network_tcp_connection_close(reader, "inactivity");
