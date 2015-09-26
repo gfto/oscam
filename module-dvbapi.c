@@ -1209,6 +1209,8 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 	LL_ITER itr = ll_iter_create(cl->aureader_list);
 	while((rdr = ll_iter_next(&itr)))
 	{
+		if(!(rdr->grp & cl->grp)) 
+			{ continue; }
 		if(rdr->audisabled || !rdr->enable || (!is_network_reader(rdr) && rdr->card_status != CARD_INSERTED))
 			{ continue; }
 
