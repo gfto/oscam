@@ -1888,7 +1888,7 @@ void dvbapi_process_emm(int32_t demux_index, int32_t filter_num, unsigned char *
 
 	cs_log_dbg(D_DVBAPI, "Demuxer %d Filter %d fetched emm data", demux_index, filter_num + 1); // emm shown with -d64
 
-	struct s_emm_filter *filter = get_emmfilter_by_filternum(demux_index, filter_num + 1);
+	struct s_emm_filter *filter = get_emmfilter_by_filternum(demux_index, filter_num);
 
 	if(!filter)
 	{
