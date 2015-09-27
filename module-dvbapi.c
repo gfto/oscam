@@ -3931,16 +3931,25 @@ void *dvbapi_event_thread(void *cli)
 
 void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, int32_t len)
 {	
-	int32_t pid = demux[demux_id].demux_fd[filter_num].pidindex;
+	
 	struct s_ecmpids *curpid = NULL;
-	if(pid != -1 && demux[demux_id].demux_fd[filter_num].type == TYPE_ECM)
+	int32_t pid = demux[demux_id].demux_fd[filter_num].pidindex;
+	uint16_t filtertype = demux[demux_id].demux_fd[filter_num].type;
+	if(pid != -1 && filtertype == TYPE_ECM)
 	{
 		curpid = &demux[demux_id].ECMpids[pid];
 	}
 	
 	if(!USE_OPENXCAS)
 	{
-		if(curpid && curpid->tries <= 0xF0) // acts only on ecmfilters since they have curpid!
+		int32_t filt_match = filtermatch(buffer, filter_num, demux_id, len); // acts on all filters (sdt/emm/ecm)
+		if(!filt_match)
+		{
+			cs_log_dbg(D_DVBAPI,"Demuxer %d receiver returned data that was not matching to the filter -> delivered filter data discarded!", demux_id);
+			return;
+		}
+		
+		if(curpid && curpid->tries <= 0xF0 && filtertype == TYPE_ECM)
 		{
 			curpid->irdeto_maxindex = 0;
 			curpid->irdeto_curindex = 0xFE;
@@ -3957,30 +3966,14 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 			dvbapi_stop_filternum(demux_id, filter_num); // stop this ecm filter!
 			return;
 		}
-		
-		int32_t filt_match = filtermatch(buffer, filter_num, demux_id, len); // acts on all filters (sdt/emm/ecm)
-		if(!filt_match)
-		{
-			cs_log_dbg(D_DVBAPI,"Demuxer %d receiver returned data that was not matching to the filter -> delivered filter data discarded! (%d times)",
-				demux_id, (0xFF - curpid->tries));
-			if(curpid)
-			{ 
-				if(selected_api != STAPI) curpid->tries--;   // dont use filter killer on stapi: they are notorius for delivering bad filter data!
-			}
-			return;
-		}
-		else
-		{
-			cs_log_dbg(D_DVBAPI,"Demuxer %d filterdata matches with the filter/mask we setup!", demux_id);
-		}
 	}
-		
-	uint32_t chid = 0x10000;
-	uint32_t ecmlen = SCT_LEN(buffer);
-	ECM_REQUEST *er;
 	
-	if(demux[demux_id].demux_fd[filter_num].type == TYPE_ECM)
+	if(filtertype == TYPE_ECM)
 	{
+		uint32_t chid = 0x10000;
+		uint32_t ecmlen = SCT_LEN(buffer);
+		ECM_REQUEST *er;
+		
 		if(len != 0)  // len = 0 receiver encountered an internal bufferoverflow!
 		{
 			cs_log_dump_dbg(D_DVBAPI, buffer, len, "Demuxer %d Filter %d fetched ECM data (ecmlength = 0x%03X):", demux_id, filter_num + 1, ecmlen);
@@ -4087,8 +4080,11 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		{
 			cs_log_dbg(D_DVBAPI, "Fixing provid ecmpid %d from %06X -> %06X", pid, curpid->PROVID, fixedprovid);
 			curpid->PROVID = fixedprovid;
-			cs_log_dbg(D_DVBAPI, "Fixing provid filter %d from %06X -> %06X", filter_num+1, demux[demux_id].demux_fd[filter_num].provid, fixedprovid);
-			demux[demux_id].demux_fd[filter_num].provid = fixedprovid;
+			if(!USE_OPENXCAS)
+			{
+				cs_log_dbg(D_DVBAPI, "Fixing provid filter %d from %06X -> %06X", filter_num+1, demux[demux_id].demux_fd[filter_num].provid, fixedprovid);
+				demux[demux_id].demux_fd[filter_num].provid = fixedprovid;
+			}
 			cs_log_dbg(D_DVBAPI, "Fixing provid ecmrequest from %06X -> %06X", er->prid, fixedprovid);
 			er->prid = fixedprovid;
 		}
@@ -4266,7 +4262,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		return; // end of ecm filterhandling!
 	}
 
-	if(demux[demux_id].demux_fd[filter_num].type == TYPE_EMM && len != 0)  // len = 0 receiver encountered an internal bufferoverflow!
+	if(filtertype == TYPE_EMM && len != 0)  // len = 0 receiver encountered an internal bufferoverflow!
 	{
 		if(demux[demux_id].demux_fd[filter_num].pid == 0x01) // CAT
 		{
@@ -4279,7 +4275,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		dvbapi_process_emm(demux_id, filter_num, buffer, len);
 	}
 	
-	if(demux[demux_id].demux_fd[filter_num].type == TYPE_SDT)
+	if(filtertype == TYPE_SDT)
 	{	
 		dvbapi_parse_sdt(demux_id, buffer, len);
 	}	
