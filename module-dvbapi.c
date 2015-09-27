@@ -2657,55 +2657,62 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 
 void request_cw(struct s_client *client, ECM_REQUEST *er, int32_t demux_id, uint8_t delayed_ecm_check)
 {
-	int32_t filternum = dvbapi_set_section_filter(demux_id, er, -1); // set ecm filter to odd -> even and visaversa
-
-	if(!USE_OPENXCAS && filternum < 0)
+	if(!er)
 	{
-		cs_log_dbg(D_DVBAPI, "Demuxer %d not requesting cw -> ecm filter was killed!", demux_id);
-		NULLFREE(er);
 		return;
 	}
 	
-	if(er)
-	{
-		unsigned char md5tmp[MD5_DIGEST_LENGTH];
-		MD5(er->ecm, er->ecmlen, md5tmp);
-		if(!memcmp(demux[demux_id].demux_fd[filternum].prevecmd5, md5tmp, CS_ECMSTORESIZE))
+	if(!USE_OPENXCAS)
+	{	
+		int32_t filternum = dvbapi_set_section_filter(demux_id, er, -1); // set ecm filter to odd -> even and visaversa
+		if(filternum < 0)
 		{
-			if(demux[demux_id].demux_fd[filternum].prevresult < E_NOTFOUND)
-			{
-				cs_log_dbg(D_DVBAPI, "Demuxer %d not requesting same ecm again! -> SKIP!", demux_id);
-				NULLFREE(er);
-				return;
-			}
-			else
-			{
-				cs_log_dbg(D_DVBAPI, "Demuxer %d requesting same ecm again (previous result was not found!)", demux_id);
-			}
-		}
-		else if(!memcmp(demux[demux_id].demux_fd[filternum].lastecmd5, md5tmp, CS_ECMSTORESIZE))
+			cs_log_dbg(D_DVBAPI, "Demuxer %d not requesting cw -> ecm filter was killed!", demux_id);
+			NULLFREE(er);
+			return;
+		}	
+		
+		if(!delayed_ecm_check) // no delayed ecm check for this filter
 		{
-			if(demux[demux_id].demux_fd[filternum].lastresult < E_NOTFOUND)
-			{
-				cs_log_dbg(D_DVBAPI, "Demuxer %d not requesting same ecm again! -> SKIP!", demux_id);
-				NULLFREE(er);
-				return;
-			}
-			else
-			{
-				cs_log_dbg(D_DVBAPI, "Demuxer %d requesting same ecm again (previous result was not found!)", demux_id);
-			}
+			memset(demux[demux_id].demux_fd[filternum].lastecmd5, 0, CS_ECMSTORESIZE); // no ecm delay check: zero it!
 		}
-		memcpy(demux[demux_id].demux_fd[filternum].prevecmd5, demux[demux_id].demux_fd[filternum].lastecmd5, CS_ECMSTORESIZE);
-		demux[demux_id].demux_fd[filternum].prevresult = demux[demux_id].demux_fd[filternum].lastresult;
-		memcpy(demux[demux_id].demux_fd[filternum].lastecmd5, md5tmp, CS_ECMSTORESIZE);
-		demux[demux_id].demux_fd[filternum].lastresult = 0xFF;
+		else
+		{
+			unsigned char md5tmp[MD5_DIGEST_LENGTH];
+			MD5(er->ecm, er->ecmlen, md5tmp);
+			if(!memcmp(demux[demux_id].demux_fd[filternum].prevecmd5, md5tmp, CS_ECMSTORESIZE))
+			{
+				if(demux[demux_id].demux_fd[filternum].prevresult < E_NOTFOUND)
+				{
+					cs_log_dbg(D_DVBAPI, "Demuxer %d not requesting same ecm again! -> SKIP!", demux_id);
+					NULLFREE(er);
+					return;
+				}
+				else
+				{
+					cs_log_dbg(D_DVBAPI, "Demuxer %d requesting same ecm again (previous result was not found!)", demux_id);
+				}
+			}
+			else if(!memcmp(demux[demux_id].demux_fd[filternum].lastecmd5, md5tmp, CS_ECMSTORESIZE))
+			{
+				if(demux[demux_id].demux_fd[filternum].lastresult < E_NOTFOUND)
+				{
+					cs_log_dbg(D_DVBAPI, "Demuxer %d not requesting same ecm again! -> SKIP!", demux_id);
+					NULLFREE(er);
+					return;
+				}
+				else
+				{
+					cs_log_dbg(D_DVBAPI, "Demuxer %d requesting same ecm again (previous result was not found!)", demux_id);
+				}
+			}
+			memcpy(demux[demux_id].demux_fd[filternum].prevecmd5, demux[demux_id].demux_fd[filternum].lastecmd5, CS_ECMSTORESIZE);
+			demux[demux_id].demux_fd[filternum].prevresult = demux[demux_id].demux_fd[filternum].lastresult;
+			memcpy(demux[demux_id].demux_fd[filternum].lastecmd5, md5tmp, CS_ECMSTORESIZE);
+			demux[demux_id].demux_fd[filternum].lastresult = 0xFF;
+		}
 	}
 
-	if(USE_OPENXCAS || !delayed_ecm_check) // register this ecm as latest request for this filter
-	{ 
-		memset(demux[demux_id].demux_fd[filternum].lastecmd5, 0, CS_ECMSTORESIZE); // no ecm delay check: zero it!
-	}
 	cs_log_dbg(D_DVBAPI, "Demuxer %d get controlword!", demux_id);
 	get_cw(client, er);
 
