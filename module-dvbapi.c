@@ -3934,6 +3934,13 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 	int32_t pid = demux[demux_id].demux_fd[filter_num].pidindex;
 	uint16_t filtertype = demux[demux_id].demux_fd[filter_num].type;
 	uint32_t sctlen = SCT_LEN(buffer);
+	
+	if((uint) len  < sctlen) // invalid CAT length
+	{
+		cs_log_dbg(D_DVBAPI, "Received filterdata with total length 0x%03X but section length is 0x%03X -> invalid length!", len, sctlen);
+		return;
+	}
+	
 	if(pid != -1 && filtertype == TYPE_ECM)
 	{
 		curpid = &demux[demux_id].ECMpids[pid];
@@ -3941,9 +3948,10 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 	
 	if(!USE_OPENXCAS)
 	{
-		int32_t filt_match = filtermatch(buffer, filter_num, demux_id, len); // acts on all filters (sdt/emm/ecm)
+		int32_t filt_match = filtermatch(buffer, filter_num, demux_id, sctlen); // acts on all filters (sdt/emm/ecm)
 		if(!filt_match)
 		{
+			
 			cs_log_dbg(D_DVBAPI,"Demuxer %d receiver returned data that was not matching to the filter -> delivered filter data discarded!", demux_id);
 			return;
 		}
@@ -3974,16 +3982,8 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		
 		if(len != 0)  // len = 0 receiver encountered an internal bufferoverflow!
 		{
-			cs_log_dump_dbg(D_DVBAPI, buffer, len, "Demuxer %d Filter %d fetched ECM data (ecmlength = 0x%03X):", demux_id, filter_num + 1, sctlen);
-			if((uint) len  < sctlen) // invalid CAT length
-			{
-				cs_log_dbg(D_DVBAPI, "Received data with total length 0x%03X but ECM length is 0x%03X -> invalid CAT length!", len, sctlen);
-				if(curpid)
-				{ 
-					curpid->tries--;
-				}
-				return;
-			}
+			cs_log_dump_dbg(D_DVBAPI, buffer, sctlen, "Demuxer %d Filter %d fetched ECM data (ecmlength = 0x%03X):", demux_id, filter_num + 1, sctlen);
+			
 			if(sctlen > MAX_ECM_SIZE) // ecm too long to handle!
 			{
 				cs_log_dbg(D_DVBAPI, "Received data with total length 0x%03X but maximum ECM length oscam can handle is 0x%03X -> Please report!", sctlen, MAX_ECM_SIZE);
@@ -4264,12 +4264,8 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 	{
 		if(len != 0)  // len = 0 receiver encountered an internal bufferoverflow!
 		{
-			cs_log_dump_dbg(D_DVBAPI, buffer, len, "Demuxer %d Filter %d fetched EMM data (emmlength = 0x%03X):", demux_id, filter_num + 1, sctlen);
-			if((uint) len  < sctlen) // invalid CAT length
-			{
-				cs_log_dbg(D_DVBAPI, "Received data with total length 0x%03X but EMM length is 0x%03X -> invalid length!", len, sctlen);
-				return;
-			}
+			cs_log_dump_dbg(D_DVBAPI, buffer, sctlen, "Demuxer %d Filter %d fetched EMM data (emmlength = 0x%03X):", demux_id, filter_num + 1, sctlen);
+			
 			if(sctlen > MAX_EMM_SIZE) // emm too long to handle!
 			{
 				cs_log_dbg(D_DVBAPI, "Received data with total length 0x%03X but maximum EMM length oscam can handle is 0x%03X -> Please report!", sctlen, MAX_EMM_SIZE);
@@ -6259,7 +6255,7 @@ int32_t filtermatch(uchar *buffer, int32_t filter_num, int32_t demux_id, int32_t
 	int32_t i, k, match;
 	uint8_t flt, mask;
 	match = 1;
-	for(i = 0, k = 0; i < 16 && k < len && len > 3 && match; i++, k++)
+	for(i = 0, k = 0; i < 16 && match; i++, k++)
 	{
 		mask = demux[demux_id].demux_fd[filter_num].mask[i];
 		if(k == 1) //skip len bytes
@@ -6273,7 +6269,14 @@ int32_t filtermatch(uchar *buffer, int32_t filter_num, int32_t demux_id, int32_t
 		flt = (demux[demux_id].demux_fd[filter_num].filter[i]&mask);
 		//cs_log_dbg(D_DVBAPI,"Demuxer %d filter%d[%d] = %02X, filter mask[%d] = %02X, flt&mask = %02X , buffer[%d] = %02X, buffer[%d] & mask = %02X", demux_id, filter_num+1, i,
 		//	demux[demux_id].demux_fd[filter_num].filter[i], i, mask, flt&mask, k, buffer[k], k, buffer[k] & mask); 
-		match = (flt == (buffer[k] & mask));
+		if(k <= len)
+		{
+			match = (flt == (buffer[k] & mask));
+		}
+		else
+		{
+			match = 0;
+		}
 	}
 	return (match && i == 16); // 0 = delivered data does not match with filter, 1 = delivered data matches with filter
 }
