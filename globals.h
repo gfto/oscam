@@ -1055,6 +1055,7 @@ struct s_ecm_answer
 	char            msglog[MSGLOGSIZE];
 	struct timeb    time_request_sent;  //using for evaluate ecm_time
 	int32_t         ecm_time;
+	uint16_t        tier; //only filled by local videoguard reader atm
 #ifdef WITH_LB
 	int32_t     value;
 	int32_t     time;

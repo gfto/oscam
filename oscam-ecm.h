@@ -43,7 +43,7 @@ uint8_t checkCWpart(uchar *cw, int8_t part);
     } while(0)
 
 int32_t ecmfmt(char *result, size_t size, uint16_t caid, uint16_t onid, uint32_t prid, uint16_t chid, uint16_t pid,
-		 uint16_t srvid, uint16_t l, char *ecmd5hex, char *csphash, char *cw, uint16_t origin_peer, uint8_t distance, char *payload);
+		 uint16_t srvid, uint16_t l, char *ecmd5hex, char *csphash, char *cw, uint16_t origin_peer, uint8_t distance, char *payload, char *tier);
 
 int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size);
 

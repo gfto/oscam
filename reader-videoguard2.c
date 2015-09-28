@@ -1167,6 +1167,11 @@ static int32_t videoguard2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 			switch(tag)
 				{
 				case 0x0F:	// Debug ecm info
+					if(t_len > 6)
+					{
+						t_len = 6;
+					}
+									
 					memcpy(buff_0F, t_body, t_len);
 					break;
 				case 0x25:  // CW2 tag
@@ -1183,7 +1188,11 @@ static int32_t videoguard2_do_ecm(struct s_reader *reader, const ECM_REQUEST *er
 				}
 		ind += t_len + 2;
 		}
-
+		
+		if(12 < payloadLen)
+		{
+			ea->tier = b2i(2, &payload[10]);
+		}
 
 		memcpy(reader->VgLastPayload, buff_0F, 6);
 			

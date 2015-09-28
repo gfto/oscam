@@ -2437,7 +2437,7 @@ OUT:
 
 
 int32_t ecmfmt(char *result, size_t size, uint16_t caid, uint16_t onid, uint32_t prid, uint16_t chid, uint16_t pid,
-		 uint16_t srvid, uint16_t l, char *ecmd5hex, char *csphash, char *cw, uint16_t origin_peer, uint8_t distance, char *payload)
+		 uint16_t srvid, uint16_t l, char *ecmd5hex, char *csphash, char *cw, uint16_t origin_peer, uint8_t distance, char *payload, char *tier)
 {
 	if(!cfg.ecmfmt)
 	{
@@ -2476,6 +2476,10 @@ int32_t ecmfmt(char *result, size_t size, uint16_t caid, uint16_t onid, uint32_t
 		
 		switch(*c)
 		{
+		case 't':
+			type = ECMFMT_STRING;
+			svalue = tier;
+			break;
 		case 'c':
 			type = ECMFMT_NUMBER;
 			ifmt = "%04X";
@@ -2614,15 +2618,30 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 	char csphash[(4*2)+1] = { 0 };
 	char cwhex[(16*2)+1];
 	char *payload = NULL;
+	char *tier = NULL;
 #ifdef READER_VIDEOGUARD
 	char payload_string[(3*2)+1];
+	char tier_string[83];
 	static const uint8_t nullBytes[6] = { 0, 0, 0, 0, 0, 0};
+	struct s_ecm_answer *ea;
 	
-	if(ecm->selected_reader
-		&& memcmp(ecm->selected_reader->VgLastPayload, nullBytes, 6))
-	{
-		cs_hexdump(0, ecm->selected_reader->VgLastPayload, 3, payload_string, sizeof(payload_string));
-		payload = payload_string;	
+	if(ecm->selected_reader && caid_is_videoguard(ecm->selected_reader->caid))
+	{	
+		for(ea = ecm->matching_rdr; ea; ea = ea->next)
+		{
+			if((ea->status & REQUEST_ANSWERED) && !is_network_reader(ea->reader))
+			{
+				get_tiername(ea->tier, ecm->selected_reader->caid, tier_string);
+				tier = tier_string;
+				break;
+			}
+		}
+			
+		if(memcmp(ecm->selected_reader->VgLastPayload, nullBytes, 6))
+		{
+			cs_hexdump(0, ecm->selected_reader->VgLastPayload, 3, payload_string, sizeof(payload_string));
+			payload = payload_string;	
+		}
 	}
 #endif
 	cs_hexdump(0, ecm->ecmd5, 16, ecmd5hex, sizeof(ecmd5hex));
@@ -2633,11 +2652,11 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 #ifdef MODULE_GBOX
 	struct gbox_ecm_request_ext *ere = ecm->src_data;
 	if(ere && check_client(ecm->client) && get_module(ecm->client)->num == R_GBOX && ere->gbox_hops)
-		{ return ecmfmt(result, size, ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, ere->gbox_peer, ere->gbox_hops, payload); }
+		{ return ecmfmt(result, size, ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, ere->gbox_peer, ere->gbox_hops, payload, tier); }
 	else if (ecm->selected_reader && ecm->selected_reader->typ == R_GBOX && ecm->gbox_ecm_id)
-		{ return ecmfmt(result, size, ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, ecm->gbox_ecm_id, 0, payload); }
+		{ return ecmfmt(result, size, ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, ecm->gbox_ecm_id, 0, payload, tier); }
 	else
 #endif
-		return ecmfmt(result, size, ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, 0, 0, payload);
+		return ecmfmt(result, size, ecm->caid, ecm->onid, ecm->prid, ecm->chid, ecm->pid, ecm->srvid, ecm->ecmlen, ecmd5hex, csphash, cwhex, 0, 0, payload, tier);
 }
 
