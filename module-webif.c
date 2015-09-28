@@ -4150,11 +4150,10 @@ static char *send_oscam_entitlement(struct templatevars *vars, struct uriparams 
 					add_nds_line = 1;
 				}
 				
-				static const uint8_t nullBytes[6] = { 0, 0, 0, 0, 0, 0};
-				if(memcmp(rdr->VgLastPayload, nullBytes, 6))
+				if(caid_is_videoguard(rdr->caid))
 				{
-                    tpl_printf(vars, TPLAPPEND, "READERPAYLOAD", "%02X %02X %02X %02X %02X %02X", rdr->VgLastPayload[0],
-                    			 rdr->VgLastPayload[1], rdr->VgLastPayload[2], rdr->VgLastPayload[3], rdr->VgLastPayload[4], rdr->VgLastPayload[5]);
+					tpl_printf(vars, TPLAPPEND, "READERPAYLOAD", "%02X %02X %02X %02X %02X %02X", rdr->VgLastPayload[0],
+						rdr->VgLastPayload[1], rdr->VgLastPayload[2], rdr->VgLastPayload[3], rdr->VgLastPayload[4], rdr->VgLastPayload[5]);
 					add_nds_line = 1;
 				}
 				
