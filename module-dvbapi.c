@@ -1888,7 +1888,7 @@ void dvbapi_process_emm(int32_t demux_index, int32_t filter_num, unsigned char *
 {
 	EMM_PACKET epg;
 
-	struct s_emm_filter *filter = get_emmfilter_by_filternum(demux_index, filter_num);
+	struct s_emm_filter *filter = get_emmfilter_by_filternum(demux_index, filter_num+1); // 0 is used for pending emmfilters, so everything increase 1
 
 	if(!filter)
 	{
