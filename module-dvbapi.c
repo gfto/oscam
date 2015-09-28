@@ -2306,6 +2306,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 						{ continue; }
 
 					matching_done = 1;
+					add_prio = prio + (p_order);
 					for(rdr = first_active_reader; rdr ; rdr = rdr->next)
 					{
 						if(cfg.preferlocalcards == 2 && !is_network_reader(rdr)) // cfg.preferlocalcards 2 = local reader
@@ -2327,6 +2328,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 											  n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
 											  demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) p->chid, rdr->label,
 											  demux[demux_index].ECMpids[n].status);
+								add_prio = 1;
 							}
 						}
 						else if(cfg.preferlocalcards == 1 && cacheex_reader(rdr))
@@ -2342,11 +2344,12 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 									demux[demux_index].ECMpids[n].status += add_prio;
 									add_prio = 1;
 								}
-								demux[demux_index].ECMpids[n].status += prio + (p_order);
+								demux[demux_index].ECMpids[n].status += add_prio;
 								cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X:%04X (cacheexrdr: %s weight: %d)", demux_index,
 											  n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
 											  demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) p->chid, rdr->label,
 											  demux[demux_index].ECMpids[n].status);
+								add_prio = 1;
 							}
 						}
 						else if(matching_reader(er, rdr))
@@ -2360,7 +2363,8 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 								demux[demux_index].ECMpids[n].status += add_prio;
 								add_prio = 1;
 							}
-							demux[demux_index].ECMpids[n].status += prio + (p_order);
+							demux[demux_index].ECMpids[n].status += add_prio;
+							add_prio = 1;
 							cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X:%04X (rdr: %s weight: %d)", demux_index,
 										  n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID,
 										  demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) p->chid, rdr->label,
