@@ -2647,7 +2647,6 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 #ifdef READER_VIDEOGUARD
 	char payload_string[(6*2)+1];
 	char tier_string[83];
-	static const uint8_t nullBytes[6] = { 0, 0, 0, 0, 0, 0};
 	struct s_ecm_answer *ea;
 	
 	if(ecm->selected_reader && caid_is_videoguard(ecm->selected_reader->caid))
@@ -2661,12 +2660,9 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 				break;
 			}
 		}
-			
-		if(memcmp(ecm->selected_reader->VgLastPayload, nullBytes, 6))
-		{
-			cs_hexdump(0, ecm->selected_reader->VgLastPayload, 6, payload_string, sizeof(payload_string));
-			payload = payload_string;	
-		}
+		
+		cs_hexdump(0, ecm->selected_reader->VgLastPayload, 6, payload_string, sizeof(payload_string));
+		payload = payload_string;
 	}
 #endif
 	cs_hexdump(0, ecm->ecmd5, 16, ecmd5hex, sizeof(ecmd5hex));
