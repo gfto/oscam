@@ -128,9 +128,9 @@ static int32_t ecm_ratelimit_findspace(struct s_reader *reader, ECM_REQUEST *er,
 							ecm = check_cache(erold, erold->client); //CHECK IF FOUND ECM IN CACHE
 							NULLFREE(erold);
 							if(ecm)   //found in cache
-								{ write_ecm_answer(reader, er, ecm->rc, ecm->rcEx, ecm->cw, NULL); } // return controlword of the ecm sitting in the slot!
+								{ write_ecm_answer(reader, er, ecm->rc, ecm->rcEx, ecm->cw, NULL, 0); } // return controlword of the ecm sitting in the slot!
 							else
-								{ write_ecm_answer(reader, er, E_NOTFOUND, E2_RATELIMIT, NULL, "Ratelimiter: no slots free!"); }
+								{ write_ecm_answer(reader, er, E_NOTFOUND, E2_RATELIMIT, NULL, "Ratelimiter: no slots free!", 0); }
 
 							NULLFREE(ecm);
 							return -2;
@@ -317,7 +317,7 @@ int32_t ecm_ratelimit_check(struct s_reader *reader, ECM_REQUEST *er, int32_t re
 				if(foundspace != -2)
 				{
 					cs_log_dbg(D_CLIENT, "ratelimiter no free slot for srvid %04X on reader %s -> dropping!", er->srvid, reader->label);
-					write_ecm_answer(reader, er, E_NOTFOUND, E2_RATELIMIT, NULL, "Ratelimiter: no slots free!");
+					write_ecm_answer(reader, er, E_NOTFOUND, E2_RATELIMIT, NULL, "Ratelimiter: no slots free!", 0);
 				}
 			}
 
@@ -415,7 +415,7 @@ int32_t ecm_ratelimit_check(struct s_reader *reader, ECM_REQUEST *er, int32_t re
 			{
 				cs_log_dbg(D_CLIENT, "ratelimiter cooldownphase %d no free slot for srvid %04X on reader %s -> dropping!",
 							  reader->cooldownstate, er->srvid, reader->label);
-				write_ecm_answer(reader, er, E_NOTFOUND, E2_RATELIMIT, NULL, "Ratelimiter: cooldown no slots free!");
+				write_ecm_answer(reader, er, E_NOTFOUND, E2_RATELIMIT, NULL, "Ratelimiter: cooldown no slots free!", 0);
 			}
 		}
 
@@ -668,15 +668,15 @@ void casc_check_dcw(struct s_reader *reader, int32_t idx, int32_t rc, uchar *cw)
 		{
 			if(rc==2)  //E_INVALID from camd35 CMD08
 			{
-				write_ecm_answer(reader, ecm, E_INVALID, 0, cw, NULL);
+				write_ecm_answer(reader, ecm, E_INVALID, 0, cw, NULL, 0);
 			}
 			else if(rc)
 			{
-				write_ecm_answer(reader, ecm, E_FOUND, 0, cw, NULL);
+				write_ecm_answer(reader, ecm, E_FOUND, 0, cw, NULL, 0);
 			}
 			else
 			{
-				write_ecm_answer(reader, ecm, E_NOTFOUND, 0 , NULL, NULL);
+				write_ecm_answer(reader, ecm, E_NOTFOUND, 0 , NULL, NULL, 0);
 			}
 			ecm->idx = 0;
 			ecm->rc = E_FOUND;
@@ -1039,7 +1039,7 @@ void reader_get_ecm(struct s_reader *reader, ECM_REQUEST *er)
 	if(!chk_bcaid(er, &reader->ctab))
 	{
 		rdr_log_dbg(reader, D_READER, "caid %04X filtered", er->caid);
-		write_ecm_answer(reader, er, E_NOTFOUND, E2_CAID, NULL, NULL);
+		write_ecm_answer(reader, er, E_NOTFOUND, E2_CAID, NULL, NULL, 0);
 		return;
 	}
 
@@ -1081,7 +1081,7 @@ void reader_get_ecm(struct s_reader *reader, ECM_REQUEST *er)
 			cs_log_dbg(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [reader_get_ecm] ecm already sent to reader %s (%s)", (check_client(er->client) ? er->client->account->usr : "-"), er->caid, er->prid, er->srvid, reader ? reader->label : "-", ea->rc==E_FOUND?"OK":"NOK");
 
 			//e.g. we cannot send timeout, because "ea_temp->er->client" could wait/ask other readers! Simply set not_found if different from E_FOUND!
-			write_ecm_answer(reader, er, (ea->rc==E_FOUND? E_FOUND : E_NOTFOUND), ea->rcEx, ea->cw, NULL);
+			write_ecm_answer(reader, er, (ea->rc==E_FOUND? E_FOUND : E_NOTFOUND), ea->rcEx, ea->cw, NULL, ea->tier);
 			return;
 		}
 		else

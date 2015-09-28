@@ -498,7 +498,7 @@ void cardreader_process_ecm(struct s_reader *reader, struct s_client *cl, ECM_RE
 		memcpy(ea.msglog, "Invalid ecm type for card", 25);
 	}
 
-	write_ecm_answer(reader, er, ea.rc, ea.rcEx, ea.cw, ea.msglog);
+	write_ecm_answer(reader, er, ea.rc, ea.rcEx, ea.cw, ea.msglog, ea.tier);
 	
 	cl->lastecm = time((time_t *)0);
 	char ecmd5[17 * 3];

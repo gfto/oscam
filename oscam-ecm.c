@@ -67,7 +67,7 @@ void ecm_timeout(ECM_REQUEST *er)
 			{
 				if((ea_list->status & (REQUEST_SENT | REQUEST_ANSWERED)) == REQUEST_SENT)  //Request sent, but no answer!
 				{
-					write_ecm_answer(ea_list->reader, er, E_TIMEOUT, 0, NULL, NULL); //set timeout for readers not answered!
+					write_ecm_answer(ea_list->reader, er, E_TIMEOUT, 0, NULL, NULL, 0); //set timeout for readers not answered!
 				}
 			}
 
@@ -656,7 +656,7 @@ void distribute_ea(struct s_ecm_answer *ea)
 		cs_log_dbg(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [distribute_ea] send ea (%s) by reader %s answering for client %s", (check_client(ea_temp->er->client) ? ea_temp->er->client->account->usr : "-"), ea_temp->er->caid, ea_temp->er->prid, ea_temp->er->srvid, ea->rc==E_FOUND?"OK":"NOK", ea_temp->reader->label, (check_client(ea->er->client) ? ea->er->client->account->usr : "-"));
 
 		//e.g. we cannot send timeout, because "ea_temp->er->client" could wait/ask other readers! Simply set not_found if different from E_FOUND!
-		write_ecm_answer(ea_temp->reader, ea_temp->er, (ea->rc==E_FOUND? E_FOUND : E_NOTFOUND), ea->rcEx, ea->cw, NULL);
+		write_ecm_answer(ea_temp->reader, ea_temp->er, (ea->rc==E_FOUND? E_FOUND : E_NOTFOUND), ea->rcEx, ea->cw, NULL, ea->tier);
 	}
 }
 
@@ -1524,7 +1524,7 @@ static void logCWtoFile(ECM_REQUEST *er, uchar *cw)
 	fclose(pfCWL);
 }
 
-int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, uint8_t rcEx, uint8_t *cw, char *msglog)
+int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, uint8_t rcEx, uint8_t *cw, char *msglog, uint16_t used_cardtier)
 {
 	if(!reader || !er || !er->tps.time) { return 0; }
 
@@ -1647,7 +1647,8 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 	ea->rcEx = rcEx;
 	if(cw) { memcpy(ea->cw, cw, 16); }
 	if(msglog) { memcpy(ea->msglog, msglog, MSGLOGSIZE); }
-
+	ea->tier = used_cardtier;
+	
 	cs_writeunlock(__func__, &ea->ecmanswer_lock);
 
 	struct timeb tpe;
@@ -2486,6 +2487,12 @@ int32_t ecmfmt(char *result, size_t size, uint16_t caid, uint16_t onid, uint32_t
 		case 't':
 			type = ECMFMT_STRING;
 			svalue = tier;
+			if(tier == NULL && !hide_if_zero)
+			{
+				type = ECMFMT_NUMBER;
+				ifmt = "%04X";
+				ivalue = 0;
+			}
 			break;
 		case 'c':
 			type = ECMFMT_NUMBER;
@@ -2647,7 +2654,7 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 	{	
 		for(ea = ecm->matching_rdr; ea; ea = ea->next)
 		{
-			if((ea->status & REQUEST_ANSWERED) && !is_network_reader(ea->reader))
+			if(ea->tier && (ea->status & REQUEST_ANSWERED) && !is_network_reader(ea->reader))
 			{
 				get_tiername_defaultid(ea->tier, ecm->selected_reader->caid, tier_string);
 				tier = tier_string;

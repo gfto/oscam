@@ -1299,7 +1299,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er)
 	if(!cli->gbox || !cli->reader->tcp_connected)
 	{
 		cs_log_dbg(D_READER, "%s server not init!", cli->reader->label);
-		write_ecm_answer(cli->reader, er, E_NOTFOUND, 0x27, NULL, NULL);
+		write_ecm_answer(cli->reader, er, E_NOTFOUND, 0x27, NULL, NULL, 0);
 		return -1;
 	}
 
@@ -1309,14 +1309,14 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er)
 	if(!peer->filtered_cards)
 	{
 		cs_log_dbg(D_READER, "%s NO CARDS!", cli->reader->label);
-		write_ecm_answer(cli->reader, er, E_NOTFOUND, E2_CCCAM_NOCARD, NULL, NULL);
+		write_ecm_answer(cli->reader, er, E_NOTFOUND, E2_CCCAM_NOCARD, NULL, NULL, 0);
 		return -1;
 	}
 
 	if(!peer->online)
 	{
 		cs_log_dbg(D_READER, "peer is OFFLINE!");
-		write_ecm_answer(cli->reader, er, E_NOTFOUND, 0x27, NULL, NULL);
+		write_ecm_answer(cli->reader, er, E_NOTFOUND, 0x27, NULL, NULL, 0);
 		//      gbox_send_hello(cli,0);
 		return -1;
 	}
@@ -1330,7 +1330,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er)
 	if(er->gbox_ecm_id == peer->gbox.id)
 	{
 		cs_log_dbg(D_READER, "%s provided ecm", cli->reader->label);
-		write_ecm_answer(cli->reader, er, E_NOTFOUND, 0x27, NULL, NULL);
+		write_ecm_answer(cli->reader, er, E_NOTFOUND, 0x27, NULL, NULL, 0);
 		return 0;
 	}
 
@@ -1380,7 +1380,7 @@ static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er)
 	if(!cont_card_1 && er->gbox_ecm_status == GBOX_ECM_NOT_ASKED)
 	{
 		cs_log_dbg(D_READER, "no valid card found for CAID: %04X PROVID: %04X", er->caid, er->prid);
-		write_ecm_answer(cli->reader, er, E_NOTFOUND, E2_CCCAM_NOCARD, NULL, NULL);
+		write_ecm_answer(cli->reader, er, E_NOTFOUND, E2_CCCAM_NOCARD, NULL, NULL, 0);
 		return -1;
 	}
 	if(cont_card_1)
