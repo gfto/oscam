@@ -5635,6 +5635,11 @@ int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er, int32_t 
 		return 0;
 	}
 	
+	if(cfg.dvbapi_boxtype == BOXTYPE_IPBOX || cfg.dvbapi_boxtype == BOXTYPE_IPBOX_PMT) // reported buggy using sectionfiltering after 1~4 hours -> for now disabled!
+	{
+		return 0;
+	}
+	
 	if(n == -1)
 	{
 		n = dvbapi_get_filternum(demux_index, er, TYPE_ECM);
