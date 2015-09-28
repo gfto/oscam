@@ -2441,9 +2441,17 @@ int32_t ecmfmt(char *result, size_t size, uint16_t caid, uint16_t onid, uint32_t
 {
 	if(!cfg.ecmfmt)
 	{
-		if(payload)
+		if(tier && payload)
 		{
-			return snprintf(result, size, "%04X@%06X/%04X/%04X/%02X:%s:%s", caid, prid, chid, srvid, l, ecmd5hex, payload);	
+			return snprintf(result, size, "%04X@%06X/%04X/%04X/%02X:%s:%.06s:%s", caid, prid, chid, srvid, l, ecmd5hex, payload, tier);				
+		}
+		else if(tier)
+		{
+			return snprintf(result, size, "%04X@%06X/%04X/%04X/%02X:%s:%s", caid, prid, chid, srvid, l, ecmd5hex, tier);				
+		}
+		else if(payload)
+		{
+			return snprintf(result, size, "%04X@%06X/%04X/%04X/%02X:%s:%.06s", caid, prid, chid, srvid, l, ecmd5hex, payload);	
 		}
 		else
 		{ 
@@ -2460,8 +2468,6 @@ int32_t ecmfmt(char *result, size_t size, uint16_t caid, uint16_t onid, uint32_t
 	char *ifmt = NULL, *sfmt = NULL;
 	char *svalue = NULL, cvalue = '\0';
 	uint8_t hide_if_zero = 0;
-	char tmp_payload[(3*2)+1];
-	
 	char *c;
 	uint32_t s = 0;
 		
@@ -2547,11 +2553,9 @@ int32_t ecmfmt(char *result, size_t size, uint16_t caid, uint16_t onid, uint32_t
 				{ return s; }
 			break;
 		case 'y':
-			memcpy(tmp_payload, payload, 3*2);
-			tmp_payload[6] = '\0';
 			type = ECMFMT_STRING;
-			svalue = tmp_payload;
-			sfmt = "0F06%s";
+			svalue = payload;
+			sfmt = "0F06%.06s";
 			if(payload == NULL && !hide_if_zero)
 			{
 				type = ECMFMT_NUMBER;
