@@ -247,6 +247,27 @@ char *get_tiername(uint16_t tierid, uint16_t caid, char *buf)
 	return (buf);
 }
 
+/* Gets the tier name. Make sure that buf is at least 83 bytes long. */
+char *get_tiername_defaultid(uint16_t tierid, uint16_t caid, char *buf)
+{
+	uint8_t found = 0;
+	int32_t i;
+	struct s_tierid *this = cfg.tierid;
+
+	for(buf[0] = 0; this && !found; this = this->next)
+		if(this->tierid == tierid)
+			for(i = 0; i < this->ncaid && !found; i++)
+				if(this->caid[i] == caid)
+					{ cs_strncpy(buf, this->name, 32); found = 1; }
+
+	if(!tierid)
+	{
+		snprintf(buf, 82, "%04X", tierid);
+	}
+	
+	return (buf);
+}
+
 /* Gets the provider name. */
 char *get_provider(uint32_t provid, uint16_t caid, char *buf, uint32_t buflen)
 {

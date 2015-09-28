@@ -2257,6 +2257,7 @@ char *get_servicename_or_null(struct s_client *cl, uint16_t srvid, uint32_t prov
 char *get_picon_servicename_or_null(struct s_client *cl, uint16_t srvid, uint32_t provid, uint16_t caid, char *buf, uint32_t buflen);
 int32_t picon_servicename_remve_hd(char *buf, uint32_t buflen);
 char *get_tiername(uint16_t tierid, uint16_t caid, char *buf);
+char *get_tiername_defaultid(uint16_t tierid, uint16_t caid, char *buf);
 char *get_provider(uint32_t provid, uint16_t caid, char *buf, uint32_t buflen);
 char *get_providername(uint32_t provid, uint16_t caid, char *buf, uint32_t buflen);
 char *get_providername_or_null(uint32_t provid, uint16_t caid, char *buf, uint32_t buflen);

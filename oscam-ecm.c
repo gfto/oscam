@@ -2649,7 +2649,7 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 		{
 			if((ea->status & REQUEST_ANSWERED) && !is_network_reader(ea->reader))
 			{
-				get_tiername(ea->tier, ecm->selected_reader->caid, tier_string);
+				get_tiername_defaultid(ea->tier, ecm->selected_reader->caid, tier_string);
 				tier = tier_string;
 				break;
 			}
