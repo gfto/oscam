@@ -2444,7 +2444,7 @@ int32_t ecmfmt(char *result, size_t size, uint16_t caid, uint16_t onid, uint32_t
 	{
 		if(tier && payload)
 		{
-			return snprintf(result, size, "%04X@%06X/%04X/%04X/%02X:%s:%.06s:%s", caid, prid, chid, srvid, l, ecmd5hex, payload, tier);				
+			return snprintf(result, size, "%04X@%06X/%04X/%04X/%02X:%s:0F06%.06s:%s", caid, prid, chid, srvid, l, ecmd5hex, payload, tier);				
 		}
 		else if(tier)
 		{
@@ -2452,7 +2452,7 @@ int32_t ecmfmt(char *result, size_t size, uint16_t caid, uint16_t onid, uint32_t
 		}
 		else if(payload)
 		{
-			return snprintf(result, size, "%04X@%06X/%04X/%04X/%02X:%s:%.06s", caid, prid, chid, srvid, l, ecmd5hex, payload);	
+			return snprintf(result, size, "%04X@%06X/%04X/%04X/%02X:%s:0F06%.06s", caid, prid, chid, srvid, l, ecmd5hex, payload);	
 		}
 		else
 		{ 
