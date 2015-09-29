@@ -113,6 +113,7 @@ FILTERFORM                    files/file_filterform.html
 WRITEPROTECTION               files/file_writeprotection.html
 FILEMENU                      files/menu.html
 FILEMENUANTICASC              files/menu_anticasc.html                                    CS_ANTICASC
+FILEMENUCONSTCW               files/menu_constantcw.html                                  MODULE_CONSTCW
 FILEMENUDVBAPI                files/menu_dvbapi.html                                      HAVE_DVBAPI
 FILEMENUFAKECWS               files/menu_fakecws.html                                     CS_CACHEEX
 FILEMENUTWIN                  files/menu_twin.html                                        MODULE_SERIAL

@@ -376,6 +376,7 @@ static void write_versionfile(bool use_stdout)
 	fprintf(fp, "Version:        oscam-%s-r%s\n", CS_VERSION, CS_SVN_VERSION);
 	fprintf(fp, "Compiler:       %s\n", CS_TARGET);
 	fprintf(fp, "Box type:       %s (%s)\n", boxtype_get(), boxname_get());
+	fprintf(fp, "PID:            %d\n", getppid());
 	fprintf(fp, "TempDir:        %s\n", cs_tmpdir);
 	fprintf(fp, "ConfigDir:      %s\n", cs_confdir);
 #ifdef WEBIF
