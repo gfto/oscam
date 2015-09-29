@@ -435,7 +435,11 @@ int32_t init_srvid(void)
 	if(!fp)
 	{ 
 		fp = create_config_file("oscam.srvid2");
-		flush_config_file(fp, "oscam.srvid2");
+		if(fp)
+		{
+			flush_config_file(fp, "oscam.srvid2");
+		}
+		
 		return 0;
 	}
 

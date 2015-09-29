@@ -524,6 +524,9 @@ bool flush_config_file(FILE *f, const char *conf_filename)
 	memcpy(bak_file, dst_file, sizeof(bak_file));
 	strncat(tmp_file, ".tmp", sizeof(tmp_file) - strlen(tmp_file) - 1);
 	strncat(bak_file, ".bak", sizeof(bak_file) - strlen(bak_file) - 1);
-	fclose(f);
+	if(f)
+	{
+		fclose(f);
+	}
 	return safe_overwrite_with_bak(dst_file, tmp_file, bak_file, cfg.http_overwrite_bak_file);
 }
