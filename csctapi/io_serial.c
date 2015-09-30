@@ -744,7 +744,7 @@ static bool IO_Serial_WaitToWrite(struct s_reader *reader, uint32_t delay_us, ui
 	int32_t out_fd;
 	int64_t polltimeout = timeout_us / 1000;
 
-#if !defined(WITH_COOLAPI) && defined(WITH_COOLAPI2)
+#if !defined(WITH_COOLAPI) && !defined(WITH_COOLAPI2)
 	if(reader->typ == R_INTERNAL) { return OK; }  // needed for internal readers, otherwise error!
 #endif
 	if(delay_us > 0)
