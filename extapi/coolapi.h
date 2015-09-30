@@ -43,6 +43,14 @@ typedef struct
 	uint8_t				filterprotocolbytes;
 } CNXT_SMC_COMM;
 
+typedef struct
+{
+   uint8_t   *pStartAddress;
+   uint8_t   *pEndAddress;
+   uint8_t   *pWriteAddress;
+   uint8_t   *pReadAddress;
+} CNXT_CBUF_POINTERS;
+
 /* These functions are implemented in libnxp and are used in coolstream */
 int32_t cnxt_cbuf_init(void *);
 int32_t cnxt_cbuf_get_used(void *buffer, uint32_t * bytes_used);
@@ -51,6 +59,8 @@ int32_t cnxt_cbuf_detach(void *handle, int32_t type, void * channel);
 int32_t cnxt_cbuf_close(void * handle);
 int32_t cnxt_cbuf_read_data(void * handle, void *buffer, uint32_t size, uint32_t * ret_size);
 int32_t cnxt_cbuf_flush(void * handle, int);
+int32_t cnxt_cbuf_removed_data(void *handle, uint32_t bytes);
+int32_t cnxt_cbuf_get_pointers(void *handle, CNXT_CBUF_POINTERS *buffer_pointers);
 
 void cnxt_kal_initialize(void);
 void cnxt_kal_terminate(void);
@@ -219,7 +229,7 @@ do { \
 	} \
 } while(0)
 
-#if defined(HAVE_DVBAPI) && (defined(WITH_COOLAPI) || defined(WITH_SU980))
+#if defined(HAVE_DVBAPI) && (defined(WITH_COOLAPI) || defined(WITH_SU980) || defined(WITH_COOLAPI2))
 extern void coolapi_open_all(void);
 extern void coolapi_close_all(void);
 #else

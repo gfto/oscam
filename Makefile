@@ -94,6 +94,7 @@ TARGET := $(shell $(CC) -dumpmachine 2>/dev/null)
 DEFAULT_STAPI_LIB = -L./stapi -loscam_stapi
 DEFAULT_STAPI5_LIB = -L./stapi -loscam_stapi5
 DEFAULT_COOLAPI_LIB = -lnxp -lrt
+DEFAULT_COOLAPI2_LIB = -llnxUKAL -llnxcssUsr -llnxscsUsr -llnxnotifyqUsr -llnxplatUsr -lrt
 DEFAULT_SU980_LIB = -lentropic -lrt
 DEFAULT_AZBOX_LIB = -Lextapi/openxcas -lOpenXCASAPI
 DEFAULT_LIBCRYPTO_LIB = -lcrypto
@@ -159,6 +160,7 @@ endef
 $(eval $(call prepare_use_flags,STAPI,stapi))
 $(eval $(call prepare_use_flags,STAPI5,stapi5))
 $(eval $(call prepare_use_flags,COOLAPI,coolapi))
+$(eval $(call prepare_use_flags,COOLAPI2,coolapi2))
 $(eval $(call prepare_use_flags,SU980,su980))
 $(eval $(call prepare_use_flags,AZBOX,azbox))
 $(eval $(call prepare_use_flags,MCA,mca))
@@ -241,6 +243,7 @@ SRC-$(CONFIG_WITH_CARDREADER) += csctapi/protocol_t0.c
 SRC-$(CONFIG_WITH_CARDREADER) += csctapi/protocol_t1.c
 SRC-$(CONFIG_CARDREADER_INTERNAL_AZBOX) += csctapi/ifd_azbox.c
 SRC-$(CONFIG_CARDREADER_INTERNAL_COOLAPI) += csctapi/ifd_cool.c
+SRC-$(CONFIG_CARDREADER_INTERNAL_COOLAPI2) += csctapi/ifd_cool.c
 SRC-$(CONFIG_CARDREADER_DB2COM) += csctapi/ifd_db2com.c
 SRC-$(CONFIG_CARDREADER_MP35) += csctapi/ifd_mp35.c
 SRC-$(CONFIG_CARDREADER_PCSC) += csctapi/ifd_pcsc.c
@@ -269,6 +272,7 @@ SRC-$(CONFIG_CW_CYCLE_CHECK) += module-cw-cycle-check.c
 SRC-$(CONFIG_WITH_AZBOX) += module-dvbapi-azbox.c
 SRC-$(CONFIG_WITH_MCA) += module-dvbapi-mca.c
 SRC-$(CONFIG_WITH_COOLAPI) += module-dvbapi-coolapi.c
+SRC-$(CONFIG_WITH_COOLAPI2) += module-dvbapi-coolapi.c
 SRC-$(CONFIG_WITH_SU980) += module-dvbapi-coolapi.c
 SRC-$(CONFIG_WITH_STAPI) += module-dvbapi-stapi.c
 SRC-$(CONFIG_WITH_STAPI5) += module-dvbapi-stapi5.c
@@ -590,6 +594,17 @@ OSCam build system documentation\n\
                      In order for USE_COOLAPI to work you have to have libnxp.so\n\
                      library in your cross compilation toolchain.\n\
 \n\
+   USE_COOLAPI2=1  - Request support for Coolstream API aka NeutrinoHD\n\
+                    box. The variables that control the build are:\n\
+                         COOLAPI_FLAGS='$(DEFAULT_COOLAPI2_FLAGS)'\n\
+                         COOLAPI_CFLAGS='$(DEFAULT_COOLAPI2_FLAGS)'\n\
+                         COOLAPI_LDFLAGS='$(DEFAULT_COOLAPI2_FLAGS)'\n\
+                         COOLAPI_LIB='$(DEFAULT_COOLAPI2_LIB)'\n\
+                     Using USE_COOLAPI2=1 adds to '-coolapi2' to PLUS_TARGET.\n\
+                     In order for USE_COOLAPI2 to work you have to have liblnxUKAL.so,\n\
+                     liblnxcssUsr.so, liblnxscsUsr.so, liblnxnotifyqUsr.so, liblnxplatUsr.so\n\
+                     library in your cross compilation toolchain.\n\
+\n\
    USE_SU980=1  - Request support for SU980 API (libentropic) aka Enimga2 arm\n\
                     box. The variables that control the build are:\n\
                          COOLAPI_FLAGS='$(DEFAULT_SU980_FLAGS)'\n\
@@ -709,7 +724,8 @@ OSCam build system documentation\n\
     make sh4           - Builds OSCam for SH4 boxes\n\
     make azbox         - Builds OSCam for AZBox STBs\n\
     make mca           - Builds OSCam for Matrix Cam Air (MCA)\n\
-    make coolstream    - Builds OSCam for Coolstream\n\
+    make coolstream    - Builds OSCam for Coolstream HD1\n\
+    make coolstream2   - Builds OSCam for Coolstream HD2\n\
     make dockstar      - Builds OSCam for Dockstar\n\
     make qboxhd        - Builds OSCam for QBoxHD STBs\n\
     make opensolaris   - Builds OSCam for OpenSolaris\n\
@@ -737,6 +753,8 @@ OSCam build system documentation\n\
      make CROSS=sh4-linux- USE_STAPI=1 CONF_DIR=/var/tuxbox/config\n\n\
    Build OSCam for ARM with COOLAPI (coolstream aka NeutrinoHD):\n\
      make CROSS=arm-cx2450x-linux-gnueabi- USE_COOLAPI=1\n\n\
+   Build OSCam for ARM with COOLAPI2 (coolstream aka NeutrinoHD):\n\
+     make CROSS=arm-pnx8400-linux-uclibcgnueabi- USE_COOLAPI2=1\n\n\
    Build OSCam for MIPSEL with AZBOX support:\n\
      make CROSS=mipsel-linux-uclibc- USE_AZBOX=1\n\n\
    Build OSCam for ARM with MCA support:\n\

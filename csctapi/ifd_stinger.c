@@ -47,7 +47,7 @@ static bool Stinger_IO_Serial_WaitToWrite(struct s_reader *reader, uint32_t dela
 	int32_t out_fd;
 	int64_t polltimeout = timeout_us / 1000;
 
-#if !defined(WITH_COOLAPI) && !defined(WITH_AZBOX)
+#if !defined(WITH_COOLAPI) && !defined(WITH_COOLAPI2) && !defined(WITH_AZBOX)
 
 	if(reader->typ == R_INTERNAL) { return OK; }  // needed for internal readers, otherwise error!
 #endif

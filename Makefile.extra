@@ -223,8 +223,18 @@ cool:
 		USE_COOLAPI=1 \
 		$(MAKEFLAGS)
 
+cool2:
+	$(MAKE) --no-print-directory \
+		CROSS=arm-pnx8400-linux-uclibcgnueabi- \
+		CONF_DIR=/var/tuxbox/config \
+		USE_COOLAPI2=1 \
+		$(MAKEFLAGS)
+
 neutrinohd: cool
 coolstream: cool
+
+neutrinohd2: cool2
+coolstream2: cool2
 
 su980:
 	$(MAKE) --no-print-directory \

@@ -723,7 +723,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 		}
 		break;
 #endif
-#ifdef WITH_COOLAPI
+#if defined WITH_COOLAPI || defined WITH_COOLAPI2
 	case COOLAPI:
 		ret = filterfd = coolapi_open_device(demux[demux_id].demux_index, demux_id);
 		if(ret > 0)
@@ -765,7 +765,7 @@ int32_t dvbapi_set_filter(int32_t demux_id, int32_t api, uint16_t pid, uint16_t 
 
 static int32_t dvbapi_detect_api(void)
 {
-#ifdef WITH_COOLAPI
+#if defined WITH_COOLAPI || defined WITH_COOLAPI2
 	selected_api = COOLAPI;
 	selected_box = BOX_INDEX_COOLSTREAM;
 	disable_pmt_files = 1;
@@ -1041,7 +1041,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 			}
 			break;
 #endif
-#ifdef WITH_COOLAPI
+#if defined WITH_COOLAPI || defined WITH_COOLAPI2
 		case COOLAPI:
 			retfilter = coolapi_remove_filter(fd, num);
 			retfd = coolapi_close_device(fd);
@@ -1051,7 +1051,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 			break;
 		}
 		
-#ifndef WITH_COOLAPI // no fd close for coolapi and stapi, all others do close fd!
+#if !defined WITH_COOLAPI && !defined WITH_COOLAPI2 // no fd close for coolapi and stapi, all others do close fd!
 		if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
 		{
 			if(selected_api == STAPI)
@@ -1414,7 +1414,7 @@ void dvbapi_add_emmpid(int32_t demux_id, uint16_t caid, uint16_t emmpid, uint32_
 
 void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len)
 {
-#ifdef WITH_COOLAPI
+#if defined WITH_COOLAPI  || defined WITH_COOLAPI2
 	// driver sometimes reports error if too many emm filter
 	// but adding more ecm filter is no problem
 	// ... so ifdef here instead of limiting MAX_FILTER
@@ -1556,7 +1556,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 		stapi_set_pid(demux_id, num, idx, demux[demux_id].STREAMpids[num], demux[demux_id].pmt_file); // only used to disable pids!!!
 		break;
 #endif
-#ifdef WITH_COOLAPI
+#if defined WITH_COOLAPI || defined WITH_COOLAPI2
 	case COOLAPI:
 		break;
 #endif
@@ -2831,7 +2831,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 #define LIST_ADD 0x04    //*CA application should append an 'ADD' CAPMT object to the current list and start working with the updated list
 #define LIST_UPDATE 0x05 //*CA application should replace an entry in the list with an 'UPDATE' CAPMT object, and start working with the updated list
 
-#ifdef WITH_COOLAPI
+#if defined WITH_COOLAPI || defined WITH_COOLAPI2
 	int32_t ca_pmt_list_management = LIST_ONLY;
 #else
 	int32_t ca_pmt_list_management = buffer[0];
@@ -2865,7 +2865,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		if(cfg.dvbapi_boxtype == BOXTYPE_IPBOX_PMT) demux_index = i; // fixup for ipbox
 
 		bool full_check = 1, matched = 0;
-		if (config_enabled(WITH_COOLAPI) || cfg.dvbapi_boxtype == BOXTYPE_SAMYGO)
+		if (config_enabled(WITH_COOLAPI) || config_enabled(WITH_COOLAPI2) || cfg.dvbapi_boxtype == BOXTYPE_SAMYGO)
 			full_check = 0;
 
 		if (full_check)
@@ -4403,7 +4403,7 @@ static void *dvbapi_main_local(void *cli)
 		type[0] = 1;
 	}
 
-#ifdef WITH_COOLAPI
+#if defined WITH_COOLAPI || defined WITH_COOLAPI2
 	system("pzapit -rz");
 #endif
 	cs_ftime(&start); // register start time
@@ -5017,7 +5017,7 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid)
 			int32_t idx = dvbapi_ca_setpid(demux_id, pid);  // prepare ca
 			if (idx == -1) return; // return on no index!
 
-#ifdef WITH_COOLAPI
+#if defined WITH_COOLAPI || defined WITH_COOLAPI2
 			ca_descr.index = idx;
 			ca_descr.parity = n;
 			memcpy(demux[demux_id].lastcw[n], cw + (n * 8), 8);
@@ -5822,13 +5822,17 @@ int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t
 		break;
 	}
 #endif
-	/*#ifdef WITH_COOLAPI    ******* NOT IMPLEMENTED YET ********
-	        case COOLAPI: {
-	            coolapi_set_filter(demux[demux_id].demux_fd[n].fd, n, pid, filter, mask, TYPE_ECM);
-	            break;
-	        }
+	#if defined WITH_COOLAPI || defined WITH_COOLAPI2
+	case COOLAPI:
+	{
+		int32_t n = coolapi_get_filter_num(fd);
+		if (n < 0)
+			return n;
+		coolapi_set_filter(fd, n, pid, filter, mask, TYPE_ECM);
+		break;
+	}
 	#endif
-	*/
+	
 	default:
 		break;
 	}

@@ -71,10 +71,12 @@
 
 // CARDREADER_INTERNAL_{AZBOX,COOLAPI,SCI} are internal variables
 // do not touch them
-#if   defined(CARDREADER_INTERNAL) && defined(WITH_AZBOX)
+#if (defined(CARDREADER_INTERNAL) && defined(WITH_AZBOX))
 #define CARDREADER_INTERNAL_AZBOX 1
-#elif defined(CARDREADER_INTERNAL) && (defined(WITH_COOLAPI) || defined(WITH_SU980))
+#elif (defined(CARDREADER_INTERNAL) && (defined(WITH_COOLAPI) || defined(WITH_SU980)))
 #define CARDREADER_INTERNAL_COOLAPI 1
+#elif defined(CARDREADER_INTERNAL) && defined(WITH_COOLAPI2)
+#define CARDREADER_INTERNAL_COOLAPI2 1
 #elif defined(CARDREADER_INTERNAL)
 #define CARDREADER_INTERNAL_SCI 1
 #endif

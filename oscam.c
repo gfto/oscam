@@ -394,6 +394,7 @@ static void write_versionfile(bool use_stdout)
 		write_conf(WITH_AZBOX, "DVB API with AZBOX support");
 		write_conf(WITH_MCA, "DVB API with MCA support");
 		write_conf(WITH_COOLAPI, "DVB API with COOLAPI support");
+		write_conf(WITH_COOLAPI2, "DVB API with COOLAPI2 support");
 		write_conf(WITH_STAPI, "DVB API with STAPI support");
 		write_conf(WITH_STAPI5, "DVB API with STAPI5 support");
 		write_conf(READ_SDT_CHARSETS, "DVB API read-sdt charsets");
@@ -450,6 +451,7 @@ static void write_versionfile(bool use_stdout)
 		write_cardreaderconf(CARDREADER_PHOENIX, "phoenix");
 		write_cardreaderconf(CARDREADER_INTERNAL_AZBOX, "internal_azbox");
 		write_cardreaderconf(CARDREADER_INTERNAL_COOLAPI, "internal_coolapi");
+		write_cardreaderconf(CARDREADER_INTERNAL_COOLAPI2, "internal_coolapi");
 		write_cardreaderconf(CARDREADER_INTERNAL_SCI, "internal_sci");
 		write_cardreaderconf(CARDREADER_SC8IN1, "sc8in1");
 		write_cardreaderconf(CARDREADER_MP35, "mp35");
@@ -1552,6 +1554,8 @@ const struct s_cardreader *cardreaders[] =
 #if defined(CARDREADER_INTERNAL_AZBOX)
 	&cardreader_internal_azbox,
 #elif defined(CARDREADER_INTERNAL_COOLAPI)
+	&cardreader_internal_cool,
+#elif defined(CARDREADER_INTERNAL_COOLAPI2)
 	&cardreader_internal_cool,
 #elif defined(CARDREADER_INTERNAL_SCI)
 	&cardreader_internal_sci,

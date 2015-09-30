@@ -852,7 +852,7 @@ static int32_t videoguard2_card_init(struct s_reader *reader, ATR *newatr)
 						{
 							rdr_log(reader, "classD0 ins7E11: Scheduling card reset for TA1 change from %02X to %02X", TA1, reader->ins7E11[0x00]);
 							reader->ins7e11_fast_reset = 1;
-#ifdef WITH_COOLAPI
+#if defined(WITH_COOLAPI) || defined(WITH_COOLAPI2)
 							if(reader->typ == R_MOUSE || reader->typ == R_SC8in1 || reader->typ == R_SMART || reader->typ == R_INTERNAL)
 							{
 #else

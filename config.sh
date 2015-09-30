@@ -133,7 +133,7 @@ USE_FLAGS=
 have_flag() {
 	for FLAG in $USE_FLAGS
 	do
-		[ $FLAG = "$1" ] && return 0
+		[ "$FLAG" = "$1" ] && return 0
 	done
 	return 1
 }
@@ -155,7 +155,7 @@ have_any_flags() {
 not_have_flag() {
 	for FLAG in $USE_FLAGS
 	do
-		[ $FLAG = "$1" ] && return 1
+		[ "$FLAG" = "$1" ] && return 1
 	done
 	return 0
 }
@@ -302,6 +302,7 @@ list_config() {
 	have_flag USE_STAPI && echo "CONFIG_WITH_STAPI=y" || echo "# CONFIG_WITH_STAPI=n"
 	have_flag USE_STAPI5 && echo "CONFIG_WITH_STAPI5=y" || echo "# CONFIG_WITH_STAPI5=n"
 	have_flag USE_COOLAPI && echo "CONFIG_WITH_COOLAPI=y" || echo "# CONFIG_WITH_COOLAPI=n"
+	have_flag USE_COOLAPI2 && echo "CONFIG_WITH_COOLAPI2=y" || echo "# CONFIG_WITH_COOLAPI2=n"
 	have_flag USE_SU980 && echo "CONFIG_WITH_SU980=y" || echo "# CONFIG_WITH_SU980=n"
 	have_flag USE_AZBOX && echo "CONFIG_WITH_AZBOX=y" || echo "# CONFIG_WITH_AZBOX=n"
 	have_flag USE_MCA && echo "CONFIG_WITH_MCA=y" || echo "# CONFIG_WITH_MCA=n"
@@ -317,7 +318,8 @@ list_config() {
 			# Internal card reader is actually three different readers depending on USE flags
 			enabled $OPT && have_flag USE_AZBOX && echo "CONFIG_${OPT}_AZBOX=y" || echo "# CONFIG_${OPT}_AZBOX=n"
 			enabled $OPT && have_any_flags USE_COOLAPI USE_SU980 && echo "CONFIG_${OPT}_COOLAPI=y" || echo "# CONFIG_${OPT}_COOLAPI=n"
-			enabled $OPT && not_have_all_flags USE_AZBOX USE_COOLAPI USE_SU980 && echo "CONFIG_${OPT}_SCI=y" || echo "# CONFIG_${OPT}_SCI=n"
+			enabled $OPT && have_flag USE_COOLAPI2 && echo "CONFIG_${OPT}_COOLAPI2=y" || echo "# CONFIG_${OPT}_COOLAPI2=n"
+			enabled $OPT && not_have_all_flags USE_AZBOX USE_COOLAPI USE_COOLAPI2 USE_SU980 && echo "CONFIG_${OPT}_SCI=y" || echo "# CONFIG_${OPT}_SCI=n"
 			continue
 		fi
 		if [ $OPT = CARDREADER_STAPI ]
