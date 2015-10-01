@@ -930,7 +930,7 @@ static void coolapi_stop_api(void)
 	cnxt_css_drv_term();
 	cnxt_kal_terminate();
 }
-#else
+#elif defined(HAVE_DVBAPI) && defined(WITH_COOLAPI)
 static void coolapi_start_api(void)
 {
 	cnxt_kal_initialize();
