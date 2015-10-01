@@ -2213,13 +2213,16 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 		if(prio && prio->force)  // check for forced prio, we only accept one if found use it!
 		{
 			demux[demux_index].ECMpids[n].status = 1;
+			demux[demux_index].max_status = 1;
+			cs_log_dbg(D_DVBAPI, "Demuxer %d prio forced ecmpid %d %04X@%06X:%04X:%04X (file)", demux_index, n, demux[demux_index].ECMpids[n].CAID,
+						  demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) prio->chid);
 			NULLFREE(er);
 			return; // go start descrambling since its forced by user!
 		}
 		
 		prio = dvbapi_check_prio_match(demux_index, n, 'i'); 
 		
-		if(prio)
+		if(prio && prio->caid)
 		{
 			cs_log_dbg(D_DVBAPI, "Demuxer %d ignore ecmpid %d %04X@%06X:%04X:%04X (file)", demux_index, n, demux[demux_index].ECMpids[n].CAID,
 				demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, demux[demux_index].ECMpids[n].CHID);
@@ -2462,6 +2465,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 	
 	max_status = 0;
 	int32_t highest_priopid = -1;
+	
 	for(n = 0; n < demux[demux_index].ECMpidcount; n++)
 	{
 		if(demux[demux_index].ECMpids[n].status == -1) continue; // skip ignores!
@@ -2470,7 +2474,16 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 		{ 
 			max_status = demux[demux_index].ECMpids[n].status;
 			highest_priopid = n;
-		}  
+		}
+		prio = dvbapi_check_prio_match(demux_index, n, 'i'); 
+		
+		if(prio && !prio->caid && demux[demux_index].ECMpids[n].status == 0)
+		{
+			cs_log_dbg(D_DVBAPI, "Demuxer %d ignore ecmpid %d %04X@%06X:%04X:%04X (file)", demux_index, n, demux[demux_index].ECMpids[n].CAID,
+				demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, demux[demux_index].ECMpids[n].CHID);
+			demux[demux_index].ECMpids[n].status = -1;
+			continue; // evaluate next ecmpid
+		}		
 		if(demux[demux_index].ECMpids[n].status == 0) { demux[demux_index].ECMpids[n].checked = 2; }  // set pids with no status to no prio run
 	}
 	
