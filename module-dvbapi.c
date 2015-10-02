@@ -2203,7 +2203,6 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 	struct s_reader *rdr;
 		
 	int32_t p_order = demux[demux_index].ECMpidcount+1;
-	
 	struct s_dvbapi_priority *prio;
 	
 	// handle prio order in oscam.dvbapi + ignore all chids
@@ -2247,10 +2246,13 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 				}
 				else
 				{
-					demux[demux_index].ECMpids[n].status = total_reader + p_order--;
-					matching_done = 1;
-					cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X:%04X weight: %d (file)", demux_index, n, demux[demux_index].ECMpids[n].CAID,
+					if(!demux[demux_index].ECMpids[n].status) // only accept first matching prio from oscam.dvbapi
+					{
+						demux[demux_index].ECMpids[n].status = total_reader + p_order--;
+						matching_done = 1;
+						cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X:%04X weight: %d (file)", demux_index, n, demux[demux_index].ECMpids[n].CAID,
 						  demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) prio->chid, demux[demux_index].ECMpids[n].status);
+					}
 					continue; // evaluate next ecmpid
 				}
 			}
