@@ -2225,7 +2225,6 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 			if(prio->srvid && prio->srvid != demux[demux_index].program_number) { continue; }
 			if(prio->ecmpid && prio->ecmpid != demux[demux_index].ECMpids[n].ECM_PID) { continue; }
 			if(prio->pidx && prio->pidx-1 != n) { continue; }
-			if(prio->chid < 0x10000) { demux[demux_index].ECMpids[n].CHID = prio->chid; }
 			
 			if(prio->type == 'p') // check for prio
 			{
