@@ -2228,6 +2228,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 			
 			if(prio->type == 'p') // check for prio
 			{
+				if(prio->chid < 0x10000) { demux[demux_index].ECMpids[n].CHID = prio->chid; }
 				if(prio->force)
 				{
 					int32_t j;
