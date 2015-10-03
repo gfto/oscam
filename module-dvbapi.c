@@ -2365,7 +2365,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 				{
 					count_matching_cacheex_reader++;
 				}
-				else if(!is_network_reader(rdr))
+				else if(is_localreader(rdr, er))
 				{
 					count_matching_local_reader++;
 				}
@@ -2431,7 +2431,7 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 						count_matching_cacheex_reader++;
 						cacheexprio=1;
 					}
-					if(!is_network_reader(rdr))
+					if(is_localreader(rdr, er))
 					{
 						demux[demux_index].ECMpids[n].status += localprio;
 						count_matching_local_reader++;
