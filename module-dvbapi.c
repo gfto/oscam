@@ -2212,6 +2212,10 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 		total_reader++; // only need to calculate once!
 	}
 	
+	ECM_REQUEST *er;
+	if(!cs_malloc(&er, sizeof(ECM_REQUEST)))
+		{ return; }
+	
 	for(prio = dvbapi_priority; prio != NULL; prio = prio->next)
 	{
 		if(prio->type != 'p' && prio->type != 'i' )
@@ -2219,11 +2223,21 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 		for(n = 0; n < demux[demux_index].ECMpidcount; n++)
 		{
 			if(demux[demux_index].ECMpids[n].status == -1) continue; // skip ignores!
+			er->caid = er->ocaid = demux[demux_index].ECMpids[n].CAID;
+			er->prid = demux[demux_index].ECMpids[n].PROVID;
+			er->pid = demux[demux_index].ECMpids[n].ECM_PID;
+			er->srvid = demux[demux_index].program_number;
+			er->client = cur_client();
+			btun_caid = chk_on_btun(SRVID_MASK, er->client, er);
+			if(prio->type == 'p' && btun_caid)
+			{
+				er->caid = btun_caid;
+			}
 			
-			if(prio->caid && prio->caid != demux[demux_index].ECMpids[n].CAID) { continue; }
-			if(prio->provid && prio->provid != demux[demux_index].ECMpids[n].PROVID) { continue; }
-			if(prio->srvid && prio->srvid != demux[demux_index].program_number) { continue; }
-			if(prio->ecmpid && prio->ecmpid != demux[demux_index].ECMpids[n].ECM_PID) { continue; }
+			if(prio->caid && (prio->caid != er->caid && prio->caid != er->ocaid)) { continue; }
+			if(prio->provid && prio->provid != er->prid) { continue; }
+			if(prio->srvid && prio->srvid != er->srvid) { continue; }
+			if(prio->ecmpid && prio->ecmpid != er->pid) { continue; }
 			if(prio->pidx && prio->pidx-1 != n) { continue; }
 			
 			if(prio->type == 'p') // check for prio
@@ -2240,8 +2254,10 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 					demux[demux_index].ECMpids[n].checked = 0;
 					demux[demux_index].max_status = 1;
 					demux[demux_index].max_emm_filter = maxfilter - 1;
-					cs_log_dbg(D_DVBAPI, "Demuxer %d prio forced ecmpid %d %04X@%06X:%04X:%04X (file)", demux_index, n, demux[demux_index].ECMpids[n].CAID,
-						  demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) prio->chid);
+					cs_log_dbg(D_DVBAPI, "Demuxer %d prio forced%s ecmpid %d %04X@%06X:%04X:%04X (file)", demux_index, 
+						((prio->caid == er->caid && prio->caid != er->ocaid) ? " betatunneled" : ""), n, demux[demux_index].ECMpids[n].CAID,
+						demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) prio->chid);
+					NULLFREE(er);
 					return; // go start descrambling since its forced by user!
 				}
 				else
@@ -2250,8 +2266,9 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 					{
 						demux[demux_index].ECMpids[n].status = total_reader + p_order--;
 						matching_done = 1;
-						cs_log_dbg(D_DVBAPI, "Demuxer %d prio ecmpid %d %04X@%06X:%04X:%04X weight: %d (file)", demux_index, n, demux[demux_index].ECMpids[n].CAID,
-						  demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) prio->chid, demux[demux_index].ECMpids[n].status);
+						cs_log_dbg(D_DVBAPI, "Demuxer %d prio%s ecmpid %d %04X@%06X:%04X:%04X weight: %d (file)", demux_index,
+							((prio->caid == er->caid && prio->caid != er->ocaid) ? " betatunneled" : ""), n, demux[demux_index].ECMpids[n].CAID,
+							demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].ECM_PID, (uint16_t) prio->chid, demux[demux_index].ECMpids[n].status);
 					}
 					continue; // evaluate next ecmpid
 				}
@@ -2265,11 +2282,6 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 			}
 		}
 	}
-	
-	ECM_REQUEST *er;
-	if(!cs_malloc(&er, sizeof(ECM_REQUEST)))
-		{ return; }
-
 	
 	p_order = demux[demux_index].ECMpidcount+1;
 	
@@ -5867,7 +5879,7 @@ int32_t dvbapi_get_filternum(int32_t demux_index, ECM_REQUEST *er, int32_t type)
 				fd = demux[demux_index].demux_fd[n].fd; // found!
 				if(demux[demux_index].demux_fd[n].caid == er->ocaid)
 				{
-					memset(demux[demux_index].demux_fd[n].lastecmd5, 0, CS_ECMSTORESIZE); // clear ecmd5 hash since betatunnelled ecms hash different!
+					memset(demux[demux_index].demux_fd[n].lastecmd5, 0, CS_ECMSTORESIZE); // clear ecmd5 hash since betatunneled ecms hash different!
 				}
 				break;
 			}
