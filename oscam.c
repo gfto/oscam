@@ -451,7 +451,7 @@ static void write_versionfile(bool use_stdout)
 		write_cardreaderconf(CARDREADER_PHOENIX, "phoenix");
 		write_cardreaderconf(CARDREADER_INTERNAL_AZBOX, "internal_azbox");
 		write_cardreaderconf(CARDREADER_INTERNAL_COOLAPI, "internal_coolapi");
-		write_cardreaderconf(CARDREADER_INTERNAL_COOLAPI2, "internal_coolapi");
+		write_cardreaderconf(CARDREADER_INTERNAL_COOLAPI2, "internal_coolapi2");
 		write_cardreaderconf(CARDREADER_INTERNAL_SCI, "internal_sci");
 		write_cardreaderconf(CARDREADER_SC8IN1, "sc8in1");
 		write_cardreaderconf(CARDREADER_MP35, "mp35");
