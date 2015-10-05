@@ -2649,7 +2649,7 @@ int32_t format_ecm(ECM_REQUEST *ecm, char *result, size_t size)
 	char tier_string[83];
 	struct s_ecm_answer *ea;
 	
-	if(ecm->selected_reader && caid_is_videoguard(ecm->selected_reader->caid))
+	if(ecm->selected_reader && caid_is_videoguard(ecm->selected_reader->caid) && !is_network_reader(ecm->selected_reader))
 	{	
 		for(ea = ecm->matching_rdr; ea; ea = ea->next)
 		{
