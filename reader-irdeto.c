@@ -1073,13 +1073,16 @@ static int32_t irdeto_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 				memcpy(ptr, sc_EmmCmd, sizeof(sc_EmmCmd));      // copy card command
 				ptr[4] = dataLen + ADDRLEN;                     // set card command emm size
 				ptr += sizeof(sc_EmmCmd);
-				emm += 3;
+				emm += 4;
 				memset(ptr, 0, ADDRLEN);                        // clear addr range
 				memcpy(ptr, emm, l);                            // copy addr bytes
 				ptr += ADDRLEN;
 				emm += l;
-				memcpy(ptr, &emm[2], dataLen);                  // copy emm bytes
-				return (irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr) == 0 ? OK : ERROR);
+				memcpy(ptr, &emm[2], dataLen);                  // copy emm bytes]
+				int32_t errorcode = irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr) == 0;
+				rdr_log_dbg(reader, D_EMM,"response %02X %02X %02X %02X (%s)", cta_res[0], cta_res[1], cta_res[2], cta_res[3], (errorcode == 0 ? "OK" : "ERROR"));
+				
+				return (errorcode == 0 ? OK : ERROR);
 			}
 		}
 		else
