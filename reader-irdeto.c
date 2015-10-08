@@ -1054,9 +1054,9 @@ static int32_t irdeto_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 				int32_t acslength = cta_res[cta_lr - 1];
 				sc_Acs57_Cmd[4] = acslength;
 				reader_chk_cmd(sc_Acs57_Cmd, acslength + 2);
+				rdr_log_dbg(reader, D_EMM,"response %02X %02X %02X %02X %02X (%s)", cta_res[0], cta_res[1], cta_res[2], cta_res[3], cta_res[4], (cta_res[2] == 0 ? "OK" : "ERROR"));
 				if(cta_res[2] != 0)
 				{ 
-					rdr_log(reader, "EMM write error %02X", cta_res[2]);
 					return ERROR;
 				}
 				return OK;
@@ -1080,7 +1080,7 @@ static int32_t irdeto_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 				emm += l;
 				memcpy(ptr, &emm[2], dataLen);                  // copy emm bytes]
 				int32_t errorcode = irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr) == 0;
-				rdr_log_dbg(reader, D_EMM,"response %02X %02X %02X %02X (%s)", cta_res[0], cta_res[1], cta_res[2], cta_res[3], (errorcode == 0 ? "OK" : "ERROR"));
+				rdr_log_dbg(reader, D_EMM,"response %02X %02X %02X %02X %02X (%s)", cta_res[0], cta_res[1], cta_res[2], cta_res[3], cta_res[4], (errorcode == 0 ? "OK" : "ERROR"));
 				
 				return (errorcode == 0 ? OK : ERROR);
 			}
