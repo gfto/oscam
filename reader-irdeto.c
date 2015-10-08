@@ -1073,7 +1073,7 @@ static int32_t irdeto_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 				memcpy(ptr, sc_EmmCmd, sizeof(sc_EmmCmd));      // copy card command
 				ptr[4] = dataLen + ADDRLEN;                     // set card command emm size
 				ptr += sizeof(sc_EmmCmd);
-				emm += 4;
+				emm += 3;
 				memset(ptr, 0, ADDRLEN);                        // clear addr range
 				memcpy(ptr, emm, l);                            // copy addr bytes
 				ptr += ADDRLEN;
