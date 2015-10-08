@@ -180,18 +180,23 @@ static int8_t find_class(struct s_reader *reader, uint32_t provid, const uchar *
 					rdr_log(reader, "provid %06X has matching class %02X", provid, cls);
 					struct via_date vd;
 					parse_via_date(b - 4, &vd, 1);
-					time_t end_t;
+					time_t start_t, end_t;
 					struct tm tm;
 					//convert time:
 					memset(&tm, 0, sizeof(tm));
+					tm.tm_year = vd.year_s + 80; //via year starts in 1980, tm_year starts in 1900
+					tm.tm_mon = vd.month_s - 1; // january is 0 in tm_mon
+					tm.tm_mday = vd.day_s;
+					start_t = cs_timegm(&tm);
+					
 					tm.tm_year = vd.year_e + 80; //via year starts in 1980, tm_year starts in 1900
 					tm.tm_mon = vd.month_e - 1; // january is 0 in tm_mon
 					tm.tm_mday = vd.day_e;
 					end_t = cs_timegm(&tm);
 					
-					if(cs_add_entitlement(reader, reader->caid, provid, cls, cls, 0, end_t, 5, 0) != NULL)
+					if(cs_add_entitlement(reader, reader->caid, provid, cls, cls, start_t, end_t, 5, 0) != NULL)
 					{
-						rdr_log(reader, "Enddate of this emm matches with entitlement already on card -> SKIP!");
+						rdr_log(reader, "Start / Enddate of this emm matches with entitlement already on card -> SKIP!");
 						return 0; // end date same!
 					}
 				}
