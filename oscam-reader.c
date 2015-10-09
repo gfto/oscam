@@ -604,8 +604,8 @@ S_ENTITLEMENT *cs_add_entitlement(struct s_reader *rdr, uint16_t caid, uint32_t 
 			(provid && item->provid != provid) || 
 			(id && item->id != id) || 
 			(class && item->class != class) ||
-			(start && item->start < start) ||
-			(end && item->end < end) ||
+			(start && ((!add && item->start < start) || (add && item->start !=start))) ||
+			(end && ((!add && item->end < end) || (add && item->end != end))) ||
 			(type && item->type != type))
 		{
 			continue; // no match, try next!

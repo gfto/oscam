@@ -5,6 +5,7 @@
 #include "oscam-emm.h"
 #include "reader-common.h"
 #include "cscrypt/des.h"
+#include "oscam-work.h"
 
 struct geo_cache
 {
@@ -196,8 +197,8 @@ static int8_t find_class(struct s_reader *reader, uint32_t provid, const uchar *
 					
 					if(cs_add_entitlement(reader, reader->caid, provid, cls, cls, start_t, end_t, 5, 0) != NULL)
 					{
-						rdr_log(reader, "Start / Enddate of this emm matches with entitlement already on card -> SKIP!");
-						return 0; // end date same!
+						rdr_log(reader, "class %02X provid %06X has already this daterange or newer entitled -> SKIP!", cls, provid);
+						return 0; // skip due to date
 					}
 				}
 			}
@@ -1805,7 +1806,8 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		write_cmd(ins18, insData);
 		if((cta_res[cta_lr - 2] == 0x90 || cta_res[cta_lr - 2] == 0x91) && cta_res[cta_lr - 1] == 0x00)
 		{
-			rdr_log_dbg(reader, D_READER, "update successfully written");
+			rdr_log(reader, "Your subscription data was updated.");
+			add_job(reader->client, ACTION_READER_CARDINFO, NULL, 0); 
 			rc = 1; // written
 		}
 		else
