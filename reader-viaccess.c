@@ -156,7 +156,7 @@ static void show_class(struct s_reader *reader, const char *p, uint32_t provid, 
 			}
 }
 
-static int8_t find_class(struct s_reader *reader, uint32_t provid, const uchar *b, int32_t l)
+static int8_t add_find_class(struct s_reader *reader, uint32_t provid, const uchar *b, int32_t l, int8_t add)
 {
 	int32_t i, j;
 
@@ -171,7 +171,7 @@ static int8_t find_class(struct s_reader *reader, uint32_t provid, const uchar *
 			{
 				uchar cls;
 				cls = (l - (j + 1)) * 8 + i;
-				if(cs_add_entitlement(reader, reader->caid, provid, cls, cls, 0, 0, 5, 0) == NULL)
+				if(cs_add_entitlement(reader, reader->caid, provid, cls, cls, 0, 0, 5, 0) == NULL && !add)
 				{
 					rdr_log(reader, "provid %06X class %02X not found!", provid, cls);
 					return 0; // class not found!
@@ -195,9 +195,12 @@ static int8_t find_class(struct s_reader *reader, uint32_t provid, const uchar *
 					tm.tm_mday = vd.day_e;
 					end_t = cs_timegm(&tm);
 					
-					if(cs_add_entitlement(reader, reader->caid, provid, cls, cls, start_t, end_t, 5, 0) != NULL)
+					if(cs_add_entitlement(reader, reader->caid, provid, cls, cls, start_t, end_t, 5, add) != NULL)
 					{
-						rdr_log(reader, "class %02X provid %06X has already this daterange or newer entitled -> SKIP!", cls, provid);
+						if(!add)
+						{
+							rdr_log(reader, "class %02X provid %06X has already this daterange or newer entitled -> SKIP!", cls, provid);
+						}
 						return 0; // skip due to date
 					}
 				}
@@ -1619,6 +1622,7 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	uchar *nano92Data = 0;
 	uchar *nano9EData = 0;
 	uchar *nanoF0Data = 0;
+	uchar *nanoA9Data = 0;
 
 	for(emmUpToEnd = emmLen; (emmParsed[1] != 0) && (emmUpToEnd > 0); emmUpToEnd -= (2 + emmParsed[1]), emmParsed += (2 + emmParsed[1]))
 	{
@@ -1735,11 +1739,12 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 					rdr_log(reader, "no provid in shared emm -> skipped!");
 					return SKIPPED;
 				}
-				if(!find_class(reader, emm_provid, emmParsed + 2, emmParsed[1]))
+				if(!add_find_class(reader, emm_provid, emmParsed + 2, emmParsed[1], 0))
 				{
 					rdr_log(reader, "shared emm provid %06X class mismatch or same enddate -> skipped!", emm_provid);
 					return SKIPPED;
 				}
+				nanoA9Data = emmParsed;
 			}
 
 			memcpy(ins18Data + ins18Len, emmParsed, emmParsed[1] + 2);
@@ -1806,8 +1811,11 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		write_cmd(ins18, insData);
 		if((cta_res[cta_lr - 2] == 0x90 || cta_res[cta_lr - 2] == 0x91) && cta_res[cta_lr - 1] == 0x00)
 		{
-			rdr_log(reader, "Your subscription data was updated.");
-			add_job(reader->client, ACTION_READER_CARDINFO, NULL, 0); 
+			if(nanoA9Data)
+			{
+				add_find_class(reader, emm_provid, nanoA9Data + 2, nanoA9Data[1], 1);
+				rdr_log(reader, "Your subscription data was updated.");
+			} 
 			rc = 1; // written
 		}
 		else
