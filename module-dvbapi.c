@@ -2591,7 +2591,7 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 		int32_t descriptor_ca_system_id = b2i(2, buffer + j + 2);
 		int32_t descriptor_ca_pid = b2i(2, buffer + j + 4)&0x1FFF;
 		int32_t descriptor_ca_provider = 0;
-		char txt[(2*8) + 1 + 10 + 1 + 10]; // PBM: room for 8 byte pbm and DATE: date
+		char txt[40]; // room for PBM: 8 byte pbm and DATE: date
 		memset(txt, 0x00, sizeof(txt));
 
 		if(descriptor_ca_system_id >> 8 == 0x01)
@@ -2605,7 +2605,7 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 				int8_t day = buffer[j + u + 16]&0x1F;
 				snprintf(txt, sizeof(txt), "PBM: "); 
 				cs_hexdump(0, buffer + j + u + 7, 8, txt+5, (2*8)+1); // hexdump 8 byte pbm
-				snprintf(txt+20, sizeof(txt)-16, " DATE: %d-%d-%d", day, month, year+1990); 
+				snprintf(txt+20, sizeof(txt)-20, " DATE: %d-%d-%d", day, month, year+1990); 
 				dvbapi_add_ecmpid(demux_id, descriptor_ca_system_id, descriptor_ca_pid, descriptor_ca_provider, txt);
 			}
 		}
