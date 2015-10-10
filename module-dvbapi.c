@@ -1313,7 +1313,7 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 	cs_log_dbg(D_DVBAPI, "Demuxer %d handles %i emm filters", demux_index, demux[demux_index].emm_filter);
 }
 
-void dvbapi_add_ecmpid_int(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_t provid) 
+void dvbapi_add_ecmpid_int(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_t provid, char *txt) 
 {
 	int32_t n, added = 0;
 	
@@ -1358,15 +1358,15 @@ void dvbapi_add_ecmpid_int(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uin
 	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].irdeto_cycle = 0xFE; // reset
 	demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].table = 0;
 
-	cs_log("Demuxer %d ecmpid %d CAID: %04X ECM_PID: %04X PROVID: %06X", demux_id, demux[demux_id].ECMpidcount, caid, ecmpid, provid);
+	cs_log("Demuxer %d ecmpid %d CAID: %04X ECM_PID: %04X PROVID: %06X %s", demux_id, demux[demux_id].ECMpidcount, caid, ecmpid, provid, txt);
 	if(caid_is_irdeto(caid)) { demux[demux_id].emmstart.time = 1; }  // marker to fetch emms early irdeto needs them!
 
 	demux[demux_id].ECMpidcount++;
 }
 
-void dvbapi_add_ecmpid(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_t provid)
+void dvbapi_add_ecmpid(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_t provid, char *txt)
 {
-	dvbapi_add_ecmpid_int(demux_id, caid, ecmpid, provid);
+	dvbapi_add_ecmpid_int(demux_id, caid, ecmpid, provid, txt);
 	struct s_dvbapi_priority *joinentry;
 
 	for(joinentry = dvbapi_priority; joinentry != NULL; joinentry = joinentry->next)
@@ -1379,7 +1379,7 @@ void dvbapi_add_ecmpid(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uint32_
 			{ continue; }
 		cs_log_dbg(D_DVBAPI, "Join ecmpid %04X@%06X:%04X to %04X@%06X:%04X",
 					  caid, provid, ecmpid, joinentry->mapcaid, joinentry->mapprovid, joinentry->mapecmpid);
-		dvbapi_add_ecmpid_int(demux_id, joinentry->mapcaid, joinentry->mapecmpid, joinentry->mapprovid);
+		dvbapi_add_ecmpid_int(demux_id, joinentry->mapcaid, joinentry->mapecmpid, joinentry->mapprovid, txt);
 	}
 }
 
@@ -2591,6 +2591,8 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 		int32_t descriptor_ca_system_id = b2i(2, buffer + j + 2);
 		int32_t descriptor_ca_pid = b2i(2, buffer + j + 4)&0x1FFF;
 		int32_t descriptor_ca_provider = 0;
+		char txt[(2*8) + 1 + 10 + 1 + 10]; // PBM: room for 8 byte pbm and DATE: date
+		memset(txt, 0x00, sizeof(txt));
 
 		if(descriptor_ca_system_id >> 8 == 0x01)
 		{
@@ -2598,7 +2600,13 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 			{
 				descriptor_ca_pid = b2i(2, buffer + j + u + 2)&0x1FFF;
 				descriptor_ca_provider = b2i(2, buffer + j + u + 4);
-				dvbapi_add_ecmpid(demux_id, descriptor_ca_system_id, descriptor_ca_pid, descriptor_ca_provider);
+				int8_t year = buffer[j + u + 15] >> 1;
+				int8_t month = (((buffer[j + u + 15]&0x01) << 3) | (buffer[j + u + 16] >> 5));
+				int8_t day = buffer[j + u + 16]&0x1F;
+				snprintf(txt, sizeof(txt), "PBM: "); 
+				cs_hexdump(0, buffer + j + u + 7, 8, txt+5, (2*8)+1); // hexdump 8 byte pbm
+				snprintf(txt+20, sizeof(txt)-16, " DATE: %d-%d-%d", day, month, year+1990); 
+				dvbapi_add_ecmpid(demux_id, descriptor_ca_system_id, descriptor_ca_pid, descriptor_ca_provider, txt);
 			}
 		}
 		else
@@ -2612,7 +2620,7 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 			if(descriptor_ca_system_id >> 8 == 0x4A && descriptor_length == 0x05)
 				{ descriptor_ca_provider = buffer[j + 6]; }
 
-			dvbapi_add_ecmpid(demux_id, descriptor_ca_system_id, descriptor_ca_pid, descriptor_ca_provider);
+			dvbapi_add_ecmpid(demux_id, descriptor_ca_system_id, descriptor_ca_pid, descriptor_ca_provider, txt);
 			
 		}
 	}
@@ -2965,7 +2973,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 					{ continue; }
 				cs_log_dbg(D_DVBAPI, "Demuxer %d fake ecmpid %04X@%06X:%04x for unencrypted stream on srvid %04X", demux_id, addentry->mapcaid, addentry->mapprovid,
 					addentry->mapecmpid, demux[demux_id].program_number);
-				dvbapi_add_ecmpid(demux_id, addentry->mapcaid, addentry->mapecmpid, addentry->mapprovid);
+				dvbapi_add_ecmpid(demux_id, addentry->mapcaid, addentry->mapecmpid, addentry->mapprovid, " (fake ecmpid)");
 				break;
 			}
 		}
