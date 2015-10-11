@@ -16,6 +16,7 @@
 
 const char *entitlement_type[] = { "", "package", "PPV-Event", "chid", "tier", "class", "PBM", "admin" };
 
+static struct timeb last_emm_clean;
 static int8_t cs_emmlen_is_blocked(struct s_reader *rdr, int16_t len)
 {
 	struct s_emmlen_range *blocklen;
@@ -585,13 +586,14 @@ int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	if(reader->cachemm)
 	{
 		MD5(ep->emm, ep->emm[2], md5tmp);
-		count = clean_stale_emm_cache_and_stat(md5tmp, (int64_t)1000*60*60*24*30); // clean after 30 days emm is last seen!
-		if(count)
+		int64_t gone = comp_timeb(&tps, &last_emm_clean);
+		if(gone > (int64_t)1000*60*60*24*30 || gone < 0) // dont run every time, only on first emm oscam is started and then every 30 days
 		{
+			last_emm_clean = tps;
+			count = clean_stale_emm_cache_and_stat(md5tmp, (int64_t)1000*60*60*24*30); // clean global all emms from all readers after 30 days emm is last seen!
 			cs_log_dbg(D_EMM, "Cleaned %d emm stale stats and cache entries", count);
 		}
-	
-	
+		
 		struct s_emmcache *emmcache = find_emm_cache(md5tmp); // check emm cache
 		if(!emmcache)
 		{
