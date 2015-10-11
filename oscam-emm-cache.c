@@ -409,7 +409,7 @@ int32_t clean_stale_emm_cache_and_stat(uchar *emmd5, int64_t gone)
 			LL_ITER rdr_itr = ll_iter_create(configured_readers);
 			while((rdr = ll_iter_next(&rdr_itr)))
 			{
-				if(rdr->emmstat)
+				if(rdr->emmstat && !caid_is_irdeto(rdr->caid))
 				{
 					remove_emm_stat(rdr, c->emmd5); // clean stale entry from stats
 					count++;

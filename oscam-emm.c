@@ -522,8 +522,8 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 		ep->client = client;
 
 		int32_t writeemm = 1; // 0= dont write emm, 1=write emm, default = write
-
-		if(aureader->cachemm) //Check emmcache early:
+		
+		if(aureader->cachemm && !caid_is_irdeto(caid)) //Check emmcache early:
 		{
 			unsigned char md5tmp[MD5_DIGEST_LENGTH];
 
@@ -582,8 +582,8 @@ int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	struct timeb tps;
 
 	cs_ftime(&tps);
-
-	if(reader->cachemm)
+	uint16_t caid = b2i(2, ep->caid);
+	if(reader->cachemm && !caid_is_irdeto(caid))
 	{
 		MD5(ep->emm, ep->emm[2], md5tmp);
 		int64_t gone = comp_timeb(&tps, &last_emm_clean);
