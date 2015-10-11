@@ -174,11 +174,14 @@ static int8_t add_find_class(struct s_reader *reader, uint32_t provid, const uch
 				if(cs_add_entitlement(reader, reader->caid, provid, cls, cls, 0, 0, 5, 0) == NULL && !add)
 				{
 					rdr_log(reader, "provid %06X class %02X not found!", provid, cls);
-					return 0; // class not found!
+					return -1; // class not found!
 				}
 				else
 				{
-					rdr_log(reader, "provid %06X has matching class %02X", provid, cls);
+					if(!add)
+					{
+						rdr_log(reader, "provid %06X has matching class %02X", provid, cls);
+					}
 					struct via_date vd;
 					parse_via_date(b - 4, &vd, 1);
 					time_t start_t, end_t;
@@ -201,7 +204,7 @@ static int8_t add_find_class(struct s_reader *reader, uint32_t provid, const uch
 						{
 							rdr_log(reader, "class %02X provid %06X has already this daterange or newer entitled -> SKIP!", cls, provid);
 						}
-						return 0; // skip due to date
+						return -2; // skip due to date
 					}
 				}
 			}
@@ -1739,9 +1742,18 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 					rdr_log(reader, "no provid in shared emm -> skipped!");
 					return SKIPPED;
 				}
-				if(!add_find_class(reader, emm_provid, emmParsed + 2, emmParsed[1], 0))
+				
+				int8_t match = add_find_class(reader, emm_provid, emmParsed + 2, emmParsed[1], 0);
+				
+				if(match == -1)
 				{
-					rdr_log(reader, "shared emm provid %06X class mismatch or same enddate -> skipped!", emm_provid);
+					rdr_log(reader, "shared emm provid %06X class mismatch -> skipped!", emm_provid);
+					return SKIPPED;
+				}
+				
+				if(match == -2)
+				{
+					rdr_log(reader, "shared emm provid %06X class %d entitlementdate already same or newer -> skipped!", emm_provid, emmParsed[1]);
 					return SKIPPED;
 				}
 				nanoA9Data = emmParsed;
