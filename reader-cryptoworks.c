@@ -618,55 +618,58 @@ static int32_t cryptoworks_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	uchar insEMM_GA[] = {0xA4, 0x44, 0x00, 0x00, 0x00};
 	uchar insEMM_SA[] = {0xA4, 0x48, 0x00, 0x00, 0x00};
 	uchar insEMM_UA[] = {0xA4, 0x42, 0x00, 0x00, 0x00};
-	int32_t rc = 0;
 	uchar *emm = ep->emm;
 
 	if(emm[0] == 0x8f && emm[3] == 0xA4)
 	{
 		//camd3 emm
 		write_cmd(emm + 3, emm + 3 + CMD_LEN);
-		rc = ((cta_res[0] == 0x90) && (cta_res[1] == 0x00));
-		return (rc);
 	}
-
-	switch(ep->type)
+	else
 	{
-		//GA
-	case GLOBAL:
-		insEMM_GA[4] = ep->emm[2] - 2;
-		if(emm[7] == insEMM_GA[4] - 3)
+		switch(ep->type)
 		{
-			write_cmd(insEMM_GA, emm + 5);
-			rc = ((cta_res[0] == 0x90) && (cta_res[1] == 0x00));
-		}
-		break;
+			//GA
+		case GLOBAL:
+			insEMM_GA[4] = ep->emm[2] - 2;
+			if(emm[7] == insEMM_GA[4] - 3)
+			{
+				write_cmd(insEMM_GA, emm + 5);
+			}
+			break;
 
-		//SA
-	case SHARED:
-		insEMM_SA[4] = ep->emm[2] - 6;
-		if(emm[11] == insEMM_SA[4] - 3)
-		{
-			write_cmd(insEMM_SA, emm + 9);
-			rc = ((cta_res[0] == 0x90) && (cta_res[1] == 0x00));
-		}
-		break;
+			//SA
+		case SHARED:
+			insEMM_SA[4] = ep->emm[2] - 6;
+			if(emm[11] == insEMM_SA[4] - 3)
+			{
+				write_cmd(insEMM_SA, emm + 9);
+			}
+			break;
 
 		//UA
-	case UNIQUE:
-		insEMM_UA[4] = ep->emm[2] - 7;
-		if(emm[12] == insEMM_UA[4] - 3)
-		{
-			//cryptoworks_send_pin(); //?? may be
-			write_cmd(insEMM_UA, emm + 10);
-			rc = ((cta_res[0] == 0x90) && (cta_res[1] == 0x00));
+		case UNIQUE:
+			insEMM_UA[4] = ep->emm[2] - 7;
+			if(emm[12] == insEMM_UA[4] - 3)
+			{
+				//cryptoworks_send_pin(); //?? may be
+				write_cmd(insEMM_UA, emm + 10);
+			}
+			break;
 		}
-		break;
 	}
 
-	if(!rc)
-		{ rdr_log_dbg(reader, D_EMM, "%s(): type %d - %02X %02X", __func__, ep->type, cta_res[0], cta_res[1]); }
-
-	return (rc);
+	if((cta_res[0] == 0x90) && (cta_res[1] == 0x00))
+	{
+		return OK;
+	}
+	if((cta_res[0] == 0x94) && (cta_res[1] == 0x04)) // emm already written before, entitlement / key is already up to date -> skipped
+	{
+		return SKIPPED;
+	}
+	
+	rdr_log_dbg(reader, D_EMM, "%s(): type %d - response %02X %02X", __func__, ep->type, cta_res[0], cta_res[1]);
+	return ERROR;
 }
 
 static int32_t cryptoworks_card_info(struct s_reader *reader)
