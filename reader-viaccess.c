@@ -1753,7 +1753,7 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 				
 				if(match == -2)
 				{
-					rdr_log(reader, "shared emm provid %06X class %d entitlementdate already same or newer -> skipped!", emm_provid, emmParsed[1]);
+					rdr_log(reader, "shared emm provid %06X class entitlementdate already same or newer -> skipped!", emm_provid);
 					return SKIPPED;
 				}
 				nanoA9Data = emmParsed;
