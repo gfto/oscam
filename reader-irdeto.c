@@ -1066,7 +1066,7 @@ static int32_t irdeto_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 				}
 				return ERROR; // all other 
 			}
-			else
+			else // non acs57 based cards
 			{
 				const int32_t dataLen = SCT_LEN(emm) - 5 - l;       // sizeof of emm bytes (nanos)
 				if(dataLen < 1 || dataLen > (int32_t)sizeof(ep->emm) - 5 - l || dataLen > (int32_t)sizeof(cta_cmd) - (int32_t)sizeof(sc_EmmCmd) - ADDRLEN)
@@ -1086,13 +1086,13 @@ static int32_t irdeto_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 				memcpy(ptr, &emm[2], dataLen);                  // copy emm bytes]
 				irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr);
 				rdr_log_dbg(reader, D_EMM,"response %02X %02X %02X %02X %02X (%s)", cta_res[0], cta_res[1], cta_res[2], cta_res[3], cta_res[4],
-					((cta_res[2] == 0 || cta_res[2] == 0x7B || cta_res[2] == 0x7C) ? "OK" : "ERROR"));
+					((cta_res[3] == 0 || cta_res[3] == 0x7B || cta_res[3] == 0x7C) ? "OK" : "ERROR"));
 				
-				if(cta_res[2] == 0x7B || cta_res[2] == 0x7C) // chid already written or chid already up to date
+				if(cta_res[3] == 0x7B || cta_res[3] == 0x7C) // chid already written or chid already up to date
 				{
 					return SKIPPED;
 				}
-				if(cta_res[2] == 0x00)
+				if(cta_res[3] == 0x00)
 				{ 
 					return OK;
 				}
