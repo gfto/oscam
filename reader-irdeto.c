@@ -671,12 +671,75 @@ int32_t irdeto_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, struct s_e
 			ret = (irdeto_do_cmd(reader, cta_cmd, 0x9D00, cta_res, &cta_lr));
 			ret = ret || (cta_lr < 24);
 			if(ret)
-				{ snprintf(ea->msglog, MSGLOGSIZE, "%s irdeto_do_cmd [%d] %02x %02x", reader->label, cta_lr, cta_res[cta_lr - 2], cta_res[cta_lr - 1]); }
+			{
+				switch(cta_res[cta_lr - 2])
+				{
+					case 0x26: // valid for V6 and V7 cards *26 rare case card gets locked if bad EMM being written
+					{
+						snprintf(ea->msglog, MSGLOGSIZE, "%s cardstatus: LOCKED", reader->label);
+						return E_CORRUPT;
+					}
+					case 0x27: // valid for V6 and V7 cards Time sync EMMs
+					{
+						snprintf(ea->msglog, MSGLOGSIZE, "%s need global EMMs first", reader->label); 
+						return E_CORRUPT;
+					}
+					case 0x33: // valid for all cards *33 comes in 2 cases Either Card Requires to be init with Dynamic RSA AKA cmd28/A0 or Pairing Enabled
+					{
+						snprintf(ea->msglog, MSGLOGSIZE, "%s dynamic RSA init or pairing enabled", reader->label);
+						return ERROR;
+					}
+					case 0x35: // valid for V6 and V7 cards Time sync EMMs
+					{
+						snprintf(ea->msglog, MSGLOGSIZE, "%s need global EMMs first", reader->label);
+						return E_CORRUPT;
+					}
+					case 0x90: // valid for all cards
+					{
+						snprintf(ea->msglog, MSGLOGSIZE,"%s unsubscribed channel or chid missing", reader->label);
+						return ERROR;
+					}
+					case 0x92: // valid for all cards
+					{
+						snprintf(ea->msglog, MSGLOGSIZE,"%s regional chid missing", reader->label);
+						return ERROR;
+					}
+					case 0x9E: // valid for all cards *9E comes in 2 cases if card not fully updated OR if pairing Enabled
+					{
+						if(cta_res[cta_lr - 1] == 0x65)
+						{
+							snprintf(ea->msglog, MSGLOGSIZE,"%s chipset pairing enabled", reader->label);
+							return ERROR;
+						}
+						else
+						{
+							snprintf(ea->msglog, MSGLOGSIZE,"%s needs EMMs", reader->label);
+							return E_CORRUPT;
+						}
+					}
+					case 0xA0: // valid for all cards
+					{
+						snprintf(ea->msglog, MSGLOGSIZE,"%s surflock enabled", reader->label);
+						return E_CORRUPT;
+					}
+			
+					default: // all other error status
+					{
+						snprintf(ea->msglog, MSGLOGSIZE, "%s irdeto_do_cmd [%d] %02x %02x", reader->label, cta_lr, cta_res[cta_lr - 2], cta_res[cta_lr - 1]);
+						break;
+					}
+				}
+			} 
 			try++;
 		}
 		while((try < 3) && (ret));
 		if(ret)
 			{ return ERROR; }
+	}
+	
+	if(cta_res[5]== 0x36 || cta_res[5]== 0x37 || cta_res[5]== 0x24 || cta_res[5]== 0x25)
+	{
+		snprintf(ea->msglog, MSGLOGSIZE, "cw needs tweaking");
 	}
 	ReverseSessionKeyCrypt(reader->boxkey, cta_res + 6 + acspadd);
 	ReverseSessionKeyCrypt(reader->boxkey, cta_res + 14 + acspadd);
