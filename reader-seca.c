@@ -350,7 +350,7 @@ static int32_t seca_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, struc
 		{
 			write_cmd(ins3a, NULL); //get cw
 			snprintf(ea->msglog, MSGLOGSIZE, "fake 96 00 ecm");
-			return ERROR;
+			return E_CORRUPT;
 		}; //exit if fake 96 00 ecm
 		if(ret)
 		{
