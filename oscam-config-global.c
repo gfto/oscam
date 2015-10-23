@@ -255,7 +255,7 @@ void global_fixups_fn(void *UNUSED(var))
 {
 	if(!cfg.usrfile) { cfg.disableuserfile = 1; }
 	if(!cfg.mailfile) { cfg.disablemail = 1; }
-	if(cfg.ctimeout < 10) { cfg.ctimeout = cfg.ctimeout * 100; } // save always in ms
+	if(cfg.ctimeout < 10) { cfg.ctimeout = cfg.ctimeout * 1000; } // save always in ms
 
 	if(cfg.nice < -20 || cfg.nice > 20) { cfg.nice = 99; }
 	if(cfg.nice != 99)
