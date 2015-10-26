@@ -1586,6 +1586,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 					if(action == REMOVED_DECODING_STREAMPID_INDEX)
 					{
 						newidx = is_ca_used(i, demux[demux_id].STREAMpids[num]); // get an active index for this pid and enable it on ca device
+						idx = -1;
 					}
 
 					while (idx !=0xFF || newidx !=0xFF)
