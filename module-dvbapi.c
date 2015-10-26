@@ -1545,7 +1545,7 @@ int32_t dvbapi_get_descindex(int32_t demux_index)
 
 void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 {
-	int32_t i, currentfd;
+	int32_t i, currentfd, newidx = 0xFF;
 	if(demux[demux_id].pidindex == -1 && enable) return; // no current pid on enable? --> exit
 
 	switch(selected_api)
@@ -1585,38 +1585,51 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 					// removed index of streampid that is used to decode on ca -> get a fresh one
 					if(action == REMOVED_DECODING_STREAMPID_INDEX)
 					{
-						idx = is_ca_used(i, demux[demux_id].STREAMpids[num]); // get an active index for this pid and enable it on ca device
-						enable = 1;
+						newidx = is_ca_used(i, demux[demux_id].STREAMpids[num]); // get an active index for this pid and enable it on ca device
 					}
 
-					ca_pid2.index = idx;
-					cs_log_dbg(D_DVBAPI, "Demuxer %d %s stream %d pid=0x%04x index=%d on ca%d", demux_id,
-						(enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i);
-
-					if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-						dvbapi_net_send(DVBAPI_CA_SET_PID, demux[demux_id].socket_fd, demux_id, -1 /*unused*/, (unsigned char *) &ca_pid2, NULL, NULL);
-					else
+					while (idx !=0xFF || newidx !=0xFF)
 					{
-						currentfd = ca_fd[i];
-						if(currentfd <= 0)
+						if(idx !=0xFF)
 						{
-							currentfd = dvbapi_open_device(1, i, demux[demux_id].adapter_index);
-							ca_fd[i] = currentfd; // save fd of this ca
+							ca_pid2.index = idx;
+							cs_log_dbg(D_DVBAPI, "Demuxer %d %s stream %d pid=0x%04x index=%d on ca%d", demux_id,
+								(enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i);
+							idx = 0xFF; // flag this index as handled
 						}
-						if(currentfd > 0)
+						else if (newidx !=0xFF)
 						{
-							if(dvbapi_ioctl(currentfd, CA_SET_PID, &ca_pid2) == -1)
+							ca_pid2.index = newidx;
+							cs_log_dbg(D_DVBAPI, "Demuxer %d takeover stream %d pid=0x%04x by index=%d on ca%d", demux_id, num + 1,
+								ca_pid2.pid, ca_pid2.index, i);
+							newidx = 0xFF; // flag this takeover / new index as handled
+						}
+
+						if(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
+							dvbapi_net_send(DVBAPI_CA_SET_PID, demux[demux_id].socket_fd, demux_id, -1 /*unused*/, (unsigned char *) &ca_pid2, NULL, NULL);
+						else
+						{
+							currentfd = ca_fd[i];
+							if(currentfd <= 0)
 							{
-								cs_log_dbg(D_TRACE | D_DVBAPI,"CA_SET_PID ioctl error (errno=%d %s)", errno, strerror(errno));
-								remove_streampid_from_list(i, ca_pid2.pid, ca_pid2.index);
+								currentfd = dvbapi_open_device(1, i, demux[demux_id].adapter_index);
+								ca_fd[i] = currentfd; // save fd of this ca
 							}
-							int8_t result = is_ca_used(i,0); // check if in use by any pid
-							if(result == CA_IS_CLEAR)
+							if(currentfd > 0)
 							{
-								cs_log_dbg(D_DVBAPI, "Demuxer %d close now unused CA%d device", demux_id, i);
-								int32_t ret = close(currentfd);
-								if(ret < 0) { cs_log("ERROR: Could not close demuxer fd (errno=%d %s)", errno, strerror(errno)); }
-								currentfd = ca_fd[i] = 0;
+								if(dvbapi_ioctl(currentfd, CA_SET_PID, &ca_pid2) == -1)
+								{
+									cs_log_dbg(D_TRACE | D_DVBAPI,"CA_SET_PID ioctl error (errno=%d %s)", errno, strerror(errno));
+									remove_streampid_from_list(i, ca_pid2.pid, ca_pid2.index);
+								}
+								int8_t result = is_ca_used(i,0); // check if in use by any pid
+								if(result == CA_IS_CLEAR)
+								{
+									cs_log_dbg(D_DVBAPI, "Demuxer %d close now unused CA%d device", demux_id, i);
+									int32_t ret = close(currentfd);
+									if(ret < 0) { cs_log("ERROR: Could not close demuxer fd (errno=%d %s)", errno, strerror(errno)); }
+									currentfd = ca_fd[i] = 0;
+								}
 							}
 						}
 					}
