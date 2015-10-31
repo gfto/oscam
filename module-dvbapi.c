@@ -4797,17 +4797,22 @@ static void *dvbapi_main_local(void *cli)
 					if (connfd > 0) {
 						uint32_t pmtlen = 0, chunks_processed = 0;
 
-						int tries = 100;
+						int8_t tries = 1;
 						do {
+							if(tries > 1)
+							{
+								cs_sleepms(50);
+							}
+							cs_log_dbg(D_DVBAPI, "%s to read from connection fd %d try %d", ((chunks_processed == 0 && pmtlen == 0) ? "Trying":"Continue"), connfd , tries);
 							len = cs_recv(connfd, mbuf + pmtlen, sizeof(mbuf) - pmtlen, MSG_DONTWAIT);
 							if (len > 0)
 								pmtlen += len;
-							if ((cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) &&
-								(len == 0 || (len == -1 && (errno != EINTR && errno != EAGAIN))))
+							if (len == -1 && (errno != EINTR && errno != EAGAIN))
 							{
 								//client disconnects, stop all assigned decoding
 								cs_log_dbg(D_DVBAPI, "Socket %d reported connection close", connfd);
 								int active_conn = 0; //other active connections counter
+								
 								for (j = 0; j < MAX_DEMUX; j++)
 								{
 									if (demux[j].socket_fd == connfd)
@@ -4821,7 +4826,7 @@ static void *dvbapi_main_local(void *cli)
 								close(connfd);
 								connfd = -1;
 								add_to_poll = 0;
-								if (!active_conn) //last connection closed
+								if (!active_conn && (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)) //last connection closed
 								{
 									client_proto_version = 0;
 									if (client_name)
@@ -4893,6 +4898,7 @@ static void *dvbapi_main_local(void *cli)
 								if (chunksize < sizeof(mbuf) && chunksize <= pmtlen) // only handle if we fetched a complete chunksize!
 								{
 									chunks_processed++;
+									tries = 1;
 									if ((opcode & 0xFFFFF000) == DVBAPI_AOT_CA)
 									{
 										cs_log_dump_dbg(D_DVBAPI, mbuf, chunksize, "Parsing PMT object %d:", chunks_processed);
@@ -4943,21 +4949,14 @@ static void *dvbapi_main_local(void *cli)
 									continue;
 								}
 							}
-							if (len <= 0) {
-								if (pmtlen > 0 || chunks_processed > 0) //all data read
-									break;
-								else {          //wait for data become available and try again
-
-									// remove from unassoc_fd if the socket fd is invalid
-									if (errno == EBADF)
-										for (j = 0; j < MAX_DEMUX; j++)
-											if (unassoc_fd[j] == connfd)
-												unassoc_fd[j] = 0;
-									cs_sleepms(20);
-									continue;
-								}
+							//cs_log_dbg(D_DVBAPI, "len = %d, pmtlen = %d, chunks_processed = %d", len, pmtlen, chunks_processed);
+							if(len == -1 && pmtlen == 0 && chunks_processed > 0) // did we receive and process complete pmt already? 
+							{
+								cs_log_dbg(D_DVBAPI, "Seems we received and parsed all PMT objects!");
+								break;
 							}
-						} while (pmtlen < sizeof(mbuf) && tries--);
+							tries++;
+						} while (pmtlen < sizeof(mbuf) && tries < 10); //wait for data become available and try again
 
 						// if the connection is new and we read no PMT data, then add it to the poll,
 						// otherwise this socket will not be checked with poll when data arives
