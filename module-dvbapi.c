@@ -800,10 +800,10 @@ static int32_t dvbapi_detect_api(void)
 		cfg.dvbapi_listenport = 0;
 	}
 	
-	int32_t i = 0, n = 0, devnum = -1, dmx_fd = 0, ret = 0, boxnum = sizeof(devices) / sizeof(struct box_devices);
+	int32_t i = 0, n = 0, devnum = -1, dmx_fd = 0, ret = 0;
 	char device_path[128], device_path2[128];
 
-	while (i < boxnum)
+	while (i < BOX_COUNT)
 	{
 		snprintf(device_path2, sizeof(device_path2), devices[i].demux_device, 0);
 		snprintf(device_path, sizeof(device_path), devices[i].path, n);
@@ -997,76 +997,99 @@ uint16_t tunemm_caid_map(uint8_t direct, uint16_t caid, uint16_t srvid)
 
 int32_t dvbapi_stop_filter(int32_t demux_index, int32_t type)
 {
-	int32_t g, ret = -1;
+	int32_t g, error = 0;
 
 	for(g = 0; g < MAX_FILTER; g++) // just stop them all, we dont want to risk leaving any stale filters running due to lowering of maxfilters
 	{
 		if(demux[demux_index].demux_fd[g].type == type)
 		{
-			ret = dvbapi_stop_filternum(demux_index, g);
+			if(dvbapi_stop_filternum(demux_index, g) == -1)
+			{ 
+				error = 1;
+			}  
 		}
 	}
-	if(ret == -1) { return 0; }  // on error return 0
-	else { return 1; }
+	return !error; // on error return 0, all ok 1
 }
 
 int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 {
-	int32_t retfilter = -1, retfd = -1, fd = demux[demux_index].demux_fd[num].fd;
+	int32_t retfilter = -1, retfd = -1, fd = demux[demux_index].demux_fd[num].fd, try = 0;
 	if(fd > 0)
 	{
-		cs_log_dbg(D_DVBAPI, "Demuxer %d stop Filter %d (fd: %d api: %d, caid: %04X, provid: %06X, %spid: %04X)",
-					  demux_index, num + 1, fd, selected_api, demux[demux_index].demux_fd[num].caid, demux[demux_index].demux_fd[num].provid,
-					  (demux[demux_index].demux_fd[num].type == TYPE_ECM ? "ecm" : "emm"), demux[demux_index].demux_fd[num].pid);
-
-		switch(selected_api)
+		do
 		{
-		case DVBAPI_3:
-			if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
-				retfilter = dvbapi_net_send(DVBAPI_DMX_STOP, demux[demux_index].socket_fd, demux_index, num, NULL, NULL, NULL);
-			else
-				retfilter = dvbapi_ioctl(fd, DMX_STOP, NULL);
-			break;
+			if(try)
+			{
+				cs_sleepms(50);
+			}
+			try++;
+			cs_log_dbg(D_DVBAPI, "Demuxer %d stop filter %d try %d (fd: %d api: %d, caid: %04X, provid: %06X, %spid: %04X)", demux_index, num + 1, try,
+						fd, selected_api, demux[demux_index].demux_fd[num].caid, demux[demux_index].demux_fd[num].provid,
+						(demux[demux_index].demux_fd[num].type == TYPE_ECM ? "ecm" : "emm"), demux[demux_index].demux_fd[num].pid);
 
-		case DVBAPI_1:
-			retfilter = dvbapi_ioctl(fd, DMX_STOP, NULL);
-			break;
+			switch(selected_api)
+			{
+			case DVBAPI_3:
+				if (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)
+					retfilter = dvbapi_net_send(DVBAPI_DMX_STOP, demux[demux_index].socket_fd, demux_index, num, NULL, NULL, NULL);
+				else
+					retfilter = dvbapi_ioctl(fd, DMX_STOP, NULL);
+				break;
+
+			case DVBAPI_1:
+				retfilter = dvbapi_ioctl(fd, DMX_STOP, NULL);
+				break;
 
 #if defined(WITH_STAPI) || defined(WITH_STAPI5)
-		case STAPI:
-			retfilter = stapi_remove_filter(demux_index, num, demux[demux_index].pmt_file);
-			if(retfilter != 1)   // stapi returns 0 for error, 1 for all ok
-			{
-				retfilter = -1;
-			}
-			break;
+			case STAPI:
+				retfilter = stapi_remove_filter(demux_index, num, demux[demux_index].pmt_file);
+				if(retfilter != 1)   // stapi returns 0 for error, 1 for all ok
+				{
+					retfilter = -1;
+				}
+				break;
 #endif
 #if defined WITH_COOLAPI || defined WITH_COOLAPI2
-		case COOLAPI:
-			retfilter = coolapi_remove_filter(fd, num);
-			retfd = coolapi_close_device(fd);
-			break;
+			case COOLAPI:
+				retfilter = coolapi_remove_filter(fd, num);
+				if(retfilter >=0 )
+				{
+					retfd = coolapi_close_device(fd);
+				}
+				break;
 #endif
-		default:
-			break;
-		}
+			default:
+				break;
+			}
+		} while (retfilter < 0 && try < 10);
 		
 #if !defined WITH_COOLAPI && !defined WITH_COOLAPI2 // no fd close for coolapi and stapi, all others do close fd!
-		if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
+		try = 0;
+		do
 		{
-			if(selected_api == STAPI)
-			{ 
-				retfd = 0;	// stapi closes its own filter fd!
-			}  
-			else
+			if(try)
 			{
-				flush_read_fd(demux_index, num, fd); // flush filter input buffer in attempt to avoid overflow receivers internal buffer
-				retfd = close(fd);
-				if(errno == 9) { retfd = 0; }  // no error on bad file descriptor
+				cs_sleepms(50);
 			}
-		}
-		else
-			retfd = 0;
+			try++;
+			if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
+			{
+				if(selected_api == STAPI)
+				{ 
+					retfd = 0;	// stapi closes its own filter fd!
+				}  
+				else
+				{
+					flush_read_fd(demux_index, num, fd); // flush filter input buffer in attempt to avoid overflow receivers internal buffer
+					retfd = close(fd);
+					if(errno == 9) { retfd = 0; }  // no error on bad file descriptor
+				}
+			}
+			else
+				retfd = 0;
+			
+		} while (retfd < 0 && try < 10);
 #endif
 	}
 	else // fd <=0
@@ -1083,7 +1106,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 	if(retfd < 0) // error on close filter fd
 	{ 
 		cs_log("ERROR: Demuxer %d could not close fd of Filter %d (fd=%d api:%d errno=%d %s)", demux_index, num + 1, fd,
-			   selected_api, errno, strerror(errno));
+			selected_api, errno, strerror(errno));
 		return retfd;
 	}
 	
