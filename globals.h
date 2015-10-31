@@ -1116,7 +1116,7 @@ struct emm_rass
 {
 	int16_t         emmlen;
 	int32_t			provid;
-	uint8_t         emm[512];
+	uint8_t         emm[MAX_EMM_SIZE];
 };
 
 struct s_client
