@@ -345,7 +345,7 @@ static int32_t griffin_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)
 static int32_t griffin_do_emm(struct s_reader *rdr, EMM_PACKET *ep)
 {
 	def_resp
-	griffin_cmd(GRIFFIN_CMD_SEND_EMM, ep->emm, ep->emm[2] + 3, 2);
+	griffin_cmd(GRIFFIN_CMD_SEND_EMM, ep->emm, SCT_LEN(ep->emm), 2);
 	return OK;
 }
 

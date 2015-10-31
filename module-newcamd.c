@@ -1140,7 +1140,7 @@ static void newcamd_process_emm(uchar *buf, int32_t len)
 	
 	memset(&epg, 0, sizeof(epg));
 
-	epg.emmlen = buf[2] + 3;
+	epg.emmlen = SCT_LEN(buf);
 	if(epg.emmlen > MAX_EMM_SIZE || epg.emmlen > len)
 		{ return; }
 	

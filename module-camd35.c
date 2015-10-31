@@ -516,7 +516,7 @@ static void camd35_process_emm(uchar *buf, int buflen, int emmlen)
 		{ return; }
 	memset(&epg, 0, sizeof(epg));
 	epg.emmlen = emmlen;
-	if(epg.emmlen < 0 || epg.emmlen > MAX_EMM_SIZE)
+	if(epg.emmlen < 3 || epg.emmlen > MAX_EMM_SIZE)
 		{ return; }
 	memcpy(epg.caid, buf + 10, 2);
 	memcpy(epg.provid, buf + 12 , 4);

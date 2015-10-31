@@ -450,7 +450,7 @@ int32_t emm_edit_cache(uchar *emmd5, EMM_PACKET *ep, bool add)
 			{ return count; }
 		memcpy(c->emmd5, emmd5, MD5_DIGEST_LENGTH);
 		c->type = ep->type;
-		c->len = ep->emm[2];
+		c->len = SCT_LEN(ep->emm);
 		cs_ftime(&c->firstseen);
 		c->lastseen = c->firstseen;
 		memcpy(c->emm, ep->emm, c->len);

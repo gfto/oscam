@@ -178,7 +178,7 @@ static int32_t tongfang_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	def_resp;
 	int32_t write_len;
 
-	if(ep->emm[2] < 5) { return ERROR; }
+	if(SCT_LEN(ep->emm) < 8) { return ERROR; }
 
 	write_len = ep->emm[15] + 5;
 	memcpy(emm_cmd, ep->emm + 11, write_len);

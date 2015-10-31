@@ -118,7 +118,7 @@ static void reader_log_emm(struct s_reader *reader, EMM_PACKET *ep, int32_t coun
 			{ tps = &tpe; }
 
 		rdr_log(reader, "%s emmtype=%s, len=%d (hex: 0x%02X), cnt=%d: %s (%"PRId64" ms)",
-				username(ep->client), typedesc[ep->type], ep->emm[2], ep->emm[2], count, rtxt[rc], comp_timeb(&tpe, tps));
+				username(ep->client), typedesc[ep->type], SCT_LEN(ep->emm)-3, SCT_LEN(ep->emm)-3, count, rtxt[rc], comp_timeb(&tpe, tps));
 	}
 
 	if(rc)
@@ -274,7 +274,7 @@ static void saveemm(struct s_reader *aureader, EMM_PACKET *ep, const char *proce
 	{
 		time(&rawtime);
 		localtime_r(&rawtime, &timeinfo); // to access LOCAL date/time info
-		int32_t emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
+		int32_t emm_length = SCT_LEN(ep->emm);
 		strftime(buf, sizeof(buf), "%Y/%m/%d %H:%M:%S", &timeinfo);
 		switch(ep->type)
 		{
@@ -298,10 +298,10 @@ static void saveemm(struct s_reader *aureader, EMM_PACKET *ep, const char *proce
 		}
 		else
 		{
-			if(cs_malloc(&tmp2, (emm_length + 3) * 2 + 1))
+			if(cs_malloc(&tmp2, emm_length * 2 + 1))
 			{
 				fprintf(fp_log, "%s   %s   ", buf, cs_hexdump(0, ep->hexserial, 8, tmp, sizeof(tmp)));
-				fprintf(fp_log, "%s   %s\n", cs_hexdump(0, ep->emm, emm_length + 3, tmp2, (emm_length + 3) * 2 + 1), proceded);
+				fprintf(fp_log, "%s   %s\n", cs_hexdump(0, ep->emm, emm_length, tmp2, emm_length * 2 + 1), proceded);
 				NULLFREE(tmp2);
 				rdr_log(aureader, "Successfully added EMM to %s", token_log);
 			}
@@ -318,8 +318,9 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 	bool lastseendone = false;
 
 	struct s_reader *aureader = NULL;
+	uint16_t sct_len;
 	
-	if(ep->emmlen < 0)
+	if(ep->emmlen < 3)
 	{
 		cs_log("EMM size %d invalid, ignored! client %s", ep->emmlen, username(client));
 		return;
@@ -330,6 +331,14 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 		cs_log("EMM size %d > Max EMM size %d, ignored! client %s", ep->emmlen, MAX_EMM_SIZE, username(client));
 		return;
 	}
+		
+	sct_len = SCT_LEN(ep->emm);
+	if(sct_len > ep->emmlen)
+	{
+		cs_log("Real EMM size %d > EMM size %d, ignored! client %s", sct_len, ep->emmlen, username(client));
+		return;	
+	}
+	ep->emmlen = sct_len;
 	
 	cs_log_dump_dbg(D_EMM, ep->emm, ep->emmlen, "emm:");
 
@@ -363,8 +372,8 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 				rdr_log(aureader, "%s emmtype=%s, len=%d (hex: 0x%02X), idx=0, cnt=1: audisabled (0 ms)",
 						client->account->usr,
 						typtext[ep->type],
-						ep->emm[2],
-						ep->emm[2]);
+						SCT_LEN(ep->emm)-3,
+						SCT_LEN(ep->emm)-3);
 			}
 			continue;
 		}
@@ -488,7 +497,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 		}
 		
 		// if not already blocked we check for block by len
-		if(!is_blocked) { is_blocked = cs_emmlen_is_blocked(aureader, ep->emm[2]) ; }
+		if(!is_blocked) { is_blocked = cs_emmlen_is_blocked(aureader, SCT_LEN(ep->emm)-3) ; }
 
 		if(is_blocked != 0)
 		{
@@ -504,8 +513,8 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 				rdr_log(aureader, "%s emmtype=%s, len=%d (hex: 0x%02X), idx=0, cnt=%d: blocked (0 ms)",
 						client->account->usr,
 						typtext[ep->type],
-						ep->emm[2],
-						ep->emm[2],
+						SCT_LEN(ep->emm)-3,
+						SCT_LEN(ep->emm)-3,
 						is_blocked);
 			}
 			saveemm(aureader, ep, "blocked");
@@ -527,7 +536,7 @@ void do_emm(struct s_client *client, EMM_PACKET *ep)
 		{
 			unsigned char md5tmp[MD5_DIGEST_LENGTH];
 
-			MD5(ep->emm, ep->emm[2], md5tmp);
+			MD5(ep->emm, SCT_LEN(ep->emm), md5tmp);
 		
 			struct s_emmcache *emmcache = find_emm_cache(md5tmp); // check emm cache
 			if(emmcache && !lastseendone)
@@ -585,7 +594,7 @@ int32_t reader_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 	uint16_t caid = b2i(2, ep->caid);
 	if(reader->cachemm && !caid_is_irdeto(caid))
 	{
-		MD5(ep->emm, ep->emm[2], md5tmp);
+		MD5(ep->emm, SCT_LEN(ep->emm), md5tmp);
 		int64_t gone = comp_timeb(&tps, &last_emm_clean);
 		if(gone > (int64_t)1000*60*60*24*30 || gone < 0) // dont run every time, only on first emm oscam is started and then every 30 days
 		{
@@ -700,7 +709,7 @@ void do_emm_from_file(struct s_reader *reader)
 	eptmp->caid[1] = reader->caid & 0xFF;
 	if(reader->nprov > 0)
 		{ memcpy(eptmp->provid, reader->prid[0], sizeof(eptmp->provid)); }
-	eptmp->emmlen = eptmp->emm[2] + 3;
+	eptmp->emmlen = SCT_LEN(eptmp->emm);
 }
 	const struct s_cardsystem *csystem = get_cardsystem_by_caid(reader->caid);
 	if(csystem && csystem->get_emm_type && !csystem->get_emm_type(eptmp, reader))
