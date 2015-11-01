@@ -1568,7 +1568,7 @@ int32_t dvbapi_get_descindex(int32_t demux_index)
 
 void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 {
-	int32_t i, currentfd, newidx = 0xFF;
+	int32_t i, currentfd, newidx = 0, curidx;
 	if(demux[demux_id].pidindex == -1 && enable) return; // no current pid on enable? --> exit
 
 	switch(selected_api)
@@ -1586,14 +1586,15 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 	default:
 		for(i = 0; i < MAX_DEMUX; i++)
 		{
+			newidx = 0xFF, curidx = idx;
 			if(((demux[demux_id].ca_mask & (1 << i)) == (uint) (1 << i)))
 			{	
 				int8_t action = 0;
 				if(enable){
-					action = update_streampid_list(i, demux[demux_id].STREAMpids[num], idx);
+					action = update_streampid_list(i, demux[demux_id].STREAMpids[num], curidx);
 				}
 				if(!enable){
-					action = remove_streampid_from_list(i, demux[demux_id].STREAMpids[num], idx);
+					action = remove_streampid_from_list(i, demux[demux_id].STREAMpids[num], curidx);
 				}
 				
 				if(action != NO_STREAMPID_LISTED && action != FOUND_STREAMPID_INDEX && action != ADDED_STREAMPID_INDEX)
@@ -1603,23 +1604,23 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable)
 					ca_pid2.pid = demux[demux_id].STREAMpids[num];
 					
 					// removed last of this streampid on ca? -> disable this pid with -1 on this ca
-					if((action == REMOVED_STREAMPID_LASTINDEX) && (is_ca_used(i, ca_pid2.pid) == CA_IS_CLEAR)) idx = -1; 
+					if((action == REMOVED_STREAMPID_LASTINDEX) && (is_ca_used(i, ca_pid2.pid) == CA_IS_CLEAR)) curidx = -1; 
 					
 					// removed index of streampid that is used to decode on ca -> get a fresh one
 					if(action == REMOVED_DECODING_STREAMPID_INDEX)
 					{
 						newidx = is_ca_used(i, demux[demux_id].STREAMpids[num]); // get an active index for this pid and enable it on ca device
-						idx = -1;
+						curidx = -1;
 					}
 
-					while (idx !=0xFF || newidx !=0xFF)
+					while (curidx !=0xFF || newidx !=0xFF)
 					{
-						if(idx !=0xFF)
+						if(curidx !=0xFF)
 						{
-							ca_pid2.index = idx;
+							ca_pid2.index = curidx;
 							cs_log_dbg(D_DVBAPI, "Demuxer %d %s stream %d pid=0x%04x index=%d on ca%d", demux_id,
 								(enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i);
-							idx = 0xFF; // flag this index as handled
+							curidx = 0xFF; // flag this index as handled
 						}
 						else if (newidx !=0xFF)
 						{
