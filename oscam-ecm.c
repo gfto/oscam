@@ -67,7 +67,7 @@ void ecm_timeout(ECM_REQUEST *er)
 			{
 				if((ea_list->status & (REQUEST_SENT | REQUEST_ANSWERED)) == REQUEST_SENT)  //Request sent, but no answer!
 				{
-					write_ecm_answer(ea_list->reader, er, E_TIMEOUT, 0, NULL, NULL, 0); //set timeout for readers not answered!
+					write_ecm_answer(ea_list->reader, er, E_TIMEOUT, 0, NULL, NULL, 0, NULL); //set timeout for readers not answered!
 				}
 			}
 
@@ -656,7 +656,7 @@ void distribute_ea(struct s_ecm_answer *ea)
 		cs_log_dbg(D_LB, "{client %s, caid %04X, prid %06X, srvid %04X} [distribute_ea] send ea (%s) by reader %s answering for client %s", (check_client(ea_temp->er->client) ? ea_temp->er->client->account->usr : "-"), ea_temp->er->caid, ea_temp->er->prid, ea_temp->er->srvid, ea->rc==E_FOUND?"OK":"NOK", ea_temp->reader->label, (check_client(ea->er->client) ? ea->er->client->account->usr : "-"));
 
 		//e.g. we cannot send timeout, because "ea_temp->er->client" could wait/ask other readers! Simply set not_found if different from E_FOUND!
-		write_ecm_answer(ea_temp->reader, ea_temp->er, (ea->rc==E_FOUND? E_FOUND : E_NOTFOUND), ea->rcEx, ea->cw, NULL, ea->tier);
+		write_ecm_answer(ea_temp->reader, ea_temp->er, (ea->rc==E_FOUND? E_FOUND : E_NOTFOUND), ea->rcEx, ea->cw, NULL, ea->tier, &ea->cw_ex);
 	}
 }
 
@@ -1328,6 +1328,7 @@ void chk_dcw(struct s_ecm_answer *ea)
 	{
 	case E_FOUND:
 		memcpy(ert->cw, ea->cw, 16);
+		ert->cw_ex = ea->cw_ex;
 		ert->rcEx = 0;
 		ert->rc = ea->rc;
 		ert->grp |= eardr->grp;
@@ -1524,7 +1525,7 @@ static void logCWtoFile(ECM_REQUEST *er, uchar *cw)
 	fclose(pfCWL);
 }
 
-int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, uint8_t rcEx, uint8_t *cw, char *msglog, uint16_t used_cardtier)
+int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, uint8_t rcEx, uint8_t *cw, char *msglog, uint16_t used_cardtier, EXTENDED_CW* cw_ex)
 {
 	if(!reader || !er || !er->tps.time) { return 0; }
 
@@ -1648,6 +1649,10 @@ int32_t write_ecm_answer(struct s_reader *reader, ECM_REQUEST *er, int8_t rc, ui
 	if(cw) { memcpy(ea->cw, cw, 16); }
 	if(msglog) { memcpy(ea->msglog, msglog, MSGLOGSIZE); }
 	ea->tier = used_cardtier;
+	if(cw_ex)
+	{
+		ea->cw_ex = *cw_ex;
+	}
 	
 	cs_writeunlock(__func__, &ea->ecmanswer_lock);
 

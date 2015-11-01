@@ -133,11 +133,11 @@ static int32_t constcw_send_ecm(struct s_client *client, ECM_REQUEST *er)
 
 	if(constcw_analyse_file(er->caid, er->prid, er->srvid, er->pmtpid, er->vpid, er->pid, cw) == 0)
 	{
-		write_ecm_answer(rdr, er, E_NOTFOUND, (E1_READER << 4 | E2_SID), NULL, NULL, 0);
+		write_ecm_answer(rdr, er, E_NOTFOUND, (E1_READER << 4 | E2_SID), NULL, NULL, 0, NULL);
 	}
 	else
 	{
-		write_ecm_answer(rdr, er, E_FOUND, 0, cw, NULL, 0);
+		write_ecm_answer(rdr, er, E_FOUND, 0, cw, NULL, 0, NULL);
 	}
 
 	client->last = t;

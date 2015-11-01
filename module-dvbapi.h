@@ -28,6 +28,7 @@
 #define MAX_CAID 50
 #define ECM_PIDS 30
 #define MAX_FILTER 24
+#define MAX_STREAMS 32
 
 #define BOX_COUNT 7
 
@@ -59,18 +60,19 @@
 //constants used int socket communication:
 #define DVBAPI_PROTOCOL_VERSION         2
 
-#define DVBAPI_CA_SET_PID      0x40086f87
-#define DVBAPI_CA_SET_DESCR    0x40106f86
-#define DVBAPI_DMX_SET_FILTER  0x403c6f2b
-#define DVBAPI_DMX_STOP        0x00006f2a
+#define DVBAPI_CA_SET_PID         0x40086f87
+#define DVBAPI_CA_SET_DESCR       0x40106f86                         
+#define DVBAPI_CA_SET_DESCR_MODE  0x400c6f88
+#define DVBAPI_DMX_SET_FILTER     0x403c6f2b
+#define DVBAPI_DMX_STOP           0x00006f2a
 
-#define DVBAPI_AOT_CA          0x9F803000
-#define DVBAPI_AOT_CA_PMT      0x9F803200  //least significant byte is length (ignored)
-#define DVBAPI_AOT_CA_STOP     0x9F803F04
-#define DVBAPI_FILTER_DATA     0xFFFF0000
-#define DVBAPI_CLIENT_INFO     0xFFFF0001
-#define DVBAPI_SERVER_INFO     0xFFFF0002
-#define DVBAPI_ECM_INFO        0xFFFF0003
+#define DVBAPI_AOT_CA             0x9F803000
+#define DVBAPI_AOT_CA_PMT         0x9F803200  //least significant byte is length (ignored)
+#define DVBAPI_AOT_CA_STOP        0x9F803F04
+#define DVBAPI_FILTER_DATA        0xFFFF0000
+#define DVBAPI_CLIENT_INFO        0xFFFF0001
+#define DVBAPI_SERVER_INFO        0xFFFF0002
+#define DVBAPI_ECM_INFO           0xFFFF0003
 
 #define DVBAPI_MAX_PACKET_SIZE 262         //maximum possible packet size
 
@@ -98,7 +100,8 @@ struct s_ecmpids
 	int8_t status;
 	uint8_t tries;
 	unsigned char table;
-	int8_t index;
+	int8_t index[MAX_STREAMS];
+	int8_t useMultipleIndices;
 	uint32_t streams;
 };
 
@@ -150,6 +153,7 @@ typedef struct demux_s
 	uint16_t max_emm_filter;
 	int8_t STREAMpidcount;
 	uint16_t STREAMpids[ECM_PIDS];
+	uint8_t STREAMpidsType[ECM_PIDS];
 	int16_t pidindex;
 	int16_t curindex;
 	int8_t max_status;
@@ -276,12 +280,30 @@ typedef struct ca_pid
 	int32_t index;      /* -1 == disable*/
 } ca_pid_t;
 
+enum ca_descr_algo {
+	CA_ALGO_DVBCSA,
+	CA_ALGO_DES,
+	CA_ALGO_AES128,
+};
+ 
+enum ca_descr_cipher_mode {
+	CA_MODE_ECB,
+	CA_MODE_CBC,
+};
+
+typedef struct ca_descr_mode {
+	uint32_t index;
+	enum ca_descr_algo algo;
+	enum ca_descr_cipher_mode cipher_mode;
+} ca_descr_mode_t;
+
 #define DMX_START       _IO('o', 41)
 #define DMX_STOP        _IO('o', 42)
 #define DMX_SET_FILTER  _IOW('o', 43, struct dmx_sct_filter_params)
 
-#define CA_SET_DESCR        _IOW('o', 134, ca_descr_t)
-#define CA_SET_PID      _IOW('o', 135, ca_pid_t)
+#define CA_SET_DESCR       _IOW('o', 134, ca_descr_t)
+#define CA_SET_PID         _IOW('o', 135, ca_pid_t)
+#define CA_SET_DESCR_MODE  _IOW('o', 136, ca_descr_mode_t)
 // --------------------------------------------------------------------
 
 void dvbapi_stop_descrambling(int);
@@ -292,7 +314,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num);
 int32_t dvbapi_stop_filter(int32_t demux_index, int32_t type);
 struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidindex, char type);
 void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er);
-void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t idx);
+void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid, int32_t stream_id, enum ca_descr_algo algo, enum ca_descr_cipher_mode cipher_mode);
 int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connfd, char *pmtfile);
 void request_cw(struct s_client *client, ECM_REQUEST *er, int32_t demux_id, uint8_t delayed_ecm_check);
 void dvbapi_try_next_caid(int32_t demux_id, int8_t checked);
@@ -301,8 +323,8 @@ int32_t dvbapi_set_section_filter(int32_t demux_index, ECM_REQUEST *er, int32_t 
 int32_t dvbapi_activate_section_filter(int32_t demux_index, int32_t num, int32_t fd, int32_t pid, uchar *filter, uchar *mask);
 int32_t dvbapi_check_ecm_delayed_delivery(int32_t demux_index, ECM_REQUEST *er);
 int32_t dvbapi_get_filternum(int32_t demux_index, ECM_REQUEST *er, int32_t type);
-int32_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid);
-void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable);
+int32_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid, int32_t stream_id, bool use_des);
+void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable, bool use_des);
 int8_t update_streampid_list(uint8_t cadevice, uint16_t pid, int32_t idx);
 int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, int32_t idx);
 void disable_unused_streampids(int16_t demux_id);

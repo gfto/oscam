@@ -1279,6 +1279,10 @@ static char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparam
 	tpl_printf(vars, TPLADD, "TMP", "READSDTSELECTED%d", cfg.dvbapi_read_sdt);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
+	//extended_cw_api
+	tpl_printf(vars, TPLADD, "TMP", "EXTENDEDCWAPISELECTED%d", cfg.dvbapi_extended_cw_api);
+	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+
 	//write_sdt_prov
 	if(cfg.dvbapi_write_sdt_prov > 0)
 		{ tpl_addVar(vars, TPLADD, "WRITESDTPROVCHECKED", "checked"); } 

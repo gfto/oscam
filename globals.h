@@ -386,6 +386,9 @@ typedef unsigned char uchar;
 #define CS_DELAY          0
 #define CS_ECM_RINGBUFFER_MAX 0x10 // max size for ECM last responsetimes ringbuffer. Keep this set to power of 2 values!
 
+// Support for multiple CWs per channel and other encryption algos
+//#define WITH_EXTENDED_CW 1
+
 #define MAX_ECM_SIZE 596
 #define MAX_EMM_SIZE 512
 
@@ -581,6 +584,17 @@ enum {E2_GLOBAL = 0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE, E
 
 #define REQUEST_SENT            0x10
 #define REQUEST_ANSWERED        0x20
+
+#define CW_MODE_ONE_CW 0
+#define CW_MODE_MULTIPLE_CW 1
+#define CW_TYPE_VIDEO 0
+#define CW_TYPE_AUDIO 1
+#define CW_TYPE_DATA 2
+#define CW_ALGO_CSA 0
+#define CW_ALGO_DES 1
+#define CW_ALGO_AES128 2
+#define CW_ALGO_MODE_ECB 0
+#define CW_ALGO_MODE_CBC 1
 
 /* ===========================
  *      Default Values
@@ -959,10 +973,27 @@ struct s_cardsystem
 	int32_t (*get_tunemm_filter)(struct s_reader *, struct s_csystem_emm_filter **, unsigned int *);
 };
 
+#ifdef WITH_EXTENDED_CW
+typedef struct cw_extendted_t
+{
+	uchar           mode;
+	uchar           audio[4][16];
+	uchar           data[16];
+	uchar           algo;
+	uchar           algo_mode;
+} EXTENDED_CW;
+#else
+typedef struct cw_extendted_t
+{
+	uchar			disabled;
+} EXTENDED_CW;
+#endif
+
 typedef struct ecm_request_t
 {
 	uchar           ecm[MAX_ECM_SIZE];
 	uchar           cw[16];
+	EXTENDED_CW     cw_ex;
 	uchar           ecmd5[CS_ECMSTORESIZE];
 	int16_t         ecmlen;
 	uint16_t        caid;
@@ -1052,6 +1083,7 @@ struct s_ecm_answer
 	int8_t          rc;
 	uint8_t     rcEx;
 	uchar           cw[16];
+	EXTENDED_CW     cw_ex;
 	char            msglog[MSGLOGSIZE];
 	struct timeb    time_request_sent;  //using for evaluate ecm_time
 	int32_t         ecm_time;
@@ -2062,6 +2094,7 @@ struct s_config
 	int8_t      dvbapi_ecminfo_type;
 	int8_t      dvbapi_read_sdt;
 	int8_t      dvbapi_write_sdt_prov;
+	int8_t      dvbapi_extended_cw_api;
 #endif
 
 #ifdef CS_ANTICASC

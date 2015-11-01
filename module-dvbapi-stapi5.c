@@ -715,12 +715,12 @@ int32_t stapi_write_cw(int32_t demux_id, uchar *cw, uint16_t *STREAMpids, int32_
 
 	//@theparasol: please verify this block is in the right place
 	int32_t pidnum = demux[demux_id].pidindex; // get current pidindex used for descrambling
-	int32_t idx = demux[demux_id].ECMpids[pidnum].index;
+	int32_t idx = demux[demux_id].ECMpids[pidnum].index[0];
 
 	if(!idx)   // if no indexer for this pid get one!
 	{
 		idx = dvbapi_get_descindex(demux_id);
-		demux[demux_id].ECMpids[pidnum].index = idx;
+		demux[demux_id].ECMpids[pidnum].index[0] = idx;
 		cs_log_dbg(D_DVBAPI, "Demuxer %d PID: %d CAID: %04X ECMPID: %04X is using index %d", demux_id, pidnum,
 				  demux[demux_id].ECMpids[pidnum].CAID, demux[demux_id].ECMpids[pidnum].ECM_PID, idx - 1);
 	}
