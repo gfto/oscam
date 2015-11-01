@@ -6100,8 +6100,8 @@ int32_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid, int32_t stream_id, bo
 		{
 			idx = dvbapi_get_descindex(demux_index);
 			demux[demux_index].ECMpids[pid].index[n] = idx;
-			cs_log_dbg(D_DVBAPI, "Demuxer %d PID: %d CAID: %04X ECMPID: %04X is using index %d", demux_index, pid,
-					  demux[demux_index].ECMpids[pid].CAID, demux[demux_index].ECMpids[pid].ECM_PID, idx - 1);
+			cs_log_dbg(D_DVBAPI, "Demuxer %d PID: %d CAID: %04X ECMPID: %04X is using index %d for stream %d", demux_index, pid,
+					  demux[demux_index].ECMpids[pid].CAID, demux[demux_index].ECMpids[pid].ECM_PID, idx - 1, n);
 		}
 		
 		if(!demux[demux_index].ECMpids[pid].streams || ((demux[demux_index].ECMpids[pid].streams & (1 << n)) == (uint) (1 << n)))

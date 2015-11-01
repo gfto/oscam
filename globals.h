@@ -802,7 +802,7 @@ struct s_emmcache
 {
 	uchar			emmd5[CS_EMMSTORESIZE];
 	uchar			type;
-	uchar			len;
+	uint16_t		len;
 	uchar			emm[MAX_EMM_SIZE];
 	struct timeb    firstseen;
 	struct timeb    lastseen;
