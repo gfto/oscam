@@ -822,44 +822,82 @@ static int32_t dvbapi_detect_api(void)
 		cfg.dvbapi_listenport = 0;
 	}
 	
-	int32_t i = 0, n = 0, devnum = -1, dmx_fd = 0, ret = 0;
+	int32_t i = 0, n = 0, devnum = -1, dmx_fd = 0, filtercount = 0;
 	char device_path[128], device_path2[128];
+	static LLIST *ll_max_fd; 
+	ll_max_fd = ll_create("ll_max_fd");
+	LL_ITER itr;
+	
+	struct s_open_fd
+	{
+		uint32_t fd;
+	}; 
+ 
+	struct s_open_fd *open_fd;
 
 	while (i < BOX_COUNT)
 	{
-		snprintf(device_path2, sizeof(device_path2), devices[i].demux_device, 0);
-		snprintf(device_path, sizeof(device_path), devices[i].path, n);
-		strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path) - 1);
-		
-		if((dmx_fd = open(device_path, O_RDWR | O_NONBLOCK)) > 0)
+		do
 		{
-			devnum = i;
-			ret = close(dmx_fd);
-			break;
-		}
-		/* try at least 8 adapters */
-		if ((strchr(devices[i].path, '%') != NULL) && (n < 8)) n++; else { n = 0; i++; }
+			snprintf(device_path2, sizeof(device_path2), devices[i].demux_device, 0);
+			snprintf(device_path, sizeof(device_path), devices[i].path, n);
+			strncat(device_path, device_path2, sizeof(device_path) - strlen(device_path) - 1);
+			filtercount = 0;
+			while((dmx_fd = open(device_path, O_RDWR | O_NONBLOCK)) > 0 && filtercount < MAX_FILTER)
+			{
+				filtercount++;
+				if(!cs_malloc(&open_fd, sizeof(struct s_open_fd)))
+				{
+					close(dmx_fd);
+					break;
+				}
+				open_fd->fd = dmx_fd;
+				ll_append(ll_max_fd, open_fd);
+			}
+		
+			if(filtercount > 0)
+			{
+				itr = ll_iter_create(ll_max_fd);
+				while((open_fd = ll_iter_next(&itr)))
+				{
+					dmx_fd = open_fd->fd;
+					do
+					{
+						;
+					}
+					while(close(dmx_fd)<0);
+					ll_iter_remove_data(&itr);
+				}
+				devnum = i;
+				selected_api = devices[devnum].api;
+				selected_box = devnum;
+				if(cfg.dvbapi_boxtype == BOXTYPE_NEUMO)
+				{
+					selected_api = DVBAPI_3; //DeepThought
+				}
+#if defined(WITH_STAPI) || defined(WITH_STAPI5)
+				if(selected_api == STAPI && stapi_open() == 0)
+				{
+					cs_log("ERROR: stapi: setting up stapi failed.");
+					return 0;
+				}
+#endif
+				maxfilter = filtercount;
+				cs_log("Detected %s Api: %d, userconfig boxtype: %d maximum amount of possible filters is %d (oscam limit is %d)",
+					device_path, selected_api, cfg.dvbapi_boxtype, filtercount, MAX_FILTER);
+			}
+		
+			/* try at least 8 adapters */
+			if ((strchr(devices[i].path, '%') != NULL) && (n < 8)) n++; else { n = 0; i++; }
+		}while(n != 0); // n is set to 0 again if 8 adapters are tried!
+		
+		if(devnum != -1) break; // check if box detected
 	}
+	
+	ll_destroy(&ll_max_fd);
 
 	if(devnum == -1) { return 0; }
-	selected_box = devnum;
-	if(selected_box > -1)
-		{ selected_api = devices[selected_box].api; }
 	
-	if(ret < 0) { cs_log("ERROR: Could not close demuxer fd (errno=%d %s)", errno, strerror(errno)); } // log it here since some needed var are not inited before!
-
-#if defined(WITH_STAPI) || defined(WITH_STAPI5)
-	if(selected_api == STAPI && stapi_open() == 0)
-	{
-		cs_log("ERROR: stapi: setting up stapi failed.");
-		return 0;
-	}
-#endif
-	if(cfg.dvbapi_boxtype == BOXTYPE_NEUMO)
-	{
-		selected_api = DVBAPI_3; //DeepThought
-	}
-	cs_log("Detected %s Api: %d, userconfig boxtype: %d", device_path, selected_api, cfg.dvbapi_boxtype);
 #endif
 	return 1;
 }
@@ -1552,6 +1590,11 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len)
 					dvbapi_add_emmpid(demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
 				}
 				break;
+			case 0x27:
+			case 0x4A:
+				emm_provider = (uint32_t)buf[i+6];
+				dvbapi_add_emmpid(demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
+				break;
 			default:
 				dvbapi_add_emmpid(demux_id, caid, emm_pid, 0, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
 				break;
@@ -1731,6 +1774,19 @@ void dvbapi_stop_all_descrambling(void)
 		dvbapi_stop_descrambling(j);
 	}
 }
+
+void dvbapi_stop_all_emm_sdt_filtering(void)
+{
+	int32_t j;
+	for(j = 0; j < MAX_DEMUX; j++)
+	{
+		if(demux[j].program_number == 0) { continue; }
+		dvbapi_stop_filter(j, TYPE_EMM);
+		dvbapi_stop_filter(j, TYPE_SDT);
+		demux[j].emm_filter = -1;
+	}
+}
+
 
 void dvbapi_stop_descrambling(int32_t demux_id)
 {
@@ -2711,7 +2767,7 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 			if(caid_is_nagra(descriptor_ca_system_id) && descriptor_length == 0x07)
 				{ descriptor_ca_provider = b2i(2, buffer + j + 7); }
 			
-			if((descriptor_ca_system_id >> 8 == 0x4A || descriptor_ca_system_id == 0x2710) && descriptor_length > 0x04 )
+			if(caid_is_dre(descriptor_ca_system_id) && descriptor_length > 0x04)
 				{ descriptor_ca_provider = buffer[j + 6]; }
 
 			dvbapi_add_ecmpid(demux_id, descriptor_ca_system_id, descriptor_ca_pid, descriptor_ca_provider, txt);
@@ -3230,6 +3286,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			
 			if(demux[j].running == 0 && demux[j].ECMpidcount != 0 )   // only start demuxer if it wasnt running
 			{
+				dvbapi_stop_all_emm_sdt_filtering(); // remove all unimportant filtering (there are images with limited amount of filters available!)
 				cs_log_dbg(D_DVBAPI, "Demuxer %d/%d lets start descrambling (srvid = %04X fd = %d ecmpids = %d)", j, MAX_DEMUX,
 					demux[j].program_number, connfd, demux[j].ECMpidcount);
 				demux[j].running = 1;  // mark channel as running

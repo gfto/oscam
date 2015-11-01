@@ -27,7 +27,7 @@
 #define MAX_DEMUX 16
 #define MAX_CAID 50
 #define ECM_PIDS 30
-#define MAX_FILTER 24
+#define MAX_FILTER 32
 #define MAX_STREAMS 32
 
 #define BOX_COUNT 7
