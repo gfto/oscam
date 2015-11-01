@@ -2767,7 +2767,7 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 			if(caid_is_nagra(descriptor_ca_system_id) && descriptor_length == 0x07)
 				{ descriptor_ca_provider = b2i(2, buffer + j + 7); }
 			
-			if(caid_is_dre(descriptor_ca_system_id) && descriptor_length > 0x04)
+			if((descriptor_ca_system_id >> 8 == 0x4A || descriptor_ca_system_id == 0x2710) && descriptor_length > 0x04 )
 				{ descriptor_ca_provider = buffer[j + 6]; }
 
 			dvbapi_add_ecmpid(demux_id, descriptor_ca_system_id, descriptor_ca_pid, descriptor_ca_provider, txt);
