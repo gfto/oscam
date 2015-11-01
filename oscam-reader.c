@@ -379,7 +379,7 @@ int32_t ecm_ratelimit_check(struct s_reader *reader, ECM_REQUEST *er, int32_t re
 			// how many active slots are registered at end of cooldown delay period
 			
 			gone = comp_timeb(&now, &reader->rlecmh[h].last);
-			if(gone <= reader->ratelimittime)
+			if(gone <= (reader->ratelimittime + reader->srvidholdtime))
 			{
 				maxslots++;
 				if(maxslots >= reader->ratelimitecm) { break; }  // Need to go cooling down phase
