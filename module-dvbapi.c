@@ -1590,11 +1590,6 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len)
 					dvbapi_add_emmpid(demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
 				}
 				break;
-			case 0x27:
-			case 0x4A:
-				emm_provider = (uint32_t)buf[i+6];
-				dvbapi_add_emmpid(demux_id, caid, emm_pid, emm_provider, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
-				break;
 			default:
 				dvbapi_add_emmpid(demux_id, caid, emm_pid, 0, EMM_UNIQUE | EMM_SHARED | EMM_GLOBAL);
 				break;
