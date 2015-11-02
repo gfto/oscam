@@ -206,7 +206,7 @@ static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er)
 	// 40 07 03 0B 00 08 07 01 01 ... -> to delete 
 	// Thanks to luffy for the tip and the code.
 	
-	if(er->caid == 0x500)
+	if(er->caid == 0x500 && er->ecmlen > 0xFE)
 	{	
 		cs_log_dump_dbg(D_ATR, er->ecm, er->ecmlen, "%s: ecm dump BEFORE suppressing SubECMs with CWsSwap set to 01", __func__);
 		Len = er->ecmlen;
