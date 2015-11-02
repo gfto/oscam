@@ -158,7 +158,7 @@ static void show_class(struct s_reader *reader, const char *p, uint32_t provid, 
 
 static int8_t add_find_class(struct s_reader *reader, uint32_t provid, const uchar *b, int32_t l, int8_t add)
 {
-	int32_t i, j;
+	int32_t i, j, classfound = 0, freshdate = 0;
 
 	// b -> via date (4 uint8_ts)
 	b += 4;
@@ -174,10 +174,10 @@ static int8_t add_find_class(struct s_reader *reader, uint32_t provid, const uch
 				if(cs_add_entitlement(reader, reader->caid, provid, cls, cls, 0, 0, 5, 0) == NULL && !add)
 				{
 					rdr_log(reader, "provid %06X class %02X not found!", provid, cls);
-					return -1; // class not found!
 				}
 				else
 				{
+					classfound = 1;
 					if(!add)
 					{
 						rdr_log(reader, "provid %06X has matching class %02X", provid, cls);
@@ -204,11 +204,16 @@ static int8_t add_find_class(struct s_reader *reader, uint32_t provid, const uch
 						{
 							rdr_log(reader, "class %02X provid %06X has already this daterange or newer entitled -> SKIP!", cls, provid);
 						}
-						return -2; // skip due to date
+					}
+					else
+					{
+						freshdate = 1;
 					}
 				}
 			}
-	return 1; // all classes found!
+	if(classfound == 0) return -1;
+	if(freshdate == 0) return -2;
+	return 1; // one or more classes found and emmdate is fresh!
 }
 
 static void show_subs(struct s_reader *reader, const uchar *emm)
@@ -1747,13 +1752,13 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 				
 				if(match == -1)
 				{
-					rdr_log(reader, "shared emm provid %06X class mismatch -> skipped!", emm_provid);
+					rdr_log(reader, "shared emm provid %06X no class of this emm matches with your card -> skipped!", emm_provid);
 					return SKIPPED;
 				}
 				
 				if(match == -2)
 				{
-					rdr_log(reader, "shared emm provid %06X class entitlementdate already same or newer -> skipped!", emm_provid);
+					rdr_log(reader, "shared emm provid %06X all classes have entitlementdate already same or newer -> skipped!", emm_provid);
 					return SKIPPED;
 				}
 				nanoA9Data = emmParsed;
