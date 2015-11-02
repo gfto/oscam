@@ -158,7 +158,7 @@ static void show_class(struct s_reader *reader, const char *p, uint32_t provid, 
 
 static int8_t add_find_class(struct s_reader *reader, uint32_t provid, const uchar *b, int32_t l, int8_t add)
 {
-	int32_t i, j, classfound = 0, freshdate = 0;
+	int32_t i, j, freshdate = 0;
 
 	// b -> via date (4 uint8_ts)
 	b += 4;
@@ -173,11 +173,11 @@ static int8_t add_find_class(struct s_reader *reader, uint32_t provid, const uch
 				cls = (l - (j + 1)) * 8 + i;
 				if(cs_add_entitlement(reader, reader->caid, provid, cls, cls, 0, 0, 5, 0) == NULL && !add)
 				{
-					rdr_log(reader, "provid %06X class %02X not found!", provid, cls);
+					rdr_log(reader, "provid %06X class %02X not found -> SKIP!", provid, cls);
+					return -1;
 				}
 				else
 				{
-					classfound = 1;
 					if(!add)
 					{
 						rdr_log(reader, "provid %06X has matching class %02X", provid, cls);
@@ -202,7 +202,7 @@ static int8_t add_find_class(struct s_reader *reader, uint32_t provid, const uch
 					{
 						if(!add)
 						{
-							rdr_log(reader, "class %02X provid %06X has already this daterange or newer entitled -> SKIP!", cls, provid);
+							rdr_log(reader, "class %02X provid %06X has already this daterange or newer entitled", cls, provid);
 						}
 					}
 					else
@@ -211,9 +211,8 @@ static int8_t add_find_class(struct s_reader *reader, uint32_t provid, const uch
 					}
 				}
 			}
-	if(classfound == 0) return -1;
 	if(freshdate == 0) return -2;
-	return 1; // one or more classes found and emmdate is fresh!
+	return 1; // all classes found and emmdate is fresh!
 }
 
 static void show_subs(struct s_reader *reader, const uchar *emm)
@@ -1752,7 +1751,7 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 				
 				if(match == -1)
 				{
-					rdr_log(reader, "shared emm provid %06X no class of this emm matches with your card -> skipped!", emm_provid);
+					rdr_log(reader, "shared emm provid %06X one or more classes of this emm do not match with your card -> skipped!", emm_provid);
 					return SKIPPED;
 				}
 				
