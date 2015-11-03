@@ -1314,9 +1314,6 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 		cs_log_dbg(D_DVBAPI, "Demuxer %d matching reader %s against available emmpids -> START!", demux_index, rdr->label);
 		for(c = 0; c < demux[demux_index].EMMpidcount; c++)
 		{
-			dmx_filter = NULL;
-			filter_count = 0;
-			
 			caid = ncaid = demux[demux_index].EMMpids[c].CAID;
 			if(!caid) continue;
 
@@ -1400,6 +1397,7 @@ void dvbapi_start_emm_filter(int32_t demux_index)
 					
 				// dmx_filter not use below this point;
 				NULLFREE(dmx_filter);
+				filter_count = 0;
 			}
 		}
 		cs_log_dbg(D_DVBAPI, "Demuxer %d matching reader %s against available emmpids -> DONE!", demux_index, rdr->label);
