@@ -28,7 +28,12 @@
 #define MAX_CAID 50
 #define ECM_PIDS 30
 #define MAX_FILTER 32
-#define MAX_STREAMS 32
+
+#ifdef WITH_EXTENDED_CW	
+#define MAX_STREAM_INDICES 32
+#else
+#define MAX_STREAM_INDICES 1
+#endif
 
 #define BOX_COUNT 7
 
@@ -100,7 +105,7 @@ struct s_ecmpids
 	int8_t status;
 	uint8_t tries;
 	unsigned char table;
-	int8_t index[MAX_STREAMS];
+	int8_t index[MAX_STREAM_INDICES];
 	int8_t useMultipleIndices;
 	uint32_t streams;
 };

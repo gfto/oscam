@@ -1181,7 +1181,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 		if(selected_api != STAPI)
 		{
 			int32_t z;
-			for(z = 0; z < MAX_STREAMS; z++)
+			for(z = 0; z < MAX_STREAM_INDICES; z++)
 			{
 				int32_t idx = demux[demux_index].ECMpids[oldpid].index[z];
 				demux[demux_index].ECMpids[oldpid].index[z] = 0;
@@ -1214,7 +1214,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 								if(otherdemuxpid == -1) { continue; }          						// Other demuxer not descrambling yet
 												
 								int32_t y;
-								for(y = 0; y < MAX_STREAMS; y++)
+								for(y = 0; y < MAX_STREAM_INDICES; y++)
 								{
 									otherdemuxidx = demux[j].ECMpids[otherdemuxpid].index[y];
 									if(!otherdemuxidx || otherdemuxidx != idx) { continue; } 			// Other demuxer has no index yet, or index is different
@@ -1623,17 +1623,12 @@ int32_t dvbapi_get_descindex(int32_t demux_index)
 			
 			for(j = 0; j < demux[i].ECMpidcount && !fail; j++) // search for new unique index
 			{
-				for(k = 0; k < MAX_STREAMS; k++)
+				for(k = 0; k < MAX_STREAM_INDICES; k++)
 				{
 					if(demux[i].ECMpids[j].index[k] == idx) 
 					{
 						fail = 1;
 						idx++;
-					}
-					
-					if(!demux[i].ECMpids[j].useMultipleIndices)
-					{
-						break;
 					}
 				}
 			}
@@ -5357,7 +5352,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				demux[i].pidindex = j; // set current ecmpid as the new pid to descramble
 				if(oldpidindex != -1) 
 				{
-					for(k = 0; k < MAX_STREAMS; k++)
+					for(k = 0; k < MAX_STREAM_INDICES; k++)
 					{	
 						demux[i].ECMpids[j].index[k] = demux[i].ECMpids[oldpidindex].index[k]; // swap index with lower status pid that was descrambling
 						demux[i].ECMpids[j].useMultipleIndices = demux[i].ECMpids[oldpidindex].useMultipleIndices;
@@ -6275,7 +6270,7 @@ void disable_unused_streampids(int16_t demux_id)
 	if (ecmpid == -1) return; // no active ecmpid!
 	
 	int32_t j;
-	for(j = 0; j < MAX_STREAMS; j++)
+	for(j = 0; j < MAX_STREAM_INDICES; j++)
 	{
 		int32_t idx = demux[demux_id].ECMpids[ecmpid].index[j];
 		int32_t i,n;
