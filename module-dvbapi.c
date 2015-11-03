@@ -1230,11 +1230,6 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 										}
 										match = 1; // matching stream found
 									}
-									
-									if(!demux[j].ECMpids[otherdemuxpid].useMultipleIndices)
-									{
-										break;
-									}
 								}
 							}
 								
@@ -1244,11 +1239,6 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 							}
 						}
 					}
-				}
-				
-				if(!demux[demux_index].ECMpids[oldpid].useMultipleIndices)
-				{
-					break;
 				}
 			}
 		}
@@ -5556,20 +5546,13 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 #endif
 		default:
 			{
-#ifdef WITH_EXTENDED_CW
-				if(er->cw_ex.mode == CW_MODE_ONE_CW)
-				{				
-					demux[i].ECMpids[j].useMultipleIndices = 0;
-				}
-				else
-				{
-					demux[i].ECMpids[j].useMultipleIndices = 1;
-				}
-				
+#ifdef WITH_EXTENDED_CW			
 				if(er->cw_ex.mode == CW_MODE_MULTIPLE_CW)
 				{
 					int32_t key_pos_a = 0;
 					uint8_t *cw, stream_type;
+
+					demux[i].ECMpids[j].useMultipleIndices = 1;
 					
 					for(k = 0; k < demux[i].STREAMpidcount; k++)
 					{
@@ -5603,6 +5586,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				}
 				else
 				{
+					demux[i].ECMpids[j].useMultipleIndices = 0;
 					dvbapi_write_cw(i, er->cw, j, 0, er->cw_ex.algo, er->cw_ex.algo_mode);
 				}
 #else
@@ -6344,11 +6328,6 @@ void disable_unused_streampids(int16_t demux_id)
 					}
 				}
 			}
-		} 
-	
-		if(!demux[demux_id].ECMpids[ecmpid].useMultipleIndices)
-		{
-			break;
 		}
 	}
 }
