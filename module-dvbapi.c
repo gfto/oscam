@@ -3092,7 +3092,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		// find and register videopid
 		if(!vpid && 
 			(stream_type == 0x01 || stream_type == 0x02 || stream_type == 0x10 || stream_type == 0x1B 
-				|| stream_type == 0x24 || stream_type == 0x42 || stream_type == 0xD1 || stream_type == 0xEA)) 
+			|| stream_type == 0x24 || stream_type == 0x42 || stream_type == 0x80 || stream_type == 0xD1 
+			|| stream_type == 0xEA)) 
 		{
 			vpid = elementary_pid;
 		}
@@ -5556,13 +5557,14 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 							
 						// Video
 						if(stream_type == 0x01 || stream_type == 0x02 || stream_type == 0x10 || stream_type == 0x1B 
-							|| stream_type == 0x24 || stream_type == 0x42 || stream_type == 0xD1 || stream_type == 0xEA) 
+							|| stream_type == 0x24 || stream_type == 0x42 || stream_type == 0x80 || stream_type == 0xD1 
+							|| stream_type == 0xEA)
 						{
 							cw = er->cw;
 						}
 						// Audio
-						else if(stream_type == 0x03 || stream_type == 0x04 || stream_type == 0x06 || stream_type == 0x0F 
-								|| stream_type == 0x11 || (stream_type >= 0x80 && stream_type <= 0x87))	
+						else if(stream_type == 0x03 || stream_type == 0x04 || stream_type == 0x0F || stream_type == 0x11 
+							|| stream_type == 0x81 || stream_type == 0x87)
 						{
 							cw = er->cw_ex.audio[key_pos_a];
 							
