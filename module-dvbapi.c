@@ -5213,7 +5213,7 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid, int32_t stream_id
 							}
 							else
 							{
-								if(usedidx == (int) ca_descr.index)
+								if(usedidx == (int32_t) ca_descr.index)
 								{
 									cs_log_dbg(D_DVBAPI,"Demuxer %d ca%d is using index %d for streampid %04X -> skip, %s part of cw already written!",
 										demux_id, i, usedidx, demux[demux_id].STREAMpids[j], (n == 1 ? "even" : "odd"));
