@@ -6226,7 +6226,7 @@ int8_t update_streampid_list(uint8_t cadevice, uint16_t pid, int32_t idx, bool u
 			if (cadevice == listitem->cadevice && pid == listitem->streampid){
 				if((listitem->activeindexers & (1 << idx)) == (uint) (1 << idx)){
 					
-					if(cfg.dvbapi_extended_cw_api == 1 && use_des != listitem->use_des)
+					if(cfg.dvbapi_extended_cw_api == 2 && use_des != listitem->use_des)
 					{
 						listitem->use_des = use_des;
 						return FIRST_STREAMPID_INDEX;
@@ -6237,7 +6237,7 @@ int8_t update_streampid_list(uint8_t cadevice, uint16_t pid, int32_t idx, bool u
 					listitem->activeindexers|=(1 << idx); // ca + pid found but not this index -> add this index
 					cs_log_dbg(D_DVBAPI, "Added existing streampid %04X with new index %d to ca%d", pid, idx, cadevice);
 
-					if(cfg.dvbapi_extended_cw_api == 1 && use_des != listitem->use_des)
+					if(cfg.dvbapi_extended_cw_api == 2 && use_des != listitem->use_des)
 					{
 						listitem->use_des = use_des;
 						return FIRST_STREAMPID_INDEX;
