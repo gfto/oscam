@@ -1666,7 +1666,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable, boo
 			{	
 				int8_t action = 0;
 				if(enable){
-					action = update_streampid_list(i, demux[demux_id].STREAMpids[num], curidx);
+					action = update_streampid_list(i, demux[demux_id].STREAMpids[num], curidx, use_des);
 				}
 				if(!enable){
 					action = remove_streampid_from_list(i, demux[demux_id].STREAMpids[num], curidx);
@@ -6175,7 +6175,7 @@ int32_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid, int32_t stream_id, bo
 	return idx - 1; // return caindexer
 }
 
-int8_t update_streampid_list(uint8_t cadevice, uint16_t pid, int32_t idx)
+int8_t update_streampid_list(uint8_t cadevice, uint16_t pid, int32_t idx, bool use_des)
 {
 	struct s_streampid *listitem, *newlistitem;
 	if(!ll_activestreampids)
@@ -6188,10 +6188,24 @@ int8_t update_streampid_list(uint8_t cadevice, uint16_t pid, int32_t idx)
 		{
 			if (cadevice == listitem->cadevice && pid == listitem->streampid){
 				if((listitem->activeindexers & (1 << idx)) == (uint) (1 << idx)){
+					
+					if(use_des != listitem->use_des)
+					{
+						listitem->use_des = use_des;
+						return FIRST_STREAMPID_INDEX;
+					}
+					
 					return FOUND_STREAMPID_INDEX; // match found
 				}else{
 					listitem->activeindexers|=(1 << idx); // ca + pid found but not this index -> add this index
 					cs_log_dbg(D_DVBAPI, "Added existing streampid %04X with new index %d to ca%d", pid, idx, cadevice);
+
+					if(use_des != listitem->use_des)
+					{
+						listitem->use_des = use_des;
+						return FIRST_STREAMPID_INDEX;
+					}
+					
 					return ADDED_STREAMPID_INDEX;
 				}
 			}
@@ -6203,6 +6217,7 @@ int8_t update_streampid_list(uint8_t cadevice, uint16_t pid, int32_t idx)
 	newlistitem->streampid = pid;
 	newlistitem->activeindexers = (1 << idx);
 	newlistitem->caindex = idx; // set this index as used to decode on ca device
+	newlistitem->use_des = use_des;
 	ll_append(ll_activestreampids, newlistitem);
 	cs_log_dbg(D_DVBAPI, "Added new streampid %04X with index %d to ca%d", pid, idx, cadevice);
 	return FIRST_STREAMPID_INDEX;

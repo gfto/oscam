@@ -197,6 +197,7 @@ typedef struct s_streampid
 	uint16_t 	streampid; // holds pids
 	uint32_t	activeindexers; // bitmask indexers if streampid enabled for index bit is set
 	uint32_t	caindex; // holds index that is used to decode on ca device
+	bool		use_des;
 }STREAMPIDTYPE;
 
 struct s_dvbapi_priority
@@ -330,7 +331,7 @@ int32_t dvbapi_check_ecm_delayed_delivery(int32_t demux_index, ECM_REQUEST *er);
 int32_t dvbapi_get_filternum(int32_t demux_index, ECM_REQUEST *er, int32_t type);
 int32_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid, int32_t stream_id, bool use_des);
 void dvbapi_set_pid(int32_t demux_id, int32_t num, int32_t idx, bool enable, bool use_des);
-int8_t update_streampid_list(uint8_t cadevice, uint16_t pid, int32_t idx);
+int8_t update_streampid_list(uint8_t cadevice, uint16_t pid, int32_t idx, bool use_des);
 int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, int32_t idx);
 void disable_unused_streampids(int16_t demux_id);
 int8_t is_ca_used(uint8_t cadevice, int32_t pid);
