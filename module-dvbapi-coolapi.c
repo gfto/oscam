@@ -753,7 +753,8 @@ int32_t coolapi_close_device(int32_t fd)
 /* write cw to all demuxes in mask with passed index */
 int32_t coolapi_write_cw(int32_t mask, uint16_t *STREAMpids, int32_t count, ca_descr_t *ca_descr)
 {
-	int32_t i, idx = ca_descr->index;
+	int32_t i;
+	uint32_t idx = ca_descr->index;
 	int32_t result;
 	void *channel;
 
