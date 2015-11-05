@@ -2682,12 +2682,19 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 	return;
 }
 
-void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned char *buffer)
+void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned char *buffer, uint8_t* is_audio)
 {
 	// int32_t ca_pmt_cmd_id = buffer[i + 5];
 	uint32_t descriptor_length = 0;
-	uint32_t j, u;
+	uint32_t j, u, k;
 	uint8_t skip_border = cfg.dvbapi_boxtype == BOXTYPE_SAMYGO ? 0x05 : 0x02; // skip input values <0x05 on samygo
+	uint32_t format_identifier;
+	
+	static const uint32_t format_identifiers_audio[10] = 
+		{
+			0x41432D33, 0x42535344, 0x646D6174, 0x44545331, 0x44545332,
+			0x44545333, 0x45414333, 0x48444D56, 0x6D6C7061, 0x4F707573,
+		};
 
 	if(info_length < 1)
 		{ return; }
@@ -2701,7 +2708,28 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 	for(j = 0; j < info_length; j += descriptor_length + 2)
 	{
 		descriptor_length = buffer[j + 1];
-
+		
+		if(is_audio)
+		{
+			if(buffer[j] == 0x6A || buffer[j] == 0x73 || buffer[j] == 0x81)
+			{
+				*is_audio = 1;
+			}
+			else if(buffer[j] == 0x05 && descriptor_length >= 4)
+			{
+				format_identifier = b2i(4, buffer + j + 2);
+				
+				for(k = 0; k < 10; k++)
+				{
+					if(format_identifier == format_identifiers_audio[k])
+					{
+						*is_audio = 1;
+						break;
+					}
+				}
+			}
+		}
+		
 		if(buffer[j] == 0x81 && descriptor_length == 8)    // private descriptor of length 8, assume enigma/tvh
 		{
 			demux[demux_id].enigma_namespace = b2i(4, buffer + j + 2);
@@ -3057,7 +3085,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	
 	if(program_info_length > 1 && program_info_length < length)
 	{
-		dvbapi_parse_descriptor(demux_id, program_info_length - 1, buffer + 6);
+		dvbapi_parse_descriptor(demux_id, program_info_length - 1, buffer + 6, NULL);
 	}
 
 	uint32_t es_info_length = 0, vpid = 0;
@@ -3069,6 +3097,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	{
 		uint32_t stream_type = buffer[i];
 		uint16_t elementary_pid = b2i(2, buffer + i + 1)&0x1FFF;
+		uint8_t is_audio = 0;
 		es_info_length = b2i(2, buffer + i +3)&0x0FFF;
 		if(stream_type < (sizeof(streamtxt) / sizeof(const char *)))
 		{
@@ -3092,15 +3121,23 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		// find and register videopid
 		if(!vpid && 
 			(stream_type == 0x01 || stream_type == 0x02 || stream_type == 0x10 || stream_type == 0x1B 
-			|| stream_type == 0x24 || stream_type == 0x42 || stream_type == 0x80 || stream_type == 0xD1 
-			|| stream_type == 0xEA)) 
+			|| stream_type == 0x24 || stream_type == 0x42 || stream_type == 0xD1 || stream_type == 0xEA)) 
 		{
 			vpid = elementary_pid;
 		}
 
 		if(es_info_length != 0 && es_info_length < length)
 		{
-			dvbapi_parse_descriptor(demux_id, es_info_length, buffer + i + 5);
+			dvbapi_parse_descriptor(demux_id, es_info_length, buffer + i + 5, &is_audio);
+			
+			if((stream_type == 0x06 || stream_type == 0x80) && is_audio)
+			{
+				demux[demux_id].STREAMpidsType[demux[demux_id].STREAMpidcount-1] = 0x03;
+			}
+			else if(!vpid && stream_type == 0x80 && !is_audio)
+			{
+				vpid = elementary_pid;
+			}
 		}
 		else
 		{
@@ -5564,7 +5601,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 						}
 						// Audio
 						else if(stream_type == 0x03 || stream_type == 0x04 || stream_type == 0x0F || stream_type == 0x11 
-							|| stream_type == 0x81 || stream_type == 0x87)
+							|| (stream_type >= 0x81 && stream_type <= 0x87) || stream_type == 0x8A)
 						{
 							cw = er->cw_ex.audio[key_pos_a];
 							
