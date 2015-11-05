@@ -84,13 +84,12 @@
 typedef uint32_t ca_index_t;
 
 #define INDEX_MAX           0x00000007
-#define INDEX_NOTFOUND      0xEFFFFFFA
-#define INDEX_STAPI_DISABLE 0xEFFFFFFB
-#define INDEX_FTA           0xEFFFFFFC
-#define INDEX_ALL           0xEFFFFFFD
-#define INDEX_NOTACTIVE     0xEFFFFFFE
+#define INDEX_NOTFOUND      0xEFFFFFFA // only used by is_ca_used()
+#define INDEX_STAPI_DISABLE 0xEFFFFFFB // only used for stapi_set_pid()
+#define INDEX_ALL           0xEFFFFFFD // only used for remove_streampid_from_list()
+#define INDEX_NOTACTIVE     0xEFFFFFFE // only used for caindex
 #define INDEX_INVALID       0xEFFFFFFF
-#define INDEX_DISABLE       0xFFFFFFFF
+#define INDEX_DISABLE       0xFFFFFFFF // only used for ca_pid_t
 
 struct box_devices
 {

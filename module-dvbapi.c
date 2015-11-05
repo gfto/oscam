@@ -1184,9 +1184,9 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 			for(z = 0; z < MAX_STREAM_INDICES; z++)
 			{
 				ca_index_t idx = demux[demux_index].ECMpids[oldpid].index[z];
-				demux[demux_index].ECMpids[oldpid].index[z] = 0;
+				demux[demux_index].ECMpids[oldpid].index[z] = INDEX_INVALID;
 		
-				if(idx != INDEX_FTA) // if in use
+				if(idx != INDEX_INVALID) // if in use
 				{
 					int32_t i;
 					for(i = 0; i < demux[demux_index].STREAMpidcount; i++)
@@ -1218,7 +1218,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 								for(y = 0; y < MAX_STREAM_INDICES; y++)
 								{
 									otherdemuxidx = demux[j].ECMpids[otherdemuxpid].index[y];
-									if(otherdemuxidx == INDEX_FTA || otherdemuxidx != idx) { continue; } 			// Other demuxer has no index yet, or index is different
+									if(otherdemuxidx == INDEX_INVALID || otherdemuxidx != idx) { continue; } 			// Other demuxer has no index yet, or index is different
 										
 									for(k = 0; k < demux[j].STREAMpidcount; k++)
 									{
@@ -6355,8 +6355,8 @@ void disable_unused_streampids(int16_t demux_id)
 		uint32_t idx = demux[demux_id].ECMpids[ecmpid].index[j];
 		int32_t i,n;
 		struct s_streampid *listitem;
-		// search for old enabled streampids on all ca devices that have to be disabled, index 0 is skipped as it belongs to fta!
-		for(i = 0; i < MAX_DEMUX && idx != INDEX_FTA; i++)
+		// search for old enabled streampids on all ca devices that have to be disabled
+		for(i = 0; i < MAX_DEMUX && idx != INDEX_INVALID; i++)
 		{
 			if(!((demux[demux_id].ca_mask & (1 << i)) == (uint) (1 << i))) continue; // continue if ca is unused by this demuxer
 			
