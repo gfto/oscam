@@ -3979,7 +3979,7 @@ int32_t cc_cli_init_int(struct s_client *cl)
 	if(rdr->tcp_connected)
 		{ return 1; }
 
-	if(rdr->tcp_ito < 1)
+	if(rdr->tcp_ito < 15)
 		{ rdr->tcp_ito = 30; }
 	if(rdr->cc_maxhops < 0)
 		{ rdr->cc_maxhops = DEFAULT_CC_MAXHOPS; }
