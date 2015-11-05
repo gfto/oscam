@@ -65,20 +65,27 @@ typedef struct cache_t {
 static pthread_rwlock_t cache_lock;
 static hash_table ht_cache;
 static list ll_cache;
+static int8_t cache_init_done = 0;
 
 void init_cache(void){
 	init_hash_table(&ht_cache, &ll_cache);
 	if (pthread_rwlock_init(&cache_lock,NULL) != 0)
-		cs_log("Error creating lock cache_lock!");
+		{ cs_log("Error creating lock cache_lock!"); }
+	else
+		{ cache_init_done = 1; }
 }
 
 void free_cache(void){
 	cleanup_cache(true);
+	cache_init_done = 0;
 	deinitialize_hash_table(&ht_cache);
 	pthread_rwlock_destroy(&cache_lock);
 }
 
 uint32_t cache_size(void){
+	if(!cache_init_done)
+		{ return 0; }
+	
 	return count_hash_table(&ht_cache);
 }
 
@@ -185,7 +192,7 @@ static bool cwcycle_check_cache(struct s_client *cl, ECM_REQUEST *er, CW *cw)
  */
 struct ecm_request_t *check_cache(ECM_REQUEST *er, struct s_client *cl)
 {
-	if(!er->csp_hash) return NULL;
+	if(!cache_init_done || !er->csp_hash) return NULL;
 
 	ECM_REQUEST *ecm = NULL;
 	ECMHASH *result;
@@ -304,7 +311,7 @@ static void cacheex_cache_add(ECM_REQUEST *er, ECMHASH *result, CW *cw, bool add
 }
 
 void add_cache(ECM_REQUEST *er){
-	if(!er->csp_hash) return;
+	if(!cache_init_done || !er->csp_hash) return;
 
 	ECMHASH *result = NULL;
 	CW *cw = NULL;
@@ -411,6 +418,9 @@ void cleanup_cache(bool force){
 	struct timeb now;
 	int64_t gone_first, gone_upd;
 
+
+	if(!cache_init_done)
+		{ return; }
 
 	SAFE_RWLOCK_WRLOCK(&cache_lock);
 
