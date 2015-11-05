@@ -211,7 +211,6 @@ struct cc_data
 	int8_t ecm_busy;
 	CS_MUTEX_LOCK cards_busy;
 	struct timeb ecm_time;
-	time_t answer_on_keepalive;
 	uint8_t last_msg;
 	uint8_t cmd05NOK;
 

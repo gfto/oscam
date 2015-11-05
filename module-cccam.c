@@ -2028,7 +2028,6 @@ void cc_idle(void)
 		if(cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) > 0)
 		{
 			cs_log_dbg(D_READER, "cccam: keepalive");
-			cc->answer_on_keepalive = now;
 		}
 		return;
 	}
@@ -3022,27 +3021,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 			rdr->last_g = time(NULL);
 			rdr->last_s = time(NULL);
 		}
-		if(cl->typ != 'c')
-		{
-			cs_log_dbg(D_READER, "cccam: keepalive ack");
-			//Checking if last answer is one minute ago:
-			if(cc->answer_on_keepalive + 65 <= time(NULL)) // 1min = 60 + maxlag(5s)
-			{
-				cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
-				cs_log_dbg(D_CLIENT, "cccam: READER KEEPALIVE TO SERVER");
-				cc->answer_on_keepalive = time(NULL);
-			}
-		}
-		else
-		{
-			//Checking if last answer is one minute ago:
-			if(cc->just_logged_in || cc->answer_on_keepalive + 65 <= time(NULL)) // 1min = 60 + maxlag(5s)
-			{
-					cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
-					cs_log_dbg(D_CLIENT, "cccam: SERVER KEEPALIVE TO READER");
-					cc->answer_on_keepalive = time(NULL);
-			}
-		}
+		
 		cc->just_logged_in = 0;
 		break;
 
@@ -3739,7 +3718,6 @@ int32_t cc_srv_connect(struct s_client *cl)
 
 	cc->cccam220 = check_cccam_compat(cc);
 	cc->just_logged_in = 1;
-	cc->answer_on_keepalive = time(NULL);
 
 	//Wait for Partner detection (NOK1 with data) before reporting cards
 	//When Partner is detected, cccam220=1 is set. then we can report extended card data
@@ -3877,7 +3855,6 @@ int32_t cc_cli_connect(struct s_client *cl)
 	cc->cmd05_offset = 0;
 	cc->cmd05_active = 0;
 	cc->cmd05_data_len = 0;
-	cc->answer_on_keepalive = time(NULL);
 	cc->extended_mode = 0;
 	cc->last_emm_card = NULL;
 	cc->num_hop1 = 0;

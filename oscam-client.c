@@ -578,6 +578,11 @@ void client_check_status(struct s_client *cl)
 	case 'm':
 	case 'c':
 
+		if((get_module(cl)->listenertype & LIS_CCCAM) && cl->last && (time(NULL) - cl->last) > (time_t)12)
+		{
+			add_job(cl, ACTION_CLIENT_IDLE, NULL, 0);
+		}
+
 		//Check umaxidle to avoid client is killed for inactivity, it has priority than cmaxidle
 		if(!cl->account->umaxidle)
 			break;
@@ -611,7 +616,7 @@ void client_check_status(struct s_client *cl)
 		{
 			time_t now = time(NULL);
 			int32_t time_diff = llabs(now - rdr->last_check);
-			if(time_diff > 60 || (time_diff > 10 && (rdr->typ == R_CCCAM || rdr->typ == R_CAMD35 || rdr->typ == R_CS378X)) || ((time_diff > (rdr->tcp_rto?rdr->tcp_rto:60)) && rdr->typ == R_RADEGAST))     //check 1x per minute or every 10s for cccam/camd35 or reconnecttimeout radegast if 0 defaut 60s
+			if(time_diff > 60 || (time_diff > 12 && (rdr->typ == R_CCCAM || rdr->typ == R_CAMD35 || rdr->typ == R_CS378X)) || ((time_diff > (rdr->tcp_rto?rdr->tcp_rto:60)) && rdr->typ == R_RADEGAST))     //check 1x per minute or every 10s for cccam/camd35 or reconnecttimeout radegast if 0 defaut 60s
 			{
 				add_job(rdr->client, ACTION_READER_IDLE, NULL, 0);
 				rdr->last_check = now;
