@@ -1737,7 +1737,9 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, ca_index_t idx, bool enable, 
 									cs_log_dbg(D_TRACE | D_DVBAPI,"CA_SET_PID ioctl error (errno=%d %s)", errno, strerror(errno));
 									remove_streampid_from_list(i, ca_pid2.pid, ca_pid2.index);
 								}
-								uint32_t result = is_ca_used(i,0); // check if in use by any pid
+								
+								ca_index_t result = is_ca_used(i,0); // check if in use by any pid
+								
 								if(result == INDEX_NOTFOUND)
 								{
 									cs_log_dbg(D_DVBAPI, "Demuxer %d close now unused CA%d device", demux_id, i);
