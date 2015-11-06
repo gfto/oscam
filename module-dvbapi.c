@@ -5215,12 +5215,14 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid, int32_t stream_id
 			coolapi_write_cw(demux[demux_id].ca_mask, demux[demux_id].STREAMpids, demux[demux_id].STREAMpidcount, &ca_descr);
 #else
 			int32_t i, j, write_cw = 0;
-			ca_index_t usedidx;
+			ca_index_t usedidx, lastidx;
 			
 			for(i = 0; i < MAX_DEMUX; i++)
 			{
 				if(!(demux[demux_id].ca_mask & (1 << i))) continue; // ca not in use by this demuxer!
-				ca_descr.index = INDEX_INVALID;
+				
+				lastidx = INDEX_INVALID;
+				
 				for(j = 0; j < demux[demux_id].STREAMpidcount; j++)
 				{
 					write_cw = 0;
@@ -5236,7 +5238,7 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid, int32_t stream_id
 							}
 							else
 							{
-								if(usedidx == ca_descr.index)
+								if(usedidx == lastidx)
 								{
 									cs_log_dbg(D_DVBAPI,"Demuxer %d ca%d is using index %d for streampid %04X -> skip, %s part of cw already written!",
 										demux_id, i, usedidx, demux[demux_id].STREAMpids[j], (n == 1 ? "even" : "odd"));
@@ -5250,6 +5252,7 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid, int32_t stream_id
 					}
 					if(!write_cw) { continue; } // no need to write the cw since this ca isnt using it!
 					
+					lastidx = usedidx;
 					ca_descr.index = usedidx;
 					ca_descr.parity = n;
 					memcpy(demux[demux_id].lastcw[n], cw + (n * 8), 8);
