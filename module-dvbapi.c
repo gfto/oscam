@@ -1639,7 +1639,8 @@ ca_index_t dvbapi_get_descindex(int32_t demux_index)
 		
 		if(idx > INDEX_MAX)
 		{
-			idx = 0;	
+			idx = 0;
+			fail = 1;
 		}
 		
 		cs_sleepms(1);
