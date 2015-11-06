@@ -1784,7 +1784,7 @@ void dvbapi_stop_all_emm_sdt_filtering(void)
 
 void dvbapi_stop_descrambling(int32_t demux_id)
 {
-	int32_t i;
+	int32_t i, j;
 	if(demux[demux_id].program_number == 0) { return; }
 	char channame[CS_SERVICENAME_SIZE];
 	i = demux[demux_id].pidindex;
@@ -1810,6 +1810,13 @@ void dvbapi_stop_descrambling(int32_t demux_id)
 	}
 	
 	memset(&demux[demux_id], 0 , sizeof(DEMUXTYPE));
+	for(i = 0; i < ECM_PIDS; i++)
+	{
+		for(j = 0; j < MAX_STREAM_INDICES; j++)
+		{
+			demux[demux_id].ECMpids[i].index[j] = INDEX_INVALID;
+		}
+	}
 	demux[demux_id].pidindex = -1;
 	demux[demux_id].curindex = -1;
 	if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
