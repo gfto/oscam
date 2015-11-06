@@ -4971,7 +4971,7 @@ static void *dvbapi_main_local(void *cli)
 							len = cs_recv(connfd, mbuf + pmtlen, sizeof(mbuf) - pmtlen, MSG_DONTWAIT);
 							if (len > 0)
 								pmtlen += len;
-							if (len == -1 && (errno != EINTR && errno != EAGAIN))
+							if ((len == 0 || len == -1) && (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK))
 							{
 								//client disconnects, stop all assigned decoding
 								cs_log_dbg(D_DVBAPI, "Socket %d reported connection close", connfd);
