@@ -1593,7 +1593,7 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len)
 static pthread_mutex_t lockindex;
 ca_index_t dvbapi_get_descindex(int32_t demux_index)
 {
-	int32_t i, j, k, fail = 1;
+	int32_t i, j, k, fail = 1, tries = 0;
 	ca_index_t idx = 0;
 	uint32_t tmp_idx;
 	
@@ -1643,7 +1643,22 @@ ca_index_t dvbapi_get_descindex(int32_t demux_index)
 			fail = 1;
 		}
 		
+		if(tries > 10)
+		{
+			for(i = 0; i < MAX_DEMUX; i++)
+			{
+				if(demux[i].ca_mask != demux[demux_index].ca_mask && (!(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)))
+				{
+					continue; // skip demuxer using other ca device
+				}
+			
+				disable_unused_streampids(i); // disable all streampids not in use anymore
+			}
+			tries = 0;
+		}
+		
 		cs_sleepms(1);
+		tries++;
 	}
 	
 	SAFE_MUTEX_UNLOCK(&lockindex); // and release it!
