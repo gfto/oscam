@@ -6357,7 +6357,7 @@ void disable_unused_streampids(int16_t demux_id)
 	int32_t j;
 	for(j = 0; j < MAX_STREAM_INDICES; j++)
 	{
-		uint32_t idx = demux[demux_id].ECMpids[ecmpid].index[j];
+		ca_index_t idx = demux[demux_id].ECMpids[ecmpid].index[j];
 		int32_t i,n;
 		struct s_streampid *listitem;
 		// search for old enabled streampids on all ca devices that have to be disabled
@@ -6428,7 +6428,7 @@ ca_index_t is_ca_used(uint8_t cadevice, int32_t pid)
 			if(listitem->cadevice != cadevice) continue;
 			if(pid && listitem->streampid != pid) continue;
 			uint32_t i = 0;
-			uint32_t newindex = INDEX_INVALID;
+			ca_index_t newindex = INDEX_INVALID;
 			if(listitem->caindex != INDEX_NOTACTIVE)
 			{
 				newindex = listitem->caindex;
