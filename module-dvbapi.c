@@ -3006,7 +3006,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		{
 			if(demux[i].program_number == 0) { continue; }  // skip empty demuxers
 			if(demux[i].socket_fd != connfd) { continue; }  // skip demuxers belonging to other ca pmt connection
-			if((demux[i].socket_fd == -1) && (strcmp(demux[i].pmt_file, pmtfile) != 0)) { continue; } // skip demuxers handled by other pmt files
+			if((demux[i].socket_fd == -1) && (pmtfile && strcmp(demux[i].pmt_file, pmtfile) != 0)) { continue; } // skip demuxers handled by other pmt files
 			demux[i].stopdescramble = 1; // Mark for deletion if not used again by following pmt objects.
 			cs_log_dbg(D_DVBAPI, "Marked demuxer %d/%d (srvid = %04X fd = %d) to stop decoding", i, MAX_DEMUX, demux[i].program_number, connfd);
 		}
@@ -3311,7 +3311,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		{
 			if(demux[j].program_number == 0) { continue; }
 			if(demux[j].socket_fd != connfd) { continue; }  // skip demuxers belonging to other ca pmt connection
-			if((demux[j].socket_fd == -1) && (strcmp(demux[j].pmt_file, pmtfile) != 0)) { continue; } // skip demuxers handled by other pmt files
+			if((demux[j].socket_fd == -1) && (pmtfile && strcmp(demux[j].pmt_file, pmtfile) != 0)) { continue; } // skip demuxers handled by other pmt files
 			
 			if(demux[j].running && demux_id == j) disable_unused_streampids(j); // disable all streampids not in use anymore
 			
