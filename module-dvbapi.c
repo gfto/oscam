@@ -2689,7 +2689,10 @@ void dvbapi_resort_ecmpids(int32_t demux_index)
 			max_status = demux[demux_index].ECMpids[n].status;
 			highest_priopid = n;
 		}		
-		if(demux[demux_index].ECMpids[n].status == 0) { demux[demux_index].ECMpids[n].checked = 2; }  // set pids with no status to no prio run
+		if(!USE_OPENXCAS) // openxcas doesnt use prio and non-prio run: all are equal!
+		{
+			if(demux[demux_index].ECMpids[n].status == 0) { demux[demux_index].ECMpids[n].checked = 2; }  // set pids with no status to no prio run
+		}
 	}
 	
 	demux[demux_index].max_status = max_status; // register maxstatus
