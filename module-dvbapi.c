@@ -4999,7 +4999,7 @@ static void *dvbapi_main_local(void *cli)
 							len = cs_recv(connfd, mbuf + pmtlen, sizeof(mbuf) - pmtlen, MSG_DONTWAIT);
 							if (len > 0)
 								pmtlen += len;
-							if ((len == 0 || len == -1) && (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK))
+							if ((len == 0 || len == -1) && ((errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) || tries >= 10))
 							{
 								//client disconnects, stop all assigned decoding
 								cs_log_dbg(D_DVBAPI, "Socket %d reported connection close", connfd);
@@ -5148,7 +5148,7 @@ static void *dvbapi_main_local(void *cli)
 								break;
 							}
 							tries++;
-						} while (pmtlen < sizeof(mbuf) && tries < 10); //wait for data become available and try again
+						} while (pmtlen < sizeof(mbuf) && tries <= 10); //wait for data become available and try again
 
 						// if the connection is new and we read no PMT data, then add it to the poll,
 						// otherwise this socket will not be checked with poll when data arives
