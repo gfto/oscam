@@ -1825,7 +1825,7 @@ void dvbapi_stop_descrambling(int32_t demux_id)
 	{
 		for(i = 0; i < demux[demux_id].STREAMpidcount; i++)
 		{
-			dvbapi_set_pid(demux_id, i, -1, false, false); // disable streampid
+			dvbapi_set_pid(demux_id, i, INDEX_DISABLE_ALL, false, false); // disable streampid
 		}
 	}
 	
@@ -5634,7 +5634,23 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 #endif
 		default:
 			{
-#ifdef WITH_EXTENDED_CW			
+#ifdef WITH_EXTENDED_CW
+				
+				if(er->cw_ex.mode != demux[i].ECMpids[j].useMultipleIndices)
+				{
+					ca_index_t idx;
+					for(k = 0; k < demux[i].STREAMpidcount; k++)
+					{
+						idx = demux[i].ECMpids[j].useMultipleIndices ? demux[i].ECMpids[j].index[k] : demux[i].ECMpids[j].index[0];
+						dvbapi_set_pid(i, k, idx, false, false); // disable streampid
+					}
+					
+					for(k = 0; k < MAX_STREAM_INDICES; k++)
+					{	
+						demux[i].ECMpids[j].index[k] = INDEX_INVALID;
+					}				
+				}
+				
 				if(er->cw_ex.mode == CW_MODE_MULTIPLE_CW)
 				{
 					int32_t key_pos_a = 0;
@@ -6386,9 +6402,10 @@ void disable_unused_streampids(int16_t demux_id)
 	if (ecmpid == -1) return; // no active ecmpid!
 	
 	int32_t j;
-	for(j = 0; j < MAX_STREAM_INDICES; j++)
+
+	if(demux[demux_id].ECMpids[ecmpid].useMultipleIndices == 0)
 	{
-		ca_index_t idx = demux[demux_id].ECMpids[ecmpid].index[j];
+		ca_index_t idx = demux[demux_id].ECMpids[ecmpid].index[0];
 		int32_t i,n;
 		struct s_streampid *listitem;
 		// search for old enabled streampids on all ca devices that have to be disabled
@@ -6440,6 +6457,90 @@ void disable_unused_streampids(int16_t demux_id)
 				}
 			}
 		}
+	}
+	else
+	{
+		ca_index_t idx = INDEX_INVALID;
+		int32_t i,n;
+		uint8_t skip;
+		struct s_streampid *listitem;
+		// search for old enabled streampids on all ca devices that have to be disabled
+		for(i = 0; i < MAX_DEMUX && idx != INDEX_INVALID; i++)
+		{
+			if(!((demux[demux_id].ca_mask & (1 << i)) == (uint) (1 << i))) continue; // continue if ca is unused by this demuxer
+			
+			LL_ITER itr;
+			itr = ll_iter_create(ll_activestreampids);
+			while((listitem = ll_iter_next(&itr)))
+			{
+				if (i != listitem->cadevice) continue; // ca doesnt match
+				
+				for(skip = 1, j = 0; j < MAX_STREAM_INDICES; j++)
+				{
+					idx = demux[demux_id].ECMpids[ecmpid].index[j];
+					if(idx == INDEX_INVALID) continue;
+					
+					if ((listitem->activeindexers & (1 << (idx))) == (uint) (1 << (idx)))
+					{
+						skip = 0; // index match
+						break;
+					}
+				}
+				
+				if(skip) continue;
+				
+				for(n = 0; n < demux[demux_id].STREAMpidcount; n++){
+					if(demux[demux_id].ECMpidcount == 0) // FTA? -> disable stream!
+					{
+						n = demux[demux_id].STREAMpidcount;
+						break;
+					}
+					if (listitem->streampid == demux[demux_id].STREAMpids[n]){ // check if pid matches with current streampid on demuxer
+						break;
+					}
+				}
+				if (n == demux[demux_id].STREAMpidcount){
+					demux[demux_id].STREAMpids[n] = listitem->streampid; // put it temp here!
+					dvbapi_set_pid(demux_id, n, idx, false, false); // no match found so disable this now unused streampid
+					demux[demux_id].STREAMpids[n] = 0; // remove temp!
+				}
+			}
+			
+			for(n = 0; n < demux[demux_id].STREAMpidcount && demux[demux_id].ECMpidcount != 0; n++) // ECMpidcount != 0 -> skip enabling on fta
+			{
+				ll_iter_reset(&itr);
+				if(!demux[demux_id].ECMpids[ecmpid].streams || ((demux[demux_id].ECMpids[ecmpid].streams & (1 << n)) == (uint) (1 << n)))
+				{
+					while((listitem = ll_iter_next(&itr)))
+					{
+						if (i != listitem->cadevice) continue; // ca doesnt match
+						
+						for(skip = 1, j = 0; j < MAX_STREAM_INDICES; j++)
+						{
+							idx = demux[demux_id].ECMpids[ecmpid].index[j];
+							if(idx == INDEX_INVALID) continue;
+							
+							if ((listitem->activeindexers & (1 << (idx))) == (uint) (1 << (idx)))
+							{
+								skip = 0; // index match
+								break;
+							}
+						}
+						
+						if(skip) continue;
+					
+						if (listitem->streampid == demux[demux_id].STREAMpids[n]) // check if pid matches with current streampid on demuxer
+						{ 
+							break;
+						}
+					}
+					if(!listitem) // if streampid not listed -> enable it!
+					{
+						dvbapi_set_pid(demux_id, n, idx, true, false); // enable streampid
+					}
+				}
+			}
+		}		
 	}
 }
 

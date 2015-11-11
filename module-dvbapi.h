@@ -90,6 +90,7 @@ typedef uint32_t ca_index_t;
 #define INDEX_NOTACTIVE     0xEFFFFFFE // only used for caindex
 #define INDEX_INVALID       0xEFFFFFFF
 #define INDEX_DISABLE       0xFFFFFFFF // only used for ca_pid_t
+#define INDEX_DISABLE_ALL   0xFFFFFFFF // only used for dvbapi_set_pid()
 
 struct box_devices
 {
