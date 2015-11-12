@@ -37,37 +37,95 @@ extern int32_t exit_oscam;
 #define DN_MULTISHOT 0
 #endif
 
-const char *streamtxt[] = {
-								"",			 																				// 00
-								"",																							// 01
-								"Videostream ",																				// 02
-								"Audiostream ",																			    // 03
-								"",																							// 04
-								"",																							// 05
-								"Datastream ",																				// 06
-								"",																							// 07
-								"",																							// 08
+const char *streamtxt_00_to_1B[] = {
+								"Reserved",			 																		// 00
+								"Videostream (MPEG-1)",																		// 01
+								"Videostream (MPEG-2)",																		// 02
+								"Audiostream (MPEG-1)",																		// 03
+								"Audiostream (MPEG-2)",																		// 04
+								"Datastream (MPEG-2 tabled data)",															// 05
+								"Data-/Audostream (Subtitles/VBI and AC-3)",												// 06
+								"Datastream (MHEG)",																		// 07
+								"Datastream (DSM CC)",																		// 08
 								"Conditional Access ",																		// 09
-								"",																							// 0A
-								"",																							// 0B
-								"",																							// 0C
-								"",																							// 0D
-								"",																							// 0E
-								"",																							// 0F
-								"",																							// 10
-								"",																							// 11
-								"",																							// 12
-								"",																							// 13
-								"",																							// 14
-								"",																							// 15
-								"",																							// 16
-								"",																							// 17
-								"",																							// 18
-								"",																							// 19
-								"",																							// 1A
-								"MPEG-4 videostream ",																		// 1B
-								"MPEG-4 audiostream ",
+								"Datastream (DSM CC)",																		// 0A
+								"Datastream (DSM CC)",																		// 0B
+								"Datastream (DSM CC)",																		// 0C
+								"Datastream (DSM CC)",																		// 0D
+								"Datastream (Auxiliary)",																	// 0E
+								"Audiostream (MPEG-2 lower bit-rate)",														// 0F
+								"Videostream (MPEG-4 H.263)",																// 10
+								"Audiostream (MPEG-4)",																		// 11
+								"Datastream (MPEG-4 FlexMux)",																// 12
+								"Datastream (MPEG-4 FlexMux)",																// 13
+								"Datastream (DSM CC)",																		// 14
+								"Datastream (Metadata)",																	// 15
+								"Datastream (Metadata)",																	// 16
+								"Datastream (DSM CC)",																		// 17
+								"Datastream (DSM CC)",																		// 18
+								"Datastream (Metadata)",																	// 19
+								"Datastream (IPMP)",																		// 1A
+								"Videostream (MPEG-4 lower bit-rate)",														// 1B
 							};
+
+const char *streamtxt_80_to_87[] = {
+								"Video-/Audiostream (H.262/PCM)",															// 80
+								"Audiostream (Dolby Digital)",																// 81
+								"Data-/Audiostream (Subtitles/DTS6)",														// 82
+								"Audiostream (Dolby TrueHD)",																// 83
+								"Audiostream (Dolby Digital Plus)",															// 84
+								"Audiostream (DTS 8)",																		// 85
+								"Audiostream (DTS 8 losless)",																// 86
+								"Audiostream (Dolby Digital Plus)",															// 87
+							};
+
+const char *get_streamtxt(uint8_t id)
+{
+	if(id <= 0x1B)
+	{
+		return 	streamtxt_00_to_1B[id];
+	}
+	else if(id == 0x24)
+	{
+		return 	"Videostream (H.265 Ultra HD video)";
+	}
+	else if(id == 0x42)
+	{
+		return 	"Videostream (Chinese Video Standard)";
+	}
+	else if(id >= 0x80 && id <= 0x87)
+	{
+		return 	streamtxt_80_to_87[id - 0x80];
+	}
+	else if(id == 0x90)
+	{
+		return 	"Datastream (Blu-ray subtitling)";
+	}
+	else if(id == 0x95)
+	{
+		return 	"Datastream (DSM CC)";
+	}
+	else if(id == 0xC0)
+	{
+		return 	"Datastream (DigiCipher II text)";
+	}
+	else if(id == 0xC2)
+	{
+		return 	"Datastream (DSM CC)";
+	}
+	else if(id == 0xD1)
+	{
+		return 	"Videostream (BBC Dirac Ultra HD video)";
+	}
+	else if(id == 0xEA)
+	{
+		return 	"Videostream (WMV9 lower bit-rate)";
+	}
+	else
+	{
+		return "Reserved";	
+	}
+}
 
 
 void flush_read_fd(int32_t demux_index, int32_t num, int fd)
@@ -3159,8 +3217,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 	uint32_t es_info_length = 0, vpid = 0;
 	struct s_dvbapi_priority *addentry;
-
-	const char *stream_in_text = NULL;
 	
 	for(i = program_info_length + program_info_start; i < length; i += es_info_length + 5)
 	{
@@ -3190,7 +3246,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		{
 			dvbapi_parse_descriptor(demux_id, es_info_length, buffer + i + 5, &is_audio);
 			
-			if((stream_type == 0x06 || stream_type == 0x80) && is_audio)
+			if((stream_type == 0x06 || stream_type == 0x80 || stream_type == 0x82) && is_audio)
 			{
 				demux[demux_id].STREAMpidsType[demux[demux_id].STREAMpidcount-1] = 0x03;
 				stream_type = 0x03;
@@ -3216,15 +3272,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			}
 		}
 		
-		if(stream_type < (sizeof(streamtxt) / sizeof(const char *)))
-		{
-			stream_in_text = streamtxt[stream_type];
-		}
-		else
-		{
-			stream_in_text = "";
-		}
-		cs_log_dbg(D_DVBAPI, "Demuxer %d stream %s(type: %02x pid: %04x length: %d)", demux_id, stream_in_text, stream_type, elementary_pid, es_info_length);
+		cs_log_dbg(D_DVBAPI, "Demuxer %d stream %s(type: %02x pid: %04x length: %d)", demux_id, get_streamtxt(stream_type), stream_type, elementary_pid, es_info_length);
 	}
 	
 	if(!is_real_pmt)
@@ -5763,7 +5811,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 						}
 						// Audio
 						else if(stream_type == 0x03 || stream_type == 0x04 || stream_type == 0x0F || stream_type == 0x11 
-							|| (stream_type >= 0x81 && stream_type <= 0x87) || stream_type == 0x8A)
+							|| stream_type == 0x81 || (stream_type >= 0x83 && stream_type <= 0x87) || stream_type == 0x8A)
 						{
 							cw = er->cw_ex.audio[key_pos_a];
 							
