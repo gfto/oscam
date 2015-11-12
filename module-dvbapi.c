@@ -5288,7 +5288,7 @@ static void *dvbapi_main_local(void *cli)
 								break;
 							}
 							tries++;
-						} while (pmtlen < sizeof(mbuf) && tries <= 10); //wait for data become available and try again
+						} while (pmtlen && pmtlen < sizeof(mbuf) && tries <= 10); //wait for data become available and try again
 
 						// if the connection is new and we read no PMT data, then add it to the poll,
 						// otherwise this socket will not be checked with poll when data arives
