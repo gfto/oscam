@@ -3202,10 +3202,15 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	{
 		demux_id = existing_demux_id;
 		
-		dvbapi_stop_filter(demux_id, TYPE_PMT);
-		
 		program_number = b2i(2, buffer + 3);
 		program_info_length = b2i(2, buffer + 10) &0xFFF;
+		
+		if(demux[demux_id].program_number != program_number)
+		{
+			return -1;	
+		}		
+		
+		dvbapi_stop_filter(demux_id, TYPE_PMT);
 		
 		cs_log_dump_dbg(D_DVBAPI, buffer, length, "pmt:");
 	}
