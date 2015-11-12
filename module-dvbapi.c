@@ -5844,7 +5844,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		// reset idle-Time
 		client->last = time((time_t *)0); // ********* TO BE FIXED LATER ON ******
 
-		if (cfg.dvbapi_listenport && client_proto_version >= 2)
+		if ((cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX) && client_proto_version >= 2)
 			{ dvbapi_net_send(DVBAPI_ECM_INFO, demux[i].socket_fd, i, 0, NULL, client, er); }
 #ifndef __CYGWIN__
 		else if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
