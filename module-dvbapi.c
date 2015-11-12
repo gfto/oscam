@@ -2743,12 +2743,11 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 	uint32_t descriptor_length = 0;
 	uint32_t j, u, k;
 	uint8_t skip_border = cfg.dvbapi_boxtype == BOXTYPE_SAMYGO ? 0x05 : 0x02; // skip input values <0x05 on samygo
-	uint32_t format_identifier;
 	
-	static const uint32_t format_identifiers_audio[10] = 
+	static const char format_identifiers_audio[10][4] = 
 		{
-			0x41432D33, 0x42535344, 0x646D6174, 0x44545331, 0x44545332,
-			0x44545333, 0x45414333, 0x48444D56, 0x6D6C7061, 0x4F707573,
+			"AC-3", "BSSD", "dmat", "DTS1", "DTS2",
+			"DTS3", "EAC3", "HDMV", "mlpa", "Opus",
 		};
 
 	if(info_length < 1)
@@ -2772,11 +2771,9 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 			}
 			else if(buffer[j] == 0x05 && descriptor_length >= 4)
 			{
-				format_identifier = b2i(4, buffer + j + 2);
-				
 				for(k = 0; k < 10; k++)
 				{
-					if(format_identifier == format_identifiers_audio[k])
+					if(memcmp(buffer + j + 2, format_identifiers_audio[k], 4) == 0)
 					{
 						*is_audio = 1;
 						break;
