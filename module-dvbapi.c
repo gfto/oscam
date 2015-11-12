@@ -3168,16 +3168,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		uint16_t elementary_pid = b2i(2, buffer + i + 1)&0x1FFF;
 		uint8_t is_audio = 0;
 		es_info_length = b2i(2, buffer + i +3)&0x0FFF;
-		if(stream_type < (sizeof(streamtxt) / sizeof(const char *)))
-		{
-			stream_in_text = streamtxt[stream_type];
-		}
-		else
-		{
-			stream_in_text = "";
-		}
-		cs_log_dbg(D_DVBAPI, "Demuxer %d stream %s(type: %02x pid: %04x length: %d)", demux_id, stream_in_text, stream_type, elementary_pid, es_info_length);
-
+		
 		if(demux[demux_id].STREAMpidcount >= ECM_PIDS)
 		{
 			break;
@@ -3202,6 +3193,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			if((stream_type == 0x06 || stream_type == 0x80) && is_audio)
 			{
 				demux[demux_id].STREAMpidsType[demux[demux_id].STREAMpidcount-1] = 0x03;
+				stream_type = 0x03;
 			}
 			else if(!vpid && stream_type == 0x80 && !is_audio)
 			{
@@ -3223,6 +3215,16 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 				break;
 			}
 		}
+		
+		if(stream_type < (sizeof(streamtxt) / sizeof(const char *)))
+		{
+			stream_in_text = streamtxt[stream_type];
+		}
+		else
+		{
+			stream_in_text = "";
+		}
+		cs_log_dbg(D_DVBAPI, "Demuxer %d stream %s(type: %02x pid: %04x length: %d)", demux_id, stream_in_text, stream_type, elementary_pid, es_info_length);
 	}
 	
 	if(!is_real_pmt)
