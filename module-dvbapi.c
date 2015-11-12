@@ -5393,7 +5393,7 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid, int32_t stream_id
 						}
 					}
 					
-					if(algo != CA_ALGO_DVBCSA && cfg.dvbapi_extended_cw_api == 1)
+					if(cfg.dvbapi_extended_cw_api == 1)
 					{
 						ca_descr_mode.index = usedidx;
 						ca_descr_mode.algo = algo;
