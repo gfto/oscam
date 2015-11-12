@@ -3920,7 +3920,7 @@ void dvbapi_handlesockmsg(unsigned char *buffer, uint32_t len, int32_t connfd)
 			// 9F 80 3f 04 83 02 00 <demux index>
 			cs_log_dump_dbg(D_DVBAPI, buffer, len, "capmt 3f:");
 			// ipbox fix
-			if(cfg.dvbapi_boxtype == BOXTYPE_IPBOX || cfg.dvbapi_listenport)
+			if(cfg.dvbapi_boxtype == BOXTYPE_IPBOX  || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX || cfg.dvbapi_listenport)
 			{
 				int32_t demux_index = buffer[7 + k];
 				for(i = 0; i < MAX_DEMUX; i++)
