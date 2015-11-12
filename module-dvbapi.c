@@ -2817,7 +2817,7 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 		info_length--;
 	}
 
-	for(j = 0; j < info_length; j += descriptor_length + 2)
+	for(j = 0; j + 1 < info_length; j += descriptor_length + 2)
 	{
 		descriptor_length = buffer[j + 1];
 		
@@ -3218,7 +3218,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	uint32_t es_info_length = 0, vpid = 0;
 	struct s_dvbapi_priority *addentry;
 	
-	for(i = program_info_length + program_info_start; i < length; i += es_info_length + 5)
+	for(i = program_info_length + program_info_start; i + 4 < length; i += es_info_length + 5)
 	{
 		uint32_t stream_type = buffer[i];
 		uint16_t elementary_pid = b2i(2, buffer + i + 1)&0x1FFF;
@@ -3272,7 +3272,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			}
 		}
 		
-		cs_log_dbg(D_DVBAPI, "Demuxer %d stream %s(type: %02x pid: %04x length: %d)", demux_id, get_streamtxt(stream_type), stream_type, elementary_pid, es_info_length);
+		cs_log_dbg(D_DVBAPI,"Demuxer %d stream %s(type: %02x pid: %04x length: %d)", demux_id, get_streamtxt(stream_type), stream_type, elementary_pid, es_info_length);
 	}
 	
 	if(!is_real_pmt)
