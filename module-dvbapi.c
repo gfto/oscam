@@ -5164,7 +5164,10 @@ static void *dvbapi_main_local(void *cli)
 										break;
 									}
 									default:
+									{
 										cs_log("Unknown socket command received: 0x%08X", opcode);
+										chunksize = 1;
+									}
 								}
 
 								//processing the complete data according to type
