@@ -1302,6 +1302,16 @@ void dvbapi_start_sdt_filter(int32_t demux_index)
 	demux[demux_index].sdt_filter = 0;
 }
 
+void dvbapi_start_pat_filter(int32_t demux_index)
+{
+	dvbapi_start_filter(demux_index, demux[demux_index].pidindex, 0x00, 0x001, 0x01, 0x00, 0xFF, 0, TYPE_PAT);
+}
+
+void dvbapi_start_pmt_filter(int32_t demux_index, int32_t pmt_pid)
+{
+	dvbapi_start_filter(demux_index, demux[demux_index].pidindex, pmt_pid, 0x001, 0x01, 0x02, 0xFF, 0, TYPE_PMT);
+}
+
 void dvbapi_start_emm_filter(int32_t demux_index)
 {
 	unsigned int j;
@@ -1815,6 +1825,8 @@ void dvbapi_stop_descrambling(int32_t demux_id)
 	
 	dvbapi_stop_filter(demux_id, TYPE_EMM);
 	dvbapi_stop_filter(demux_id, TYPE_SDT);
+	dvbapi_stop_filter(demux_id, TYPE_PAT);
+	dvbapi_stop_filter(demux_id, TYPE_PMT);
 	
 	if(demux[demux_id].ECMpidcount > 0)
 	{
@@ -3004,12 +3016,17 @@ static void dvbapi_capmt_notify(struct demux_s *dmx)
 	}
 }
 
-int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connfd, char *pmtfile)
+int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connfd, char *pmtfile, int8_t is_real_pmt, uint16_t existing_demux_id)
 {
 	uint32_t i = 0, start_descrambling = 0;
 	int32_t j = 0;
 	int32_t demux_id = -1;
 	uint16_t ca_mask, demux_index, adapter_index, pmtpid;
+	uint32_t program_number, program_info_length;
+	uint8_t program_info_start = is_real_pmt ? 12 : 6;
+		
+	if(!is_real_pmt)
+	{
 
 #define LIST_MORE 0x00    //*CA application should append a 'MORE' CAPMT object to the list and start receiving the next object
 #define LIST_FIRST 0x01   //*CA application should clear the list when a 'FIRST' CAPMT object is received, and start receiving the next object
@@ -3019,102 +3036,116 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 #define LIST_UPDATE 0x05 //*CA application should replace an entry in the list with an 'UPDATE' CAPMT object, and start working with the updated list
 
 #if defined WITH_COOLAPI || defined WITH_COOLAPI2
-	int32_t ca_pmt_list_management = LIST_ONLY;
+		int32_t ca_pmt_list_management = LIST_ONLY;
 #else
-	int32_t ca_pmt_list_management = buffer[0];
+		int32_t ca_pmt_list_management = buffer[0];
 #endif
-	uint32_t program_number = b2i(2, buffer + 1);
-	uint32_t program_info_length = b2i(2, buffer + 4) &0xFFF;
-	
-	cs_log_dump_dbg(D_DVBAPI, buffer, length, "capmt:");
-	cs_log_dbg(D_DVBAPI, "Receiver sends PMT command %d for channel %04X", ca_pmt_list_management, program_number);
-	
-	if(!pmt_stopmarking && (ca_pmt_list_management == LIST_FIRST || ca_pmt_list_management == LIST_ONLY))
-	{
-		for(i = 0; i < MAX_DEMUX; i++) 
+		program_number = b2i(2, buffer + 1);
+		program_info_length = b2i(2, buffer + 4) &0xFFF;
+		
+		cs_log_dump_dbg(D_DVBAPI, buffer, length, "capmt:");
+		cs_log_dbg(D_DVBAPI, "Receiver sends PMT command %d for channel %04X", ca_pmt_list_management, program_number);
+		
+		if(!pmt_stopmarking && (ca_pmt_list_management == LIST_FIRST || ca_pmt_list_management == LIST_ONLY))
 		{
-			if(demux[i].program_number == 0) { continue; }  // skip empty demuxers
-			if(demux[i].socket_fd != connfd) { continue; }  // skip demuxers belonging to other ca pmt connection
-			if((demux[i].socket_fd == -1) && (pmtfile && strcmp(demux[i].pmt_file, pmtfile) != 0)) { continue; } // skip demuxers handled by other pmt files
-			demux[i].stopdescramble = 1; // Mark for deletion if not used again by following pmt objects.
-			cs_log_dbg(D_DVBAPI, "Marked demuxer %d/%d (srvid = %04X fd = %d) to stop decoding", i, MAX_DEMUX, demux[i].program_number, connfd);
-		}
-		pmt_stopmarking = 1; // only stop demuxing for first pmt record
-	}
-	
-	getDemuxOptions(i, buffer, &ca_mask, &demux_index, &adapter_index, &pmtpid);
-	cs_log_dbg(D_DVBAPI,"Receiver wants to demux srvid %04X on adapter %04X camask %04X index %04X pmtpid %04X",
-		program_number, adapter_index, ca_mask, demux_index, pmtpid);
-	
-	for(i = 0; i < MAX_DEMUX; i++)    // search current demuxers for running the same program as the one we received in this PMT object
-	{
-		if(demux[i].program_number == 0) { continue; }
-		if(cfg.dvbapi_boxtype == BOXTYPE_IPBOX_PMT) demux_index = i; // fixup for ipbox
-
-		bool full_check = 1, matched = 0;
-		if (config_enabled(WITH_COOLAPI) || config_enabled(WITH_COOLAPI2) || cfg.dvbapi_boxtype == BOXTYPE_SAMYGO)
-			full_check = 0;
-
-		if (full_check)
-			matched = (connfd > 0 && demux[i].socket_fd == connfd) && demux[i].program_number == program_number;
-		else
-			matched = connfd > 0 && demux[i].program_number == program_number;
-
-		if(matched)
-		{
-			if (full_check) {
-				if (demux[i].adapter_index != adapter_index) continue; // perhaps next demuxer matches?
-				if (demux[i].ca_mask != ca_mask) continue; // perhaps next demuxer matches?
-				if (demux[i].demux_index != demux_index) continue; // perhaps next demuxer matches?
+			for(i = 0; i < MAX_DEMUX; i++) 
+			{
+				if(demux[i].program_number == 0) { continue; }  // skip empty demuxers
+				if(demux[i].socket_fd != connfd) { continue; }  // skip demuxers belonging to other ca pmt connection
+				if((demux[i].socket_fd == -1) && (pmtfile && strcmp(demux[i].pmt_file, pmtfile) != 0)) { continue; } // skip demuxers handled by other pmt files
+				demux[i].stopdescramble = 1; // Mark for deletion if not used again by following pmt objects.
+				cs_log_dbg(D_DVBAPI, "Marked demuxer %d/%d (srvid = %04X fd = %d) to stop decoding", i, MAX_DEMUX, demux[i].program_number, connfd);
 			}
-			if(ca_pmt_list_management == LIST_UPDATE){
-				cs_log("Demuxer %d PMT update for decoding of SRVID %04X! ", i, program_number);
-			}
-
-			demux_id = i;
-			
-			cs_log("Demuxer %d continue decoding of SRVID %04X", i, demux[i].program_number);
-
-			openxcas_set_sid(program_number);
-
-			demux[i].stopdescramble = 0; // dont stop current demuxer!
-			break; // no need to explore other demuxers since we have a found!
+			pmt_stopmarking = 1; // only stop demuxing for first pmt record
 		}
-	}
-
-	// start using the new list
-	if(ca_pmt_list_management != LIST_FIRST && ca_pmt_list_management != LIST_MORE)
-	{
-		for(j = 0; j < MAX_DEMUX; j++)
+		
+		getDemuxOptions(i, buffer, &ca_mask, &demux_index, &adapter_index, &pmtpid);
+		cs_log_dbg(D_DVBAPI,"Receiver wants to demux srvid %04X on adapter %04X camask %04X index %04X pmtpid %04X",
+			program_number, adapter_index, ca_mask, demux_index, pmtpid);
+		
+		for(i = 0; i < MAX_DEMUX; i++)    // search current demuxers for running the same program as the one we received in this PMT object
 		{
-			if(demux[j].program_number == 0) { continue; }
-			if(demux[j].stopdescramble == 1) { dvbapi_stop_descrambling(j); }// Stop descrambling and remove all demuxer entries not in new PMT. 
+			if(demux[i].program_number == 0) { continue; }
+			if(cfg.dvbapi_boxtype == BOXTYPE_IPBOX_PMT) demux_index = i; // fixup for ipbox
+    	
+			bool full_check = 1, matched = 0;
+			if (config_enabled(WITH_COOLAPI) || config_enabled(WITH_COOLAPI2) || cfg.dvbapi_boxtype == BOXTYPE_SAMYGO)
+				full_check = 0;
+    	
+			if (full_check)
+				matched = (connfd > 0 && demux[i].socket_fd == connfd) && demux[i].program_number == program_number;
+			else
+				matched = connfd > 0 && demux[i].program_number == program_number;
+    	
+			if(matched)
+			{
+				if (full_check) {
+					if (demux[i].adapter_index != adapter_index) continue; // perhaps next demuxer matches?
+					if (demux[i].ca_mask != ca_mask) continue; // perhaps next demuxer matches?
+					if (demux[i].demux_index != demux_index) continue; // perhaps next demuxer matches?
+				}
+				if(ca_pmt_list_management == LIST_UPDATE){
+					cs_log("Demuxer %d PMT update for decoding of SRVID %04X! ", i, program_number);
+				}
+    	
+				demux_id = i;
+				
+				cs_log("Demuxer %d continue decoding of SRVID %04X", i, demux[i].program_number);
+    	
+				openxcas_set_sid(program_number);
+    	
+				demux[i].stopdescramble = 0; // dont stop current demuxer!
+				break; // no need to explore other demuxers since we have a found!
+			}
 		}
-		start_descrambling = 1; // flag that demuxer descrambling is to be executed!
-		pmt_stopmarking = 0; // flag that demuxers may be marked for stop decoding again
+    	
+		// start using the new list
+		if(ca_pmt_list_management != LIST_FIRST && ca_pmt_list_management != LIST_MORE)
+		{
+			for(j = 0; j < MAX_DEMUX; j++)
+			{
+				if(demux[j].program_number == 0) { continue; }
+				if(demux[j].stopdescramble == 1) { dvbapi_stop_descrambling(j); }// Stop descrambling and remove all demuxer entries not in new PMT. 
+			}
+			start_descrambling = 1; // flag that demuxer descrambling is to be executed!
+			pmt_stopmarking = 0; // flag that demuxers may be marked for stop decoding again
+		}
+    	
+		if(demux_id == -1)
+		{
+			for(demux_id = 0; demux_id < MAX_DEMUX && demux[demux_id].program_number > 0; demux_id++) { ; }
+		}
+    	
+		if(demux_id >= MAX_DEMUX)
+		{
+			cs_log("ERROR: No free id (MAX_DEMUX)");
+			return -1;
+		}
+		
+		dvbapi_start_pat_filter(demux_id);
+		
+		demux[demux_id].program_number = program_number; // do this early since some prio items use them!
+    	
+		demux[demux_id].enigma_namespace = 0;
+		demux[demux_id].tsid = 0;
+		demux[demux_id].onid = 0;
+		demux[demux_id].pmtpid = pmtpid;
+    	
+		if(pmtfile)
+		{
+			cs_strncpy(demux[demux_id].pmt_file, pmtfile, sizeof(demux[demux_id].pmt_file));
+		}
 	}
-
-	if(demux_id == -1)
+	else // is_real_pmt
 	{
-		for(demux_id = 0; demux_id < MAX_DEMUX && demux[demux_id].program_number > 0; demux_id++) { ; }
-	}
-
-	if(demux_id >= MAX_DEMUX)
-	{
-		cs_log("ERROR: No free id (MAX_DEMUX)");
-		return -1;
-	}
-	
-	demux[demux_id].program_number = program_number; // do this early since some prio items use them!
-
-	demux[demux_id].enigma_namespace = 0;
-	demux[demux_id].tsid = 0;
-	demux[demux_id].onid = 0;
-	demux[demux_id].pmtpid = pmtpid;
-
-	if(pmtfile)
-	{
-		cs_strncpy(demux[demux_id].pmt_file, pmtfile, sizeof(demux[demux_id].pmt_file));
+		demux_id = existing_demux_id;
+		
+		dvbapi_stop_filter(demux_id, TYPE_PMT);
+		
+		program_number = b2i(2, buffer + 3);
+		program_info_length = b2i(2, buffer + 10) &0xFFF;
+		
+		cs_log_dump_dbg(D_DVBAPI, buffer, length, "pmt:");
 	}
 	
 	for(j = 0; j < demux[demux_id].ECMpidcount; j++) // cleanout demuxer from possible stale info 
@@ -3126,7 +3157,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	
 	if(program_info_length > 1 && program_info_length < length)
 	{
-		dvbapi_parse_descriptor(demux_id, program_info_length - 1, buffer + 6, NULL);
+		dvbapi_parse_descriptor(demux_id, program_info_length - 1, buffer + program_info_start, NULL);
 	}
 
 	uint32_t es_info_length = 0, vpid = 0;
@@ -3134,7 +3165,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 
 	const char *stream_in_text = NULL;
 	
-	for(i = program_info_length + 6; i < length; i += es_info_length + 5)
+	for(i = program_info_length + program_info_start; i < length; i += es_info_length + 5)
 	{
 		uint32_t stream_type = buffer[i];
 		uint16_t elementary_pid = b2i(2, buffer + i + 1)&0x1FFF;
@@ -3200,19 +3231,34 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	{
 		demux[demux_id].ECMpids[j].VPID = vpid; // register found vpid on all ecmpids of this demuxer
 	}
-	cs_log("Demuxer %d found %d ECMpids and %d STREAMpids in PMT", demux_id, demux[demux_id].ECMpidcount, demux[demux_id].STREAMpidcount);
-
-	getDemuxOptions(demux_id, buffer, &ca_mask, &demux_index, &adapter_index, &pmtpid);
+	
+	if(!is_real_pmt)
+	{
+		cs_log("Demuxer %d found %d ECMpids and %d STREAMpids in caPMT", demux_id, demux[demux_id].ECMpidcount, demux[demux_id].STREAMpidcount);
+			
+		getDemuxOptions(demux_id, buffer, &ca_mask, &demux_index, &adapter_index, &pmtpid);
+		demux[demux_id].adapter_index = adapter_index;
+		demux[demux_id].ca_mask = ca_mask;
+		demux[demux_id].rdr = NULL;
+		demux[demux_id].demux_index = demux_index;
+		demux[demux_id].socket_fd = connfd;
+	}
+	else
+	{
+		cs_log("Demuxer %d found %d ECMpids and %d STREAMpids in PMT", demux_id, demux[demux_id].ECMpidcount, demux[demux_id].STREAMpidcount);
+		
+		ca_mask = demux[demux_id].ca_mask;
+		demux_index = demux[demux_id].demux_index;
+		adapter_index = demux[demux_id].adapter_index;
+		pmtpid = demux[demux_id].pmtpid;
+		connfd = demux[demux_id].socket_fd;
+	}
+	
 	char channame[CS_SERVICENAME_SIZE];
 	get_servicename(dvbapi_client, demux[demux_id].program_number, demux[demux_id].ECMpidcount > 0 ? demux[demux_id].ECMpids[0].PROVID : 0 , demux[demux_id].ECMpidcount > 0 ? demux[demux_id].ECMpids[0].CAID : NO_CAID_VALUE, channame, sizeof(channame));
 	cs_log("Demuxer %d serving srvid %04X (%s) on adapter %04X camask %04X index %04X pmtpid %04X", demux_id,
 		   demux[demux_id].program_number, channame, adapter_index, ca_mask, demux_index, pmtpid); 
 
-	demux[demux_id].adapter_index = adapter_index;
-	demux[demux_id].ca_mask = ca_mask;
-	demux[demux_id].rdr = NULL;
-	demux[demux_id].demux_index = demux_index;
-	demux[demux_id].socket_fd = connfd;
 	demux[demux_id].stopdescramble = 0; // remove deletion mark!
 
 	// remove from unassoc_fd when necessary
@@ -3248,7 +3294,10 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 				continue;
 			}
 			// copy to new demuxer
-			getDemuxOptions(demux_id, buffer, &ca_mask, &demux_index, &adapter_index, &pmtpid);
+			if(!is_real_pmt)
+			{
+				getDemuxOptions(demux_id, buffer, &ca_mask, &demux_index, &adapter_index, &pmtpid);
+			}
 			demux[xtra_demux_id].ECMpids[0] = demux[demux_id].ECMpids[j];
 			demux[xtra_demux_id].ECMpidcount = 1;
 			demux[xtra_demux_id].STREAMpidcount = 0;
@@ -3756,6 +3805,28 @@ static void dvbapi_parse_sdt(int32_t demux_id, unsigned char *buffer, uint32_t l
 	}
 }
 
+static void dvbapi_parse_pat(int32_t demux_id, unsigned char *buffer, uint32_t length)
+{
+	uint16_t srvid;
+	uint32_t i;
+
+	dvbapi_stop_filter(demux_id, TYPE_PAT);
+
+	for(i=8; i+7<length; i+=4)
+	{
+		srvid = b2i(2, buffer+i);
+		
+		if(srvid == 0)
+			{ continue; }
+		
+		if(demux[demux_id].program_number == srvid)
+		{
+			dvbapi_start_pmt_filter(demux_id, b2i(2, buffer+i+2) & 0x1FFF);
+			break;
+		}
+	}
+}
+
 void dvbapi_handlesockmsg(unsigned char *buffer, uint32_t len, int32_t connfd)
 {
 	uint32_t val = 0, size = 0, i, k;
@@ -3787,7 +3858,7 @@ void dvbapi_handlesockmsg(unsigned char *buffer, uint32_t len, int32_t connfd)
 		switch(buffer[2 + k])
 		{
 		case 0x32:
-			dvbapi_parse_capmt(buffer + size + 3 + k, val, connfd, NULL);
+			dvbapi_parse_capmt(buffer + size + 3 + k, val, connfd, NULL, 0, 0);
 			break;
 		case 0x3f:
 			// 9F 80 3f 04 83 02 00 <demux index>
@@ -4083,7 +4154,7 @@ void event_handler(int32_t UNUSED(signal))
 		}
 
 		cs_log_dump_dbg(D_DVBAPI, (unsigned char *)dest, len / 2, "QboxHD pmt.tmp:");
-		pmt_id = dvbapi_parse_capmt((unsigned char *)dest + 4, (len / 2) - 4, -1, dp->d_name);
+		pmt_id = dvbapi_parse_capmt((unsigned char *)dest + 4, (len / 2) - 4, -1, dp->d_name, 0, 0);
 #else
 		if(len > sizeof(dest))
 		{
@@ -4106,7 +4177,7 @@ void event_handler(int32_t UNUSED(signal))
 
 		memcpy(dest + 7, mbuf + 12, len - 12 - 4);
 
-		pmt_id = dvbapi_parse_capmt((uchar *)dest, 7 + len - 12 - 4, -1, dp->d_name);
+		pmt_id = dvbapi_parse_capmt((uchar *)dest, 7 + len - 12 - 4, -1, dp->d_name, 0, 0);
 #endif
 
 		if(pmt_id >= 0)
@@ -4501,7 +4572,17 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 	if(filtertype == TYPE_SDT)
 	{	
 		dvbapi_parse_sdt(demux_id, buffer, sctlen);
+	}
+
+	if(filtertype == TYPE_PAT)
+	{
+		dvbapi_parse_pat(demux_id, buffer, sctlen);
 	}	
+
+	if(filtertype == TYPE_PMT)
+	{
+		dvbapi_parse_capmt(buffer, sctlen, demux[demux_id].socket_fd, demux[demux_id].pmt_file, 1, demux_id);
+	}		
 }
 
 static void *dvbapi_main_local(void *cli)
