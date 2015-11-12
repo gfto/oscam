@@ -4640,16 +4640,19 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 	
 	if(filtertype == TYPE_SDT)
 	{	
+		cs_log_dump_dbg(D_DVBAPI, buffer, sctlen, "Demuxer %d Filter %d fetched SDT data (length = 0x%03X):", demux_id, filter_num + 1, sctlen);
 		dvbapi_parse_sdt(demux_id, buffer, sctlen);
 	}
 
 	if(filtertype == TYPE_PAT)
 	{
+		cs_log_dump_dbg(D_DVBAPI, buffer, sctlen, "Demuxer %d Filter %d fetched PAT data (length = 0x%03X):", demux_id, filter_num + 1, sctlen);
 		dvbapi_parse_pat(demux_id, buffer, sctlen);
 	}	
 
 	if(filtertype == TYPE_PMT)
 	{
+		cs_log_dump_dbg(D_DVBAPI, buffer, sctlen, "Demuxer %d Filter %d fetched CAPMT data (length = 0x%03X):", demux_id, filter_num + 1, sctlen);
 		dvbapi_parse_capmt(buffer, sctlen, demux[demux_id].socket_fd, demux[demux_id].pmt_file, 1, demux_id);
 	}		
 }
