@@ -83,7 +83,7 @@ const char *get_streamtxt(uint8_t id)
 {
 	if(id <= 0x1B)
 	{
-		return 	streamtxt_00_to_1B[id];
+		return streamtxt_00_to_1B[id];
 	}
 	else if(id == 0x24)
 	{
@@ -3208,6 +3208,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		program_info_length = b2i(2, buffer + 10) &0xFFF;
 		
 		cs_log_dump_dbg(D_DVBAPI, buffer, length, "pmt:");
+		
+		dvbapi_stop_descrambling(demux_id);
 	}
 	
 	for(j = 0; j < demux[demux_id].ECMpidcount; j++) // cleanout demuxer from possible stale info 
@@ -3227,7 +3229,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	
 	for(i = program_info_length + program_info_start; i + 4 < length; i += es_info_length + 5)
 	{
-		uint32_t stream_type = buffer[i];
+		uint8_t stream_type = buffer[i];
 		uint16_t elementary_pid = b2i(2, buffer + i + 1)&0x1FFF;
 		uint8_t is_audio = 0;
 		es_info_length = b2i(2, buffer + i +3)&0x0FFF;
