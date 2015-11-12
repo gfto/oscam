@@ -2744,7 +2744,7 @@ void dvbapi_parse_descriptor(int32_t demux_id, uint32_t info_length, unsigned ch
 	uint32_t j, u, k;
 	uint8_t skip_border = cfg.dvbapi_boxtype == BOXTYPE_SAMYGO ? 0x05 : 0x02; // skip input values <0x05 on samygo
 	
-	static const char format_identifiers_audio[10][4] = 
+	static const char format_identifiers_audio[10][5] = 
 		{
 			"AC-3", "BSSD", "dmat", "DTS1", "DTS2",
 			"DTS3", "EAC3", "HDMV", "mlpa", "Opus",
