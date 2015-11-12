@@ -5080,7 +5080,7 @@ static void *dvbapi_main_local(void *cli)
 							len = cs_recv(connfd, mbuf + pmtlen, sizeof(mbuf) - pmtlen, MSG_DONTWAIT);
 							if (len > 0)
 								pmtlen += len;
-							if ((len == 0 || len == -1) && ((errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) || tries >= 10))
+							if ((len == 0 || len == -1) && (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK))
 							{
 								//client disconnects, stop all assigned decoding
 								cs_log_dbg(D_DVBAPI, "Socket %d reported connection close", connfd);
@@ -5243,7 +5243,7 @@ static void *dvbapi_main_local(void *cli)
 							}
 						}
 
-						if (pmtlen > 0) {
+						if (pmtlen > 0 && connfd != -1) {
 							if (pmtlen < 3)
 								cs_log_dbg(D_DVBAPI, "CA PMT server message too short!");
 							else {
