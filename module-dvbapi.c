@@ -3176,8 +3176,15 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			cs_log("ERROR: No free id (MAX_DEMUX)");
 			return -1;
 		}
-		
-		dvbapi_start_pat_filter(demux_id);
+
+		if(pmtpid)
+		{
+			dvbapi_start_pmt_filter(demux_id, pmtpid);
+		}
+		else
+		{
+			dvbapi_start_pat_filter(demux_id);
+		}
 		
 		demux[demux_id].program_number = program_number; // do this early since some prio items use them!
     	
@@ -3920,7 +3927,7 @@ void dvbapi_handlesockmsg(unsigned char *buffer, uint32_t len, int32_t connfd)
 			// 9F 80 3f 04 83 02 00 <demux index>
 			cs_log_dump_dbg(D_DVBAPI, buffer, len, "capmt 3f:");
 			// ipbox fix
-			if(cfg.dvbapi_boxtype == BOXTYPE_IPBOX  || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX || cfg.dvbapi_listenport)
+			if(cfg.dvbapi_boxtype == BOXTYPE_IPBOX || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX || cfg.dvbapi_listenport)
 			{
 				int32_t demux_index = buffer[7 + k];
 				for(i = 0; i < MAX_DEMUX; i++)
@@ -5132,7 +5139,7 @@ static void *dvbapi_main_local(void *cli)
 							{
 								cs_sleepms(50);
 							}
-							cs_log_dbg(D_DVBAPI, "%s to read from connection fd %d try %d", ((chunks_processed == 0 && pmtlen == 0) ? "Trying":"Continue"), connfd , tries);
+							cs_log_dbg(D_TRACE, "%s to read from connection fd %d try %d", ((chunks_processed == 0 && pmtlen == 0) ? "Trying":"Continue"), connfd , tries);
 							len = cs_recv(connfd, mbuf + pmtlen, sizeof(mbuf) - pmtlen, MSG_DONTWAIT);
 							if (len > 0)
 								pmtlen += len;
