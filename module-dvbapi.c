@@ -3227,10 +3227,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			}
 		}
 	}
-	for(j = 0; j < demux[demux_id].ECMpidcount; j++)
-	{
-		demux[demux_id].ECMpids[j].VPID = vpid; // register found vpid on all ecmpids of this demuxer
-	}
 	
 	if(!is_real_pmt)
 	{
@@ -3242,6 +3238,14 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		demux[demux_id].rdr = NULL;
 		demux[demux_id].demux_index = demux_index;
 		demux[demux_id].socket_fd = connfd;
+		
+		if(demux[demux_id].STREAMpidcount == 0) // encrypted PMT
+		{
+			demux[demux_id].STREAMpids[demux[demux_id].STREAMpidcount] = pmtpid;
+			demux[demux_id].STREAMpidsType[demux[demux_id].STREAMpidcount] = 0x01;
+			demux[demux_id].STREAMpidcount++;
+			vpid = pmtpid;
+		}
 	}
 	else
 	{
@@ -3254,6 +3258,11 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		connfd = demux[demux_id].socket_fd;
 	}
 	
+	for(j = 0; j < demux[demux_id].ECMpidcount; j++)
+	{
+		demux[demux_id].ECMpids[j].VPID = vpid; // register found vpid on all ecmpids of this demuxer
+	}
+		
 	char channame[CS_SERVICENAME_SIZE];
 	get_servicename(dvbapi_client, demux[demux_id].program_number, demux[demux_id].ECMpidcount > 0 ? demux[demux_id].ECMpids[0].PROVID : 0 , demux[demux_id].ECMpidcount > 0 ? demux[demux_id].ECMpids[0].CAID : NO_CAID_VALUE, channame, sizeof(channame));
 	cs_log("Demuxer %d serving srvid %04X (%s) on adapter %04X camask %04X index %04X pmtpid %04X", demux_id,
