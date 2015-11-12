@@ -3208,8 +3208,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		program_info_length = b2i(2, buffer + 10) &0xFFF;
 		
 		cs_log_dump_dbg(D_DVBAPI, buffer, length, "pmt:");
-		
-		dvbapi_stop_descrambling(demux_id);
 	}
 	
 	for(j = 0; j < demux[demux_id].ECMpidcount; j++) // cleanout demuxer from possible stale info 
