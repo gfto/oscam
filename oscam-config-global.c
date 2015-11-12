@@ -28,21 +28,21 @@ static void disablelog_fn(const char *token, char *value, void *UNUSED(setting),
 }
 
 #if defined(WEBIF) || defined(MODULE_MONITOR)
-static void loghistorysize_fn(const char *token, char *value, void *UNUSED(setting), FILE *f)
+static void loghistorylines_fn(const char *token, char *value, void *UNUSED(setting), FILE *f)
 {
 	if(value)
 	{
-		uint32_t newsize = strToUIntVal(value, 4096);
-		if(newsize < 1024 && newsize != 0)
+		uint32_t newsize = strToUIntVal(value, 256);
+		if(newsize < 64 && newsize != 0)
 		{
-			fprintf(stderr, "WARNING: loghistorysize is too small, adjusted to 1024\n");
-			newsize = 1024;
+			fprintf(stderr, "WARNING: loghistorylines is too small, adjusted to 64\n");
+			newsize = 64;
 		}
 		cs_reinit_loghist(newsize);
 		return;
 	}
-	if(cfg.loghistorysize != 4096 || cfg.http_full_cfg)
-		{ fprintf_conf(f, token, "%u\n", cfg.loghistorysize); }
+	if(cfg.loghistorylines != 256 || cfg.http_full_cfg)
+		{ fprintf_conf(f, token, "%u\n", cfg.loghistorylines); }
 }
 #endif
 
@@ -302,7 +302,7 @@ static const struct config_list global_opts[] =
 #endif
 	DEF_OPT_FUNC("disablelog"               , OFS(disablelog),          disablelog_fn),
 #if defined(WEBIF) || defined(MODULE_MONITOR)
-	DEF_OPT_FUNC("loghistorysize"           , OFS(loghistorysize),      loghistorysize_fn),
+	DEF_OPT_FUNC("loghistorylines"           , OFS(loghistorylines),      loghistorylines_fn),
 #endif
 	DEF_OPT_FUNC("serverip"                 , OFS(srvip),               serverip_fn),
 	DEF_OPT_FUNC("logfile"                  , OFS(logfile),             logfile_fn),

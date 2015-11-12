@@ -1917,7 +1917,7 @@ struct s_config
 	char			*sysloghost;
 	int32_t			syslogport;
 #if defined(WEBIF) || defined(MODULE_MONITOR)
-	uint32_t        loghistorysize;
+	uint32_t        loghistorylines;
 #endif
 	int8_t          disablelog;
 	int8_t          disablemail;

@@ -52,8 +52,8 @@ DESCRIPTIONS
 	   example: ecmfmt = c&0p/i/d/s/l:h.e_w
 		    (hide provider ID if 0)
 
-       loghistorysize = bytes
-	  size of log message history in web interface or monitor, 0 = disabled, default:4096
+       loghistorylines = lines
+	  size of log message history in web interface or monitor, 0 = disabled, default:256
 
        maxlogsize = kbytes
 	  maximum log file size, 0 = unlimited, default:10

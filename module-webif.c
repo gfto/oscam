@@ -41,11 +41,6 @@ extern uint8_t cacheex_peer_id[8];
 
 extern char *entitlement_type[];
 extern char *RDR_CD_TXT[];
-extern char *loghist;
-extern char *loghistid;
-extern char *loghistptr;
-extern int8_t logStarted;
-extern CS_MUTEX_LOCK loghistory_lock;
 
 int32_t ssl_active = 0;
 char noncekey[33];
@@ -530,7 +525,7 @@ static char *send_oscam_config_global(struct templatevars *vars, struct uriparam
 	if(cfg.cwlogdir != NULL) { tpl_addVar(vars, TPLADD, "CWLOGDIR", cfg.cwlogdir); }
 	if(cfg.emmlogdir != NULL) { tpl_addVar(vars, TPLADD, "EMMLOGDIR", cfg.emmlogdir); }
 	tpl_addVar(vars, TPLADD, "ECMFMT", cfg.ecmfmt);
-	tpl_printf(vars, TPLADD, "LOGHISTORYSIZE", "%u", cfg.loghistorysize);
+	tpl_printf(vars, TPLADD, "LOGHISTORYLINES", "%u", cfg.loghistorylines);
 	if(cfg.sysloghost != NULL) { tpl_addVar(vars, TPLADD, "SYSLOGHOST", cfg.sysloghost); }
 	tpl_printf(vars, TPLADD, "SYSLOGPORT", "%u", cfg.syslogport);
 
@@ -4281,50 +4276,32 @@ static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * p
 	tpl_printf(vars, TPLAPPEND, "DATA","%s\"maxdebug\":\"%d\"",dot, MAX_DEBUG_LEVELS);
 #endif
 
-	if(cfg.loghistorysize == 0){
+	if(cfg.loghistorylines == 0){
 		tpl_printf(vars, TPLAPPEND, "DATA","%s\"logdisabled\":\"1\"",dot);
 		return tpl_getTpl(vars, "POLL");
 	}
-
-
-	if(logStarted)
-		{ cs_readlock(__func__, &loghistory_lock); }
-			
-	if(loghist && loghistptr && loghistid)
-	{			
-		char *t_loghistptr = loghistptr, *ptr1 = NULL;
-		if(loghistptr >= loghist + (cfg.loghistorysize) - 1)
-			{ t_loghistptr = loghist; }
 		
-		int32_t i, d = 0, l1 = strlen(t_loghistptr + 1) + 2;
-		char *lastpos = loghist + (cfg.loghistorysize) - 1;
+	if(log_history)
+	{
+		LL_ITER it = ll_iter_create(log_history);
+		struct s_log_history *hist;
 		
 		tpl_printf(vars, TPLAPPEND, "DATA", "%s\"lines\":[", dot);
     	
 		dot = "";
-		for(ptr1 = t_loghistptr + l1, i = 0; i < 200; i++, ptr1 = ptr1 + l1)
+		
+		while((hist = (struct s_log_history*)ll_iter_next(&it)))
 		{
-			l1 = strlen(ptr1) + 1;
-			if(!d && ((ptr1 >= lastpos) || (l1 < 2)))
-			{
-				ptr1 = loghist;
-				l1 = strlen(ptr1) + 1;
-				d++;
-			}
-			
-			if(d && ((ptr1 >= t_loghistptr) || (l1 < 2)))
-				{ break; }		
-			
 			char p_usr[32];
-			size_t pos1 = strcspn(ptr1, "\t") + 1;
-			cs_strncpy(p_usr, ptr1 , pos1 > sizeof(p_usr) ? sizeof(p_usr) : pos1);
+			size_t pos1 = strcspn(hist->txt, "\t") + 1;
+			cs_strncpy(p_usr, hist->txt , pos1 > sizeof(p_usr) ? sizeof(p_usr) : pos1);
 			
-			char *p_txt = ptr1 + pos1;
+			char *p_txt = hist->txt + pos1;
     	
 			pos1 = strcspn(p_txt, "\n") + 1;
 			char str_out[pos1];
 			cs_strncpy(str_out, p_txt, pos1);
-			uint64_t id = b2ll(8, (uchar *) (loghistid + ((ptr1-loghist)/3)));
+			uint64_t id = hist->counter;
     	
 			size_t b64_str_in = strlen(xml_encode(vars, str_out));
 			size_t b64_str_out = 32 + BASE64_LENGTH(b64_str_in);
@@ -4344,10 +4321,6 @@ static char *send_oscam_logpoll(struct templatevars * vars, struct uriparams * p
 			NULLFREE(b64_str_out_buf);
 		}
 	}
-	
-	if(logStarted)
-		{ cs_readunlock(__func__, &loghistory_lock); }
-
 	
 	tpl_addVar(vars, TPLAPPEND, "DATA", "]");
 	return tpl_getTpl(vars, "POLL");
@@ -5180,55 +5153,32 @@ static char *send_oscam_status(struct templatevars * vars, struct uriparams * pa
 
 	if(cfg.http_status_log || (apicall == 1 && strcmp(getParam(params, "appendlog"), "1") == 0) || is_touch)
 	{
-		if(cfg.loghistorysize)
+		if(cfg.loghistorylines && log_history)
 		{
-			if(logStarted)
-				{ cs_readlock(__func__, &loghistory_lock); }
-			
-			if(loghist && loghistptr && loghistid)
+			LL_ITER it = ll_iter_create(log_history);
+			struct s_log_history *hist;
+		
+			while((hist = (struct s_log_history*)ll_iter_next(&it)))
 			{
-				char *t_loghistptr = loghistptr, *ptr1 = NULL;
-				if(loghistptr >= loghist + (cfg.loghistorysize) - 1)
-					{ t_loghistptr = loghist; }
-				int32_t d = 0, l1 = strlen(t_loghistptr + 1) + 2;
-				char *lastpos = loghist + (cfg.loghistorysize) - 1;
-            	
-				for(ptr1 = t_loghistptr + l1, i = 0; i < 200; i++, ptr1 = ptr1 + l1)
+				char p_usr[32];
+				size_t pos1 = strcspn(hist->txt, "\t") + 1;
+				cs_strncpy(p_usr, hist->txt , pos1 > sizeof(p_usr) ? sizeof(p_usr) : pos1);
+					
+				char *p_txt = hist->txt + pos1;
+				
+				if(!apicall)
+				{	
+					if(p_txt[0]) tpl_printf(vars, TPLAPPEND, "LOGHISTORY","\t\t<SPAN CLASS=\"%s\">%s\t\t</SPAN><BR>\n", xml_encode(vars, p_usr), xml_encode(vars, p_txt));
+				}
+				else
 				{
-					l1 = strlen(ptr1) + 1;
-					if(!d && ((ptr1 >= lastpos) || (l1 < 2)))
-					{
-						ptr1 = loghist;
-						l1 = strlen(ptr1) + 1;
-						d++;
-					}
-            	
-					if(d && ((ptr1 >= t_loghistptr) || (l1 < 2)))
-						{ break; }
-            	
-					char p_usr[32];
-					size_t pos1 = strcspn(ptr1, "\t") + 1;
-					cs_strncpy(p_usr, ptr1 , pos1 > sizeof(p_usr) ? sizeof(p_usr) : pos1);
-            	
-					char *p_txt = ptr1 + pos1;
-            	
-					if(!apicall)
-					{	
-						if(p_txt[0]) tpl_printf(vars, TPLAPPEND, "LOGHISTORY","\t\t<SPAN CLASS=\"%s\">%s\t\t</SPAN><BR>\n", xml_encode(vars, p_usr), xml_encode(vars, p_txt));
-					}
-					else
-					{
-						tpl_addVar(vars, TPLAPPEND, "LOGHISTORY", p_txt);
-					}
+					tpl_addVar(vars, TPLAPPEND, "LOGHISTORY", p_txt);
 				}
 			}
-			
-			if(logStarted)
-				{ cs_readunlock(__func__, &loghistory_lock); }
 		}
 		else
 		{
-			tpl_addVar(vars, TPLADD, "LOGHISTORY", "loghistorysize is set to 0 in your configuration");
+			tpl_addVar(vars, TPLADD, "LOGHISTORY", "loghistorylines is set to 0 in your configuration");
 		}
 	}
 

@@ -238,56 +238,18 @@ int32_t cs_open_logfiles(void)
 }
 
 #if defined(WEBIF) || defined(MODULE_MONITOR)
+
 static uint64_t counter = 0;
-CS_MUTEX_LOCK loghistory_lock;
-// These are accessed in module-monitor and module-webif
-char *loghist = NULL;     // ptr of log-history
-char *loghistid = NULL;
-char *loghistptr = NULL;
+LLIST *log_history = NULL;
 
 /*
  This function allows to reinit the in-memory loghistory with a new size.
 */
 void cs_reinit_loghist(uint32_t size)
 {
-	char *tmp = NULL, *tmp2, *tmp3 = NULL, *tmp4;
-	if(size != cfg.loghistorysize)
+	if(cfg.loghistorylines != size)
 	{
-		if(cs_malloc(&tmp, size) && cs_malloc(&tmp3, size/3+8))
-		{
-			if(logStarted)
-				{ cs_writelock_nolog(__func__, &loghistory_lock); }
-			
-			tmp2 = loghist;
-			tmp4 = loghistid;
-			// On shrinking, the log is not copied and the order is reversed
-			if(size < cfg.loghistorysize)
-			{
-				cfg.loghistorysize = size;
-				loghistptr = tmp;
-				loghist = tmp;
-				loghistid = tmp3;
-			}
-			else
-			{
-				if(loghist)
-				{
-					memcpy(tmp, loghist, cfg.loghistorysize);
-					loghistptr = tmp + (loghistptr - loghist);
-					memcpy(tmp3, loghistid, cfg.loghistorysize/3);
-				} else { 
-					loghistptr = tmp;
-				}
-				loghist = tmp;
-				loghistid = tmp3;
-				cfg.loghistorysize = size;
-			}
-			if(logStarted)
-				{ cs_writeunlock_nolog(__func__, &loghistory_lock); }
-			
-			if(tmp2 != NULL) { add_garbage(tmp2); }
-			if(tmp4 != NULL) { add_garbage(tmp4); }
-		}
+		cfg.loghistorylines = size;
 	}
 }
 #endif
@@ -413,42 +375,37 @@ static void write_to_log(char *txt, struct s_log *log, int8_t do_flush)
 	cs_write_log(txt, do_flush, log->header_date_offset, log->header_time_offset);
 
 #if defined(WEBIF) || defined(MODULE_MONITOR)
-	if(loghist && !exit_oscam && cfg.loghistorysize)
+	if(!exit_oscam && cfg.loghistorylines && log_history)
 	{
-		char *usrtxt = log->cl_text;
-		char *target_ptr = NULL;
-		int32_t target_len = strlen(usrtxt) + strlen(txt+log->header_date_offset) + 1;
-
-		cs_writelock_nolog(__func__, &loghistory_lock);
-		char *lastpos = loghist + (cfg.loghistorysize) - 1;
-		if(loghist + target_len + 1 >= lastpos)
-		{
-			// we can assume that the min loghistorysize is always 1024 so we don't need to check if this new string fits into it!
-			strncpy(txt + log->header_len, "Log entry too long!", strlen(txt) - log->header_len);
-			target_len = strlen(usrtxt) + strlen(txt+log->header_date_offset) + 1;
-		}
-		if(!loghistptr)
-			{ loghistptr = loghist;	}
-
-		if(loghistptr + target_len + 1 > lastpos)
-		{
-			*loghistptr = '\0';
-			loghistptr = loghist + target_len + 1;
-			*loghistptr = '\0';
-			target_ptr = loghist;
-		}
-		else
-		{
-			target_ptr = loghistptr;
-			loghistptr = loghistptr + target_len + 1;
-			*loghistptr = '\0';
-		}
-		++counter;
+		struct s_log_history *hist;
 		
-		snprintf(target_ptr, target_len + 1, "%s\t%s", usrtxt, txt + log->header_date_offset);
-		ull2b_buf(counter, (uchar *)(loghistid + ((target_ptr-loghist)/3)));
+		while((uint32_t)ll_count(log_history) >= cfg.loghistorylines)
+		{
+			hist = ll_remove_first(log_history);
+			if(hist)
+			{
+				add_garbage(hist->txt);
+				add_garbage(hist);
+				hist = NULL;
+			}
+		}
 		
-		cs_writeunlock_nolog(__func__, &loghistory_lock);
+		if(cs_malloc(&hist, sizeof(struct s_log_history)))
+		{
+			int32_t target_len = strlen(log->cl_text) + strlen(txt+log->header_date_offset) + 1;
+			
+			if(cs_malloc(&hist->txt, sizeof(char) * (target_len + 1)))
+			{
+				hist->counter = counter++;
+				snprintf(hist->txt, target_len + 1, "%s\t%s", log->cl_text, txt + log->header_date_offset);
+				
+				ll_append(log_history, hist);
+			}
+			else
+			{
+				NULLFREE(hist);	
+			}
+		}
 	}
 #endif
 
@@ -797,7 +754,7 @@ int32_t cs_init_log(void)
 		cs_pthread_cond_init_nolog(__func__, &log_thread_sleep_cond_mutex, &log_thread_sleep_cond);
 
 #if defined(WEBIF) || defined(MODULE_MONITOR)
-		cs_lock_create_nolog(__func__, &loghistory_lock, "loghistory_lock", 5000);
+		log_history = ll_create("log history");
 #endif
 
 		log_list = ll_create(LOG_LIST);
@@ -866,9 +823,4 @@ void log_free(void)
 	log_running = 0;
 	SAFE_COND_SIGNAL_NOLOG(&log_thread_sleep_cond);
 	SAFE_THREAD_JOIN_NOLOG(log_thread, NULL);
-#if defined(WEBIF) || defined(MODULE_MONITOR)
-	NULLFREE(loghist);
-	NULLFREE(loghistid);
-	loghist = loghistptr = loghistid = NULL;
-#endif
 }

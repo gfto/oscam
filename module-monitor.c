@@ -16,10 +16,6 @@
 #include "oscam-work.h"
 
 extern char *entitlement_type[];
-extern char *loghist;
-extern char *loghistptr;
-extern int8_t logStarted;
-extern CS_MUTEX_LOCK loghistory_lock;
 
 struct monitor_data
 {
@@ -607,53 +603,29 @@ static void monitor_logsend(char *flag)
 
 	if(cur_cl->log)     // already on
 		{ return; }
-
-	int32_t i, d = 0;
-	if(!strcmp(flag, "on") && cfg.loghistorysize)
-	{
-		if(logStarted)
-			{ cs_readlock(__func__, &loghistory_lock); }
-		
-		if(loghist && loghistptr)
+	
+	if(!strcmp(flag, "on") && cfg.loghistorylines)
+	{	
+		if(cfg.loghistorylines && log_history)
 		{
-			char *t_loghistptr = loghistptr, *ptr1 = NULL;
-			
-			if(loghistptr >= loghist + (cfg.loghistorysize) - 1)
-				{ t_loghistptr = loghist; }
-				
-			int32_t l1 = strlen(t_loghistptr + 1) + 2;
-			char *lastpos = loghist + (cfg.loghistorysize) - 1;
-        	
-			for(ptr1 = t_loghistptr + l1, i = 0; i < 200; i++, ptr1 = ptr1 + l1)
+			LL_ITER it = ll_iter_create(log_history);
+			struct s_log_history *hist;
+		
+			while((hist = (struct s_log_history*)ll_iter_next(&it)))
 			{
-				l1 = strlen(ptr1) + 1;
-				if(!d && ((ptr1 >= lastpos) || (l1 < 2)))
-				{
-					ptr1 = loghist;
-					l1 = strlen(ptr1) + 1;
-					d++;
-				}
-        	
-				if(d && ((ptr1 >= t_loghistptr) || (l1 < 2)))
-					{ break; }
-        	
 				char p_usr[32], p_txt[512];
-				size_t pos1 = strcspn(ptr1, "\t") + 1;
-        	
-				cs_strncpy(p_usr, ptr1 , pos1 > sizeof(p_usr) ? sizeof(p_usr) : pos1);
-        	
+				size_t pos1 = strcspn(hist->txt, "\t") + 1;
+				
+				cs_strncpy(p_usr, hist->txt , pos1 > sizeof(p_usr) ? sizeof(p_usr) : pos1);
+				
 				if((p_usr[0]) && ((cur_cl->monlvl > 1) || (cur_cl->account && !strcmp(p_usr, cur_cl->account->usr))))
 				{
-					snprintf(p_txt, sizeof(p_txt), "[LOG%03d]%s", cur_cl->logcounter, ptr1 + pos1);
+					snprintf(p_txt, sizeof(p_txt), "[LOG%03d]%s", cur_cl->logcounter, hist->txt + pos1);
 					cur_cl->logcounter = (cur_cl->logcounter + 1) % 1000;
 					monitor_send(p_txt);
 				}
 			}   
 		}
-		
-		if(logStarted)
-			{ cs_readunlock(__func__, &loghistory_lock); }
-
 	}
 
 	cur_cl->log = 1;

@@ -34,4 +34,16 @@ void log_free(void);
 #define cs_ddump_mask             cs_log_dump_dbg
 #define rdr_ddump_mask            rdr_log_dump_dbg
 
+#if defined(WEBIF) || defined(MODULE_MONITOR)
+
+extern LLIST *log_history;
+
+struct s_log_history
+{
+	char *txt;
+	uint64_t counter;
+};
+
+#endif
+
 #endif
