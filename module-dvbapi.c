@@ -44,7 +44,7 @@ const char *streamtxt_00_to_1B[] = {
 								"Audiostream (MPEG-1)",																		// 03
 								"Audiostream (MPEG-2)",																		// 04
 								"Datastream (MPEG-2 tabled data)",															// 05
-								"Data-/Audostream (Subtitles/VBI and AC-3)",												// 06
+								"Data-/Audiostream (Subtitles/VBI and AC-3)",												// 06
 								"Datastream (MHEG)",																		// 07
 								"Datastream (DSM CC)",																		// 08
 								"Conditional Access ",																		// 09
