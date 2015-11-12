@@ -53,7 +53,7 @@ const char *streamtxt_00_to_1B[] = {
 								"Datastream (DSM CC)",																		// 0C
 								"Datastream (DSM CC)",																		// 0D
 								"Datastream (Auxiliary)",																	// 0E
-								"Audiostream (MPEG-2 lower bit-rate)",														// 0F
+								"Audiostream (MPEG-2)",																		// 0F
 								"Videostream (MPEG-4 H.263)",																// 10
 								"Audiostream (MPEG-4)",																		// 11
 								"Datastream (MPEG-4 FlexMux)",																// 12
@@ -65,7 +65,7 @@ const char *streamtxt_00_to_1B[] = {
 								"Datastream (DSM CC)",																		// 18
 								"Datastream (Metadata)",																	// 19
 								"Datastream (IPMP)",																		// 1A
-								"Videostream (MPEG-4 lower bit-rate)",														// 1B
+								"Videostream (MPEG-4)",																		// 1B
 							};
 
 const char *streamtxt_80_to_87[] = {
