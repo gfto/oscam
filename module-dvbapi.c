@@ -3216,6 +3216,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		program_info_length = b2i(2, buffer + 10) &0xFFF;
 		
 		cs_log_dump_dbg(D_DVBAPI, buffer, length, "pmt:");
+		pmtpid = demux[demux_id].pmtpid;
 	}
 	
 	for(j = 0; j < demux[demux_id].ECMpidcount; j++) // cleanout demuxer from possible stale info 
@@ -3322,7 +3323,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		ca_mask = demux[demux_id].ca_mask;
 		demux_index = demux[demux_id].demux_index;
 		adapter_index = demux[demux_id].adapter_index;
-		pmtpid = demux[demux_id].pmtpid;
 		connfd = demux[demux_id].socket_fd;
 	}
 	
