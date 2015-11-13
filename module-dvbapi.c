@@ -1367,7 +1367,16 @@ void dvbapi_start_pat_filter(int32_t demux_index)
 
 void dvbapi_start_pmt_filter(int32_t demux_index, int32_t pmt_pid)
 {
-	dvbapi_start_filter(demux_index, demux[demux_index].pidindex, pmt_pid, 0x001, 0x01, 0x02, 0xFF, 0, TYPE_PMT);
+	uchar filter[16], mask[16];
+	memset(filter, 0, 16);
+	memset(mask, 0, 16);
+
+	filter[0] = 0x02;
+	i2b_buf(2, demux[demux_index].program_number, filter + 1); // add srvid to filter since the pid can deliver pmt for multiple srvid
+	mask[0] = 0xFF;
+	mask[1] = 0xFF;
+	mask[2] = 0xFF;
+	dvbapi_set_filter(demux_index, selected_api, pmt_pid, 0x001, 0x01, filter, mask, 0, 0, TYPE_PMT, 0);
 }
 
 void dvbapi_start_emm_filter(int32_t demux_index)
@@ -3176,6 +3185,12 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			cs_log("ERROR: No free id (MAX_DEMUX)");
 			return -1;
 		}
+		
+		demux[demux_id].program_number = program_number; // do this early since some prio items use them!
+		demux[demux_id].enigma_namespace = 0;
+		demux[demux_id].tsid = 0;
+		demux[demux_id].onid = 0;
+		demux[demux_id].pmtpid = pmtpid;
 
 		if(pmtpid)
 		{
@@ -3185,13 +3200,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		{
 			dvbapi_start_pat_filter(demux_id);
 		}
-		
-		demux[demux_id].program_number = program_number; // do this early since some prio items use them!
-    	
-		demux[demux_id].enigma_namespace = 0;
-		demux[demux_id].tsid = 0;
-		demux[demux_id].onid = 0;
-		demux[demux_id].pmtpid = pmtpid;
     	
 		if(pmtfile)
 		{
@@ -3202,15 +3210,10 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	{
 		demux_id = existing_demux_id;
 		
+		dvbapi_stop_filter(demux_id, TYPE_PMT);
+		
 		program_number = b2i(2, buffer + 3);
 		program_info_length = b2i(2, buffer + 10) &0xFFF;
-		
-		if(demux[demux_id].program_number != program_number)
-		{
-			return -1;	
-		}		
-		
-		dvbapi_stop_filter(demux_id, TYPE_PMT);
 		
 		cs_log_dump_dbg(D_DVBAPI, buffer, length, "pmt:");
 	}
