@@ -1522,7 +1522,7 @@ void dvbapi_add_ecmpid_int(int32_t demux_id, uint16_t caid, uint16_t ecmpid, uin
 			if(!demux[demux_id].ECMpids[n].streams)
 			{
 				//we already got this caid/ecmpid as global, no need to add the single stream
-				cs_log("Demuxer %d skipped stream CAID: %04X ECM_PID: %04X PROVID: %06X (Same as ECMPID %d)", demux_id, caid, ecmpid, provid, n);
+				cs_log_dbg(D_DVBAPI, "Demuxer %d skipped stream CAID: %04X ECM_PID: %04X PROVID: %06X (Same as ECMPID %d)", demux_id, caid, ecmpid, provid, n);
 				continue;
 			}
 			added = 1;
@@ -3191,6 +3191,11 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		demux[demux_id].tsid = 0;
 		demux[demux_id].onid = 0;
 		demux[demux_id].pmtpid = pmtpid;
+		
+		if(pmtfile)
+		{
+			cs_strncpy(demux[demux_id].pmt_file, pmtfile, sizeof(demux[demux_id].pmt_file));
+		}
 
 		if(pmtpid)
 		{
@@ -3199,11 +3204,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		else
 		{
 			dvbapi_start_pat_filter(demux_id);
-		}
-    	
-		if(pmtfile)
-		{
-			cs_strncpy(demux[demux_id].pmt_file, pmtfile, sizeof(demux[demux_id].pmt_file));
 		}
 	}
 	else // is_real_pmt
@@ -3293,7 +3293,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			}
 		}
 		
-		cs_log_dbg(D_DVBAPI,"Demuxer %d stream %s(type: %02x pid: %04x length: %d)", demux_id, get_streamtxt(stream_type), stream_type, elementary_pid, es_info_length);
+		cs_log("Demuxer %d stream %s(type: %02x pid: %04x length: %d)", demux_id, get_streamtxt(stream_type), stream_type, elementary_pid, es_info_length);
 	}
 	
 	if(!is_real_pmt)
