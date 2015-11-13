@@ -5142,7 +5142,6 @@ static void *dvbapi_main_local(void *cli)
 					}
 					else
 					{
-						cs_log_dbg(D_DVBAPI, "PMT Update on socket %d.", pfd2[i].fd);
 						connfd = pfd2[i].fd;
 					}
 
@@ -5159,7 +5158,13 @@ static void *dvbapi_main_local(void *cli)
 							cs_log_dbg(D_TRACE, "%s to read from connection fd %d try %d", ((chunks_processed == 0 && pmtlen == 0) ? "Trying":"Continue"), connfd , tries);
 							len = cs_recv(connfd, mbuf + pmtlen, sizeof(mbuf) - pmtlen, MSG_DONTWAIT);
 							if (len > 0)
+							{
 								pmtlen += len;
+								if(tries == 1)
+								{	
+									cs_log_dbg(D_DVBAPI, "PMT Update on socket %d.", pfd2[i].fd);
+								}
+							}
 							if ((len == 0 || len == -1) && (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK))
 							{
 								//client disconnects, stop all assigned decoding
