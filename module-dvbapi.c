@@ -5160,10 +5160,6 @@ static void *dvbapi_main_local(void *cli)
 							if (len > 0)
 							{
 								pmtlen += len;
-								if(tries == 1)
-								{	
-									cs_log_dbg(D_DVBAPI, "PMT Update on socket %d.", pfd2[i].fd);
-								}
 							}
 							if ((len == 0 || len == -1) && (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK))
 							{
@@ -5262,6 +5258,10 @@ static void *dvbapi_main_local(void *cli)
 									tries = 1;
 									if ((opcode & 0xFFFFF000) == DVBAPI_AOT_CA)
 									{
+										if(chunks_processed == 1)
+										{
+											cs_log_dbg(D_DVBAPI, "PMT Update on socket %d.", connfd);
+										}
 										cs_log_dump_dbg(D_DVBAPI, mbuf, chunksize, "Parsing PMT object %d:", chunks_processed);
 										dvbapi_handlesockmsg(mbuf, chunksize, connfd);
 										add_to_poll = 0;
@@ -5311,7 +5311,7 @@ static void *dvbapi_main_local(void *cli)
 								}
 							}
 							//cs_log_dbg(D_DVBAPI, "len = %d, pmtlen = %d, chunks_processed = %d", len, pmtlen, chunks_processed);
-							if(len == -1 && pmtlen == 0 && chunks_processed > 0) // did we receive and process complete pmt already? 
+							if(len == -1 && pmtlen == 0 && chunks_processed > 0 && pmthandling == 1) // did we receive and process complete pmt already? 
 							{
 								cs_log_dbg(D_DVBAPI, "Seems we received and parsed all PMT objects!");
 								break;
