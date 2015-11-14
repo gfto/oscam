@@ -3206,6 +3206,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		{
 			dvbapi_start_pat_filter(demux_id);
 		}
+		
+		demux[demux_id].ECMpidcount = 0; // reset number of ecmpids
 	}
 	else // is_real_pmt
 	{
@@ -3225,7 +3227,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		demux[demux_id].ECMpids[j].streams = 0; // reset streams of each ecmpid!
 	}
 	demux[demux_id].STREAMpidcount = 0; // reset number of streams
-	demux[demux_id].ECMpidcount = 0; // reset number of ecmpids
 	
 	if(program_info_length > 1 && program_info_length < length)
 	{
