@@ -3197,16 +3197,13 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			cs_strncpy(demux[demux_id].pmt_file, pmtfile, sizeof(demux[demux_id].pmt_file));
 		}
 
-		if(!(cfg.dvbapi_boxtype == BOXTYPE_SAMYGO)) // SAMYGO doesnt support this
+		if(pmtpid)
 		{
-			if(pmtpid)
-			{
-				dvbapi_start_pmt_filter(demux_id, pmtpid);
-			}
-			else
-			{
-				dvbapi_start_pat_filter(demux_id);
-			}
+			dvbapi_start_pmt_filter(demux_id, pmtpid);
+		}
+		else
+		{
+			dvbapi_start_pat_filter(demux_id);
 		}
 	}
 	else // is_real_pmt
