@@ -3191,6 +3191,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		demux[demux_id].tsid = 0;
 		demux[demux_id].onid = 0;
 		demux[demux_id].pmtpid = pmtpid;
+		demux[demux_id].socket_fd = connfd;
 		
 		if(pmtfile)
 		{
