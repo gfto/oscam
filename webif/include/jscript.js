@@ -957,9 +957,6 @@ function updateLogpage(data) {
 			}
 
 			if (!hiddenline) {
-				if ($("#livelogdata li").length >= maxloglines) {
-					$("#livelogdata li").eq(0).remove();
-				}
 				if ($("#livelog:hover").length) {
 					$('#livelog').stop(true);
 				} else {
@@ -969,6 +966,11 @@ function updateLogpage(data) {
 		}
 		parameters = "?lastid=" + item.id;
 	});
+
+	var len = $("#livelogdata li").length;
+	if (len > maxloglines) {
+		$("#livelogdata li").slice(0, len - maxloglines).remove();
+	}
 
 	// update footer
 	updateFooter(data);
