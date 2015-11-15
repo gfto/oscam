@@ -729,12 +729,10 @@ int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_
 		len += 4;
 	}
 
-	//cs_log_dump_dbg(D_CLIENT, netbuf, len, "cccam: send:");
+	cs_log_dump_dbg(D_CLIENT, netbuf, len, "cccam: send:");
 	cc_crypt(&cc->block[ENCRYPT], netbuf, len, ENCRYPT);
 
 	n = send(cl->udp_fd, netbuf, len, 0);
-	if(rdr) { rdr->last_s = time(NULL); }
-	if(cl) { cl->last = time(NULL); }
 
 	cs_writeunlock(__func__, &cc->lockcmd);
 
@@ -1629,6 +1627,7 @@ int32_t cc_send_ecm(struct s_client *cl, ECM_REQUEST *er)
 			cs_log_dbg(
 				D_READER,
 				"%s sending ecm for sid %04X(%d) to card %08x, hop %d, ecmtask %d", getprefix(), cur_er->srvid, cur_er->ecmlen, card->id, card->hop, cur_er->idx);
+			cl->reader->last_s = time(NULL);
 			cc_cmd_send(cl, ecmbuf, cur_er->ecmlen + 13, MSG_CW_ECM); // send ecm
 
 			NULLFREE(ecmbuf);
@@ -1751,6 +1750,9 @@ int32_t cc_send_pending_emms(struct s_client *cl)
 					  emmbuf + 7));
 
 		cc_cmd_send(cl, emmbuf, size, MSG_EMM_ACK); // send emm
+		cl->last = time(NULL);
+		cl->reader->last_g = time(NULL);
+		cl->reader->last_s = time(NULL);
 
 		ll_iter_remove_data(&it);
 	}
@@ -2014,7 +2016,7 @@ void cc_idle(void)
 	if(!cl->udp_fd)
 		{ cc_cli_close(cl, 0); }
 
-	if(rdr && rdr->cc_keepalive && !rdr->tcp_connected)
+	if(rdr && !rdr->tcp_connected && (rdr->cc_keepalive || (rdr->tcp_ito == -1 && (rdr->last_s !=0 || rdr->last_g !=0))))
 	{
 		cc_cli_connect(cl);
 	}
@@ -2028,6 +2030,15 @@ void cc_idle(void)
 		if(cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) > 0)
 		{
 			cs_log_dbg(D_READER, "cccam: keepalive");
+			if(cl)
+			{
+				cl->last = now;
+			}
+			if(cl->reader)
+			{
+				cl->reader->last_s = now;
+				cl->reader->last_g = now;
+			}
 		}
 		return;
 	}
@@ -2035,17 +2046,20 @@ void cc_idle(void)
 	{
 		//cs_log("last_s - now = %d, last_g - now = %d, tcp_ito=%d", abs(rdr->last_s - now), abs(rdr->last_g - now), rdr->tcp_ito);
 		//check inactivity timeout:
-		if((llabs(rdr->last_s - now) > rdr->tcp_ito) && (llabs(rdr->last_g - now) > rdr->tcp_ito))   // inactivity timeout is entered in seconds in webif!
+		if(rdr->tcp_ito > 0)
 		{
-			rdr_log_dbg(rdr, D_READER, "inactive_timeout, close connection (fd=%d)", rdr->client->pfd);
-			network_tcp_connection_close(rdr, "inactivity");
-			return;
+			if((llabs(rdr->last_s - now) > rdr->tcp_ito) && (llabs(rdr->last_g - now) > rdr->tcp_ito))   // inactivity timeout is entered in seconds in webif!
+			{
+				rdr_log_dbg(rdr, D_READER, "inactive_timeout, close connection (fd=%d)", rdr->client->pfd);
+				network_tcp_connection_close(rdr, "inactivity");
+				return;
+			}
 		}
-
+		
 		//check read timeout:
 		int32_t rto = llabs(rdr->last_g - now);
 		//cs_log("last_g - now = %d, rto=%d", rto, rdr->tcp_rto);
-		if(rto > (rdr->tcp_rto))    // this is also entered in seconds, actually its an receive timeout!
+		if(rto > (rdr->tcp_rto) && (rdr->last_g !=0 || rdr->last_s !=0) && rdr->last_s != rdr->last_g)    // this is also entered in seconds, actually its an receive timeout!
 		{
 			rdr_log_dbg(rdr, D_READER, "read timeout, close connection (fd=%d)", rdr->client->pfd);
 			network_tcp_connection_close(rdr, "rto");
@@ -3015,8 +3029,11 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 		break;
 
 	case MSG_KEEPALIVE:
-		cl->last = time(NULL);
-		if(rdr)
+		if(cl)
+		{
+			cl->last = time(NULL);
+		}
+		if(rdr && rdr->cc_keepalive)
 		{
 			rdr->last_g = time(NULL);
 			rdr->last_s = time(NULL);
@@ -3979,7 +3996,7 @@ int32_t cc_cli_init_int(struct s_client *cl)
 	if(rdr->tcp_connected)
 		{ return 1; }
 
-	if(rdr->tcp_ito < 15)
+	if(rdr->tcp_ito < 15 && rdr->tcp_ito !=-1)
 		{ rdr->tcp_ito = 30; }
 	if(rdr->cc_maxhops < 0)
 		{ rdr->cc_maxhops = DEFAULT_CC_MAXHOPS; }
@@ -4184,6 +4201,7 @@ static void cc_s_idle(struct s_client *cl)
 	if(cfg.cc_keep_connected)
 	{
 		cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
+		cl->last = time(NULL);
 	}
 	else
 	{
