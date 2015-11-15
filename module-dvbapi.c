@@ -3259,12 +3259,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		{
 			vpid = elementary_pid;
 		}
-		
-		if(es_info_length == 0 && stream_type == 0x06) // we are out of luck
-		{
-			demux[demux_id].STREAMpidsType[demux[demux_id].STREAMpidcount-1] = 0x03;
-			stream_type = 0x03;
-		}
 			
 		if(es_info_length != 0 && es_info_length < length)
 		{
