@@ -173,8 +173,8 @@ static int8_t add_find_class(struct s_reader *reader, uint32_t provid, const uch
 				cls = (l - (j + 1)) * 8 + i;
 				if(cs_add_entitlement(reader, reader->caid, provid, cls, cls, 0, 0, 5, 0) == NULL && !add)
 				{
-					rdr_log(reader, "provid %06X class %02X not found -> SKIP!", provid, cls);
-					return -1;
+					rdr_log(reader, "provid %06X class %02X not found", provid, cls);
+					freshdate = 1;
 				}
 				else
 				{
@@ -212,7 +212,7 @@ static int8_t add_find_class(struct s_reader *reader, uint32_t provid, const uch
 				}
 			}
 	if(freshdate == 0) return -2;
-	return 1; // all classes found and emmdate is fresh!
+	return 1; // emmdate is fresh!
 }
 
 static void show_subs(struct s_reader *reader, const uchar *emm)
@@ -1739,7 +1739,7 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		{
 			/* other nanos */
 			show_subs(reader, emmParsed);
-			if(emmParsed[0] == 0xA9 && ep->type == SHARED) // check on shared (reassembled) emm if all nanos are present on card: if not and written error 90 40 
+			if(emmParsed[0] == 0xA9 && ep->type == SHARED) // check on shared (reassembled) emm if all classes are present and up to date on card: error 90 40 
 			{	
 				if(!emm_provid)
 				{
@@ -1749,11 +1749,12 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 				
 				int8_t match = add_find_class(reader, emm_provid, emmParsed + 2, emmParsed[1], 0);
 				
-				if(match == -1)
+				// seems not all classes have to be present on card to accept the emm
+				/*if(match == -1)
 				{
 					rdr_log(reader, "shared emm provid %06X one or more classes of this emm do not match with your card -> skipped!", emm_provid);
 					return SKIPPED;
-				}
+				}*/
 				
 				if(match == -2)
 				{
@@ -1838,7 +1839,10 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 		{
 			rdr_log_dump(reader, ins18, 5, "set subscription cmd:");
 			rdr_log_dump(reader, insData, ins18[4], "set subscription data:");
-			rdr_log(reader, "update error: %02X %02X", cta_res[cta_lr - 2], cta_res[cta_lr - 1]);
+			if(!(cta_res[cta_lr -2] == 0x90 && cta_res[cta_lr - 1] == 0x40))  // dont throw softerror 9040 in log!
+			{
+				rdr_log(reader, "update error: %02X %02X", cta_res[cta_lr - 2], cta_res[cta_lr - 1]);
+			}
 		}
 
 	}
