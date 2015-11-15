@@ -5291,6 +5291,11 @@ static void *dvbapi_main_local(void *cli)
 												memcpy(client_name, &mbuf[7], data_len);
 												client_name[data_len] = 0;
 												cs_log("Client connected: '%s' (protocol version = %d)", client_name, client_proto);
+												
+												if(strncmp(client_name, "libOscam", 8) == 0)
+												{
+													close(connfd);
+												}
 											}
 											client_proto_version = client_proto; //setting the global var according to the client
 
