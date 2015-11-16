@@ -98,18 +98,18 @@ a:hover {
 	color:#FF9E5F
 }
 /* logpage_debugmenu.html */
-a.debugl:link {
+a.debugl:link, a.sizeml:link {
 	margin:0 1px
 }
-a.debugl:hover, a.debugs:hover {
+a.debugl:hover, a.debugs:hover, a.sizeml:hover, a.sizems:hover {
 	background-color:#A00;
 	color:#FFF
 }
 /* module-webif.c  */
-a.debugls:link {
+a.debugls:link, a.sizemls:link {
 	padding:1px 2px 2px
 }
-a.debugls:link, a.debugls:visited {
+a.debugls:link, a.debugls:visited, a.sizemls:link, a.sizemls:visited {
 	background-color:#A00;
 	color:#FFF
 }
@@ -559,7 +559,7 @@ div.info {
 /* debugmenu	- status_sdebug.html
  * logmenu		- file.html
 */
-div.debugmenu, div.logmenu {
+div.debugmenu, div.logmenu, div.logsizemenu {
 	font-size:12px;
 	line-height:16px;
 	margin-top:10px

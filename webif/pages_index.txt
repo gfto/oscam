@@ -175,6 +175,7 @@ LOGMENUONOFF                  logmenu/log_logmenuonoff.html
 LOGPAGE                       logpage/logpage.html                                        WEBIF_LIVELOG
 LOGMENU                       logpage/logpage_menu.html                                   WEBIF_LIVELOG
 LOGDEBUGMENU                  logpage/logpage_debugmenu.html                              WEBIF_LIVELOG
+LOGSIZEMENU                   logpage/logpage_sizemenu.html                               WEBIF_LIVELOG
 
 READERCONFIG                  readerconfig/readerconfig.html
 READEREDITCACHEEXBIT          readerconfig/readerconfig_cacheexbit.html                   CS_CACHEEX

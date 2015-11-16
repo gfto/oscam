@@ -282,6 +282,15 @@ $(function () {
 
 	});
 
+	$(".sizemls a, .sizeml a").click(function () {
+		maxloglines = parseInt($(this).attr('sendval'));
+		$("#sizemfrom").text(' Switch displayed log lines from ' + maxloglines + ' to ');
+		for (var i = 32; i <= 512; i *= 2) {
+			$("#sizem" + i).attr('class', (maxloglines == i) ? 'sizemls' : 'sizeml');
+		}
+		return false;
+	});
+	
 	$(".debugls a, .debugl a").click(function () {
 		parameters = parameters + "&debug=" + $(this).attr('sendval');
 		return false;
