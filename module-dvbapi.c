@@ -4766,10 +4766,7 @@ static void dvbapi_handlesockmsg(uchar* mbuf, uint16_t chunksize, uint16_t data_
 	uint32_t opcode = b2i(4, mbuf); //get the client opcode (4 bytes)
 		
 	if((opcode & 0xFFFFF000) == DVBAPI_AOT_CA)
-	{
-		cs_log_dbg(D_DVBAPI, "PMT Update on socket %d.", connfd);
-		cs_log_dump_dbg(D_DVBAPI, mbuf, chunksize, "Parsing PMT object:");
-		
+	{	
 		switch(opcode & 0xFFFFFF00)
 		{
 			case DVBAPI_AOT_CA_PMT:
@@ -4780,13 +4777,20 @@ static void dvbapi_handlesockmsg(uchar* mbuf, uint16_t chunksize, uint16_t data_
 					break;
 				}
 				
+				cs_log_dbg(D_DVBAPI, "PMT Update on socket %d.", connfd);
+				cs_log_dump_dbg(D_DVBAPI, mbuf, chunksize, "Parsing PMT object:");
+				
 				dvbapi_parse_capmt(mbuf + (chunksize - data_len), data_len, connfd, NULL, 0, 0);
 				break;
 			}
-			case DVBAPI_AOT_CA_STOP:
+			case (DVBAPI_AOT_CA_STOP & 0xFFFFFF00):
 			{
 				// 9F 80 3f 04 83 02 00 <demux index>
-				
+				if(opcode != DVBAPI_AOT_CA_STOP)
+				{
+					cs_log_dbg(D_DVBAPI, "dvbapi_handlesockmsg(): DVBAPI_AOT_CA opcode unknown: %08X", opcode);
+					break;
+				}
 				int32_t i;
 				
 				if(data_len < 4)
