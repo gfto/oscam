@@ -486,7 +486,9 @@ div.log, div#livelog, textarea.editor, div.sidlist {
 }
 div.log {
 	margin:20px 0 0;
-	padding:4px
+	padding:4px;
+	max-height:300px;
+	overflow:scroll;
 }
 /* module-webif.c class for services.html */
 div.sidlist {
