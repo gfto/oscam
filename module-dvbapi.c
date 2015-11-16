@@ -4782,6 +4782,7 @@ static void dvbapi_handlesockmsg(uchar* mbuf, uint16_t chunksize, uint16_t data_
 				cs_log_dump_dbg(D_DVBAPI, mbuf, chunksize, "Parsing PMT object:");
 				
 				dvbapi_parse_capmt(mbuf + (chunksize - data_len), data_len, connfd, NULL, 0, 0);
+				(*add_to_poll) = 0;	
 				break;
 			}
 			case (DVBAPI_AOT_CA_STOP & 0xFFFFFF00):
@@ -4820,7 +4821,7 @@ static void dvbapi_handlesockmsg(uchar* mbuf, uint16_t chunksize, uint16_t data_
 							break;
 						}
 					}
-					if (cfg.dvbapi_boxtype == BOXTYPE_IPBOX)
+					if(cfg.dvbapi_boxtype == BOXTYPE_IPBOX)
 					{
 						// check do we have any demux running on this fd
 						int16_t execlose = 1;
@@ -4838,6 +4839,10 @@ static void dvbapi_handlesockmsg(uchar* mbuf, uint16_t chunksize, uint16_t data_
 							if(ret < 0) { cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno)); }
 						}
 					}
+					else
+					{
+						(*add_to_poll) = 1;
+					}
 				}
 				else
 				{
@@ -4854,15 +4859,6 @@ static void dvbapi_handlesockmsg(uchar* mbuf, uint16_t chunksize, uint16_t data_
 				cs_log_dbg(D_DVBAPI, "dvbapi_handlesockmsg(): DVBAPI_AOT_CA opcode unknown: %08X", opcode);
 				break;
 			}
-		}
-		
-		if(cfg.dvbapi_listenport && opcode == DVBAPI_AOT_CA_STOP)
-		{
-			(*add_to_poll) = 1;
-		}
-		else
-		{
-			(*add_to_poll) = 0;	
 		}
 	}
 	else switch(opcode)
