@@ -252,9 +252,9 @@ static int dvbapi_ioctl(int fd, uint32_t request, ...)
 
 #if defined(CARDREADER_STAPI) || defined(CARDREADER_STAPI5)
 //fix from stapi5 patch
-int32_t pausecam = 0, disable_pmt_files = 0, pmt_stopmarking = 1, pmthandling = 0;
+int32_t pausecam = 0, disable_pmt_files = 0, pmt_stopmarking = 1;
 #else
-int32_t pausecam = 0, disable_pmt_files = 0, pmt_stopmarking = 0, pmthandling = 0;
+int32_t pausecam = 0, disable_pmt_files = 0, pmt_stopmarking = 0;
 #endif
 
 DEMUXTYPE demux[MAX_DEMUX];
@@ -3900,96 +3900,6 @@ static void dvbapi_parse_pat(int32_t demux_id, unsigned char *buffer, uint32_t l
 	}
 }
 
-void dvbapi_handlesockmsg(unsigned char *buffer, uint32_t len, int32_t connfd)
-{
-	uint32_t val = 0, size = 0, i, k;
-
-	for(k = 0; k < len; k += 3 + size + val)
-	{
-		if(buffer[0 + k] != 0x9F || buffer[1 + k] != 0x80)
-		{
-			cs_log_dbg(D_DVBAPI, "Received unknown PMT command: %02x", buffer[0 + k]);
-			break;
-		}
-
-		if(k > 0)
-			cs_log_dump_dbg(D_DVBAPI, buffer + k, len - k, "Parsing next PMT object:");
-
-		if(buffer[3 + k] & 0x80)
-		{
-			val = 0;
-			size = buffer[3 + k] & 0x7F;
-			for(i = 0; i < size; i++)
-				{ val = (val << 8) | buffer[i + 1 + 3 + k]; }
-			size++;
-		}
-		else
-		{
-			val = buffer[3 + k] & 0x7F;
-			size = 1;
-		}
-		switch(buffer[2 + k])
-		{
-		case 0x32:
-			dvbapi_parse_capmt(buffer + size + 3 + k, val, connfd, NULL, 0, 0);
-			break;
-		case 0x3f:
-			// 9F 80 3f 04 83 02 00 <demux index>
-			cs_log_dump_dbg(D_DVBAPI, buffer, len, "capmt 3f:");
-			// ipbox fix
-			if(cfg.dvbapi_boxtype == BOXTYPE_IPBOX || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX || cfg.dvbapi_listenport)
-			{
-				int32_t demux_index = buffer[7 + k];
-				for(i = 0; i < MAX_DEMUX; i++)
-				{
-					// 0xff demux_index is a wildcard => close all related demuxers
-					if (demux_index == 0xff)
-					{
-						if (demux[i].socket_fd == connfd)
-							dvbapi_stop_descrambling(i);
-					}
-					else if (demux[i].demux_index == demux_index)
-					{
-						dvbapi_stop_descrambling(i);
-						break;
-					}
-				}
-				if (cfg.dvbapi_boxtype == BOXTYPE_IPBOX)
-				{
-					// check do we have any demux running on this fd
-					int16_t execlose = 1;
-					for(i = 0; i < MAX_DEMUX; i++)
-					{
-						if(demux[i].socket_fd == connfd)
-						{
-							execlose = 0;
-							break;
-						}
-					}
-					if(execlose)
-					{
-						int32_t ret = close(connfd);
-						if(ret < 0) { cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno)); }
-					}
-				}
-			}
-			else
-			{
-				if(cfg.dvbapi_pmtmode != 6)
-				{
-					int32_t ret = close(connfd);
-					if(ret < 0) { cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno)); }
-				}
-			}
-			break;
-		default:
-			cs_log_dbg(D_DVBAPI, "handlesockmsg() unknown command");
-			cs_log_dump(buffer, len, "unknown command:");
-			break;
-		}
-	}
-}
-
 int32_t dvbapi_init_listenfd(void)
 {
 	int32_t clilen, listenfd;
@@ -4284,8 +4194,7 @@ void *dvbapi_event_thread(void *cli)
 }
 
 void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, int32_t len)
-{	
-	
+{		
 	struct s_ecmpids *curpid = NULL;
 	int32_t pid = demux[demux_id].demux_fd[filter_num].pidindex;
 	uint16_t filtertype = demux[demux_id].demux_fd[filter_num].type;
@@ -4297,11 +4206,22 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		return;
 	}
 	
+	if(demux_id < 0 || demux_id >= MAX_DEMUX)
+	{
+		cs_log("dvbapi_process_input(): error -  received invalid demux_id (%d)", demux_id);
+		return;	
+	}
+	
+	if(filter_num < 0 || filter_num >= DMX_FILTER_SIZE)
+	{
+		cs_log("dvbapi_process_input(): error - received invalid filter_num (%d)", filter_num);
+		return;
+	}
+	
 	if(pid != -1 && filtertype == TYPE_ECM)
 	{
 		curpid = &demux[demux_id].ECMpids[pid];
 	}
-	
 	
 	int32_t filt_match = filtermatch(buffer, filter_num, demux_id, sctlen); // acts on all filters (sdt/emm/ecm)
 	if(!filt_match)
@@ -4661,6 +4581,427 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 	}		
 }
 
+static int32_t dvbapi_recv(int32_t connfd, uchar* mbuf, size_t rlen)
+{
+	ssize_t len = cs_recv(connfd, mbuf, rlen, MSG_DONTWAIT);
+
+	if((len == -1 && (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)) || (len == 0))
+	{
+		return -1;
+	}
+	
+	if(len == -1)
+	{
+		return 0;	
+	}
+	
+	return len;
+}
+
+static uint16_t dvbapi_get_nbof_missing_header_bytes(uchar* mbuf, uint16_t mbuf_len)
+{
+	if(mbuf_len < 4)
+	{
+		return 4 - mbuf_len;	
+	}
+	
+	uint32_t opcode = b2i(4, mbuf); //get the client opcode (4 bytes)
+
+	//detect the opcode, its size (chunksize) and its internal data size (data_len)
+	if((opcode & 0xFFFFF000) == DVBAPI_AOT_CA) // min 4+size bytes
+	{
+		if(mbuf[3] & 0x80)
+		{
+			uint32_t size = mbuf[3] & 0x7F;
+		
+			if(mbuf_len < (4+size))
+			{
+				return (4+size) - mbuf_len;
+			}
+		}
+		return 0;	
+	}
+	else switch (opcode)
+	{
+		case DVBAPI_FILTER_DATA: // min 9 bytes
+		{
+			if(mbuf_len < 9)
+			{
+				return 9 - mbuf_len;
+			}
+			return 0;
+		}
+		case DVBAPI_CLIENT_INFO: // min 7 bytes
+		{
+			if(mbuf_len < 7)
+			{
+				return 7 - mbuf_len;
+			}
+			return 0;
+		}
+		default:
+		{
+			return 0;
+		}
+	}
+}
+
+static void dvbapi_get_packet_size(uchar* mbuf, uint16_t mbuf_len, uint16_t* chunksize, uint16_t *data_len)
+{
+	//chunksize: size of complete chunk in the buffer (an opcode with the data)
+	//data_len: variable for internal data length (eg. for the filter data size, PMT len)
+
+	(*chunksize) = 0;
+	(*data_len) = 0;
+		
+	if(mbuf_len < 4)
+	{
+		cs_log("dvbapi_get_packet_size(): error - buffer length (%" PRIu16 ") too short", mbuf_len);	
+		(*chunksize) = 1;
+		(*data_len) = 1;
+		return;
+	}
+	
+	uint32_t opcode = b2i(4, mbuf); //get the client opcode (4 bytes)
+
+	//detect the opcode, its size (chunksize) and its internal data size (data_len)
+	if((opcode & 0xFFFFF000) == DVBAPI_AOT_CA) // min 4+size bytes
+	{
+		// parse packet size (ASN.1)
+		uint32_t size = 0;
+		
+		if(mbuf[3] & 0x80)
+		{
+			uint32_t tmp_data_len = 0;
+			
+			size = mbuf[3] & 0x7F;
+			
+			if(3 + size < mbuf_len)
+			{
+				uint32_t k;
+				for (k = 0; k < size; k++)
+				{
+					tmp_data_len = (tmp_data_len << 8) | mbuf[4 + k];
+				}
+			}
+			else
+			{
+				cs_log("dvbapi_get_packet_size(): error - buffer length (%" PRIu16 ") too short for opcode %08X", mbuf_len, opcode);	
+				(*chunksize) = 1;
+				(*data_len) = 1;
+				return;
+			}
+			
+			if(tmp_data_len > 0xFFFF)
+			{
+				cs_log("Socket command too big: %d bytes", tmp_data_len);
+				(*data_len) = 0xFFFF - 4 - size;
+			}
+			else
+			{
+				(*data_len) = tmp_data_len;
+			}
+		}
+		else
+		{
+			(*data_len) = mbuf[3] & 0x7F;
+		}
+		
+		(*chunksize) = 4 + size + (*data_len);
+		
+		cs_log_dbg(D_DVBAPI, "Got packet with opcode %08X and size %" PRIu16, opcode, (*chunksize));
+	}
+	else switch (opcode)
+	{
+		case DVBAPI_FILTER_DATA: // min 9 bytes
+		{
+			if(mbuf_len < 9)
+			{
+				cs_log("dvbapi_get_packet_size(): error - buffer length (%" PRIu16 ") too short for DVBAPI_FILTER_DATA", mbuf_len);	
+				(*chunksize) = 1;
+				(*data_len) = 1;
+				return;
+			}
+				
+			(*data_len) = b2i(2, mbuf + 7) & 0x0FFF;
+			(*chunksize) = 6 + 3 + (*data_len);
+			
+			cs_log_dbg(D_DVBAPI, "Got DVBAPI_FILTER_DATA packet with size %" PRIu16, (*chunksize));
+			break;
+		}
+		case DVBAPI_CLIENT_INFO: // min 7 bytes
+		{
+			if(mbuf_len < 7)
+			{
+				cs_log("dvbapi_get_packet_size(): error - buffer length (%" PRIu16 ") too short for DVBAPI_CLIENT_INFO", mbuf_len);	
+				(*chunksize) = 1;
+				(*data_len) = 1;
+				return;
+			}
+			
+			(*data_len) = mbuf[6];
+			(*chunksize) = 6 + 1 + (*data_len);
+			
+			cs_log_dbg(D_DVBAPI, "Got DVBAPI_CLIENT_INFO packet with size %" PRIu16, (*chunksize));
+			break;
+		}
+		default:
+		{
+			cs_log("Unknown socket command received: 0x%08X", opcode);
+			(*chunksize) = 1;
+			(*data_len) = 1;
+			break;
+		}
+	}
+	
+	if((*chunksize) < 1)
+	{
+		(*chunksize) = 1;
+		(*data_len) = 1;
+	}
+}
+
+static void dvbapi_handlesockmsg(uchar* mbuf, uint16_t chunksize, uint16_t data_len, uint8_t* add_to_poll, int32_t connfd)
+{
+	uint32_t opcode = b2i(4, mbuf); //get the client opcode (4 bytes)
+		
+	if((opcode & 0xFFFFF000) == DVBAPI_AOT_CA)
+	{
+		cs_log_dbg(D_DVBAPI, "PMT Update on socket %d.", connfd);
+		cs_log_dump_dbg(D_DVBAPI, mbuf, chunksize, "Parsing PMT object:");
+		
+		switch(opcode & 0xFFFFFF00)
+		{
+			case DVBAPI_AOT_CA_PMT:
+			{
+				if(data_len < 5)
+				{
+					cs_log("Error: packet DVBAPI_AOT_CA_PMT is too short!");
+					break;
+				}
+				
+				dvbapi_parse_capmt(mbuf + (chunksize - data_len), data_len, connfd, NULL, 0, 0);
+				break;
+			}
+			case DVBAPI_AOT_CA_STOP:
+			{
+				// 9F 80 3f 04 83 02 00 <demux index>
+				
+				int32_t i;
+				
+				if(data_len < 4)
+				{
+					cs_log("Error: packet DVBAPI_AOT_CA_STOP is too short!");
+					break;
+				}
+				
+				// ipbox fix
+				if(cfg.dvbapi_boxtype == BOXTYPE_IPBOX || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX || cfg.dvbapi_listenport)
+				{
+					int32_t demux_index = mbuf[7];
+					for(i = 0; i < MAX_DEMUX; i++)
+					{
+						// 0xff demux_index is a wildcard => close all related demuxers
+						if(demux_index == 0xff)
+						{
+							if(demux[i].socket_fd == connfd)
+							{
+								dvbapi_stop_descrambling(i);
+							}
+						}
+						else if (demux[i].demux_index == demux_index)
+						{
+							dvbapi_stop_descrambling(i);
+							break;
+						}
+					}
+					if (cfg.dvbapi_boxtype == BOXTYPE_IPBOX)
+					{
+						// check do we have any demux running on this fd
+						int16_t execlose = 1;
+						for(i = 0; i < MAX_DEMUX; i++)
+						{
+							if(demux[i].socket_fd == connfd)
+							{
+								execlose = 0;
+								break;
+							}
+						}
+						if(execlose)
+						{
+							int32_t ret = close(connfd);
+							if(ret < 0) { cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno)); }
+						}
+					}
+				}
+				else
+				{
+					if(cfg.dvbapi_pmtmode != 6)
+					{
+						int32_t ret = close(connfd);
+						if(ret < 0) { cs_log("ERROR: Could not close PMT fd (errno=%d %s)", errno, strerror(errno)); }
+					}
+				}
+				break;
+			}
+			default:
+			{
+				cs_log_dbg(D_DVBAPI, "dvbapi_handlesockmsg(): DVBAPI_AOT_CA opcode unknown: %08X", opcode);
+				break;
+			}
+		}
+		
+		if(cfg.dvbapi_listenport && opcode == DVBAPI_AOT_CA_STOP)
+		{
+			(*add_to_poll) = 1;
+		}
+		else
+		{
+			(*add_to_poll) = 0;	
+		}
+	}
+	else switch(opcode)
+	{
+		case DVBAPI_FILTER_DATA:
+		{
+			if(data_len < 1)
+			{
+				cs_log("Error: packet DVBAPI_FILTER_DATA is too short!");
+				break;
+			}
+				
+			int32_t demux_id = mbuf[4];
+			int32_t filter_num = mbuf[5];
+			
+			if(demux_id < 0 || demux_id >= MAX_DEMUX)
+			{
+				cs_log("dvbapi_handlesockmsg(): error -  received invalid demux_id (%d)", demux_id);
+				break;	
+			}
+
+			if(filter_num < 0 || filter_num >= DMX_FILTER_SIZE)
+			{
+				cs_log("dvbapi_handlesockmsg(): error - received invalid filter_num (%d)", filter_num);
+				break;
+			}
+			
+			dvbapi_process_input(demux_id, filter_num, mbuf + 6, data_len + 3);
+			break;
+		}
+		case DVBAPI_CLIENT_INFO:
+		{
+			uint16_t client_proto_ptr;
+			memcpy(&client_proto_ptr, &mbuf[4], 2);
+			uint16_t client_proto = ntohs(client_proto_ptr);
+			
+			NULLFREE(client_name);
+			
+			if(cs_malloc(&client_name, data_len + 1))
+			{
+				memcpy(client_name, &mbuf[7], data_len);
+				client_name[data_len] = 0;
+				cs_log("Client connected: '%s' (protocol version = %d)", client_name, client_proto);
+			}
+			client_proto_version = client_proto; //setting the global var according to the client
+
+			// as a response we are sending our info to the client:
+			dvbapi_net_send(DVBAPI_SERVER_INFO, connfd, -1, -1, NULL, NULL, NULL);
+			break;
+		}
+		default:
+		{
+			cs_log_dbg(D_DVBAPI, "dvbapi_handlesockmsg(): opcode unknown: %08X", opcode);
+			cs_log_dump(mbuf, chunksize, "Unknown command:");
+			break;
+		}
+	}
+}
+
+static bool dvbapi_handlesockdata(int32_t connfd, uchar* mbuf, uint16_t mbuf_size, uint16_t unhandled_len, 
+									uint8_t* add_to_poll, uint16_t* new_unhandled_len)
+{
+	int32_t recv_result;
+	uint16_t chunksize = 1, data_len = 1;
+	
+	uint16_t missing_header_bytes = dvbapi_get_nbof_missing_header_bytes(mbuf, unhandled_len);
+	
+	if(missing_header_bytes)
+	{
+		// read first few bytes so we know packet type and length
+		cs_log_dbg(D_TRACE, "%s to read %" PRIu16 " bytes from connection fd %d", (unhandled_len == 0) ? "Trying":"Continue", missing_header_bytes, connfd);
+
+		recv_result = dvbapi_recv(connfd, mbuf + unhandled_len, mbuf_size - unhandled_len);
+		if(recv_result < 1)
+		{
+			(*new_unhandled_len) = unhandled_len;
+			return (recv_result != -1);	
+		}
+		else
+		{
+			unhandled_len += recv_result;
+			
+			if(unhandled_len < dvbapi_get_nbof_missing_header_bytes(mbuf, unhandled_len))
+			{
+				(*new_unhandled_len) = unhandled_len;
+				return true;
+			}
+		}
+	}
+	
+	do
+	{
+		// we got at least the first few bytes, detect packet type and length, then read the missing bytes
+		dvbapi_get_packet_size(mbuf, unhandled_len, &chunksize, &data_len);
+			
+		if(chunksize > mbuf_size)
+		{
+			cs_log("***** WARNING: SOCKET DATA BUFFER OVERFLOW (%" PRIu16 " bytes), PLEASE REPORT! ****** ", chunksize);
+			(*new_unhandled_len) = 0;
+			return true;
+		}
+		
+		if(unhandled_len < chunksize) // we are missing some bytes, try to read them
+		{
+			cs_log_dbg(D_TRACE, "Continue to read %d bytes from connection fd %d", chunksize - unhandled_len, connfd);
+    	
+			recv_result = dvbapi_recv(connfd, mbuf + unhandled_len, mbuf_size - unhandled_len);
+			if(recv_result < 1)
+			{
+				(*new_unhandled_len) = unhandled_len;
+				return (recv_result != -1);	
+			}
+			else
+			{
+				unhandled_len += recv_result;
+				
+				if(unhandled_len < chunksize)
+				{
+					(*new_unhandled_len) = unhandled_len;
+					return true;
+				}
+			}
+		}
+		
+		// we got at least one full packet, handle it, then return
+		dvbapi_handlesockmsg(mbuf, chunksize, data_len, add_to_poll, connfd);
+		
+		unhandled_len -= chunksize;
+		memmove(mbuf, mbuf + chunksize, unhandled_len);
+				
+	} while(dvbapi_get_nbof_missing_header_bytes(mbuf, unhandled_len) == 0);
+	
+	if(unhandled_len)
+	{
+		(*new_unhandled_len) = unhandled_len;	
+	}
+	else
+	{
+		(*new_unhandled_len) = 0;
+	}
+	
+	return true;
+}
+
 static void *dvbapi_main_local(void *cli)
 {
 	int32_t i, j, l;
@@ -4683,10 +5024,26 @@ static void *dvbapi_main_local(void *cli)
 	int32_t ids[maxpfdsize], fdn[maxpfdsize], type[maxpfdsize];
 	struct SOCKADDR servaddr;
 	ssize_t len = 0;
-	uchar mbuf[2048];
-
+	static const uint16_t mbuf_size = 2048;
+	uchar *mbuf;
+	uint16_t unhandled_buf_len[maxpfdsize], unhandled_buf_used[maxpfdsize];
+	uchar *unhandled_buf[maxpfdsize];
+	
 	struct s_auth *account;
 	int32_t ok = 0;
+	
+	if(!cs_malloc(&mbuf, sizeof(uchar)*mbuf_size))
+	{
+		return NULL;
+	}
+	
+	for(i = 0; i < maxpfdsize; i++)
+	{
+		unhandled_buf[i] = NULL;	
+		unhandled_buf_len[i] = 0;
+		unhandled_buf_used[i] = 0;
+	}
+	
 	for(account = cfg.account; account != NULL; account = account->next)
 	{
 		if((ok = is_dvbapi_usr(account->usr)))
@@ -4716,6 +5073,7 @@ static void *dvbapi_main_local(void *cli)
 	if(selected_box == -1 || selected_api == -1)
 	{
 		cs_log("ERROR: Could not detect DVBAPI version.");
+		free(mbuf);
 		return NULL;
 	}
 	
@@ -4732,6 +5090,7 @@ static void *dvbapi_main_local(void *cli)
 		if(listenfd < 1)
 		{
 			cs_log("ERROR: Could not init socket: (errno=%d: %s)", errno, strerror(errno));
+			free(mbuf);
 			return NULL;
 		}
 	}
@@ -4765,6 +5124,7 @@ static void *dvbapi_main_local(void *cli)
 		int32_t ret = start_thread("dvbapi event", dvbapi_event_thread, (void *) dvbapi_client, NULL, 1, 0);
 		if(ret)
 		{
+			free(mbuf);
 			return NULL;
 		}
 	}
@@ -5107,11 +5467,10 @@ static void *dvbapi_main_local(void *cli)
 
 			if(pfd2[i].revents & (POLLIN | POLLPRI))
 			{
-				if(type[i] == 1 && pmthandling == 0)
+				if(type[i] == 1)
 				{
-					pmthandling = 1;     // pmthandling in progress!
 					connfd = -1;         // initially no socket to read from
-					int add_to_poll = 0; // we may need to additionally poll this socket when no PMT data comes in
+					uint8_t add_to_poll = 0; // we may need to additionally poll this socket when no PMT data comes in
 
 					if (pfd2[i].fd == listenfd)
 					{
@@ -5140,186 +5499,82 @@ static void *dvbapi_main_local(void *cli)
 					{
 						connfd = pfd2[i].fd;
 					}
-
+					
 					//reading and completing data from socket
 					if (connfd > 0) {
-						uint32_t pmtlen = 0, chunks_processed = 0;
-
-						int8_t tries = 1;
-						do {
-							if(tries > 1)
+			
+						if(unhandled_buf_used[i])
+						{
+							memcpy(mbuf, unhandled_buf[i], unhandled_buf_used[i]);
+						}	
+						
+						if(!dvbapi_handlesockdata(connfd, mbuf, mbuf_size, unhandled_buf_used[i], &add_to_poll, &unhandled_buf_used[i]))
+						{
+							unhandled_buf_used[i] = 0;
+																			
+							//client disconnects, stop all assigned decoding
+							cs_log_dbg(D_DVBAPI, "Socket %d reported connection close", connfd);
+							int active_conn = 0; //other active connections counter
+							
+							for (j = 0; j < MAX_DEMUX; j++)
 							{
-								cs_sleepms(50);
-							}
-							cs_log_dbg(D_TRACE, "%s to read from connection fd %d try %d", ((chunks_processed == 0 && pmtlen == 0) ? "Trying":"Continue"), connfd , tries);
-							len = cs_recv(connfd, mbuf + pmtlen, sizeof(mbuf) - pmtlen, MSG_DONTWAIT);
-							if (len > 0)
-							{
-								pmtlen += len;
-							}
-							if ((len == 0 || len == -1) && (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK))
-							{
-								//client disconnects, stop all assigned decoding
-								cs_log_dbg(D_DVBAPI, "Socket %d reported connection close", connfd);
-								int active_conn = 0; //other active connections counter
+								if (demux[j].socket_fd == connfd)
+								{
+									dvbapi_stop_descrambling(j);
+								}
+								else if (demux[j].socket_fd)
+								{
+									active_conn++;
+								}
 								
-								for (j = 0; j < MAX_DEMUX; j++)
+								// remove from unassoc_fd when necessary
+								if (unassoc_fd[j] == connfd)
 								{
-									if (demux[j].socket_fd == connfd)
-										dvbapi_stop_descrambling(j);
-									else if (demux[j].socket_fd)
-										active_conn++;
-									// remove from unassoc_fd when necessary
-									if (unassoc_fd[j] == connfd)
-										unassoc_fd[j] = 0;
+									unassoc_fd[j] = 0;
 								}
-								close(connfd);
-								connfd = -1;
-								add_to_poll = 0;
-								if (!active_conn && (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)) //last connection closed
-								{
-									client_proto_version = 0;
-									if (client_name)
-									{
-										free(client_name);
-										client_name = NULL;
-									}
-									if (cfg.dvbapi_listenport)
-									{
-										//update webif data
-										client->ip = get_null_ip();
-										client->port = 0;
-									}
-								}
-								break;
 							}
-							if (pmtlen >= 8) //if we received less then 8 bytes, than it's not complete for sure
+							
+							close(connfd);
+							connfd = -1;
+							
+							if (!active_conn && (cfg.dvbapi_listenport || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)) //last connection closed
 							{
-								// check and try to process complete PMT objects and filter data by chunks to avoid PMT buffer overflows
-								uint32_t opcode_ptr;
-								memcpy(&opcode_ptr, &mbuf[0], 4);                     //used only to silent compiler warning about dereferencing type-punned pointer
-								uint32_t opcode = ntohl(opcode_ptr);                  //get the client opcode (4 bytes)
-								uint32_t chunksize = 0;                               //size of complete chunk in the buffer (an opcode with the data)
-								uint32_t data_len = 0;                                //variable for internal data length (eg. for the filter data size, PMT len)
-
-								//detect the opcode, its size (chunksize) and its internal data size (data_len)
-								if ((opcode & 0xFFFFF000) == DVBAPI_AOT_CA)
+								client_proto_version = 0;
+								if (client_name)
 								{
-									// parse packet size (ASN.1)
-									uint32_t size = 0;
-									if (mbuf[3] & 0x80)
-									{
-										data_len = 0;
-										size = mbuf[3] & 0x7F;
-										if (pmtlen > 4 + size)
-										{
-											uint32_t k;
-											for (k = 0; k < size; k++)
-												data_len = (data_len << 8) | mbuf[3 + 1 + k];
-											size++;
-										}
-									}
-									else
-									{
-										data_len = mbuf[3] & 0x7F;
-										size = 1;
-									}
-									chunksize = 3 + size + data_len;
+									free(client_name);
+									client_name = NULL;
 								}
-								else switch (opcode)
+								if (cfg.dvbapi_listenport)
 								{
-									case DVBAPI_FILTER_DATA:
-									{
-										data_len = b2i(2, mbuf + 7) & 0x0FFF;
-										chunksize = 6 + 3 + data_len;
-										break;
-									}
-									case DVBAPI_CLIENT_INFO:
-									{
-										data_len = mbuf[6];
-										chunksize = 6 + 1 + data_len;
-										break;
-									}
-									default:
-									{
-										cs_log("Unknown socket command received: 0x%08X", opcode);
-										chunksize = 1;
-									}
-								}
-
-								//processing the complete data according to type
-								if (chunksize < sizeof(mbuf) && chunksize <= pmtlen) // only handle if we fetched a complete chunksize!
-								{
-									chunks_processed++;
-									tries = 1;
-									if ((opcode & 0xFFFFF000) == DVBAPI_AOT_CA)
-									{
-										if(chunks_processed == 1)
-										{
-											cs_log_dbg(D_DVBAPI, "PMT Update on socket %d.", connfd);
-										}
-										cs_log_dump_dbg(D_DVBAPI, mbuf, chunksize, "Parsing PMT object %d:", chunks_processed);
-										dvbapi_handlesockmsg(mbuf, chunksize, connfd);
-										add_to_poll = 0;
-										if (cfg.dvbapi_listenport && opcode == DVBAPI_AOT_CA_STOP)
-											add_to_poll = 1;
-									}
-									else switch (opcode)
-									{
-										case DVBAPI_FILTER_DATA:
-										{
-											int32_t demux_index = mbuf[4];
-											int32_t filter_num = mbuf[5];
-											dvbapi_process_input(demux_index, filter_num, mbuf + 6, data_len + 3);
-											break;
-										}
-										case DVBAPI_CLIENT_INFO:
-										{
-											uint16_t client_proto_ptr;
-											memcpy(&client_proto_ptr, &mbuf[4], 2);
-											uint16_t client_proto = ntohs(client_proto_ptr);
-											if (client_name)
-												free(client_name);
-											if (cs_malloc(&client_name, data_len + 1))
-											{
-												memcpy(client_name, &mbuf[7], data_len);
-												client_name[data_len] = 0;
-												cs_log("Client connected: '%s' (protocol version = %d)", client_name, client_proto);
-												
-												if(strncmp(client_name, "libOscam", 8) == 0)
-												{
-													close(connfd);
-												}
-											}
-											client_proto_version = client_proto; //setting the global var according to the client
-
-											// as a response we are sending our info to the client:
-											dvbapi_net_send(DVBAPI_SERVER_INFO, connfd, -1, -1, NULL, NULL, NULL);
-											break;
-										}
-									}
-
-									if (pmtlen == chunksize) // if we fetched and handled the exact chunksize reset buffer counter! 
-										pmtlen = 0;
-
-									// if we read more data then processed, move it to beginning
-									if (pmtlen > chunksize)
-									{
-										memmove(mbuf, mbuf + chunksize, pmtlen - chunksize);
-										pmtlen -= chunksize;
-									}
-									continue;
+									//update webif data
+									client->ip = get_null_ip();
+									client->port = 0;
 								}
 							}
-							//cs_log_dbg(D_DVBAPI, "len = %d, pmtlen = %d, chunks_processed = %d", len, pmtlen, chunks_processed);
-							if(len == -1 && pmtlen == 0 && chunks_processed > 0 && pmthandling == 1) // did we receive and process complete pmt already? 
+							
+							continue;
+						}
+						
+						if(unhandled_buf_used[i])
+						{	
+							if(unhandled_buf_used[i] > unhandled_buf_len[i])
 							{
-								cs_log_dbg(D_DVBAPI, "Seems we received and parsed all PMT objects!");
-								break;
+								NULLFREE(unhandled_buf[i]);
+								
+								unhandled_buf_len[i] = unhandled_buf_used[i] < 128 ? 128 : unhandled_buf_used[i];
+								
+								if(!cs_malloc(&unhandled_buf[i], sizeof(uchar)*unhandled_buf_len[i]))
+								{
+									unhandled_buf_len[i] = 0;
+									unhandled_buf_used[i] = 0;
+									continue;	
+								}
 							}
-							tries++;
-						} while (pmtlen < sizeof(mbuf) && tries <= 10); //wait for data become available and try again
-
+							
+							memcpy(unhandled_buf[i], mbuf, unhandled_buf_used[i]);
+						}
+						
 						// if the connection is new and we read no PMT data, then add it to the poll,
 						// otherwise this socket will not be checked with poll when data arives
 						// because fd it is not yet assigned with the demux
@@ -5331,20 +5586,7 @@ static void *dvbapi_main_local(void *cli)
 								}
 							}
 						}
-
-						if (pmtlen > 0 && connfd != -1) {
-							if (pmtlen < 3)
-								cs_log_dbg(D_DVBAPI, "CA PMT server message too short!");
-							else {
-								if (pmtlen >= sizeof(mbuf))
-									cs_log("***** WARNING: PMT BUFFER OVERFLOW, PLEASE REPORT! ****** ");
-								cs_log_dump_dbg(D_DVBAPI, mbuf, pmtlen, "New PMT info from socket (total size: %d)", pmtlen);
-								dvbapi_handlesockmsg(mbuf, pmtlen, connfd);
-							}
-						}
 					}
-					pmthandling = 0; // pmthandling done!
-					continue; // continue with other events!
 				}
 				else     // type==0
 				{
@@ -5353,7 +5595,7 @@ static void *dvbapi_main_local(void *cli)
 					
 					if((int)demux[demux_index].demux_fd[n].fd != pfd2[i].fd) { continue; } // filter already killed, no need to process this data!
 					
-					len = dvbapi_read_device(pfd2[i].fd, mbuf, sizeof(mbuf));
+					len = dvbapi_read_device(pfd2[i].fd, mbuf, mbuf_size);
 					if(len < 0) // serious filterdata read error
 					{
 						dvbapi_stop_filternum(demux_index, n); // stop filter since its giving errors and wont return anything good.
@@ -5362,7 +5604,7 @@ static void *dvbapi_main_local(void *cli)
 					}
 					if(!len) // receiver internal filterbuffer overflow
 					{
-						memset(mbuf, 0, sizeof(mbuf));
+						memset(mbuf, 0, mbuf_size);
 					}
 
 					dvbapi_process_input(demux_index, n, mbuf, len);
@@ -5371,6 +5613,12 @@ static void *dvbapi_main_local(void *cli)
 			}
 		}
 	}
+	
+	for(j = 0; j < maxpfdsize; j++)
+	{
+		NULLFREE(unhandled_buf[j]);
+	}
+	free(mbuf);
 	return NULL;
 }
 
