@@ -5517,6 +5517,7 @@ static void *dvbapi_main_local(void *cli)
 							//client disconnects, stop all assigned decoding
 							cs_log_dbg(D_DVBAPI, "Socket %d reported connection close", connfd);
 							int active_conn = 0; //other active connections counter
+							add_to_poll = 0;
 							
 							for (j = 0; j < MAX_DEMUX; j++)
 							{
