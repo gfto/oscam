@@ -1197,6 +1197,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 			default:
 				break;
 			}
+			if(errno == 9) {retfilter = 0;} // no error on bad file descriptor
 		} while (retfilter < 0 && try < 10);
 		
 #if !defined WITH_COOLAPI && !defined WITH_COOLAPI2 // no fd close for coolapi and stapi, all others do close fd!
