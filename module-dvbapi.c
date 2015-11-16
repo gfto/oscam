@@ -4890,9 +4890,7 @@ static void dvbapi_handlesockmsg(uchar* mbuf, uint16_t chunksize, uint16_t data_
 		}
 		case DVBAPI_CLIENT_INFO:
 		{
-			uint16_t client_proto_ptr;
-			memcpy(&client_proto_ptr, &mbuf[4], 2);
-			uint16_t client_proto = ntohs(client_proto_ptr);
+			uint16_t client_proto = b2i(2, mbuf + 4);
 			
 			NULLFREE(client_name);
 			
@@ -4900,7 +4898,7 @@ static void dvbapi_handlesockmsg(uchar* mbuf, uint16_t chunksize, uint16_t data_
 			{
 				memcpy(client_name, &mbuf[7], data_len);
 				client_name[data_len] = 0;
-				cs_log("Client connected: '%s' (protocol version = %d)", client_name, client_proto);
+				cs_log("Client connected: '%s' (protocol version = %" PRIu16 ")", client_name, client_proto);
 			}
 			client_proto_version = client_proto; //setting the global var according to the client
 
@@ -4922,6 +4920,7 @@ static bool dvbapi_handlesockdata(int32_t connfd, uchar* mbuf, uint16_t mbuf_siz
 {
 	int32_t recv_result;
 	uint16_t chunksize = 1, data_len = 1;
+	uint8_t packet_count = 0;
 	
 	uint16_t missing_header_bytes = dvbapi_get_nbof_missing_header_bytes(mbuf, unhandled_len);
 	
@@ -4986,19 +4985,17 @@ static bool dvbapi_handlesockdata(int32_t connfd, uchar* mbuf, uint16_t mbuf_siz
 		dvbapi_handlesockmsg(mbuf, chunksize, data_len, add_to_poll, connfd);
 		
 		unhandled_len -= chunksize;
-		memmove(mbuf, mbuf + chunksize, unhandled_len);
+		
+		if(unhandled_len > 0)
+		{
+			memmove(mbuf, mbuf + chunksize, unhandled_len);
+		}
+		
+		packet_count++;
 				
-	} while(dvbapi_get_nbof_missing_header_bytes(mbuf, unhandled_len) == 0);
-	
-	if(unhandled_len)
-	{
-		(*new_unhandled_len) = unhandled_len;	
-	}
-	else
-	{
-		(*new_unhandled_len) = 0;
-	}
-	
+	} while(dvbapi_get_nbof_missing_header_bytes(mbuf, unhandled_len) == 0 && packet_count < 7);
+
+	(*new_unhandled_len) = unhandled_len;	
 	return true;
 }
 
