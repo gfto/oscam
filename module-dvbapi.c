@@ -1209,7 +1209,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 				cs_sleepms(50);
 			}
 			try++;
-			if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
+			if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX && errno != 9) //on bad filterfd dont try to close!
 			{
 				if(selected_api == STAPI)
 				{ 
