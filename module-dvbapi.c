@@ -5412,6 +5412,12 @@ static void *dvbapi_main_local(void *cli)
 						{
 							dvbapi_stop_descrambling(j);
 						}
+						
+						// remove from unassoc_fd when necessary
+						if (unassoc_fd[j] == pfd2[i].fd)
+						{
+							unassoc_fd[j] = 0;
+						}
 					}
 					int32_t ret = close(pfd2[i].fd);
 					if(ret < 0 && errno != 9) { cs_log("ERROR: Could not close demuxer socket fd (errno=%d %s)", errno, strerror(errno)); }
@@ -5419,6 +5425,8 @@ static void *dvbapi_main_local(void *cli)
 					{
 						listenfd = -1;
 					}
+					
+					cs_log_dbg(D_DVBAPI, "Socket %d reported hard connection close", pfd2[i].fd);
 				}
 				else   // type = 0
 				{
