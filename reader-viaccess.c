@@ -1843,6 +1843,10 @@ static int32_t viaccess_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 			{
 				rdr_log(reader, "update error: %02X %02X", cta_res[cta_lr - 2], cta_res[cta_lr - 1]);
 			}
+			else
+			{
+				rc = 2; // skipped
+			}
 		}
 
 	}
