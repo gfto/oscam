@@ -2037,7 +2037,6 @@ void cc_idle(void)
 			if(cl->reader)
 			{
 				cl->reader->last_s = now;
-				cl->reader->last_g = now;
 			}
 		}
 		return;
@@ -3055,7 +3054,6 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 		if(rdr && rdr->cc_keepalive) // client: received keepalive package from server
 		{
 			rdr->last_g = time(NULL);
-			rdr->last_s = time(NULL);
 		}
 		
 		cc->just_logged_in = 0;
