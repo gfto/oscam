@@ -2289,6 +2289,23 @@ static void chk_peer_node_for_oscam(struct cc_data *cc)
 	}
 }
 
+#ifdef MODULE_CCCSHARE
+static void cc_s_idle(struct s_client *cl)
+{
+	cs_log_dbg(D_TRACE, "ccc idle %s", username(cl));
+	if(cfg.cc_keep_connected)
+	{
+		cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
+		cl->last = time(NULL);
+	}
+	else
+	{
+		cs_log_dbg(D_CLIENT, "%s keepalive after maxidle is reached", getprefix());
+		cs_disconnect_client(cl);
+	}
+}
+#endif
+
 int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 {
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
@@ -3029,11 +3046,13 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l)
 		break;
 
 	case MSG_KEEPALIVE:
-		if(cl)
+#ifdef MODULE_CCCSHARE
+		if(cl && rdr == NULL) // server: react to keepalive package from client
 		{
-			cl->last = time(NULL);
+			cc_s_idle(cl);
 		}
-		if(rdr && rdr->cc_keepalive)
+#endif
+		if(rdr && rdr->cc_keepalive) // client: received keepalive package from server
 		{
 			rdr->last_g = time(NULL);
 			rdr->last_s = time(NULL);
@@ -4193,23 +4212,6 @@ bool cccam_client_extended_mode(struct s_client *cl)
 {
 	return cl && cl->cc && ((struct cc_data *)cl->cc)->extended_mode;
 }
-
-#ifdef MODULE_CCCSHARE
-static void cc_s_idle(struct s_client *cl)
-{
-	cs_log_dbg(D_TRACE, "ccc idle %s", username(cl));
-	if(cfg.cc_keep_connected)
-	{
-		cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
-		cl->last = time(NULL);
-	}
-	else
-	{
-		cs_log_dbg(D_CLIENT, "%s keepalive after maxidle is reached", getprefix());
-		cs_disconnect_client(cl);
-	}
-}
-#endif
 
 void module_cccam(struct s_module *ph)
 {
