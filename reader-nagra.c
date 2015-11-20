@@ -1241,6 +1241,7 @@ int32_t nagra2_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)  //returns 1 i
 	switch(ep->emm[0])
 	{
 	case 0x83:
+	case 0x87:
 		memset(ep->hexserial, 0, 8);
 		ep->hexserial[0] = ep->emm[5];
 		ep->hexserial[1] = ep->emm[4];
@@ -1257,6 +1258,7 @@ int32_t nagra2_get_emm_type(EMM_PACKET *ep, struct s_reader *rdr)  //returns 1 i
 			return (!memcmp(rdr->hexserial + 2, ep->hexserial, 4));
 		}
 	case 0x82:
+	case 0x84:
 		ep->type = GLOBAL;
 		return 1;
 	default:
@@ -1280,30 +1282,32 @@ static int32_t nagra2_get_emm_filter(struct s_reader *rdr, struct s_csystem_emm_
 
 		filters[idx].type = EMM_GLOBAL;
 		filters[idx].enabled   = 1;
-		filters[idx].filter[0] = 0x82;
-		filters[idx].mask[0]   = 0xFF;
+		filters[idx].filter[0] = 0x86;
+		filters[idx].mask[0]   = 0xF9;   // 0x82, 0x84 and 0x86 
 		idx++;
 
 		filters[idx].type = EMM_SHARED;
 		filters[idx].enabled   = 1;
-		filters[idx].filter[0] = 0x83;
+		filters[idx].filter[0] = 0x87;
 		filters[idx].filter[1] = rdr->hexserial[4];
 		filters[idx].filter[2] = rdr->hexserial[3];
 		filters[idx].filter[3] = rdr->hexserial[2];
 		filters[idx].filter[4] = 0x00;
 		filters[idx].filter[5] = 0x10;
-		memset(&filters[idx].mask[0], 0xFF, 6);
+		filters[idx].mask[0]   = 0xFB;   // 0x83 and 0x87
+		memset(&filters[idx].mask[1], 0xFF, 5);
 		idx++;
 
 		filters[idx].type = EMM_UNIQUE;
 		filters[idx].enabled   = 1;
-		filters[idx].filter[0] = 0x83;
+		filters[idx].filter[0] = 0x87;
 		filters[idx].filter[1] = rdr->hexserial[4];
 		filters[idx].filter[2] = rdr->hexserial[3];
 		filters[idx].filter[3] = rdr->hexserial[2];
 		filters[idx].filter[4] = rdr->hexserial[5];
 		filters[idx].filter[5] = 0x00;
-		memset(&filters[idx].mask[0], 0xFF, 6);
+		filters[idx].mask[0]   = 0xFB;   // 0x83 and 0x87
+		memset(&filters[idx].mask[1], 0xFF, 5);
 		idx++;
 
 		*filter_count = idx;
