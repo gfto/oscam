@@ -1689,7 +1689,7 @@ void dvbapi_parse_cat(int32_t demux_id, uchar *buf, int32_t len)
 }
 
 static pthread_mutex_t lockindex;
-ca_index_t dvbapi_get_descindex(int32_t demux_index, uint16_t pid)
+ca_index_t dvbapi_get_descindex(int32_t demux_index)
 {
 	int32_t i, j, k, fail = 1;
 	ca_index_t idx = 0;
@@ -1708,29 +1708,12 @@ ca_index_t dvbapi_get_descindex(int32_t demux_index, uint16_t pid)
 		sscanf(demux[demux_index].pmt_file, "pmt%3d.tmp", &tmp_idx);
 		return (ca_index_t)tmp_idx;
 	}
-	
-	for(i = 0; i < MAX_DEMUX; i++)
-	{
-		if(((demux[demux_index].ca_mask & (1 << i)) != (uint) (1 << i)))
-		{
-			continue;	
-		}
-		
-		if(search_streampid_list(i, pid, &idx) == STREAMPID_FOUND)
-		{
-			return idx;	
-		}
-		else
-		{ 
-			idx = 0;
-		}
-	}
-		
 	SAFE_MUTEX_LOCK(&lockindex); // to avoid race when readers become responsive!
 	
-	while(fail && idx <= INDEX_MAX)
+	while(fail)
 	{
-		for(fail = 0, i = 0; i < MAX_DEMUX && !fail && idx <= INDEX_MAX; i++)
+		fail = 0;
+		for(i = 0; i < MAX_DEMUX && !fail; i++)
 		{
 			if(demux[i].program_number == 0) { continue; }  // skip empty demuxers 
 			
@@ -1751,11 +1734,14 @@ ca_index_t dvbapi_get_descindex(int32_t demux_index, uint16_t pid)
 				}
 			}
 		}
-	}
-	
-	if(idx > INDEX_MAX && (!(cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)))
-	{
-		idx = INDEX_INVALID;	
+		
+		if(idx > INDEX_MAX)
+		{
+			idx = 0;
+			fail = 1;
+		}	
+		
+		cs_sleepms(1);
 	}
 	
 	SAFE_MUTEX_UNLOCK(&lockindex); // and release it!
@@ -1773,7 +1759,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, ca_index_t idx, bool enable, 
 	{
 #if defined(WITH_STAPI) || defined(WITH_STAPI5)
 	case STAPI:
-		if(!enable) idx = INDEX_INVALID;
+		if(!enable) idx = INDEX_STAPI_DISABLE;
 		stapi_set_pid(demux_id, num, idx, demux[demux_id].STREAMpids[num], demux[demux_id].pmt_file); // only used to disable pids!!!
 		break;
 #endif
@@ -1792,19 +1778,25 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, ca_index_t idx, bool enable, 
 					action = update_streampid_list(i, demux[demux_id].STREAMpids[num], curidx, use_des);
 				}
 				if(!enable){
-					action = remove_streampid_from_list(demux_id, i, demux[demux_id].STREAMpids[num], curidx);
+					action = remove_streampid_from_list(i, demux[demux_id].STREAMpids[num], curidx);
 				}
 				
-				if(action != STREAMPID_NOT_LISTED && action != STREAMPID_FOUND)
+				if(action != NO_STREAMPID_LISTED && action != FOUND_STREAMPID_INDEX && action != ADDED_STREAMPID_INDEX)
 				{
 					ca_pid_t ca_pid2;
 					memset(&ca_pid2, 0, sizeof(ca_pid2));
 					ca_pid2.pid = demux[demux_id].STREAMpids[num];
 					
-					// removed last of this streampid on ca? -> disable this pid on this ca
-					if((action == STREAMPID_REMOVED) && (is_ca_used(i, ca_pid2.pid) == INDEX_INVALID))
-						{ curidx = DVBAPI_INDEX_DISABLE; }
+					// removed last of this streampid on ca? -> disable this pid with -1 on this ca
+					if((action == REMOVED_STREAMPID_LASTINDEX) && (is_ca_used(i, ca_pid2.pid) == INDEX_NOTFOUND)) curidx = INDEX_DISABLE; 
 					
+					// removed index of streampid that is used to decode on ca -> get a fresh one
+					if(action == REMOVED_DECODING_STREAMPID_INDEX)
+					{
+						newidx = is_ca_used(i, demux[demux_id].STREAMpids[num]); // get an active index for this pid and enable it on ca device
+						curidx = INDEX_DISABLE;
+					}
+
 					while (curidx != INDEX_INVALID || newidx != INDEX_INVALID)
 					{
 						if(curidx != INDEX_INVALID)
@@ -1842,12 +1834,12 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, ca_index_t idx, bool enable, 
 								if(dvbapi_ioctl(currentfd, CA_SET_PID, &ca_pid2) == -1)
 								{
 									cs_log_dbg(D_TRACE | D_DVBAPI,"CA_SET_PID ioctl error (errno=%d %s)", errno, strerror(errno));
-									remove_streampid_from_list(demux_id, i, ca_pid2.pid, ca_pid2.index);
+									remove_streampid_from_list(i, ca_pid2.pid, ca_pid2.index);
 								}
 								
 								ca_index_t result = is_ca_used(i,0); // check if in use by any pid
 								
-								if(result == INDEX_INVALID)
+								if(result == INDEX_NOTFOUND)
 								{
 									cs_log_dbg(D_DVBAPI, "Demuxer %d close now unused CA%d device", demux_id, i);
 									int32_t ret = close(currentfd);
@@ -1913,7 +1905,7 @@ void dvbapi_stop_descrambling(int32_t demux_id)
 	{
 		for(i = 0; i < demux[demux_id].STREAMpidcount; i++)
 		{
-			dvbapi_set_pid(demux_id, i, INDEX_DISABLE_ANY, false, false); // disable streampid
+			dvbapi_set_pid(demux_id, i, INDEX_DISABLE_ALL, false, false); // disable streampid
 		}
 	}
 	
@@ -4221,7 +4213,7 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 		return;	
 	}
 	
-	if(filter_num < 0 || filter_num >= MAX_FILTER)
+	if(filter_num < 0 || filter_num >= DMX_FILTER_SIZE)
 	{
 		cs_log("dvbapi_process_input(): error - received invalid filter_num (%d)", filter_num);
 		return;
@@ -4892,7 +4884,7 @@ static void dvbapi_handlesockmsg(uchar* mbuf, uint16_t chunksize, uint16_t data_
 				break;	
 			}
 
-			if(filter_num < 0 || filter_num >= MAX_FILTER)
+			if(filter_num < 0 || filter_num >= DMX_FILTER_SIZE)
 			{
 				cs_log("dvbapi_handlesockmsg(): error - received invalid filter_num (%d)", filter_num);
 				break;
@@ -5694,7 +5686,7 @@ void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid, int32_t stream_id
 					if(!demux[demux_id].ECMpids[pid].streams || ((demux[demux_id].ECMpids[pid].streams & (1 << j)) == (uint) (1 << j)))
 					{
 						usedidx = is_ca_used(i, demux[demux_id].STREAMpids[j]);
-						if(usedidx != INDEX_INVALID)
+						if(usedidx != INDEX_NOTFOUND)
 						{
 							if(idx != usedidx)
 							{
@@ -6683,14 +6675,7 @@ ca_index_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid, int32_t stream_id,
 		
 		if(idx == INDEX_INVALID)   // if no indexer for this pid get one!
 		{
-			idx = dvbapi_get_descindex(demux_index, pid);
-			if(idx == INDEX_INVALID)
-			{
-				cs_log_dbg(D_DVBAPI, "Demuxer %d PID: %d CAID: %04X ECMPID: %04X has no free index for stream %d", demux_index, pid,
-					  demux[demux_index].ECMpids[pid].CAID, demux[demux_index].ECMpids[pid].ECM_PID, n);
-				return INDEX_INVALID;
-			}
-						
+			idx = dvbapi_get_descindex(demux_index);
 			demux[demux_index].ECMpids[pid].index[n] = idx;
 			cs_log_dbg(D_DVBAPI, "Demuxer %d PID: %d CAID: %04X ECMPID: %04X is using index %d for stream %d", demux_index, pid,
 					  demux[demux_index].ECMpids[pid].CAID, demux[demux_index].ECMpids[pid].ECM_PID, idx, n);
@@ -6711,14 +6696,7 @@ ca_index_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid, int32_t stream_id,
 		
 		if(idx == INDEX_INVALID)   // if no indexer for this pid get one!
 		{
-			idx = dvbapi_get_descindex(demux_index, pid);
-			if(idx == INDEX_INVALID)
-			{
-				cs_log_dbg(D_DVBAPI, "Demuxer %d PID: %d CAID: %04X ECMPID: %04X has no free index", demux_index, pid,
-					  demux[demux_index].ECMpids[pid].CAID, demux[demux_index].ECMpids[pid].ECM_PID);
-				return INDEX_INVALID;
-			}
-			
+			idx = dvbapi_get_descindex(demux_index);
 			demux[demux_index].ECMpids[pid].index[0] = idx;
 			cs_log_dbg(D_DVBAPI, "Demuxer %d PID: %d CAID: %04X ECMPID: %04X is using index %d", demux_index, pid,
 						  demux[demux_index].ECMpids[pid].CAID, demux[demux_index].ECMpids[pid].ECM_PID, idx);
@@ -6740,144 +6718,106 @@ ca_index_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid, int32_t stream_id,
 	return idx; // return caindexer
 }
 
-int8_t search_streampid_list(uint8_t cadevice, uint16_t pid, ca_index_t* idx)
-{
-	struct s_streampid *listitem;
-	
-	if(!ll_activestreampids)
-		{ ll_activestreampids = ll_create("ll_activestreampids"); }
-	
-	if(ll_count(ll_activestreampids) > 0)
-	{
-		LL_ITER itr = ll_iter_create(ll_activestreampids);
-		
-		while((listitem = ll_iter_next(&itr)))
-		{
-			if (cadevice == listitem->cadevice && pid == listitem->streampid){
-				(*idx) = listitem->caindex;
-				cs_log_dbg(D_DVBAPI, "search_streampid_list(ca%d, %04X): found idx %d", cadevice, pid, *idx);
-				return STREAMPID_FOUND;
-			}
-		}
-	}
-	
-	(*idx) = INDEX_INVALID;
-	cs_log_dbg(D_DVBAPI, "search_streampid_list(ca%d, %04X): not found", cadevice, pid);
-	return STREAMPID_NOTFOUND;
-}
-
 int8_t update_streampid_list(uint8_t cadevice, uint16_t pid, ca_index_t idx, bool use_des)
 {
 	struct s_streampid *listitem, *newlistitem;
-	LL_ITER itr;
-		
 	if(!ll_activestreampids)
 		{ ll_activestreampids = ll_create("ll_activestreampids"); }
-	
+	LL_ITER itr;
 	if(ll_count(ll_activestreampids) > 0)
 	{
 		itr = ll_iter_create(ll_activestreampids);
 		while((listitem = ll_iter_next(&itr)))
 		{
 			if (cadevice == listitem->cadevice && pid == listitem->streampid){
-				if(listitem->caindex == idx) {
+				if((listitem->activeindexers & (1 << idx)) == (uint) (1 << idx)){
 					
 					if(cfg.dvbapi_extended_cw_api == 2 && use_des != listitem->use_des)
 					{
 						listitem->use_des = use_des;
-						return STREAMPID_ADDED;
+						return FIRST_STREAMPID_INDEX;
 					}
 					
-					return STREAMPID_FOUND;
-				}
-				else {
-					listitem->caindex = idx; // ca + pid found but not this index -> update index
-					cs_log_dbg(D_DVBAPI, "Updated existing streampid %04X with new index %d to ca%d", pid, idx, cadevice);
+					return FOUND_STREAMPID_INDEX; // match found
+				}else{
+					listitem->activeindexers|=(1 << idx); // ca + pid found but not this index -> add this index
+					cs_log_dbg(D_DVBAPI, "Added existing streampid %04X with new index %d to ca%d", pid, idx, cadevice);
 
 					if(cfg.dvbapi_extended_cw_api == 2 && use_des != listitem->use_des)
 					{
 						listitem->use_des = use_des;
-						return STREAMPID_ADDED;
+						return FIRST_STREAMPID_INDEX;
 					}
 					
-					return STREAMPID_UPDATED;
+					return ADDED_STREAMPID_INDEX;
 				}
 			}
 		}
 	}
 	if(!cs_malloc(&newlistitem, sizeof(struct s_streampid)))
-		{ return STREAMPID_ADDED; }
-	
+		{ return FIRST_STREAMPID_INDEX; }
 	newlistitem->cadevice = cadevice;
 	newlistitem->streampid = pid;
+	newlistitem->activeindexers = (1 << idx);
 	newlistitem->caindex = idx; // set this index as used to decode on ca device
 	newlistitem->use_des = use_des;
 	ll_append(ll_activestreampids, newlistitem);
-	
 	cs_log_dbg(D_DVBAPI, "Added new streampid %04X with index %d to ca%d", pid, idx, cadevice);
-	return STREAMPID_ADDED;
+	return FIRST_STREAMPID_INDEX;
 }
 
-bool dvbapi_demuxer_uses_idx(int32_t demux_id, uint8_t cadevice, ca_index_t idx)
+int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, ca_index_t idx)
 {
-	int32_t i, j;
+	if(!ll_activestreampids) return NO_STREAMPID_LISTED;
 	
-	if(((demux[demux_id].ca_mask & (1 << cadevice)) == (uint) (1 << cadevice)))
-	{
-		for(i = 0; i < demux[demux_id].ECMpidcount; i++)
-		{
-			for(j = 0; j < MAX_STREAM_INDICES; j++)
-			{
-				if(demux[demux_id].ECMpids[i].index[j] == idx)
-				{
-					return true;	
-				}
-			}
-		}
-	}
-	
-	return false;
-}
-
-int8_t remove_streampid_from_list(int32_t demux_id, uint8_t cadevice, uint16_t pid, ca_index_t idx)
-{
 	struct s_streampid *listitem;
-	int32_t i;
+	int8_t removed = 0;
+	
 	LL_ITER itr;
-	
-	if(!ll_activestreampids)
-		{ return STREAMPID_NOT_LISTED; }
-	
-	for(i = 0; idx != INDEX_DISABLE_ANY && i < MAX_DEMUX; i++)
-	{
-		if(i == demux_id)
-			{ continue; }
-		
-		if(dvbapi_demuxer_uses_idx(i, cadevice, idx))
-		{
-			cs_log_dbg(D_DVBAPI, "Skipped removal of index %d of streampid %04X from ca%d because still in use by demuxer %d", idx, pid, cadevice, i);
-			return STREAMPID_STILL_IN_USE;
-		}
-	}
-	
 	if(ll_count(ll_activestreampids) > 0)
 	{
 		itr = ll_iter_create(ll_activestreampids);
 		while((listitem = ll_iter_next(&itr)))
 		{
-			if (cadevice == listitem->cadevice && pid == listitem->streampid 
-				&& (idx == listitem->caindex || idx == INDEX_DISABLE_ANY))
+			if (cadevice == listitem->cadevice && pid == listitem->streampid)
 			{
-				ll_iter_remove_data(&itr);
-				cs_log_dbg(D_DVBAPI, "Removed index %d of streampid %04X from ca%d", idx, pid, cadevice);
-				return STREAMPID_REMOVED;
+				if(idx == INDEX_ALL){ // INDEX_ALL means disable all!
+					listitem->activeindexers = 0;
+					removed = 1;
+				}
+				else if((listitem->activeindexers & (1 << idx)) == (uint) (1 << idx))
+				{
+					listitem->activeindexers &= ~(1 << idx); // flag it as disabled for this index
+					removed = 1;
+				}
 				
+				if(removed)
+				{
+					cs_log_dbg(D_DVBAPI, "Remove streampid %04X using indexer %d from ca%d", pid, idx, cadevice);
+				}
+				if (listitem->activeindexers == 0 && removed == 1) // all indexers disabled? -> remove pid from list!
+				{ 
+					ll_iter_remove_data(&itr);
+					cs_log_dbg(D_DVBAPI, "Removed last indexer of streampid %04X from ca%d", pid, cadevice);
+					return REMOVED_STREAMPID_LASTINDEX;
+				}
+				else if(removed == 1)
+				{
+					if (idx != INDEX_ALL && idx != listitem->caindex)
+					{
+						return REMOVED_STREAMPID_INDEX;
+					}
+					else
+					{
+						listitem->caindex = INDEX_NOTACTIVE;
+						cs_log_dbg(D_DVBAPI, "Streampid %04X index %d was used for decoding on ca%d", pid, idx, cadevice);
+						return REMOVED_DECODING_STREAMPID_INDEX;
+					}
+				}
 			}
 		}
 	}
-	
-	cs_log_dbg(D_DVBAPI, "Removed index %d of streampid %04X from ca%d (was not listed)", idx, pid, cadevice);
-	return STREAMPID_NOT_LISTED;
+	return NO_STREAMPID_LISTED;
 }
 
 void disable_unused_streampids(int16_t demux_id)
@@ -6907,7 +6847,7 @@ void disable_unused_streampids(int16_t demux_id)
 			while((listitem = ll_iter_next(&itr)))
 			{
 				if (i != listitem->cadevice) continue; // ca doesnt match
-				if (listitem->caindex != idx) continue; // index doesnt match
+				if (!((listitem->activeindexers & (1 << (idx))) == (uint) (1 << (idx)))) continue; // index doesnt match
 				for(n = 0; n < demux[demux_id].STREAMpidcount; n++){
 					if(demux[demux_id].ECMpidcount == 0) // FTA? -> disable stream!
 					{
@@ -6933,7 +6873,7 @@ void disable_unused_streampids(int16_t demux_id)
 					while((listitem = ll_iter_next(&itr)))
 					{
 						if (i != listitem->cadevice) continue; // ca doesnt match
-						if (listitem->caindex != idx) continue; // index doesnt match
+						if (!((listitem->activeindexers & (1 << (idx))) == (uint) (1 << (idx)))) continue; // index doesnt match
 						if (listitem->streampid == demux[demux_id].STREAMpids[n]) // check if pid matches with current streampid on demuxer
 						{ 
 							break;
@@ -6969,7 +6909,7 @@ void disable_unused_streampids(int16_t demux_id)
 					idx = demux[demux_id].ECMpids[ecmpid].index[j];
 					if(idx == INDEX_INVALID) continue;
 					
-					if(listitem->caindex == idx)
+					if ((listitem->activeindexers & (1 << (idx))) == (uint) (1 << (idx)))
 					{
 						skip = 0; // index match
 						break;
@@ -7009,7 +6949,7 @@ void disable_unused_streampids(int16_t demux_id)
 							idx = demux[demux_id].ECMpids[ecmpid].index[j];
 							if(idx == INDEX_INVALID) continue;
 							
-							if(listitem->caindex == idx)
+							if ((listitem->activeindexers & (1 << (idx))) == (uint) (1 << (idx)))
 							{
 								skip = 0; // index match
 								break;
@@ -7036,8 +6976,7 @@ void disable_unused_streampids(int16_t demux_id)
 
 ca_index_t is_ca_used(uint8_t cadevice, int32_t pid)
 {
-	if(!ll_activestreampids) 
-		{ return INDEX_INVALID; }
+	if(!ll_activestreampids) return INDEX_NOTFOUND;
 	
 	struct s_streampid *listitem;
 	
@@ -7047,16 +6986,32 @@ ca_index_t is_ca_used(uint8_t cadevice, int32_t pid)
 		itr = ll_iter_create(ll_activestreampids);
 		while((listitem = ll_iter_next(&itr)))
 		{
-			if(listitem->cadevice != cadevice)
-				{ continue; }
-			
-			if(pid && listitem->streampid != pid) 
-				{ continue; }
-			
-			return listitem->caindex;
+			if(listitem->cadevice != cadevice) continue;
+			if(pid && listitem->streampid != pid) continue;
+			uint32_t i = 0;
+			ca_index_t newindex = INDEX_INVALID;
+			if(listitem->caindex != INDEX_NOTACTIVE)
+			{
+				newindex = listitem->caindex;
+			}
+			while(newindex == INDEX_INVALID)
+			{
+				if((listitem->activeindexers&(1 << i)) == (uint)(1 << i))
+				{
+					newindex = i;
+				}
+				i++;
+			}
+			if(listitem->caindex == INDEX_NOTACTIVE) // check if this pid has active index for ca device (INDEX_NOTACTIVE means no active index!)
+			{
+				
+				listitem->caindex = newindex; // set fresh one
+				cs_log_dbg(D_DVBAPI, "Streampid %04X is now using index %d for decoding on ca%d", pid, newindex, cadevice);
+			}
+			return newindex;
 		}
 	}
-	return INDEX_INVALID; // no indexer found for this pid!
+	return INDEX_NOTFOUND; // no indexer found for this pid!
 }
 
 const char *dvbapi_get_client_name(void)

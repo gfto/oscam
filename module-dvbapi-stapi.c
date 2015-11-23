@@ -656,7 +656,7 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t UNUSED(num), ca_index_t idx, uin
 {
 	int32_t n;
 
-	if(idx == INDEX_INVALID)
+	if(idx == NDEX_STAPI_DISABLE)
 	{
 		for(n = 0; n < PTINUM; n++)
 		{
