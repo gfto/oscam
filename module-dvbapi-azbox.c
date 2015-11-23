@@ -172,7 +172,7 @@ static void *azbox_main_thread(void *cli)
 
 				memcpy(dest + 7, msg.buf + 12, msg.buf_len - 12 - 4);
 
-				dvbapi_parse_capmt(dest, 7 + msg.buf_len - 12 - 4, -1, NULL, 0, 0);
+				dvbapi_parse_capmt(dest, 7 + msg.buf_len - 12 - 4, -1, NULL, 0, 0, 0);
 				NULLFREE(dest);
 
 				unsigned char mask[12];

@@ -177,6 +177,7 @@ typedef struct demux_s
 	uint32_t ca_mask;
 	int8_t adapter_index;
 	int32_t socket_fd;
+	uint16_t client_proto_version;
 	int8_t ECMpidcount;
 	struct timeb emmstart; // last time emm cat was started
 	struct s_ecmpids ECMpids[ECM_PIDS];
@@ -348,7 +349,7 @@ int32_t dvbapi_stop_filter(int32_t demux_index, int32_t type);
 struct s_dvbapi_priority *dvbapi_check_prio_match(int32_t demux_id, int32_t pidindex, char type);
 void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er);
 void dvbapi_write_cw(int32_t demux_id, uchar *cw, int32_t pid, int32_t stream_id, enum ca_descr_algo algo, enum ca_descr_cipher_mode cipher_mode);
-int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connfd, char *pmtfile, int8_t is_real_pmt, uint16_t existing_demux_id);
+int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connfd, char *pmtfile, int8_t is_real_pmt, uint16_t existing_demux_id, uint16_t client_proto_version);
 void request_cw(struct s_client *client, ECM_REQUEST *er, int32_t demux_id, uint8_t delayed_ecm_check);
 void dvbapi_try_next_caid(int32_t demux_id, int8_t checked);
 void dvbapi_read_priority(void);
@@ -362,10 +363,10 @@ int8_t update_streampid_list(uint8_t cadevice, uint16_t pid, ca_index_t idx, boo
 int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, ca_index_t idx);
 void disable_unused_streampids(int16_t demux_id);
 ca_index_t is_ca_used(uint8_t cadevice, int32_t pid);
+uint16_t dvbapi_get_client_proto_version(void);
 const char *dvbapi_get_client_name(void);
 void rotate_emmfilter(int32_t demux_id);
 int32_t filtermatch(uchar *buffer, int32_t filter_num, int32_t demux_id, int32_t len);
-uint16_t dvbapi_get_client_proto_version(void);
 void delayer(ECM_REQUEST *er, uint32_t delay);
 void check_add_emmpid(int32_t demux_index, uchar *filter, int32_t l, int32_t emmtype);
 void *dvbapi_start_handler(struct s_client *cl, uchar *mbuf, int32_t module_idx, void * (*_main_func)(void *));
