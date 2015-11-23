@@ -54,13 +54,27 @@
 #define BOXTYPE_SAMYGO  13
 #define BOXTYPES        13
 #define DMXMD5HASHSIZE  16  // use MD5() 
-#define REMOVED_STREAMPID_INDEX 1
-#define REMOVED_STREAMPID_LASTINDEX 2
-#define REMOVED_DECODING_STREAMPID_INDEX 3
-#define NO_STREAMPID_LISTED 0
-#define FOUND_STREAMPID_INDEX 0
-#define ADDED_STREAMPID_INDEX 1
-#define FIRST_STREAMPID_INDEX 2
+
+// returned by remove_streampid_from_list():
+#define STREAMPID_NOT_LISTED 0
+#define STREAMPID_STILL_IN_USE 1
+#define STREAMPID_REMOVED 2
+
+// returned by search_streampid_list(), update_streampid_list():
+#define STREAMPID_FOUND 0
+
+// returned by search_streampid_list()
+#define STREAMPID_NOTFOUND 11
+
+// returned by update_streampid_list():
+#define STREAMPID_UPDATED 1
+#define STREAMPID_ADDED 2
+
+typedef uint32_t ca_index_t;
+#define INDEX_MAX           0x00000007
+#define INDEX_DISABLE_ANY   0xEFFFFFFA // used for dvbapi_set_pid(), remove_streampid_from_list()
+#define INDEX_INVALID       0xEFFFFFFF
+
 #define DUMMY_FD    0xFFFF
 
 //constants used int socket communication:
@@ -82,17 +96,7 @@
 
 #define DVBAPI_MAX_PACKET_SIZE 262         //maximum possible packet size
 
-
-typedef uint32_t ca_index_t;
-
-#define INDEX_MAX           0x00000007
-#define INDEX_NOTFOUND      0xEFFFFFFA // only used by is_ca_used()
-#define INDEX_STAPI_DISABLE 0xEFFFFFFB // only used for stapi_set_pid()
-#define INDEX_ALL           0xEFFFFFFD // only used for remove_streampid_from_list()
-#define INDEX_NOTACTIVE     0xEFFFFFFE // only used for caindex
-#define INDEX_INVALID       0xEFFFFFFF
-#define INDEX_DISABLE       0xFFFFFFFF // only used for ca_pid_t
-#define INDEX_DISABLE_ALL   0xFFFFFFFF // only used for dvbapi_set_pid()
+#define DVBAPI_INDEX_DISABLE      0xFFFFFFFF // only used for ca_pid_t
 
 struct box_devices
 {
@@ -208,7 +212,6 @@ typedef struct s_streampid
 {
 	uint8_t		cadevice; // holds ca device
 	uint16_t 	streampid; // holds pids
-	uint32_t	activeindexers; // bitmask indexers if streampid enabled for index bit is set
 	ca_index_t	caindex; // holds index that is used to decode on ca device
 	bool		use_des;
 }STREAMPIDTYPE;
@@ -344,8 +347,10 @@ int32_t dvbapi_check_ecm_delayed_delivery(int32_t demux_index, ECM_REQUEST *er);
 int32_t dvbapi_get_filternum(int32_t demux_index, ECM_REQUEST *er, int32_t type);
 ca_index_t dvbapi_ca_setpid(int32_t demux_index, int32_t pid, int32_t stream_id, bool use_des);
 void dvbapi_set_pid(int32_t demux_id, int32_t num, ca_index_t idx, bool enable, bool use_des);
+int8_t search_streampid_list(uint8_t cadevice, uint16_t pid, ca_index_t* idx);
 int8_t update_streampid_list(uint8_t cadevice, uint16_t pid, ca_index_t idx, bool use_des);
-int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, ca_index_t idx);
+bool dvbapi_demuxer_uses_idx(int32_t demux_id, uint8_t cadevice, ca_index_t idx);
+int8_t remove_streampid_from_list(int32_t demux_id, uint8_t cadevice, uint16_t pid, ca_index_t idx);
 void disable_unused_streampids(int16_t demux_id);
 ca_index_t is_ca_used(uint8_t cadevice, int32_t pid);
 const char *dvbapi_get_client_name(void);
@@ -355,7 +360,7 @@ uint16_t dvbapi_get_client_proto_version(void);
 void delayer(ECM_REQUEST *er, uint32_t delay);
 void check_add_emmpid(int32_t demux_index, uchar *filter, int32_t l, int32_t emmtype);
 void *dvbapi_start_handler(struct s_client *cl, uchar *mbuf, int32_t module_idx, void * (*_main_func)(void *));
-ca_index_t dvbapi_get_descindex(int32_t demux_index);
+ca_index_t dvbapi_get_descindex(int32_t demux_index, uint16_t pid);
 void dvbapi_write_ecminfo_file(struct s_client *client, ECM_REQUEST *er, uint8_t* lastcw0, uint8_t* lastcw1);
 
 #if defined(WITH_AZBOX) || defined(WITH_MCA)
