@@ -625,7 +625,7 @@ int32_t stapi_init_descrambler(int32_t dev_index)
 
 int32_t stapi_set_pid(int32_t demux_id, int32_t UNUSED(num), ca_index_t idx, uint16_t pid, char *UNUSED(pmtfile))
 {
-	if(idx == NDEX_STAPI_DISABLE)
+	if(idx == INDEX_STAPI_DISABLE)
 	{
 		if (tkd_desc_info[demux[demux_id].dev_index].path_hndl != 0)
 		{
