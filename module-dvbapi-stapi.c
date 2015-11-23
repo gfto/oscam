@@ -656,7 +656,7 @@ int32_t stapi_set_pid(int32_t demux_id, int32_t UNUSED(num), ca_index_t idx, uin
 {
 	int32_t n;
 
-	if(idx == INDEX_STAPI_DISABLE)
+	if(idx == INDEX_INVALID)
 	{
 		for(n = 0; n < PTINUM; n++)
 		{
@@ -708,8 +708,7 @@ int32_t stapi_write_cw(int32_t demux_id, uchar *cw, uint16_t *STREAMpids, int32_
 
 		if(idx == INDEX_INVALID)   // if no indexer for this pid get one!
 		{
-			idx = dvbapi_get_descindex(demux_id);
-			demux[demux_id].ECMpids[pidnum].index[0] = idx;
+			idx = dvbapi_get_descindex(demux_id, pidnum, 0);
 			cs_log_dbg(D_DVBAPI, "Demuxer %d PID: %d CAID: %04X ECMPID: %04X is using index %d", demux_id, pidnum,
 					  demux[demux_id].ECMpids[pidnum].CAID, demux[demux_id].ECMpids[pidnum].ECM_PID, idx);
 		}
