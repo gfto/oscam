@@ -101,7 +101,7 @@
 typedef uint32_t ca_index_t;
 
 // INDEX_MAX is limited by sizeof(uint64_t * 8) - 1  [ == 63 ]
-#define INDEX_MAX_LOCAL     7
+#define INDEX_MAX_LOCAL     15
 #define INDEX_MAX_NET       63
 #define INDEX_MAX INDEX_MAX_NET
 
