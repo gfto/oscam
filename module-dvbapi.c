@@ -3266,6 +3266,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		demux[demux_id].STREAMpidsType[demux[demux_id].STREAMpidcount] = buffer[i];
 		demux[demux_id].STREAMpidcount++;
 		
+		cs_log("Demuxer %d stream %s(type: %02x pid: %04x length: %d)", demux_id, get_streamtxt(stream_type), stream_type, elementary_pid, es_info_length);
+		
 		// find and register videopid
 		if(!vpid && 
 			(stream_type == 0x01 || stream_type == 0x02 || stream_type == 0x10 || stream_type == 0x1B 
@@ -3303,8 +3305,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 				break;
 			}
 		}
-		
-		cs_log("Demuxer %d stream %s(type: %02x pid: %04x length: %d)", demux_id, get_streamtxt(stream_type), stream_type, elementary_pid, es_info_length);
 	}
 	
 	if(!is_real_pmt)
