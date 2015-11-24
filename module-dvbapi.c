@@ -6759,7 +6759,7 @@ int8_t update_streampid_list(uint8_t cadevice, uint16_t pid, ca_index_t idx, boo
 		while((listitem = ll_iter_next(&itr)))
 		{
 			if (cadevice == listitem->cadevice && pid == listitem->streampid){
-				if((listitem->activeindexers & (1 << idx)) == (uint) (1 << idx)){
+				if((listitem->activeindexers & (1 << idx)) == (uint64_t) (1 << idx)){
 					
 					if(cfg.dvbapi_extended_cw_api == 2 && use_des != listitem->use_des)
 					{
@@ -6818,7 +6818,7 @@ int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, ca_index_t idx
 					listitem->activeindexers = 0;
 					removed = 1;
 				}
-				else if((listitem->activeindexers & (1 << idx)) == (uint) (1 << idx))
+				else if((listitem->activeindexers & (1 << idx)) == (uint64_t) (1 << idx))
 				{
 					listitem->activeindexers &= ~(1 << idx); // flag it as disabled for this index
 					removed = 1;
@@ -6880,7 +6880,7 @@ void disable_unused_streampids(int16_t demux_id)
 			while((listitem = ll_iter_next(&itr)))
 			{
 				if (i != listitem->cadevice) continue; // ca doesnt match
-				if (!((listitem->activeindexers & (1 << (idx))) == (uint) (1 << (idx)))) continue; // index doesnt match
+				if (!((listitem->activeindexers & (1 << (idx))) == (uint64_t) (1 << (idx)))) continue; // index doesnt match
 				for(n = 0; n < demux[demux_id].STREAMpidcount; n++){
 					if(demux[demux_id].ECMpidcount == 0) // FTA? -> disable stream!
 					{
@@ -6906,7 +6906,7 @@ void disable_unused_streampids(int16_t demux_id)
 					while((listitem = ll_iter_next(&itr)))
 					{
 						if (i != listitem->cadevice) continue; // ca doesnt match
-						if (!((listitem->activeindexers & (1 << (idx))) == (uint) (1 << (idx)))) continue; // index doesnt match
+						if (!((listitem->activeindexers & (1 << (idx))) == (uint64_t) (1 << (idx)))) continue; // index doesnt match
 						if (listitem->streampid == demux[demux_id].STREAMpids[n]) // check if pid matches with current streampid on demuxer
 						{ 
 							break;
@@ -6942,7 +6942,7 @@ void disable_unused_streampids(int16_t demux_id)
 					idx = demux[demux_id].ECMpids[ecmpid].index[j];
 					if(idx == INDEX_INVALID) continue;
 					
-					if ((listitem->activeindexers & (1 << (idx))) == (uint) (1 << (idx)))
+					if ((listitem->activeindexers & (1 << (idx))) == (uint64_t) (1 << (idx)))
 					{
 						skip = 0; // index match
 						break;
@@ -6982,7 +6982,7 @@ void disable_unused_streampids(int16_t demux_id)
 							idx = demux[demux_id].ECMpids[ecmpid].index[j];
 							if(idx == INDEX_INVALID) continue;
 							
-							if ((listitem->activeindexers & (1 << (idx))) == (uint) (1 << (idx)))
+							if ((listitem->activeindexers & (1 << (idx))) == (uint64_t) (1 << (idx)))
 							{
 								skip = 0; // index match
 								break;
@@ -7029,7 +7029,7 @@ ca_index_t is_ca_used(uint8_t cadevice, int32_t pid)
 			uint32_t i = 0;
 			while(listitem->caindex == INDEX_INVALID && i <= INDEX_MAX)
 			{
-				if((listitem->activeindexers&(1 << i)) == (uint)(1 << i))
+				if((listitem->activeindexers&(1 << i)) == (uint64_t)(1 << i))
 				{
 					listitem->caindex = i; // set fresh one
 					cs_log_dbg(D_DVBAPI, "Streampid %04X is now using index %d for decoding on ca%d", pid, i, cadevice);
