@@ -1783,7 +1783,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, ca_index_t idx, bool enable, 
 		for(i = 0; i < MAX_DEMUX; i++)
 		{
 			newidx = INDEX_INVALID, curidx = idx;
-			if(((demux[demux_id].ca_mask & (1 << i)) == (uint) (1 << i)))
+			if(((demux[demux_id].ca_mask & (1 << i)) == (uint32_t) (1 << i)))
 			{	
 				uint32_t action = 0;
 				if(enable){
@@ -3038,7 +3038,7 @@ void dvbapi_try_next_caid(int32_t demux_id, int8_t checked)
 	}
 }
 
-static void getDemuxOptions(int32_t demux_id, unsigned char *buffer, uint16_t *ca_mask, uint16_t *demux_index, uint16_t *adapter_index, uint16_t *pmtpid)
+static void getDemuxOptions(int32_t demux_id, unsigned char *buffer, uint32_t *ca_mask, uint16_t *demux_index, uint16_t *adapter_index, uint16_t *pmtpid)
 {
 	*ca_mask = 0x01, *demux_index = 0x00, *adapter_index = 0x00, *pmtpid = 0x00;
 
@@ -3098,7 +3098,8 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	uint32_t i = 0, start_descrambling = 0;
 	int32_t j = 0;
 	int32_t demux_id = -1;
-	uint16_t ca_mask, demux_index, adapter_index, pmtpid;
+	uint16_t demux_index, adapter_index, pmtpid;
+	uint32_t ca_mask;
 	uint32_t program_number, program_info_length;
 	uint8_t program_info_start = is_real_pmt ? 12 : 6;
 		
@@ -6873,7 +6874,7 @@ void disable_unused_streampids(int16_t demux_id)
 		// search for old enabled streampids on all ca devices that have to be disabled
 		for(i = 0; i < MAX_DEMUX && idx != INDEX_INVALID; i++)
 		{
-			if(!((demux[demux_id].ca_mask & (1 << i)) == (uint) (1 << i))) continue; // continue if ca is unused by this demuxer
+			if(!((demux[demux_id].ca_mask & (1 << i)) == (uint32_t) (1 << i))) continue; // continue if ca is unused by this demuxer
 			
 			LL_ITER itr;
 			itr = ll_iter_create(ll_activestreampids);
@@ -6929,7 +6930,7 @@ void disable_unused_streampids(int16_t demux_id)
 		// search for old enabled streampids on all ca devices that have to be disabled
 		for(i = 0; i < MAX_DEMUX && idx != INDEX_INVALID; i++)
 		{
-			if(!((demux[demux_id].ca_mask & (1 << i)) == (uint) (1 << i))) continue; // continue if ca is unused by this demuxer
+			if(!((demux[demux_id].ca_mask & (1 << i)) == (uint32_t) (1 << i))) continue; // continue if ca is unused by this demuxer
 			
 			LL_ITER itr;
 			itr = ll_iter_create(ll_activestreampids);
