@@ -5051,6 +5051,7 @@ static void *dvbapi_main_local(void *cli)
 	struct s_auth *account;
 	int32_t ok = 0;
 	uint16_t client_proto_version[maxpfdsize];
+	uint16_t unassoc_client_proto_version[MAX_DEMUX];
 	
 	if(!cs_malloc(&mbuf, sizeof(uchar)*mbuf_size))
 	{
@@ -5087,6 +5088,7 @@ static void *dvbapi_main_local(void *cli)
 	
 	memset(ca_fd, 0, sizeof(ca_fd));
 	memset(unassoc_fd, 0, sizeof(unassoc_fd));
+	memset(unassoc_client_proto_version, 0, sizeof(unassoc_client_proto_version));
 
 	dvbapi_read_priority();
 	dvbapi_load_channel_cache();
@@ -5208,6 +5210,10 @@ static void *dvbapi_main_local(void *cli)
 			if (unassoc_fd[i]) {
 				pfd2[pfdcount].fd = unassoc_fd[i];
 				pfd2[pfdcount].events = (POLLIN | POLLPRI);
+				if (unassoc_client_proto_version[i]) {
+					client_proto_version[pfdcount] = unassoc_client_proto_version[i];
+					unassoc_client_proto_version[i] = 0;
+				}
 				type[pfdcount++] = 1;
 			}
 
@@ -5607,6 +5613,7 @@ static void *dvbapi_main_local(void *cli)
 							for (j = 0; j < MAX_DEMUX; j++) {
 								if (!unassoc_fd[j]) {
 									unassoc_fd[j] = connfd;
+									unassoc_client_proto_version[j] = client_proto_version[i];
 									break;
 								}
 							}
