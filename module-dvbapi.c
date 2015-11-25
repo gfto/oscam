@@ -3222,7 +3222,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			dvbapi_start_pat_filter(demux_id);
 		}
 		
-		demux[demux_id].ECMpidcount = 0; // reset number of ecmpids
+		if(demux[demux_id].running == 0) demux[demux_id].ECMpidcount = 0; // reset number of ecmpids only if it was not running!
 	}
 	else // is_real_pmt
 	{
