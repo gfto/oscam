@@ -3352,9 +3352,10 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	demux[demux_id].stopdescramble = 0; // remove deletion mark!
 
 	// remove from unassoc_fd when necessary
-	for (j = 0; j < MAX_DEMUX; j++)
-			if (unassoc_fd[j] == connfd)
-					unassoc_fd[j] = 0;
+	if(!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
+		for (j = 0; j < MAX_DEMUX; j++)
+				if (unassoc_fd[j] == connfd)
+						unassoc_fd[j] = 0;
 
 	dvbapi_capmt_notify(&demux[demux_id]);
 
