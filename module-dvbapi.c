@@ -4779,7 +4779,7 @@ static void dvbapi_get_packet_size(uchar* mbuf, uint16_t mbuf_len, uint16_t* chu
 	}
 }
 
-static void dvbapi_handlesockmsg(uchar* mbuf, uint16_t chunksize, uint16_t data_len, uint8_t* add_to_poll, int32_t connfd, uint16_t* client_proto_version)
+static void dvbapi_handlesockmsg(uchar* mbuf, uint16_t chunksize, uint16_t data_len, int32_t connfd, uint16_t* client_proto_version)
 {
 	uint32_t opcode = b2i(4, mbuf); //get the client opcode (4 bytes)
 		
@@ -4872,15 +4872,6 @@ static void dvbapi_handlesockmsg(uchar* mbuf, uint16_t chunksize, uint16_t data_
 				break;
 			}
 		}
-		
-		if(cfg.dvbapi_listenport && opcode == DVBAPI_AOT_CA_STOP)
-		{
-			(*add_to_poll) = 1;
-		}
-		else
-		{
-			(*add_to_poll) = 0;	
-		}
 	}
 	else switch(opcode)
 	{
@@ -4940,7 +4931,7 @@ static void dvbapi_handlesockmsg(uchar* mbuf, uint16_t chunksize, uint16_t data_
 }
 
 static bool dvbapi_handlesockdata(int32_t connfd, uchar* mbuf, uint16_t mbuf_size, uint16_t unhandled_len, 
-									uint8_t* add_to_poll, uint16_t* new_unhandled_len, uint16_t* client_proto_version)
+				  uint16_t* new_unhandled_len, uint16_t* client_proto_version)
 {
 	int32_t recv_result;
 	uint16_t chunksize = 1, data_len = 1;
@@ -5006,7 +4997,7 @@ static bool dvbapi_handlesockdata(int32_t connfd, uchar* mbuf, uint16_t mbuf_siz
 		}
 		
 		// we got at least one full packet, handle it, then return
-		dvbapi_handlesockmsg(mbuf, chunksize, data_len, add_to_poll, connfd, client_proto_version);
+		dvbapi_handlesockmsg(mbuf, chunksize, data_len, connfd, client_proto_version);
 		
 		unhandled_len -= chunksize;
 		
@@ -5214,14 +5205,16 @@ static void *dvbapi_main_local(void *cli)
 				g = unassoc_migrate_pfdindex[i];
 				// migrate from another poll index
 				if (g-- > 0) {
-					client_proto_version[pfdcount] = client_proto_version[g];
-					client_proto_version[g] = 0;
-					unhandled_buf_len[pfdcount] = unhandled_buf_len[g];
-					unhandled_buf_len[g] = 0;
-					unhandled_buf_used[pfdcount] = unhandled_buf_used[g];
-					unhandled_buf_used[g] = 0;
-					unhandled_buf[pfdcount] = unhandled_buf[g];
-					unhandled_buf[g] = NULL;
+					if (g != pfdcount) {
+						client_proto_version[pfdcount] = client_proto_version[g];
+						client_proto_version[g] = 0;
+						unhandled_buf_len[pfdcount] = unhandled_buf_len[g];
+						unhandled_buf_len[g] = 0;
+						unhandled_buf_used[pfdcount] = unhandled_buf_used[g];
+						unhandled_buf_used[g] = 0;
+						unhandled_buf[pfdcount] = unhandled_buf[g];
+						unhandled_buf[g] = NULL;
+					}
 					unassoc_migrate_pfdindex[i] = 0;
 				}
 				type[pfdcount++] = 1;
@@ -5548,13 +5541,13 @@ static void *dvbapi_main_local(void *cli)
 					
 					//reading and completing data from socket
 					if (connfd > 0) {
-			
+
 						if(unhandled_buf_used[i])
 						{
 							memcpy(mbuf, unhandled_buf[i], unhandled_buf_used[i]);
-						}	
-						
-						if(!dvbapi_handlesockdata(connfd, mbuf, mbuf_size, unhandled_buf_used[i], &add_to_poll, &unhandled_buf_used[i], &client_proto_version[i]))
+						}
+
+						if(!dvbapi_handlesockdata(connfd, mbuf, mbuf_size, unhandled_buf_used[i], &unhandled_buf_used[i], &client_proto_version[i]))
 						{
 							unhandled_buf_used[i] = 0;
 																			
