@@ -754,9 +754,13 @@ static char *read_line_from_file(char *fname, char *buf, int bufsz)
 	FILE *f = fopen(fname, "r");
 	if (!f)
 		return NULL;
-	if (fgets(buf, bufsz, f)) { // only the first line is needed
-		char *p = strchr(buf, '\n');
-		*p = '\0';
+	while (fgets(buf, bufsz, f))
+	{
+		if (strstr(buf,"\n")) //we need only the first line
+		{
+			buf[strlen(buf)-1] = "\0";
+			break;
+		}
 	}
 	fclose(f);
 	if (buf[0])
