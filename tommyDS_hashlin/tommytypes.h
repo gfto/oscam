@@ -329,7 +329,7 @@ tommy_inline tommy_uint_t tommy_ilog2_u32(tommy_uint32_t value)
 	unsigned long count;
 	_BitScanReverse(&count, value);
 	return count;
-/*
+/* Removed since current toolchain used for crosscompiling for Fritzbox 73XX and 74XX cant handle this!
 #elif defined(__GNUC__)
 	
 	 * GCC implements __builtin_clz(x) as "__builtin_clz(x) = bsr(x) ^ 31"
