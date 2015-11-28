@@ -758,7 +758,7 @@ static char *read_line_from_file(char *fname, char *buf, int bufsz)
 	{
 		if (strstr(buf,"\n")) //we need only the first line
 		{
-			buf[strlen(buf)-1] = "\0";
+			buf[strlen(buf)-1] = '\0';
 			break;
 		}
 	}
