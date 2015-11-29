@@ -13,7 +13,7 @@
 
 extern int32_t exit_oscam;
 
-#define MAX_STREAMPIDS MAX_DEMUX
+#define MAX_STREAMPIDS MAX_DEMUX + 1
 
 struct tTkdDescInfo
 {
