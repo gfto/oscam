@@ -1794,7 +1794,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, ca_index_t idx, bool enable, 
 					action = remove_streampid_from_list(i, demux[demux_id].STREAMpids[num], curidx);
 				}
 				
-				if(action != NO_STREAMPID_LISTED && action != INVALID_STREAMPID_INDEX && action != FOUND_STREAMPID_INDEX && action != ADDED_STREAMPID_INDEX)
+				if(action != NO_STREAMPID_LISTED && action != INVALID_STREAMPID_INDEX && action != FOUND_STREAMPID_INDEX && action != ADDED_STREAMPID_INDEX && action != REMOVED_STREAMPID_INDEX)
 				{
 					ca_pid_t ca_pid2;
 					memset(&ca_pid2, 0, sizeof(ca_pid2));
