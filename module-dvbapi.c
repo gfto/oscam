@@ -3196,7 +3196,32 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
     	
 		if(demux_id == -1)
 		{
-			for(demux_id = 0; demux_id < MAX_DEMUX && demux[demux_id].program_number > 0; demux_id++) { ; }
+			for(demux_id = 0; demux_id < MAX_DEMUX; demux_id++)
+			{
+				if(demux[demux_id].program_number == 0)
+				{
+					demux[demux_id].program_number = program_number; // do this early since some prio items use them!
+					demux[demux_id].enigma_namespace = 0;
+					demux[demux_id].tsid = 0;
+					demux[demux_id].onid = 0;
+					demux[demux_id].pmtpid = pmtpid;
+					demux[demux_id].socket_fd = connfd;
+					demux[demux_id].adapter_index = adapter_index;
+					demux[demux_id].client_proto_version = client_proto_version;
+					demux[demux_id].sdt_filter = -1;
+					
+					// free demuxer found, start pat/pmt filter for this new demuxer
+					if(pmtpid)
+					{
+						dvbapi_start_pmt_filter(demux_id, pmtpid);
+					}
+					else
+					{
+						dvbapi_start_pat_filter(demux_id);
+					}
+					break;
+				}
+			}
 		}
     	
 		if(demux_id >= MAX_DEMUX)
@@ -3205,27 +3230,9 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			return -1;
 		}
 		
-		demux[demux_id].program_number = program_number; // do this early since some prio items use them!
-		demux[demux_id].enigma_namespace = 0;
-		demux[demux_id].tsid = 0;
-		demux[demux_id].onid = 0;
-		demux[demux_id].pmtpid = pmtpid;
-		demux[demux_id].socket_fd = connfd;
-		demux[demux_id].adapter_index = adapter_index;
-		demux[demux_id].client_proto_version = client_proto_version;
-		
 		if(pmtfile)
 		{
 			cs_strncpy(demux[demux_id].pmt_file, pmtfile, sizeof(demux[demux_id].pmt_file));
-		}
-
-		if(pmtpid)
-		{
-			dvbapi_start_pmt_filter(demux_id, pmtpid);
-		}
-		else
-		{
-			dvbapi_start_pat_filter(demux_id);
 		}
 		
 		if(demux[demux_id].running == 0) demux[demux_id].ECMpidcount = 0; // reset number of ecmpids only if it was not running!
@@ -3465,8 +3472,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 			}
 		}
 	}
-
-	demux[demux_id].sdt_filter = -1;
 
 	if(cfg.dvbapi_au > 0 && demux[demux_id].EMMpidcount == 0) // only do emm setup if au enabled and not running!
 	{
