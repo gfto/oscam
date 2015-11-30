@@ -1312,7 +1312,8 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 								
 							if(!match)
 							{
-								dvbapi_set_pid(demux_index, i, idx, false, false); // disable streampid since its not used by this pid (or by the new ecmpid or any other demuxer!) 
+								remove_streampid_from_list(demux[demux_index].ca_mask, pidtobestopped, idx);
+								//dvbapi_set_pid(demux_index, i, idx, false, false); // disable streampid since its not used by this pid (or by the new ecmpid or any other demuxer!) 
 							}
 						}
 					}
@@ -1813,20 +1814,20 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, ca_index_t idx, bool enable, 
 					{
 						if(curidx != INDEX_INVALID)
 						{
-							ca_pid2.index = curidx;
+							(curidx == DVBAPI_INDEX_DISABLE) ? (ca_pid2.index = -1) : (ca_pid2.index = curidx);
 							cs_log_dbg(D_DVBAPI, "Demuxer %d %s stream %d pid=0x%04x index=%d on ca%d", demux_id,
 								(enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i);
 							curidx = INDEX_INVALID; // flag this index as handled
 						}
 						else if (newidx != INDEX_INVALID)
 						{
-							ca_pid2.index = newidx;
+							(newidx == DVBAPI_INDEX_DISABLE) ? (ca_pid2.index = -1) : (ca_pid2.index = newidx);
 							cs_log_dbg(D_DVBAPI, "Demuxer %d takeover stream %d pid=0x%04x by index=%d on ca%d", demux_id, num + 1,
 								ca_pid2.pid, ca_pid2.index, i);
 							newidx = INDEX_INVALID; // flag this takeover / new index as handled
 						}
 
-						if(use_des && cfg.dvbapi_extended_cw_api == 2)
+						if(use_des && cfg.dvbapi_extended_cw_api == 2 && ca_pid2.index != -1)
 						{
 							ca_pid2.index |= 0x100;
 						}
@@ -1846,7 +1847,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, ca_index_t idx, bool enable, 
 								if(dvbapi_ioctl(currentfd, CA_SET_PID, &ca_pid2) == -1)
 								{
 									cs_log_dbg(D_TRACE | D_DVBAPI,"CA_SET_PID ioctl error (errno=%d %s)", errno, strerror(errno));
-									remove_streampid_from_list(i, ca_pid2.pid, ca_pid2.index);
+									remove_streampid_from_list(i, ca_pid2.pid, INDEX_DISABLE_ALL);
 								}
 								
 								ca_index_t result = is_ca_used(i,0); // check if in use by any pid
@@ -1894,7 +1895,7 @@ void dvbapi_stop_all_emm_sdt_filtering(void)
 
 void dvbapi_stop_descrambling(int32_t demux_id)
 {
-	int32_t i, j;
+	int32_t i, j, z;
 	if(demux[demux_id].program_number == 0) { return; }
 	char channame[CS_SERVICENAME_SIZE];
 	i = demux[demux_id].pidindex;
@@ -1908,18 +1909,21 @@ void dvbapi_stop_descrambling(int32_t demux_id)
 	dvbapi_stop_filter(demux_id, TYPE_PAT);
 	dvbapi_stop_filter(demux_id, TYPE_PMT);
 	
-	if(demux[demux_id].ECMpidcount > 0)
+	for(i = 0; i < demux[demux_id].ECMpidcount && demux[demux_id].ECMpidcount > 0; i++)
 	{
-		dvbapi_stop_filter(demux_id, TYPE_ECM);
-	}
-	
-	if(selected_api == STAPI) // just disable all streams since stapi enables them all while writing first found cw too!
-	{
-		for(i = 0; i < demux[demux_id].STREAMpidcount; i++)
+		for(j = 0; j < MAX_STREAM_INDICES; j++)
 		{
-			dvbapi_set_pid(demux_id, i, INDEX_DISABLE_ALL, false, false); // disable streampid
+			if(demux[demux_id].ECMpids[i].index[j] == INDEX_INVALID) continue;
+			
+			// disable streams!
+			for(z = 0; z < demux[demux_id].STREAMpidcount; z++)
+			{
+				dvbapi_set_pid(demux_id, z, demux[demux_id].ECMpids[i].index[j], false, false); // disable streampid
+			}
+			demux[demux_id].ECMpids[i].index[j] = INDEX_INVALID;
 		}
 	}
+	dvbapi_stop_filter(demux_id, TYPE_ECM);
 	
 	memset(&demux[demux_id], 0 , sizeof(DEMUXTYPE));
 	for(i = 0; i < ECM_PIDS; i++)
@@ -1929,6 +1933,7 @@ void dvbapi_stop_descrambling(int32_t demux_id)
 			demux[demux_id].ECMpids[i].index[j] = INDEX_INVALID;
 		}
 	}
+	
 	demux[demux_id].pidindex = -1;
 	demux[demux_id].curindex = -1;
 	if (!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
@@ -6859,6 +6864,7 @@ int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, ca_index_t idx
 						return REMOVED_DECODING_STREAMPID_INDEX;
 					}
 				}
+				return INVALID_STREAMPID_INDEX;
 			}
 		}
 	}
