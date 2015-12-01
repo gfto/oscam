@@ -3210,6 +3210,11 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 					demux[demux_id].client_proto_version = client_proto_version;
 					demux[demux_id].sdt_filter = -1;
 					
+					if(pmtfile)
+					{
+						cs_strncpy(demux[demux_id].pmt_file, pmtfile, sizeof(demux[demux_id].pmt_file));
+					}
+					
 					// free demuxer found, start pat/pmt filter for this new demuxer
 					if(pmtpid)
 					{
@@ -3228,11 +3233,6 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 		{
 			cs_log("ERROR: No free id (MAX_DEMUX)");
 			return -1;
-		}
-		
-		if(pmtfile)
-		{
-			cs_strncpy(demux[demux_id].pmt_file, pmtfile, sizeof(demux[demux_id].pmt_file));
 		}
 		
 		if(demux[demux_id].running == 0) demux[demux_id].ECMpidcount = 0; // reset number of ecmpids only if it was not running!
