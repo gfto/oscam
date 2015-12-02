@@ -5209,7 +5209,7 @@ static void *dvbapi_main_local(void *cli)
 		for(i = 0; i < MAX_DEMUX; i++)
 		{	
 			// add client fd's which are not yet associated with the demux but needs to be polled for data
-			if (unassoc_fd[i]) {
+			if (unassoc_fd[i] && (cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)) {
 				pfd2[pfdcount].fd = unassoc_fd[i];
 				pfd2[pfdcount].events = (POLLIN | POLLPRI);
 				g = unassoc_migrate_pfdindex[i];
@@ -5622,7 +5622,7 @@ static void *dvbapi_main_local(void *cli)
 						// if the connection is new and we read no PMT data, then add it to the poll,
 						// otherwise this socket will not be checked with poll when data arives
 						// because fd it is not yet assigned with the demux
-						if (add_to_poll) {
+						if (add_to_poll && (cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)) {
 							for (j = 0; j < MAX_DEMUX; j++) {
 								if (!unassoc_fd[j]) {
 									unassoc_fd[j] = connfd;
