@@ -3364,10 +3364,9 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	demux[demux_id].stopdescramble = 0; // remove deletion mark!
 
 	// remove from unassoc_fd when necessary
-	if(!cfg.dvbapi_listenport && cfg.dvbapi_boxtype != BOXTYPE_PC_NODMX)
-		for (j = 0; j < MAX_DEMUX; j++)
-				if (unassoc_fd[j] == connfd)
-						unassoc_fd[j] = 0;
+	for (j = 0; j < MAX_DEMUX; j++)
+			if (unassoc_fd[j] == connfd)
+					unassoc_fd[j] = 0;
 
 	dvbapi_capmt_notify(&demux[demux_id]);
 
@@ -4789,7 +4788,7 @@ static void dvbapi_get_packet_size(uchar* mbuf, uint16_t mbuf_len, uint16_t* chu
 	}
 }
 
-static void dvbapi_handlesockmsg(uchar* mbuf, uint16_t chunksize, uint16_t data_len, int32_t connfd, uint16_t* client_proto_version)
+static void dvbapi_handlesockmsg(uchar* mbuf, uint16_t chunksize, uint16_t data_len, uint8_t* add_to_poll, int32_t connfd, uint16_t* client_proto_version)
 {
 	uint32_t opcode = b2i(4, mbuf); //get the client opcode (4 bytes)
 		
@@ -4882,6 +4881,15 @@ static void dvbapi_handlesockmsg(uchar* mbuf, uint16_t chunksize, uint16_t data_
 				break;
 			}
 		}
+		
+		if(cfg.dvbapi_listenport && opcode == DVBAPI_AOT_CA_STOP)
+		{
+			(*add_to_poll) = 1;
+		}
+		else
+		{
+			(*add_to_poll) = 0;	
+		}
 	}
 	else switch(opcode)
 	{
@@ -4941,7 +4949,7 @@ static void dvbapi_handlesockmsg(uchar* mbuf, uint16_t chunksize, uint16_t data_
 }
 
 static bool dvbapi_handlesockdata(int32_t connfd, uchar* mbuf, uint16_t mbuf_size, uint16_t unhandled_len, 
-				  uint16_t* new_unhandled_len, uint16_t* client_proto_version)
+									uint8_t* add_to_poll, uint16_t* new_unhandled_len, uint16_t* client_proto_version)
 {
 	int32_t recv_result;
 	uint16_t chunksize = 1, data_len = 1;
@@ -5007,7 +5015,7 @@ static bool dvbapi_handlesockdata(int32_t connfd, uchar* mbuf, uint16_t mbuf_siz
 		}
 		
 		// we got at least one full packet, handle it, then return
-		dvbapi_handlesockmsg(mbuf, chunksize, data_len, connfd, client_proto_version);
+		dvbapi_handlesockmsg(mbuf, chunksize, data_len, add_to_poll, connfd, client_proto_version);
 		
 		unhandled_len -= chunksize;
 		
@@ -5053,7 +5061,6 @@ static void *dvbapi_main_local(void *cli)
 	struct s_auth *account;
 	int32_t ok = 0;
 	uint16_t client_proto_version[maxpfdsize];
-	uint16_t unassoc_migrate_pfdindex[MAX_DEMUX];
 	
 	if(!cs_malloc(&mbuf, sizeof(uchar)*mbuf_size))
 	{
@@ -5090,7 +5097,6 @@ static void *dvbapi_main_local(void *cli)
 	
 	memset(ca_fd, 0, sizeof(ca_fd));
 	memset(unassoc_fd, 0, sizeof(unassoc_fd));
-	memset(unassoc_migrate_pfdindex, 0, sizeof(unassoc_migrate_pfdindex));
 
 	dvbapi_read_priority();
 	dvbapi_load_channel_cache();
@@ -5209,24 +5215,9 @@ static void *dvbapi_main_local(void *cli)
 		for(i = 0; i < MAX_DEMUX; i++)
 		{	
 			// add client fd's which are not yet associated with the demux but needs to be polled for data
-			if (unassoc_fd[i] && (cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)) {
+			if (unassoc_fd[i]) {
 				pfd2[pfdcount].fd = unassoc_fd[i];
 				pfd2[pfdcount].events = (POLLIN | POLLPRI);
-				g = unassoc_migrate_pfdindex[i];
-				// migrate from another poll index
-				if (g-- > 0) {
-					if (g != pfdcount) {
-						client_proto_version[pfdcount] = client_proto_version[g];
-						client_proto_version[g] = 0;
-						unhandled_buf_len[pfdcount] = unhandled_buf_len[g];
-						unhandled_buf_len[g] = 0;
-						unhandled_buf_used[pfdcount] = unhandled_buf_used[g];
-						unhandled_buf_used[g] = 0;
-						unhandled_buf[pfdcount] = unhandled_buf[g];
-						unhandled_buf[g] = NULL;
-					}
-					unassoc_migrate_pfdindex[i] = 0;
-				}
 				type[pfdcount++] = 1;
 			}
 
@@ -5551,13 +5542,13 @@ static void *dvbapi_main_local(void *cli)
 					
 					//reading and completing data from socket
 					if (connfd > 0) {
-
+			
 						if(unhandled_buf_used[i])
 						{
 							memcpy(mbuf, unhandled_buf[i], unhandled_buf_used[i]);
-						}
-
-						if(!dvbapi_handlesockdata(connfd, mbuf, mbuf_size, unhandled_buf_used[i], &unhandled_buf_used[i], &client_proto_version[i]))
+						}	
+						
+						if(!dvbapi_handlesockdata(connfd, mbuf, mbuf_size, unhandled_buf_used[i], &add_to_poll, &unhandled_buf_used[i], &client_proto_version[i]))
 						{
 							unhandled_buf_used[i] = 0;
 																			
@@ -5622,11 +5613,10 @@ static void *dvbapi_main_local(void *cli)
 						// if the connection is new and we read no PMT data, then add it to the poll,
 						// otherwise this socket will not be checked with poll when data arives
 						// because fd it is not yet assigned with the demux
-						if (add_to_poll && (cfg.dvbapi_boxtype == BOXTYPE_PC || cfg.dvbapi_boxtype == BOXTYPE_PC_NODMX)) {
+						if (add_to_poll) {
 							for (j = 0; j < MAX_DEMUX; j++) {
 								if (!unassoc_fd[j]) {
 									unassoc_fd[j] = connfd;
-									unassoc_migrate_pfdindex[j] = i + 1;
 									break;
 								}
 							}
@@ -6869,7 +6859,6 @@ int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, ca_index_t idx
 						return REMOVED_DECODING_STREAMPID_INDEX;
 					}
 				}
-				return INVALID_STREAMPID_INDEX;
 			}
 		}
 	}
