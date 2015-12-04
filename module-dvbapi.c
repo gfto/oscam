@@ -6859,6 +6859,7 @@ int8_t remove_streampid_from_list(uint8_t cadevice, uint16_t pid, ca_index_t idx
 						return REMOVED_DECODING_STREAMPID_INDEX;
 					}
 				}
+				return INVALID_STREAMPID_INDEX;
 			}
 		}
 	}
