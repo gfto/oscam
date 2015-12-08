@@ -1154,6 +1154,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 	{
 		do
 		{
+			errno = 0;
 			if(try)
 			{
 				cs_sleepms(50);
@@ -1206,6 +1207,7 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 		{
 			if(try)
 			{
+				errno = 0;
 				cs_sleepms(50);
 			}
 			try++;
