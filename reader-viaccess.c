@@ -2049,10 +2049,6 @@ static int32_t viaccess_card_info(struct s_reader *reader)
 		{
 			rdr_log(reader, "CA 28 initialisation failed! CA 28 refused");
 		}
-	}	    
-	else
-	{
-		rdr_log(reader, "CA 28 initialisation failed! No boxkey or deskey!");
 	}
 	//end process init CA 28
 	return OK;
