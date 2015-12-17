@@ -1387,6 +1387,7 @@ static int32_t viaccess_do_ecm(struct s_reader *reader, const ECM_REQUEST *er, s
 		{
 			rdr_log_dbg(reader, D_READER, "Decrypting nano E0 encrypted cw.");
 			uint8_t returnedcw[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; 
+			memcpy(returnedcw,ea->cw,16);
 			// Processing 3DES
 			// Processing even cw
 			des(returnedcw, reader->key_schedule1, 0);  //decrypt
