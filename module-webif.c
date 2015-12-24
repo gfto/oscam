@@ -632,7 +632,7 @@ static char *send_oscam_config_loadbalancer(struct templatevars *vars, struct ur
 				tpl_addMsg(vars, "Timeout cleared from Stats");
 			}
 
-			if(strcmp(getParam(params, "button"), "Clear Not Founds") == 0)
+			if(strcmp(getParam(params, "button"), "Clear Not Found") == 0)
 			{
 				clean_all_stats_by_rc(E_NOTFOUND, 0);
 				tpl_addMsg(vars, "Not Found cleared from Stats");
