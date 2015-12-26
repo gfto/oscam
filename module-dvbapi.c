@@ -1314,8 +1314,14 @@ int32_t dvbapi_stop_filternum(int32_t demux_index, int32_t num)
 								
 							if(!match)
 							{
-								remove_streampid_from_list(demux[demux_index].ca_mask, pidtobestopped, idx);
-								//dvbapi_set_pid(demux_index, i, idx, false, false); // disable streampid since its not used by this pid (or by the new ecmpid or any other demuxer!) 
+								for(j = 0; j < MAX_DEMUX; j++)
+								{
+									if(((demux[demux_index].ca_mask & (1 << j)) == (uint32_t) (1 << j)))
+									{
+										remove_streampid_from_list(j, pidtobestopped, idx);
+										break;
+									}
+								}
 							}
 						}
 					}
@@ -1803,10 +1809,10 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, ca_index_t idx, bool enable, 
 					ca_pid2.pid = demux[demux_id].STREAMpids[num];
 					
 					// removed last of this streampid on ca? -> disable this pid with -1 on this ca
-					if((action == REMOVED_STREAMPID_LASTINDEX) && (is_ca_used(i, ca_pid2.pid) == INDEX_INVALID)) curidx = DVBAPI_INDEX_DISABLE; 
+					if((action == REMOVED_STREAMPID_LASTINDEX || action == FIRST_STREAMPID_INDEX) && (is_ca_used(i, ca_pid2.pid) == INDEX_INVALID)) curidx = DVBAPI_INDEX_DISABLE; 
 					
 					// removed index of streampid that is used to decode on ca -> get a fresh one
-					if(action == REMOVED_DECODING_STREAMPID_INDEX)
+					if(action == REMOVED_DECODING_STREAMPID_INDEX || action == FIRST_STREAMPID_INDEX)
 					{
 						newidx = is_ca_used(i, demux[demux_id].STREAMpids[num]); // get an active index for this pid and enable it on ca device
 						curidx = DVBAPI_INDEX_DISABLE;
@@ -1818,14 +1824,16 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, ca_index_t idx, bool enable, 
 						{
 							(curidx == DVBAPI_INDEX_DISABLE) ? (ca_pid2.index = -1) : (ca_pid2.index = curidx);
 							cs_log_dbg(D_DVBAPI, "Demuxer %d %s stream %d pid=0x%04x index=%d on ca%d", demux_id,
-								(enable ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i);
+								((enable && curidx != DVBAPI_INDEX_DISABLE) ? "enable" : "disable"), num + 1, ca_pid2.pid, ca_pid2.index, i);
 							curidx = INDEX_INVALID; // flag this index as handled
 						}
 						else if (newidx != INDEX_INVALID)
 						{
 							(newidx == DVBAPI_INDEX_DISABLE) ? (ca_pid2.index = -1) : (ca_pid2.index = newidx);
-							cs_log_dbg(D_DVBAPI, "Demuxer %d takeover stream %d pid=0x%04x by index=%d on ca%d", demux_id, num + 1,
-								ca_pid2.pid, ca_pid2.index, i);
+							
+							cs_log_dbg(D_DVBAPI, "Demuxer %d %s stream %d pid=0x%04x by index=%d on ca%d", demux_id, 
+								((enable && action == FIRST_STREAMPID_INDEX) ? "enable" : "takeover"), num + 1, ca_pid2.pid, ca_pid2.index, i);
+							
 							newidx = INDEX_INVALID; // flag this takeover / new index as handled
 						}
 
@@ -1904,7 +1912,7 @@ void dvbapi_stop_descrambling(int32_t demux_id)
 	if(i < 0) { i = 0; }
 	demux[demux_id].pidindex = -1; // no ecmpid is to be descrambling since we start stop descrambling!
 	get_servicename(dvbapi_client, demux[demux_id].program_number, demux[demux_id].ECMpidcount > 0 ? demux[demux_id].ECMpids[i].PROVID : 0, demux[demux_id].ECMpidcount > 0 ? demux[demux_id].ECMpids[i].CAID : 0, channame, sizeof(channame));
-	cs_log_dbg(D_DVBAPI, "Demuxer %d stop descrambling program number %04X (%s)", demux_id, demux[demux_id].program_number, channame);
+	cs_log("Demuxer %d stop descrambling program number %04X (%s)", demux_id, demux[demux_id].program_number, channame);
 	
 	dvbapi_stop_filter(demux_id, TYPE_EMM);
 	dvbapi_stop_filter(demux_id, TYPE_SDT);
