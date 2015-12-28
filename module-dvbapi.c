@@ -1772,7 +1772,9 @@ ca_index_t dvbapi_get_descindex(int32_t demux_index, int32_t pid, int32_t stream
 void dvbapi_set_pid(int32_t demux_id, int32_t num, ca_index_t idx, bool enable, bool use_des)
 {
 	int32_t i, currentfd;
+	uint16_t streampid = demux[demux_id].STREAMpids[num];
 	ca_index_t newidx = 0, curidx;
+	ca_pid_t ca_pid2;
 	
 	if(demux[demux_id].pidindex == -1 && enable) return; // no current pid on enable? --> exit
 
@@ -1781,7 +1783,7 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, ca_index_t idx, bool enable, 
 #if defined(WITH_STAPI) || defined(WITH_STAPI5)
 	case STAPI:
 		if(!enable) idx = INDEX_INVALID;
-		stapi_set_pid(demux_id, num, idx, demux[demux_id].STREAMpids[num], demux[demux_id].pmt_file); // only used to disable pids!!!
+		stapi_set_pid(demux_id, num, idx, streampid, demux[demux_id].pmt_file); // only used to disable pids!!!
 		break;
 #endif
 #if defined WITH_COOLAPI || defined WITH_COOLAPI2
@@ -1796,30 +1798,29 @@ void dvbapi_set_pid(int32_t demux_id, int32_t num, ca_index_t idx, bool enable, 
 			{	
 				uint32_t action = 0;
 				if(enable){
-					action = update_streampid_list(i, demux[demux_id].STREAMpids[num], curidx, use_des);
+					action = update_streampid_list(i, streampid, curidx, use_des);
 				}
 				if(!enable){
-					action = remove_streampid_from_list(i, demux[demux_id].STREAMpids[num], curidx);
+					action = remove_streampid_from_list(i, streampid, curidx);
 				}
 				
 				if(action != NO_STREAMPID_LISTED && action != INVALID_STREAMPID_INDEX && action != FOUND_STREAMPID_INDEX && action != ADDED_STREAMPID_INDEX && action != REMOVED_STREAMPID_INDEX)
-				{
-					ca_pid_t ca_pid2;
-					memset(&ca_pid2, 0, sizeof(ca_pid2));
-					ca_pid2.pid = demux[demux_id].STREAMpids[num];
-					
+				{	
 					// removed last of this streampid on ca? -> disable this pid with -1 on this ca
-					if((action == REMOVED_STREAMPID_LASTINDEX || action == FIRST_STREAMPID_INDEX) && (is_ca_used(i, ca_pid2.pid) == INDEX_INVALID)) curidx = DVBAPI_INDEX_DISABLE; 
+					if((action == REMOVED_STREAMPID_LASTINDEX || action == FIRST_STREAMPID_INDEX) && (is_ca_used(i, streampid) == INDEX_INVALID)) curidx = DVBAPI_INDEX_DISABLE; 
 					
 					// removed index of streampid that is used to decode on ca -> get a fresh one
 					if(action == REMOVED_DECODING_STREAMPID_INDEX || action == FIRST_STREAMPID_INDEX)
 					{
-						newidx = is_ca_used(i, demux[demux_id].STREAMpids[num]); // get an active index for this pid and enable it on ca device
+						newidx = is_ca_used(i, streampid); // get an active index for this pid and enable it on ca device
 						curidx = DVBAPI_INDEX_DISABLE;
 					}
 
 					while (curidx != INDEX_INVALID || newidx != INDEX_INVALID)
 					{
+						memset(&ca_pid2, 0, sizeof(ca_pid2));
+						ca_pid2.pid = streampid;
+						
 						if(curidx != INDEX_INVALID)
 						{
 							(curidx == DVBAPI_INDEX_DISABLE) ? (ca_pid2.index = -1) : (ca_pid2.index = curidx);
