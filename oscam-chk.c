@@ -1109,4 +1109,40 @@ int32_t chk_is_fakecw(uint8_t *cw)
 	cs_readunlock(__func__, &config_lock);
 	
 	return is_fakecw;
+	 if((er->client) && (strncmp(rdr->ph.desc,"cccam",5)==0)) {
+
+    int canUse0Maxdown=((strncmp(ph[er->client->ctyp].desc,"dvbapi",6)!=0)
+    (er->client->account->cccignorereshare));
+
+    struct s_client *cl=rdr->client;
+    struct cc_data *cc = cl->cc;
+    LL_ITER *it;
+    it = ll_iter_create(cc->cards);
+    struct cc_card *ncard;
+    int found=0;
+    while ((ncard = ll_iter_next(it))) {
+
+        if(ncard->caid == er->caid) {
+
+            if(canUse0Maxdown) {
+
+                found=1;
+                break;
+
+            }
+            else if(ncard->maxdown>0) {
+
+                found=1;
+                break;
+
+            }
+
+        }
+
+    }
+    ll_iter_release(it);
+    if(!found)
+
+        return 0;
+	
 }
